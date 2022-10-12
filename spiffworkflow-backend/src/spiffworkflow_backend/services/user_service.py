@@ -270,13 +270,17 @@ class UserService:
         )
 
     @classmethod
-    def create_principal(cls, user_id: int) -> PrincipalModel:
+    def create_principal(
+        cls, child_id: int, id_column_name: str = "user_id"
+    ) -> PrincipalModel:
         """Create_principal."""
-        principal: Optional[PrincipalModel] = PrincipalModel.query.filter_by(
-            user_id=user_id
+        column = PrincipalModel.__table__.columns[id_column_name]
+        principal: Optional[PrincipalModel] = PrincipalModel.query.filter(
+            column == child_id
         ).first()
         if principal is None:
-            principal = PrincipalModel(user_id=user_id)
+            principal = PrincipalModel()
+            setattr(principal, id_column_name, child_id)
             db.session.add(principal)
             try:
                 db.session.commit()
@@ -285,7 +289,7 @@ class UserService:
                 current_app.logger.error(f"Exception in create_principal: {e}")
                 raise ApiError(
                     error_code="add_principal_error",
-                    message=f"Could not create principal {user_id}",
+                    message=f"Could not create principal {child_id}",
                 ) from e
         return principal
 

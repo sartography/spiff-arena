@@ -1,10 +1,11 @@
 """PermissionAssignment."""
 import enum
+from typing import Any
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-from sqlalchemy import Enum
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
@@ -26,12 +27,12 @@ class Permission(enum.Enum):
     # administer = 2
     # view_instance = 3
 
-    create = 1
-    read = 2
-    update = 3
-    delete = 4
-    list = 5
-    instantiate = 6  # this is something you do to a process model
+    create = "create"
+    read = "read"
+    update = "update"
+    delete = "delete"
+    list = "list"
+    instantiate = "instantiate"  # this is something you do to a process model
 
 
 class PermissionAssignmentModel(SpiffworkflowBaseDBModel):
@@ -51,5 +52,15 @@ class PermissionAssignmentModel(SpiffworkflowBaseDBModel):
     permission_target_id = db.Column(
         ForeignKey(PermissionTargetModel.id), nullable=False
     )
-    grant_type = db.Column(Enum(PermitDeny))
-    permission = db.Column(Enum(Permission))
+    grant_type = db.Column(db.String(50))
+    permission = db.Column(db.String(50))
+
+    @validates("grant_type")
+    def validate_grant_type(self, key: str, value: str) -> Any:
+        """Validate_grant_type."""
+        return self.validate_enum_field(key, value, PermitDeny)
+
+    @validates("permission")
+    def validate_permission(self, key: str, value: str) -> Any:
+        """Validate_permission."""
+        return self.validate_enum_field(key, value, Permission)

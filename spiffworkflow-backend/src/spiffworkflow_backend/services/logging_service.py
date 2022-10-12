@@ -23,7 +23,14 @@ from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 # full message list:
 # {'name': 'gunicorn.error', 'msg': 'GET /admin/token', 'args': (), 'levelname': 'DEBUG', 'levelno': 10, 'pathname': '~/.cache/pypoetry/virtualenvs/spiffworkflow-backend-R_hdWfN1-py3.10/lib/python3.10/site-packages/gunicorn/glogging.py', 'filename': 'glogging.py', 'module': 'glogging', 'exc_info': None, 'exc_text': None, 'stack_info': None, 'lineno': 267, 'funcName': 'debug', 'created': 1657307111.4513023, 'msecs': 451.30228996276855, 'relativeCreated': 1730.785846710205, 'thread': 139945864087360, 'threadName': 'MainThread', 'processName': 'MainProcess', 'process': 2109561, 'message': 'GET /admin/token', 'asctime': '2022-07-08T15:05:11.451Z'}
 
+
+class InvalidLogLevelError(Exception):
+    """InvalidLogLevelError."""
+
+
 # originally from https://stackoverflow.com/a/70223539/6090676
+
+
 class JsonFormatter(logging.Formatter):
     """Formatter that outputs JSON strings after parsing the LogRecord.
 
@@ -108,8 +115,16 @@ class SpiffFilter(logging.Filter):
 
 def setup_logger(app: Flask) -> None:
     """Setup_logger."""
-    log_level = logging.DEBUG
-    spiff_log_level = logging.DEBUG
+    upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
+    log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+    if upper_log_level_string not in log_levels:
+        raise InvalidLogLevelError(
+            f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}"
+        )
+
+    log_level = getattr(logging, upper_log_level_string)
+    spiff_log_level = getattr(logging, upper_log_level_string)
     log_formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )

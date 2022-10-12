@@ -1,10 +1,9 @@
 """Grabs tickets from csv and makes process instances."""
 import csv
-import os
 
 from flask_bpmn.models.db import db
 
-from spiffworkflow_backend import create_app
+from spiffworkflow_backend import get_hacked_up_app_for_script
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -26,10 +25,7 @@ def print_process_instance_count(process_model_identifier_ticket: str) -> None:
 
 def main():
     """Main."""
-    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "development"
-    flask_env_key = "FLASK_SESSION_SECRET_KEY"
-    os.environ[flask_env_key] = "whatevs"
-    app = create_app()
+    app = get_hacked_up_app_for_script()
     with app.app_context():
 
         process_model_identifier_ticket = "ticket"
