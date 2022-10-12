@@ -67,7 +67,7 @@ def setup_config(app: Flask) -> None:
 
     # unversioned (see .gitignore) config that can override everything and include secrets.
     # src/spiffworkflow_backend/config/secrets.py
-    app.config.from_pyfile(os.path.join("config", "secrets.py"))
+    app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
 
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
