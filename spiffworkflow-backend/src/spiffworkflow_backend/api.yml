@@ -8,9 +8,9 @@ servers:
   - url: http://localhost:5000/v1.0
 security:
   - jwt: ["secret"]
-  - oAuth2AuthCode:
-      - read_email
-      - uid
+#  - oAuth2AuthCode:
+#      - read_email
+#      - uid
 
 paths:
   /login:

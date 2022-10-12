@@ -116,6 +116,24 @@ def create_app() -> flask.app.Flask:
     return app  # type: ignore
 
 
+def get_hacked_up_app_for_script() -> flask.app.Flask:
+    """Get_hacked_up_app_for_script."""
+    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "development"
+    flask_env_key = "FLASK_SESSION_SECRET_KEY"
+    os.environ[flask_env_key] = "whatevs"
+    if "BPMN_SPEC_ABSOLUTE_DIR" not in os.environ:
+        home = os.environ["HOME"]
+        full_process_model_path = (
+            f"{home}/projects/github/sartography/sample-process-models"
+        )
+        if os.path.isdir(full_process_model_path):
+            os.environ["BPMN_SPEC_ABSOLUTE_DIR"] = full_process_model_path
+        else:
+            raise Exception(f"Could not find {full_process_model_path}")
+    app = create_app()
+    return app
+
+
 def configure_sentry(app: flask.app.Flask) -> None:
     """Configure_sentry."""
     import sentry_sdk

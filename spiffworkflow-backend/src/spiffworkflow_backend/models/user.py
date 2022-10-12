@@ -17,6 +17,10 @@ from spiffworkflow_backend.services.authentication_service import (
 )
 
 
+class UserNotFoundError(Exception):
+    """UserNotFoundError."""
+
+
 class UserModel(SpiffworkflowBaseDBModel):
     """UserModel."""
 

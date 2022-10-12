@@ -7,6 +7,12 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+arg="${1:-}"
+if [[ "$arg" == "acceptance" ]]; then
+  export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
+  export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
+fi
+
 if [[ -z "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_ENV=development
 fi
@@ -24,6 +30,11 @@ if [[ -n "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" ]]; then
 else
   if [[ -z "${PROCESS_WAITING_MESSAGES:-}" ]]; then
     export PROCESS_WAITING_MESSAGES="true"
+  fi
+  export FLASK_DEBUG=1
+
+  if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
+    SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
   fi
   FLASK_APP=src/spiffworkflow_backend poetry run flask run -p 7000
 fi

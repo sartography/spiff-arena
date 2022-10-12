@@ -2,6 +2,7 @@
 import json
 import time
 
+from flask import current_app
 from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
@@ -9,8 +10,9 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 
 
-def load_fixtures() -> list[ProcessInstanceModel]:
+def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
     """Load_fixtures."""
+    current_app.logger.debug("load_acceptance_test_fixtures() start")
     test_process_group_id = "acceptance-tests-group-one"
     test_process_model_id = "acceptance-tests-model-1"
     user = BaseTest.find_or_create_user()
@@ -40,4 +42,5 @@ def load_fixtures() -> list[ProcessInstanceModel]:
         process_instances.append(process_instance)
 
     db.session.commit()
+    current_app.logger.debug("load_acceptance_test_fixtures() end")
     return process_instances

@@ -22,6 +22,7 @@ from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -262,3 +263,18 @@ class BaseTest:
         )
         with open(file_full_path, "rb") as file:
             return file.read()
+
+    def assert_user_has_permission(
+        self,
+        user: UserModel,
+        permission: str,
+        target_uri: str,
+        expected_result: bool = True,
+    ) -> None:
+        """Assert_user_has_permission."""
+        has_permission = AuthorizationService.user_has_permission(
+            user=user,
+            permission=permission,
+            target_uri=target_uri,
+        )
+        assert has_permission is expected_result

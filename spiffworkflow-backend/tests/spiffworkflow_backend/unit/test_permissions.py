@@ -8,7 +8,6 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -74,23 +73,17 @@ class TestPermissions(BaseTest):
         db.session.add(permission_assignment)
         db.session.commit()
 
-        has_permission_to_a = AuthorizationService.user_has_permission(
-            user=group_a_admin,
-            permission="update",
-            target_uri=f"/{process_group_a_id}",
+        self.assert_user_has_permission(
+            group_a_admin, "update", f"/{process_group_a_id}"
         )
-        assert has_permission_to_a is True
-        has_permission_to_b = AuthorizationService.user_has_permission(
-            user=group_a_admin,
-            permission="update",
-            target_uri=f"/{process_group_b_id}",
+        self.assert_user_has_permission(
+            group_a_admin, "update", f"/{process_group_b_id}", expected_result=False
         )
-        assert has_permission_to_b is False
 
     def test_user_can_be_granted_access_through_a_group(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        """Test_group_a_admin_needs_to_stay_away_from_group_b."""
+        """Test_user_can_be_granted_access_through_a_group."""
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
         process_group_ids[1]
@@ -123,9 +116,38 @@ class TestPermissions(BaseTest):
         db.session.add(permission_assignment)
         db.session.commit()
 
-        has_permission_to_a = AuthorizationService.user_has_permission(
-            user=user,
+        self.assert_user_has_permission(user, "update", f"/{process_group_a_id}")
+
+    def test_user_can_be_read_models_with_global_permission(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        """Test_user_can_be_read_models_with_global_permission."""
+        process_group_ids = ["group-a", "group-b"]
+        process_group_a_id = process_group_ids[0]
+        process_group_b_id = process_group_ids[1]
+        for process_group_id in process_group_ids:
+            load_test_spec(
+                "timers_intermediate_catch_event",
+                process_group_id=process_group_id,
+            )
+        group_a_admin = self.find_or_create_user()
+
+        permission_target = PermissionTargetModel(uri="/%")
+        db.session.add(permission_target)
+        db.session.commit()
+
+        permission_assignment = PermissionAssignmentModel(
+            permission_target_id=permission_target.id,
+            principal_id=group_a_admin.principal.id,
             permission="update",
-            target_uri=f"/{process_group_a_id}",
+            grant_type="permit",
         )
-        assert has_permission_to_a is True
+        db.session.add(permission_assignment)
+        db.session.commit()
+
+        self.assert_user_has_permission(
+            group_a_admin, "update", f"/{process_group_a_id}"
+        )
+        self.assert_user_has_permission(
+            group_a_admin, "update", f"/{process_group_b_id}"
+        )

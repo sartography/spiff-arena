@@ -1,15 +1,24 @@
 """Authorization_service."""
+import re
+from typing import Optional
 from typing import Union
 
 import jwt
+import yaml
 from flask import current_app
 from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
+from sqlalchemy import text
 
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.models.user import UserNotFoundError
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.services.user_service import UserService
 
 
 class AuthorizationService:
@@ -21,20 +30,21 @@ class AuthorizationService:
     ) -> bool:
         """Has_permission."""
         principal_ids = [p.id for p in principals]
+
         permission_assignments = (
             PermissionAssignmentModel.query.filter(
                 PermissionAssignmentModel.principal_id.in_(principal_ids)
             )
             .filter_by(permission=permission)
             .join(PermissionTargetModel)
-            .filter_by(uri=target_uri)
+            .filter(text(f"'{target_uri}' LIKE permission_target.uri"))
             .all()
         )
 
         for permission_assignment in permission_assignments:
-            if permission_assignment.grant_type.value == "permit":
+            if permission_assignment.grant_type == "permit":
                 return True
-            elif permission_assignment.grant_type.value == "deny":
+            elif permission_assignment.grant_type == "deny":
                 return False
             else:
                 raise Exception("Unknown grant type")
@@ -61,7 +71,105 @@ class AuthorizationService:
             principals.append(group.principal)
 
         return cls.has_permission(principals, permission, target_uri)
-        # return False
+
+    @classmethod
+    def import_permissions_from_yaml_file(
+        cls, raise_if_missing_user: bool = False
+    ) -> None:
+        """Import_permissions_from_yaml_file."""
+        permission_configs = None
+        with open(current_app.config["PERMISSIONS_FILE_FULLPATH"]) as file:
+            permission_configs = yaml.safe_load(file)
+
+        if "groups" in permission_configs:
+            for group_identifier, group_config in permission_configs["groups"].items():
+                group = GroupModel.query.filter_by(identifier=group_identifier).first()
+                if group is None:
+                    group = GroupModel(identifier=group_identifier)
+                    db.session.add(group)
+                    db.session.commit()
+                    UserService.create_principal(group.id, id_column_name="group_id")
+                for username in group_config["users"]:
+                    user = UserModel.query.filter_by(username=username).first()
+                    if user is None:
+                        if raise_if_missing_user:
+                            raise (
+                                UserNotFoundError(
+                                    f"Could not find a user with name: {username}"
+                                )
+                            )
+                        continue
+                    user_group_assignemnt = UserGroupAssignmentModel.query.filter_by(
+                        user_id=user.id, group_id=group.id
+                    ).first()
+                    if user_group_assignemnt is None:
+                        user_group_assignemnt = UserGroupAssignmentModel(
+                            user_id=user.id, group_id=group.id
+                        )
+                        db.session.add(user_group_assignemnt)
+                        db.session.commit()
+
+        if "permissions" in permission_configs:
+            for _permission_identifier, permission_config in permission_configs[
+                "permissions"
+            ].items():
+                uri = permission_config["uri"]
+                uri_with_percent = re.sub(r"\*", "%", uri)
+                permission_target = PermissionTargetModel.query.filter_by(
+                    uri=uri_with_percent
+                ).first()
+                if permission_target is None:
+                    permission_target = PermissionTargetModel(uri=uri_with_percent)
+                    db.session.add(permission_target)
+                    db.session.commit()
+
+                for allowed_permission in permission_config["allowed_permissions"]:
+                    if "groups" in permission_config:
+                        for group_identifier in permission_config["groups"]:
+                            principal = (
+                                PrincipalModel.query.join(GroupModel)
+                                .filter(GroupModel.identifier == group_identifier)
+                                .first()
+                            )
+                            cls.create_permission_for_principal(
+                                principal, permission_target, allowed_permission
+                            )
+                    if "users" in permission_config:
+                        for username in permission_config["users"]:
+                            principal = (
+                                PrincipalModel.query.join(UserModel)
+                                .filter(UserModel.username == username)
+                                .first()
+                            )
+                            cls.create_permission_for_principal(
+                                principal, permission_target, allowed_permission
+                            )
+
+    @classmethod
+    def create_permission_for_principal(
+        cls,
+        principal: PrincipalModel,
+        permission_target: PermissionTargetModel,
+        permission: str,
+    ) -> PermissionAssignmentModel:
+        """Create_permission_for_principal."""
+        permission_assignment: Optional[
+            PermissionAssignmentModel
+        ] = PermissionAssignmentModel.query.filter_by(
+            principal_id=principal.id,
+            permission_target_id=permission_target.id,
+            permission=permission,
+        ).first()
+        if permission_assignment is None:
+            permission_assignment = PermissionAssignmentModel(
+                principal_id=principal.id,
+                permission_target_id=permission_target.id,
+                permission=permission,
+                grant_type="permit",
+            )
+            db.session.add(permission_assignment)
+            db.session.commit()
+        return permission_assignment
 
     # def refresh_token(self, token: str) -> str:
     #     """Refresh_token."""
