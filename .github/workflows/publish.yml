@@ -1,0 +1,27 @@
+name: Publish NPM
+
+# On a published release, run tests and deploy to NPM
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+# Job Setup
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+
+      - uses: actions/checkout@v3 #Checkout Repo
+      - uses: actions/setup-node@v3 #Setup Node
+        with:
+          node-version: 18
+      - run: npm install
+      - run: npm test
+      - uses: JS-DevTools/npm-publish@v1
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          access: public
+      - if: steps.publish.outputs.type != 'none'
+        run: |
+          echo "Version changed: ${{ steps.publish.outputs.old-version }} => ${{ steps.publish.outputs.version }}"

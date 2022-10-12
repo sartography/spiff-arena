@@ -1,0 +1,30 @@
+name: Tests
+
+# Run on Pull Requests and pushes to main
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - main
+
+# This allows a subsequently queued workflow run to interrupt previous runs
+concurrency:
+  group: '${{ github.workflow }} @ ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+# Job Setup
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3 #Checkout Repo
+      - uses: actions/setup-node@v3 #Setup Node
+      - uses: nanasess/setup-chromedriver@v1
+        with:
+          node-version: '18'
+      - name: Run Karma Tests
+        run: |
+          npm ci
+          npm run test
+  

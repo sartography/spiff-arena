@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0qmxumb" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+    <bpmn:collaboration id="my_collaboration">
+        <bpmn:participant id="buddy" name="Alpha" processRef="process_buddy" />
+        <bpmn:participant id="Person" name="Beta" processRef="random_person_process" />
+        <bpmn:messageFlow id="love_letter_flow" name="Message Flow" sourceRef="ActivitySendLetter" targetRef="Event_0ym6ptw" />
+        <bpmn:messageFlow id="Flow_0zpmqjr" name="Response Flow" sourceRef="Event_0e1t8xh" targetRef="Activity_1dagl6a" />
+        <bpmn:correlationKey name="invoice">
+            <bpmn:correlationPropertyRef>invoice_id</bpmn:correlationPropertyRef>
+            <bpmn:correlationPropertyRef>invoice_date</bpmn:correlationPropertyRef>
+            <bpmn:correlationPropertyRef>invoice_total</bpmn:correlationPropertyRef>
+        </bpmn:correlationKey>
+        <bpmn:correlationKey name="payment">
+            <bpmn:correlationPropertyRef>payment_id</bpmn:correlationPropertyRef>
+            <bpmn:correlationPropertyRef>payment_date</bpmn:correlationPropertyRef>
+            <bpmn:correlationPropertyRef>payment_total</bpmn:correlationPropertyRef>
+        </bpmn:correlationKey>
+    </bpmn:collaboration>
+
+    <bpmn:message id="send_invoice" name="Send Invoice">
+        <bpmn:extensionElements>
+            <spiffworkflow:messagePayload>
+                {
+                'invoice': { 'id': my_invoice_id, 'date': my_invoice_date, 'total': my_invoice_total }
+                }
+            </spiffworkflow:messagePayload>
+        </bpmn:extensionElements>
+    </bpmn:message>
+
+    <bpmn:message id="send_payment" name="Send Payment">
+        <bpmn:extensionElements>
+            <spiffworkflow:messagePayload>
+                { 'payment':
+                  {
+                  'id': my_payment_id,
+                  'date': my_payment_date,
+                  'total': my_payment_total,
+                  'invoice_id': invoice_id,
+                  'invoice_date': invoice_data,
+                  'invoice_amount': invoice_amount,
+                  }
+                }
+            </spiffworkflow:messagePayload>
+        </bpmn:extensionElements>
+    </bpmn:message>
+
+    <bpmn:correlationProperty id="invoice_id" name="Invoice ID">
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_invoice">
+            <bpmn:formalExpression>invoice.invoice_id</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
+            <bpmn:formalExpression>payment.invoice_id</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+    </bpmn:correlationProperty>
+
+    <bpmn:correlationProperty id="invoice_total" name="Invoice Total">
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_invoice">
+            <bpmn:formalExpression>invoice.total</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
+            <bpmn:formalExpression>payment.invoice_amount</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+    </bpmn:correlationProperty>
+
+    <bpmn:correlationProperty id="invoice_date" name="Invoice Date">
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_invoice">
+            <bpmn:formalExpression>invoice.date</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
+            <bpmn:formalExpression>payment.invoice_date</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+    </bpmn:correlationProperty>
+
+    <bpmn:correlationProperty id="payment_date" name="Payment Date">
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
+            <bpmn:formalExpression>payment.date</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+    </bpmn:correlationProperty>
+
+    <bpmn:correlationProperty id="payment_total" name="Payment Total">
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
+            <bpmn:formalExpression>payment.total</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+    </bpmn:correlationProperty>
+
+    <bpmn:correlationProperty id="payment_id" name="Payment ID">
+        <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
+            <bpmn:formalExpression>payment.id</bpmn:formalExpression>
+        </bpmn:correlationPropertyRetrievalExpression>
+    </bpmn:correlationProperty>
+
+    <bpmn:process id="process_buddy" name="Process Buddy" isExecutable="true">
+        <bpmn:startEvent id="StartEvent_1">
+            <bpmn:outgoing>Flow_1bl6jeh</bpmn:outgoing>
+        </bpmn:startEvent>
+        <bpmn:sendTask id="ActivitySendLetter" name="Send Message" messageRef="love_letter">
+            <bpmn:incoming>Flow_1bl6jeh</bpmn:incoming>
+            <bpmn:outgoing>Flow_1vgtrb2</bpmn:outgoing>
+        </bpmn:sendTask>
+        <bpmn:sequenceFlow id="Flow_1bl6jeh" sourceRef="StartEvent_1" targetRef="ActivitySendLetter" />
+        <bpmn:sequenceFlow id="Flow_1vgtrb2" sourceRef="ActivitySendLetter" targetRef="Activity_1dagl6a" />
+        <bpmn:endEvent id="Event_01h5zqa">
+            <bpmn:incoming>Flow_1f0m6hd</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:receiveTask id="Activity_1dagl6a" name="Reveive Response">
+            <bpmn:incoming>Flow_1vgtrb2</bpmn:incoming>
+            <bpmn:outgoing>Flow_1ygtaxw</bpmn:outgoing>
+        </bpmn:receiveTask>
+        <bpmn:sequenceFlow id="Flow_1f0m6hd" sourceRef="Activity_0ra5uc1" targetRef="Event_01h5zqa" />
+        <bpmn:sequenceFlow id="Flow_1ygtaxw" sourceRef="Activity_1dagl6a" targetRef="Activity_0ra5uc1" />
+        <bpmn:manualTask id="Activity_0ra5uc1" name="Display Stuff">
+            <bpmn:incoming>Flow_1ygtaxw</bpmn:incoming>
+            <bpmn:outgoing>Flow_1f0m6hd</bpmn:outgoing>
+        </bpmn:manualTask>
+    </bpmn:process>
+    <bpmn:process id="random_person_process" name="Process" isExecutable="true">
+        <bpmn:startEvent id="Event_0ym6ptw">
+            <bpmn:outgoing>Flow_1bnzzx2</bpmn:outgoing>
+            <bpmn:messageEventDefinition id="MessageEventDefinition_05bnll8" />
+        </bpmn:startEvent>
+        <bpmn:sequenceFlow id="Flow_11malws" sourceRef="Event_0e1t8xh" targetRef="Event_0yy6dsf" />
+        <bpmn:sequenceFlow id="Flow_1bnzzx2" sourceRef="Event_0ym6ptw" targetRef="Activity_15kdfc4" />
+        <bpmn:sequenceFlow id="Flow_07sdx2y" sourceRef="Activity_15kdfc4" targetRef="Event_0e1t8xh" />
+        <bpmn:endEvent id="Event_0yy6dsf">
+            <bpmn:incoming>Flow_11malws</bpmn:incoming>
+        </bpmn:endEvent>
+        <bpmn:intermediateThrowEvent id="Event_0e1t8xh">
+            <bpmn:incoming>Flow_07sdx2y</bpmn:incoming>
+            <bpmn:outgoing>Flow_11malws</bpmn:outgoing>
+            <bpmn:messageEventDefinition id="MessageEventDefinition_145e86u" />
+        </bpmn:intermediateThrowEvent>
+        <bpmn:scriptTask id="Activity_15kdfc4" name="Do Something">
+            <bpmn:incoming>Flow_1bnzzx2</bpmn:incoming>
+            <bpmn:outgoing>Flow_07sdx2y</bpmn:outgoing>
+        </bpmn:scriptTask>
+    </bpmn:process>
+    <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+        <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="my_collaboration">
+            <bpmndi:BPMNShape id="Participant_12ffz3p_di" bpmnElement="buddy" isHorizontal="true">
+                <dc:Bounds x="129" y="190" width="889" height="290" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge id="Flow_1vgtrb2_di" bpmnElement="Flow_1vgtrb2">
+                <di:waypoint x="370" y="265" />
+                <di:waypoint x="510" y="265" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_1bl6jeh_di" bpmnElement="Flow_1bl6jeh">
+                <di:waypoint x="215" y="265" />
+                <di:waypoint x="270" y="265" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_1f0m6hd_di" bpmnElement="Flow_1f0m6hd">
+                <di:waypoint x="770" y="265" />
+                <di:waypoint x="882" y="265" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_1ygtaxw_di" bpmnElement="Flow_1ygtaxw">
+                <di:waypoint x="610" y="265" />
+                <di:waypoint x="670" y="265" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+                <dc:Bounds x="179" y="247" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Activity_0p9c4se_di" bpmnElement="ActivitySendLetter">
+                <dc:Bounds x="270" y="225" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Event_01h5zqa_di" bpmnElement="Event_01h5zqa">
+                <dc:Bounds x="882" y="247" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Activity_021bozj_di" bpmnElement="Activity_1dagl6a">
+                <dc:Bounds x="510" y="225" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Activity_05js9ii_di" bpmnElement="Activity_0ra5uc1">
+                <dc:Bounds x="670" y="225" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Participant_0nbivcp_di" bpmnElement="Person" isHorizontal="true">
+                <dc:Bounds x="129" y="520" width="889" height="160" />
+                <bpmndi:BPMNLabel />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge id="Flow_11malws_di" bpmnElement="Flow_11malws">
+                <di:waypoint x="578" y="620" />
+                <di:waypoint x="702" y="620" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_1bnzzx2_di" bpmnElement="Flow_1bnzzx2">
+                <di:waypoint x="328" y="620" />
+                <di:waypoint x="370" y="620" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_07sdx2y_di" bpmnElement="Flow_07sdx2y">
+                <di:waypoint x="470" y="620" />
+                <di:waypoint x="542" y="620" />
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNShape id="Event_09ldq03_di" bpmnElement="Event_0ym6ptw">
+                <dc:Bounds x="292" y="602" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Event_0yy6dsf_di" bpmnElement="Event_0yy6dsf">
+                <dc:Bounds x="702" y="602" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Event_12u2p44_di" bpmnElement="Event_0e1t8xh">
+                <dc:Bounds x="542" y="602" width="36" height="36" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNShape id="Activity_0itanit_di" bpmnElement="Activity_15kdfc4">
+                <dc:Bounds x="370" y="580" width="100" height="80" />
+            </bpmndi:BPMNShape>
+            <bpmndi:BPMNEdge id="Flow_11c08m8_di" bpmnElement="love_letter_flow">
+                <di:waypoint x="310" y="305" />
+                <di:waypoint x="310" y="602" />
+                <bpmndi:BPMNLabel>
+                    <dc:Bounds x="225" y="411" width="71" height="14" />
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNEdge>
+            <bpmndi:BPMNEdge id="Flow_0zpmqjr_di" bpmnElement="Flow_0zpmqjr">
+                <di:waypoint x="560" y="602" />
+                <di:waypoint x="560" y="305" />
+                <bpmndi:BPMNLabel>
+                    <dc:Bounds x="582" y="410" width="76" height="14" />
+                </bpmndi:BPMNLabel>
+            </bpmndi:BPMNEdge>
+        </bpmndi:BPMNPlane>
+    </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -1,0 +1,87 @@
+{
+  "name": "bpmn-js-spiffworkflow",
+  "version": "0.0.8",
+  "description": "Extensions and modifications of BPMN.js to improve BPMN development for SpiffWorkflow",
+  "scripts": {
+    "all": "run-s lint test build",
+    "build": "webpack --mode production",
+    "build:watch": "webpack --watch",
+    "dev": "run-p build:watch serve",
+    "serve": "sirv public --dev",
+    "lint": "./node_modules/.bin/eslint src *.js",
+    "lint:fix": "./node_modules/.bin/eslint --fix src *.js",
+    "start": "run-s build serve",
+    "test": "karma start karma.conf.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sartography/bpmn-js-spiffworkflow"
+  },
+  "keywords": [
+    "bpmn",
+    "spiffworkflow"
+  ],
+  "author": {
+    "name": "Dan Funk (Sartography)",
+    "url": "https://github.com/danfunk"
+  },
+  "contributors": [
+    {
+      "name": "bpmn.io contributors",
+      "url": "https://github.com/bpmn-io"
+    }
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "^7.18.6",
+    "@babel/plugin-transform-react-jsx": "^7.17.12",
+    "@babel/preset-env": "^7.18.6",
+    "@babel/preset-react": "^7.18.2",
+    "@testing-library/preact": "^2.0.1",
+    "@testing-library/preact-hooks": "^1.1.0",
+    "@types/mocha": "^9.1.1",
+    "babel-loader": "^8.2.5",
+    "chai": "^4.3.6",
+    "copy-webpack-plugin": "^11.0.0",
+    "eslint": "^8.18.0",
+    "eslint_d": "^12.2.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-bpmn-io": "^0.14.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-jsx-a11y": "^6.6.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-sonarjs": "^0.13.0",
+    "file-saver": "^2.0.5",
+    "karma": "^6.3.4",
+    "karma-chrome-launcher": "^3.1.1",
+    "karma-coverage": "^2.2.0",
+    "karma-env-preprocessor": "^0.1.1",
+    "karma-mocha": "^2.0.1",
+    "karma-sinon-chai": "^2.0.2",
+    "karma-webpack": "^5.0.0",
+    "mocha": "^10.0.0",
+    "mocha-test-container-support": "^0.2.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^2.7.1",
+    "raw-loader": "^4.0.2",
+    "sinon": "^14.0.0",
+    "sinon-chai": "^3.7.0",
+    "sirv-cli": "^2.0.2",
+    "stringify": "^5.2.0",
+    "webpack": "^5.73.0",
+    "webpack-cli": "^4.9.2"
+  },
+  "dependencies": {
+    "@bpmn-io/properties-panel": "^0.19.0",
+    "bpmn-js": "^9.4.0",
+    "bpmn-js-properties-panel": "^1.5.0",
+    "diagram-js": "^8.5.0",
+    "inherits": "^2.0.4",
+    "inherits-browser": "^0.0.1",
+    "min-dash": "^3.8.1",
+    "min-dom": "^3.2.1",
+    "moddle": "^5.0.3",
+    "tiny-svg": "^2.2.3"
+  }
+}

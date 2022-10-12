@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_19o7vxg" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+  <bpmn:process id="ProcessTest" isExecutable="true">
+    <bpmn:ioSpecification>
+      <bpmn:dataInput id="num_dogs" name="Number of Dogs" />
+      <bpmn:dataOutput id="happy_index" name="Happiness Index" />
+    </bpmn:ioSpecification>
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1mezzcx</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_14wzv4j">
+      <bpmn:incoming>Flow_0q4oys2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_01jg677" sourceRef="Activity_15zz6ya" targetRef="my_script_task" />
+    <bpmn:sequenceFlow id="Flow_1mezzcx" sourceRef="StartEvent_1" targetRef="Activity_15zz6ya" />
+    <bpmn:manualTask id="Activity_15zz6ya" name="eat hot dog">
+      <bpmn:incoming>Flow_1mezzcx</bpmn:incoming>
+      <bpmn:outgoing>Flow_01jg677</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1uj5jzs">
+        <bpmn:targetRef>my_data_ref_1</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+      <bpmn:standardLoopCharacteristics />
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="Flow_0q4oys2" sourceRef="my_script_task" targetRef="Event_14wzv4j" />
+    <bpmn:scriptTask id="my_script_task" name="calculate contentment">
+      <bpmn:incoming>Flow_01jg677</bpmn:incoming>
+      <bpmn:outgoing>Flow_0q4oys2</bpmn:outgoing>
+      <bpmn:property id="Property_1w1963p" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_0thubmi">
+        <bpmn:sourceRef>my_data_ref_2</bpmn:sourceRef>
+        <bpmn:targetRef>Property_1w1963p</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+    </bpmn:scriptTask>
+    <bpmn:dataObject id="my_data_object" />
+    <bpmn:dataObject id="my_other_data_object" />
+    <bpmn:dataObject id="my_third_data_object" />
+    <bpmn:dataObjectReference id="my_data_ref_1" name="my_data_object" dataObjectRef="my_data_object" />
+    <bpmn:dataObjectReference id="my_data_ref_2" name="my_data_object" dataObjectRef="my_data_object" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ProcessTest">
+      <bpmndi:BPMNEdge id="Flow_0q4oys2_di" bpmnElement="Flow_0q4oys2">
+        <di:waypoint x="540" y="197" />
+        <di:waypoint x="602" y="197" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1mezzcx_di" bpmnElement="Flow_1mezzcx">
+        <di:waypoint x="215" y="197" />
+        <di:waypoint x="280" y="197" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_01jg677_di" bpmnElement="Flow_01jg677">
+        <di:waypoint x="380" y="197" />
+        <di:waypoint x="440" y="197" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="179" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_14wzv4j_di" bpmnElement="Event_14wzv4j">
+        <dc:Bounds x="602" y="179" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0t7iwfm_di" bpmnElement="Activity_15zz6ya">
+        <dc:Bounds x="280" y="157" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0h86vbv_di" bpmnElement="my_script_task">
+        <dc:Bounds x="440" y="157" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_1cezipn_di" bpmnElement="my_data_ref_1">
+        <dc:Bounds x="312" y="275" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="314" y="332" width="33" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_08bm72g_di" bpmnElement="my_data_ref_2">
+        <dc:Bounds x="462" y="275" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="464" y="332" width="33" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="dataInput_1" bpmnElement="num_dogs">
+        <dc:Bounds x="179" y="85" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="158" y="135" width="81" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="dataInput_2" bpmnElement="happy_index">
+        <dc:Bounds x="602" y="85" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="580" y="142" width="83" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1uj5jzs_di" bpmnElement="DataOutputAssociation_1uj5jzs">
+        <di:waypoint x="329" y="237" />
+        <di:waypoint x="328" y="275" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_0thubmi_di" bpmnElement="DataInputAssociation_0thubmi">
+        <di:waypoint x="483" y="275" />
+        <di:waypoint x="489" y="237" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
