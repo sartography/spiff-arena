@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_19o7vxg" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+  <bpmn:process id="ProcessTest" name="Process Test" isExecutable="true">
+    <bpmn:ioSpecification>
+      <bpmn:dataInput id="num_dogs" name="Number of Dogs" />
+      <bpmn:dataOutput id="happy_index" name="Happiness Index" />
+    </bpmn:ioSpecification>
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1mezzcx</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="Event_14wzv4j">
+      <bpmn:incoming>Flow_1lu1qyz</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_01jg677" sourceRef="Activity_15zz6ya" targetRef="my_script_task" />
+    <bpmn:sequenceFlow id="Flow_1mezzcx" sourceRef="StartEvent_1" targetRef="Activity_15zz6ya" />
+    <bpmn:manualTask id="Activity_15zz6ya" name="eat hot dog">
+      <bpmn:incoming>Flow_1mezzcx</bpmn:incoming>
+      <bpmn:outgoing>Flow_01jg677</bpmn:outgoing>
+      <bpmn:dataOutputAssociation id="DataOutputAssociation_1uj5jzs">
+        <bpmn:targetRef>my_data_ref_1</bpmn:targetRef>
+      </bpmn:dataOutputAssociation>
+      <bpmn:standardLoopCharacteristics />
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="Flow_0q4oys2" sourceRef="my_script_task" targetRef="task_confirm" />
+    <bpmn:scriptTask id="my_script_task" name="calculate contentment">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="Input_34evvjn_23" />
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_01jg677</bpmn:incoming>
+      <bpmn:outgoing>Flow_0q4oys2</bpmn:outgoing>
+      <bpmn:property id="Property_0lgu12u" name="__targetRef_placeholder" />
+      <bpmn:dataInputAssociation id="DataInputAssociation_0ve9sql">
+        <bpmn:sourceRef>my_data_ref_2</bpmn:sourceRef>
+        <bpmn:targetRef>Property_0lgu12u</bpmn:targetRef>
+      </bpmn:dataInputAssociation>
+      <bpmn:script>elizabeth="awesome"</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:dataObject id="my_other_data_object" />
+    <bpmn:dataObject id="my_third_data_object" />
+    <bpmn:dataObjectReference id="my_data_ref_1" name="my_data_object" dataObjectRef="my_data_object" />
+    <bpmn:sequenceFlow id="Flow_132laxn" sourceRef="task_confirm" targetRef="business_rule_task" />
+    <bpmn:userTask id="task_confirm" name="confirm contentment">
+      <bpmn:extensionElements>
+        <spiffworkflow:preScript>x=1</spiffworkflow:preScript>
+        <spiffworkflow:postScript>y=2</spiffworkflow:postScript>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="give_me_a_number_form.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="number_form_schema.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0q4oys2</bpmn:incoming>
+      <bpmn:outgoing>Flow_132laxn</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:dataObjectReference id="my_data_ref_2" name="my_data_object" dataObjectRef="my_data_object">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property />
+          <camunda:property />
+        </camunda:properties>
+      </bpmn:extensionElements>
+    </bpmn:dataObjectReference>
+    <bpmn:dataObject id="my_data_object" />
+    <bpmn:sequenceFlow id="Flow_1lu1qyz" sourceRef="business_rule_task" targetRef="Event_14wzv4j" />
+    <bpmn:businessRuleTask id="business_rule_task">
+      <bpmn:extensionElements>
+        <spiffworkflow:calledDecisionId>test_decision</spiffworkflow:calledDecisionId>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_132laxn</bpmn:incoming>
+      <bpmn:outgoing>Flow_1lu1qyz</bpmn:outgoing>
+    </bpmn:businessRuleTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ProcessTest">
+      <bpmndi:BPMNEdge id="Flow_132laxn_di" bpmnElement="Flow_132laxn">
+        <di:waypoint x="690" y="187" />
+        <di:waypoint x="730" y="187" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q4oys2_di" bpmnElement="Flow_0q4oys2">
+        <di:waypoint x="540" y="187" />
+        <di:waypoint x="590" y="187" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1mezzcx_di" bpmnElement="Flow_1mezzcx">
+        <di:waypoint x="215" y="187" />
+        <di:waypoint x="280" y="187" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_01jg677_di" bpmnElement="Flow_01jg677">
+        <di:waypoint x="380" y="187" />
+        <di:waypoint x="440" y="187" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1lu1qyz_di" bpmnElement="Flow_1lu1qyz">
+        <di:waypoint x="830" y="187" />
+        <di:waypoint x="892" y="187" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="169" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0t7iwfm_di" bpmnElement="Activity_15zz6ya">
+        <dc:Bounds x="280" y="147" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0h86vbv_di" bpmnElement="my_script_task">
+        <dc:Bounds x="440" y="147" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_1cezipn_di" bpmnElement="my_data_ref_1">
+        <dc:Bounds x="312" y="265" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="292" y="322" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gk19al_di" bpmnElement="task_confirm">
+        <dc:Bounds x="590" y="147" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="DataObjectReference_08bm72g_di" bpmnElement="my_data_ref_2">
+        <dc:Bounds x="472" y="265" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="451" y="322" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="dataInput_1" bpmnElement="num_dogs">
+        <dc:Bounds x="172" y="85" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="151" y="135" width="81" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="dataInput_2" bpmnElement="happy_index">
+        <dc:Bounds x="772" y="65" width="36" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="748" y="122" width="83" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_14wzv4j_di" bpmnElement="Event_14wzv4j">
+        <dc:Bounds x="892" y="169" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0fqcbcx_di" bpmnElement="business_rule_task">
+        <dc:Bounds x="730" y="147" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="DataOutputAssociation_1uj5jzs_di" bpmnElement="DataOutputAssociation_1uj5jzs">
+        <di:waypoint x="329" y="227" />
+        <di:waypoint x="328" y="265" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="DataInputAssociation_0ve9sql_di" bpmnElement="DataInputAssociation_0ve9sql">
+        <di:waypoint x="490" y="265" />
+        <di:waypoint x="490" y="227" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
