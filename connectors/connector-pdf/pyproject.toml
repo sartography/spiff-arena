@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "connector-pdf"
+version = "0.1.0"
+description = ""
+authors = ["Jon Herron <jon.herron@yahoo.com>"]
+readme = "README.md"
+packages = [{include = "connector_pdf"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+xhtml2pdf = "^0.2.8"
+
+connector-aws = {develop=true, path="../connector-aws"}
+Jinja2 = "^3.1.2"
+markdown2 = "^2.4.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
