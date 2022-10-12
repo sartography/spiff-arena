@@ -1,0 +1,12 @@
+version: "3.8"
+services:
+  spiffworkflow-frontend:
+    container_name: spiffworkflow-frontend
+    # command: tail -f /etc/hostname
+    build:
+      context: .
+    environment:
+      - APPLICATION_ROOT=/
+      - PORT0=7001
+    ports:
+      - "7001:7001"

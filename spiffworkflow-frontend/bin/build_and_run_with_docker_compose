@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
+#   script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+#   export BPMN_SPEC_ABSOLUTE_DIR="$script_dir/../../sample-process-models"
+# fi
+
+additional_args=""
+if [[ "${RUN_WITH_DAEMON:-}" != "false" ]]; then
+  additional_args="${additional_args} -d"
+fi
+
+docker compose build
+docker compose stop
+
+docker compose up $additional_args

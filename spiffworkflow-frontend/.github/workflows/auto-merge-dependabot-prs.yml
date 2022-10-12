@@ -1,0 +1,72 @@
+name: Dependabot auto-merge
+on:
+  workflow_run:
+    workflows: ["Tests"]
+    # completed does not mean success of Tests workflow. see below checking github.event.workflow_run.conclusion
+    types:
+      - completed
+
+# workflow_call is used to indicate that a workflow can be called by another workflow. When a workflow is triggered with the workflow_call event, the event payload in the called workflow is the same event payload from the calling workflow. For more information see, "Reusing workflows."
+
+# https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request
+# maybe hook into this instead of workflow_run:
+# on:
+#   pull_request:
+#   pull_request_target:
+#     types: [labeled]
+
+permissions:
+  contents: write
+
+jobs:
+  # print the context for debugging in case a job gets skipped
+  printJob:
+    name: Print event
+    runs-on: ubuntu-latest
+    steps:
+    - name: Dump GitHub context
+      env:
+        GITHUB_CONTEXT: ${{ toJson(github) }}
+      run: |
+        echo "$GITHUB_CONTEXT"
+
+  dependabot:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Development Code
+        uses: actions/checkout@v3
+
+      ###### GET PR NUMBER
+      # we saved the pr_number in tests.yml. fetch it so we can merge the correct PR.
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+      - name: 'Download artifact'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            let allArtifacts = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+            let matchArtifact = allArtifacts.data.artifacts.filter((artifact) => {
+              return artifact.name == "pr_number"
+            })[0];
+            let download = await github.rest.actions.downloadArtifact({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              artifact_id: matchArtifact.id,
+              archive_format: 'zip',
+            });
+            let fs = require('fs');
+            fs.writeFileSync(`${process.env.GITHUB_WORKSPACE}/pr_number.zip`, Buffer.from(download.data));
+      - name: 'Unzip artifact'
+        run: unzip pr_number.zip
+      ###########
+
+      - name: print pr number
+        run: cat pr_number
+      - name: actually merge it
+        run: gh pr merge --auto --merge "$(cat pr_number)"
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
