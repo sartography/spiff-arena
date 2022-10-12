@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+span.bjs-crumb {
+  color: #0000ff;
+}
+.bjs-breadcrumbs li:last-of-type span.bjs-crumb a {
+  color: black;
+}
+
+.app-logo {
+  height: 35%;
+  width: 35%;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+
+.active-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
+  fill: yellow !important;
+  opacity: .6;
+}
+
+.completed-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
+  fill: grey !important;
+  opacity: .4;
+}
+
+.diagram-editor-canvas {
+  border:1px solid #000000;
+  height:70vh;
+  width:90vw;
+  margin:auto;
+}
+
+.diagram-viewer-canvas {
+  border:1px solid #000000;
+  height:70vh;
+  width:90vw;
+  margin:auto;
+}
+
+.breadcrumb {
+  font-size: 1.5em;
+}
+
+.breadcrumb-item.active {
+  color: black;
+}
+
+.container .nav-tabs {
+  margin-top: 1em;
+}
