@@ -1,0 +1,99 @@
+[tool.poetry]
+name = "flask-bpmn"
+version = "0.0.0"
+description = "Flask Bpmn"
+authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.rst"
+homepage = "https://github.com/sartography/flask-bpmn"
+repository = "https://github.com/sartography/flask-bpmn"
+documentation = "https://flask-bpmn.readthedocs.io"
+classifiers = [
+    "Development Status :: 1 - Planning",
+]
+
+[tool.poetry.urls]
+Changelog = "https://github.com/sartography/flask-bpmn/releases"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+click = "^8.0.1"
+flask = "*"
+flask-admin = "*"
+flask-bcrypt = "*"
+flask-cors = "*"
+flask-mail = "*"
+flask-marshmallow = "*"
+flask-migrate = "*"
+flask-restful = "*"
+werkzeug = "*"
+# spiffworkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "feature/spiff_properties"}
+spiffworkflow = "*"
+sentry-sdk = "*"
+sphinx-autoapi = "^1.9.0"
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+coverage = {extras = ["toml"], version = "^6.4"}
+safety = "^2.1.1"
+mypy = "^0.971"
+typeguard = "^2.13.2"
+xdoctest = {extras = ["colors"], version = "^1.0.1"}
+sphinx = "^4.3.0"
+sphinx-autobuild = ">=2021.3.14"
+pre-commit = "^2.20.0"
+flake8 = "^4.0.1"
+black = ">=21.10b0"
+flake8-bandit = "^2.1.2"
+
+# 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
+bandit = "1.7.2"
+
+flake8-bugbear = "^22.7.1"
+flake8-docstrings = "^1.6.0"
+flake8-rst-docstrings = "^0.2.7"
+pep8-naming = "^0.13.1"
+darglint = "^1.8.1"
+reorder-python-imports = "^3.8.2"
+pre-commit-hooks = "^4.3.0"
+sphinx-click = "^4.3.0"
+Pygments = "^2.13.0"
+pyupgrade = "^2.37.3"
+furo = ">=2021.11.12"
+MonkeyType = "^22.2.0"
+
+[tool.poetry.scripts]
+flask-bpmn = "flask_bpmn.__main__:main"
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+tests = ["tests", "*/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["flask_bpmn", "tests"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 50
+
+[tool.mypy]
+strict = true
+disallow_any_generics = false
+warn_unreachable = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+
+# We get 'error: Module has no attribute "set_context"' for sentry-sdk without this option
+implicit_reexport = true
+
+# allow for subdirs to NOT require __init__.py
+namespace_packages = true
+explicit_package_bases = false
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

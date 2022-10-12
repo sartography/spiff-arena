@@ -1,0 +1,3 @@
+furo==2022.6.21
+sphinx==5.1.1
+sphinx-click==4.3.0
