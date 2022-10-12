@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+docker stop keycloak || echo 'no keycloak container found'
+docker rm keycloak 2>/dev/null || echo 'no keycloak container found'
+docker run -p 8080:8080 -d  --name keycloak -e KEYCLOAK_LOGLEVEL=ALL -e ROOT_LOGLEVEL=ALL -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:18.0.2 start-dev -Dkeycloak.profile.feature.token_exchange=enabled -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
+
+docker cp "${script_dir}/testing-realm.json" keycloak:/tmp
+
+sleep 10
+docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/testing-realm.json || echo ''
+
+docker stop keycloak
+docker start keycloak
+sleep 10
+
+HOSTNAME=localhost:8080
+REALM_NAME=testing
+USERS=(
+  ciadmin1
+  repeat_form_user_1
+)
+URIS_TO_TEST_AGAINST=(
+  /blog/post/1
+  /blog
+)
+
+FRONTEND_CLIENT_ID=testing-frontend
+BACKEND_CLIENT_ID=testing-backend
+BACKEND_CLIENT_SECRET="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
+
+BACKEND_BASIC_AUTH=$(echo -n "${BACKEND_CLIENT_ID}:${BACKEND_CLIENT_SECRET}" | base64)
+KEYCLOAK_URL=http://$HOSTNAME/realms/$REALM_NAME/protocol/openid-connect/token
+
+result_array=()
+for user in "${USERS[@]}" ; do
+  result=$(curl -s -X POST "$KEYCLOAK_URL" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "username=$user" \
+    -d "password=$user" \
+    -d 'grant_type=password' \
+    -d "client_id=$FRONTEND_CLIENT_ID" \
+  )
+  frontend_token=$(jq -r '.access_token' <<< "$result")
+
+  result=$(curl -s -X POST "$KEYCLOAK_URL" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    --data-urlencode 'grant_type=urn:ietf:params:oauth:grant-type:token-exchange' \
+    -d "client_id=$BACKEND_CLIENT_ID" \
+    -d "subject_token=${frontend_token}" \
+    -H "Authorization: Basic $BACKEND_BASIC_AUTH" \
+    -d "audience=${BACKEND_CLIENT_ID}" \
+  )
+  backend_token=$(jq -r '.access_token' <<< "$result")
+
+  if [[ "$backend_token" != 'null' ]]; then
+    echo "Getting resource set"
+
+    for uri in "${URIS_TO_TEST_AGAINST[@]}" ; do
+      escaped_uri=$(sed 's|/|%2F|g' <<<"$uri")
+      resource_result=$(curl -s "http://${HOSTNAME}/realms/testing/authz/protection/resource_set?matchingUri=true&deep=true&max=-1&exactName=false&uri=${escaped_uri}" -H "Authorization: Bearer $backend_token")
+
+      resource_id_name_pairs=$(jq -r '.[] | "\(._id):\(.name)"' <<<"$resource_result" || echo '')
+      if [[ -z "$resource_id_name_pairs" || "$resource_id_name_pairs" == "null" ]]; then
+        >&2 echo "ERROR: Could not find the resource id from the result: ${resource_result}"
+        exit 1
+      fi
+
+      echo "Getting permissions"
+      for resource_id_name_pair in $resource_id_name_pairs ; do
+        resource_id=$(awk -F ':' '{print $1}' <<<"$resource_id_name_pair")
+        resource_name=$(awk -F ':' '{print $2}' <<<"$resource_id_name_pair")
+
+        echo "Checking $resource_name"
+        auth_result=$(curl -s -X POST "$KEYCLOAK_URL" \
+          -H "Content-Type: application/x-www-form-urlencoded" \
+          -H "Authorization: Basic $BACKEND_BASIC_AUTH" \
+          -d "audience=${BACKEND_CLIENT_ID}" \
+          --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:uma-ticket" \
+          -d "permission=${resource_id}" \
+          -d "subject_token=${backend_token}" \
+        )
+
+        error_message=$(jq -r '.error' <<<"$auth_result" || echo -n '')
+        if [[ -n "$error_message" && "$error_message" != "null" ]]; then
+          result_array+=("${user}, ${uri}, DENY")
+        fi
+        access_token=$(jq -r '.access_token' <<<"$auth_result" || echo -n '')
+        if [[ -n "$access_token"&& "$access_token" != "null" ]]; then
+          result_array+=("${user}, ${uri}, APPROVED")
+        fi
+      done
+    done
+
+  else
+    echo "Failed auth result: $result"
+  fi
+done
+
+echo -e "\n\nRESULTS:\n"
+for final_result in "${result_array[@]}" ; do
+  echo "$final_result"
+done

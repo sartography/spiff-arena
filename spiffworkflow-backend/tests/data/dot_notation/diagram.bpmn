@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:correlationProperty id="message_correlation_property" name="Message Correlation Property">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="message_send">
+      <bpmn:formalExpression>to</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="message_response">
+      <bpmn:formalExpression>from.name</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+  </bpmn:correlationProperty>
+  <bpmn:message id="message_send" name="Message Send">
+    <bpmn:extensionElements>
+      <spiffworkflow:messagePayload>{"to": "the_recipient1" }</spiffworkflow:messagePayload>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:message id="message_response" name="Message Response">
+    <bpmn:extensionElements>
+      <spiffworkflow:messagePayload>{"from": {"name": "the_sender"}}</spiffworkflow:messagePayload>
+    </bpmn:extensionElements>
+  </bpmn:message>
+  <bpmn:correlationProperty id="correlation_property_one" name="Correlation Property One">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="message_send">
+      <bpmn:formalExpression>new</bpmn:formalExpression>
+    </bpmn:correlationPropertyRetrievalExpression>
+  </bpmn:correlationProperty>
+  <bpmn:process id="test_dot_notation" name="Test Dot Notation" isExecutable="true">
+    <bpmn:startEvent id="start" name="Start">
+      <bpmn:outgoing>Flow_0dbnzbi</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0dbnzbi" sourceRef="start" targetRef="get_data" />
+    <bpmn:endEvent id="end" name="End">
+      <bpmn:incoming>Flow_0nt355i</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0nt355i" sourceRef="get_data" targetRef="end" />
+    <bpmn:userTask id="get_data" name="Get Data">
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="json_schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="ui_schema.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0dbnzbi</bpmn:incoming>
+      <bpmn:outgoing>Flow_0nt355i</bpmn:outgoing>
+    </bpmn:userTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="test_dotnotation">
+      <bpmndi:BPMNEdge id="Flow_0dbnzbi_di" bpmnElement="Flow_0dbnzbi">
+        <di:waypoint x="208" y="230" />
+        <di:waypoint x="260" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nt355i_di" bpmnElement="Flow_0nt355i">
+        <di:waypoint x="360" y="230" />
+        <di:waypoint x="412" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1uf4njx_di" bpmnElement="start">
+        <dc:Bounds x="172" y="212" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="178" y="255" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_00d0dwr_di" bpmnElement="end">
+        <dc:Bounds x="412" y="212" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="420" y="255" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1vgvg3h_di" bpmnElement="get_data">
+        <dc:Bounds x="260" y="190" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

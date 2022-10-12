@@ -1,0 +1,35 @@
+"""Get the bpmn process json for a given process instance id and store it in /tmp."""
+#!/usr/bin/env python
+import os
+import sys
+
+from spiffworkflow_backend import create_app
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+
+
+def main(process_instance_id: str):
+    """Main."""
+    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "development"
+    flask_env_key = "FLASK_SESSION_SECRET_KEY"
+    os.environ[flask_env_key] = "whatevs"
+    app = create_app()
+    with app.app_context():
+        process_instance = ProcessInstanceModel.query.filter_by(
+            id=process_instance_id
+        ).first()
+
+        if not process_instance:
+            raise Exception(
+                f"Could not find a process instance with id: {process_instance_id}"
+            )
+
+        with open(
+            f"/tmp/{process_instance_id}_bpmn_json.json", "w", encoding="utf-8"
+        ) as f:
+            f.write(process_instance.bpmn_json)
+
+
+if len(sys.argv) < 2:
+    raise Exception("Process instance id not supplied")
+
+main(sys.argv[1])

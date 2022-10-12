@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1gjhqt9" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.0.0">
+  <bpmn:process id="Process_1ds61df" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>SequenceFlow_0c7wlth</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_User_Select_Type" name="Set Type" camunda:formKey="Get A Random Fun Fact">
+      <bpmn:documentation># h1 Heading 8-)
+## h2 Heading
+### h3 Heading
+#### h4 Heading
+##### h5 Heading
+###### h6 Heading
+
+
+## Horizontal Rules
+
+___
+
+---
+
+***
+
+
+## Typographic replacements
+
+"double quotes" and 'single quotes'
+
+
+## Emphasis
+
+**This is bold text**
+
+__This is bold text__
+
+*This is italic text*
+
+_This is italic text_
+
+~~Strikethrough~~
+
+
+## Blockquotes
+
+
+&gt; Blockquotes can also be nested...
+&gt;&gt; ...by using additional greater-than signs right next to each other...
+&gt; &gt; &gt; ...or with spaces between arrows.
+
+
+## Lists
+
+Unordered
+
++ Create a list by starting a line with `+`, `-`, or `*`
++ Sub-lists are made by indenting 2 spaces:
+  - Marker character change forces new list start:
+    * Ac tristique libero volutpat at
+    + Facilisis in pretium nisl aliquet
+    - Nulla volutpat aliquam velit
++ Very easy!
+
+Ordered
+
+1. Lorem ipsum dolor sit amet
+2. Consectetur adipiscing elit
+3. Integer molestie lorem at massa
+
+
+1. You can use sequential numbers...
+1. ...or keep all the numbers as `1.`
+
+Start numbering with offset:
+
+57. foo
+1. bar
+
+## Tables
+
+| Option | Description |
+| ------ | ----------- |
+| data   | path to data files to supply the data that will be passed into templates. |
+| engine | engine to be used for processing templates. Handlebars is the default. |
+| ext    | extension to be used for dest files. |
+
+Right aligned columns
+
+| Option | Description |
+| ------:| -----------:|
+| data   | path to data files to supply the data that will be passed into templates. |
+| engine | engine to be used for processing templates. Handlebars is the default. |
+| ext    | extension to be used for dest files. |
+
+
+## Links
+
+[link text](http://dev.nodeca.com)
+
+[link with title](http://nodeca.github.io/pica/demo/ "title text!")
+
+Autoconverted link https://github.com/nodeca/pica (enable linkify to see)
+
+
+## Images
+
+![Minion](https://octodex.github.com/images/minion.png)
+![Stormtroopocat](https://octodex.github.com/images/stormtroopocat.jpg "The Stormtroopocat")</bpmn:documentation>
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="type" label="'Type'"  type="enum" defaultValue="&#39;cat&#39;">
+            <camunda:validation>
+              <camunda:constraint name="required" config="True" />
+            </camunda:validation>
+            <camunda:value id="norris" name="Chuck Norris" />
+            <camunda:value id="cat" name="Cat Fact" />
+            <camunda:value id="buzzword" name="Business Buzzword" />
+          </camunda:formField>
+        </camunda:formData>
+        <camunda:properties>
+          <camunda:property name="type" value="string" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0c7wlth</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0641sh6</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:scriptTask id="Task_Get_Fact_From_API" name="Display Fact">
+      <bpmn:documentation />
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="Fact.type" />
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_0641sh6</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0t29gjo</bpmn:outgoing>
+      <bpmn:script>FactService = fact_service()</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="EndEvent_0u1cgrf">
+      <bpmn:documentation># Great Job!
+You have completed the random fact generator.
+You chose to receive a random fact of the type: "{{type}}"
+
+Your random fact is:
+{{details}}</bpmn:documentation>
+      <bpmn:incoming>SequenceFlow_0t29gjo</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0c7wlth" sourceRef="StartEvent_1" targetRef="Task_User_Select_Type" />
+    <bpmn:sequenceFlow id="SequenceFlow_0641sh6" sourceRef="Task_User_Select_Type" targetRef="Task_Get_Fact_From_API" />
+    <bpmn:sequenceFlow id="SequenceFlow_0t29gjo" sourceRef="Task_Get_Fact_From_API" targetRef="EndEvent_0u1cgrf" />
+    <bpmn:textAnnotation id="TextAnnotation_09fq7kh">
+      <bpmn:text>User sets the Fact.type to cat, norris, or buzzword</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1cfasjp" sourceRef="Task_User_Select_Type" targetRef="TextAnnotation_09fq7kh" />
+    <bpmn:textAnnotation id="TextAnnotation_1234e5n">
+      <bpmn:text>Makes an API  call to get a fact of the required type.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1qirnyy" sourceRef="Task_Get_Fact_From_API" targetRef="TextAnnotation_1234e5n" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1ds61df">
+      <bpmndi:BPMNEdge id="SequenceFlow_0t29gjo_di" bpmnElement="SequenceFlow_0t29gjo">
+        <di:waypoint x="570" y="250" />
+        <di:waypoint x="692" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0641sh6_di" bpmnElement="SequenceFlow_0641sh6">
+        <di:waypoint x="370" y="250" />
+        <di:waypoint x="470" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0c7wlth_di" bpmnElement="SequenceFlow_0c7wlth">
+        <di:waypoint x="188" y="250" />
+        <di:waypoint x="270" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="152" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_186s7tw_di" bpmnElement="Task_User_Select_Type">
+        <dc:Bounds x="270" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_10keafb_di" bpmnElement="Task_Get_Fact_From_API">
+        <dc:Bounds x="470" y="210" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0u1cgrf_di" bpmnElement="EndEvent_0u1cgrf">
+        <dc:Bounds x="692" y="232" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_09fq7kh_di" bpmnElement="TextAnnotation_09fq7kh">
+        <dc:Bounds x="330" y="116" width="99.99202297383536" height="68.28334396936822" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1234e5n_di" bpmnElement="TextAnnotation_1234e5n">
+        <dc:Bounds x="570" y="120" width="100" height="68" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1cfasjp_di" bpmnElement="Association_1cfasjp">
+        <di:waypoint x="344" y="210" />
+        <di:waypoint x="359" y="184" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_1qirnyy_di" bpmnElement="Association_1qirnyy">
+        <di:waypoint x="561" y="210" />
+        <di:waypoint x="584" y="188" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
