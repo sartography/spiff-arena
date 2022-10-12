@@ -1,0 +1,16 @@
+# .readthedocs.yaml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+
+build:
+  image: latest
+
+# Optionally build your docs in additional formats such as PDF
+formats: []
+
+python:
+  pip_install: true
+  version: 3.7
+  extra_requirements:
+        - docs
