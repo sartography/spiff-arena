@@ -1255,7 +1255,9 @@ def prepare_form_data(
 
 def render_jinja_template(unprocessed_template: str, data: dict[str, Any]) -> str:
     """Render_jinja_template."""
-    jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
+    jinja_environment = jinja2.Environment(
+        autoescape=True, lstrip_blocks=True, trim_blocks=True
+    )
     template = jinja_environment.from_string(unprocessed_template)
     return template.render(**data)
 
