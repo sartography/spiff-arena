@@ -1,0 +1,100 @@
+# Why we are running with network_mode: host
+# Wow this has been awful. We run three things in docker: mysql, keycloak, and the backend server.
+# The backend-server needs to talk to the other two.
+#
+# In order to talk to keycloak, it needs to go through localhost so that it can communicate with
+# keycloak using the same url as the frontend so that tokens can be properly validated.
+# If the domains are different, keycloak invalidates the token. There may be a way to change
+# this but I didn't find it.
+#
+# In order for the backend server to talk to the mysql server, they need to be on the same network.
+# I tried splitting it out where the mysql runs on a custom network and the backend runs on both
+# the custom network AND with localhost. Nothing I tried worked and googling didn't help. They
+# only ever mentioned one thing or using host.docker.internal which would cause the domains to
+# be different.
+#
+# So instead we are running with both the mysql server and the backend server in host netowrk mode.
+# There may be a better way to do this but if it works, then it works.
+
+version: "3.8"
+services:
+  db:
+    container_name: db
+    image: mysql:8.0.29
+    platform: linux/amd64
+    cap_add:
+      - SYS_NICE
+    restart: "${SPIFFWORKFLOW_BACKEND_DATABASE_DOCKER_RESTART_POLICY:-no}"
+    environment:
+      - MYSQL_DATABASE=${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
+      - MYSQL_ROOT_PASSWORD=${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw}
+      - MYSQL_TCP_PORT=7003
+    network_mode: host
+    ports:
+      - "7003"
+    volumes:
+      - spiffworkflow_backend:/var/lib/mysql
+    healthcheck:
+      test: mysql --user=root --password=${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw} -e 'select 1' ${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  spiffworkflow-backend: &spiffworkflow-backend
+    container_name: spiffworkflow-backend
+    profiles:
+      - run
+    depends_on:
+      db:
+        condition: service_healthy
+    build:
+      context: .
+    environment:
+      - APPLICATION_ROOT=/
+      - SPIFFWORKFLOW_BACKEND_ENV=${SPIFFWORKFLOW_BACKEND_ENV:-development}
+      - FLASK_DEBUG=0
+      - FLASK_SESSION_SECRET_KEY=${FLASK_SESSION_SECRET_KEY:-super_secret_key}
+      - OPEN_ID_SERVER_URL=${OPEN_ID_SERVER_URL:-http://localhost:7002}
+      - SPIFFWORKFLOW_FRONTEND_URL=${SPIFFWORKFLOW_FRONTEND_URL:-http://localhost:7001}
+      - SPIFFWORKFLOW_BACKEND_URL=${SPIFFWORKFLOW_BACKEND_URL:-http://localhost:7000}
+      - SPIFFWORKFLOW_BACKEND_PORT=7000
+      - SPIFFWORKFLOW_BACKEND_UPGRADE_DB=true
+      - SPIFFWORKFLOW_BACKEND_DATABASE_URI=mysql+mysqlconnector://root:${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw}@localhost:7003/${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
+      - BPMN_SPEC_ABSOLUTE_DIR=/app/process_models
+      - SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-false}
+      - PROCESS_WAITING_MESSAGES=true
+    ports:
+      - "7000:7000"
+    network_mode: host
+    volumes:
+      - ${BPMN_SPEC_ABSOLUTE_DIR:-./../sample-process-models}:/app/process_models
+      - ./log:/app/log
+    healthcheck:
+      test: curl localhost:7000/v1.0/status --fail
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  spiffworkflow-backend-local-debug:
+    <<: *spiffworkflow-backend
+    container_name: spiffworkflow-backend-local-debug
+    profiles:
+      - debug
+    volumes:
+      - ${BPMN_SPEC_ABSOLUTE_DIR:-./../sample-process-models}:/app/process_models
+      - ./:/app
+    command: /app/bin/boot_in_docker_debug_mode
+
+    # the docs say we can disable healthchecks with disable: true
+    # but it returns a bad exit code so setup one that doesn't matter
+    # since there is nothing to healthcheck in this case
+    # https://docs.docker.com/compose/compose-file/compose-file-v3/#healthcheck
+    healthcheck:
+      test: cat /etc/hosts
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  spiffworkflow_backend:
+    driver: local

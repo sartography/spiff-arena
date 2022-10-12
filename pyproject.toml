@@ -1,0 +1,146 @@
+[tool.poetry]
+name = "spiffworkflow-backend"
+version = "0.0.0"
+description = "Spiffworkflow Backend"
+authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
+license = "MIT"
+readme = "README.rst"
+homepage = "https://github.com/sartography/spiffworkflow-backend"
+repository = "https://github.com/sartography/spiffworkflow-backend"
+documentation = "https://spiffworkflow-backend.readthedocs.io"
+classifiers = [
+    "Development Status :: 1 - Planning",
+]
+
+[tool.poetry.urls]
+Changelog = "https://github.com/sartography/spiffworkflow-backend/releases"
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.11"
+click = "^8.0.1"
+flask = "2.2.2"
+flask-admin = "*"
+flask-bcrypt = "*"
+flask-cors = "*"
+flask-mail = "*"
+flask-marshmallow = "*"
+flask-migrate = "*"
+flask-restful = "*"
+werkzeug = "*"
+# go back to main once https://github.com/sartography/SpiffWorkflow/pull/241 is merged
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
+# SpiffWorkflow = {develop = true, path = "/Users/kevin/projects/github/sartography/SpiffWorkflow"}
+# SpiffWorkflow = {develop = true, path = "/home/jason/projects/github/sartography/SpiffWorkflow"}
+sentry-sdk = "^1.9.10"
+sphinx-autoapi = "^1.8.4"
+# flask-bpmn = {develop = true, path = "/home/jason/projects/github/sartography/flask-bpmn"}
+# flask-bpmn = {develop = true, path = "/Users/kevin/projects/github/sartography/flask-bpmn"}
+flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
+mysql-connector-python = "^8.0.29"
+pytest-flask = "^1.2.0"
+pytest-flask-sqlalchemy = "^1.1.0"
+psycopg2 = "^2.9.3"
+typing-extensions = "^4.3.0"
+connexion = {extras = [ "swagger-ui",], version = "^2"}
+lxml = "^4.9.1"
+marshmallow-enum = "^1.5.1"
+marshmallow-sqlalchemy = "^0.28.0"
+PyJWT = "^2.4.0"
+gunicorn = "^20.1.0"
+types-pytz = "^2022.1.1"
+python-keycloak = "^2.5.0"
+APScheduler = "^3.9.1"
+types-requests = "^2.28.6"
+Jinja2 = "^3.1.2"
+RestrictedPython = "^5.2"
+Flask-SQLAlchemy = "^3"
+orjson = "^3.8.0"
+
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+coverage = {extras = ["toml"], version = "^6.1"}
+safety = "^2.3.1"
+mypy = ">=0.961"
+typeguard = "^2.13.2"
+xdoctest = {extras = ["colors"], version = "^1.0.1"}
+sphinx = "^5.0.2"
+sphinx-autobuild = ">=2021.3.14"
+pre-commit = "^2.20.0"
+flake8 = "^4.0.1"
+black = ">=21.10b0"
+flake8-bandit = "^2.1.2"
+
+# 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
+bandit = "1.7.2"
+
+flake8-bugbear = "^22.7.1"
+flake8-docstrings = "^1.6.0"
+flake8-rst-docstrings = "^0.2.7"
+# flask-sqlalchemy-stubs = "^0.2"
+pep8-naming = "^0.13.2"
+darglint = "^1.8.1"
+reorder-python-imports = "^3.8.1"
+pre-commit-hooks = "^4.0.1"
+sphinx-click = "^4.3.0"
+Pygments = "^2.10.0"
+pyupgrade = "^2.37.1"
+furo = ">=2021.11.12"
+MonkeyType = "^22.2.0"
+sqlalchemy-stubs = "^0.4"
+
+[tool.poetry.scripts]
+spiffworkflow-backend = "spiffworkflow_backend.__main__:main"
+
+[tool.pytest.ini_options]
+# ignore deprecation warnings from various packages that we don't control
+filterwarnings = [
+    # note the use of single quote below to denote "raw" strings in TOML
+    # kombu/utils/compat.py:82
+    'ignore:SelectableGroups dict interface is deprecated. Use select.',
+    # flask_marshmallow/__init__.py:34
+    # marshmallow_sqlalchemy/convert.py:17
+    'ignore:distutils Version classes are deprecated. Use packaging.version instead.',
+    # connexion/spec.py:50
+    'ignore:Passing a schema to Validator.iter_errors is deprecated and will be removed in a future release',
+    # connexion/decorators/validation.py:16
+    'ignore:Accessing jsonschema.draft4_format_checker is deprecated and will be removed in a future release.',
+    # connexion/apis/flask_api.py:236
+    "ignore:'_request_ctx_stack' is deprecated and will be removed in Flask 2.3",
+    "ignore:Setting 'json_encoder' on the app or a blueprint is deprecated and will be removed in Flask 2.3",
+    "ignore:'JSONEncoder' is deprecated and will be removed in Flask 2.3",
+    "ignore:'app.json_encoder' is deprecated and will be removed in Flask 2.3"
+]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+tests = ["tests", "*/tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["spiffworkflow_backend", "tests"]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 50
+
+[tool.mypy]
+strict = true
+disallow_any_generics = false
+warn_unreachable = true
+pretty = true
+show_column_numbers = true
+show_error_codes = true
+show_error_context = true
+plugins = "sqlmypy"
+
+# We get 'error: Module has no attribute "set_context"' for sentry-sdk without this option
+implicit_reexport = true
+
+# allow for subdirs to NOT require __init__.py
+namespace_packages = true
+explicit_package_bases = false
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

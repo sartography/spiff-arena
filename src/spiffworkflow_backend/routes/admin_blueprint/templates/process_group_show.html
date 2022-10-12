@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+{% block title %}Process Group: {{ process_group.id }}{% endblock %}
+{% block content %}
+<button
+  type="button"
+  onclick="window.location.href='{{ url_for( 'admin.process_groups_list') }}';"
+>
+  Back
+</button>
+<table>
+  <tbody>
+    {# here we iterate over every item in our list#}
+    {% for process_model in process_group.process_models %}
+    <tr>
+      <td>
+        <a
+          href="{{ url_for('admin.process_model_show', process_model_id=process_model.id) }}"
+          >{{ process_model.display_name }}</a
+        >
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# this tests we can get a token from a public client and exchange it with a confidential client
+# so we can see what resources that user has access to
+
+# originally from https://medium.com/keycloak/keycloak-jwt-token-using-curl-post-72c9e791ba8c
+# btw, meta config endpoint: http://localhost:7002/realms/spiffworkflow/.well-known/openid-configuration
+# token exchange described at https://github.com/keycloak/keycloak-documentation/blob/main/securing_apps/topics/token-exchange/token-exchange.adoc
+# some UMA stuff at https://github.com/keycloak/keycloak-documentation/blob/main/authorization_services/topics/service-authorization-obtaining-permission.adoc,
+# though resource_set docs are elsewhere.
+
+# ./bin/get_token # uses ciuser1 ciuser1
+# ./bin/get_token ciadmin1 ciadmin1
+# ./bin/get_token repeat_form_user_1 repeat_form_user_1 # actually has permissions to the resource in this script
+# ./bin/get_token ciadmin1 ciadmin1 '%2Fprocess-models'
+
+HOSTNAME=localhost:7002
+REALM_NAME=spiffworkflow
+USERNAME=${1-ciuser1}
+PASSWORD=${2-ciuser1}
+URI_TO_TEST_AGAINST=${3-'%2Fprocess-models%2Fcategory_number_one%2Fprocess-model-with-repeating-form'}
+
+FRONTEND_CLIENT_ID=spiffworkflow-frontend
+BACKEND_CLIENT_ID=spiffworkflow-backend
+BACKEND_CLIENT_SECRET="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
+SECURE=false
+
+BACKEND_BASIC_AUTH=$(echo -n "${BACKEND_CLIENT_ID}:${BACKEND_CLIENT_SECRET}" | base64)
+KEYCLOAK_URL=http://$HOSTNAME/realms/$REALM_NAME/protocol/openid-connect/token
+
+echo "Using Keycloak: $KEYCLOAK_URL"
+echo "realm: $REALM_NAME"
+echo "client-id: $FRONTEND_CLIENT_ID"
+echo "username: $USERNAME"
+echo "password: $PASSWORD"
+echo "secure: $SECURE"
+
+
+if [[ $SECURE = 'y' ]]; then
+	INSECURE=
+else
+	INSECURE=--insecure
+fi
+
+result=$(curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
+ -H "Content-Type: application/x-www-form-urlencoded" \
+ -d "username=$USERNAME" \
+ -d "password=$PASSWORD" \
+ -d 'grant_type=password' \
+ -d "client_id=$FRONTEND_CLIENT_ID" \
+)
+frontend_token=$(jq -r '.access_token' <<< "$result")
+
+result=$(curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
+ -H "Content-Type: application/x-www-form-urlencoded" \
+ --data-urlencode 'grant_type=urn:ietf:params:oauth:grant-type:token-exchange' \
+ -d "client_id=$BACKEND_CLIENT_ID" \
+ -d "subject_token=${frontend_token}" \
+ -H "Authorization: Basic $BACKEND_BASIC_AUTH" \
+ -d "audience=${BACKEND_CLIENT_ID}" \
+)
+backend_token=$(jq -r '.access_token' <<< "$result")
+
+if [[ "$backend_token" != 'null' ]]; then
+  echo "backend_token: $backend_token"
+
+  echo "Getting resource set"
+  # everything_resource_id='446bdcf4-a3bd-41c7-a0f8-67a225ba6b57'
+  resource_result=$(curl -s "http://${HOSTNAME}/realms/spiffworkflow/authz/protection/resource_set?matchingUri=true&deep=true&max=-1&exactName=false&uri=${URI_TO_TEST_AGAINST}" -H "Authorization: Bearer $backend_token")
+  # resource_result=$(curl -s "http://${HOSTNAME}/realms/spiffworkflow/authz/protection/resource_set?matchingUri=false&deep=true&max=-1&exactName=false&type=admin" -H "Authorization: Bearer $backend_token")
+
+  resource_id_name_pairs=$(jq -r '.[] | "\(._id):\(.name)"' <<<"$resource_result" || echo '')
+  if [[ -z "$resource_id_name_pairs" || "$resource_id_name_pairs" == "null" ]]; then
+    >&2 echo "ERROR: Could not find the resource id from the result: ${resource_result}"
+    exit 1
+  fi
+  echo $resource_id_name_pairs
+
+  echo "Getting permissions"
+  for resource_id_name_pair in $resource_id_name_pairs ; do
+    resource_id=$(awk -F ':' '{print $1}' <<<"$resource_id_name_pair")
+    resource_name=$(awk -F ':' '{print $2}' <<<"$resource_id_name_pair")
+
+    echo "Checking $resource_name"
+    curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
+      -H "Content-Type: application/x-www-form-urlencoded" \
+      -H "Authorization: Basic $BACKEND_BASIC_AUTH" \
+      -d "audience=${BACKEND_CLIENT_ID}" \
+      --data-urlencode "grant_type=urn:ietf:params:oauth:grant-type:uma-ticket" \
+      -d "permission=${resource_id}" \
+      -d "subject_token=${backend_token}" \
+      | jq .
+  done
+else
+  echo "Failed auth result: $result"
+fi
