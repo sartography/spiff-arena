@@ -17,6 +17,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import (
     PublicAuthenticationService,
 )
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
 """
@@ -249,6 +250,14 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
 
                 if user_model:
                     g.user = user_model.id
+
+                # this may eventually get too slow.
+                # when it does, be careful about backgrounding, because
+                # the user will immediately need permissions to use the site.
+                # we are also a little apprehensive about pre-creating users
+                # before the user signs in, because we won't know things like
+                # the external service user identifier.
+                AuthorizationService.import_permissions_from_yaml_file()
 
                 redirect_url = (
                     f"{state_redirect_url}?"
