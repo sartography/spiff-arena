@@ -62,3 +62,27 @@ span.bjs-crumb {
 .container .nav-tabs {
   margin-top: 1em;
 }
+
+
+/* Markdown Tables */
+.markdown table {
+  color: #333;
+  background: white;
+  border: 1px solid grey;
+  font-size: 12pt;
+  border-collapse: collapse;
+}
+.markdown table thead th,
+.markdown table tfoot th {
+  color: #777;
+  background: rgba(0,0,0,.1);
+}
+.markdown table th,
+.markdown table td {
+  padding: .5em;
+  border: 1px solid lightgrey;
+}
+/* Zebra Table Style */
+.markdown tbody tr:nth-of-type(odd) {
+  background: rgba(0,0,0,.05);
+}
