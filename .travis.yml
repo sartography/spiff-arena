@@ -1,0 +1,36 @@
+dist: focal
+language: python
+
+python:
+  - 3.7
+  - 3.8
+  - 3.9
+  - 3.10
+
+addons:
+  sonarcloud:
+    organization: sartography
+
+install:
+  - pip install -r requirements.txt
+  - pip install celery
+
+script:
+  - cd tests/SpiffWorkflow
+  - coverage run --source=SpiffWorkflow -m unittest discover -v . "*Test.py"
+  - coverage xml -i
+  - cd ../..
+
+after_success:
+  - sonar-scanner
+
+git:
+  depth: false
+
+jobs:
+  include:
+  - python: 3.7
+  - python: 3.8
+  - python: 3.9
+  - python: 3.10
+    env: RUN_QUALITY_GATES=true
