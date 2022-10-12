@@ -1,0 +1,19 @@
+{
+  "invoice.contributorName": {
+    "ui:autofocus": true,
+    "ui:emptyValue": ""
+  },
+  "invoice.contributorId": {
+    "ui:emptyValue": "Enter your Status Contributor ID"
+  },
+  "invoice.invoiceId": {
+    "ui:title": "Status Invoice ID",
+    "ui:description": "Enter the Status Invoice ID found in the upper left"
+  },
+  "invoice.invoiceAmount": {
+    "ui:help": "Amount in Euros"
+  },
+  "invoice.dueDate": {
+    "ui:widget": "date"
+  }
+}

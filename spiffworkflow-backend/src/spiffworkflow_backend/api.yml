@@ -1,0 +1,2049 @@
+openapi: "3.0.2"
+info:
+  version: 1.0.0
+  title: Workflow Microservice
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:5000/v1.0
+security:
+  - jwt: ["secret"]
+  - oAuth2AuthCode:
+      - read_email
+      - uid
+
+paths:
+  /login:
+    parameters:
+      - name: redirect_url
+        in: query
+        required: false
+        schema:
+          type: string
+    get:
+      security: []
+      summary: redirect to open id authentication server
+      operationId: spiffworkflow_backend.routes.user.login
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Redirects to authentication server
+  /login_return:
+    parameters:
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: state
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: session_state
+        in: query
+        required: false
+        schema:
+          type: string
+    get:
+      security: []
+      operationId: spiffworkflow_backend.routes.user.login_return
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Test Return Response
+  /logout:
+    parameters:
+      - name: id_token
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: redirect_url
+        in: query
+        required: false
+        schema:
+          type: string
+    get:
+      security: []
+      operationId: spiffworkflow_backend.routes.user.logout
+      summary: Logout authenticated user
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Logout Authenticated User
+  /logout_return:
+    get:
+      security: []
+      operationId: spiffworkflow_backend.routes.user.logout_return
+      summary: Logout authenticated user
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Logout Authenticated User
+
+  /login_api:
+    get:
+      security: []
+      operationId: spiffworkflow_backend.routes.user.login_api
+      summary: Authenticate user for API access
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Redirects to authentication server
+  /login_api_return:
+    parameters:
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: state
+        in: query
+        required: true
+        schema:
+          type: string
+      - name: session_state
+        in: query
+        required: false
+        schema:
+          type: string
+    get:
+      security: []
+      operationId: spiffworkflow_backend.routes.user.login_api_return
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Test Return Response
+
+  /status:
+    get:
+      security: []
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.status
+      summary: Returns 200 if the server is Responding
+      tags:
+        - Liveness
+        - Status
+      responses:
+        "200":
+          description: The server is running.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /process-groups:
+    parameters:
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The number of groups to show per page. Defaults to page 10.
+        schema:
+          type: integer
+    # process_groups_list
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_groups_list
+      summary: get list
+      tags:
+        - Process Groups
+      responses:
+        "200":
+          description: An array of process groups
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessModelCategory"
+    # process_group_add
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_add
+      summary: Add process group
+      tags:
+        - Process Groups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModelCategory"
+      responses:
+        "201":
+          description: Processs Group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModelCategory"
+
+  /process-groups/{process_group_id}:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group.
+        schema:
+          type: string
+    # process_group_show
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_show
+      summary: Returns a single process group
+      tags:
+        - Process Groups
+      responses:
+        "200":
+          description: Processs Group.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModelCategory"
+    delete:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_delete
+      summary: Deletes a single process group
+      tags:
+        - Process Groups
+      responses:
+        "200":
+          description: The process group was deleted.
+    put:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_update
+      summary: Updates a single process group
+      tags:
+        - Process Groups
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModelCategory"
+      responses:
+        "200":
+          description: Process group updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModelCategory"
+
+  /process-models:
+    parameters:
+      - name: process_group_identifier
+        in: query
+        required: false
+        description: The group containing the models we want to return
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The number of models to show per page. Defaults to page 10.
+        schema:
+          type: integer
+    # process_model_list
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_list
+      summary: Return a list of process models for a given process group
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: Successfully return the requested models
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProcessModel"
+    # process_model_add
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_add
+      summary: Creates a new process model with the given parameters.
+      tags:
+        - Process Models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModel"
+      responses:
+        "201":
+          description: Process model created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModel"
+
+  /process-models/{process_group_id}/{process_model_id}/files:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The group containing the models we want to return
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model to validate.
+        schema:
+          type: string
+    # add_file
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.add_file
+      summary: Add a new workflow spec file
+      tags:
+        - Process Model Files
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "201":
+          description: Metadata about the uploaded file, but not the file content.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+    # get:
+    #   operationId: spiffworkflow_backend.api.process_api_blueprint.get_files
+    #   summary: Provide a list of workflow spec files for the given workflow_spec_id. IMPORTANT, only includes metadata, not the file content.
+    #   tags:
+    #     - Process Model Files
+    #   responses:
+    #     '200':
+    #       description: An array of file descriptions (not the file content)
+    #       content:
+    #         application/json:
+    #          schema:
+    #            type: array
+    #            items:
+    #              $ref: "#/components/schemas/File"
+
+  /process-models/{process_group_id}/{process_model_id}:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+    # process_model_show
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_show
+      summary: Returns a single process model
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: Workflow spec.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModel"
+    # process_model_delete
+    delete:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_delete
+      summary: Removes an existing process model
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: The process model has been removed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+    # process model update
+    put:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_update
+      summary: Modifies an existing process mosel with the given parameters.
+      tags:
+        - Process Models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModel"
+      responses:
+        "200":
+          description: Process model updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModel"
+
+  /process-instances:
+    parameters:
+      - name: process_group_identifier
+        in: query
+        required: false
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_identifier
+        in: query
+        required: false
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: start_from
+        in: query
+        required: false
+        description: For filtering - beginning of start window - in seconds since epoch
+        schema:
+          type: integer
+      - name: start_till
+        in: query
+        required: false
+        description: For filtering - end of start window - in seconds since epoch
+        schema:
+          type: integer
+      - name: end_from
+        in: query
+        required: false
+        description: For filtering - beginning of end window - in seconds since epoch
+        schema:
+          type: integer
+      - name: end_till
+        in: query
+        required: false
+        description: For filtering - end of end window - in seconds since epoch
+        schema:
+          type: integer
+      - name: process_status
+        in: query
+        required: false
+        description: For filtering - not_started, user_input_required, waiting, complete, faulted, or suspended
+        schema:
+          type: string
+    # process_instance_list
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list
+      summary: Returns a list of process instances for a given process model
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Workflow.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+
+  /process-models/{process_group_id}/{process_model_id}/script-unit-tests:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.script_unit_test_create
+      summary: Create script unit test based on given criteria
+      tags:
+        - Script Unit Test
+      responses:
+        "200":
+          description: Script Unit Test Result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /process-models/{process_group_id}/{process_model_id}/script-unit-tests/run:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.script_unit_test_run
+      summary: Run a given script unit test.
+      tags:
+        - Script Unit Test
+      responses:
+        "200":
+          description: Script Unit Test Result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /process-models/{process_group_id}/{process_model_id}/process-instances:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+    # process_instance_create
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_create
+      summary: Creates an process instance from a process model and returns the instance
+      tags:
+        - Process Instances
+      responses:
+        "201":
+          description: Workflow generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_show
+      summary: Show information about a process instance
+      responses:
+        "200":
+          description: One Process Instance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+    # process_instance_delete
+    delete:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_delete
+      summary: Deletes a single process instance
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: The process instance was deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/run:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: do_engine_steps
+        in: query
+        required: false
+        description: Defaults to true, can be set to false if you are just looking at the workflow not completeing it.
+        schema:
+          type: boolean
+    # process_instance_run
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_run
+      summary: Run a process instance
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Returns details about the workflows state and current task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/terminate:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_terminate
+      summary: Terminate a process instance
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Empty ok true response on successful termination.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /process-models/{process_group_id}/{process_model_id}/process-instances/reports:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_list
+      summary: Returns all process instance reports for process model
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Workflow.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_create
+      summary: Returns all process instance reports for process model
+      tags:
+        - Process Instances
+      responses:
+        "201":
+          description: The process instance report was created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /process-models/{process_group_id}/{process_model_id}/process-instances/reports/{report_identifier}:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: report_identifier
+        in: path
+        required: true
+        description: The unique id of an existing report
+        schema:
+          type: string
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_show
+      summary: Returns a report of process instances for a given process model
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Workflow.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+    put:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_update
+      summary: Updates a process instance report
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: The process instance report was updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+    delete:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_delete
+      summary: Delete a process instance report
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: The process instance report was delete.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /process-models/{process_group_id}/{process_model_id}/files/{file_name}:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model to validate.
+        schema:
+          type: string
+      - name: file_name
+        in: path
+        required: true
+        description: The id of the spec file
+        schema:
+          type: string
+    # get_file
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.get_file
+      summary: Returns metadata about the file
+      tags:
+        - Process Model Files
+      responses:
+        "200":
+          description: Returns the file information requested.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+    # process_model_file_update
+    put:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_file_update
+      summary: save the contents to the given file
+      tags:
+        - Process Model Files
+      requestBody:
+        description: Log Pagination Request
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Metadata about the uploaded file, but not the file content.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+    delete:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_file_delete
+      summary: Removes an existing process model file
+      tags:
+        - Process Model Files
+      responses:
+        "200":
+          description: The process model has been removed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /tasks:
+    parameters:
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Tasks
+      #      security: []
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_my_tasks
+      summary: returns the list of ready or waiting tasks for a user
+      responses:
+        "200":
+          description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+  /process-instance/{process_instance_id}/tasks:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: all_tasks
+        in: query
+        required: false
+        description: If true, this wil return all tasks associated with the process instance and not just user tasks.
+        schema:
+          type: boolean
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_task_list
+      summary: returns the list of all user tasks associated with process instance
+      responses:
+        "200":
+          description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+  /service_tasks:
+    get:
+      tags:
+        - Service Tasks
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.service_tasks_show
+      summary: Gets all available service task connectors
+      responses:
+        "200":
+          description: All service task connectors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceTask"
+
+  /tasks/{process_instance_id}/{task_id}:
+    parameters:
+      - name: task_id
+        in: path
+        required: true
+        description: The unique id of an existing process group.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: terminate_loop
+        in: query
+        required: false
+        description: Terminate the loop on a looping task
+        schema:
+          type: boolean
+    get:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_show
+      summary: Gets one task that a user wants to complete
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+    put:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_submit
+      summary: Update the form data for a tasks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModelCategory"
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "202":
+          description: "ok: true"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /messages:
+    parameters:
+      - name: process_instance_id
+        in: query
+        required: false
+        description: the id of the process instance
+        schema:
+          type: integer
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The number of models to show per page. Defaults to page 10.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Messages
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.message_instance_list
+      summary: Get a list of message instances
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /messages/{message_identifier}:
+    parameters:
+      - name: message_identifier
+        in: path
+        required: true
+        description: The unique identifier of the message model.
+        schema:
+          type: string
+    post:
+      tags:
+        - Messages
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.message_start
+      summary: Instantiate and run a given process model with a message start event matching given identifier
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Workflow"
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/logs:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: the id of the process instance
+        schema:
+          type: integer
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The number of items to show per page. Defaults to page 10.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_log_list
+      summary: returns a list of logs associated with the process instance
+      responses:
+        "200":
+          description: list of logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessInstanceLog"
+
+  /secrets:
+    parameters:
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The number of items to show per page. Defaults to page 10.
+        schema:
+          type: integer
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.add_secret
+      summary: Create a secret for a key and value
+      tags:
+        - Secrets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Secret"
+      responses:
+        "201":
+          description: Secret created successfully
+          content:
+            application/json:
+              schema:
+                type: number
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_list
+      summary: Return list of all secrets
+      tags:
+        - Secrets
+      responses:
+        "200":
+          description: list of secrets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Secret"
+
+  /secrets/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        description: The key we are using
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.get_secret
+      summary: Return a secret value for a key
+      tags:
+        - Secrets
+      responses:
+        "200":
+          description: We return a secret
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Secret"
+    delete:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.delete_secret
+      summary: Delete an existing secret
+      tags:
+        - Secrets
+      responses:
+        "204":
+          description: The secret is deleted
+        "401":
+          description: Unauthorized to delete secret
+        "404":
+          description: Secret does not exist
+    put:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.update_secret
+      summary: Modify an existing secret
+      tags:
+        - Secrets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Secret"
+      responses:
+        "200":
+          description: Secret updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Secret"
+        "401":
+          description: Unauthorized to update secret
+        "404":
+          description: Secret does not exist
+
+  /secrets/allowed_process_paths:
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.add_allowed_process_path
+      summary: Create an allowed process to a secret
+      tags:
+        - Secrets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SecretAllowedProcessPath"
+      responses:
+        "201":
+          description: Allowed process created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecretAllowedProcessPath"
+  /secrets/allowed_process_paths/{allowed_process_path_id}:
+    parameters:
+      - name: allowed_process_path_id
+        in: path
+        required: true
+        description: The id of the allowed process path to delete
+        schema:
+          type: integer
+    delete:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.delete_allowed_process_path
+      summary: Delete an existing allowed process for a secret
+      tags:
+        - Secrets
+      responses:
+        "204":
+          description: The allowed process is deleted.
+
+components:
+  securitySchemes:
+    jwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-bearerInfoFunc: spiffworkflow_backend.routes.user.verify_token
+      x-scopeValidateFunc: spiffworkflow_backend.routes.user.validate_scope
+
+    oAuth2AuthCode:
+      type: oauth2
+      description: authenticate with openid server
+      flows:
+        authorizationCode:
+          authorizationUrl: /v1.0/login_api
+          tokenUrl: /v1.0/login_api_return
+          scopes:
+            read_email: read email
+      x-tokenInfoFunc: spiffworkflow_backend.routes.user.get_scope
+  #    oAuth2AuthCode:
+  #      type: oauth2
+  #      description: authenticate with openid server
+  #      flows:
+  #        implicit:
+  #          authorizationUrl: /v1.0/login_api
+  #          scopes:
+  #            uid: uid
+  #      x-tokenInfoUrl: localhost:7000/v1.0/login_api_return
+  #      x-tokenInfoFunc: spiffworkflow_backend.routes.user.get_scope
+
+  schemas:
+    OkTrue:
+      properties:
+        ok:
+          type: boolean
+          example: true
+    User:
+      properties:
+        uid:
+          type: string
+        email_address:
+          type: string
+        display_name:
+          type: string
+        affiliation:
+          type: string
+        eppn:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        title:
+          type: string
+    DataModel:
+      properties:
+        id:
+          type: string
+    ProcessModelDiffList:
+      properties:
+        workflow_spec_id:
+          type: string
+          example: top_level_workflow
+        created_at_in_seconds:
+          type: integer
+        location:
+          type: string
+          example: remote
+        new:
+          type: boolean
+          example: false
+    ProcessModelFilesList:
+      properties:
+        file_model_id:
+          type: integer
+          example: 171
+        workflow_spec_id:
+          type: string
+          example: top_level_workflow
+        filename:
+          type: string
+          example: data_security_plan.dmn
+        created_at_in_seconds:
+          type: integer
+        type:
+          type: string
+          example: dmn
+        primary:
+          type: boolean
+          example: false
+        content_type:
+          type: string
+          example: text/xml
+        primary_process_id:
+          type: string
+          example: null
+        md5_hash:
+          type: string
+          example: f12e2bbd-a20c-673b-ccb8-a8a1ea9c5b7b
+
+    ProcessModelFilesDiff:
+      properties:
+        filename:
+          type: string
+          example: data_security_plan.dmn
+        created_at_in_seconds:
+          type: integer
+        type:
+          type: string
+          example: dmn
+        primary:
+          type: boolean
+          example: false
+        content_type:
+          type: string
+          example: text/xml
+        primary_process_id:
+          type: string
+          example: null
+        md5_hash:
+          type: string
+          example: f12e2bbd-a20c-673b-ccb8-a8a1ea9c5b7b
+        location:
+          type: string
+          example: remote
+        new:
+          type: boolean
+          example: false
+    ProcessModelAll:
+      properties:
+        workflow_spec_id:
+          type: string
+          example: acaf1258-43b4-437e-8846-f612afa66811
+        created_at_in_seconds:
+          type: integer
+        md5_hash:
+          type: string
+          example: c30fd597f21715018eab12f97f9d4956
+    Study:
+      properties:
+        id:
+          type: integer
+          example: 1234
+        title:
+          type: string
+          example: The impact of fried pickles on beer consumption in bipedal software developers.
+        updated_at_in_seconds:
+          type: string
+          format: date_time
+          example: "2019-12-25T09:12:33.001Z"
+        user_uid:
+          type: string
+          example: dhf8r
+        status:
+          type: string
+          enum: ["in_progress", "hold", "open_for_enrollment", "abandoned"]
+          example: done
+        sponsor:
+          type: string
+          x-nullable: true
+          example: "Sartography Pharmaceuticals"
+        ind_number:
+          type: string
+          x-nullable: true
+          example: "27b-6-42"
+    StudyAssociate:
+      properties:
+        uid:
+          type: string
+          example: "dhf8r"
+        access:
+          type: boolean
+          example: False
+        role:
+          type: string
+          example: "TODO"
+    DocumentDirectory:
+      properties:
+        level:
+          type: string
+          x-nullable: true
+          example: "Ancillary Document"
+        description:
+          type: string
+          x-nullable: true
+          example: "Documents that are ancillary to the study"
+        file:
+          $ref: "#/components/schemas/File"
+          x-nullable: true
+        expanded:
+          type: boolean
+          example: False
+        filecount:
+          type: integer
+          example: 1
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/File"
+    DataStore:
+      properties:
+        id:
+          type: integer
+          example: 1234
+        key:
+          type: string
+          example: MyKey
+        workflow_id:
+          type: integer
+          x-nullable: true
+          example: 12
+        study_id:
+          type: integer
+          x-nullable: true
+          example: 42
+        user_id:
+          type: string
+          x-nullable: true
+          example: dhf8r
+        task_id:
+          type: string
+          x-nullable: true
+          example: MyTask
+        process_model_id:
+          type: string
+          x-nullable: true
+          example: My Spec Name
+        value:
+          type: string
+          x-nullable: true
+          example: Some Value
+
+    ProcessModel:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        display_name:
+          type: string
+        description:
+          type: string
+        primary_process_id:
+          type: string
+          nullable: true
+        category_id:
+          type: string
+          nullable: true
+        standalone:
+          type: boolean
+          example: false
+          default: false
+        workflow_spec_category:
+          $ref: "#/components/schemas/ProcessModelCategory"
+        is_status:
+          type: boolean
+          nullable: true
+    ProcessModelCategory:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        display_name:
+          type: string
+        display_order:
+          type: integer
+        workflows:
+          type: array
+          items:
+            $ref: "#/components/schemas/Workflow"
+    File:
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+          example: "random_fact.bpmn"
+        version:
+          type: integer
+        updated_at_in_seconds:
+          type: string
+          format: date_time
+          example: "2019-12-25T09:12:33.001Z"
+        type:
+          type: string
+        primary:
+          type: boolean
+        content_type:
+          type: string
+          example: "application/xml"
+        workflow_spec_id:
+          type: string
+          example: "random_fact"
+          x-nullable: true
+        file:
+          type: string
+    Workflow:
+      properties:
+        id:
+          readOnly: true
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum: ["new", "user_input_required", "waiting", "complete"]
+        navigation:
+          type: array
+          items:
+            $ref: "#/components/schemas/NavigationItem"
+        next_task:
+          $ref: "#/components/schemas/Task"
+        workflow_spec_id:
+          type: string
+        spec_version:
+          type: string
+        is_latest_spec:
+          type: boolean
+        num_tasks_total:
+          type: integer
+        num_tasks_complete:
+          type: integer
+        num_tasks_incomplete:
+          type: integer
+        study_id:
+          type: integer
+
+      example:
+        id: 291234
+        status: "user_input_required"
+        workflow_spec_id: "random_fact"
+        spec_version: "v1.1 [22,23]"
+        is_latest_spec: True
+        next_task:
+          id: study_identification
+          name: Study Identification
+          title: IRB Review
+          documentation: "# Heading 1\n\nMarkdown documentation text goes here"
+          type: form
+          state: ready
+    Task:
+      properties:
+        id:
+          readOnly: true
+          type: string
+        name:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        state:
+          type: string
+        form:
+          $ref: "#/components/schemas/Form"
+        documentation:
+          type: string
+        data:
+          type: object
+        multi_instance_type:
+          type: string
+          enum: ["none", "looping", "parallel", "sequential"]
+        multi_instance_count:
+          type: number
+        multi_instance_index:
+          type: number
+        process_name:
+          type: string
+        properties:
+          type: object
+      example:
+        id: study_identification
+        name: Study Identification
+        title: IRB Review
+        documentation: "# Heading 1\n\nMarkdown documentation text goes here"
+        type: form
+        state: ready
+        form:
+          "key": "irb_review_form"
+          "fields":
+            - "id": "irb_review_type"
+              "type": "enum"
+              "label": "Select IRB Review Type"
+              "options":
+                - id: "emergency_use"
+                  name: "Emergency Use"
+                - id: "humanitarian_device"
+                  name: "Humanitarian Device"
+                - id: "non_human"
+                  name: "Non-Human"
+                - id: "non_uva_agent"
+                  name: "Non-UVA Agent"
+                - id: "exempt"
+                  name: "Exempt"
+                - id: "non_engaged"
+                  name: "Non-Engaged"
+                - id: "expedited"
+                  name: "Expedited"
+                - id: "full_board"
+                  name: "Full Board"
+              "default_value": "Full Board"
+              "validation":
+                - name: "required"
+                  config: "true"
+              "properties":
+                - id: "description"
+                  value: "Description text goes here"
+                - id: "help"
+                  value: "# Heading 1\n\nMarkdown help text goes here"
+                - id: "required_expression"
+                  value: "model.my_boolean_field_id && model.my_enum_field_value !== 'something'"
+                - id: "hide_expression"
+                  value: "model.my_enum_field_value === 'something'"
+    PaginatedTaskLog:
+      properties:
+        code:
+          example: "email_sent"
+          type: string
+        level:
+          example: "warning"
+          type: string
+        user:
+          example: "email_sent"
+          type: string
+        page:
+          type: integer
+          example: 0
+        per_page:
+          type: integer
+          example: 10
+        sort_column:
+          type: string
+          example: "timestamp"
+        sort_reverse:
+          type: boolean
+          example: false
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskLog"
+        has_next:
+          type: boolean
+          example: true
+        has_prev:
+          type: boolean
+          example: false
+    TaskLog:
+      properties:
+        level:
+          type: string
+          example: "info"
+        code:
+          example: "email_sent"
+          type: string
+        message:
+          example: "Approval email set to Jake in Accounting"
+          type: string
+        workflow_id:
+          example: 42
+          type: integer
+        study_id:
+          example: 187
+          type: integer
+        user_uid:
+          example: "dhf8r"
+          type: string
+        timestamp:
+          type: string
+          format: date_time
+          example: "2021-01-07T11:36:40.001Z"
+    TaskEvent:
+      properties:
+        workflow:
+          $ref: "#/components/schemas/Workflow"
+        study:
+          $ref: "#/components/schemas/Study"
+        workflow_sec:
+          $ref: "#/components/schemas/ProcessModel"
+        spec_version:
+          type: string
+        action:
+          type: string
+        task_id:
+          type: string
+        task_type:
+          type: string
+        task_lane:
+          type: string
+        form_data:
+          type: object
+        mi_type:
+          type: string
+        mi_count:
+          type: integer
+        mi_index:
+          type: integer
+        process_name:
+          type: string
+        date:
+          type: string
+    Form:
+      properties:
+        key:
+          type: string
+        fields:
+          type: array
+          items:
+            $ref: "#/components/schemas/Field"
+      example:
+        "key": "irb_review_form"
+        "fields":
+          - "id": "irb_review_type"
+            "type": "enum"
+            "label": "Select IRB Review Type"
+            "options":
+              - id: "emergency_use"
+                name: "Emergency Use"
+              - id: "humanitarian_device"
+                name: "Humanitarian Device"
+              - id: "non_human"
+                name: "Non-Human"
+              - id: "non_uva_agent"
+                name: "Non-UVA Agent"
+              - id: "exempt"
+                name: "Exempt"
+              - id: "non_engaged"
+                name: "Non-Engaged"
+              - id: "expedited"
+                name: "Expedited"
+              - id: "full_board"
+                name: "Full Board"
+            "default_value": "Full Board"
+            "validation":
+              - name: "required"
+                config: "true"
+            "properties":
+              - id: "description"
+                value: "Description text goes here"
+              - id: "help"
+                value: "# Heading 1\n\nMarkdown help text goes here"
+              - id: "required_expression"
+                value: "model.my_boolean_field_id && model.my_enum_field_value !== 'something'"
+              - id: "hide_expression"
+                value: "model.my_enum_field_value === 'something'"
+    Field:
+      properties:
+        id:
+          type: string
+          readOnly: true
+        type:
+          type: string
+          enum: ["string", "long", "boolean", "date", "enum"]
+          readOnly: true
+        label:
+          type: string
+          readOnly: true
+        options:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnumFieldOption"
+          readOnly: true
+        default_value:
+          type: string
+          readOnly: true
+        validation:
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldValidation"
+          readOnly: true
+        "properties":
+          type: array
+          items:
+            $ref: "#/components/schemas/FieldProperty"
+          readOnly: true
+    EnumFieldOption:
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    FieldValidation:
+      properties:
+        name:
+          type: string
+        config:
+          type: string
+    FieldProperty:
+      properties:
+        id:
+          type: string
+        value:
+          type: string
+      example:
+        id: "required_expression"
+        value: "model.should_require"
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          format: string
+          example: "access_denied"
+        message:
+          type: string
+          example: "You do not have permission to view the requested study."
+    Script:
+      properties:
+        name:
+          type: string
+          format: string
+          example: "random_fact"
+        description:
+          type: string
+          example: "Returns a random fact about a topic.  Provide an argument of either 'cat', 'norris', or 'buzzword'"
+    LookupItem:
+      properties:
+        value:
+          type: string
+          format: string
+          example: "1000"
+        label:
+          type: string
+          example: "Chuck Norris"
+        data:
+          type: string
+    NavigationItem:
+      properties:
+        id:
+          type: number
+          format: integer
+          example: 5
+        task_id:
+          type: string
+          format: uuid
+          example: "1234123uuid1234"
+        name:
+          type: string
+          example: "Task_Has_bananas"
+        description:
+          type: string
+          example: "Has Bananas?"
+        backtracks:
+          type: boolean
+          example: false
+        level:
+          type: integer
+          example: 1
+        indent:
+          type: integer
+          example: 2
+        child_count:
+          type: integer
+          example: 4
+        state:
+          type: string
+          enum:
+            [
+              "FUTURE",
+              "WAITING",
+              "READY",
+              "CANCELLED",
+              "COMPLETED",
+              "LIKELY",
+              "MAYBE",
+            ]
+          readOnly: true
+        is_decision:
+          type: boolean
+          example: False
+          readOnly: true
+        task:
+          $ref: "#/components/schemas/Task"
+    Approval:
+      properties:
+        id:
+          type: number
+          format: integer
+          example: 5
+    ApprovalCounts:
+      properties:
+        PENDING:
+          type: number
+          format: integer
+          example: 5
+        APPROVED:
+          type: number
+          format: integer
+          example: 5
+        DECLINED:
+          type: number
+          format: integer
+          example: 5
+        CANCELED:
+          type: number
+          format: integer
+          example: 5
+        AWAITING:
+          type: number
+          format: integer
+          example: 5
+    ServiceTask:
+      properties:
+        items:
+          type: array
+          $ref: "#/components/schemas/ServiceTaskConnector"
+          readOnly: true
+    ServiceTaskConnector:
+      properties:
+        id:
+          type: string
+          example: xero/CreateInvoice
+        parameters:
+          type: array
+          $ref: "#/components/schemas/ServiceTaskOperatorParameter"
+          readOnly: true
+    ServiceTaskOperatorParameter:
+      properties:
+        id:
+          type: string
+          example: client_id
+        type:
+          type: string
+          example: str
+        required:
+          type: boolean
+          example: false
+    GitRepo:
+      properties:
+        #        remote:
+        #          type: string
+        #          example: sartography/crconnect-workflow-specs
+        directory:
+          type: string
+          example: /home/cr-connect/sync_files
+        branch:
+          type: string
+          example: dev
+        merge_branch:
+          type: string
+          example: staging
+        changes:
+          type: array
+          example: ["file_1.txt", "file_2.txt"]
+        untracked:
+          type: array
+          example: ["a_file.txt", "b_file.txt"]
+    Secret:
+      properties:
+        key:
+          description: The key of the secret we want to use
+          type: string
+          example: my_secret_key
+          nullable: false
+        value:
+          description: The value associated with the key
+          type: string
+          example: my_super_secret_value
+          nullable: false
+        creator_user_id:
+          description: The id of the logged in user that created this secret
+          type: number
+          example: 1
+          nullable: false
+        allowed_processes:
+          description: The processes allowed to access this secret
+          type: array
+          items:
+            $ref: "#/components/schemas/SecretAllowedProcessPath"
+          nullable: true
+    ProcessInstanceLog:
+      properties:
+        id:
+          description: The id of the log
+          type: number
+          example: 1
+          nullable: false
+        process_instance_id:
+          description: The id of the associated process instance
+          type: number
+          example: 2
+          nullable: false
+        bpmn_process_identifier:
+          description: The id of the bpmn process element
+          type: string
+          example: Process_SimpleProcess
+          nullable: false
+        task:
+          description: The task identifier
+          type: number
+          example: 1234567890
+          nullable: false
+        message:
+          description: The msg returned in the log
+          type: string
+          example: Some message returned in the log
+          nullable: true
+        timestamp:
+          description: The timestamp returned in the log
+          type: number
+          example: 123456789.12345
+    SecretAllowedProcessPath:
+      properties:
+        id:
+          description: The id of the allowed process path
+          type: number
+          example: 1
+          nullable: true
+        secret_id:
+          description: The id of the secret associated with this allowed process path
+          type: number
+          example: 2
+        allowed_relative_path:
+          description: The allowed process path
+          type: string
+          example: /group_one/group_two/model_a

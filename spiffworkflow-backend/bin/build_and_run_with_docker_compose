@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
+  script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+  export BPMN_SPEC_ABSOLUTE_DIR="$script_dir/../../sample-process-models"
+fi
+
+if [[ -z "${SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE:-}" ]]; then
+  export SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE=run
+fi
+
+additional_args=""
+if [[ "${RUN_WITH_DAEMON:-}" != "false" ]]; then
+  additional_args="${additional_args} -d"
+fi
+
+docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" build
+docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" stop
+
+if [[ "${SPIFFWORKFLOW_BACKEND_RECREATE_DATABASE:-}" == "true" ]]; then
+  docker stop db
+  docker rm db
+  docker volume rm spiffworkflow-backend_spiffworkflow_backend
+
+  # i observed a case locally where the db had a stale sqlalchemy revision which
+  # caused the backend to exit and when docker compose up was running with
+  # --wait, it just said waiting forever (like we have seen in CI). so removing
+  # the volume would work around that case, if the volumes are not cleaned up in
+  # CI. also removing the wait prevents it from hanging forever in the case where
+  # the backend crashes, so then we'll just wait for the timeout to happen in the
+  # bin/wait_for_server_to_be_up script.
+  docker volume rm spiffworkflow-backend_spiffworkflow_backend || echo 'docker volume not found'
+fi
+
+docker compose --profile "$SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE" up --wait $additional_args

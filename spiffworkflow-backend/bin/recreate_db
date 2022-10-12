@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+export FLASK_SESSION_SECRET_KEY="this_is_recreate_db_secret_key"
+
+tasks=""
+if [[ "${1:-}" == "clean" ]]; then
+  subcommand="${2:-}"
+  if [[ "$subcommand" == "rmall" ]]; then
+    tasks="$tasks init migrate"
+    rm -rf migrations/
+  elif [[ -n "$subcommand" ]]; then
+    >&2 echo "ERROR: you passed a subcommand that was not rmall, and that is not supported: $subcommand"
+    exit 1
+  fi
+
+  rm -f ./src/instance/*.sqlite3
+  mysql -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_development"
+  mysql -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_testing"
+
+  # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
+  # start postgres in background with one db
+  if [[ "${SPIFF_DATABASE_TYPE:-}" == "postgres" ]]; then
+    if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_testing -c "select 1"; then
+      docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_testing -d postgres
+      sleep 4 # classy
+    fi
+    if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_development -c "select 1"; then
+      # create other db. spiffworkflow_backend_testing came with the docker run.
+      docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_testing -c "create database spiffworkflow_backend_development;"
+    fi
+  fi
+fi
+tasks="$tasks upgrade"
+
+mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_development"
+mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_testing"
+
+for task in $tasks; do
+  SPIFFWORKFLOW_BACKEND_ENV=development FLASK_APP=src/spiffworkflow_backend poetry run flask db "$task"
+done
+
+SPIFFWORKFLOW_BACKEND_ENV=testing FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade

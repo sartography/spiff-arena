@@ -1,0 +1,18 @@
+{
+  "definitions": {
+    "Color": {
+      "title": "Color",
+      "type": "string",
+      "anyOf": ["options_from_task_data_var:awesome_color_options"]
+    }
+  },
+  "title": "Select Color",
+  "type": "object",
+  "required": ["selectedColor"],
+  "properties": {
+    "selectedColor": {
+      "$ref": "#/definitions/Color",
+      "title": "Select color"
+    }
+  }
+}

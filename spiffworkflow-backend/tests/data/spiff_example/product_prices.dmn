@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" xmlns:dmndi="https://www.omg.org/spec/DMN/20191111/DMNDI/" xmlns:dc="http://www.omg.org/spec/DMN/20180521/DC/" id="product_price" name="DRD" namespace="http://camunda.org/schema/1.0/dmn" exporter="Camunda Modeler" exporterVersion="4.11.1">
+  <decision id="product_prices" name="Product Prices">
+    <decisionTable id="DecisionTable_0irsx4u">
+      <input id="Input_1">
+        <inputExpression id="InputExpression_1" typeRef="string" expressionLanguage="python">
+          <text>product_name</text>
+        </inputExpression>
+      </input>
+      <output id="Output_1" label="product_price" typeRef="long" />
+      <rule id="DecisionRule_0yzfvwg">
+        <description>Product A</description>
+        <inputEntry id="UnaryTests_09p3f1m">
+          <text>"product_a"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_04z7pbc">
+          <text>15.00</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_06r9cs6">
+        <description>Product B</description>
+        <inputEntry id="UnaryTests_081dqoi">
+          <text>"product_b"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_09pcew9">
+          <text>15.00</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1p0fmx5">
+        <description>Product C: color</description>
+        <inputEntry id="UnaryTests_0iajjkd">
+          <text>"product_c"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0xey55a">
+          <text>25.00</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1yvfyok">
+        <description>Product D: color, size</description>
+        <inputEntry id="UnaryTests_012k20z">
+          <text>"product_d"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0l1h1st">
+          <text>20.00</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_034qyb9">
+        <description>Product E: color, size, style</description>
+        <inputEntry id="UnaryTests_1751ikg">
+          <text>"product_e"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1yaavlq">
+          <text>25.00</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_1m9eyai">
+        <description>Product F: color, size, style</description>
+        <inputEntry id="UnaryTests_0w5l948">
+          <text>"product_f"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_0lic6qk">
+          <text>30.00</text>
+        </outputEntry>
+      </rule>
+      <rule id="DecisionRule_08r1zzy">
+        <description>Product G: style</description>
+        <inputEntry id="UnaryTests_1wn1qis">
+          <text>"product_g"</text>
+        </inputEntry>
+        <outputEntry id="LiteralExpression_1vi74nu">
+          <text>25.00</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+  <dmndi:DMNDI>
+    <dmndi:DMNDiagram>
+      <dmndi:DMNShape dmnElementRef="product_prices">
+        <dc:Bounds height="80" width="180" x="160" y="100" />
+      </dmndi:DMNShape>
+    </dmndi:DMNDiagram>
+  </dmndi:DMNDI>
+</definitions>

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# run migrations
+export FLASK_APP=/app/src/spiffworkflow_backend
+
+if [[ "${DOWNGRADE_DB:-}" == "true" ]]; then
+  echo 'Downgrading database...'
+  poetry run flask db downgrade
+fi
+
+if [[ "${SPIFFWORKFLOW_BACKEND_UPGRADE_DB:-}" == "true" ]]; then
+  echo 'Upgrading database...'
+  poetry run flask db upgrade
+fi
+
+port="${SPIFFWORKFLOW_BACKEND_PORT:-}"
+if [[ -z "$port" ]]; then
+  port=7000
+fi
+
+additional_args=""
+
+if [[ "${APPLICATION_ROOT:-}" != "/" ]]; then
+  additional_args="${additional_args} -e SCRIPT_NAME=${APPLICATION_ROOT}"
+fi
+
+# HACK: if loading fixtures for acceptance tests when we do not need multiple workers
+# it causes issues with attempting to add duplicate data to the db
+workers=3
+if [[ "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" == "true" ]]; then
+  workers=1
+fi
+
+export IS_GUNICORN="true"
+export PROCESS_WAITING_MESSAGES="true"
+
+# THIS MUST BE THE LAST COMMAND!
+exec poetry run gunicorn ${additional_args} --bind "0.0.0.0:$port" --workers="$workers" --timeout 90 --capture-output --access-logfile '-' --log-level debug wsgi:app

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+if [[ -z "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]]; then
+  export SPIFFWORKFLOW_BACKEND_ENV=staging
+fi
+
+if [[ -z "${FLASK_SESSION_SECRET_KEY:-}" ]]; then
+  export FLASK_SESSION_SECRET_KEY=staging_super_secret_key_dont_tell_anyone
+fi
+
+if [[ -z "${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_PASSWORD:-}" ]]; then
+  export SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_PASSWORD=St4g3Th1515
+fi
+
+if [[ -z "${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-}" ]]; then
+  export SPIFFWORKFLOW_BACKEND_DATABASE_NAME=spiffworkflow_backend_staging
+fi
+
+if [[ -z "${SPIFFWORKFLOW_BACKEND_DATABASE_DOCKER_RESTART_POLICY:-}" ]]; then
+  export SPIFFWORKFLOW_BACKEND_DATABASE_DOCKER_RESTART_POLICY=always
+fi
+
+if [[ -z "${SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE:-}" ]]; then
+  export SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE=run
+fi
+
+if [[ -z "${SPIFFWORKFLOW_FRONTEND_URL:-}" ]]; then
+  export SPIFFWORKFLOW_FRONTEND_URL='http://167.172.242.138:7001'
+fi
+
+if [[ -z "${SPIFFWORKFLOW_BACKEND_URL:-}" ]]; then
+  export SPIFFWORKFLOW_BACKEND_URL='http://167.172.242.138:7000'
+fi
+
+if [[ -z "${OPEN_ID_SERVER_URL:-}" ]]; then
+  export OPEN_ID_SERVER_URL='http://167.172.242.138:7002'
+fi
+
+git pull
+./bin/build_and_run_with_docker_compose
+./bin/wait_for_server_to_be_up

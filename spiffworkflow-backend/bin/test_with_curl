@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+if [[ "${1:-}" == "c" ]]; then
+  curl --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{}'
+elif grep -qE '^[0-9]$' <<<"${1:-}" ; then
+  curl --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d "{ \"task_identifier\": \"${1}\"}"
+else
+  ./bin/recreate_db clean
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Product Name": "G", "Quantity": "2"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Sleeve Type": "Short"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Continue shopping?": "N"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Shipping Method": "Overnight"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Shipping Address": "Somewhere"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Place Order": "Y"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Card Number": "MY_CARD"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "2", "answer": {"Was the customer charged?": "Y"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Was the product available?": "Y"}}' | jq .
+  curl --silent --fail localhost:5000/run_process -H "Content-type: application/json" -X POST -d '{ "task_identifier": "1", "answer": {"Was the order shipped?": "Y"}}' | jq .
+fi

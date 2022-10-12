@@ -1,0 +1,430 @@
+{
+  "spec": {
+    "name": "sample",
+    "description": "sample",
+    "file": "sample.bpmn",
+    "task_specs": {
+      "Start": {
+        "id": "sample_1",
+        "name": "Start",
+        "description": "",
+        "manual": false,
+        "internal": false,
+        "position": { "x": 0, "y": 0 },
+        "lookahead": 2,
+        "inputs": [],
+        "outputs": ["StartEvent_1"],
+        "typename": "StartTask"
+      },
+      "sample.EndJoin": {
+        "id": "sample_2",
+        "name": "sample.EndJoin",
+        "description": "",
+        "manual": false,
+        "internal": false,
+        "position": { "x": 0, "y": 0 },
+        "lookahead": 2,
+        "inputs": ["Event_1qb1u6a"],
+        "outputs": ["End"],
+        "typename": "_EndJoin"
+      },
+      "End": {
+        "id": "sample_3",
+        "name": "End",
+        "description": "",
+        "manual": false,
+        "internal": false,
+        "position": { "x": 0, "y": 0 },
+        "lookahead": 2,
+        "inputs": ["sample.EndJoin"],
+        "outputs": [],
+        "typename": "Simple"
+      },
+      "StartEvent_1": {
+        "id": "sample_4",
+        "name": "StartEvent_1",
+        "description": null,
+        "manual": false,
+        "internal": false,
+        "position": { "x": 152.0, "y": 102.0 },
+        "lookahead": 2,
+        "inputs": ["Start"],
+        "outputs": ["Activity_0pxf6g1"],
+        "lane": null,
+        "documentation": null,
+        "loopTask": false,
+        "outgoing_sequence_flows": {
+          "Activity_0pxf6g1": {
+            "id": "Flow_10jwwqy",
+            "name": null,
+            "documentation": null,
+            "target_task_spec": "Activity_0pxf6g1",
+            "typename": "SequenceFlow"
+          }
+        },
+        "outgoing_sequence_flows_by_id": {
+          "Flow_10jwwqy": {
+            "id": "Flow_10jwwqy",
+            "name": null,
+            "documentation": null,
+            "target_task_spec": "Activity_0pxf6g1",
+            "typename": "SequenceFlow"
+          }
+        },
+        "event_definition": {
+          "internal": false,
+          "external": false,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "StartEvent",
+        "extensions": {}
+      },
+      "Activity_0pxf6g1": {
+        "id": "sample_5",
+        "name": "Activity_0pxf6g1",
+        "description": "My Script",
+        "manual": false,
+        "internal": false,
+        "position": { "x": 240.0, "y": 80.0 },
+        "lookahead": 2,
+        "inputs": ["StartEvent_1"],
+        "outputs": ["Activity_0a21ntf"],
+        "lane": null,
+        "documentation": null,
+        "loopTask": false,
+        "outgoing_sequence_flows": {
+          "Activity_0a21ntf": {
+            "id": "Flow_0htxke7",
+            "name": null,
+            "documentation": null,
+            "target_task_spec": "Activity_0a21ntf",
+            "typename": "SequenceFlow"
+          }
+        },
+        "outgoing_sequence_flows_by_id": {
+          "Flow_0htxke7": {
+            "id": "Flow_0htxke7",
+            "name": null,
+            "documentation": null,
+            "target_task_spec": "Activity_0a21ntf",
+            "typename": "SequenceFlow"
+          }
+        },
+        "script": "my_var = \"Hello World\"\nMike = \"Awesome\"\nperson = \"Kevin\"",
+        "typename": "ScriptTask",
+        "extensions": {}
+      },
+      "Activity_0a21ntf": {
+        "id": "sample_6",
+        "name": "Activity_0a21ntf",
+        "description": "is wonderful?",
+        "manual": false,
+        "internal": false,
+        "position": { "x": 0, "y": 0 },
+        "lookahead": 2,
+        "inputs": ["Activity_0pxf6g1"],
+        "outputs": ["Event_1qb1u6a"],
+        "lane": null,
+        "documentation": null,
+        "loopTask": false,
+        "outgoing_sequence_flows": {
+          "Event_1qb1u6a": {
+            "id": "Flow_1hd6o66",
+            "name": null,
+            "documentation": null,
+            "target_task_spec": "Event_1qb1u6a",
+            "typename": "SequenceFlow"
+          }
+        },
+        "outgoing_sequence_flows_by_id": {
+          "Flow_1hd6o66": {
+            "id": "Flow_1hd6o66",
+            "name": null,
+            "documentation": null,
+            "target_task_spec": "Event_1qb1u6a",
+            "typename": "SequenceFlow"
+          }
+        },
+        "decision_table": {
+          "id": "DecisionTable_02m334z",
+          "name": "",
+          "inputs": [
+            {
+              "id": "Input_1",
+              "label": "",
+              "name": "",
+              "expression": "person",
+              "typeRef": "string"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "Output_1",
+              "label": "",
+              "name": "wonderfulness",
+              "typeRef": "string"
+            }
+          ],
+          "rules": [
+            {
+              "id": "DecisionRule_1hnzjl8",
+              "description": "",
+              "input_entries": [
+                {
+                  "id": "UnaryTests_1pb0ou0",
+                  "input_id": "Input_1",
+                  "description": "",
+                  "lhs": ["\"Dan\""]
+                }
+              ],
+              "output_entries": [
+                {
+                  "id": "LiteralExpression_0rtsxgu",
+                  "output_id": "Output_1",
+                  "description": "",
+                  "text": "\"pretty wonderful\""
+                }
+              ]
+            },
+            {
+              "id": "DecisionRule_1cc73tk",
+              "description": "",
+              "input_entries": [
+                {
+                  "id": "UnaryTests_1fbj1wn",
+                  "input_id": "Input_1",
+                  "description": "",
+                  "lhs": ["\"Kevin\""]
+                }
+              ],
+              "output_entries": [
+                {
+                  "id": "LiteralExpression_1d9nsnp",
+                  "output_id": "Output_1",
+                  "description": "",
+                  "text": "\"Very wonderful\""
+                }
+              ]
+            },
+            {
+              "id": "DecisionRule_09y32t9",
+              "description": "",
+              "input_entries": [
+                {
+                  "id": "UnaryTests_05h3qcx",
+                  "input_id": "Input_1",
+                  "description": "",
+                  "lhs": ["\"Mike\""]
+                }
+              ],
+              "output_entries": [
+                {
+                  "id": "LiteralExpression_15b83d9",
+                  "output_id": "Output_1",
+                  "description": "",
+                  "text": "\"Powerful wonderful\""
+                }
+              ]
+            }
+          ]
+        },
+        "typename": "BusinessRuleTask",
+        "extensions": {}
+      },
+      "Event_1qb1u6a": {
+        "id": "sample_7",
+        "name": "Event_1qb1u6a",
+        "description": null,
+        "manual": false,
+        "internal": false,
+        "position": { "x": 802.0, "y": 92.0 },
+        "lookahead": 2,
+        "inputs": ["Activity_0a21ntf"],
+        "outputs": ["sample.EndJoin"],
+        "lane": null,
+        "documentation": null,
+        "loopTask": false,
+        "outgoing_sequence_flows": {
+          "sample.EndJoin": {
+            "id": "Event_1qb1u6a.ToEndJoin",
+            "name": null,
+            "documentation": null,
+            "target_task_spec": "sample.EndJoin",
+            "typename": "SequenceFlow"
+          }
+        },
+        "outgoing_sequence_flows_by_id": {
+          "Event_1qb1u6a.ToEndJoin": {
+            "id": "Event_1qb1u6a.ToEndJoin",
+            "name": null,
+            "documentation": null,
+            "target_task_spec": "sample.EndJoin",
+            "typename": "SequenceFlow"
+          }
+        },
+        "event_definition": {
+          "internal": false,
+          "external": false,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "EndEvent",
+        "extensions": {}
+      },
+      "Root": {
+        "id": "sample_8",
+        "name": "Root",
+        "description": "",
+        "manual": false,
+        "internal": false,
+        "position": { "x": 0, "y": 0 },
+        "lookahead": 2,
+        "inputs": [],
+        "outputs": [],
+        "typename": "Simple"
+      }
+    },
+    "typename": "BpmnProcessSpec"
+  },
+  "data": {
+    "validate_only": false,
+    "process_instance_id": 63,
+    "current_user": { "username": "test_user1", "id": "1" },
+    "my_var": "Hello World",
+    "Mike": "Awesome",
+    "person": "Kevin",
+    "wonderfulness": "Very wonderful"
+  },
+  "last_task": "11314c29-ab0c-447d-82c0-48d824b017ec",
+  "success": true,
+  "tasks": {
+    "4e227637-6ded-431a-ad6a-dd57d7b87b38": {
+      "id": "4e227637-6ded-431a-ad6a-dd57d7b87b38",
+      "parent": null,
+      "children": ["69a8b231-43fd-4faa-8343-de37d7985824"],
+      "last_state_change": 1654725001.792306,
+      "state": 32,
+      "task_spec": "Root",
+      "triggered": false,
+      "workflow_name": "sample",
+      "internal_data": {},
+      "data": {}
+    },
+    "69a8b231-43fd-4faa-8343-de37d7985824": {
+      "id": "69a8b231-43fd-4faa-8343-de37d7985824",
+      "parent": "4e227637-6ded-431a-ad6a-dd57d7b87b38",
+      "children": ["348a4290-c626-4a3d-9bf0-c25f09c5e448"],
+      "last_state_change": 1654725001.7997818,
+      "state": 32,
+      "task_spec": "Start",
+      "triggered": false,
+      "workflow_name": "sample",
+      "internal_data": {},
+      "data": { "current_user": { "username": "test_user1", "id": "1" } }
+    },
+    "348a4290-c626-4a3d-9bf0-c25f09c5e448": {
+      "id": "348a4290-c626-4a3d-9bf0-c25f09c5e448",
+      "parent": "69a8b231-43fd-4faa-8343-de37d7985824",
+      "children": ["dc89284f-e574-4e6b-9c74-e79db384beba"],
+      "last_state_change": 1654725001.8002229,
+      "state": 32,
+      "task_spec": "StartEvent_1",
+      "triggered": false,
+      "workflow_name": "sample",
+      "internal_data": { "event_fired": true },
+      "data": { "current_user": { "username": "test_user1", "id": "1" } }
+    },
+    "dc89284f-e574-4e6b-9c74-e79db384beba": {
+      "id": "dc89284f-e574-4e6b-9c74-e79db384beba",
+      "parent": "348a4290-c626-4a3d-9bf0-c25f09c5e448",
+      "children": ["f014d940-4023-4676-8a22-8ab82501cb6a"],
+      "last_state_change": 1654725001.800621,
+      "state": 32,
+      "task_spec": "Activity_0pxf6g1",
+      "triggered": false,
+      "workflow_name": "sample",
+      "internal_data": {},
+      "data": {
+        "current_user": { "username": "test_user1", "id": "1" },
+        "my_var": "Hello World",
+        "Mike": "Awesome",
+        "person": "Kevin"
+      }
+    },
+    "f014d940-4023-4676-8a22-8ab82501cb6a": {
+      "id": "f014d940-4023-4676-8a22-8ab82501cb6a",
+      "parent": "dc89284f-e574-4e6b-9c74-e79db384beba",
+      "children": ["5c7368cf-6b56-4d40-a0b2-e6ccd1115cb1"],
+      "last_state_change": 1654725001.801095,
+      "state": 32,
+      "task_spec": "Activity_0a21ntf",
+      "triggered": false,
+      "workflow_name": "sample",
+      "internal_data": {},
+      "data": {
+        "current_user": { "username": "test_user1", "id": "1" },
+        "my_var": "Hello World",
+        "Mike": "Awesome",
+        "person": "Kevin",
+        "wonderfulness": "Very wonderful"
+      }
+    },
+    "5c7368cf-6b56-4d40-a0b2-e6ccd1115cb1": {
+      "id": "5c7368cf-6b56-4d40-a0b2-e6ccd1115cb1",
+      "parent": "f014d940-4023-4676-8a22-8ab82501cb6a",
+      "children": ["6487a111-1427-4de4-aa0e-bdb3b1ccba01"],
+      "last_state_change": 1654725001.8016891,
+      "state": 32,
+      "task_spec": "Event_1qb1u6a",
+      "triggered": false,
+      "workflow_name": "sample",
+      "internal_data": {},
+      "data": {
+        "current_user": { "username": "test_user1", "id": "1" },
+        "my_var": "Hello World",
+        "Mike": "Awesome",
+        "person": "Kevin",
+        "wonderfulness": "Very wonderful"
+      }
+    },
+    "6487a111-1427-4de4-aa0e-bdb3b1ccba01": {
+      "id": "6487a111-1427-4de4-aa0e-bdb3b1ccba01",
+      "parent": "5c7368cf-6b56-4d40-a0b2-e6ccd1115cb1",
+      "children": ["11314c29-ab0c-447d-82c0-48d824b017ec"],
+      "last_state_change": 1654725001.8022258,
+      "state": 32,
+      "task_spec": "sample.EndJoin",
+      "triggered": false,
+      "workflow_name": "sample",
+      "internal_data": {},
+      "data": {
+        "current_user": { "username": "test_user1", "id": "1" },
+        "my_var": "Hello World",
+        "Mike": "Awesome",
+        "person": "Kevin",
+        "wonderfulness": "Very wonderful"
+      }
+    },
+    "11314c29-ab0c-447d-82c0-48d824b017ec": {
+      "id": "11314c29-ab0c-447d-82c0-48d824b017ec",
+      "parent": "6487a111-1427-4de4-aa0e-bdb3b1ccba01",
+      "children": [],
+      "last_state_change": 1654725001.802538,
+      "state": 32,
+      "task_spec": "End",
+      "triggered": false,
+      "workflow_name": "sample",
+      "internal_data": {},
+      "data": {
+        "current_user": { "username": "test_user1", "id": "1" },
+        "my_var": "Hello World",
+        "Mike": "Awesome",
+        "person": "Kevin",
+        "wonderfulness": "Very wonderful"
+      }
+    }
+  },
+  "root": "4e227637-6ded-431a-ad6a-dd57d7b87b38",
+  "subprocess_specs": {},
+  "subprocesses": {},
+  "serializer_version": "1.0-CRC"
+}

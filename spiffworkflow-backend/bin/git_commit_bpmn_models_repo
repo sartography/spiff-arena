@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# HELP: git adds and commits the entire BPMN models directory, including all process groups
+
+bpmn_models_absolute_dir="$1"
+git_commit_message="$2"
+git_commit_username="$3"
+git_commit_email="$4"
+
+if [[ -z "${2:-}" ]]; then
+  >&2 echo "usage: $(basename "$0") [bpmn_models_absolute_dir] [git_commit_message]"
+  exit 1
+fi
+
+cd "$bpmn_models_absolute_dir"
+git add .
+
+# https://unix.stackexchange.com/a/155077/456630
+if [ -z "$(git status --porcelain)" ]; then
+  echo "No changes to commit"
+else
+  if [[ -n "$git_commit_username" ]]; then
+    git config --local user.name "$git_commit_username"
+  fi
+  if [[ -n "$git_commit_email" ]]; then
+    git config --local user.email "$git_commit_email"
+  fi
+  git commit -m "$git_commit_message"
+fi

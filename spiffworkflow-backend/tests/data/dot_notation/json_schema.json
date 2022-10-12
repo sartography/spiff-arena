@@ -1,0 +1,36 @@
+{
+  "title": "Submit Invoice",
+  "description": "Information for submitting an invoice.",
+  "type": "object",
+  "required": [
+    "invoice.contributorName",
+    "invoice.contributorId",
+    "invoice.invoiceId",
+    "invoice.invoiceAmount",
+    "invoice.dueDate"
+  ],
+  "properties": {
+    "invoice.contributorName": {
+      "type": "string",
+      "title": "Contributor Name"
+    },
+    "invoice.contributorId": {
+      "type": "integer",
+      "title": "Contributor Id",
+      "minLength": 2
+    },
+    "invoice.invoiceId": {
+      "type": "integer",
+      "title": "Invoice Id",
+      "minLength": 4
+    },
+    "invoice.invoiceAmount": {
+      "type": "number",
+      "title": "Invoice Amount"
+    },
+    "invoice.dueDate": {
+      "type": "string",
+      "title": "Due Date"
+    }
+  }
+}

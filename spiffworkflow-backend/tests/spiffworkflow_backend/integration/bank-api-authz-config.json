@@ -1,0 +1,102 @@
+{
+  "allowRemoteResourceManagement": true,
+  "policyEnforcementMode": "ENFORCING",
+  "resources": [
+    {
+      "name": "Default Resource",
+      "type": "urn:bank-api:resources:default",
+      "ownerManagedAccess": false,
+      "attributes": {},
+      "_id": "0f0c6dcf-9b86-419d-8331-ce6dd1f779a1",
+      "uris": ["/*"]
+    },
+    {
+      "name": "View Account Resource",
+      "ownerManagedAccess": false,
+      "displayName": "View Account Resource",
+      "attributes": {},
+      "_id": "6934ad55-cd6a-46d9-8653-7b1966973917",
+      "uris": ["account/{id}"],
+      "scopes": [
+        {
+          "name": "account:view"
+        }
+      ]
+    }
+  ],
+  "policies": [
+    {
+      "id": "1cec062d-19dd-4896-9ced-07fe20d68b22",
+      "name": "Default Policy",
+      "description": "A policy that grants access only for users within this realm",
+      "type": "js",
+      "logic": "POSITIVE",
+      "decisionStrategy": "AFFIRMATIVE",
+      "config": {
+        "code": "// by default, grants any permission associated with this policy\n$evaluation.grant();\n"
+      }
+    },
+    {
+      "id": "2059c4a3-59d4-4a56-bf31-f861141f515c",
+      "name": "Only Bank Teller and Account Owner Policy",
+      "type": "role",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "roles": "[{\"id\":\"accounts_owner\",\"required\":false},{\"id\":\"bank_teller\",\"required\":false}]"
+      }
+    },
+    {
+      "id": "570a1e09-25ad-4da6-ab0a-0b77101176f2",
+      "name": "Only Account Owner Policy",
+      "type": "role",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "roles": "[{\"id\":\"accounts_owner\",\"required\":false}]"
+      }
+    },
+    {
+      "id": "13494e3d-5e85-43fe-80e9-ab7b6f1191d5",
+      "name": "Default Permission",
+      "description": "A permission that applies to the default resource type",
+      "type": "resource",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "defaultResourceType": "urn:bank-api:resources:default",
+        "applyPolicies": "[\"Default Policy\"]"
+      }
+    },
+    {
+      "id": "cf04026c-e44f-401f-92e5-5c330dff2831",
+      "name": "View Account Resource Permission",
+      "type": "resource",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "resources": "[\"View Account Resource\"]",
+        "applyPolicies": "[\"Only Bank Teller and Account Owner Policy\"]"
+      }
+    },
+    {
+      "id": "6ce39e54-ffe7-4f4e-b689-d190e63e3b2d",
+      "name": "View Account Scope Permission",
+      "description": "View Account Scope Permission",
+      "type": "scope",
+      "logic": "POSITIVE",
+      "decisionStrategy": "UNANIMOUS",
+      "config": {
+        "scopes": "[\"account:view\"]",
+        "applyPolicies": "[\"Only Account Owner Policy\"]"
+      }
+    }
+  ],
+  "scopes": [
+    {
+      "id": "326a57f4-c487-4466-8521-d3f0c25c399f",
+      "name": "account:view"
+    }
+  ],
+  "decisionStrategy": "UNANIMOUS"
+}
