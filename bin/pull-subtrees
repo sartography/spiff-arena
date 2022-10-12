@@ -1,0 +1,10 @@
+#!/bin/sh
+
+for subtree in "SpiffWorkflow" \
+  "spiffworkflow-backend" \
+  "spiffworkflow-frontend" \
+  "flask-bpmn" \
+  "bpmn-js-spiffworkflow"
+do
+  git subtree pull --prefix=$subtree git@github.com:sartography/$subtree.git main --squash
+done
