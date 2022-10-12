@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+if [[ -z "${FLASK_ENV:-}" ]]; then
+  export FLASK_ENV=staging
+fi
+
+if [[ -z "${FLASK_SESSION_SECRET_KEY:-}" ]]; then
+  export FLASK_SESSION_SECRET_KEY=staging_super_secret_key_dont_tell_anyone
+fi
+
+if [[ -z "${CONNECTOR_PROXY_STATUS_IM_DOCKER_COMPOSE_PROFILE:-}" ]]; then
+  export CONNECTOR_PROXY_STATUS_IMSPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE=run
+fi
+
+git pull
+./bin/build_and_run_with_docker_compose
+./bin/wait_for_server_to_be_up
