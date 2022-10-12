@@ -3,8 +3,10 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import Form from '@rjsf/core';
 import { Button, Stack } from 'react-bootstrap';
 
+import ReactMarkdown from 'react-markdown';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
+import remarkGfm from 'remark-gfm';
 
 export default function TaskShow() {
   const [task, setTask] = useState(null);
@@ -97,8 +99,6 @@ export default function TaskShow() {
     if (taskToUse.type === 'Manual Task') {
       taskData = {};
       jsonSchema = {
-        title: 'Instructions',
-        description: taskToUse.properties.instructionsForEndUser,
         type: 'object',
         required: [],
         properties: {
@@ -142,6 +142,18 @@ export default function TaskShow() {
     );
   };
 
+  const instructionsElement = (taskToUse: any) => {
+    let instructions = '';
+    if (taskToUse.type === 'Manual Task') {
+      instructions = taskToUse.properties.instructionsForEndUser;
+    }
+    return (
+      <div className="markdown">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{instructions}</ReactMarkdown>
+      </div>
+    );
+  };
+
   if (task) {
     const taskToUse = task as any;
     let statusString = '';
@@ -151,11 +163,12 @@ export default function TaskShow() {
 
     return (
       <main>
-        {buildTaskNavigation()}
+        <div>{buildTaskNavigation()}</div>
         <h3>
           Task: {taskToUse.title} ({taskToUse.process_model_display_name})
           {statusString}
         </h3>
+        {instructionsElement(taskToUse)}
         {formElement(taskToUse)}
       </main>
     );
