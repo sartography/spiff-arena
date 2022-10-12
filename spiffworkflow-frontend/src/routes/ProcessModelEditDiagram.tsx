@@ -235,7 +235,6 @@ export default function ProcessModelEditDiagram() {
   };
 
   const makeApiHandler = (event: any) => {
-    console.log("Service Tasks Returned.")
     return function fireEvent(results: any) {
       event.eventBus.fire('spiff.service_tasks.returned', {
         serviceTaskOperators: results,

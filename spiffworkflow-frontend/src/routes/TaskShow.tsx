@@ -4,9 +4,9 @@ import Form from '@rjsf/core';
 import { Button, Stack } from 'react-bootstrap';
 
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import remarkGfm from 'remark-gfm';
 
 export default function TaskShow() {
   const [task, setTask] = useState(null);
@@ -149,7 +149,9 @@ export default function TaskShow() {
     }
     return (
       <div className="markdown">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{instructions}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {instructions}
+        </ReactMarkdown>
       </div>
     );
   };
