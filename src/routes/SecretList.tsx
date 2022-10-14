@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Button, Table } from 'react-bootstrap';
+import { MdDelete } from 'react-icons/md';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
 import { getPageInfoFromSearchParams } from '../helpers';
@@ -23,17 +24,36 @@ export default function SecretList() {
     });
   }, [searchParams]);
 
+  const reloadSecrets = (_result: any) => {
+    window.location.reload();
+  };
+
+  const handleDeleteSecret = (key: any) => {
+    HttpService.makeCallToBackend({
+      path: `/secrets/${key}`,
+      successCallback: reloadSecrets,
+      httpMethod: 'DELETE',
+    });
+  };
+
   const buildTable = () => {
     const rows = secrets.map((row) => {
       return (
         <tr key={(row as any).key}>
           <td>
             <Link to={`/admin/secrets/${(row as any).key}`}>
+              {(row as any).id}
+            </Link>
+          </td>
+          <td>
+            <Link to={`/admin/secrets/${(row as any).key}`}>
               {(row as any).key}
             </Link>
           </td>
-          <td>{(row as any).value}</td>
           <td>{(row as any).username}</td>
+          <td>
+            <MdDelete onClick={() => handleDeleteSecret((row as any).key)} />
+          </td>
         </tr>
       );
     });
@@ -41,9 +61,10 @@ export default function SecretList() {
       <Table striped bordered>
         <thead>
           <tr>
+            <th>ID</th>
             <th>Secret Key</th>
-            <th>Secret Value</th>
             <th>Creator</th>
+            <th>Delete</th>
           </tr>
         </thead>
         <tbody>{rows}</tbody>
@@ -72,12 +93,11 @@ export default function SecretList() {
 
   if (pagination) {
     return (
-      <>
-        <Button href="/admin/secrets/new">Add a secret</Button>
-        <br />
-        <br />
+      <div>
+        <h2>Secrets</h2>
         {SecretsDisplayArea()}
-      </>
+        <Button href="/admin/secrets/new">Add a secret</Button>
+      </div>
     );
   }
   return null;

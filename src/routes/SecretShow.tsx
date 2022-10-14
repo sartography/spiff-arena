@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Stack, Table } from 'react-bootstrap';
+import { Stack, Table, Button } from 'react-bootstrap';
 import HttpService from '../services/HttpService';
 import { Secret } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -10,10 +10,7 @@ export default function SecretShow() {
   const params = useParams();
 
   const [secret, setSecret] = useState<Secret | null>(null);
-
-  const navigateToSecrets = (_result: any) => {
-    navigate(`/admin/secrets`);
-  };
+  const [secretValue, setSecretValue] = useState(secret?.value);
 
   useEffect(() => {
     HttpService.makeCallToBackend({
@@ -21,6 +18,37 @@ export default function SecretShow() {
       successCallback: setSecret,
     });
   }, [params]);
+
+  const handleSecretValueChange = (event: any) => {
+    if (secret) {
+      setSecretValue(event.target.value);
+    }
+  };
+
+  // const reloadSecret = (_result: any) => {
+  //   window.location.reload();
+  // };
+
+  const updateSecretValue = () => {
+    if (secret && secretValue) {
+      secret.value = secretValue;
+      HttpService.makeCallToBackend({
+        path: `/secrets/${secret.key}`,
+        successCallback: () => {
+          setSecret(secret);
+        },
+        httpMethod: 'PUT',
+        postBody: {
+          value: secretValue,
+          creator_user_id: secret.creator_user_id,
+        },
+      });
+    }
+  };
+
+  const navigateToSecrets = (_result: any) => {
+    navigate(`/admin/secrets`);
+  };
 
   const deleteSecret = () => {
     if (secret === null) {
@@ -34,17 +62,18 @@ export default function SecretShow() {
   };
 
   if (secret) {
-    const secretToUse = secret as any;
-
     return (
       <>
         <Stack direction="horizontal" gap={3}>
-          <h2>Secret Key: {secretToUse.key}</h2>
+          <h2>Secret Key: {secret.key}</h2>
           <ButtonWithConfirmation
             description="Delete Secret?"
             onConfirmation={deleteSecret}
             buttonLabel="Delete"
           />
+          <Button variant="warning" onClick={updateSecretValue}>
+            Update Value
+          </Button>
         </Stack>
         <div>
           <Table striped bordered>
@@ -57,7 +86,15 @@ export default function SecretShow() {
             <tbody>
               <tr>
                 <td>{params.key}</td>
-                <td>{secretToUse.value}</td>
+                <td>
+                  <input
+                    id="secret_value"
+                    name="secret_value"
+                    type="text"
+                    value={secretValue || secret.value}
+                    onChange={handleSecretValueChange}
+                  />
+                </td>
               </tr>
             </tbody>
           </Table>

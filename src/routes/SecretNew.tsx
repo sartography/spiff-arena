@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Stack } from 'react-bootstrap';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import HttpService from '../services/HttpService';
@@ -11,6 +12,18 @@ export default function SecretNew() {
 
   const navigateToSecret = (_result: any) => {
     navigate(`/admin/secrets/${key}`);
+  };
+
+  const navigateToSecrets = () => {
+    navigate(`/admin/secrets`);
+  };
+
+  const changeSpacesToDash = (someString: string) => {
+    // change spaces to `-`
+    let s1 = someString.replace(' ', '-');
+    // remove any trailing `-`
+    s1 = s1.replace(/-$/, '');
+    return s1;
   };
 
   const addSecret = (event: any) => {
@@ -26,16 +39,22 @@ export default function SecretNew() {
     });
   };
 
+  const warningStyle = {
+    color: 'red',
+  };
+
   return (
     <main style={{ padding: '1rem 0' }}>
       <h2>Add Secret</h2>
       <Form onSubmit={addSecret}>
         <Form.Group className="mb-3" controlId="formDisplayName">
-          <Form.Label>Key:</Form.Label>
+          <Form.Label>
+            Key: <span style={warningStyle}>No Spaces</span>
+          </Form.Label>
           <Form.Control
             type="text"
             value={key}
-            onChange={(e) => setKey(e.target.value)}
+            onChange={(e) => setKey(changeSpacesToDash(e.target.value))}
           />
         </Form.Group>
         <Form.Group className="mb-3" controlId="formIdentifier">
@@ -48,9 +67,14 @@ export default function SecretNew() {
             }}
           />
         </Form.Group>
-        <Button variant="primary" type="submit">
-          Submit
-        </Button>
+        <Stack direction="horizontal" gap={3}>
+          <Button variant="primary" type="submit">
+            Submit
+          </Button>
+          <Button variant="danger" type="button" onClick={navigateToSecrets}>
+            Cancel
+          </Button>
+        </Stack>
       </Form>
     </main>
   );
