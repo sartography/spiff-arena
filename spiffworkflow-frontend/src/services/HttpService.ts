@@ -67,11 +67,15 @@ backendCallProps) => {
   });
 
   let isSuccessful = true;
+  let is403 = false;
   fetch(`${BACKEND_BASE_URL}${path}`, httpArgs)
     .then((response) => {
       if (response.status === 401) {
         UserService.doLogin();
         throw new UnauthenticatedError('You must be authenticated to do this.');
+      } else if (response.status === 403) {
+        is403 = true;
+        isSuccessful = false;
       } else if (!response.ok) {
         isSuccessful = false;
       }
@@ -80,6 +84,10 @@ backendCallProps) => {
     .then((result: any) => {
       if (isSuccessful) {
         successCallback(result);
+      } else if (is403) {
+        // Hopefully we can make this service a hook and use the error message context directly
+        // eslint-disable-next-line no-alert
+        alert(result.message);
       } else {
         let message = 'A server error occurred.';
         if (result.message) {
@@ -89,6 +97,8 @@ backendCallProps) => {
           failureCallback(message);
         } else {
           console.error(message);
+          // eslint-disable-next-line no-alert
+          alert(message);
         }
       }
     })

@@ -1,7 +1,8 @@
 export interface Secret {
+  id: number;
   key: string;
   value: string;
-  username: string;
+  creator_user_id: string;
 }
 
 export interface RecentProcessModel {

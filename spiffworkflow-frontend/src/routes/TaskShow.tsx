@@ -17,7 +17,6 @@ export default function TaskShow() {
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
   useEffect(() => {
-    setErrorMessage('');
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
       successCallback: setTask,
