@@ -1195,41 +1195,6 @@ paths:
         "404":
           description: Secret does not exist
 
-  /secrets/allowed_process_paths:
-    post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.add_allowed_process_path
-      summary: Create an allowed process to a secret
-      tags:
-        - Secrets
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SecretAllowedProcessPath"
-      responses:
-        "201":
-          description: Allowed process created successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SecretAllowedProcessPath"
-  /secrets/allowed_process_paths/{allowed_process_path_id}:
-    parameters:
-      - name: allowed_process_path_id
-        in: path
-        required: true
-        description: The id of the allowed process path to delete
-        schema:
-          type: integer
-    delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.delete_allowed_process_path
-      summary: Delete an existing allowed process for a secret
-      tags:
-        - Secrets
-      responses:
-        "204":
-          description: The allowed process is deleted.
-
 components:
   securitySchemes:
     jwt:
@@ -1995,12 +1960,6 @@ components:
           type: number
           example: 1
           nullable: false
-        allowed_processes:
-          description: The processes allowed to access this secret
-          type: array
-          items:
-            $ref: "#/components/schemas/SecretAllowedProcessPath"
-          nullable: true
     ProcessInstanceLog:
       properties:
         id:
@@ -2032,18 +1991,3 @@ components:
           description: The timestamp returned in the log
           type: number
           example: 123456789.12345
-    SecretAllowedProcessPath:
-      properties:
-        id:
-          description: The id of the allowed process path
-          type: number
-          example: 1
-          nullable: true
-        secret_id:
-          description: The id of the secret associated with this allowed process path
-          type: number
-          example: 2
-        allowed_relative_path:
-          description: The allowed process path
-          type: string
-          example: /group_one/group_two/model_a
