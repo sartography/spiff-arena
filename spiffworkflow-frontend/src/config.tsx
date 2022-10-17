@@ -1,7 +1,11 @@
 const host = window.location.hostname;
-export const HOST_AND_PORT = `${host}:7000`;
-
-export const BACKEND_BASE_URL = `http://${HOST_AND_PORT}/v1.0`;
+let hostAndPort = `api.${host}`;
+let protocol = 'https';
+if (/^\d+\./.test(host) || host === 'localhost') {
+  hostAndPort = `${host}:7000`;
+  protocol = 'http';
+}
+export const BACKEND_BASE_URL = `${protocol}://${hostAndPort}/v1.0`;
 
 export const PROCESS_STATUSES = [
   'not_started',
