@@ -35,7 +35,7 @@ docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/quarkus-realm.js
 echo 'imported realms'
 
 if [ "${TURN_OFF_SSL:-}" == "true" ]; then
-  docker exec -it keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin
+  docker exec -it keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
   docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
   docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/spiffworkflow -s sslRequired=NONE
   echo 'turned off SSL requirement'
