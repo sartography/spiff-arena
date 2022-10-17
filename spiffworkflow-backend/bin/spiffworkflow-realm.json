@@ -1255,6 +1255,7 @@
       "redirectUris": [
         "http://localhost:7000/*",
         "http://67.205.133.116:7000/*",
+        "https://api.demo.spiffworkflow.org/*",
         "http://167.172.242.138:7000/*"
       ],
       "webOrigins": [],
@@ -1525,6 +1526,7 @@
       "redirectUris": [
         "http://localhost:7001/*",
         "http://67.205.133.116:7000/*",
+        "https://api.demo.spiffworkflow.org/*",
         "http://167.172.242.138:7001/*"
       ],
       "webOrigins": ["*"],
@@ -1594,6 +1596,7 @@
       "redirectUris": [
         "http://localhost:7001/*",
         "http://67.205.133.116:7000/*",
+        "https://api.demo.spiffworkflow.org/*",
         "http://167.172.242.138:7001/*"
       ],
       "webOrigins": [],
