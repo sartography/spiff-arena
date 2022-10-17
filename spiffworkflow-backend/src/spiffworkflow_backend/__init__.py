@@ -148,6 +148,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
         integrations=[
             FlaskIntegration(),
         ],
+        environment=app.config['ENV_IDENTIFIER'],
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for performance monitoring.
         # We recommend adjusting this value in production.
