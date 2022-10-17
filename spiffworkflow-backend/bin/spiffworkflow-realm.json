@@ -26,7 +26,7 @@
   "oauth2DeviceCodeLifespan": 600,
   "oauth2DevicePollingInterval": 5,
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "NONE",
   "registrationAllowed": false,
   "registrationEmailAsUsername": false,
   "rememberMe": false,
@@ -1254,6 +1254,7 @@
       "secret": "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
       "redirectUris": [
         "http://localhost:7000/*",
+        "http://67.205.133.116:7000/*",
         "http://167.172.242.138:7000/*"
       ],
       "webOrigins": [],
@@ -1523,6 +1524,7 @@
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
         "http://localhost:7001/*",
+        "http://67.205.133.116:7000/*",
         "http://167.172.242.138:7001/*"
       ],
       "webOrigins": ["*"],
@@ -1591,6 +1593,7 @@
       "secret": "6o8kIKQznQtejHOdRhWeKorBJclMGcgA",
       "redirectUris": [
         "http://localhost:7001/*",
+        "http://67.205.133.116:7000/*",
         "http://167.172.242.138:7001/*"
       ],
       "webOrigins": [],
