@@ -10,6 +10,11 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # run migrations
 export FLASK_APP=/app/src/spiffworkflow_backend
 
+if [[ "${WAIT_FOR_DB_TO_BE_READY:-}" == "true" ]]; then
+  echo 'Waiting for db to be ready...'
+  poetry run python ./bin/wait_for_db_to_be_ready.py
+fi
+
 if [[ "${DOWNGRADE_DB:-}" == "true" ]]; then
   echo 'Downgrading database...'
   poetry run flask db downgrade
