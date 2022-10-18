@@ -20,7 +20,6 @@ class TestProcessModel(BaseTest):
             id="model_one", display_name="Model One"
         )
         assert process_model_one.files == []
-        assert process_model_one.libraries == []
 
     def test_can_run_process_model_with_call_activities_when_in_same_process_model_directory(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
