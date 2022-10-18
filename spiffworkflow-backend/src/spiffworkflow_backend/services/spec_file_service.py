@@ -39,22 +39,15 @@ class SpecFileService(FileSystemService):
     def get_files(
         process_model_info: ProcessModelInfo,
         file_name: Optional[str] = None,
-        include_libraries: bool = False,
         extension_filter: str = "",
     ) -> List[File]:
         """Return all files associated with a workflow specification."""
         path = SpecFileService.workflow_path(process_model_info)
         files = SpecFileService._get_files(path, file_name)
-        if include_libraries:
-            for lib_name in process_model_info.libraries:
-                lib_path = SpecFileService.library_path(lib_name)
-                files.extend(SpecFileService._get_files(lib_path, file_name))
-
         if extension_filter != "":
             files = list(
                 filter(lambda file: file.name.endswith(extension_filter), files)
             )
-
         return files
 
     @staticmethod
@@ -96,13 +89,6 @@ class SpecFileService(FileSystemService):
     def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
         """Get_data."""
         file_path = SpecFileService.file_path(process_model_info, file_name)
-        if not os.path.exists(file_path):
-            # If the file isn't here, it may be in a library
-            for lib in process_model_info.libraries:
-                file_path = SpecFileService.library_path(lib)
-                file_path = os.path.join(file_path, file_name)
-                if os.path.exists(file_path):
-                    break
         if not os.path.exists(file_path):
             raise ApiError(
                 "unknown_file",

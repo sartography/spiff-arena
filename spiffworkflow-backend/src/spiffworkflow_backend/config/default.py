@@ -22,6 +22,10 @@ SPIFFWORKFLOW_FRONTEND_URL = environ.get(
 SPIFFWORKFLOW_BACKEND_URL = environ.get(
     "SPIFFWORKFLOW_BACKEND_URL", default="http://localhost:7000"
 )
+# service task connector proxy
+CONNECTOR_PROXY_URL = environ.get(
+    "CONNECTOR_PROXY_URL", default="http://localhost:7004"
+)
 
 GIT_COMMIT_ON_SAVE = environ.get("GIT_COMMIT_ON_SAVE", default="false") == "true"
 
@@ -35,11 +39,6 @@ OPEN_ID_CLIENT_SECRET_KEY = environ.get(
 
 SPIFFWORKFLOW_BACKEND_LOG_TO_FILE = (
     environ.get("SPIFFWORKFLOW_BACKEND_LOG_TO_FILE", default="false") == "true"
-)
-
-# service task connector proxy
-CONNECTOR_PROXY_URL = environ.get(
-    "CONNECTOR_PROXY_URL", default="http://localhost:7004"
 )
 
 SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(

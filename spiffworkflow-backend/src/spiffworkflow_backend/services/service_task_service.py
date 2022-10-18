@@ -9,6 +9,10 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 
 
+class ConnectorProxyError(Exception):
+    """ConnectorProxyError."""
+
+
 def connector_proxy_url() -> Any:
     """Returns the connector proxy url."""
     return current_app.config["CONNECTOR_PROXY_URL"]
@@ -73,3 +77,18 @@ class ServiceTaskService:
         except Exception as e:
             print(e)
             return []
+
+    @staticmethod
+    def authentication_list() -> Any:
+        """Returns a list of available authentications."""
+        try:
+            response = requests.get(f"{connector_proxy_url()}/v1/auths")
+
+            if response.status_code != 200:
+                return []
+
+            parsed_response = json.loads(response.text)
+            return parsed_response
+        except Exception as exception:
+            current_app.logger.error(exception)
+            raise ConnectorProxyError(exception.__class__.__name__) from exception

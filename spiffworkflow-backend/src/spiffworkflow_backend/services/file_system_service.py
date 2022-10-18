@@ -20,11 +20,6 @@ class FileSystemService:
     """ Simple Service meant for extension that provides some useful
     methods for dealing with the File system.
     """
-    LIBRARY_SPECS = "Library Specs"
-    STAND_ALONE_SPECS = "Stand Alone"
-    MASTER_SPECIFICATION = "Master Specification"
-    REFERENCE_FILES = "Reference Files"
-    SPECIAL_FOLDERS = [LIBRARY_SPECS, MASTER_SPECIFICATION, REFERENCE_FILES]
     CAT_JSON_FILE = "process_group.json"
     WF_JSON_FILE = "workflow.json"
 
@@ -40,13 +35,6 @@ class FileSystemService:
     def process_group_path(name: str) -> str:
         """Category_path."""
         return os.path.join(FileSystemService.root_path(), name)
-
-    @staticmethod
-    def library_path(name: str) -> str:
-        """Library_path."""
-        return os.path.join(
-            FileSystemService.root_path(), FileSystemService.LIBRARY_SPECS, name
-        )
 
     @staticmethod
     def full_path_from_relative_path(relative_path: str) -> str:
@@ -66,32 +54,13 @@ class FileSystemService:
     @staticmethod
     def process_group_path_for_spec(spec: ProcessModelInfo) -> str:
         """Category_path_for_spec."""
-        if spec.is_master_spec:
-            return os.path.join(FileSystemService.root_path())
-        elif spec.library:
-            process_group_path = FileSystemService.process_group_path(
-                FileSystemService.LIBRARY_SPECS
-            )
-        elif spec.standalone:
-            process_group_path = FileSystemService.process_group_path(
-                FileSystemService.STAND_ALONE_SPECS
-            )
-        else:
-            process_group_path = FileSystemService.process_group_path(
-                spec.process_group_id
-            )
-        return process_group_path
+        return FileSystemService.process_group_path(spec.process_group_id)
 
     @staticmethod
     def workflow_path(spec: ProcessModelInfo) -> str:
         """Workflow_path."""
-        if spec.is_master_spec:
-            return os.path.join(
-                FileSystemService.root_path(), FileSystemService.MASTER_SPECIFICATION
-            )
-        else:
-            process_group_path = FileSystemService.process_group_path_for_spec(spec)
-            return os.path.join(process_group_path, spec.id)
+        process_group_path = FileSystemService.process_group_path_for_spec(spec)
+        return os.path.join(process_group_path, spec.id)
 
     @staticmethod
     def full_path_to_process_model_file(spec: ProcessModelInfo, file_name: str) -> str:

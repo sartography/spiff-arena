@@ -18,12 +18,9 @@ class ExampleDataLoader:
         process_model_id: str,
         display_name: str = "",
         description: str = "",
-        master_spec: bool = False,
         process_group_id: str = "",
         display_order: int = 0,
         from_tests: bool = False,
-        standalone: bool = False,
-        library: bool = False,
         bpmn_file_name: Optional[str] = None,
         process_model_source_directory: Optional[str] = None,
     ) -> ProcessModelInfo:
@@ -38,11 +35,7 @@ class ExampleDataLoader:
             description=description,
             process_group_id=process_group_id,
             display_order=display_order,
-            is_master_spec=master_spec,
-            standalone=standalone,
-            library=library,
             is_review=False,
-            libraries=[],
         )
         workflow_spec_service = ProcessModelService()
         workflow_spec_service.add_spec(spec)

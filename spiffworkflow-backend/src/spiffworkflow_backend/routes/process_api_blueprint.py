@@ -774,6 +774,17 @@ def service_tasks_show() -> flask.wrappers.Response:
     )
 
 
+def authentication_list() -> flask.wrappers.Response:
+    """Authentication_list."""
+    available_authentications = ServiceTaskService.authentication_list()
+    response_json = {
+        "results": available_authentications,
+        "connector_proxy_base_url": current_app.config["CONNECTOR_PROXY_URL"],
+    }
+
+    return Response(json.dumps(response_json), status=200, mimetype="application/json")
+
+
 def process_instance_report_show(
     process_group_id: str,
     process_model_id: str,

@@ -217,9 +217,6 @@ class ProcessInstanceService:
                 message="A process instance must have a user_id.",
                 task=spiff_task,
             )
-        # # Standalone workflow - we only care about the current user
-        # elif processor.workflow_model.study_id is None and processor.workflow_model.user_id is not None:
-        #     return [processor.workflow_model.user_id]
 
         # Workflow associated with a study - get all the users
         else:
