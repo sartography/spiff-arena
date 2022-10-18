@@ -47,15 +47,12 @@ marshmallow-enum = "^1.5.1"
 marshmallow-sqlalchemy = "^0.28.0"
 PyJWT = "^2.4.0"
 gunicorn = "^20.1.0"
-types-pytz = "^2022.1.1"
 python-keycloak = "^2.5.0"
 APScheduler = "^3.9.1"
-types-requests = "^2.28.6"
 Jinja2 = "^3.1.2"
 RestrictedPython = "^5.2"
 Flask-SQLAlchemy = "^3"
 orjson = "^3.8.0"
-types-PyYAML = "^6.0.12"
 
 
 [tool.poetry.dev-dependencies]
@@ -71,6 +68,11 @@ pre-commit = "^2.20.0"
 flake8 = "^4.0.1"
 black = ">=21.10b0"
 flake8-bandit = "^2.1.2"
+types-Werkzeug = "^1.0.9"
+types-PyYAML = "^6.0.12"
+types-Flask = "^1.1.6"
+types-requests = "^2.28.6"
+types-pytz = "^2022.1.1"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.2"

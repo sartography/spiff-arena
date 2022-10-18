@@ -7,7 +7,7 @@ from flask import redirect
 from flask import render_template
 from flask import request
 from flask import url_for
-from werkzeug.wrappers.response import Response
+from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,

@@ -10,7 +10,7 @@ import requests
 from flask import current_app
 from flask import redirect
 from flask_bpmn.api.api_error import ApiError
-from werkzeug.wrappers.response import Response
+from werkzeug.wrappers import Response
 
 
 class AuthenticationProviderTypes(enum.Enum):
