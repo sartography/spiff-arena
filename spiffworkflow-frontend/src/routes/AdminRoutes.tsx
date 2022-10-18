@@ -23,13 +23,14 @@ import MessageInstanceList from './MessageInstanceList';
 import SecretList from './SecretList';
 import SecretNew from './SecretNew';
 import SecretShow from './SecretShow';
+import AuthenticationList from './AuthenticationList';
 
 export default function AdminRoutes() {
   const location = useLocation();
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
   useEffect(() => {
-    setErrorMessage('');
+    setErrorMessage(null);
   }, [location, setErrorMessage]);
 
   if (UserService.hasRole(['admin'])) {
@@ -108,6 +109,7 @@ export default function AdminRoutes() {
         <Route path="secrets" element={<SecretList />} />
         <Route path="secrets/new" element={<SecretNew />} />
         <Route path="secrets/:key" element={<SecretShow />} />
+        <Route path="authentications" element={<AuthenticationList />} />
       </Routes>
     );
   }

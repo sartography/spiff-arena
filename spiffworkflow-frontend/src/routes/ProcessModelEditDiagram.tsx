@@ -112,7 +112,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const saveDiagram = (bpmnXML: any, fileName = params.file_name) => {
-    setErrorMessage('');
+    setErrorMessage(null);
     setBpmnXmlForDiagramRendering(bpmnXML);
 
     let url = `/process-models/${params.process_group_id}/${params.process_model_id}/files`;

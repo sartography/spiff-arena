@@ -82,7 +82,7 @@ export default function ProcessModelShow() {
   }, [params, reloadModel]);
 
   const processModelRun = (processInstance: any) => {
-    setErrorMessage('');
+    setErrorMessage(null);
     HttpService.makeCallToBackend({
       path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${processInstance.id}/run`,
       successCallback: setProcessInstanceResult,

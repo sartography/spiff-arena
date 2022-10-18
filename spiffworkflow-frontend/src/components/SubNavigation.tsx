@@ -14,6 +14,8 @@ export default function SubNavigation() {
       newActiveKey = '/admin/process-instances';
     } else if (location.pathname.match(/^\/admin\/secrets\b/)) {
       newActiveKey = '/admin/secrets';
+    } else if (location.pathname.match(/^\/admin\/authentications\b/)) {
+      newActiveKey = '/admin/authentications';
     } else if (location.pathname === '/') {
       newActiveKey = '/';
     } else if (location.pathname.match(/^\/tasks\b/)) {
@@ -39,6 +41,9 @@ export default function SubNavigation() {
         </Nav.Item>
         <Nav.Item>
           <Nav.Link href="/admin/secrets">Secrets</Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link href="/admin/authentications">Authentications</Nav.Link>
         </Nav.Item>
       </Nav>
     );

@@ -176,19 +176,19 @@ export default function ProcessInstanceList() {
     let queryParamString = `per_page=${perPage}&page=${page}`;
 
     if (isTrueComparison(startFrom, '>', startTill)) {
-      setErrorMessage('startFrom cannot be after startTill');
+      setErrorMessage({ message: 'startFrom cannot be after startTill' });
       return;
     }
     if (isTrueComparison(endFrom, '>', endTill)) {
-      setErrorMessage('endFrom cannot be after endTill');
+      setErrorMessage({ message: 'endFrom cannot be after endTill' });
       return;
     }
     if (isTrueComparison(startFrom, '>', endFrom)) {
-      setErrorMessage('startFrom cannot be after endFrom');
+      setErrorMessage({ message: 'startFrom cannot be after endFrom' });
       return;
     }
     if (isTrueComparison(startTill, '>', endTill)) {
-      setErrorMessage('startTill cannot be after endTill');
+      setErrorMessage({ message: 'startTill cannot be after endTill' });
       return;
     }
 
@@ -217,7 +217,7 @@ export default function ProcessInstanceList() {
       queryParamString += `&process_group_identifier=${currentProcessModel.process_group_id}&process_model_identifier=${currentProcessModel.id}`;
     }
 
-    setErrorMessage('');
+    setErrorMessage(null);
     navigate(`/admin/process-instances?${queryParamString}`);
   };
 
