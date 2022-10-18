@@ -31,12 +31,8 @@ class ProcessModelInfo:
     description: str
     process_group_id: str = ""
     process_group: Any | None = None
-    is_master_spec: bool | None = False
-    standalone: bool | None = False
-    library: bool | None = False
     primary_file_name: str | None = None
     primary_process_id: str | None = None
-    libraries: list[str] = field(default_factory=list)
     display_order: int | None = 0
     is_review: bool = False
     files: list[File] | None = field(default_factory=list[File])
@@ -67,15 +63,11 @@ class ProcessModelInfoSchema(Schema):
     id = marshmallow.fields.String(required=True)
     display_name = marshmallow.fields.String(required=True)
     description = marshmallow.fields.String()
-    is_master_spec = marshmallow.fields.Boolean(required=True)
-    standalone = marshmallow.fields.Boolean(required=True)
-    library = marshmallow.fields.Boolean(required=True)
     display_order = marshmallow.fields.Integer(allow_none=True)
     primary_file_name = marshmallow.fields.String(allow_none=True)
     primary_process_id = marshmallow.fields.String(allow_none=True)
     is_review = marshmallow.fields.Boolean(allow_none=True)
     process_group_id = marshmallow.fields.String(allow_none=True)
-    libraries = marshmallow.fields.List(marshmallow.fields.String(), allow_none=True)
     files = marshmallow.fields.List(marshmallow.fields.Nested("FileSchema"))
     fault_or_suspend_on_exception = marshmallow.fields.String()
     exception_notification_addresses = marshmallow.fields.List(

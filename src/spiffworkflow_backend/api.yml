@@ -937,6 +937,20 @@ paths:
               schema:
                 $ref: "#/components/schemas/ServiceTask"
 
+  /authentications:
+    get:
+      tags:
+        - Authentications
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.authentication_list
+      summary: Gets all available authentications from connector proxy
+      responses:
+        "200":
+          description: All authentications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceTask"
+
   /tasks/{process_instance_id}/{task_id}:
     parameters:
       - name: task_id
