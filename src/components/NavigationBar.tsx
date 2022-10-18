@@ -1,34 +1,10 @@
 import { Button, Navbar, Nav, Container } from 'react-bootstrap';
-// import { capitalizeFirstLetter } from '../helpers';
 // @ts-expect-error TS(2307) FIXME: Cannot find module '../logo.svg' or its correspond... Remove this comment to see the full error message
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 
 // for ref: https://react-bootstrap.github.io/components/navbar/
 export default function NavigationBar() {
-  // const navItems: string[] = [];
-  // if (UserService.hasRole(['admin'])) {
-  //   navItems.push('/admin');
-  // }
-  // navItems.push('/tasks');
-  //
-  // const navElements = navItems.map((navItem) => {
-  //   let className = '';
-  //   if (window.location.pathname.startsWith(navItem)) {
-  //     className = 'active';
-  //   }
-  //   const navItemWithoutSlash = navItem.replace(/\/*/, '');
-  //   const title = capitalizeFirstLetter(navItemWithoutSlash);
-  //   return (
-  //     <Nav.Link
-  //       href={navItem}
-  //       className={className}
-  //       data-qa={`nav-item-${navItemWithoutSlash}`}
-  //     >
-  //       {title}
-  //     </Nav.Link>
-  //   );
-  // });
   const navElements = null;
 
   const handleLogout = () => {

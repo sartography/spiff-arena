@@ -94,7 +94,7 @@ backendCallProps) => {
           message = result.message;
         }
         if (failureCallback) {
-          failureCallback(message);
+          failureCallback(result);
         } else {
           console.error(message);
           // eslint-disable-next-line no-alert
@@ -105,7 +105,7 @@ backendCallProps) => {
     .catch((error) => {
       if (error.name !== 'UnauthenticatedError') {
         if (failureCallback) {
-          failureCallback(error.message);
+          failureCallback(error);
         } else {
           console.error(error.message);
         }

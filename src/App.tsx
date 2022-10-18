@@ -10,9 +10,12 @@ import TaskShow from './routes/TaskShow';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminRoutes from './routes/AdminRoutes';
 import SubNavigation from './components/SubNavigation';
+import { ErrorForDisplay } from './interfaces';
 
 export default function App() {
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState<ErrorForDisplay | null>(
+    null
+  );
 
   const errorContextValueArray = useMemo(
     () => [errorMessage, setErrorMessage],
@@ -20,10 +23,24 @@ export default function App() {
   );
 
   let errorTag = null;
-  if (errorMessage !== '') {
+  if (errorMessage) {
+    let sentryLinkTag = null;
+    if (errorMessage.sentry_link) {
+      sentryLinkTag = (
+        <span>
+          {
+            ': Find details about this error here (it may take a moment to become available): '
+          }
+          <a href={errorMessage.sentry_link} target="_blank" rel="noreferrer">
+            {errorMessage.sentry_link}
+          </a>
+        </span>
+      );
+    }
     errorTag = (
       <div id="filter-errors" className="mt-4 alert alert-danger" role="alert">
-        {errorMessage}
+        {errorMessage.message}
+        {sentryLinkTag}
       </div>
     );
   }
