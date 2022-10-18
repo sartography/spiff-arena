@@ -11,7 +11,7 @@ from flask import current_app
 from flask import g
 from flask import redirect
 from flask_bpmn.api.api_error import ApiError
-from werkzeug.wrappers.response import Response
+from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import (
