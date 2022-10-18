@@ -49,7 +49,7 @@ export default function ProcessModelEdit() {
   };
 
   const deleteProcessModel = () => {
-    setErrorMessage('');
+    setErrorMessage(null);
     const processModelToUse = processModel as any;
     const processModelShowPath = `/process-models/${processModelToUse.process_group_id}/${processModelToUse.id}`;
     HttpService.makeCallToBackend({

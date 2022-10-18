@@ -29,7 +29,7 @@ export default function TaskShow() {
   }, [params, setErrorMessage]);
 
   const processSubmitResult = (result: any) => {
-    setErrorMessage('');
+    setErrorMessage(null);
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
@@ -40,7 +40,7 @@ export default function TaskShow() {
   };
 
   const handleFormSubmit = (event: any) => {
-    setErrorMessage('');
+    setErrorMessage(null);
     const dataToSubmit = event.formData;
     delete dataToSubmit.isManualTask;
     HttpService.makeCallToBackend({
