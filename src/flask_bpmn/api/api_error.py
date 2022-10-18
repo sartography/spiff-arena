@@ -2,78 +2,47 @@
 from __future__ import annotations
 
 import json
+from dataclasses import dataclass
+from dataclasses import field
 from typing import Any
 
+import flask.wrappers
 import sentry_sdk
 from flask import Blueprint
 from flask import current_app
 from flask import g
-from marshmallow import Schema
+from flask import jsonify
+from flask import make_response
+from sentry_sdk import capture_exception
+from sentry_sdk import set_user
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
 from werkzeug.exceptions import InternalServerError
 
+
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
 
 
+@dataclass
 class ApiError(Exception):
     """ApiError Class to help handle exceptions."""
 
-    def __init__(
-        self,
-        error_code: str,
-        message: str,
-        status_code: int = 400,
-        file_name: str = "",
-        task_id: str = "",
-        task_name: str = "",
-        tag: str = "",
-        task_data: dict | None | str = None,
-        error_type: str = "",
-        error_line: str = "",
-        line_number: int = 0,
-        offset: int = 0,
-        task_trace: dict | None = None,
-    ) -> None:
-        """The Init Method."""
-        if task_data is None:
-            task_data = {}
-        if task_trace is None:
-            task_trace = {}
-        self.status_code = status_code
-        self.error_code = error_code  # a short consistent string describing the error.
-        self.message = message  # A detailed message that provides more information.
-
-        # OPTIONAL:  The id of the task in the BPMN Diagram.
-        self.task_id = task_id or ""
-
-        # OPTIONAL: The name of the task in the BPMN Diagram.
-
-        # OPTIONAL: The file that caused the error.
-        self.task_name = task_name or ""
-        self.file_name = file_name or ""
-
-        # OPTIONAL: The XML Tag that caused the issue.
-        self.tag = tag or ""
-
-        # OPTIONAL: A snapshot of data connected to the task when error occurred.
-        self.task_data = task_data or ""
-        self.line_number = line_number
-        self.offset = offset
-        self.error_type = error_type
-        self.error_line = error_line
-        self.task_trace = task_trace
-
-        try:
-            user = g.user.uid
-        except Exception:
-            user = "Unknown"
-        self.task_user = user
-        # This is for sentry logging into Slack
-        sentry_sdk.set_context("User", {"user": user})
-        Exception.__init__(self, self.message)
+    error_code: str
+    message: str
+    error_line: str = ""
+    error_type: str = ""
+    file_name: str = ""
+    line_number: int = 0
+    offset: int = 0
+    sentry_link: str | None = None
+    status_code: int = 400
+    tag: str = ""
+    task_data: dict | str | None = field(default_factory=dict)
+    task_id: str = ""
+    task_name: str = ""
+    task_trace: dict | None = field(default_factory=dict)
 
     def __str__(self) -> str:
         """Instructions to print instance as a string."""
@@ -189,43 +158,48 @@ class ApiError(Exception):
             return ApiError.from_task_spec(error_code, message, exp.sender)
 
 
-class ApiErrorSchema(Schema):
-    """ApiErrorSchema Class."""
-
-    class Meta:
-        """Sets the fields to search the error schema for."""
-
-        fields = (
-            "error_code",
-            "message",
-            "workflow_name",
-            "file_name",
-            "task_name",
-            "task_id",
-            "task_data",
-            "task_user",
-            "hint",
-            "line_number",
-            "offset",
-            "error_type",
-            "error_line",
-            "task_trace",
-        )
+def set_user_sentry_context() -> None:
+    """Set_user_sentry_context."""
+    try:
+        username = g.user.username
+    except Exception:
+        username = "Unknown"
+    # This is for sentry logging into Slack
+    sentry_sdk.set_context("User", {"user": username})
+    set_user({"username": username})
 
 
 @api_error_blueprint.app_errorhandler(ApiError)
-def handle_invalid_usage(error: ApiError) -> tuple[str, int]:
+def handle_invalid_usage(error: ApiError) -> flask.wrappers.Response:
     """Handles invalid usage error."""
-    response = ApiErrorSchema().dump(error)
-    return response, error.status_code
+    return make_response(jsonify(error), error.status_code)
 
 
 @api_error_blueprint.app_errorhandler(InternalServerError)
-def handle_internal_server_error(error: InternalServerError) -> tuple[str, int]:
+def handle_internal_server_error(error: InternalServerError) -> flask.wrappers.Response:
     """Handles internal server error."""
     original = getattr(error, "original_exception", None)
-    api_error = ApiError(
-        error_code="Internal Server Error (500)", message=str(original)
+    api_error = ApiError(error_code="internal_server_error", message=str(original))
+    return make_response(jsonify(api_error), 500)
+
+
+@api_error_blueprint.app_errorhandler(Exception)
+def handle_internal_server_exception(exception: Exception) -> flask.wrappers.Response:
+    """Handles unexpected exceptions."""
+    set_user_sentry_context()
+    id = capture_exception(exception)
+
+    organization_slug = current_app.config.get("SENTRY_ORGANIZATION_SLUG")
+    project_slug = current_app.config.get("SENTRY_PROJECT_SLUG")
+    sentry_link = None
+    if organization_slug and project_slug:
+        sentry_link = (
+            f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
+        )
+
+    api_exception = ApiError(
+        error_code="error",
+        message=f"{exception.__class__.__name__}",
+        sentry_link=sentry_link,
     )
-    response = ApiErrorSchema().dump(api_error)
-    return response, 500
+    return make_response(jsonify(api_exception), 500)
