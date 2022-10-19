@@ -172,6 +172,7 @@ def set_user_sentry_context() -> None:
 @api_error_blueprint.app_errorhandler(ApiError)
 def handle_invalid_usage(error: ApiError) -> flask.wrappers.Response:
     """Handles invalid usage error."""
+    current_app.logger.exception(error)
     return make_response(jsonify(error), error.status_code)
 
 
@@ -196,6 +197,8 @@ def handle_internal_server_exception(exception: Exception) -> flask.wrappers.Res
         sentry_link = (
             f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
         )
+
+    current_app.logger.exception(exception)
 
     api_exception = ApiError(
         error_code="error",
