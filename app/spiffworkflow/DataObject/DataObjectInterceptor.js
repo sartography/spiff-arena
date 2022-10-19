@@ -1,8 +1,10 @@
 import CommandInterceptor from 'diagram-js/lib/command/CommandInterceptor';
-import { is } from 'bpmn-js/lib/util/ModelUtil';
-import { findDataObjects } from './DataObjectHelpers';
+import {getDi, is} from 'bpmn-js/lib/util/ModelUtil';
+import {findDataObjects, findDataReferenceShapes} from './DataObjectHelpers';
 var HIGH_PRIORITY = 1500;
-
+import {
+  remove as collectionRemove,
+} from 'diagram-js/lib/util/Collections';
 /**
  * This Command Interceptor functions like the BpmnUpdator in BPMN.js - It hooks into events
  * from Diagram.js and updates the underlying BPMN model accordingly.
@@ -51,6 +53,45 @@ export default class DataObjectInterceptor extends CommandInterceptor {
 
         // set the reference to the DataObject
         shape.businessObject.dataObjectRef = dataObject;
+      }
+    });
+
+    /**
+     * Don't remove the associated DataObject, unless all references to that data object
+     * Difficult to do given placement of this logic in the BPMN Updater, so we have
+     * to manually handle the removal.
+     */
+    this.executed([ 'shape.delete' ], HIGH_PRIORITY, function(event) {
+      const { context } = event;
+      const { shape, oldParent } = context;
+      if (is(shape, 'bpmn:DataObjectReference') && shape.type !== 'label') {
+        const references = findDataReferenceShapes(
+          oldParent,
+          shape.businessObject.dataObjectRef.id
+        );
+        if (references.length === 0) {
+          return; // Use the default bahavior and delete the data object.
+        }
+        // Remove the business Object
+        let containment = '';
+        const { businessObject } = shape;
+        if (is(businessObject, 'bpmn:DataOutputAssociation')) {
+          containment = 'dataOutputAssociations';
+        }
+        if (is(businessObject, 'bpmn:DataInputAssociation')) {
+          containment = 'dataInputAssociations';
+        }
+        const children = businessObject.$parent.get(containment);
+        collectionRemove(children, businessObject);
+
+        // Remove the visible element.
+        const di = getDi(shape);
+        const planeElements = di.$parent.get('planeElement');
+        collectionRemove(planeElements, di);
+        di.$parent = null;
+
+        // Stop the propogation.
+        event.stopPropagation();
       }
     });
   }

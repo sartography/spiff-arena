@@ -245,6 +245,7 @@ function createServiceGroup(element, translate, moddle, commandStack) {
           element,
           moddle,
           translate,
+          commandStack
         }),
       },
     ],
