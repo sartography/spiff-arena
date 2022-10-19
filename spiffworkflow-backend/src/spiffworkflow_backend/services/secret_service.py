@@ -69,7 +69,8 @@ class SecretService:
     def update_secret(
         key: str,
         value: str,
-        creator_user_id: Optional[int] = None,
+        creator_user_id: int,
+        create_if_not_exists: Optional[bool] = False,
     ) -> None:
         """Does this pass pre commit?"""
         secret_model = SecretModel.query.filter(SecretModel.key == key).first()
@@ -80,16 +81,18 @@ class SecretService:
                 try:
                     db.session.commit()
                 except Exception as e:
-                    raise ApiError(
-                        error_code="update_secret_error",
-                        message=f"There was an error updating the secret with key: {key}, and value: {value}",
-                    ) from e
+                    db.session.rollback()
+                    raise e
             else:
                 raise ApiError(
                     error_code="update_secret_error",
                     message=f"User: {creator_user_id} cannot update the secret with key : {key}",
                     status_code=401,
                 )
+        elif create_if_not_exists:
+            SecretService.add_secret(
+                key=key, value=value, creator_user_id=creator_user_id
+            )
         else:
             raise ApiError(
                 error_code="update_secret_error",
