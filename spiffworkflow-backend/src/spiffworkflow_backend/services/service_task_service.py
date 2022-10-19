@@ -52,7 +52,7 @@ class ServiceTaskDelegate:
         }
         params["spiff__task_data"] = json.dumps(task_data)
 
-        proxied_response = requests.get(f"{connector_proxy_url()}/v1/do/{name}", params)
+        proxied_response = requests.post(f"{connector_proxy_url()}/v1/do/{name}", params)
 
         if proxied_response.status_code != 200:
             print("got error from connector proxy")
