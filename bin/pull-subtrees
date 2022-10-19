@@ -6,5 +6,5 @@ for subtree in "SpiffWorkflow" \
   "flask-bpmn" \
   "bpmn-js-spiffworkflow"
 do
-  git subtree pull --prefix=$subtree git@github.com:sartography/$subtree.git main --squash
+  GIT_MERGE_AUTOEDIT=no git subtree pull --prefix=$subtree git@github.com:sartography/$subtree.git main --squash
 done
