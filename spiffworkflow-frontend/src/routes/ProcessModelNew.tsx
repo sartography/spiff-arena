@@ -29,9 +29,6 @@ export default function ProcessModelNew() {
         display_name: displayName,
         description: displayName,
         process_group_id: params.process_group_id,
-        is_master_spec: false,
-        standalone: false,
-        library: false,
       },
     });
   };
