@@ -13,7 +13,7 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 
 setup(name='SpiffWorkflow',
-      version='1.2.0',
+      version='1.2.1',
       description='A workflow framework and BPMN/DMN Processor',
       long_description=README,
       long_description_content_type="text/markdown",
@@ -23,7 +23,7 @@ setup(name='SpiffWorkflow',
       packages=find_packages(exclude=['tests', 'tests.*']),
       install_requires=['configparser', 'lxml', 'celery', 'dateparser', 'pytz',
           # required for python 3.7 - https://stackoverflow.com/a/73932581
-          'importlib-metadata<5.0'],
+          'importlib-metadata<5.0; python_version <= "3.7"'],
       keywords='spiff workflow bpmn engine',
       url='https://github.com/sartography/SpiffWorkflow',
       classifiers=[
