@@ -50,6 +50,41 @@ describe('DataObject Interceptor', function() {
 
   }));
 
+  it('Deleting a data object reference does not delete the data object, unless it is the last reference', inject(function(canvas, modeling) {
+
+    // IF - two dataObjectReferences are created
+    let rootShape = canvas.getRootElement();
+    const dataObjectRefShape1 = modeling.createShape({ type: 'bpmn:DataObjectReference' },
+      { x: 220, y: 220 }, rootShape);
+    const dataObjectRefShape2 = modeling.createShape({ type: 'bpmn:DataObjectReference' },
+      { x: 320, y: 220 }, rootShape);
+
+    // AND one is deleted
+    modeling.removeShape(dataObjectRefShape1)
+
+    // THEN - there is still a data object
+    const dataObjects = findDataObjects(rootShape.businessObject);
+    expect(dataObjects.length).to.equal(1);
+  }));
+
+  it('Deleting all the data references will also delete the data object', inject(function(canvas, modeling) {
+
+    // IF - two dataObjectReferences are created
+    let rootShape = canvas.getRootElement();
+    const dataObjectRefShape1 = modeling.createShape({ type: 'bpmn:DataObjectReference' },
+      { x: 220, y: 220 }, rootShape);
+    const dataObjectRefShape2 = modeling.createShape({ type: 'bpmn:DataObjectReference' },
+      { x: 320, y: 220 }, rootShape);
+
+    // AND both are deleted
+    modeling.removeShape(dataObjectRefShape1);
+    modeling.removeShape(dataObjectRefShape2);
+
+    // THEN - there is no data object
+    const dataObjects = findDataObjects(rootShape.businessObject);
+    expect(dataObjects.length).to.equal(0);
+  }));
+
   it('Creating a new Reference will update the name to match the DataObject', inject(function(canvas, modeling) {
 
     // IF - a Data Reference Exists

@@ -111,9 +111,11 @@ export function ServiceTaskOperatorSelect(props) {
       console.error(`Could not find service task operator with id: ${value}`);
       return;
     }
-
+    if (!(element.businessObject.id in previouslyUsedServiceTaskParameterValuesHash)) {
+      previouslyUsedServiceTaskParameterValuesHash[element.businessObject.id] = {}
+    }
     const previouslyUsedServiceTaskParameterValues =
-      previouslyUsedServiceTaskParameterValuesHash[value];
+      previouslyUsedServiceTaskParameterValuesHash[element.businessObject.id][value];
 
     const { businessObject } = element;
     let extensions = businessObject.extensionElements;
@@ -143,9 +145,12 @@ export function ServiceTaskOperatorSelect(props) {
         newParameterModdleElement.type = stoParameter.type;
         newParameterList.parameters.push(newParameterModdleElement);
       });
-      previouslyUsedServiceTaskParameterValuesHash[value] = newParameterList;
+
+      previouslyUsedServiceTaskParameterValuesHash[element.businessObject.id][
+        value
+      ] = newParameterList;
       if (oldServiceTaskOperatorModdleElement) {
-        previouslyUsedServiceTaskParameterValuesHash[
+        previouslyUsedServiceTaskParameterValuesHash[element.businessObject.id][
           oldServiceTaskOperatorModdleElement.id
         ] = oldServiceTaskOperatorModdleElement.parameterList;
       }
@@ -228,12 +233,20 @@ function serviceTaskParameterEntries(props) {
 }
 
 function ServiceTaskParameterTextField(props) {
-  const { idPrefix, element, serviceTaskParameterModdleElement } = props;
+  const { idPrefix, element, serviceTaskParameterModdleElement, commandStack } = props;
 
   const debounce = useService('debounceInput');
+
   const setValue = (value) => {
-    serviceTaskParameterModdleElement.value = value;
+    commandStack.execute('element.updateModdleProperties', {
+      element,
+      moddleElement: serviceTaskParameterModdleElement,
+      properties: {
+        value: value,
+      },
+    });
   };
+
 
   const getValue = () => {
     return serviceTaskParameterModdleElement.value;
