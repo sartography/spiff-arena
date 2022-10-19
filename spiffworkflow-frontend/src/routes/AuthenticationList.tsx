@@ -3,6 +3,7 @@ import { Table } from 'react-bootstrap';
 import ErrorContext from '../contexts/ErrorContext';
 import { AuthenticationItem } from '../interfaces';
 import HttpService from '../services/HttpService';
+import UserService from '../services/UserService';
 
 export default function AuthenticationList() {
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
@@ -13,11 +14,13 @@ export default function AuthenticationList() {
   const [connectProxyBaseUrl, setConnectProxyBaseUrl] = useState<string | null>(
     null
   );
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   useEffect(() => {
     const processResult = (result: any) => {
       setAuthenticationList(result.results);
       setConnectProxyBaseUrl(result.connector_proxy_base_url);
+      setRedirectUrl(result.redirect_url);
     };
     HttpService.makeCallToBackend({
       path: `/authentications`,
@@ -34,7 +37,11 @@ export default function AuthenticationList() {
             <td>
               <a
                 data-qa="authentication-create-link"
-                href={`${connectProxyBaseUrl}/v1/auths/${row.id}`}
+                href={`${connectProxyBaseUrl}/v1/auth/${
+                  row.id
+                }?redirect_url=${redirectUrl}/${
+                  row.id
+                }?token=${UserService.getAuthToken()}`}
               >
                 {row.id}
               </a>
