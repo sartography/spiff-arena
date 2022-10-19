@@ -46,7 +46,7 @@ class ActiveTaskModel(SpiffworkflowBaseDBModel):
     task_type = db.Column(db.String(50))
     task_status = db.Column(db.String(50))
     process_model_display_name = db.Column(db.String(255))
-    task_data: str = db.Column(db.Text)
+    task_data: str = db.Column(db.Text(4294000000))
 
     @classmethod
     def to_task(cls, task: ActiveTaskModel) -> Task:
