@@ -132,6 +132,8 @@ def get_hacked_up_app_for_script() -> flask.app.Flask:
         else:
             raise Exception(f"Could not find {full_process_model_path}")
     app = create_app()
+    setup_config(app)
+    configure_sentry(app)
     return app
 
 
