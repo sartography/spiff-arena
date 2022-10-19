@@ -1498,10 +1498,6 @@ components:
         category_id:
           type: string
           nullable: true
-        standalone:
-          type: boolean
-          example: false
-          default: false
         workflow_spec_category:
           $ref: "#/components/schemas/ProcessModelCategory"
         is_status:
