@@ -13,11 +13,13 @@ from typing import Union
 import connexion  # type: ignore
 import flask.wrappers
 import jinja2
+import werkzeug
 from flask import Blueprint
 from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
+from flask import redirect
 from flask import request
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
@@ -52,6 +54,7 @@ from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitService
@@ -780,9 +783,26 @@ def authentication_list() -> flask.wrappers.Response:
     response_json = {
         "results": available_authentications,
         "connector_proxy_base_url": current_app.config["CONNECTOR_PROXY_URL"],
+        "redirect_url": f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/authentication_callback",
     }
 
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
+
+
+def authentication_callback(
+    service: str,
+    auth_method: str,
+) -> werkzeug.wrappers.Response:
+    """Authentication_callback."""
+    verify_token(request.args.get("token"))
+    response = request.args["response"]
+    print(f"response: {response}")
+    SecretService().update_secret(
+        f"{service}/{auth_method}", response, g.user.id, create_if_not_exists=True
+    )
+    return redirect(
+        f"{current_app.config['SPIFFWORKFLOW_FRONTEND_URL']}/admin/authentications"
+    )
 
 
 def process_instance_report_show(

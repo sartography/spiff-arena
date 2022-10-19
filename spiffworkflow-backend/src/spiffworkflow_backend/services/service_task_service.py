@@ -90,5 +90,4 @@ class ServiceTaskService:
             parsed_response = json.loads(response.text)
             return parsed_response
         except Exception as exception:
-            current_app.logger.error(exception)
             raise ConnectorProxyError(exception.__class__.__name__) from exception

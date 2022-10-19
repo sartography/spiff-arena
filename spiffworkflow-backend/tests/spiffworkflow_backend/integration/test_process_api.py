@@ -1560,6 +1560,16 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert len(response.json["results"]) == 2
 
+    # TODO: test the auth callback endpoint
+    # def test_can_store_authentication_secret(
+    #     self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None
+    # ) -> None:
+    #     """Test_can_store_authentication_secret."""
+    #     response = client.get(
+    #         "/v1.0/authentication_callback",
+    #         headers=self.logged_in_headers(user),
+    #     )
+
     # def test_get_process_model(self):
     #
     #     load_test_spec('random_fact')

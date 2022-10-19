@@ -951,6 +951,47 @@ paths:
               schema:
                 $ref: "#/components/schemas/ServiceTask"
 
+  /authentication_callback/{service}/{auth_method}:
+    parameters:
+      - name: service
+        in: path
+        required: true
+        description: The name of the service
+        schema:
+          type: string
+      - name: auth_method
+        in: path
+        required: true
+        description: The method
+        schema:
+          type: string
+      - name: response
+        in: query
+        required: true
+        description: The response
+        schema:
+          type: string
+      - name: token
+        in: query
+        required: true
+        description: The response
+        schema:
+          type: string
+    get:
+      # disable security so we can get the token from query params instead
+      security: []
+      tags:
+        - Authentications
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.authentication_callback
+      summary: Callback to backend
+      responses:
+        "200":
+          description: All authentications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceTask"
+
   /tasks/{process_instance_id}/{task_id}:
     parameters:
       - name: task_id
