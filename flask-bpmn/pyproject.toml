@@ -27,7 +27,6 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
-# spiffworkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "feature/spiff_properties"}
 spiffworkflow = "*"
 sentry-sdk = "*"
 sphinx-autoapi = "^1.9.0"
@@ -46,6 +45,9 @@ pre-commit = "^2.20.0"
 flake8 = "^4.0.1"
 black = ">=21.10b0"
 flake8-bandit = "^2.1.2"
+
+# require git version here to avoid importlib but do not require this version for other apps
+spiffworkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.2"
@@ -77,6 +79,16 @@ source = ["flask_bpmn", "tests"]
 [tool.coverage.report]
 show_missing = true
 fail_under = 50
+
+[tool.pytest.ini_options]
+# ignore deprecation warnings from various packages that we don't control
+filterwarnings = [
+    # note the use of single quote below to denote "raw" strings in TOML
+    # kombu/utils/compat.py:82
+    'ignore:SelectableGroups dict interface is deprecated. Use select.',
+    # flask_sqlalchemy/__init__.py:14
+    "ignore:'_app_ctx_stack' is deprecated and will be removed in Flask 2.3",
+]
 
 [tool.mypy]
 strict = true
