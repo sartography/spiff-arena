@@ -639,7 +639,7 @@ werkzeug = "*"
 type = "git"
 url = "https://github.com/sartography/flask-bpmn"
 reference = "main"
-resolved_reference = "42cebab51fe469ab9dcb45672917d34c1f30987a"
+resolved_reference = "5edb83f662a6da2c8ce0dea8992ef8602218828f"
 
 [[package]]
 name = "Flask-Cors"
@@ -1847,8 +1847,8 @@ test = ["pytest"]
 
 [[package]]
 name = "SpiffWorkflow"
-version = "1.2.0"
-description = "A workflow framework and BPMN/DMN Processor"
+version = "1.2.1"
+description = ""
 category = "main"
 optional = false
 python-versions = "*"
@@ -1858,7 +1858,6 @@ develop = false
 celery = "*"
 configparser = "*"
 dateparser = "*"
-importlib-metadata = "<5.0"
 lxml = "*"
 pytz = "*"
 
@@ -1866,7 +1865,7 @@ pytz = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "d9fcd45a384f8376a669cf58677564289d2c661c"
+resolved_reference = "a094adad8767f82e9c5fa806a46597e066252a72"
 
 [[package]]
 name = "SQLAlchemy"
