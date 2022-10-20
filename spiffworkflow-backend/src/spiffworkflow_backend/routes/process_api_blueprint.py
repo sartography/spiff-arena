@@ -433,6 +433,21 @@ def process_instance_suspend(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
+def process_instance_resume(
+    process_group_id: str,
+    process_model_id: str,
+    process_instance_id: int,
+    do_engine_steps: bool = True,
+) -> flask.wrappers.Response:
+    """Process_instance_resume."""
+    process_instance = ProcessInstanceService().get_process_instance(
+        process_instance_id
+    )
+    processor = ProcessInstanceProcessor(process_instance)
+    processor.resume()
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
 def process_instance_log_list(
     process_group_id: str,
     process_model_id: str,
@@ -875,6 +890,7 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.process_group_identifier,
+            ProcessInstanceModel.status,
             ActiveTaskModel.task_data,
             ActiveTaskModel.task_name,
             ActiveTaskModel.task_title,

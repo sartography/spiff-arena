@@ -61,6 +61,7 @@ class ActiveTaskModel(SpiffworkflowBaseDBModel):
             task.task_status,
             data=task_data,
             process_instance_id=task.process_instance_id,
+            process_instance_status=task.status,
         )
         if hasattr(task, "process_model_display_name"):
             new_task.process_model_display_name = task.process_model_display_name

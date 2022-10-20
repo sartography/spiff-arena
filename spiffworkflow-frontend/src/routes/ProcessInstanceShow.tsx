@@ -61,6 +61,14 @@ export default function ProcessInstanceShow() {
     });
   };
 
+  const resumeProcessInstance = () => {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/resume`,
+      successCallback: refreshPage,
+      httpMethod: 'POST',
+    });
+  };
+
   const getTaskIds = () => {
     const taskIds = { completed: [], readyOrWaiting: [] };
     if (tasks) {
@@ -135,11 +143,25 @@ export default function ProcessInstanceShow() {
   };
 
   const suspendButton = (processInstanceToUse: any) => {
-    // TODO - correct statuses to check here
-    if (['suspended'].indexOf(processInstanceToUse.status) === -1) {
+    if (
+      ['complete', 'terminated', 'faulted', 'suspended'].indexOf(
+        processInstanceToUse.status
+      ) === -1
+    ) {
       return (
         <Button onClick={suspendProcessInstance} variant="warning">
           Suspend
+        </Button>
+      );
+    }
+    return <div />;
+  };
+
+  const resumeButton = (processInstanceToUse: any) => {
+    if (['suspended'].indexOf(processInstanceToUse.status) !== -1) {
+      return (
+        <Button onClick={resumeProcessInstance} variant="warning">
+          Resume
         </Button>
       );
     }
@@ -238,6 +260,7 @@ export default function ProcessInstanceShow() {
           />
           {terminateButton(processInstanceToUse)}
           {suspendButton(processInstanceToUse)}
+          {resumeButton(processInstanceToUse)}
         </Stack>
         {getInfoTag(processInstanceToUse)}
         {taskDataDisplayArea()}

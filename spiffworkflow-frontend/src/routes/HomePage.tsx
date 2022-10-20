@@ -35,6 +35,7 @@ export default function HomePage() {
   }
 
   const buildTable = () => {
+    console.log(tasks)
     const rows = tasks.map((row) => {
       const rowToUse = row as any;
       const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.id}`;
@@ -62,8 +63,13 @@ export default function HomePage() {
             {rowToUse.title}
           </td>
           <td>{rowToUse.state}</td>
+          <td>{rowToUse.process_instance_status}</td>
           <td>
-            <Button variant="primary" href={taskUrl}>
+            <Button
+              variant="primary"
+              href={taskUrl}
+              hidden={rowToUse.process_instance_status === 'suspended'}
+            >
               Complete Task
             </Button>
           </td>
@@ -78,6 +84,7 @@ export default function HomePage() {
             <th>Process Instance</th>
             <th>Task Name</th>
             <th>Status</th>
+            <th>Process Instance Status</th>
             <th>Actions</th>
           </tr>
         </thead>
