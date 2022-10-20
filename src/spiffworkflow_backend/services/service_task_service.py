@@ -27,19 +27,20 @@ class ServiceTaskDelegate:
         if isinstance(value, dict):
             value = json.dumps(value)
 
-        secret_prefix = "secret:"  # noqa: S105
-        if value.startswith(secret_prefix):
-            key = value.removeprefix(secret_prefix)
-            secret = SecretService().get_secret(key)
-            assert secret  # noqa: S101
-            return secret.value
+        if isinstance(value, str):
+            secret_prefix = "secret:"  # noqa: S105
+            if value.startswith(secret_prefix):
+                key = value.removeprefix(secret_prefix)
+                secret = SecretService().get_secret(key)
+                assert secret  # noqa: S101
+                return secret.value
 
-        file_prefix = "file:"
-        if value.startswith(file_prefix):
-            file_name = value.removeprefix(file_prefix)
-            full_path = FileSystemService.full_path_from_relative_path(file_name)
-            with open(full_path) as f:
-                return f.read()
+            file_prefix = "file:"
+            if value.startswith(file_prefix):
+                file_name = value.removeprefix(file_prefix)
+                full_path = FileSystemService.full_path_from_relative_path(file_name)
+                with open(full_path) as f:
+                    return f.read()
 
         return value
 
@@ -52,7 +53,9 @@ class ServiceTaskDelegate:
         }
         params["spiff__task_data"] = json.dumps(task_data)
 
-        proxied_response = requests.post(f"{connector_proxy_url()}/v1/do/{name}", params)
+        proxied_response = requests.post(
+            f"{connector_proxy_url()}/v1/do/{name}", params
+        )
 
         if proxied_response.status_code != 200:
             print("got error from connector proxy")
