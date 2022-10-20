@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# HELP: git pull, pull subtrees, and push back to spiff-arena origin
+
+if has_local_git_changes; then
+  >&2 echo "ERROR: you have local git changes. Please commit or stash them before running this script."
+  exit 1
+fi
+
+gp
+./bin/pull-subtrees
+gpush
