@@ -31,7 +31,13 @@ class Permission(enum.Enum):
     read = "read"
     update = "update"
     delete = "delete"
+
+    # maybe read to GET process_model/process-instances instead?
     list = "list"
+
+    # maybe use create instead on
+    # POST http://localhost:7000/v1.0/process-models/category_number_one/call-activity/process-instances/*
+    # POST http://localhost:7000/v1.0/process-models/category_number_one/call-activity/process-instances/332/run
     instantiate = "instantiate"  # this is something you do to a process model
 
 
@@ -50,10 +56,10 @@ class PermissionAssignmentModel(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     principal_id = db.Column(ForeignKey(PrincipalModel.id), nullable=False)
     permission_target_id = db.Column(
-        ForeignKey(PermissionTargetModel.id), nullable=False
+        ForeignKey(PermissionTargetModel.id), nullable=False  # type: ignore
     )
-    grant_type = db.Column(db.String(50))
-    permission = db.Column(db.String(50))
+    grant_type = db.Column(db.String(50), nullable=False)
+    permission = db.Column(db.String(50), nullable=False)
 
     @validates("grant_type")
     def validate_grant_type(self, key: str, value: str) -> Any:
