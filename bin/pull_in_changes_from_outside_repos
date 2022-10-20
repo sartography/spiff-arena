@@ -9,11 +9,18 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 # HELP: git pull, pull subtrees, and push back to spiff-arena origin
 
-if has_local_git_changes; then
+if ! grep -q 'working tree clean' <<<"$(git status)"; then
   >&2 echo "ERROR: you have local git changes. Please commit or stash them before running this script."
   exit 1
 fi
 
-gp
+branchname=$(git symbolic-ref HEAD | cut -d'/' -f3,4)
+
+if [[ "$branchname" != "main" ]]; then
+  >&2 echo "ERROR: run this thing from the main branch, not $branchname"
+  exit 1
+fi
+
+git pull
 ./bin/pull-subtrees
-gpush
+git push origin main
