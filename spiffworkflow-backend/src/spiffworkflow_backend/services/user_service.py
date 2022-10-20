@@ -299,3 +299,17 @@ class UserService:
         ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
         db.session.add(ugam)
         db.session.commit()
+
+    @staticmethod
+    def get_user_by_service_and_service_id(
+        service: str, service_id: str
+    ) -> Optional[UserModel]:
+        """Get_user_by_service_and_service_id."""
+        user: UserModel = (
+            UserModel.query.filter(UserModel.service == service)
+            .filter(UserModel.service_id == service_id)
+            .first()
+        )
+        if user:
+            return user
+        return None

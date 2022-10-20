@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 9e14b40371f3
+Revision ID: e6b28d8e3178
 Revises: 
-Create Date: 2022-10-19 19:31:20.431800
+Create Date: 2022-10-20 13:05:25.896486
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '9e14b40371f3'
+revision = 'e6b28d8e3178'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -134,11 +134,21 @@ def upgrade():
     op.create_index(op.f('ix_process_instance_report_identifier'), 'process_instance_report', ['identifier'], unique=False)
     op.create_index(op.f('ix_process_instance_report_process_group_identifier'), 'process_instance_report', ['process_group_identifier'], unique=False)
     op.create_index(op.f('ix_process_instance_report_process_model_identifier'), 'process_instance_report', ['process_model_identifier'], unique=False)
+    op.create_table('refresh_token',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('token', sa.String(length=1024), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id')
+    )
     op.create_table('secret',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('key', sa.String(length=50), nullable=False),
     sa.Column('value', sa.Text(), nullable=False),
     sa.Column('creator_user_id', sa.Integer(), nullable=False),
+    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['creator_user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('key')
@@ -226,8 +236,8 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('principal_id', sa.Integer(), nullable=False),
     sa.Column('permission_target_id', sa.Integer(), nullable=False),
-    sa.Column('grant_type', sa.String(length=50), nullable=True),
-    sa.Column('permission', sa.String(length=50), nullable=True),
+    sa.Column('grant_type', sa.String(length=50), nullable=False),
+    sa.Column('permission', sa.String(length=50), nullable=False),
     sa.ForeignKeyConstraint(['permission_target_id'], ['permission_target.id'], ),
     sa.ForeignKeyConstraint(['principal_id'], ['principal.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -316,6 +326,7 @@ def downgrade():
     op.drop_table('active_task')
     op.drop_table('user_group_assignment')
     op.drop_table('secret')
+    op.drop_table('refresh_token')
     op.drop_index(op.f('ix_process_instance_report_process_model_identifier'), table_name='process_instance_report')
     op.drop_index(op.f('ix_process_instance_report_process_group_identifier'), table_name='process_instance_report')
     op.drop_index(op.f('ix_process_instance_report_identifier'), table_name='process_instance_report')

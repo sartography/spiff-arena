@@ -29,4 +29,4 @@ class GroupModel(FlaskBpmnGroupModel):
         secondary="user_group_assignment",
         overlaps="user_group_assignments,users",
     )
-    principal = relationship("PrincipalModel", uselist=False)  # type: ignore
+    principal = relationship("PrincipalModel", uselist=False, cascade="all, delete")  # type: ignore

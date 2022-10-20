@@ -1,13 +1,14 @@
 openapi: "3.0.2"
 info:
   version: 1.0.0
-  title: Workflow Microservice
+  title: spiffworkflow-backend
   license:
     name: MIT
 servers:
   - url: http://localhost:5000/v1.0
-security:
-  - jwt: ["secret"]
+# this is handled in flask now
+security: []
+#  - jwt: ["secret"]
 #  - oAuth2AuthCode:
 #      - read_email
 #      - uid
@@ -378,7 +379,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
-    # process model update
     put:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_update
       summary: Modifies an existing process mosel with the given parameters.
@@ -827,7 +827,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/File"
-    # process_model_file_update
     put:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_file_update
       summary: save the contents to the given file
@@ -1249,6 +1248,25 @@ paths:
           description: Unauthorized to update secret
         "404":
           description: Secret does not exist
+
+  /permissions-check:
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.permissions_check
+      summary: Checks if current user has access to given list of target uris and permissions.
+      tags:
+        - Permissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Secret"
+      responses:
+        "200":
+          description: Result of permission check
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Secret"
 
 components:
   securitySchemes:

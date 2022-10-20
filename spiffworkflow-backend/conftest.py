@@ -10,6 +10,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -57,6 +58,7 @@ def with_db_and_bpmn_file_cleanup() -> None:
     """Process_group_resource."""
     for model in SpiffworkflowBaseDBModel._all_subclasses():
         db.session.query(model).delete()
+    db.session.commit()
 
     try:
         yield
@@ -64,6 +66,12 @@ def with_db_and_bpmn_file_cleanup() -> None:
         process_model_service = ProcessModelService()
         if os.path.exists(process_model_service.root_path()):
             shutil.rmtree(process_model_service.root_path())
+
+
+@pytest.fixture()
+def with_super_admin_user() -> UserModel:
+    """With_super_admin_user."""
+    return BaseTest.create_user_with_permission("super_admin")
 
 
 @pytest.fixture()

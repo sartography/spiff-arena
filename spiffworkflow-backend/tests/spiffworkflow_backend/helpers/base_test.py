@@ -15,6 +15,8 @@ from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from werkzeug.test import TestResponse  # type: ignore
 
+from spiffworkflow_backend.models.permission_assignment import Permission
+from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -92,6 +94,7 @@ class BaseTest:
         exception_notification_addresses: Optional[list] = None,
         primary_process_id: Optional[str] = None,
         primary_file_name: Optional[str] = None,
+        user: Optional[UserModel] = None,
     ) -> TestResponse:
         """Create_process_model."""
         process_model_service = ProcessModelService()
@@ -121,7 +124,9 @@ class BaseTest:
             fault_or_suspend_on_exception=fault_or_suspend_on_exception,
             exception_notification_addresses=exception_notification_addresses,
         )
-        user = self.find_or_create_user()
+        if user is None:
+            user = self.find_or_create_user()
+
         response = client.post(
             "/v1.0/process-models",
             content_type="application/json",
@@ -139,6 +144,7 @@ class BaseTest:
         process_model: Optional[ProcessModelInfo] = None,
         file_name: str = "random_fact.svg",
         file_data: bytes = b"abcdef",
+        user: Optional[UserModel] = None,
     ) -> Any:
         """Test_create_spec_file."""
         if process_model is None:
@@ -146,7 +152,8 @@ class BaseTest:
                 process_model_id, process_group_id=process_group_id
             )
         data = {"file": (io.BytesIO(file_data), file_name)}
-        user = self.find_or_create_user()
+        if user is None:
+            user = self.find_or_create_user()
         response = client.post(
             f"/v1.0/process-models/{process_model.process_group_id}/{process_model.id}/files",
             data=data,
@@ -194,7 +201,7 @@ class BaseTest:
     # @staticmethod
     # def get_public_access_token(username: str, password: str) -> dict:
     #     """Get_public_access_token."""
-    #     public_access_token = PublicAuthenticationService().get_public_access_token(
+    #     public_access_token = AuthenticationService().get_public_access_token(
     #         username, password
     #     )
     #     return public_access_token
@@ -217,6 +224,46 @@ class BaseTest:
         db.session.add(process_instance)
         db.session.commit()
         return process_instance
+
+    @classmethod
+    def create_user_with_permission(
+        cls,
+        username: str,
+        target_uri: str = PermissionTargetModel.URI_ALL,
+        permission_names: Optional[list[str]] = None,
+    ) -> UserModel:
+        """Create_user_with_permission."""
+        user = BaseTest.find_or_create_user(username=username)
+        return cls.add_permissions_to_user(
+            user, target_uri=target_uri, permission_names=permission_names
+        )
+
+    @classmethod
+    def add_permissions_to_user(
+        cls,
+        user: UserModel,
+        target_uri: str = PermissionTargetModel.URI_ALL,
+        permission_names: Optional[list[str]] = None,
+    ) -> UserModel:
+        """Add_permissions_to_user."""
+        permission_target = PermissionTargetModel.query.filter_by(
+            uri=target_uri
+        ).first()
+        if permission_target is None:
+            permission_target = PermissionTargetModel(uri=target_uri)
+            db.session.add(permission_target)
+            db.session.commit()
+
+        if permission_names is None:
+            permission_names = [member.name for member in Permission]
+
+        for permission in permission_names:
+            AuthorizationService.create_permission_for_principal(
+                principal=user.principal,
+                permission_target=permission_target,
+                permission=permission,
+            )
+        return user
 
     @staticmethod
     def logged_in_headers(
