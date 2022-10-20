@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Editor from '@monaco-editor/react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Modal, Stack } from 'react-bootstrap';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -14,6 +15,7 @@ export default function ProcessInstanceShow() {
   const [processInstance, setProcessInstance] = useState(null);
   const [tasks, setTasks] = useState<Array<object> | null>(null);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
+  const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -170,17 +172,20 @@ export default function ProcessInstanceShow() {
 
   const handleClickedDiagramTask = (shapeElement: any) => {
     if (tasks) {
-      const matchingTask = tasks.find(
+      const matchingTask: any = tasks.find(
         (task: any) => task.name === shapeElement.id
       );
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
+        // TODO better react way to do this?
+        setTaskDataToDisplay(JSON.stringify(matchingTask.data, null, 2))
       }
     }
   };
 
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
+    setTaskDataToDisplay('');
   };
 
   const getTaskById = (taskId: string) => {
@@ -225,6 +230,18 @@ export default function ProcessInstanceShow() {
           </Button>
         );
       }
+      const taskDataContainer =
+        taskToUse.state === 'READY' ? (
+          <Editor
+            height={600}
+            width="auto"
+            defaultLanguage="json"
+            defaultValue={taskDataToDisplay}
+            onChange={(value) => setTaskDataToDisplay(value || '')}
+          />
+        ) : (
+          <pre>{taskDataToDisplay}</pre>
+        )
       return (
         <Modal show={!!taskToUse} onHide={handleTaskDataDisplayClose}>
           <Modal.Header closeButton>
@@ -233,7 +250,7 @@ export default function ProcessInstanceShow() {
               {createScriptUnitTestElement}
             </Modal.Title>
           </Modal.Header>
-          <pre>{JSON.stringify(taskToUse.data, null, 2)}</pre>
+          {taskDataContainer}
         </Modal>
       );
     }
