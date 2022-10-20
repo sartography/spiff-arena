@@ -45,6 +45,7 @@ from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -449,6 +450,34 @@ def process_instance_terminate(
     )
     processor = ProcessInstanceProcessor(process_instance)
     processor.terminate()
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
+def process_instance_suspend(
+    process_group_id: str,
+    process_model_id: str,
+    process_instance_id: int,
+) -> flask.wrappers.Response:
+    """Process_instance_suspend."""
+    process_instance = ProcessInstanceService().get_process_instance(
+        process_instance_id
+    )
+    processor = ProcessInstanceProcessor(process_instance)
+    processor.suspend()
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
+def process_instance_resume(
+    process_group_id: str,
+    process_model_id: str,
+    process_instance_id: int,
+) -> flask.wrappers.Response:
+    """Process_instance_resume."""
+    process_instance = ProcessInstanceService().get_process_instance(
+        process_instance_id
+    )
+    processor = ProcessInstanceProcessor(process_instance)
+    processor.resume()
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -895,6 +924,7 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.process_group_identifier,
+            ProcessInstanceModel.status,
             ActiveTaskModel.task_data,
             ActiveTaskModel.task_name,
             ActiveTaskModel.task_title,
@@ -947,6 +977,14 @@ def process_instance_task_list(
 def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response:
     """Task_show."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+
+    if process_instance.status == ProcessInstanceStatus.suspended.value:
+        raise ApiError(
+            error_code="error_suspended",
+            message="The process instance is suspended",
+            status_code=400,
+        )
+
     process_model = get_process_model(
         process_instance.process_model_identifier,
         process_instance.process_group_identifier,

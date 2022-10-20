@@ -1133,3 +1133,15 @@ class ProcessInstanceProcessor:
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
         db.session.commit()
+
+    def suspend(self) -> None:
+        """Suspend."""
+        self.process_instance_model.status = ProcessInstanceStatus.suspended.value
+        db.session.add(self.process_instance_model)
+        db.session.commit()
+
+    def resume(self) -> None:
+        """Resume."""
+        self.process_instance_model.status = ProcessInstanceStatus.waiting.value
+        db.session.add(self.process_instance_model)
+        db.session.commit()
