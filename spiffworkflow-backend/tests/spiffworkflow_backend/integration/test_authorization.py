@@ -9,7 +9,7 @@ class TestAuthorization(BaseTest):
     #     """Test_get_bearer_token."""
     #     for user_id in ("user_1", "user_2", "admin_1", "admin_2"):
     #         public_access_token = self.get_public_access_token(user_id, user_id)
-    #         bearer_token = PublicAuthenticationService.get_bearer_token(public_access_token)
+    #         bearer_token = AuthenticationService.get_bearer_token(public_access_token)
     #         assert isinstance(public_access_token, str)
     #         assert isinstance(bearer_token, dict)
     #         assert "access_token" in bearer_token
@@ -25,7 +25,7 @@ class TestAuthorization(BaseTest):
     #     """Test_get_user_info_from_public_access_token."""
     #     for user_id in ("user_1", "user_2", "admin_1", "admin_2"):
     #         public_access_token = self.get_public_access_token(user_id, user_id)
-    #         user_info = PublicAuthenticationService.get_user_info_from_id_token(
+    #         user_info = AuthenticationService.get_user_info_from_id_token(
     #             public_access_token
     #         )
     #         assert "sub" in user_info
@@ -46,7 +46,7 @@ class TestAuthorization(BaseTest):
     #     ) = self.get_keycloak_constants(app)
     #     for user_id in ("user_1", "user_2", "admin_1", "admin_2"):
     #         basic_token = self.get_public_access_token(user_id, user_id)
-    #         introspection = PublicAuthenticationService.introspect_token(basic_token)
+    #         introspection = AuthenticationService.introspect_token(basic_token)
     #         assert isinstance(introspection, dict)
     #         assert introspection["typ"] == "Bearer"
     #         assert introspection["preferred_username"] == user_id
@@ -80,7 +80,7 @@ class TestAuthorization(BaseTest):
     #     for user_id in ("user_1", "user_2", "admin_1", "admin_2"):
     #         output[user_id] = {}
     #         basic_token = self.get_public_access_token(user_id, user_id)
-    #         permissions = PublicAuthenticationService.get_permission_by_basic_token(
+    #         permissions = AuthenticationService.get_permission_by_basic_token(
     #             basic_token
     #         )
     #         if isinstance(permissions, list):
@@ -136,7 +136,7 @@ class TestAuthorization(BaseTest):
     #         for resource in resources:
     #             output[user_id][resource] = {}
     #             for scope in "instantiate", "read", "update", "delete":
-    #                 auth_status = PublicAuthenticationService.get_auth_status_for_resource_and_scope_by_token(
+    #                 auth_status = AuthenticationService.get_auth_status_for_resource_and_scope_by_token(
     #                     basic_token, resource, scope
     #                 )
     #                 output[user_id][resource][scope] = auth_status
@@ -152,7 +152,7 @@ class TestAuthorization(BaseTest):
     #         for resource in resource_names:
     #             output[user_id][resource] = {}
     #             for scope in "instantiate", "read", "update", "delete":
-    #                 permissions = PublicAuthenticationService.get_permissions_by_token_for_resource_and_scope(
+    #                 permissions = AuthenticationService.get_permissions_by_token_for_resource_and_scope(
     #                     basic_token, resource, scope
     #                 )
     #                 output[user_id][resource][scope] = permissions

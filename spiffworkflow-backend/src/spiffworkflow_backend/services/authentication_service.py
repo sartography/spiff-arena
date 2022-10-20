@@ -10,7 +10,10 @@ import requests
 from flask import current_app
 from flask import redirect
 from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
 from werkzeug.wrappers import Response
+
+from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 
 
 class AuthenticationProviderTypes(enum.Enum):
@@ -20,13 +23,8 @@ class AuthenticationProviderTypes(enum.Enum):
     internal = "internal"
 
 
-class PublicAuthenticationService:
-    """PublicAuthenticationService."""
-
-    """Not sure where/if this ultimately lives.
-    It uses a separate public open_id client: spiffworkflow-frontend
-    Used during development to make testing easy.
-    """
+class AuthenticationService:
+    """AuthenticationService."""
 
     @staticmethod
     def get_open_id_args() -> tuple:
@@ -45,18 +43,14 @@ class PublicAuthenticationService:
         )
 
     @classmethod
-    def get_user_info_from_id_token(cls, token: str) -> dict:
-        """This seems to work with basic tokens too."""
+    def get_user_info_from_open_id(cls, token: str) -> dict:
+        """The token is an auth_token."""
         (
             open_id_server_url,
             open_id_client_id,
             open_id_realm_name,
             open_id_client_secret_key,
         ) = cls.get_open_id_args()
-
-        # backend_basic_auth_string = f"{open_id_client_id}:{open_id_client_secret_key}"
-        # backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-        # backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
 
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -85,7 +79,8 @@ class PublicAuthenticationService:
             status_code=401,
         )
 
-    def get_backend_url(self) -> str:
+    @staticmethod
+    def get_backend_url() -> str:
         """Get_backend_url."""
         return str(current_app.config["SPIFFWORKFLOW_BACKEND_URL"])
 
@@ -99,7 +94,7 @@ class PublicAuthenticationService:
             open_id_client_id,
             open_id_realm_name,
             open_id_client_secret_key,
-        ) = PublicAuthenticationService.get_open_id_args()
+        ) = AuthenticationService.get_open_id_args()
         request_url = (
             f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/logout?"
             + f"post_logout_redirect_uri={return_redirect_url}&"
@@ -123,7 +118,7 @@ class PublicAuthenticationService:
             open_id_client_id,
             open_id_realm_name,
             open_id_client_secret_key,
-        ) = PublicAuthenticationService.get_open_id_args()
+        ) = AuthenticationService.get_open_id_args()
         return_redirect_url = f"{self.get_backend_url()}{redirect_url}"
         login_redirect_url = (
             f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/auth?"
@@ -135,16 +130,16 @@ class PublicAuthenticationService:
         )
         return login_redirect_url
 
-    def get_id_token_object(
+    def get_auth_token_object(
         self, code: str, redirect_url: str = "/v1.0/login_return"
     ) -> dict:
-        """Get_id_token_object."""
+        """Get_auth_token_object."""
         (
             open_id_server_url,
             open_id_client_id,
             open_id_realm_name,
             open_id_client_secret_key,
-        ) = PublicAuthenticationService.get_open_id_args()
+        ) = AuthenticationService.get_open_id_args()
 
         backend_basic_auth_string = f"{open_id_client_id}:{open_id_client_secret_key}"
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
@@ -162,8 +157,8 @@ class PublicAuthenticationService:
         request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
 
         response = requests.post(request_url, data=data, headers=headers)
-        id_token_object: dict = json.loads(response.text)
-        return id_token_object
+        auth_token_object: dict = json.loads(response.text)
+        return auth_token_object
 
     @classmethod
     def validate_id_token(cls, id_token: str) -> bool:
@@ -211,3 +206,65 @@ class PublicAuthenticationService:
             )
 
         return True
+
+    @staticmethod
+    def store_refresh_token(user_id: int, refresh_token: str) -> None:
+        """Store_refresh_token."""
+        refresh_token_model = RefreshTokenModel.query.filter(
+            RefreshTokenModel.user_id == user_id
+        ).first()
+        if refresh_token_model:
+            refresh_token_model.token = refresh_token
+        else:
+            refresh_token_model = RefreshTokenModel(
+                user_id=user_id, token=refresh_token
+            )
+        db.session.add(refresh_token_model)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            raise ApiError(
+                error_code="store_refresh_token_error",
+                message=f"We could not store the refresh token. Original error is {e}",
+            ) from e
+
+    @staticmethod
+    def get_refresh_token(user_id: int) -> Optional[str]:
+        """Get_refresh_token."""
+        refresh_token_object: RefreshTokenModel = RefreshTokenModel.query.filter(
+            RefreshTokenModel.user_id == user_id
+        ).first()
+        assert refresh_token_object  # noqa: S101
+        return refresh_token_object.token
+
+    @classmethod
+    def get_auth_token_from_refresh_token(cls, refresh_token: str) -> dict:
+        """Get a new auth_token from a refresh_token."""
+        (
+            open_id_server_url,
+            open_id_client_id,
+            open_id_realm_name,
+            open_id_client_secret_key,
+        ) = cls.get_open_id_args()
+
+        backend_basic_auth_string = f"{open_id_client_id}:{open_id_client_secret_key}"
+        backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
+        backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
+        }
+
+        data = {
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_id": open_id_client_id,
+            "client_secret": open_id_client_secret_key,
+        }
+
+        request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
+
+        response = requests.post(request_url, data=data, headers=headers)
+        auth_token_object: dict = json.loads(response.text)
+        return auth_token_object

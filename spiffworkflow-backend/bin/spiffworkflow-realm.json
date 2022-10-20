@@ -631,6 +631,28 @@
       "groups": []
     },
     {
+      "id": "9b46f3be-a81d-4b76-92e6-2ac8462f5ec8",
+      "createdTimestamp": 1665688255982,
+      "username": "finance_user1",
+      "enabled": true,
+      "totp": false,
+      "emailVerified": false,
+      "credentials": [
+        {
+          "id": "f14722ec-13a7-4d35-a4ec-0475d405ae58",
+          "type": "password",
+          "createdDate": 1665688275943,
+          "secretData": "{\"value\":\"PlNhf8ShIvaSP3CUwCwAJ2tkqcTCVmCWUy4rbuLSXxEIiuGMu4XeZdsrE82R8PWuDQhlWn/YOUOk38xKZS2ySQ==\",\"salt\":\"m7JGY2cWgFBXMYQSSP2JQQ==\",\"additionalParameters\":{}}",
+          "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
+        }
+      ],
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": ["default-roles-spiffworkflow"],
+      "notBefore": 0,
+      "groups": []
+    },
+    {
       "id": "087bdc16-e362-4340-aa60-1ff71a45f844",
       "createdTimestamp": 1665516884829,
       "username": "harmeet",
@@ -825,31 +847,6 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": ["default-roles-spiffworkflow"],
-      "notBefore": 0,
-      "groups": []
-    },
-    {
-      "id": "a15da457-7ebb-49d4-9dcc-6876cb71600d",
-      "createdTimestamp": 1657115919770,
-      "username": "repeat_form_user_1",
-      "enabled": true,
-      "totp": false,
-      "emailVerified": false,
-      "credentials": [
-        {
-          "id": "509dfd8d-a54e-4d8b-b250-ec99e585e15d",
-          "type": "password",
-          "createdDate": 1657298008525,
-          "secretData": "{\"value\":\"/47zG9XBvKg+1P2z6fRL4cyUNn+sB4BgXsxBsvi1NYR9Z20WTeWzzOT2uXvv2ajKMRHrv0OqTesldvSJXARPqA==\",\"salt\":\"dODEHOF24xGPx+7QGaIXWQ==\",\"additionalParameters\":{}}",
-          "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
-        }
-      ],
-      "disableableCredentialTypes": [],
-      "requiredActions": [],
-      "realmRoles": ["default-roles-spiffworkflow"],
-      "clientRoles": {
-        "spiffworkflow-backend": ["uma_protection", "repeat-form-role-2"]
-      },
       "notBefore": 0,
       "groups": []
     },

@@ -10,12 +10,13 @@ import jwt
 from flask import current_app
 from flask import g
 from flask import redirect
+from flask import request
 from flask_bpmn.api.api_error import ApiError
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import (
-    PublicAuthenticationService,
+    AuthenticationService,
 )
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
@@ -26,13 +27,17 @@ from spiffworkflow_backend.services.user_service import UserService
 """
 
 
-def verify_token(token: Optional[str] = None) -> Dict[str, Optional[Union[str, int]]]:
+# authorization_exclusion_list = ['status']
+def verify_token(
+    token: Optional[str] = None, force_run: Optional[bool] = False
+) -> Optional[Dict[str, Optional[Union[str, int]]]]:
     """Verify the token for the user (if provided).
 
     If in production environment and token is not provided, gets user from the SSO headers and returns their token.
 
     Args:
         token: Optional[str]
+        force_run: Optional[bool]
 
     Returns:
         token: str
@@ -41,6 +46,12 @@ def verify_token(token: Optional[str] = None) -> Dict[str, Optional[Union[str, i
         ApiError:  If not on production and token is not valid, returns an 'invalid_token' 403 error.
         If on production and user is not authenticated, returns a 'no_user' 403 error.
     """
+    if not force_run and AuthorizationService.should_disable_auth_for_request():
+        return None
+
+    if not token and "Authorization" in request.headers:
+        token = request.headers["Authorization"].removeprefix("Bearer ")
+
     if token:
         user_model = None
         decoded_token = get_decoded_token(token)
@@ -59,11 +70,35 @@ def verify_token(token: Optional[str] = None) -> Dict[str, Optional[Union[str, i
 
             elif "iss" in decoded_token.keys():
                 try:
-                    user_info = PublicAuthenticationService.get_user_info_from_id_token(
-                        token
-                    )
+                    user_info = AuthenticationService.get_user_info_from_open_id(token)
                 except ApiError as ae:
-                    raise ae
+                    # Try to refresh the token
+                    user = UserService.get_user_by_service_and_service_id(
+                        "open_id", decoded_token["sub"]
+                    )
+                    if user:
+                        refresh_token = AuthenticationService.get_refresh_token(user.id)
+                        if refresh_token:
+                            auth_token: dict = (
+                                AuthenticationService.get_auth_token_from_refresh_token(
+                                    refresh_token
+                                )
+                            )
+                            if auth_token and "error" not in auth_token:
+                                # redirect to original url, with auth_token?
+                                user_info = (
+                                    AuthenticationService.get_user_info_from_open_id(
+                                        auth_token["access_token"]
+                                    )
+                                )
+                                if not user_info:
+                                    raise ae
+                            else:
+                                raise ae
+                        else:
+                            raise ae
+                    else:
+                        raise ae
                 except Exception as e:
                     current_app.logger.error(f"Exception raised in get_token: {e}")
                     raise ApiError(
@@ -106,9 +141,11 @@ def verify_token(token: Optional[str] = None) -> Dict[str, Optional[Union[str, i
 
         # If the user is valid, store the token for this session
         if g.user:
+            # This is an id token, so we don't have a refresh token yet
             g.token = token
-            scope = get_scope(token)
-            return {"uid": g.user.id, "sub": g.user.id, "scope": scope}
+            get_scope(token)
+            return None
+            # return {"uid": g.user.id, "sub": g.user.id, "scope": scope}
             # return validate_scope(token, user_info, user_model)
         else:
             raise ApiError(error_code="no_user_id", message="Cannot get a user id")
@@ -116,65 +153,18 @@ def verify_token(token: Optional[str] = None) -> Dict[str, Optional[Union[str, i
     raise ApiError(
         error_code="invalid_token", message="Cannot validate token.", status_code=401
     )
-    # no token -- do we ever get here?
-    # else:
-    #     ...
-    # if current_app.config.get("DEVELOPMENT"):
-    #     # Fall back to a default user if this is not production.
-    #     g.user = UserModel.query.first()
-    #     if not g.user:
-    #         raise ApiError(
-    #             "no_user",
-    #             "You are in development mode, but there are no users in the database.  Add one, and it will use it.",
-    #         )
-    #     token_from_user = g.user.encode_auth_token()
-    #     token_info = UserModel.decode_auth_token(token_from_user)
-    #     return token_info
-    #
-    # else:
-    #     raise ApiError(
-    #         error_code="no_auth_token",
-    #         message="No authorization token was available.",
-    #         status_code=401,
-    #     )
 
 
 def validate_scope(token: Any) -> bool:
     """Validate_scope."""
     print("validate_scope")
-    # token = PublicAuthenticationService.refresh_token(token)
-    # user_info = PublicAuthenticationService.get_user_info_from_public_access_token(token)
-    # bearer_token = PublicAuthenticationService.get_bearer_token(token)
-    # permission = PublicAuthenticationService.get_permission_by_basic_token(token)
-    # permissions = PublicAuthenticationService.get_permissions_by_token_for_resource_and_scope(token)
-    # introspection = PublicAuthenticationService.introspect_token(basic_token)
+    # token = AuthenticationService.refresh_token(token)
+    # user_info = AuthenticationService.get_user_info_from_public_access_token(token)
+    # bearer_token = AuthenticationService.get_bearer_token(token)
+    # permission = AuthenticationService.get_permission_by_basic_token(token)
+    # permissions = AuthenticationService.get_permissions_by_token_for_resource_and_scope(token)
+    # introspection = AuthenticationService.introspect_token(basic_token)
     return True
-
-
-# def login_api(redirect_url: str = "/v1.0/ui") -> Response:
-#     """Api_login."""
-#     # TODO: Fix this! mac 20220801
-#     # token:dict = PublicAuthenticationService().get_public_access_token(uid, password)
-#     #
-#     # return token
-#     # if uid:
-#     #     sub = f"service:internal::service_id:{uid}"
-#     #     token = encode_auth_token(sub)
-#     #     user_model = UserModel(username=uid,
-#     #                            uid=uid,
-#     #                            service='internal',
-#     #                            name="API User")
-#     #     g.user = user_model
-#     #
-#     #     g.token = token
-#     #     scope = get_scope(token)
-#     #     return token
-#     #     return {"uid": uid, "sub": uid, "scope": scope}
-#     return login(redirect_url)
-
-
-# def login_api_return(code: str, state: str, session_state: str) -> Optional[Response]:
-#     print("login_api_return")
 
 
 def encode_auth_token(sub: str, token_type: Optional[str] = None) -> str:
@@ -202,8 +192,8 @@ def encode_auth_token(sub: str, token_type: Optional[str] = None) -> str:
 
 def login(redirect_url: str = "/") -> Response:
     """Login."""
-    state = PublicAuthenticationService.generate_state(redirect_url)
-    login_redirect_url = PublicAuthenticationService().get_login_redirect_url(
+    state = AuthenticationService.generate_state(redirect_url)
+    login_redirect_url = AuthenticationService().get_login_redirect_url(
         state.decode("UTF-8")
     )
     return redirect(login_redirect_url)
@@ -214,13 +204,13 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
 
-    id_token_object = PublicAuthenticationService().get_id_token_object(code)
-    if "id_token" in id_token_object:
-        id_token = id_token_object["id_token"]
+    auth_token_object = AuthenticationService().get_auth_token_object(code)
+    if "id_token" in auth_token_object:
+        id_token = auth_token_object["id_token"]
 
-        if PublicAuthenticationService.validate_id_token(id_token):
-            user_info = PublicAuthenticationService.get_user_info_from_id_token(
-                id_token_object["access_token"]
+        if AuthenticationService.validate_id_token(id_token):
+            user_info = AuthenticationService.get_user_info_from_open_id(
+                auth_token_object["access_token"]
             )
             if user_info and "error" not in user_info:
                 user_model = (
@@ -250,6 +240,10 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
 
                 if user_model:
                     g.user = user_model.id
+                    g.token = auth_token_object["id_token"]
+                    AuthenticationService.store_refresh_token(
+                        user_model.id, auth_token_object["refresh_token"]
+                    )
 
                 # this may eventually get too slow.
                 # when it does, be careful about backgrounding, because
@@ -261,7 +255,7 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
 
                 redirect_url = (
                     f"{state_redirect_url}?"
-                    + f"access_token={id_token_object['access_token']}&"
+                    + f"access_token={auth_token_object['access_token']}&"
                     + f"id_token={id_token}"
                 )
                 return redirect(redirect_url)
@@ -283,8 +277,8 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
 def login_api() -> Response:
     """Login_api."""
     redirect_url = "/v1.0/login_api_return"
-    state = PublicAuthenticationService.generate_state(redirect_url)
-    login_redirect_url = PublicAuthenticationService().get_login_redirect_url(
+    state = AuthenticationService.generate_state(redirect_url)
+    login_redirect_url = AuthenticationService().get_login_redirect_url(
         state.decode("UTF-8"), redirect_url
     )
     return redirect(login_redirect_url)
@@ -295,10 +289,10 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_dict["redirect_url"]
 
-    id_token_object = PublicAuthenticationService().get_id_token_object(
+    auth_token_object = AuthenticationService().get_auth_token_object(
         code, "/v1.0/login_api_return"
     )
-    access_token: str = id_token_object["access_token"]
+    access_token: str = auth_token_object["access_token"]
     assert access_token  # noqa: S101
     return access_token
     # return redirect("localhost:7000/v1.0/ui")
@@ -309,9 +303,7 @@ def logout(id_token: str, redirect_url: Optional[str]) -> Response:
     """Logout."""
     if redirect_url is None:
         redirect_url = ""
-    return PublicAuthenticationService().logout(
-        redirect_url=redirect_url, id_token=id_token
-    )
+    return AuthenticationService().logout(redirect_url=redirect_url, id_token=id_token)
 
 
 def logout_return() -> Response:
