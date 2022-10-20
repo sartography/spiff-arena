@@ -62,8 +62,13 @@ export default function HomePage() {
             {rowToUse.title}
           </td>
           <td>{rowToUse.state}</td>
+          <td>{rowToUse.process_instance_status}</td>
           <td>
-            <Button variant="primary" href={taskUrl}>
+            <Button
+              variant="primary"
+              href={taskUrl}
+              hidden={rowToUse.process_instance_status === 'suspended'}
+            >
               Complete Task
             </Button>
           </td>
@@ -78,6 +83,7 @@ export default function HomePage() {
             <th>Process Instance</th>
             <th>Task Name</th>
             <th>Status</th>
+            <th>Process Instance Status</th>
             <th>Actions</th>
           </tr>
         </thead>
