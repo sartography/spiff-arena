@@ -16,6 +16,7 @@ export default function ProcessInstanceShow() {
   const [tasks, setTasks] = useState<Array<object> | null>(null);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
+  const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -216,41 +217,83 @@ export default function ProcessInstanceShow() {
     }
   };
 
+  const canEditTaskData = (task: any) => {
+    return task.state === 'READY'
+  }
+
+  const taskDataButtons = (task: any) => {
+    const buttons = []
+
+    if (task.type === 'Script Task') {
+      buttons.push(
+        <Button
+          data-qa="create-script-unit-test-button"
+          onClick={createScriptUnitTest}
+        >
+          Create Script Unit Test
+        </Button>
+      )
+    }
+
+    if (canEditTaskData(task)) {
+      if (editingTaskData) {
+        buttons.push(
+          <Button
+            data-qa="create-script-unit-test-button"
+            onClick={() => setEditingTaskData(false)}
+          >
+            Save
+          </Button>
+        )
+        buttons.push(
+          <Button
+            data-qa="create-script-unit-test-button"
+            onClick={() => setEditingTaskData(false)}
+          >
+            Cancel
+          </Button>
+        )
+      } else {
+        buttons.push(
+          <Button
+            data-qa="create-script-unit-test-button"
+            onClick={() => setEditingTaskData(true)}
+          >
+            Edit
+          </Button>
+        )
+      }
+    }
+
+    return buttons
+  }
+
+  const taskDataContainer = () => {
+    return editingTaskData ? (
+      <Editor
+        height={600}
+        width="auto"
+        defaultLanguage="json"
+        defaultValue={taskDataToDisplay}
+        onChange={(value) => setTaskDataToDisplay(value || '')}
+      />
+    ) : (
+      <pre>{taskDataToDisplay}</pre>
+    )
+  }
+
   const taskDataDisplayArea = () => {
     const taskToUse: any = taskToDisplay;
     if (taskToDisplay) {
-      let createScriptUnitTestElement = null;
-      if (taskToUse.type === 'Script Task') {
-        createScriptUnitTestElement = (
-          <Button
-            data-qa="create-script-unit-test-button"
-            onClick={createScriptUnitTest}
-          >
-            Create Script Unit Test
-          </Button>
-        );
-      }
-      const taskDataContainer =
-        taskToUse.state === 'READY' ? (
-          <Editor
-            height={600}
-            width="auto"
-            defaultLanguage="json"
-            defaultValue={taskDataToDisplay}
-            onChange={(value) => setTaskDataToDisplay(value || '')}
-          />
-        ) : (
-          <pre>{taskDataToDisplay}</pre>
-        )
       return (
         <Modal show={!!taskToUse} onHide={handleTaskDataDisplayClose}>
           <Modal.Header closeButton>
             <Modal.Title>
               {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-              {createScriptUnitTestElement}
+              {taskDataButtons(taskToUse)}
             </Modal.Title>
           </Modal.Header>
-          {taskDataContainer}
+          {taskDataContainer()}
         </Modal>
       );
     }
