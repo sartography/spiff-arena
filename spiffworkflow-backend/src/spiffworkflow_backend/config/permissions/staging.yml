@@ -1,13 +1,25 @@
 groups:
   admin:
     users:
-      [jakub, kb, alex, dan, mike, jason, amir, jarrad, elizabeth, jon, natalia]
+      [
+        jakub,
+        kb,
+        alex,
+        dan,
+        mike,
+        jason,
+        amir,
+        jarrad,
+        elizabeth,
+        jon,
+        harmeet,
+        sasha,
+        manuchehr,
+        natalia,
+      ]
 
   finance:
-    users: [harmeet, sasha]
-
-  hr:
-    users: [manuchehr]
+    users: [finance_user1]
 
 permissions:
   admin:
@@ -20,10 +32,10 @@ permissions:
     groups: [finance]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/finance/*
+    uri: /v1.0/process-groups/execute-procure-to-pay/*
 
   read-all:
-    groups: [finance, hr, admin]
+    groups: [finance, admin]
     users: []
     allowed_permissions: [read]
     uri: /*

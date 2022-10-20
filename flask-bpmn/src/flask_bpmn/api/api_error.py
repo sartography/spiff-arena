@@ -19,7 +19,6 @@ from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ign
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
-from werkzeug.exceptions import InternalServerError
 
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
@@ -169,24 +168,10 @@ def set_user_sentry_context() -> None:
     set_user({"username": username})
 
 
-@api_error_blueprint.app_errorhandler(ApiError)
-def handle_invalid_usage(error: ApiError) -> flask.wrappers.Response:
-    """Handles invalid usage error."""
-    current_app.logger.exception(error)
-    return make_response(jsonify(error), error.status_code)
-
-
-@api_error_blueprint.app_errorhandler(InternalServerError)
-def handle_internal_server_error(error: InternalServerError) -> flask.wrappers.Response:
-    """Handles internal server error."""
-    original = getattr(error, "original_exception", None)
-    api_error = ApiError(error_code="internal_server_error", message=str(original))
-    return make_response(jsonify(api_error), 500)
-
-
 @api_error_blueprint.app_errorhandler(Exception)
-def handle_internal_server_exception(exception: Exception) -> flask.wrappers.Response:
+def handle_exception(exception: Exception) -> flask.wrappers.Response:
     """Handles unexpected exceptions."""
+    current_app.logger.exception(exception)
     set_user_sentry_context()
     id = capture_exception(exception)
 
@@ -198,11 +183,17 @@ def handle_internal_server_exception(exception: Exception) -> flask.wrappers.Res
             f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
         )
 
-    current_app.logger.exception(exception)
+    # set api_exception like this to avoid confusing mypy
+    # and what type the object is
+    api_exception = None
+    if isinstance(exception, ApiError):
+        api_exception = exception
+    else:
+        api_exception = ApiError(
+            error_code="internal_server_error",
+            message=f"{exception.__class__.__name__}",
+            sentry_link=sentry_link,
+            status_code=500,
+        )
 
-    api_exception = ApiError(
-        error_code="error",
-        message=f"{exception.__class__.__name__}",
-        sentry_link=sentry_link,
-    )
-    return make_response(jsonify(api_exception), 500)
+    return make_response(jsonify(api_exception), api_exception.status_code)

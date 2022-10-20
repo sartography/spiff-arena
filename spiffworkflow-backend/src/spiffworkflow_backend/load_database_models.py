@@ -45,6 +45,7 @@ from spiffworkflow_backend.models.process_instance import (
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.refresh_token import RefreshTokenModel  # noqa: F401
 from spiffworkflow_backend.models.secret_model import SecretModel  # noqa: F401
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel  # noqa: F401
 from spiffworkflow_backend.models.task_event import TaskEventModel  # noqa: F401
