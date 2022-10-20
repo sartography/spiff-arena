@@ -158,7 +158,7 @@ export default function ProcessInstanceShow() {
   };
 
   const resumeButton = (processInstanceToUse: any) => {
-    if (['suspended'].indexOf(processInstanceToUse.status) !== -1) {
+    if (processInstanceToUse.status === 'suspended') {
       return (
         <Button onClick={resumeProcessInstance} variant="warning">
           Resume

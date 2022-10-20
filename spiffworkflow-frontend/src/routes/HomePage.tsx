@@ -35,7 +35,6 @@ export default function HomePage() {
   }
 
   const buildTable = () => {
-    console.log(tasks)
     const rows = tasks.map((row) => {
       const rowToUse = row as any;
       const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.id}`;
