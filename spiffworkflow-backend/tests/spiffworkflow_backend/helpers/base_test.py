@@ -207,10 +207,15 @@ class BaseTest:
     #     return public_access_token
 
     def create_process_instance_from_process_model(
-        self, process_model: ProcessModelInfo, status: Optional[str] = "not_started"
+        self,
+        process_model: ProcessModelInfo,
+        status: Optional[str] = "not_started",
+        user: Optional[UserModel] = None,
     ) -> ProcessInstanceModel:
         """Create_process_instance_from_process_model."""
-        user = self.find_or_create_user()
+        if user is None:
+            user = self.find_or_create_user()
+
         current_time = round(time.time())
         process_instance = ProcessInstanceModel(
             status=status,
