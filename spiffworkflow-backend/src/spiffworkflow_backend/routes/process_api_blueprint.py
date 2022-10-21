@@ -747,6 +747,9 @@ def process_instance_delete(
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
+    # import pdb; pdb.set_trace()
+    # (Pdb) db.session.delete
+    # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
     db.session.delete(process_instance)
     db.session.commit()
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -925,7 +928,6 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.process_group_identifier,
             ProcessInstanceModel.status,
-            ActiveTaskModel.task_data,
             ActiveTaskModel.task_name,
             ActiveTaskModel.task_title,
             ActiveTaskModel.task_type,
@@ -937,7 +939,6 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
-
     tasks = [ActiveTaskModel.to_task(active_task) for active_task in active_tasks.items]
 
     response_json = {

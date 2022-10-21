@@ -563,7 +563,6 @@ class ProcessInstanceProcessor:
                     task_title=ready_or_waiting_task.task_spec.description,
                     task_type=ready_or_waiting_task.task_spec.__class__.__name__,
                     task_status=ready_or_waiting_task.get_state_name(),
-                    task_data=json.dumps(ready_or_waiting_task.data),
                 )
                 db.session.add(active_task)
 
