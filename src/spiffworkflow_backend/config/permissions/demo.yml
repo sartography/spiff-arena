@@ -3,29 +3,45 @@ default_group: everybody
 groups:
   admin:
     users:
-      [jakub, kb, alex, dan, mike, jason, amir, jarrad, elizabeth, jon, natalia]
+      [jakub, kb, alex, dan, mike, jason, amir, jarrad, elizabeth, jon, natalia, harmeet, sasha, manuchehr]
 
-  finance:
-    users: [harmeet, sasha]
+  Finance Team:
+    users: [jakub, alex, dan, mike, jason, amir, jarrad, elizabeth, jon, natalia, harmeet, sasha, manuchehr]
+
+  Team Lead:
+    users: [jakub, alex, dan, mike, jason, jarrad, elizabeth, jon, natalia, harmeet, sasha, manuchehr]
 
   hr:
     users: [manuchehr]
 
 permissions:
+  tasks-crud:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/tasks/*
+
   admin:
     groups: [admin]
     users: []
     allowed_permissions: [create, read, update, delete, list, instantiate]
     uri: /*
 
+  # TODO: all uris should really have the same structure
+  finance-admin-group:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-groups/finance/*
+
   finance-admin:
-    groups: [finance]
+    groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-groups/finance/*
 
   read-all:
-    groups: [finance, hr, admin]
+    groups: ["Finance Team", "Team Lead", hr, admin]
     users: []
     allowed_permissions: [read]
     uri: /*
