@@ -670,6 +670,72 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/suspend:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_suspend
+      summary: Suspend a process instance
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Empty ok true response on successful suspension.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/resume:
+    parameters:
+      - name: process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group
+        schema:
+          type: string
+      - name: process_model_id
+        in: path
+        required: true
+        description: The unique id of an existing process model.
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_resume
+      summary: Resume a process instance
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Empty ok true response on successful resume.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /process-models/{process_group_id}/{process_model_id}/process-instances/reports:
     parameters:
       - name: process_group_id

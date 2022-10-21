@@ -111,6 +111,7 @@ class Task:
         process_name: str = "",
         properties: Union[dict, None] = None,
         process_instance_id: Union[int, None] = None,
+        process_instance_status: Union[str, None] = None,
         process_model_display_name: Union[str, None] = None,
         process_group_identifier: Union[str, None] = None,
         process_model_identifier: Union[str, None] = None,
@@ -134,6 +135,7 @@ class Task:
             self.data = {}
 
         self.process_instance_id = process_instance_id
+        self.process_instance_status = process_instance_status
         self.process_group_identifier = process_group_identifier
         self.process_model_identifier = process_model_identifier
         self.process_model_display_name = process_model_display_name
@@ -178,6 +180,7 @@ class Task:
             "process_name": self.process_name,
             "properties": self.properties,
             "process_instance_id": self.process_instance_id,
+            "process_instance_status": self.process_instance_status,
             "process_model_display_name": self.process_model_display_name,
             "process_group_identifier": self.process_group_identifier,
             "process_model_identifier": self.process_model_identifier,

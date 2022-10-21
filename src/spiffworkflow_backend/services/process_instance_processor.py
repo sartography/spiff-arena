@@ -563,7 +563,6 @@ class ProcessInstanceProcessor:
                     task_title=ready_or_waiting_task.task_spec.description,
                     task_type=ready_or_waiting_task.task_spec.__class__.__name__,
                     task_status=ready_or_waiting_task.get_state_name(),
-                    task_data=json.dumps(ready_or_waiting_task.data),
                 )
                 db.session.add(active_task)
 
@@ -1131,5 +1130,17 @@ class ProcessInstanceProcessor:
         self.bpmn_process_instance.cancel()
         self.save()
         self.process_instance_model.status = "terminated"
+        db.session.add(self.process_instance_model)
+        db.session.commit()
+
+    def suspend(self) -> None:
+        """Suspend."""
+        self.process_instance_model.status = ProcessInstanceStatus.suspended.value
+        db.session.add(self.process_instance_model)
+        db.session.commit()
+
+    def resume(self) -> None:
+        """Resume."""
+        self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
         db.session.commit()
