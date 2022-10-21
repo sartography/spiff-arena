@@ -234,7 +234,7 @@ export default function ProcessInstanceShow() {
     initializeTaskDataToDisplay(taskToDisplay);
   }
 
-  const saveTaskDataResult = (result: any) => {
+  const saveTaskDataResult = (_: any) => {
     setEditingTaskData(false);
   }
 
@@ -249,7 +249,7 @@ export default function ProcessInstanceShow() {
 
     const taskToUse: any = taskToDisplay;
     HttpService.makeCallToBackend({
-      path: `/TODO`,
+      path: `/process-instances/${params.process_instance_id}/task/${taskToUse.id}/update`,
       httpMethod: 'POST',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,
