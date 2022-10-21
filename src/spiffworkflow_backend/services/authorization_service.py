@@ -10,8 +10,10 @@ from flask import g
 from flask import request
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import text
 
+from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
@@ -20,11 +22,22 @@ from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceProcessor,
+)
 from spiffworkflow_backend.services.user_service import UserService
 
 
 class PermissionsFileNotSetError(Exception):
     """PermissionsFileNotSetError."""
+
+
+class ActiveTaskNotFoundError(Exception):
+    """ActiveTaskNotFoundError."""
+
+
+class UserDoesNotHaveAccessToTaskError(Exception):
+    """UserDoesNotHaveAccessToTaskError."""
 
 
 class AuthorizationService:
@@ -94,6 +107,19 @@ class AuthorizationService:
         cls.import_permissions_from_yaml_file()
 
     @classmethod
+    def associate_user_with_group(cls, user: UserModel, group: GroupModel) -> None:
+        """Associate_user_with_group."""
+        user_group_assignemnt = UserGroupAssignmentModel.query.filter_by(
+            user_id=user.id, group_id=group.id
+        ).first()
+        if user_group_assignemnt is None:
+            user_group_assignemnt = UserGroupAssignmentModel(
+                user_id=user.id, group_id=group.id
+            )
+            db.session.add(user_group_assignemnt)
+            db.session.commit()
+
+    @classmethod
     def import_permissions_from_yaml_file(
         cls, raise_if_missing_user: bool = False
     ) -> None:
@@ -108,6 +134,20 @@ class AuthorizationService:
         permission_configs = None
         with open(current_app.config["PERMISSIONS_FILE_FULLPATH"]) as file:
             permission_configs = yaml.safe_load(file)
+
+        default_group = None
+        if "default_group" in permission_configs:
+            default_group_identifier = permission_configs["default_group"]
+            default_group = GroupModel.query.filter_by(
+                identifier=default_group_identifier
+            ).first()
+            if default_group is None:
+                default_group = GroupModel(identifier=default_group_identifier)
+                db.session.add(default_group)
+                db.session.commit()
+                UserService.create_principal(
+                    default_group.id, id_column_name="group_id"
+                )
 
         if "groups" in permission_configs:
             for group_identifier, group_config in permission_configs["groups"].items():
@@ -127,15 +167,7 @@ class AuthorizationService:
                                 )
                             )
                         continue
-                    user_group_assignemnt = UserGroupAssignmentModel.query.filter_by(
-                        user_id=user.id, group_id=group.id
-                    ).first()
-                    if user_group_assignemnt is None:
-                        user_group_assignemnt = UserGroupAssignmentModel(
-                            user_id=user.id, group_id=group.id
-                        )
-                        db.session.add(user_group_assignemnt)
-                        db.session.commit()
+                    cls.associate_user_with_group(user, group)
 
         if "permissions" in permission_configs:
             for _permission_identifier, permission_config in permission_configs[
@@ -164,14 +196,20 @@ class AuthorizationService:
                             )
                     if "users" in permission_config:
                         for username in permission_config["users"]:
-                            principal = (
-                                PrincipalModel.query.join(UserModel)
-                                .filter(UserModel.username == username)
-                                .first()
-                            )
-                            cls.create_permission_for_principal(
-                                principal, permission_target, allowed_permission
-                            )
+                            user = UserModel.query.filter_by(username=username).first()
+                            if user is not None:
+                                principal = (
+                                    PrincipalModel.query.join(UserModel)
+                                    .filter(UserModel.username == username)
+                                    .first()
+                                )
+                                cls.create_permission_for_principal(
+                                    principal, permission_target, allowed_permission
+                                )
+
+        if default_group is not None:
+            for user in UserModel.query.all():
+                cls.associate_user_with_group(user, default_group)
 
     @classmethod
     def create_permission_for_principal(
@@ -202,6 +240,7 @@ class AuthorizationService:
     @classmethod
     def should_disable_auth_for_request(cls) -> bool:
         """Should_disable_auth_for_request."""
+        swagger_functions = ["get_json_spec"]
         authentication_exclusion_list = ["status", "authentication_callback"]
         if request.method == "OPTIONS":
             return True
@@ -218,7 +257,9 @@ class AuthorizationService:
             api_view_function
             and api_view_function.__name__.startswith("login")
             or api_view_function.__name__.startswith("logout")
+            or api_view_function.__name__.startswith("console_ui_")
             or api_view_function.__name__ in authentication_exclusion_list
+            or api_view_function.__name__ in swagger_functions
         ):
             return True
 
@@ -277,7 +318,7 @@ class AuthorizationService:
 
         raise ApiError(
             error_code="unauthorized",
-            message="User is not authorized to perform requested action.",
+            message=f"User {g.user.username} is not authorized to perform requested action: {permission_string} - {request.path}",
             status_code=403,
         )
 
@@ -359,196 +400,73 @@ class AuthorizationService:
                 "The Authentication token you provided is invalid. You need a new token. ",
             ) from exception
 
-    # def get_bearer_token_from_internal_token(self, internal_token):
-    #     """Get_bearer_token_from_internal_token."""
-    #     self.decode_auth_token(internal_token)
-    #     print(f"get_user_by_internal_token: {internal_token}")
+    @staticmethod
+    def assert_user_can_complete_spiff_task(
+        processor: ProcessInstanceProcessor,
+        spiff_task: SpiffTask,
+        user: UserModel,
+    ) -> bool:
+        """Assert_user_can_complete_spiff_task."""
+        active_task = ActiveTaskModel.query.filter_by(
+            task_name=spiff_task.task_spec.name,
+            process_instance_id=processor.process_instance_model.id,
+        ).first()
+        if active_task is None:
+            raise ActiveTaskNotFoundError(
+                f"Could find an active task with task name '{spiff_task.task_spec.name}'"
+                f" for process instance '{processor.process_instance_model.id}'"
+            )
 
-    # def introspect_token(self, basic_token: str) -> dict:
-    #     """Introspect_token."""
-    #     (
-    #         open_id_server_url,
-    #         open_id_client_id,
-    #         open_id_realm_name,
-    #         open_id_client_secret_key,
-    #     ) = AuthorizationService.get_open_id_args()
-    #
-    #     bearer_token = AuthorizationService().get_bearer_token(basic_token)
-    #     auth_bearer_string = f"Bearer {bearer_token['access_token']}"
-    #
-    #     headers = {
-    #         "Content-Type": "application/x-www-form-urlencoded",
-    #         "Authorization": auth_bearer_string,
-    #     }
-    #     data = {
-    #         "client_id": open_id_client_id,
-    #         "client_secret": open_id_client_secret_key,
-    #         "token": basic_token,
-    #     }
-    #     request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token/introspect"
-    #
-    #     introspect_response = requests.post(request_url, headers=headers, data=data)
-    #     introspection = json.loads(introspect_response.text)
-    #
-    #     return introspection
+        if user not in active_task.potential_owners:
+            raise UserDoesNotHaveAccessToTaskError(
+                f"User {user.username} does not have access to update task'{spiff_task.task_spec.name}'"
+                f" for process instance '{processor.process_instance_model.id}'"
+            )
+        return True
 
-    # def get_permission_by_basic_token(self, basic_token: dict) -> list:
-    #     """Get_permission_by_basic_token."""
-    #     (
-    #         open_id_server_url,
-    #         open_id_client_id,
-    #         open_id_realm_name,
-    #         open_id_client_secret_key,
-    #     ) = AuthorizationService.get_open_id_args()
-    #
-    #     # basic_token = AuthorizationService().refresh_token(basic_token)
-    #     # bearer_token = AuthorizationService().get_bearer_token(basic_token['access_token'])
-    #     bearer_token = AuthorizationService().get_bearer_token(basic_token)
-    #     # auth_bearer_string = f"Bearer {bearer_token['access_token']}"
-    #     auth_bearer_string = f"Bearer {bearer_token}"
-    #
-    #     headers = {
-    #         "Content-Type": "application/x-www-form-urlencoded",
-    #         "Authorization": auth_bearer_string,
-    #     }
-    #     data = {
-    #         "client_id": open_id_client_id,
-    #         "client_secret": open_id_client_secret_key,
-    #         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-    #         "response_mode": "permissions",
-    #         "audience": open_id_client_id,
-    #         "response_include_resource_name": True,
-    #     }
-    #     request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
-    #     permission_response = requests.post(request_url, headers=headers, data=data)
-    #     permission = json.loads(permission_response.text)
-    #     return permission
+    @classmethod
+    def create_user_from_sign_in(cls, user_info: dict) -> UserModel:
+        """Create_user_from_sign_in."""
+        is_new_user = False
+        user_model = (
+            UserModel.query.filter(UserModel.service == "open_id")
+            .filter(UserModel.service_id == user_info["sub"])
+            .first()
+        )
 
-    # def get_auth_status_for_resource_and_scope_by_token(
-    #     self, basic_token: dict, resource: str, scope: str
-    # ) -> str:
-    #     """Get_auth_status_for_resource_and_scope_by_token."""
-    #     (
-    #         open_id_server_url,
-    #         open_id_client_id,
-    #         open_id_realm_name,
-    #         open_id_client_secret_key,
-    #     ) = AuthorizationService.get_open_id_args()
-    #
-    #     # basic_token = AuthorizationService().refresh_token(basic_token)
-    #     bearer_token = AuthorizationService().get_bearer_token(basic_token)
-    #     auth_bearer_string = f"Bearer {bearer_token['access_token']}"
-    #
-    #     headers = {
-    #         "Content-Type": "application/x-www-form-urlencoded",
-    #         "Authorization": auth_bearer_string,
-    #     }
-    #     data = {
-    #         "client_id": open_id_client_id,
-    #         "client_secret": open_id_client_secret_key,
-    #         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-    #         "permission": f"{resource}#{scope}",
-    #         "response_mode": "permissions",
-    #         "audience": open_id_client_id,
-    #     }
-    #     request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
-    #     auth_response = requests.post(request_url, headers=headers, data=data)
-    #
-    #     print("get_auth_status_for_resource_and_scope_by_token")
-    #     auth_status: str = json.loads(auth_response.text)
-    #     return auth_status
+        if user_model is None:
+            current_app.logger.debug("create_user in login_return")
+            is_new_user = True
+            name = username = email = ""
+            if "name" in user_info:
+                name = user_info["name"]
+            if "username" in user_info:
+                username = user_info["username"]
+            elif "preferred_username" in user_info:
+                username = user_info["preferred_username"]
+            if "email" in user_info:
+                email = user_info["email"]
+            user_model = UserService().create_user(
+                service="open_id",
+                service_id=user_info["sub"],
+                name=name,
+                username=username,
+                email=email,
+            )
 
-    # def get_permissions_by_token_for_resource_and_scope(
-    #     self, basic_token: str, resource: str|None=None, scope: str|None=None
-    # ) -> str:
-    #     """Get_permissions_by_token_for_resource_and_scope."""
-    #     (
-    #         open_id_server_url,
-    #         open_id_client_id,
-    #         open_id_realm_name,
-    #         open_id_client_secret_key,
-    #     ) = AuthorizationService.get_open_id_args()
-    #
-    #     # basic_token = AuthorizationService().refresh_token(basic_token)
-    #     # bearer_token = AuthorizationService().get_bearer_token(basic_token['access_token'])
-    #     bearer_token = AuthorizationService().get_bearer_token(basic_token)
-    #     auth_bearer_string = f"Bearer {bearer_token['access_token']}"
-    #
-    #     headers = {
-    #         "Content-Type": "application/x-www-form-urlencoded",
-    #         "Authorization": auth_bearer_string,
-    #     }
-    #     permision = ""
-    #     if resource is not None and resource != '':
-    #         permision += resource
-    #     if scope is not None and scope != '':
-    #         permision += "#" + scope
-    #     data = {
-    #         "client_id": open_id_client_id,
-    #         "client_secret": open_id_client_secret_key,
-    #         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-    #         "response_mode": "permissions",
-    #         "permission": permision,
-    #         "audience": open_id_client_id,
-    #         "response_include_resource_name": True,
-    #     }
-    #     request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
-    #     permission_response = requests.post(request_url, headers=headers, data=data)
-    #     permission: str = json.loads(permission_response.text)
-    #     return permission
+        # this may eventually get too slow.
+        # when it does, be careful about backgrounding, because
+        # the user will immediately need permissions to use the site.
+        # we are also a little apprehensive about pre-creating users
+        # before the user signs in, because we won't know things like
+        # the external service user identifier.
+        cls.import_permissions_from_yaml_file()
 
-    # def get_resource_set(self, public_access_token, uri):
-    #     """Get_resource_set."""
-    #     (
-    #         open_id_server_url,
-    #         open_id_client_id,
-    #         open_id_realm_name,
-    #         open_id_client_secret_key,
-    #     ) = AuthorizationService.get_open_id_args()
-    #     bearer_token = AuthorizationService().get_bearer_token(public_access_token)
-    #     auth_bearer_string = f"Bearer {bearer_token['access_token']}"
-    #     headers = {
-    #         "Content-Type": "application/json",
-    #         "Authorization": auth_bearer_string,
-    #     }
-    #     data = {
-    #         "matchingUri": "true",
-    #         "deep": "true",
-    #         "max": "-1",
-    #         "exactName": "false",
-    #         "uri": uri,
-    #     }
-    #
-    #     # f"matchingUri=true&deep=true&max=-1&exactName=false&uri={URI_TO_TEST_AGAINST}"
-    #     request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/authz/protection/resource_set"
-    #     response = requests.get(request_url, headers=headers, data=data)
-    #
-    #     print("get_resource_set")
+        if is_new_user:
+            UserService.add_user_to_active_tasks_if_appropriate(user_model)
 
-    # def get_permission_by_token(self, public_access_token: str) -> dict:
-    #     """Get_permission_by_token."""
-    #     # TODO: Write a test for this
-    #     (
-    #         open_id_server_url,
-    #         open_id_client_id,
-    #         open_id_realm_name,
-    #         open_id_client_secret_key,
-    #     ) = AuthorizationService.get_open_id_args()
-    #     bearer_token = AuthorizationService().get_bearer_token(public_access_token)
-    #     auth_bearer_string = f"Bearer {bearer_token['access_token']}"
-    #     headers = {
-    #         "Content-Type": "application/x-www-form-urlencoded",
-    #         "Authorization": auth_bearer_string,
-    #     }
-    #     data = {
-    #         "grant_type": "urn:ietf:params:oauth:grant-type:uma-ticket",
-    #         "audience": open_id_client_id,
-    #     }
-    #     request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
-    #     permission_response = requests.post(request_url, headers=headers, data=data)
-    #     permission: dict = json.loads(permission_response.text)
-    #
-    #     return permission
+        # this cannot be None so ignore mypy
+        return user_model  # type: ignore
 
 
 class KeycloakAuthorization:

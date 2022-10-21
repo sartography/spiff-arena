@@ -28,12 +28,14 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
+from sqlalchemy import asc
 from sqlalchemy import desc
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
+from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
@@ -918,11 +920,11 @@ def process_instance_report_show(
 def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Task_list_my_tasks."""
     principal = find_principal_or_raise()
-
     active_tasks = (
-        ActiveTaskModel.query.filter_by(assigned_principal_id=principal.id)
-        .order_by(desc(ActiveTaskModel.id))  # type: ignore
+        ActiveTaskModel.query.order_by(desc(ActiveTaskModel.id))  # type: ignore
         .join(ProcessInstanceModel)
+        .join(ActiveTaskUserModel)
+        .filter_by(user_id=principal.user_id)
         # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
@@ -1085,17 +1087,14 @@ def task_submit(
 ) -> flask.wrappers.Response:
     """Task_submit_user_data."""
     principal = find_principal_or_raise()
-    active_task_assigned_to_me = find_active_task_by_id_or_raise(
-        process_instance_id, task_id, principal.id
-    )
-
-    process_instance = find_process_instance_by_id_or_raise(
-        active_task_assigned_to_me.process_instance_id
-    )
+    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
     processor = ProcessInstanceProcessor(process_instance)
     spiff_task = get_spiff_task_from_process_instance(
         task_id, process_instance, processor=processor
+    )
+    AuthorizationService.assert_user_can_complete_spiff_task(
+        processor, spiff_task, principal.user
     )
 
     if spiff_task.state != TaskState.READY:
@@ -1109,10 +1108,6 @@ def task_submit(
 
     if terminate_loop and spiff_task.is_looping():
         spiff_task.terminate_loop()
-
-    # TODO: support repeating fields
-    # Extract the details specific to the form submitted
-    # form_data = WorkflowService().extract_form_data(body, spiff_task)
 
     ProcessInstanceService.complete_form_task(processor, spiff_task, body, g.user)
 
@@ -1128,9 +1123,13 @@ def task_submit(
 
     ProcessInstanceService.update_task_assignments(processor)
 
-    next_active_task_assigned_to_me = ActiveTaskModel.query.filter_by(
-        assigned_principal_id=principal.id, process_instance_id=process_instance.id
-    ).first()
+    next_active_task_assigned_to_me = (
+        ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id)
+        .order_by(asc(ActiveTaskModel.id))  # type: ignore
+        .join(ActiveTaskUserModel)
+        .filter_by(user_id=principal.user_id)
+        .first()
+    )
     if next_active_task_assigned_to_me:
         return make_response(
             jsonify(ActiveTaskModel.to_task(next_active_task_assigned_to_me)), 200
@@ -1291,30 +1290,6 @@ def find_principal_or_raise() -> PrincipalModel:
             )
         )
     return principal  # type: ignore
-
-
-def find_active_task_by_id_or_raise(
-    process_instance_id: int, task_id: str, principal_id: PrincipalModel
-) -> ActiveTaskModel:
-    """Find_active_task_by_id_or_raise."""
-    active_task_assigned_to_me = ActiveTaskModel.query.filter_by(
-        process_instance_id=process_instance_id,
-        task_id=task_id,
-        assigned_principal_id=principal_id,
-    ).first()
-    if active_task_assigned_to_me is None:
-        message = (
-            f"Task not found for principal user {principal_id} "
-            f"process_instance_id: {process_instance_id}, task_id: {task_id}"
-        )
-        raise (
-            ApiError(
-                error_code="task_not_found",
-                message=message,
-                status_code=400,
-            )
-        )
-    return active_task_assigned_to_me  # type: ignore
 
 
 def find_process_instance_by_id_or_raise(

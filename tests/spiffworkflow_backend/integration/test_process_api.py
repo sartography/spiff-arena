@@ -15,6 +15,7 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -26,6 +27,7 @@ from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.task_event import TaskEventModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -1771,6 +1773,94 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert len(response.json["results"]) == 2
+
+    def test_correct_user_can_get_and_update_a_task(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_correct_user_can_get_and_update_a_task."""
+        initiator_user = self.find_or_create_user("testuser4")
+        finance_user = self.find_or_create_user("testuser2")
+        assert initiator_user.principal is not None
+        assert finance_user.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        assert finance_group is not None
+
+        process_model = load_test_spec(
+            process_model_id="model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            process_group_id="finance",
+        )
+
+        response = self.create_process_instance(
+            client,
+            process_model.process_group_id,
+            process_model.id,
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 201
+
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+        response = client.post(
+            f"/v1.0/process-models/{process_model.process_group_id}/{process_model.id}/process-instances/{process_instance_id}/run",
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 200
+
+        response = client.get(
+            "/v1.0/tasks",
+            headers=self.logged_in_headers(finance_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 0
+
+        response = client.get(
+            "/v1.0/tasks",
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 1
+
+        task_id = response.json["results"][0]["id"]
+        assert task_id is not None
+
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{task_id}",
+            headers=self.logged_in_headers(finance_user),
+        )
+        assert response.status_code == 500
+        assert response.json
+        assert "UserDoesNotHaveAccessToTaskError" in response.json["message"]
+
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{task_id}",
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 202
+
+        response = client.get(
+            "/v1.0/tasks",
+            headers=self.logged_in_headers(initiator_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 0
+
+        response = client.get(
+            "/v1.0/tasks",
+            headers=self.logged_in_headers(finance_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 1
 
     # TODO: test the auth callback endpoint
     # def test_can_store_authentication_secret(

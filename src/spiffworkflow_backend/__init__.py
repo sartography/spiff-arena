@@ -145,7 +145,6 @@ def get_hacked_up_app_for_script() -> flask.app.Flask:
 def configure_sentry(app: flask.app.Flask) -> None:
     """Configure_sentry."""
     import sentry_sdk
-    from flask import Flask
     from sentry_sdk.integrations.flask import FlaskIntegration
 
     def before_send(event: Any, hint: Any) -> Any:
@@ -172,5 +171,3 @@ def configure_sentry(app: flask.app.Flask) -> None:
         traces_sample_rate=float(sentry_sample_rate),
         before_send=before_send,
     )
-
-    app = Flask(__name__)

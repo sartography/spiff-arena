@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
@@ -9,9 +10,16 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import RelationshipProperty
 
-from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.user import UserModel
+
+
+if TYPE_CHECKING:
+    from spiffworkflow_backend.models.active_task_user import (  # noqa: F401
+        ActiveTaskUserModel,
+    )
 
 
 @dataclass
@@ -25,14 +33,13 @@ class ActiveTaskModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    assigned_principal: RelationshipProperty[PrincipalModel] = relationship(
-        PrincipalModel
-    )
+    actual_owner: RelationshipProperty[UserModel] = relationship(UserModel)
     id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(
         ForeignKey(ProcessInstanceModel.id), nullable=False  # type: ignore
     )
-    assigned_principal_id: int = db.Column(ForeignKey(PrincipalModel.id))
+    actual_owner_id: int = db.Column(ForeignKey(UserModel.id))
+    lane_assignment_id: int | None = db.Column(ForeignKey(GroupModel.id))
     form_file_name: str | None = db.Column(db.String(50))
     ui_form_file_name: str | None = db.Column(db.String(50))
 
@@ -45,6 +52,14 @@ class ActiveTaskModel(SpiffworkflowBaseDBModel):
     task_type = db.Column(db.String(50))
     task_status = db.Column(db.String(50))
     process_model_display_name = db.Column(db.String(255))
+
+    active_task_users = relationship("ActiveTaskUserModel", cascade="delete")
+    potential_owners = relationship(  # type: ignore
+        "UserModel",
+        viewonly=True,
+        secondary="active_task_user",
+        overlaps="active_task_user,users",
+    )
 
     @classmethod
     def to_task(cls, task: ActiveTaskModel) -> Task:

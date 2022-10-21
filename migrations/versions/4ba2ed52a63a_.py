@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: e12e98d4e7e4
+Revision ID: 4ba2ed52a63a
 Revises: 
-Create Date: 2022-10-21 08:53:52.815491
+Create Date: 2022-10-21 09:31:30.520942
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'e12e98d4e7e4'
+revision = '4ba2ed52a63a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -165,7 +165,8 @@ def upgrade():
     op.create_table('active_task',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('assigned_principal_id', sa.Integer(), nullable=True),
+    sa.Column('actual_owner_id', sa.Integer(), nullable=True),
+    sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
     sa.Column('form_file_name', sa.String(length=50), nullable=True),
     sa.Column('ui_form_file_name', sa.String(length=50), nullable=True),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
@@ -176,7 +177,8 @@ def upgrade():
     sa.Column('task_type', sa.String(length=50), nullable=True),
     sa.Column('task_status', sa.String(length=50), nullable=True),
     sa.Column('process_model_display_name', sa.String(length=255), nullable=True),
-    sa.ForeignKeyConstraint(['assigned_principal_id'], ['principal.id'], ),
+    sa.ForeignKeyConstraint(['actual_owner_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('task_id', 'process_instance_id', name='active_task_unique')
@@ -279,6 +281,17 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('active_task_user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('active_task_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['active_task_id'], ['active_task.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('active_task_id', 'user_id', name='active_task_user_unique')
+    )
+    op.create_index(op.f('ix_active_task_user_active_task_id'), 'active_task_user', ['active_task_id'], unique=False)
+    op.create_index(op.f('ix_active_task_user_user_id'), 'active_task_user', ['user_id'], unique=False)
     op.create_table('data_store',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
@@ -312,6 +325,9 @@ def downgrade():
     op.drop_index(op.f('ix_message_correlation_message_instance_message_correlation_id'), table_name='message_correlation_message_instance')
     op.drop_table('message_correlation_message_instance')
     op.drop_table('data_store')
+    op.drop_index(op.f('ix_active_task_user_user_id'), table_name='active_task_user')
+    op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
+    op.drop_table('active_task_user')
     op.drop_table('task_event')
     op.drop_table('spiff_logging')
     op.drop_table('permission_assignment')
