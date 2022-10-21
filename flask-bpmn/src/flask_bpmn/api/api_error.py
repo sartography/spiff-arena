@@ -14,7 +14,7 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from sentry_sdk import capture_exception
-from sentry_sdk import set_user
+from sentry_sdk import set_tag
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
@@ -165,13 +165,12 @@ def set_user_sentry_context() -> None:
         username = "Unknown"
     # This is for sentry logging into Slack
     sentry_sdk.set_context("User", {"user": username})
-    set_user({"username": username})
+    set_tag("username", username)
 
 
 @api_error_blueprint.app_errorhandler(Exception)
 def handle_exception(exception: Exception) -> flask.wrappers.Response:
     """Handles unexpected exceptions."""
-    current_app.logger.exception(exception)
     set_user_sentry_context()
     id = capture_exception(exception)
 
@@ -182,6 +181,11 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
         sentry_link = (
             f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
         )
+
+    # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
+    # seems to break the sentry sdk context where we no longer get back
+    # an event id or send out tags like username
+    current_app.logger.exception(exception)
 
     # set api_exception like this to avoid confusing mypy
     # and what type the object is
