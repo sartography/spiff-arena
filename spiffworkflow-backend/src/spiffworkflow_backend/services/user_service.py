@@ -257,7 +257,7 @@ class UserService:
     @staticmethod
     def get_principal_by_user_id(user_id: int) -> PrincipalModel:
         """Get_principal_by_user_id."""
-        principal: PrincipalModel = (
+        principal = (
             db.session.query(PrincipalModel)
             .filter(PrincipalModel.user_id == user_id)
             .first()

@@ -1,7 +1,6 @@
 """Active_task."""
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 
 from flask_bpmn.models.db import db
@@ -46,20 +45,16 @@ class ActiveTaskModel(SpiffworkflowBaseDBModel):
     task_type = db.Column(db.String(50))
     task_status = db.Column(db.String(50))
     process_model_display_name = db.Column(db.String(255))
-    task_data: str = db.Column(db.Text(4294000000))
 
     @classmethod
     def to_task(cls, task: ActiveTaskModel) -> Task:
         """To_task."""
-        task_data = json.loads(task.task_data)
-
         new_task = Task(
             task.task_id,
             task.task_name,
             task.task_title,
             task.task_type,
             task.task_status,
-            data=task_data,
             process_instance_id=task.process_instance_id,
             process_instance_status=task.status,
         )
@@ -69,5 +64,10 @@ class ActiveTaskModel(SpiffworkflowBaseDBModel):
             new_task.process_group_identifier = task.process_group_identifier
         if hasattr(task, "process_model_identifier"):
             new_task.process_model_identifier = task.process_model_identifier
+
+        # active tasks only have status when getting the list on the home page
+        # and it comes from the process_instance. it should not be confused with task_status.
+        if hasattr(task, "status"):
+            new_task.process_instance_status = task.status
 
         return new_task

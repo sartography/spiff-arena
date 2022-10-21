@@ -54,6 +54,24 @@ RestrictedPython = "^5.2"
 Flask-SQLAlchemy = "^3"
 orjson = "^3.8.0"
 
+# type hinting stuff
+# these need to be in the normal (non dev-dependencies) section
+# because if not then poetry export won't have them and nox -s mypy --pythons 3.10
+# will fail
+types-Werkzeug = "^1.0.9"
+types-PyYAML = "^6.0.12"
+types-Flask = "^1.1.6"
+types-requests = "^2.28.6"
+types-pytz = "^2022.1.1"
+
+# https://github.com/dropbox/sqlalchemy-stubs/pull/251
+# someday get off github
+# sqlalchemy-stubs = "^0.4"
+# sqlalchemy-stubs = { git = "https://github.com/dropbox/sqlalchemy-stubs.git", rev = "master" }
+# sqlalchemy-stubs = {develop = true, path = "/Users/kevin/projects/github/sqlalchemy-stubs"}
+# for now use my fork
+sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
+
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
@@ -68,11 +86,6 @@ pre-commit = "^2.20.0"
 flake8 = "^4.0.1"
 black = ">=21.10b0"
 flake8-bandit = "^2.1.2"
-types-Werkzeug = "^1.0.9"
-types-PyYAML = "^6.0.12"
-types-Flask = "^1.1.6"
-types-requests = "^2.28.6"
-types-pytz = "^2022.1.1"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
 bandit = "1.7.2"
@@ -90,7 +103,6 @@ Pygments = "^2.10.0"
 pyupgrade = "^2.37.1"
 furo = ">=2021.11.12"
 MonkeyType = "^22.2.0"
-sqlalchemy-stubs = "^0.4"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"

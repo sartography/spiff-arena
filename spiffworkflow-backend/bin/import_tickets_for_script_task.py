@@ -91,7 +91,7 @@ def main():
                 # you at least need a month, or else this row in the csv is considered garbage
                 month_value = processor.bpmn_process_instance.data["month"]
                 if month_value == "" or month_value is None:
-                    db.delete(process_instance)
+                    db.session.delete(process_instance)
                     db.session.commit()
                     continue
 
