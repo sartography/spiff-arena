@@ -234,9 +234,14 @@ export default function ProcessInstanceShow() {
     initializeTaskDataToDisplay(taskToDisplay);
   };
 
+  const taskDataStringToObject = (dataString: string) => {
+    return JSON.parse(dataString);
+  };
+
   const saveTaskDataResult = (_: any) => {
     setEditingTaskData(false);
-    const taskToDisplayCopy = { ...taskToDisplay, data: taskDataToDisplay }; // spread operator
+    const dataObject = taskDataStringToObject(taskDataToDisplay);
+    const taskToDisplayCopy = { ...taskToDisplay, data: dataObject }; // spread operator
     setTaskToDisplay(taskToDisplayCopy);
   };
 
