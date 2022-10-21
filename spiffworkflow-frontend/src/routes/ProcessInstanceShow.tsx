@@ -171,6 +171,14 @@ export default function ProcessInstanceShow() {
     return <div />;
   };
 
+  const initializeTaskDataToDisplay = (task: any) => {
+    if (task == null) {
+      setTaskDataToDisplay('');
+    } else {
+      setTaskDataToDisplay(JSON.stringify(task.data, null, 2))
+    }
+  }
+
   const handleClickedDiagramTask = (shapeElement: any) => {
     if (tasks) {
       const matchingTask: any = tasks.find(
@@ -178,15 +186,15 @@ export default function ProcessInstanceShow() {
       );
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
-        // TODO better react way to do this?
-        setTaskDataToDisplay(JSON.stringify(matchingTask.data, null, 2))
+        // TODO better react way to do this? set this when taskToDisplay changes.
+        initializeTaskDataToDisplay(matchingTask);
       }
     }
   };
 
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
-    setTaskDataToDisplay('');
+    initializeTaskDataToDisplay(null);
   };
 
   const getTaskById = (taskId: string) => {
@@ -218,11 +226,20 @@ export default function ProcessInstanceShow() {
   };
 
   const canEditTaskData = (task: any) => {
-    return task.state === 'READY'
+    return task.state === 'READY';
+  }
+
+  const cancelEditingTaskData = () => {
+    setEditingTaskData(false);
+    initializeTaskDataToDisplay(taskToDisplay);
+  }
+
+  const saveEditingTaskData = () => {
+    setEditingTaskData(false);
   }
 
   const taskDataButtons = (task: any) => {
-    const buttons = []
+    const buttons = [];
 
     if (task.type === 'Script Task') {
       buttons.push(
@@ -232,7 +249,7 @@ export default function ProcessInstanceShow() {
         >
           Create Script Unit Test
         </Button>
-      )
+      );
     }
 
     if (canEditTaskData(task)) {
@@ -240,19 +257,19 @@ export default function ProcessInstanceShow() {
         buttons.push(
           <Button
             data-qa="create-script-unit-test-button"
-            onClick={() => setEditingTaskData(false)}
+            onClick={saveEditingTaskData}
           >
             Save
           </Button>
-        )
+        );
         buttons.push(
           <Button
             data-qa="create-script-unit-test-button"
-            onClick={() => setEditingTaskData(false)}
+            onClick={cancelEditingTaskData}
           >
             Cancel
           </Button>
-        )
+        );
       } else {
         buttons.push(
           <Button
@@ -261,11 +278,11 @@ export default function ProcessInstanceShow() {
           >
             Edit
           </Button>
-        )
+        );
       }
     }
 
-    return buttons
+    return buttons;
   }
 
   const taskDataContainer = () => {
