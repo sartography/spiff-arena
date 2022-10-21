@@ -53,6 +53,22 @@ export default function ProcessInstanceShow() {
     });
   };
 
+  const suspendProcessInstance = () => {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/suspend`,
+      successCallback: refreshPage,
+      httpMethod: 'POST',
+    });
+  };
+
+  const resumeProcessInstance = () => {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/resume`,
+      successCallback: refreshPage,
+      httpMethod: 'POST',
+    });
+  };
+
   const getTaskIds = () => {
     const taskIds = { completed: [], readyOrWaiting: [] };
     if (tasks) {
@@ -120,6 +136,32 @@ export default function ProcessInstanceShow() {
       return (
         <Button onClick={terminateProcessInstance} variant="warning">
           Terminate
+        </Button>
+      );
+    }
+    return <div />;
+  };
+
+  const suspendButton = (processInstanceToUse: any) => {
+    if (
+      ['complete', 'terminated', 'faulted', 'suspended'].indexOf(
+        processInstanceToUse.status
+      ) === -1
+    ) {
+      return (
+        <Button onClick={suspendProcessInstance} variant="warning">
+          Suspend
+        </Button>
+      );
+    }
+    return <div />;
+  };
+
+  const resumeButton = (processInstanceToUse: any) => {
+    if (processInstanceToUse.status === 'suspended') {
+      return (
+        <Button onClick={resumeProcessInstance} variant="warning">
+          Resume
         </Button>
       );
     }
@@ -217,6 +259,8 @@ export default function ProcessInstanceShow() {
             buttonLabel="Delete"
           />
           {terminateButton(processInstanceToUse)}
+          {suspendButton(processInstanceToUse)}
+          {resumeButton(processInstanceToUse)}
         </Stack>
         {getInfoTag(processInstanceToUse)}
         {taskDataDisplayArea()}
