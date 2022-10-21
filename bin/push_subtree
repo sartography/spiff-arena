@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+valid_subtree_prefixes=$("${script_dir}/get_subtree_prefixes")
+
+subtree="${1:-}"
+if ! grep -qE "^${subtree}$" <<<"$valid_subtree_prefixes"; then
+  >&2 echo "usage: $(basename "$0") [subtree]"
+  >&2 echo
+  >&2 echo -e "\tvalid_subtrees:\n\t\t$(tr '\n' ' ' <<<"$valid_subtree_prefixes" | sed 's/ /\n\t\t/g')"
+  exit 1
+fi
+
+git subtree push --prefix="${subtree}" "git@github.com:sartography/${subtree}.git" main
