@@ -1,8 +1,10 @@
+default_group: everybody
+
 groups:
   admin:
     users: [testadmin1, testadmin2]
 
-  finance:
+  Finance Team:
     users: [testuser1, testuser2]
 
   hr:
@@ -16,13 +18,26 @@ permissions:
     uri: /*
 
   read-all:
-    groups: [finance, hr, admin]
+    groups: ["Finance Team", hr, admin]
     users: []
     allowed_permissions: [read]
     uri: /*
 
-  finance-admin:
-    groups: [finance]
+  tasks-crud:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/tasks/*
+
+  # TODO: all uris should really have the same structure
+  finance-admin-group:
+    groups: ["Finance Team"]
     users: [testuser4]
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-groups/finance/*
+
+  finance-admin-model:
+    groups: ["Finance Team"]
+    users: [testuser4]
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/finance/*

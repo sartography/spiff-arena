@@ -18,4 +18,4 @@ node_modules
 /tests/spiffworkflow_backend/files
 /bin/import_secrets.py
 /src/spiffworkflow_backend/config/secrets.py
-_null-ls_*
+*null-ls_*

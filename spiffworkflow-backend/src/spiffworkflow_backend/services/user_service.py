@@ -7,6 +7,8 @@ from flask import g
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 
+from spiffworkflow_backend.models.active_task import ActiveTaskModel
+from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import AdminSessionModel
@@ -313,3 +315,17 @@ class UserService:
         if user:
             return user
         return None
+
+    @classmethod
+    def add_user_to_active_tasks_if_appropriate(cls, user: UserModel) -> None:
+        """Add_user_to_active_tasks_if_appropriate."""
+        group_ids = [g.id for g in user.groups]
+        active_tasks = ActiveTaskModel.query.filter(
+            ActiveTaskModel.lane_assignment_id.in_(group_ids)  # type: ignore
+        ).all()
+        for active_task in active_tasks:
+            active_task_user = ActiveTaskUserModel(
+                user_id=user.id, active_task_id=active_task.id
+            )
+            db.session.add(active_task_user)
+            db.session.commit()

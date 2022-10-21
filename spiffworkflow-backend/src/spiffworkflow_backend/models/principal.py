@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.schema import CheckConstraint
 
 from spiffworkflow_backend.models.group import GroupModel
@@ -28,3 +29,6 @@ class PrincipalModel(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(ForeignKey(UserModel.id), nullable=True, unique=True)
     group_id = db.Column(ForeignKey(GroupModel.id), nullable=True, unique=True)
+
+    user = relationship("UserModel", viewonly=True)
+    group = relationship("GroupModel", viewonly=True)

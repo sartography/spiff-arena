@@ -10,10 +10,11 @@ avoid circular imports
 
 from flask_bpmn.models.db import add_listeners
 
-# must load this before UserModel and GroupModel for relationships
+# must load these before UserModel and GroupModel for relationships
 from spiffworkflow_backend.models.user_group_assignment import (
     UserGroupAssignmentModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.principal import PrincipalModel  # noqa: F401
 
 
 from spiffworkflow_backend.models.active_task import ActiveTaskModel  # noqa: F401
@@ -38,7 +39,6 @@ from spiffworkflow_backend.models.permission_assignment import (
 from spiffworkflow_backend.models.permission_target import (
     PermissionTargetModel,
 )  # noqa: F401
-from spiffworkflow_backend.models.principal import PrincipalModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceModel,
 )  # noqa: F401

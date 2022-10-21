@@ -19,13 +19,12 @@ from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task_event import TaskAction
 from spiffworkflow_backend.models.task_event import TaskEventModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-
-# from SpiffWorkflow.task import TaskState  # type: ignore
 
 
 class ProcessInstanceService:
@@ -272,6 +271,10 @@ class ProcessInstanceService:
         Abstracted here because we need to do it multiple times when completing all tasks in
         a multi-instance task.
         """
+        AuthorizationService.assert_user_can_complete_spiff_task(
+            processor, spiff_task, user
+        )
+
         dot_dct = ProcessInstanceService.create_dot_dict(data)
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
@@ -282,8 +285,7 @@ class ProcessInstanceService:
         ProcessInstanceService.log_task_action(
             user.id, processor, spiff_task, TaskAction.COMPLETE.value
         )
-        processor.do_engine_steps()
-        processor.save()
+        processor.do_engine_steps(save=True)
 
     @staticmethod
     def log_task_action(
