@@ -19,7 +19,7 @@ docker run \
   -e KEYCLOAK_LOGLEVEL=ALL \
   -e ROOT_LOGLEVEL=ALL \
   -e KEYCLOAK_ADMIN=admin \
-  -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:18.0.2 start-dev \
+  -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:19.0.3 start-dev \
   -Dkeycloak.profile.feature.token_exchange=enabled \
   -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
 
