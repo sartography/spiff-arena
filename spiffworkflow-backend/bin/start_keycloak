@@ -23,14 +23,10 @@ docker run \
   -Dkeycloak.profile.feature.token_exchange=enabled \
   -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
 
-docker cp  bin/finance-realm.json keycloak:/tmp
 docker cp  bin/spiffworkflow-realm.json keycloak:/tmp
-docker cp  bin/quarkus-realm.json keycloak:/tmp
 
 sleep 10
-docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/finance-realm.json || echo ''
 docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/spiffworkflow-realm.json || echo ''
-docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/quarkus-realm.json || echo ''
 
 echo 'imported realms'
 
