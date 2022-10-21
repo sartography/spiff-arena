@@ -45,7 +45,7 @@ connexion = {extras = [ "swagger-ui",], version = "^2"}
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
 marshmallow-sqlalchemy = "^0.28.0"
-PyJWT = "^2.4.0"
+PyJWT = "^2.6.0"
 gunicorn = "^20.1.0"
 python-keycloak = "^2.5.0"
 APScheduler = "^3.9.1"
