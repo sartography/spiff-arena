@@ -23,7 +23,7 @@ class ServiceTaskDelegate:
 
     @staticmethod
     def check_prefixes(value: Any) -> Any:
-
+        """Check_prefixes."""
         if isinstance(value, str):
             secret_prefix = "secret:"  # noqa: S105
             if value.startswith(secret_prefix):
