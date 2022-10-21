@@ -22,10 +22,7 @@ class ServiceTaskDelegate:
     """ServiceTaskDelegate."""
 
     @staticmethod
-    def normalize_value(value: Any) -> Any:
-        """Normalize_value."""
-        if isinstance(value, dict):
-            value = json.dumps(value)
+    def check_prefixes(value: Any) -> Any:
 
         if isinstance(value, str):
             secret_prefix = "secret:"  # noqa: S105
@@ -48,13 +45,13 @@ class ServiceTaskDelegate:
     def call_connector(name: str, bpmn_params: Any, task_data: Any) -> str:
         """Calls a connector via the configured proxy."""
         params = {
-            k: ServiceTaskDelegate.normalize_value(v["value"])
+            k: ServiceTaskDelegate.check_prefixes(v["value"])
             for k, v in bpmn_params.items()
         }
-        params["spiff__task_data"] = json.dumps(task_data)
+        params["spiff__task_data"] = task_data
 
         proxied_response = requests.post(
-            f"{connector_proxy_url()}/v1/do/{name}", params
+            f"{connector_proxy_url()}/v1/do/{name}", json=params
         )
 
         if proxied_response.status_code != 200:
