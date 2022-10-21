@@ -3,13 +3,57 @@ default_group: everybody
 groups:
   admin:
     users:
-      [jakub, kb, alex, dan, mike, jason, amir, jarrad, elizabeth, jon, natalia, harmeet, sasha, manuchehr]
+      [
+        jakub,
+        kb,
+        alex,
+        dan,
+        mike,
+        jason,
+        amir,
+        jarrad,
+        elizabeth,
+        jon,
+        natalia,
+        harmeet,
+        sasha,
+        manuchehr,
+      ]
 
   Finance Team:
-    users: [jakub, alex, dan, mike, jason, amir, jarrad, elizabeth, jon, natalia, harmeet, sasha, manuchehr]
+    users:
+      [
+        jakub,
+        alex,
+        dan,
+        mike,
+        jason,
+        amir,
+        jarrad,
+        elizabeth,
+        jon,
+        natalia,
+        harmeet,
+        sasha,
+        manuchehr,
+      ]
 
   Team Lead:
-    users: [jakub, alex, dan, mike, jason, jarrad, elizabeth, jon, natalia, harmeet, sasha, manuchehr]
+    users:
+      [
+        jakub,
+        alex,
+        dan,
+        mike,
+        jason,
+        jarrad,
+        elizabeth,
+        jon,
+        natalia,
+        harmeet,
+        sasha,
+        manuchehr,
+      ]
 
   hr:
     users: [manuchehr]

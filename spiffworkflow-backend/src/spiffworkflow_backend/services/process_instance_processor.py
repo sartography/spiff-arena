@@ -534,7 +534,7 @@ class ProcessInstanceProcessor:
             if not self.bpmn_process_instance._is_engine_task(task_spec):
                 ready_or_waiting_task.data["current_user"]["id"]
                 task_lane = "process_initiator"
-                if task_spec.lane is not None:
+                if task_spec.lane is not None and task_spec.lane != "":
                     task_lane = task_spec.lane
 
                 potential_owner_ids = []
