@@ -234,8 +234,29 @@ export default function ProcessInstanceShow() {
     initializeTaskDataToDisplay(taskToDisplay);
   }
 
-  const saveEditingTaskData = () => {
+  const saveTaskDataResult = (result: any) => {
     setEditingTaskData(false);
+  }
+
+  const saveTaskDataFailure = (result: any) => {
+    console.log(result);
+  }
+
+  const saveTaskData = () => {
+    if (!taskToDisplay) {
+      return;
+    }
+
+    const taskToUse: any = taskToDisplay;
+    HttpService.makeCallToBackend({
+      path: `/TODO`,
+      httpMethod: 'POST',
+      successCallback: saveTaskDataResult,
+      failureCallback: saveTaskDataFailure,
+      postBody: {
+        new_task_data: taskToUse.data,
+      },
+    });
   }
 
   const taskDataButtons = (task: any) => {
@@ -257,7 +278,7 @@ export default function ProcessInstanceShow() {
         buttons.push(
           <Button
             data-qa="create-script-unit-test-button"
-            onClick={saveEditingTaskData}
+            onClick={saveTaskData}
           >
             Save
           </Button>
