@@ -1,4 +1,4 @@
-FROM quay.io/keycloak/keycloak:18.0.2 as builder
+FROM quay.io/keycloak/keycloak:19.0.3 as builder
 
 ENV KEYCLOAK_LOGLEVEL="ALL"
 ENV ROOT_LOGLEVEL="ALL"
@@ -13,7 +13,7 @@ ENV KC_FEATURES="token-exchange,admin-fine-grained-authz"
 # RUN curl -sL https://github.com/aerogear/keycloak-metrics-spi/releases/download/2.5.3/keycloak-metrics-spi-2.5.3.jar -o /opt/keycloak/providers/keycloak-metrics-spi-2.5.3.jar
 RUN /opt/keycloak/bin/kc.sh build
 
-FROM quay.io/keycloak/keycloak:18.0.2
+FROM quay.io/keycloak/keycloak:19.0.3
 COPY --from=builder /opt/keycloak/ /opt/keycloak/
 WORKDIR /opt/keycloak
 # for demonstration purposes only, please make sure to use proper certificates in production instead
