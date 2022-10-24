@@ -26,26 +26,26 @@
   <bpmn:message id="love_letter_response" name="Love Letter Response" />
   <bpmn:correlationProperty id="lover_instrument" name="Lover&#39;s Instrument">
     <bpmn:correlationPropertyRetrievalExpression messageRef="love_letter">
-      <bpmn:formalExpression>lover.instrument</bpmn:formalExpression>
+      <bpmn:messagePath>lover.instrument</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="love_letter_response">
-      <bpmn:formalExpression>from.instrument</bpmn:formalExpression>
+      <bpmn:messagePath>from.instrument</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:correlationProperty id="lover_name" name="Lover&#39;s Name">
     <bpmn:correlationPropertyRetrievalExpression messageRef="love_letter">
-      <bpmn:formalExpression>lover.name</bpmn:formalExpression>
+      <bpmn:messagePath>lover.name</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="love_letter_response">
-      <bpmn:formalExpression>from.name</bpmn:formalExpression>
+      <bpmn:messagePath>from.name</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression>
-      <bpmn:formalExpression>heartbreaker</bpmn:formalExpression>
+      <bpmn:messagePath>heartbreaker</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:correlationProperty id="singer_name" name="Singer&#39;s Name">
     <bpmn:correlationPropertyRetrievalExpression messageRef="love_letter_response">
-      <bpmn:formalExpression>to.name</bpmn:formalExpression>
+      <bpmn:messagePath>to.name</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:process id="process_buddy" name="Process Buddy" isExecutable="true">
