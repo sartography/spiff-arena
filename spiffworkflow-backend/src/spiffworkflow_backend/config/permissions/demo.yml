@@ -81,7 +81,7 @@ permissions:
     uri: /v1.0/process-groups/finance/*
 
   read-all:
-    groups: ["Finance Team", "Team Lead", hr, admin]
+    groups: ["Finance Team", "Project Lead", hr, admin]
     users: []
     allowed_permissions: [read]
     uri: /*

@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 
+function setup_traps() {
+  trap 'error_handler ${LINENO} $?' ERR
+}
+function remove_traps() {
+  trap - ERR
+}
+
 function error_handler() {
   >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
   exit "$2"
 }
-trap 'error_handler ${LINENO} $?' ERR
+setup_traps
+
 set -o errtrace -o errexit -o nounset -o pipefail
 
 if ! docker network inspect spiffworkflow > /dev/null 2>&1; then
@@ -25,8 +33,16 @@ docker run \
 
 docker cp  bin/spiffworkflow-realm.json keycloak:/tmp
 
-sleep 10
-docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/spiffworkflow-realm.json || echo ''
+sleep 20
+remove_traps
+set +e
+import_output=$(docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/spiffworkflow-realm.json 2>&1)
+setup_traps
+set -e
+if ! grep -qE "Import finished successfully" <<<"$import_output"; then
+  echo -e "FAILED: $import_output"
+  exit 1
+fi
 
 echo 'imported realms'
 
