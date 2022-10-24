@@ -33,12 +33,10 @@ groups:
         elizabeth,
         jon,
         natalia,
-        harmeet,
         sasha,
-        manuchehr,
       ]
 
-  Team Lead:
+  Project Lead:
     users:
       [
         jakub,
@@ -50,8 +48,6 @@ groups:
         elizabeth,
         jon,
         natalia,
-        harmeet,
-        sasha,
         manuchehr,
       ]
 
