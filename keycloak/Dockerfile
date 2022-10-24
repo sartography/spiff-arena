@@ -1,4 +1,4 @@
-FROM quay.io/keycloak/keycloak:19.0.3 as builder
+FROM quay.io/keycloak/keycloak:18.0.2 as builder
 
 ENV KEYCLOAK_LOGLEVEL="ALL"
 ENV ROOT_LOGLEVEL="ALL"
