@@ -1,20 +1,21 @@
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from flask.app import Flask
-from flask.testing import FlaskClient
-from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.scripts.get_localtime import GetLocaltime
 import datetime
 import pytz
 
+from flask.app import Flask
+from flask.testing import FlaskClient
+
+from spiffworkflow_backend.scripts.get_localtime import GetLocaltime
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
+
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestGetLocaltime(BaseTest):
     """TestProcessAPi."""
 
-    def test_get_localtime_script_directly(self):
+    def test_get_localtime_script_directly(self) -> None:
         current_time = datetime.datetime.now()
         timezone = "US/Pacific"
         result = GetLocaltime().run(task=None, environment_identifier='testing', datetime=current_time, timezone=timezone)
@@ -51,6 +52,7 @@ class TestGetLocaltime(BaseTest):
             active_task.task_name, processor.bpmn_process_instance
         )
 
+        assert spiff_task
         data = spiff_task.data
         some_time = data['some_time']
         localtime = data['localtime']
