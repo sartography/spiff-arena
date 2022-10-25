@@ -68,13 +68,13 @@ class ProcessInstanceService:
                 )
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.do_engine_steps(save=True)
-            except Exception:
+            except Exception as e:
                 db.session.rollback()  # in case the above left the database with a bad transaction
                 process_instance.status = ProcessInstanceStatus.erroring.value
                 db.session.add(process_instance)
                 db.session.commit()
                 error_message = f"Error running waiting task for process_instance {process_instance.id}" + \
-                                "({process_instance.process_model_identifier}). {str(e)}"
+                                f"({process_instance.process_model_identifier}). {str(e)}"
                 current_app.logger.error(error_message)
 
     @staticmethod
