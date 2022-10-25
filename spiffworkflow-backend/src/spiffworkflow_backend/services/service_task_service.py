@@ -4,6 +4,7 @@ from typing import Any
 
 import requests
 from flask import current_app
+from flask import g
 
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
@@ -57,7 +58,20 @@ class ServiceTaskDelegate:
         if proxied_response.status_code != 200:
             print("got error from connector proxy")
 
-        return proxied_response.text
+        parsed_response = json.loads(proxied_response.text)
+
+        if "refreshed_token_set" not in parsed_response:
+            return proxied_response.text
+
+        secret_key = parsed_response["auth"]
+        refreshed_token_set = json.dumps(
+            parsed_response["refreshed_token_set"]
+        )
+        SecretService().update_secret(
+            secret_key, refreshed_token_set, g.user.id
+        )
+        
+        return json.dumps(parsed_response["api_response"])
 
 
 class ServiceTaskService:
