@@ -48,7 +48,6 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
 fi
 
 export IS_GUNICORN="true"
-export PROCESS_WAITING_MESSAGES="true"
 
 # THIS MUST BE THE LAST COMMAND!
 exec poetry run gunicorn ${additional_args} --bind "0.0.0.0:$port" --workers="$workers" --limit-request-line 8192 --timeout 90 --capture-output --access-logfile '-' --log-level debug wsgi:app

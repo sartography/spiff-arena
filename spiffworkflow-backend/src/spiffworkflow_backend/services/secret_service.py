@@ -37,9 +37,7 @@ class SecretService:
     ) -> SecretModel:
         """Add_secret."""
         # encrypted_key = self.encrypt_key(key)
-        secret_model = SecretModel(
-            key=key, value=value, user_id=user_id
-        )
+        secret_model = SecretModel(key=key, value=value, user_id=user_id)
         db.session.add(secret_model)
         try:
             db.session.commit()
@@ -81,9 +79,7 @@ class SecretService:
                 db.session.rollback()
                 raise e
         elif create_if_not_exists:
-            SecretService.add_secret(
-                key=key, value=value, user_id=user_id
-            )
+            SecretService.add_secret(key=key, value=value, user_id=user_id)
         else:
             raise ApiError(
                 error_code="update_secret_error",

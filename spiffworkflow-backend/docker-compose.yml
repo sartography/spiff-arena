@@ -62,7 +62,7 @@ services:
       - SPIFFWORKFLOW_BACKEND_DATABASE_URI=mysql+mysqlconnector://root:${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw}@localhost:7003/${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
       - BPMN_SPEC_ABSOLUTE_DIR=/app/process_models
       - SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-false}
-      - PROCESS_WAITING_MESSAGES=true
+      - RUN_BACKGROUND_SCHEDULER=true
     ports:
       - "7000:7000"
     network_mode: host
