@@ -469,6 +469,33 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
 
+  /process-instances/{process_instance_id}/task/{task_id}/update:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of the process instance
+        schema:
+          type: string
+      - name: task_id
+        in: path
+        required: true
+        description: The unique id of the task
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.update_task_data
+      summary: Update the task data for requested instance and task
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Task Updated Successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
   /process-models/{process_group_id}/{process_model_id}/script-unit-tests:
     parameters:
       - name: process_group_id

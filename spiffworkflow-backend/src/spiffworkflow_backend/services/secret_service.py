@@ -55,7 +55,7 @@ class SecretService:
     def get_secret(key: str) -> SecretModel:
         """Get_secret."""
         secret = db.session.query(SecretModel).filter(SecretModel.key == key).first()
-        if secret is not None:
+        if isinstance(secret, SecretModel):
             return secret
         else:
             raise ApiError(
