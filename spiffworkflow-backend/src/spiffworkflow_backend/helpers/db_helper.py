@@ -13,4 +13,5 @@ def try_to_connect(start_time: float) -> None:
             raise exception
         else:
             time.sleep(1)
+            print("Waiting for db to be ready in loop...")
             try_to_connect(start_time)
