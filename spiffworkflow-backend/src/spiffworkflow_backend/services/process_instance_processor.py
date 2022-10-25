@@ -14,6 +14,7 @@ from typing import List
 from typing import NewType
 from typing import Optional
 from typing import Tuple
+from typing import TypedDict
 from typing import Union
 
 from flask import current_app
@@ -75,6 +76,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task_event import TaskAction
 from spiffworkflow_backend.models.task_event import TaskEventModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserModelSchema
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -106,12 +108,23 @@ DEFAULT_GLOBALS.update(safe_globals)
 DEFAULT_GLOBALS["__builtins__"]["__import__"] = _import
 
 
+class PotentialOwnerIdList(TypedDict):
+    """PotentialOwnerIdList."""
+
+    potential_owner_ids: list[int]
+    lane_assignment_id: Optional[int]
+
+
 class ProcessInstanceProcessorError(Exception):
     """ProcessInstanceProcessorError."""
 
 
 class NoPotentialOwnersForTaskError(Exception):
     """NoPotentialOwnersForTaskError."""
+
+
+class PotentialOwnerUserNotFoundError(Exception):
+    """PotentialOwnerUserNotFoundError."""
 
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
@@ -499,6 +512,58 @@ class ProcessInstanceProcessor:
 
         self.save()
 
+    def raise_if_no_potential_owners(
+        self, potential_owner_ids: list[int], message: str
+    ) -> None:
+        """Raise_if_no_potential_owners."""
+        if not potential_owner_ids:
+            raise (NoPotentialOwnersForTaskError(message))
+
+    def get_potential_owner_ids_from_task(
+        self, task: SpiffTask
+    ) -> PotentialOwnerIdList:
+        """Get_potential_owner_ids_from_task."""
+        task_spec = task.task_spec
+        task_lane = "process_initiator"
+        if task_spec.lane is not None and task_spec.lane != "":
+            task_lane = task_spec.lane
+
+        potential_owner_ids = []
+        lane_assignment_id = None
+        if re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
+            potential_owner_ids = [self.process_instance_model.process_initiator_id]
+        elif "lane_owners" in task.data and task_lane in task.data["lane_owners"]:
+            for username in task.data["lane_owners"][task_lane]:
+                lane_owner_user = UserModel.query.filter_by(username=username).first()
+                if lane_owner_user is not None:
+                    potential_owner_ids.append(lane_owner_user.id)
+            self.raise_if_no_potential_owners(
+                potential_owner_ids,
+                f"No users found in task data lane owner list for lane: {task_lane}. "
+                f"The user list used: {task.data['lane_owners'][task_lane]}",
+            )
+        else:
+            group_model = GroupModel.query.filter_by(identifier=task_lane).first()
+            if group_model is None:
+                raise (
+                    NoPotentialOwnersForTaskError(
+                        f"Could not find a group with name matching lane: {task_lane}"
+                    )
+                )
+            potential_owner_ids = [
+                i.user_id for i in group_model.user_group_assignments
+            ]
+            lane_assignment_id = group_model.id
+            self.raise_if_no_potential_owners(
+                potential_owner_ids,
+                f"Could not find any users in group to assign to lane: {task_lane}",
+            )
+
+        return {
+            "potential_owner_ids": potential_owner_ids,
+            "lane_assignment_id": lane_assignment_id,
+        }
+
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
@@ -532,32 +597,9 @@ class ProcessInstanceProcessor:
             # filter out non-usertasks
             task_spec = ready_or_waiting_task.task_spec
             if not self.bpmn_process_instance._is_engine_task(task_spec):
-                ready_or_waiting_task.data["current_user"]["id"]
-                task_lane = "process_initiator"
-                if task_spec.lane is not None and task_spec.lane != "":
-                    task_lane = task_spec.lane
-
-                potential_owner_ids = []
-                lane_assignment_id = None
-                if re.match(r"(process.?)initiator", task_lane, re.IGNORECASE):
-                    potential_owner_ids = [
-                        self.process_instance_model.process_initiator_id
-                    ]
-                else:
-                    group_model = GroupModel.query.filter_by(
-                        identifier=task_lane
-                    ).first()
-                    if group_model is None:
-                        raise (
-                            NoPotentialOwnersForTaskError(
-                                f"Could not find a group with name matching lane: {task_lane}"
-                            )
-                        )
-                    potential_owner_ids = [
-                        i.user_id for i in group_model.user_group_assignments
-                    ]
-                    lane_assignment_id = group_model.id
-
+                potential_owner_hash = self.get_potential_owner_ids_from_task(
+                    ready_or_waiting_task
+                )
                 extensions = ready_or_waiting_task.task_spec.extensions
 
                 form_file_name = None
@@ -586,12 +628,12 @@ class ProcessInstanceProcessor:
                     task_title=ready_or_waiting_task.task_spec.description,
                     task_type=ready_or_waiting_task.task_spec.__class__.__name__,
                     task_status=ready_or_waiting_task.get_state_name(),
-                    lane_assignment_id=lane_assignment_id,
+                    lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                 )
                 db.session.add(active_task)
                 db.session.commit()
 
-                for potential_owner_id in potential_owner_ids:
+                for potential_owner_id in potential_owner_hash["potential_owner_ids"]:
                     active_task_user = ActiveTaskUserModel(
                         user_id=potential_owner_id, active_task_id=active_task.id
                     )
