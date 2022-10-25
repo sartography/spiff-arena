@@ -264,7 +264,7 @@ class UserService:
             .filter(PrincipalModel.user_id == user_id)
             .first()
         )
-        if principal:
+        if isinstance(principal, PrincipalModel):
             return principal
         raise ApiError(
             error_code="no_principal_found",

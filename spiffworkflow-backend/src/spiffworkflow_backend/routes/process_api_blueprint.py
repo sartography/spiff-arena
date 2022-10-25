@@ -1493,3 +1493,44 @@ def _update_form_schema_with_task_data_as_needed(
             for o in value:
                 if isinstance(o, dict):
                     _update_form_schema_with_task_data_as_needed(o, task_data)
+
+
+def update_task_data(process_instance_id: str, task_id: str, body: Dict) -> Response:
+    """Update task data."""
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
+        if "new_task_data" in body:
+            new_task_data_str: str = body["new_task_data"]
+            new_task_data_dict = json.loads(new_task_data_str)
+            if task_id in process_instance_bpmn_json_dict["tasks"]:
+                process_instance_bpmn_json_dict["tasks"][task_id][
+                    "data"
+                ] = new_task_data_dict
+                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
+                db.session.add(process_instance)
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not update the Instance. Original error is {e}",
+                    ) from e
+            else:
+                raise ApiError(
+                    error_code="update_task_data_error",
+                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
+                )
+    else:
+        raise ApiError(
+            error_code="update_task_data_error",
+            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
