@@ -522,10 +522,6 @@ class ProcessInstanceProcessor:
         ).all()
         if len(active_tasks) > 0:
             for at in active_tasks:
-                active_task_users = at.active_task_users
-                for atu in active_task_users:
-                    # don't trust sqlalchemy to cascade - ran into race condition here.
-                    db.session.delete(atu)
                 db.session.delete(at)
 
         db.session.add(self.process_instance_model)
