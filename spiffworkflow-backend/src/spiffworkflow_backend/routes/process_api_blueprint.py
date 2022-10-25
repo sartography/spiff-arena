@@ -426,7 +426,7 @@ def process_instance_run(
         processor.save()
         ProcessInstanceService.update_task_assignments(processor)
 
-        if not current_app.config["PROCESS_WAITING_MESSAGES"]:
+        if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(

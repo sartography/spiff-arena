@@ -64,13 +64,9 @@ class ServiceTaskDelegate:
             return proxied_response.text
 
         secret_key = parsed_response["auth"]
-        refreshed_token_set = json.dumps(
-            parsed_response["refreshed_token_set"]
-        )
-        SecretService().update_secret(
-            secret_key, refreshed_token_set, g.user.id
-        )
-        
+        refreshed_token_set = json.dumps(parsed_response["refreshed_token_set"])
+        SecretService().update_secret(secret_key, refreshed_token_set, g.user.id)
+
         return json.dumps(parsed_response["api_response"])
 
 

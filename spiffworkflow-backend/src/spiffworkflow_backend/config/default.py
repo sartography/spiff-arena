@@ -13,8 +13,8 @@ CORS_ALLOW_ORIGINS = re.split(
     r",\s*", environ.get("CORS_ALLOW_ORIGINS", default=CORS_DEFAULT)
 )
 
-PROCESS_WAITING_MESSAGES = (
-    environ.get("PROCESS_WAITING_MESSAGES", default="false") == "true"
+RUN_BACKGROUND_SCHEDULER = (
+    environ.get("RUN_BACKGROUND_SCHEDULER", default="false") == "true"
 )
 SPIFFWORKFLOW_FRONTEND_URL = environ.get(
     "SPIFFWORKFLOW_FRONTEND_URL", default="http://localhost:7001"
