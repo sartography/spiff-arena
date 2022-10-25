@@ -71,7 +71,7 @@ class TestSecretService(SecretServiceTestHelpers):
         assert test_secret is not None
         assert test_secret.key == self.test_key
         assert test_secret.value == self.test_value
-        assert test_secret.creator_user_id == with_super_admin_user.id
+        assert test_secret.user_id == with_super_admin_user.id
 
     def test_add_secret_duplicate_key_fails(
         self,
@@ -129,24 +129,6 @@ class TestSecretService(SecretServiceTestHelpers):
         assert new_secret
         assert new_secret.value == "new_secret_value"  # noqa: S105
 
-    def test_update_secret_bad_user_fails(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        """Test_update_secret_bad_user."""
-        self.add_test_secret(with_super_admin_user)
-        with pytest.raises(ApiError) as ae:
-            SecretService.update_secret(
-                self.test_key, "new_secret_value", with_super_admin_user.id + 1
-            )  # noqa: S105
-        assert (
-            ae.value.message
-            == f"User: {with_super_admin_user.id+1} cannot update the secret with key : test_key"
-        )
-
     def test_update_secret_bad_secret_fails(
         self,
         app: Flask,
@@ -174,26 +156,10 @@ class TestSecretService(SecretServiceTestHelpers):
         self.add_test_secret(with_super_admin_user)
         secrets = SecretModel.query.all()
         assert len(secrets) == 1
-        assert secrets[0].creator_user_id == with_super_admin_user.id
+        assert secrets[0].user_id == with_super_admin_user.id
         SecretService.delete_secret(self.test_key, with_super_admin_user.id)
         secrets = SecretModel.query.all()
         assert len(secrets) == 0
-
-    def test_delete_secret_bad_user_fails(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        """Test_delete_secret_bad_user."""
-        self.add_test_secret(with_super_admin_user)
-        with pytest.raises(ApiError) as ae:
-            SecretService.delete_secret(self.test_key, with_super_admin_user.id + 1)
-        assert (
-            f"User: {with_super_admin_user.id+1} cannot delete the secret with key"
-            in ae.value.message
-        )
 
     def test_delete_secret_bad_secret_fails(
         self,
@@ -223,7 +189,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         secret_model = SecretModel(
             key=self.test_key,
             value=self.test_value,
-            creator_user_id=with_super_admin_user.id,
+            user_id=with_super_admin_user.id,
         )
         data = json.dumps(SecretModelSchema().dump(secret_model))
         response: TestResponse = client.post(
@@ -234,11 +200,11 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         )
         assert response.json
         secret: dict = response.json
-        for key in ["key", "value", "creator_user_id"]:
+        for key in ["key", "value", "user_id"]:
             assert key in secret.keys()
         assert secret["key"] == self.test_key
         assert secret["value"] == self.test_value
-        assert secret["creator_user_id"] == with_super_admin_user.id
+        assert secret["user_id"] == with_super_admin_user.id
 
     def test_get_secret(
         self,
@@ -273,7 +239,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         secret_model = SecretModel(
             key=self.test_key,
             value="new_secret_value",
-            creator_user_id=with_super_admin_user.id,
+            user_id=with_super_admin_user.id,
         )
         response = client.put(
             f"/v1.0/secrets/{self.test_key}",
@@ -307,32 +273,6 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         assert secret_response.status_code == 200
         with pytest.raises(ApiError):
             secret = SecretService.get_secret(self.test_key)
-
-    def test_delete_secret_bad_user(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        """Test_delete_secret_bad_user."""
-        user_1 = self.find_or_create_user()
-        user_2 = self.find_or_create_user("test_user_2")
-        self.add_test_secret(user_1)
-
-        # ensure user has permissions to delete the given secret
-        self.add_permissions_to_user(
-            user_2,
-            target_uri=f"/v1.0/secrets/{self.test_key}",
-            permission_names=["delete"],
-        )
-        secret_response = client.delete(
-            f"/v1.0/secrets/{self.test_key}",
-            headers=self.logged_in_headers(user_2),
-        )
-        assert secret_response.status_code == 401
-        assert secret_response.json
-        assert secret_response.json["error_code"] == "delete_secret_error"
 
     def test_delete_secret_bad_key(
         self,

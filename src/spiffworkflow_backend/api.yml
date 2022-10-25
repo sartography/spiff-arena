@@ -2117,8 +2117,8 @@ components:
           type: string
           example: my_super_secret_value
           nullable: false
-        creator_user_id:
-          description: The id of the logged in user that created this secret
+        user_id:
+          description: The id of the logged in user that updated this secret
           type: number
           example: 1
           nullable: false

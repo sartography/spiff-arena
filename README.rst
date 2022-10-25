@@ -90,3 +90,5 @@ This project was generated from `@cjolowicz`_'s `Hypermodern Python Cookiecutter
 .. github-only
 .. _Contributor Guide: CONTRIBUTING.rst
 .. _Usage: https://spiffworkflow-backend.readthedocs.io/en/latest/usage.html
+
+(test)
