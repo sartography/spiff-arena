@@ -32,7 +32,7 @@ SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "ma
 # SpiffWorkflow = {develop = true, path = "/Users/kevin/projects/github/sartography/SpiffWorkflow"}
 # SpiffWorkflow = {develop = true, path = "/home/jason/projects/github/sartography/SpiffWorkflow"}
 sentry-sdk = "^1.10"
-sphinx-autoapi = "^1.8.4"
+sphinx-autoapi = "^2.0"
 # flask-bpmn = {develop = true, path = "/home/jason/projects/github/sartography/flask-bpmn"}
 # flask-bpmn = {develop = true, path = "/Users/kevin/projects/github/sartography/flask-bpmn"}
 flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
