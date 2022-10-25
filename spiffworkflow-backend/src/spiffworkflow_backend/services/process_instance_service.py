@@ -73,8 +73,8 @@ class ProcessInstanceService:
                 process_instance.status = ProcessInstanceStatus.erroring.value
                 db.session.add(process_instance)
                 db.session.commit()
-                error_message = f"Error running waiting task for process_instance {process_instance.id}"
-                "({process_instance.process_model_identifier}). {str(e)}"
+                error_message = f"Error running waiting task for process_instance {process_instance.id}" + \
+                                "({process_instance.process_model_identifier}). {str(e)}"
                 current_app.logger.error(error_message)
 
     @staticmethod
