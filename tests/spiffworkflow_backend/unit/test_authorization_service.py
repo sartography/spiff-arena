@@ -94,6 +94,8 @@ class TestAuthorizationService(BaseTest):
         """Test_user_can_be_added_to_active_task_on_first_login."""
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
+        # to ensure there is a user that can be assigned to the task
+        self.find_or_create_user("testuser1")
         AuthorizationService.import_permissions_from_yaml_file()
 
         process_model = load_test_spec(
