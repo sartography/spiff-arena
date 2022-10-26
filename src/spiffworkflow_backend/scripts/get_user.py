@@ -1,8 +1,8 @@
 """Get_env."""
 from typing import Any
-from flask import g
 from typing import Optional
 
+from flask import g
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.scripts.script import Script
