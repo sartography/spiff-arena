@@ -20,10 +20,12 @@ class DataSetupService:
         failing_process_models = []
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
-            if process_model.primary_file_name:
-
+            process_model_files = SpecFileService.get_files(
+                process_model, extension_filter=".bpmn"
+            )
+            for process_model_file in process_model_files:
                 bpmn_xml_file_contents = SpecFileService.get_data(
-                    process_model, process_model.primary_file_name
+                    process_model, process_model_file.name
                 )
                 bad_files = [
                     "B.1.0.bpmn",
@@ -32,21 +34,21 @@ class DataSetupService:
                     "C.6.0.bpmn",
                     "TC-5.1.bpmn",
                 ]
-                if process_model.primary_file_name in bad_files:
+                if process_model_file.name in bad_files:
                     continue
                 current_app.logger.debug(
-                    f"primary_file_name: {process_model.primary_file_name}"
+                    f"primary_file_name: {process_model_file.name}"
                 )
                 try:
                     SpecFileService.update_file(
                         process_model,
-                        process_model.primary_file_name,
+                        process_model_file.name,
                         bpmn_xml_file_contents,
                     )
                 except Exception as ex:
                     failing_process_models.append(
                         (
-                            f"{process_model.process_group_id}/{process_model.id}/{process_model.primary_file_name}",
+                            f"{process_model.process_group_id}/{process_model.id}/{process_model_file.name}",
                             str(ex),
                         )
                     )
