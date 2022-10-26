@@ -1,4 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
+import dataclasses
 import json
 import os
 import random
@@ -1351,6 +1352,13 @@ def get_spiff_task_from_process_instance(
         processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_id)
     spiff_task = processor.bpmn_process_instance.get_task(task_uuid)
+
+    # FOR DEBUGGING: save this variable so we get it in sentry when something fails
+    active_task = ActiveTaskModel.query.filter_by(task_id=task_id).first()
+    if active_task:
+        task_json = dataclasses.asdict(active_task)
+        print(f"task_json: {task_json}")
+    ########
 
     if spiff_task is None:
         raise (
