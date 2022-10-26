@@ -46,12 +46,12 @@ class ActiveTaskModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
-    task_id = db.Column(db.String(50))
-    task_name = db.Column(db.String(50))
-    task_title = db.Column(db.String(50))
-    task_type = db.Column(db.String(50))
-    task_status = db.Column(db.String(50))
-    process_model_display_name = db.Column(db.String(255))
+    task_id: str = db.Column(db.String(50))
+    task_name: str = db.Column(db.String(50))
+    task_title: str = db.Column(db.String(50))
+    task_type: str = db.Column(db.String(50))
+    task_status: str = db.Column(db.String(50))
+    process_model_display_name: str = db.Column(db.String(255))
 
     active_task_users = relationship("ActiveTaskUserModel", cascade="delete")
     potential_owners = relationship(  # type: ignore
