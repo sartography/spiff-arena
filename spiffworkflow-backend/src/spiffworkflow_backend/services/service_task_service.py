@@ -4,6 +4,7 @@ from typing import Any
 
 import requests
 from flask import current_app
+from flask import g
 
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
@@ -22,11 +23,8 @@ class ServiceTaskDelegate:
     """ServiceTaskDelegate."""
 
     @staticmethod
-    def normalize_value(value: Any) -> Any:
-        """Normalize_value."""
-        if isinstance(value, dict):
-            value = json.dumps(value)
-
+    def check_prefixes(value: Any) -> Any:
+        """Check_prefixes."""
         if isinstance(value, str):
             secret_prefix = "secret:"  # noqa: S105
             if value.startswith(secret_prefix):
@@ -48,19 +46,28 @@ class ServiceTaskDelegate:
     def call_connector(name: str, bpmn_params: Any, task_data: Any) -> str:
         """Calls a connector via the configured proxy."""
         params = {
-            k: ServiceTaskDelegate.normalize_value(v["value"])
+            k: ServiceTaskDelegate.check_prefixes(v["value"])
             for k, v in bpmn_params.items()
         }
-        params["spiff__task_data"] = json.dumps(task_data)
+        params["spiff__task_data"] = task_data
 
         proxied_response = requests.post(
-            f"{connector_proxy_url()}/v1/do/{name}", params
+            f"{connector_proxy_url()}/v1/do/{name}", json=params
         )
 
         if proxied_response.status_code != 200:
             print("got error from connector proxy")
 
-        return proxied_response.text
+        parsed_response = json.loads(proxied_response.text)
+
+        if "refreshed_token_set" not in parsed_response:
+            return proxied_response.text
+
+        secret_key = parsed_response["auth"]
+        refreshed_token_set = json.dumps(parsed_response["refreshed_token_set"])
+        SecretService().update_secret(secret_key, refreshed_token_set, g.user.id)
+
+        return json.dumps(parsed_response["api_response"])
 
 
 class ServiceTaskService:

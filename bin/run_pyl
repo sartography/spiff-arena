@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+python_projects=(
+  flask-bpmn
+  spiffworkflow-backend
+)
+
+function run_fix_docstrings() {
+  fix_python_docstrings  $(get_top_level_directories_containing_python_files)
+}
+
+function run_pre_commmit() {
+  poetry run pre-commit run --verbose --all-files
+}
+
+for python_project in "${python_projects[@]}" ; do
+  pushd "$python_project"
+  run_fix_docstrings || run_fix_docstrings
+  popd
+done
+run_pre_commmit || run_pre_commmit
+
+for python_project in  "${python_projects[@]}"; do
+  pushd "$python_project"
+  poet i
+  poet mypy
+  poet test
+  popd
+done

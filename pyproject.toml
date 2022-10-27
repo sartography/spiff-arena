@@ -1,19 +1,15 @@
 [tool.poetry]
-name = "spiffworkflow-backend"
+name = "spiffworkflow-arean"
 version = "0.0.0"
-description = "Spiffworkflow Backend"
+description = "Spiffworkflow Arena"
 authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.rst"
-homepage = "https://github.com/sartography/spiffworkflow-backend"
-repository = "https://github.com/sartography/spiffworkflow-backend"
-documentation = "https://spiffworkflow-backend.readthedocs.io"
+homepage = "https://github.com/sartography/spiffworkflow-arena"
+repository = "https://github.com/sartography/spiffworkflow-arena"
 classifiers = [
     "Development Status :: 1 - Planning",
 ]
-
-[tool.poetry.urls]
-Changelog = "https://github.com/sartography/spiffworkflow-backend/releases"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.11"

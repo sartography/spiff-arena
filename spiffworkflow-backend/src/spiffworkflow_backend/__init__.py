@@ -7,6 +7,7 @@ import flask.app
 import flask.json
 import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
+from apscheduler.schedulers.base import BaseScheduler  # type: ignore
 from flask.json.provider import DefaultJSONProvider
 from flask_bpmn.api.api_error import api_error_blueprint
 from flask_bpmn.models.db import db
@@ -52,9 +53,11 @@ class MyJSONEncoder(DefaultJSONProvider):
         return super().dumps(obj, **kwargs)
 
 
-def start_scheduler(app: flask.app.Flask) -> None:
+def start_scheduler(
+    app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler
+) -> None:
     """Start_scheduler."""
-    scheduler = BackgroundScheduler()
+    scheduler = scheduler_class()
     scheduler.add_job(
         BackgroundProcessingService(app).process_message_instances_with_app_context,
         "interval",
@@ -111,7 +114,7 @@ def create_app() -> flask.app.Flask:
 
     app.json = MyJSONEncoder(app)
 
-    if app.config["PROCESS_WAITING_MESSAGES"]:
+    if app.config["RUN_BACKGROUND_SCHEDULER"]:
         start_scheduler(app)
 
     configure_sentry(app)
@@ -137,15 +140,12 @@ def get_hacked_up_app_for_script() -> flask.app.Flask:
         else:
             raise Exception(f"Could not find {full_process_model_path}")
     app = create_app()
-    setup_config(app)
-    configure_sentry(app)
     return app
 
 
 def configure_sentry(app: flask.app.Flask) -> None:
     """Configure_sentry."""
     import sentry_sdk
-    from flask import Flask
     from sentry_sdk.integrations.flask import FlaskIntegration
 
     def before_send(event: Any, hint: Any) -> Any:
@@ -172,5 +172,3 @@ def configure_sentry(app: flask.app.Flask) -> None:
         traces_sample_rate=float(sentry_sample_rate),
         before_send=before_send,
     )
-
-    app = Flask(__name__)

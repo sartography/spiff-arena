@@ -1,4 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
+import dataclasses
 import json
 import os
 import random
@@ -28,12 +29,14 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
+from sqlalchemy import asc
 from sqlalchemy import desc
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
+from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
@@ -424,7 +427,7 @@ def process_instance_run(
         processor.save()
         ProcessInstanceService.update_task_assignments(processor)
 
-        if not current_app.config["PROCESS_WAITING_MESSAGES"]:
+        if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(
@@ -918,11 +921,11 @@ def process_instance_report_show(
 def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Task_list_my_tasks."""
     principal = find_principal_or_raise()
-
     active_tasks = (
-        ActiveTaskModel.query.filter_by(assigned_principal_id=principal.id)
-        .order_by(desc(ActiveTaskModel.id))  # type: ignore
+        ActiveTaskModel.query.order_by(desc(ActiveTaskModel.id))  # type: ignore
         .join(ProcessInstanceModel)
+        .join(ActiveTaskUserModel)
+        .filter_by(user_id=principal.user_id)
         # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
@@ -1085,17 +1088,14 @@ def task_submit(
 ) -> flask.wrappers.Response:
     """Task_submit_user_data."""
     principal = find_principal_or_raise()
-    active_task_assigned_to_me = find_active_task_by_id_or_raise(
-        process_instance_id, task_id, principal.id
-    )
-
-    process_instance = find_process_instance_by_id_or_raise(
-        active_task_assigned_to_me.process_instance_id
-    )
+    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
     processor = ProcessInstanceProcessor(process_instance)
     spiff_task = get_spiff_task_from_process_instance(
         task_id, process_instance, processor=processor
+    )
+    AuthorizationService.assert_user_can_complete_spiff_task(
+        processor, spiff_task, principal.user
     )
 
     if spiff_task.state != TaskState.READY:
@@ -1109,10 +1109,6 @@ def task_submit(
 
     if terminate_loop and spiff_task.is_looping():
         spiff_task.terminate_loop()
-
-    # TODO: support repeating fields
-    # Extract the details specific to the form submitted
-    # form_data = WorkflowService().extract_form_data(body, spiff_task)
 
     ProcessInstanceService.complete_form_task(processor, spiff_task, body, g.user)
 
@@ -1128,9 +1124,13 @@ def task_submit(
 
     ProcessInstanceService.update_task_assignments(processor)
 
-    next_active_task_assigned_to_me = ActiveTaskModel.query.filter_by(
-        assigned_principal_id=principal.id, process_instance_id=process_instance.id
-    ).first()
+    next_active_task_assigned_to_me = (
+        ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id)
+        .order_by(asc(ActiveTaskModel.id))  # type: ignore
+        .join(ActiveTaskUserModel)
+        .filter_by(user_id=principal.user_id)
+        .first()
+    )
     if next_active_task_assigned_to_me:
         return make_response(
             jsonify(ActiveTaskModel.to_task(next_active_task_assigned_to_me)), 200
@@ -1293,30 +1293,6 @@ def find_principal_or_raise() -> PrincipalModel:
     return principal  # type: ignore
 
 
-def find_active_task_by_id_or_raise(
-    process_instance_id: int, task_id: str, principal_id: PrincipalModel
-) -> ActiveTaskModel:
-    """Find_active_task_by_id_or_raise."""
-    active_task_assigned_to_me = ActiveTaskModel.query.filter_by(
-        process_instance_id=process_instance_id,
-        task_id=task_id,
-        assigned_principal_id=principal_id,
-    ).first()
-    if active_task_assigned_to_me is None:
-        message = (
-            f"Task not found for principal user {principal_id} "
-            f"process_instance_id: {process_instance_id}, task_id: {task_id}"
-        )
-        raise (
-            ApiError(
-                error_code="task_not_found",
-                message=message,
-                status_code=400,
-            )
-        )
-    return active_task_assigned_to_me  # type: ignore
-
-
 def find_process_instance_by_id_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:
@@ -1377,6 +1353,13 @@ def get_spiff_task_from_process_instance(
     task_uuid = uuid.UUID(task_id)
     spiff_task = processor.bpmn_process_instance.get_task(task_uuid)
 
+    # FOR DEBUGGING: save this variable so we get it in sentry when something fails
+    active_task = ActiveTaskModel.query.filter_by(task_id=task_id).first()
+    if active_task:
+        task_json = dataclasses.asdict(active_task)
+        print(f"task_json: {task_json}")
+    ########
+
     if spiff_task is None:
         raise (
             ApiError(
@@ -1433,7 +1416,7 @@ def add_secret(body: Dict) -> Response:
 
 def update_secret(key: str, body: dict) -> Response:
     """Update secret."""
-    SecretService().update_secret(key, body["value"], body["creator_user_id"])
+    SecretService().update_secret(key, body["value"], body["user_id"])
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -1518,3 +1501,44 @@ def _update_form_schema_with_task_data_as_needed(
             for o in value:
                 if isinstance(o, dict):
                     _update_form_schema_with_task_data_as_needed(o, task_data)
+
+
+def update_task_data(process_instance_id: str, task_id: str, body: Dict) -> Response:
+    """Update task data."""
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
+        if "new_task_data" in body:
+            new_task_data_str: str = body["new_task_data"]
+            new_task_data_dict = json.loads(new_task_data_str)
+            if task_id in process_instance_bpmn_json_dict["tasks"]:
+                process_instance_bpmn_json_dict["tasks"][task_id][
+                    "data"
+                ] = new_task_data_dict
+                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
+                db.session.add(process_instance)
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not update the Instance. Original error is {e}",
+                    ) from e
+            else:
+                raise ApiError(
+                    error_code="update_task_data_error",
+                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
+                )
+    else:
+        raise ApiError(
+            error_code="update_task_data_error",
+            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )

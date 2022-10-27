@@ -203,7 +203,6 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
     """Login_return."""
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
-
     auth_token_object = AuthenticationService().get_auth_token_object(code)
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
@@ -213,46 +212,12 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
                 auth_token_object["access_token"]
             )
             if user_info and "error" not in user_info:
-                user_model = (
-                    UserModel.query.filter(UserModel.service == "open_id")
-                    .filter(UserModel.service_id == user_info["sub"])
-                    .first()
+                user_model = AuthorizationService.create_user_from_sign_in(user_info)
+                g.user = user_model.id
+                g.token = auth_token_object["id_token"]
+                AuthenticationService.store_refresh_token(
+                    user_model.id, auth_token_object["refresh_token"]
                 )
-
-                if user_model is None:
-                    current_app.logger.debug("create_user in login_return")
-                    name = username = email = ""
-                    if "name" in user_info:
-                        name = user_info["name"]
-                    if "username" in user_info:
-                        username = user_info["username"]
-                    elif "preferred_username" in user_info:
-                        username = user_info["preferred_username"]
-                    if "email" in user_info:
-                        email = user_info["email"]
-                    user_model = UserService().create_user(
-                        service="open_id",
-                        service_id=user_info["sub"],
-                        name=name,
-                        username=username,
-                        email=email,
-                    )
-
-                if user_model:
-                    g.user = user_model.id
-                    g.token = auth_token_object["id_token"]
-                    AuthenticationService.store_refresh_token(
-                        user_model.id, auth_token_object["refresh_token"]
-                    )
-
-                # this may eventually get too slow.
-                # when it does, be careful about backgrounding, because
-                # the user will immediately need permissions to use the site.
-                # we are also a little apprehensive about pre-creating users
-                # before the user signs in, because we won't know things like
-                # the external service user identifier.
-                AuthorizationService.import_permissions_from_yaml_file()
-
                 redirect_url = (
                     f"{state_redirect_url}?"
                     + f"access_token={auth_token_object['access_token']}&"

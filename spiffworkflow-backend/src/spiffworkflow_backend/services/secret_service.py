@@ -33,13 +33,11 @@ class SecretService:
     def add_secret(
         key: str,
         value: str,
-        creator_user_id: int,
+        user_id: int,
     ) -> SecretModel:
         """Add_secret."""
         # encrypted_key = self.encrypt_key(key)
-        secret_model = SecretModel(
-            key=key, value=value, creator_user_id=creator_user_id
-        )
+        secret_model = SecretModel(key=key, value=value, user_id=user_id)
         db.session.add(secret_model)
         try:
             db.session.commit()
@@ -55,7 +53,7 @@ class SecretService:
     def get_secret(key: str) -> SecretModel:
         """Get_secret."""
         secret = db.session.query(SecretModel).filter(SecretModel.key == key).first()
-        if secret is not None:
+        if isinstance(secret, SecretModel):
             return secret
         else:
             raise ApiError(
@@ -67,30 +65,21 @@ class SecretService:
     def update_secret(
         key: str,
         value: str,
-        creator_user_id: int,
+        user_id: int,
         create_if_not_exists: Optional[bool] = False,
     ) -> None:
         """Does this pass pre commit?"""
         secret_model = SecretModel.query.filter(SecretModel.key == key).first()
         if secret_model:
-            if secret_model.creator_user_id == creator_user_id:
-                secret_model.value = value
-                db.session.add(secret_model)
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    raise e
-            else:
-                raise ApiError(
-                    error_code="update_secret_error",
-                    message=f"User: {creator_user_id} cannot update the secret with key : {key}",
-                    status_code=401,
-                )
+            secret_model.value = value
+            db.session.add(secret_model)
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                raise e
         elif create_if_not_exists:
-            SecretService.add_secret(
-                key=key, value=value, creator_user_id=creator_user_id
-            )
+            SecretService.add_secret(key=key, value=value, user_id=user_id)
         else:
             raise ApiError(
                 error_code="update_secret_error",
@@ -103,21 +92,14 @@ class SecretService:
         """Delete secret."""
         secret_model = SecretModel.query.filter(SecretModel.key == key).first()
         if secret_model:
-            if secret_model.creator_user_id == user_id:
-                db.session.delete(secret_model)
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    raise ApiError(
-                        error_code="delete_secret_error",
-                        message=f"Could not delete secret with key: {key}. Original error is: {e}",
-                    ) from e
-            else:
+            db.session.delete(secret_model)
+            try:
+                db.session.commit()
+            except Exception as e:
                 raise ApiError(
                     error_code="delete_secret_error",
-                    message=f"User: {user_id} cannot delete the secret with key : {key}",
-                    status_code=401,
-                )
+                    message=f"Could not delete secret with key: {key}. Original error is: {e}",
+                ) from e
         else:
             raise ApiError(
                 error_code="delete_secret_error",
