@@ -186,8 +186,12 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
                 methods.update(external_methods)
             super().execute(task, script, methods)
         except WorkflowException as e:
-            raise e
+            print("WORKFLOW")
+            print(f"e: {e}")
+            # raise e
+            raise Exception("NEW ERROR")
         except Exception as e:
+            print("EXCEPTIONWORK")
             raise WorkflowTaskExecException(task, f" {script}, {e}", e) from e
 
     def call_service(

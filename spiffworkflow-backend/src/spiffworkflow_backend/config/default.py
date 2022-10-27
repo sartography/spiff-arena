@@ -7,7 +7,7 @@ SELF_REGISTRATION = environ.get("SELF_REGISTRATION", default=False)
 
 DEVELOPMENT = False
 
-BPMN_SPEC_ABSOLUTE_DIR = environ.get("BPMN_SPEC_ABSOLUTE_DIR", default="")
+BPMN_SPEC_ABSOLUTE_DIR = environ.get("BPMN_SPEC_ABSOLUTE_DIR")
 CORS_DEFAULT = "*"
 CORS_ALLOW_ORIGINS = re.split(
     r",\s*", environ.get("CORS_ALLOW_ORIGINS", default=CORS_DEFAULT)
