@@ -1620,8 +1620,6 @@ components:
           type: string
         name:
           type: string
-        parent:
-          type: string
         display_name:
           type: string
         display_order:
