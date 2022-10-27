@@ -197,7 +197,7 @@ paths:
           type: string
     # process_group_show
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_show
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_show_2
       summary: Returns a single process group
       tags:
         - Process Groups
@@ -271,7 +271,7 @@ paths:
                   $ref: "#/components/schemas/ProcessModel"
     # process_model_add
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_add
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_add_2
       summary: Creates a new process model with the given parameters.
       tags:
         - Process Models
@@ -1619,6 +1619,8 @@ components:
         id:
           type: string
         name:
+          type: string
+        parent:
           type: string
         display_name:
           type: string

@@ -184,6 +184,11 @@ def process_groups_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Re
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
 
 
+def process_group_show_2(process_group_id: str) -> Any:
+    print(f"process_group_show_2: {process_group_id}")
+    return process_group_show(process_group_id)
+
+
 def process_group_show(
     process_group_id: str,
 ) -> Any:
@@ -199,6 +204,13 @@ def process_group_show(
             )
         ) from exception
     return ProcessGroupSchema().dump(process_group)
+
+
+def process_model_add_2(
+        body: Dict[str, Union[str, bool, int]]
+):
+    print("process_model_add_2")
+    return process_model_add(body)
 
 
 def process_model_add(
