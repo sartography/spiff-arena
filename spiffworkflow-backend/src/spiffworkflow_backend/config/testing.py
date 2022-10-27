@@ -1,5 +1,8 @@
 """Testing.py."""
 from os import environ
+import os
+
+from spiffworkflow_backend.config.default import BPMN_SPEC_ABSOLUTE_DIR
 
 
 TESTING = True
@@ -14,4 +17,14 @@ SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(
 
 SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
     "SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="debug"
+)
+
+# NOTE: set this here since nox shoves tests and src code to
+# different places and this allows us to know exactly where we are at the start
+BPMN_SPEC_ABSOLUTE_DIR = os.path.join(
+    os.path.dirname(__file__),
+    "tests",
+    "spiffworkflow_backend",
+    "files",
+    "bpmn_specs",
 )

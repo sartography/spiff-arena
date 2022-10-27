@@ -22,6 +22,7 @@ from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -138,25 +139,11 @@ class AuthorizationService:
         default_group = None
         if "default_group" in permission_configs:
             default_group_identifier = permission_configs["default_group"]
-            default_group = GroupModel.query.filter_by(
-                identifier=default_group_identifier
-            ).first()
-            if default_group is None:
-                default_group = GroupModel(identifier=default_group_identifier)
-                db.session.add(default_group)
-                db.session.commit()
-                UserService.create_principal(
-                    default_group.id, id_column_name="group_id"
-                )
+            default_group = GroupService.find_or_create_group(default_group_identifier)
 
         if "groups" in permission_configs:
             for group_identifier, group_config in permission_configs["groups"].items():
-                group = GroupModel.query.filter_by(identifier=group_identifier).first()
-                if group is None:
-                    group = GroupModel(identifier=group_identifier)
-                    db.session.add(group)
-                    db.session.commit()
-                    UserService.create_principal(group.id, id_column_name="group_id")
+                group = GroupService.find_or_create_group(group_identifier)
                 for username in group_config["users"]:
                     user = UserModel.query.filter_by(username=username).first()
                     if user is None:
@@ -186,13 +173,9 @@ class AuthorizationService:
                 for allowed_permission in permission_config["allowed_permissions"]:
                     if "groups" in permission_config:
                         for group_identifier in permission_config["groups"]:
-                            principal = (
-                                PrincipalModel.query.join(GroupModel)
-                                .filter(GroupModel.identifier == group_identifier)
-                                .first()
-                            )
+                            group = GroupService.find_or_create_group(group_identifier)
                             cls.create_permission_for_principal(
-                                principal, permission_target, allowed_permission
+                                group.principal, permission_target, allowed_permission
                             )
                     if "users" in permission_config:
                         for username in permission_config["users"]:

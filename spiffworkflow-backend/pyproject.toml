@@ -27,15 +27,11 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
-# go back to main once https://github.com/sartography/SpiffWorkflow/pull/241 is merged
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
-# SpiffWorkflow = {develop = true, path = "/Users/kevin/projects/github/sartography/SpiffWorkflow"}
-# SpiffWorkflow = {develop = true, path = "/home/jason/projects/github/sartography/SpiffWorkflow"}
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
-# flask-bpmn = {develop = true, path = "/home/jason/projects/github/sartography/flask-bpmn"}
-# flask-bpmn = {develop = true, path = "/Users/kevin/projects/github/sartography/flask-bpmn"}
 flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
+# flask-bpmn = {develop = true, path = "../flask-bpmn"}
 mysql-connector-python = "^8.0.29"
 pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"

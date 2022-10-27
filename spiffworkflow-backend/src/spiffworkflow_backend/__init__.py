@@ -148,6 +148,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
     import sentry_sdk
     from sentry_sdk.integrations.flask import FlaskIntegration
 
+    # get rid of NotFound errors
     def before_send(event: Any, hint: Any) -> Any:
         """Before_send."""
         if "exc_info" in hint:

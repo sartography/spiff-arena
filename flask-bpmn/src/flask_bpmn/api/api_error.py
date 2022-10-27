@@ -88,7 +88,6 @@ class ApiError(Exception):
         # Assure that there is nothing in the json data that can't be serialized.
         instance.task_data = ApiError.remove_unserializeable_from_dict(task.data)
 
-        current_app.logger.error(message, exc_info=True)
         return instance
 
     @staticmethod
@@ -125,7 +124,6 @@ class ApiError(Exception):
         instance.task_name = task_spec.description or ""
         if task_spec._wf_spec:
             instance.file_name = task_spec._wf_spec.file
-        current_app.logger.error(message, exc_info=True)
         return instance
 
     @classmethod
@@ -182,9 +180,9 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
             f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
         )
 
-    # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
-    # seems to break the sentry sdk context where we no longer get back
-    # an event id or send out tags like username
+    # # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
+    # # seems to break the sentry sdk context where we no longer get back
+    # # an event id or send out tags like username
     current_app.logger.exception(exception)
 
     # set api_exception like this to avoid confusing mypy

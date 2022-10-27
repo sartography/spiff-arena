@@ -36,20 +36,8 @@ from spiffworkflow_backend import create_app  # noqa: E402
 def app() -> Flask:
     """App."""
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "testing"
-
-    # os.environ["FLASK_SESSION_SECRET_KEY"] = "this_is_testing_secret_key"
     os.environ["FLASK_SESSION_SECRET_KEY"] = "super_secret_key"
     app = create_app()
-
-    # NOTE: set this here since nox shoves tests and src code to
-    # different places and this allows us to know exactly where we are at the start
-    app.config["BPMN_SPEC_ABSOLUTE_DIR"] = os.path.join(
-        os.path.dirname(__file__),
-        "tests",
-        "spiffworkflow_backend",
-        "files",
-        "bpmn_specs",
-    )
 
     return app
 
