@@ -32,9 +32,9 @@ class FileSystemService:
         return os.path.join(app_root, "..", dir_name)
 
     @staticmethod
-    def process_group_path(name: str, parent: str) -> str:
+    def process_group_path(name: str) -> str:
         """Category_path."""
-        return os.path.join(FileSystemService.root_path(), parent, name)
+        return os.path.join(FileSystemService.root_path(), name)
 
     @staticmethod
     def full_path_from_relative_path(relative_path: str) -> str:

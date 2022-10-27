@@ -189,7 +189,7 @@ class ProcessModelService(FileSystemService):
 
     def update_process_group(self, process_group: ProcessGroup) -> ProcessGroup:
         """Update_process_group."""
-        cat_path = self.process_group_path(process_group.id, process_group.parent)
+        cat_path = self.process_group_path(process_group.id)
         os.makedirs(cat_path, exist_ok=True)
         json_path = os.path.join(cat_path, self.CAT_JSON_FILE)
         with open(json_path, "w") as cat_json:

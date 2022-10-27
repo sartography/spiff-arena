@@ -54,11 +54,10 @@ class TestNestedGroups(BaseTest):
         )
 
         process_group_b = ProcessGroup(
-            id="group_b",
+            id="group_a/group_b",
             display_name="Group B",
             display_order=0,
             admin=False,
-            parent='group_a'
         )
         response_b = client.post(
             "/v1.0/process-groups",
@@ -68,11 +67,10 @@ class TestNestedGroups(BaseTest):
         )
 
         process_group_c = ProcessGroup(
-            id="group_c",
+            id="group_a/group_b/group_c",
             display_name="Group C",
             display_order=0,
             admin=False,
-            parent='group_a/group_b'
         )
         response_c = client.post(
             "/v1.0/process-groups",
@@ -104,11 +102,10 @@ class TestNestedGroups(BaseTest):
         )
 
         process_group_b = ProcessGroup(
-            id="group_b",
+            id="group_a/group_b",
             display_name="Group B",
             display_order=0,
             admin=False,
-            parent='group_a'
         )
         response_b = client.post(
             "/v1.0/process-groups",
