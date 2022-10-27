@@ -2,19 +2,12 @@
   "title": "Get Timezone",
   "description": "Form to select a timezone.",
   "type": "object",
-  "required": [
-    "timezone"
-  ],
+  "required": ["timezone"],
   "properties": {
     "timezone": {
       "type": "string",
       "title": "Timezone",
-      "enum": [
-        "US/Eastern",
-        "US/Pacific",
-        "Europe/Berlin",
-        "Australia/ACT"
-      ]
+      "enum": ["US/Eastern", "US/Pacific", "Europe/Berlin", "Australia/ACT"]
     }
   }
 }

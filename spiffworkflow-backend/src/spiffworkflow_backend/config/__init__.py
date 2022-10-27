@@ -54,13 +54,20 @@ def setup_config(app: Flask) -> None:
     else:
         app.config.from_pyfile(f"{app.instance_path}/config.py", silent=True)
 
-    env_config_module = "spiffworkflow_backend.config." + app.config["ENV_IDENTIFIER"]
+    env_config_prefix = "spiffworkflow_backend.config."
+    env_config_module = env_config_prefix + app.config["ENV_IDENTIFIER"]
     try:
         app.config.from_object(env_config_module)
     except ImportStringError as exception:
-        raise ModuleNotFoundError(
-            f"Cannot find config module: {env_config_module}"
-        ) from exception
+        if (
+            os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
+            and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
+        ):
+            app.config.from_object("{env_config_prefix}terraform_deployed_environment")
+        else:
+            raise ModuleNotFoundError(
+                f"Cannot find config module: {env_config_module}"
+            ) from exception
 
     setup_database_uri(app)
     setup_logger(app)

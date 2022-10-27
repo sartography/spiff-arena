@@ -23,6 +23,21 @@ groups:
   Finance Team:
     users: [finance_user1]
 
+  Project Lead:
+    users:
+      [
+        jakub,
+        alex,
+        dan,
+        mike,
+        jason,
+        jarrad,
+        elizabeth,
+        jon,
+        natalia,
+        manuchehr,
+      ]
+
 permissions:
   admin:
     groups: [admin]
@@ -50,7 +65,7 @@ permissions:
     uri: /v1.0/process-models/finance/*
 
   read-all:
-    groups: [finance, admin]
+    groups: [finance, admin, "Project Lead"]
     users: []
     allowed_permissions: [read]
     uri: /*
