@@ -175,9 +175,9 @@ export default function ProcessInstanceShow() {
     if (task == null) {
       setTaskDataToDisplay('');
     } else {
-      setTaskDataToDisplay(JSON.stringify(task.data, null, 2))
+      setTaskDataToDisplay(JSON.stringify(task.data, null, 2));
     }
-  }
+  };
 
   const handleClickedDiagramTask = (shapeElement: any) => {
     if (tasks) {
@@ -227,27 +227,37 @@ export default function ProcessInstanceShow() {
 
   const canEditTaskData = (task: any) => {
     return task.state === 'READY';
-  }
+  };
 
   const cancelEditingTaskData = () => {
     setEditingTaskData(false);
     initializeTaskDataToDisplay(taskToDisplay);
-  }
+  };
+
+  const taskDataStringToObject = (dataString: string) => {
+    return JSON.parse(dataString);
+  };
 
   const saveTaskDataResult = (_: any) => {
     setEditingTaskData(false);
-  }
+    const dataObject = taskDataStringToObject(taskDataToDisplay);
+    const taskToDisplayCopy = { ...taskToDisplay, data: dataObject }; // spread operator
+    setTaskToDisplay(taskToDisplayCopy);
+  };
 
   const saveTaskDataFailure = (result: any) => {
-    console.log(result);
-  }
+    console.log(result.toString());
+    // TODO: Not sure what to do here
+    refreshPage();
+  };
 
   const saveTaskData = () => {
     if (!taskToDisplay) {
       return;
     }
 
-    const taskToUse: any = taskToDisplay;
+    // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
+    const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
       path: `/process-instances/${params.process_instance_id}/task/${taskToUse.id}/update`,
       httpMethod: 'POST',
@@ -257,7 +267,7 @@ export default function ProcessInstanceShow() {
         new_task_data: taskToUse.data,
       },
     });
-  }
+  };
 
   const taskDataButtons = (task: any) => {
     const buttons = [];
@@ -304,7 +314,7 @@ export default function ProcessInstanceShow() {
     }
 
     return buttons;
-  }
+  };
 
   const taskDataContainer = () => {
     return editingTaskData ? (
@@ -317,18 +327,20 @@ export default function ProcessInstanceShow() {
       />
     ) : (
       <pre>{taskDataToDisplay}</pre>
-    )
-  }
+    );
+  };
 
   const taskDataDisplayArea = () => {
-    const taskToUse: any = taskToDisplay;
+    const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     if (taskToDisplay) {
       return (
         <Modal show={!!taskToUse} onHide={handleTaskDataDisplayClose}>
           <Modal.Header closeButton>
             <Modal.Title>
-              {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-              {taskDataButtons(taskToUse)}
+              <Stack direction="horizontal" gap={2}>
+                {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
+                {taskDataButtons(taskToUse)}
+              </Stack>
             </Modal.Title>
           </Modal.Header>
           {taskDataContainer()}
