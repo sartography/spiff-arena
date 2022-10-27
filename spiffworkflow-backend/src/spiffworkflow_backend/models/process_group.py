@@ -20,6 +20,7 @@ class ProcessGroup:
 
     id: str  # A unique string name, lower case, under scores (ie, 'my_group')
     display_name: str
+    parent: str = ''
     display_order: int | None = 0
     admin: bool | None = False
     process_models: list[ProcessModelInfo] = field(
@@ -46,7 +47,7 @@ class ProcessGroupSchema(Schema):
         """Meta."""
 
         model = ProcessGroup
-        fields = ["id", "display_name", "display_order", "admin", "process_models"]
+        fields = ["id", "display_name", "display_order", "admin", "process_models", "parent"]
 
     process_models = marshmallow.fields.List(
         marshmallow.fields.Nested(

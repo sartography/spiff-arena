@@ -34,6 +34,18 @@ class ProcessModelService(FileSystemService):
     GROUP_SCHEMA = ProcessGroupSchema()
     WF_SCHEMA = ProcessModelInfoSchema()
 
+    def is_group(self, path):
+        group_json_path = os.path.join(path, self.CAT_JSON_FILE)
+        if os.path.exists(group_json_path):
+            return True
+        return False
+
+    def is_model(self, path):
+        model_json_path = os.path.join(path, self.WF_JSON_FILE)
+        if os.path.exists(model_json_path):
+            return True
+        return False
+
     @staticmethod
     def get_batch(
         items: list[T],
@@ -148,12 +160,24 @@ class ProcessModelService(FileSystemService):
     def get_process_group(self, process_group_id: str) -> ProcessGroup:
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
-            with os.scandir(FileSystemService.root_path()) as directory_items:
-                for item in directory_items:
-                    if item.is_dir() and item.name == process_group_id:
-                        return self.__scan_process_group(item)
+            process_group_path = os.path.join(FileSystemService.root_path(), process_group_id)
+            if self.is_group(process_group_path):
+                nested_groups = []
+                process_group_dir = os.scandir(process_group_path)
+                for item in process_group_dir:
+                    if self.is_group(item.path):
+                        nested_group = self.get_process_group(os.path.join(process_group_path, item.path))
+                        nested_groups.append(nested_group)
+                    elif self.is_model(item.path):
+                        print("get_process_group: ")
+                        return self.__scan_process_group(process_group_path)
+            # with os.scandir(FileSystemService.root_path()) as directory_items:
+            #     for item in directory_items:
+            #         if item.is_dir() and item.name == process_group_id:
+            #             return self.__scan_process_group(item)
 
-        raise ProcessEntityNotFoundError(
+        else:
+            raise ProcessEntityNotFoundError(
             "process_group_not_found", f"Process Group Id: {process_group_id}"
         )
 
@@ -165,7 +189,7 @@ class ProcessModelService(FileSystemService):
 
     def update_process_group(self, process_group: ProcessGroup) -> ProcessGroup:
         """Update_process_group."""
-        cat_path = self.process_group_path(process_group.id)
+        cat_path = self.process_group_path(process_group.id, process_group.parent)
         os.makedirs(cat_path, exist_ok=True)
         json_path = os.path.join(cat_path, self.CAT_JSON_FILE)
         with open(json_path, "w") as cat_json:
@@ -202,12 +226,14 @@ class ProcessModelService(FileSystemService):
         with os.scandir(FileSystemService.root_path()) as directory_items:
             process_groups = []
             for item in directory_items:
-                if item.is_dir() and not item.name[0] == ".":
-                    process_groups.append(self.__scan_process_group(item))
+                # if item.is_dir() and not item.name[0] == ".":
+                if item.is_dir() and self.is_group(item):
+                    scanned_process_group = self.__scan_process_group(item)
+                    process_groups.append(scanned_process_group)
             return process_groups
 
     def __scan_process_group(self, dir_item: os.DirEntry) -> ProcessGroup:
-        """Reads the process_group.json file, and any workflow directories."""
+        """Reads the process_group.json file, and any nested directories."""
         cat_path = os.path.join(dir_item.path, self.CAT_JSON_FILE)
         if os.path.exists(cat_path):
             with open(cat_path) as cat_json:
@@ -227,15 +253,20 @@ class ProcessModelService(FileSystemService):
             )
             with open(cat_path, "w") as wf_json:
                 json.dump(self.GROUP_SCHEMA.dump(process_group), wf_json, indent=4)
-        with os.scandir(dir_item.path) as workflow_dirs:
+        with os.scandir(dir_item.path) as nested_items:
             process_group.process_models = []
-            for item in workflow_dirs:
-                if item.is_dir():
-                    process_group.process_models.append(
-                        self.__scan_spec(
-                            item.path, item.name, process_group=process_group
+            for nested_item in nested_items:
+                if nested_item.is_dir():
+                    # TODO: check whether this is a group or model
+                    if self.is_group(nested_item.path):
+                        # This is a nested group
+                        ...
+                    elif self.is_model(nested_item.path):
+                        process_group.process_models.append(
+                            self.__scan_spec(
+                                nested_item.path, nested_item.name, process_group=process_group
+                            )
                         )
-                    )
             process_group.process_models.sort()
         return process_group
 
