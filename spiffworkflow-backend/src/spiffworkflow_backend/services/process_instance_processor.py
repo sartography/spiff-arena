@@ -55,7 +55,6 @@ from SpiffWorkflow.spiff.serializer import UserTaskConverter
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
-
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
@@ -186,12 +185,8 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
                 methods.update(external_methods)
             super().execute(task, script, methods)
         except WorkflowException as e:
-            print("WORKFLOW")
-            print(f"e: {e}")
-            # raise e
-            raise Exception("NEW ERROR")
+            raise e
         except Exception as e:
-            print("EXCEPTIONWORK")
             raise WorkflowTaskExecException(task, f" {script}, {e}", e) from e
 
     def call_service(
