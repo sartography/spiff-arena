@@ -1,9 +1,6 @@
 """Testing.py."""
-from os import environ
 import os
-
-from spiffworkflow_backend.config.default import BPMN_SPEC_ABSOLUTE_DIR
-
+from os import environ
 
 TESTING = True
 SECRET_KEY = "the_secret_key"

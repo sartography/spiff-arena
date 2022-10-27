@@ -6,7 +6,6 @@ from typing import Optional
 import pytz
 from flask_bpmn.api.api_error import ApiError
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-
 from spiffworkflow_backend.scripts.script import Script
 
 

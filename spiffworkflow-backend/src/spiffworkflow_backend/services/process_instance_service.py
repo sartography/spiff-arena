@@ -10,7 +10,6 @@ from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
-
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -167,9 +166,7 @@ class ProcessInstanceService:
                     f"task {spiff_task.task_spec.name}, it is not in the task event model, "
                     f"and it should be."
                 )
-                current_app.logger.exception(
-                    "missing_form_data", missing_form_error
-                )
+                current_app.logger.exception("missing_form_data", missing_form_error)
                 return {}
         else:
             return {}

@@ -12,14 +12,13 @@ from flask import g
 from flask import redirect
 from flask import request
 from flask_bpmn.api.api_error import ApiError
-from werkzeug.wrappers import Response
-
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import (
     AuthenticationService,
 )
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
+from werkzeug.wrappers import Response
 
 """
 .. module:: crc.api.user

@@ -4,13 +4,12 @@ from typing import TYPE_CHECKING
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
-
 from spiffworkflow_backend.models.message_correlation_property import (
     MessageCorrelationPropertyModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 if TYPE_CHECKING:
     from spiffworkflow_backend.models.message_correlation_message_instance import (  # noqa: F401
