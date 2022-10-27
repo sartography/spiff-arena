@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Modal, Stack } from 'react-bootstrap';
@@ -7,6 +7,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import { convertSecondsToFormattedDate } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import ErrorContext from '../contexts/ErrorContext';
 
 export default function ProcessInstanceShow() {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ export default function ProcessInstanceShow() {
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
+
+  const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -186,7 +189,6 @@ export default function ProcessInstanceShow() {
       );
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
-        // TODO better react way to do this? set this when taskToDisplay changes.
         initializeTaskDataToDisplay(matchingTask);
       }
     }
@@ -232,6 +234,7 @@ export default function ProcessInstanceShow() {
   const cancelEditingTaskData = () => {
     setEditingTaskData(false);
     initializeTaskDataToDisplay(taskToDisplay);
+    setErrorMessage(null);
   };
 
   const taskDataStringToObject = (dataString: string) => {
@@ -243,18 +246,19 @@ export default function ProcessInstanceShow() {
     const dataObject = taskDataStringToObject(taskDataToDisplay);
     const taskToDisplayCopy = { ...taskToDisplay, data: dataObject }; // spread operator
     setTaskToDisplay(taskToDisplayCopy);
+    refreshPage();
   };
 
   const saveTaskDataFailure = (result: any) => {
-    console.log(result.toString());
-    // TODO: Not sure what to do here
-    refreshPage();
+    setErrorMessage({ message: result.toString() });
   };
 
   const saveTaskData = () => {
     if (!taskToDisplay) {
       return;
     }
+
+    setErrorMessage(null);
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
