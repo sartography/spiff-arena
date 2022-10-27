@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
+import Editor from '@monaco-editor/react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button, Modal, Stack } from 'react-bootstrap';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -6,6 +7,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import { convertSecondsToFormattedDate } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import ErrorContext from '../contexts/ErrorContext';
 
 export default function ProcessInstanceShow() {
   const navigate = useNavigate();
@@ -14,6 +16,10 @@ export default function ProcessInstanceShow() {
   const [processInstance, setProcessInstance] = useState(null);
   const [tasks, setTasks] = useState<Array<object> | null>(null);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
+  const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
+  const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
+
+  const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -168,19 +174,29 @@ export default function ProcessInstanceShow() {
     return <div />;
   };
 
+  const initializeTaskDataToDisplay = (task: any) => {
+    if (task == null) {
+      setTaskDataToDisplay('');
+    } else {
+      setTaskDataToDisplay(JSON.stringify(task.data, null, 2));
+    }
+  };
+
   const handleClickedDiagramTask = (shapeElement: any) => {
     if (tasks) {
-      const matchingTask = tasks.find(
+      const matchingTask: any = tasks.find(
         (task: any) => task.name === shapeElement.id
       );
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
+        initializeTaskDataToDisplay(matchingTask);
       }
     }
   };
 
   const handleTaskDataDisplayClose = () => {
     setTaskToDisplay(null);
+    initializeTaskDataToDisplay(null);
   };
 
   const getTaskById = (taskId: string) => {
@@ -211,29 +227,127 @@ export default function ProcessInstanceShow() {
     }
   };
 
-  const taskDataDisplayArea = () => {
-    const taskToUse: any = taskToDisplay;
-    if (taskToDisplay) {
-      let createScriptUnitTestElement = null;
-      if (taskToUse.type === 'Script Task') {
-        createScriptUnitTestElement = (
+  const canEditTaskData = (task: any) => {
+    return task.state === 'READY';
+  };
+
+  const cancelEditingTaskData = () => {
+    setEditingTaskData(false);
+    initializeTaskDataToDisplay(taskToDisplay);
+    setErrorMessage(null);
+  };
+
+  const taskDataStringToObject = (dataString: string) => {
+    return JSON.parse(dataString);
+  };
+
+  const saveTaskDataResult = (_: any) => {
+    setEditingTaskData(false);
+    const dataObject = taskDataStringToObject(taskDataToDisplay);
+    const taskToDisplayCopy = { ...taskToDisplay, data: dataObject }; // spread operator
+    setTaskToDisplay(taskToDisplayCopy);
+    refreshPage();
+  };
+
+  const saveTaskDataFailure = (result: any) => {
+    setErrorMessage({ message: result.toString() });
+  };
+
+  const saveTaskData = () => {
+    if (!taskToDisplay) {
+      return;
+    }
+
+    setErrorMessage(null);
+
+    // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
+    const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
+    HttpService.makeCallToBackend({
+      path: `/process-instances/${params.process_instance_id}/task/${taskToUse.id}/update`,
+      httpMethod: 'POST',
+      successCallback: saveTaskDataResult,
+      failureCallback: saveTaskDataFailure,
+      postBody: {
+        new_task_data: taskToUse.data,
+      },
+    });
+  };
+
+  const taskDataButtons = (task: any) => {
+    const buttons = [];
+
+    if (task.type === 'Script Task') {
+      buttons.push(
+        <Button
+          data-qa="create-script-unit-test-button"
+          onClick={createScriptUnitTest}
+        >
+          Create Script Unit Test
+        </Button>
+      );
+    }
+
+    if (canEditTaskData(task)) {
+      if (editingTaskData) {
+        buttons.push(
           <Button
             data-qa="create-script-unit-test-button"
-            onClick={createScriptUnitTest}
+            onClick={saveTaskData}
           >
-            Create Script Unit Test
+            Save
+          </Button>
+        );
+        buttons.push(
+          <Button
+            data-qa="create-script-unit-test-button"
+            onClick={cancelEditingTaskData}
+          >
+            Cancel
+          </Button>
+        );
+      } else {
+        buttons.push(
+          <Button
+            data-qa="create-script-unit-test-button"
+            onClick={() => setEditingTaskData(true)}
+          >
+            Edit
           </Button>
         );
       }
+    }
+
+    return buttons;
+  };
+
+  const taskDataContainer = () => {
+    return editingTaskData ? (
+      <Editor
+        height={600}
+        width="auto"
+        defaultLanguage="json"
+        defaultValue={taskDataToDisplay}
+        onChange={(value) => setTaskDataToDisplay(value || '')}
+      />
+    ) : (
+      <pre>{taskDataToDisplay}</pre>
+    );
+  };
+
+  const taskDataDisplayArea = () => {
+    const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
+    if (taskToDisplay) {
       return (
         <Modal show={!!taskToUse} onHide={handleTaskDataDisplayClose}>
           <Modal.Header closeButton>
             <Modal.Title>
-              {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-              {createScriptUnitTestElement}
+              <Stack direction="horizontal" gap={2}>
+                {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
+                {taskDataButtons(taskToUse)}
+              </Stack>
             </Modal.Title>
           </Modal.Header>
-          <pre>{JSON.stringify(taskToUse.data, null, 2)}</pre>
+          {taskDataContainer()}
         </Modal>
       );
     }
