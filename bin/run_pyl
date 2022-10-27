@@ -13,7 +13,7 @@ python_projects=(
 )
 
 function run_fix_docstrings() {
-  fix_python_docstrings  $(get_top_level_directories_containing_python_files)
+  fix_python_docstrings $(get_top_level_directories_containing_python_files)
 }
 
 function run_pre_commmit() {
