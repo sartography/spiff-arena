@@ -47,7 +47,12 @@ SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(
 
 # Sentry Configuration
 SENTRY_DSN = environ.get("SENTRY_DSN", default="")
-SENTRY_SAMPLE_RATE = environ.get("SENTRY_SAMPLE_RATE", default="1.0")
+SENTRY_ERRORS_SAMPLE_RATE = environ.get(
+    "SENTRY_ERRORS_SAMPLE_RATE", default="1"
+)  # send all errors
+SENTRY_TRACES_SAMPLE_RATE = environ.get(
+    "SENTRY_TRACES_SAMPLE_RATE", default="0.01"
+)  # send 1% of traces
 
 SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
     "SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info"
