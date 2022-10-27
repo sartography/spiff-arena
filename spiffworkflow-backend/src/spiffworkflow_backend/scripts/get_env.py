@@ -3,7 +3,6 @@ from typing import Any
 from typing import Optional
 
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-
 from spiffworkflow_backend.scripts.script import Script
 
 
