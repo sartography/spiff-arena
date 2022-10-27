@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# HELP: runs backend and frontend in tmux. REQUIRES running in a current TMUX session.
+
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+# https://stackoverflow.com/a/39523222/6090676
+# The syntax for a specific pane is tmux send-keys -t {session}:{window}.{pane}, so tmux send-keys -t Test:Test1.1 "TEST" C-m would send that to the first pane. –
+pane_uid=$(tmux split-window -t backend.2 -c "${script_dir}/../spiffworkflow-backend" -P -F '#{pane_id}')
+tmux send-keys -t "$pane_uid" "./bin/run_server_locally" Enter
+
+pane_uid=$(tmux split-window -t frontend.2 -c "${script_dir}/../spiffworkflow-frontend" -P -F '#{pane_id}')
+tmux send-keys -t "$pane_uid" "npm start" Enter

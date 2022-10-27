@@ -11,9 +11,8 @@ from flask import current_app
 from flask import redirect
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
-from werkzeug.wrappers import Response
-
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
+from werkzeug.wrappers import Response
 
 
 class AuthenticationProviderTypes(enum.Enum):

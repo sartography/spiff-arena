@@ -1,9 +1,8 @@
 """Test_various_bpmn_constructs."""
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestServiceTaskDelegate(BaseTest):
