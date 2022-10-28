@@ -1,11 +1,12 @@
 """Get_localtime."""
 from datetime import datetime
 from typing import Any
-from typing import Optional
 
 import pytz
 from flask_bpmn.api.api_error import ApiError
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from spiffworkflow_backend.models.script_attributes_context import (
+    ScriptAttributesContext,
+)
 from spiffworkflow_backend.scripts.script import Script
 
 
@@ -19,8 +20,7 @@ class GetLocaltime(Script):
 
     def run(
         self,
-        task: Optional[SpiffTask],
-        environment_identifier: str,
+        script_attributes_context: ScriptAttributesContext,
         *args: Any,
         **kwargs: Any
     ) -> datetime:
