@@ -34,7 +34,7 @@ sphinx-autoapi = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.5"
-coverage = {extras = ["toml"], version = "^6.4"}
+coverage = {extras = ["toml"], version = "^6.5"}
 safety = "^2.3.1"
 mypy = "^0.982"
 typeguard = "^2.13.2"
