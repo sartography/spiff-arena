@@ -107,6 +107,8 @@ class SpiffFilter(logging.Filter):
         if hasattr(tld, "process_instance_id"):
             process_instance_id = tld.process_instance_id
         setattr(record, "process_instance_id", process_instance_id)  # noqa: B010
+        if hasattr(tld, "spiff_step"):
+            setattr(record, "spiff_step", tld.spiff_step)
         if hasattr(g, "user") and g.user:
             setattr(record, "current_user_id", g.user.id)  # noqa: B010
         return True
@@ -203,6 +205,7 @@ class DBHandler(logging.Handler):
             timestamp = record.created
             message = record.msg if hasattr(record, "msg") else None
             current_user_id = record.current_user_id if hasattr(record, "current_user_id") else None  # type: ignore
+            spiff_step = record.spiff_step if hasattr(record, "spiff_step") else 1
             spiff_log = SpiffLoggingModel(
                 process_instance_id=record.process_instance_id,  # type: ignore
                 bpmn_process_identifier=bpmn_process_identifier,
@@ -213,6 +216,7 @@ class DBHandler(logging.Handler):
                 message=message,
                 timestamp=timestamp,
                 current_user_id=current_user_id,
+                spiff_step=spiff_step,
             )
             db.session.add(spiff_log)
             db.session.commit()

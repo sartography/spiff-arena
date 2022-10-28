@@ -253,6 +253,7 @@ class ProcessInstanceProcessor:
         current_app.config[
             "THREAD_LOCAL_DATA"
         ].process_instance_id = process_instance_model.id
+        # TODO set spiff_step here
 
         self.process_instance_model = process_instance_model
         self.process_model_service = ProcessModelService()
