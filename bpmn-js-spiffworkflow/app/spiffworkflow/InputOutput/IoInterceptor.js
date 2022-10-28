@@ -61,7 +61,6 @@ export default class IoInterceptor extends CommandInterceptor {
         if (context.shape.di.$parent) {
           collectionRemove(context.shape.di.$parent.planeElement, context.shape.di);
         }
-        console.log("inputs/outputs", ioSpec.dataInputs, ioSpec.dataOutputs)
         if (ioSpec.dataInputs.length === 0 && ioSpec.dataOutputs.length === 0) {
           process.ioSpecification = null;
         }
