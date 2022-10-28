@@ -14,10 +14,10 @@
   </bpmn:collaboration>
   <bpmn:correlationProperty id="message_correlation_property" name="Message Correlation Property">
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_send">
-      <bpmn:formalExpression>to</bpmn:formalExpression>
+      <bpmn:messagePath>to</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_response">
-      <bpmn:formalExpression>from.name</bpmn:formalExpression>
+      <bpmn:messagePath>from.name</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:process id="message_send_process" name="Message Send Process" isExecutable="true">
@@ -68,7 +68,7 @@
   </bpmn:process>
   <bpmn:correlationProperty id="correlation_property_one" name="Correlation Property One">
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_send">
-      <bpmn:formalExpression>new</bpmn:formalExpression>
+      <bpmn:messagePath>new</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">

@@ -46,46 +46,46 @@
 
     <bpmn:correlationProperty id="invoice_id" name="Invoice ID">
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_invoice">
-            <bpmn:formalExpression>invoice.invoice_id</bpmn:formalExpression>
+            <bpmn:messagePath>invoice.invoice_id</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
-            <bpmn:formalExpression>payment.invoice_id</bpmn:formalExpression>
+            <bpmn:messagePath>payment.invoice_id</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
     </bpmn:correlationProperty>
 
     <bpmn:correlationProperty id="invoice_total" name="Invoice Total">
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_invoice">
-            <bpmn:formalExpression>invoice.total</bpmn:formalExpression>
+            <bpmn:messagePath>invoice.total</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
-            <bpmn:formalExpression>payment.invoice_amount</bpmn:formalExpression>
+            <bpmn:messagePath>payment.invoice_amount</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
     </bpmn:correlationProperty>
 
     <bpmn:correlationProperty id="invoice_date" name="Invoice Date">
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_invoice">
-            <bpmn:formalExpression>invoice.date</bpmn:formalExpression>
+            <bpmn:messagePath>invoice.date</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
-            <bpmn:formalExpression>payment.invoice_date</bpmn:formalExpression>
+            <bpmn:messagePath>payment.invoice_date</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
     </bpmn:correlationProperty>
 
     <bpmn:correlationProperty id="payment_date" name="Payment Date">
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
-            <bpmn:formalExpression>payment.date</bpmn:formalExpression>
+            <bpmn:messagePath>payment.date</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
     </bpmn:correlationProperty>
 
     <bpmn:correlationProperty id="payment_total" name="Payment Total">
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
-            <bpmn:formalExpression>payment.total</bpmn:formalExpression>
+            <bpmn:messagePath>payment.total</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
     </bpmn:correlationProperty>
 
     <bpmn:correlationProperty id="payment_id" name="Payment ID">
         <bpmn:correlationPropertyRetrievalExpression messageRef="send_payment">
-            <bpmn:formalExpression>payment.id</bpmn:formalExpression>
+            <bpmn:messagePath>payment.id</bpmn:messagePath>
         </bpmn:correlationPropertyRetrievalExpression>
     </bpmn:correlationProperty>
 
