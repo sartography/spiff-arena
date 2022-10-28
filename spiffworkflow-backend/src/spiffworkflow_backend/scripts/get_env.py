@@ -1,8 +1,9 @@
 """Get_env."""
 from typing import Any
-from typing import Optional
 
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from spiffworkflow_backend.models.script_attributes_context import (
+    ScriptAttributesContext,
+)
 from spiffworkflow_backend.scripts.script import Script
 
 
@@ -15,10 +16,9 @@ class GetEnv(Script):
 
     def run(
         self,
-        task: Optional[SpiffTask],
-        environment_identifier: str,
+        script_attributes_context: ScriptAttributesContext,
         *_args: Any,
         **kwargs: Any
     ) -> Any:
         """Run."""
-        return environment_identifier
+        return script_attributes_context.environment_identifier
