@@ -9,7 +9,9 @@ from typing import Any
 from typing import Callable
 
 from flask_bpmn.api.api_error import ApiError
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from spiffworkflow_backend.models.script_attributes_context import (
+    ScriptAttributesContext,
+)
 
 # Generally speaking, having some global in a flask app is TERRIBLE.
 # This is here, because after loading the application this will never change under
@@ -28,8 +30,7 @@ class Script:
     @abstractmethod
     def run(
         self,
-        task: SpiffTask,
-        environment_identifier: str,
+        script_attributes_context: ScriptAttributesContext,
         *args: Any,
         **kwargs: Any,
     ) -> Any:
@@ -43,7 +44,7 @@ class Script:
 
     @staticmethod
     def generate_augmented_list(
-        task: SpiffTask, environment_identifier: str
+        script_attributes_context: ScriptAttributesContext,
     ) -> dict[str, Callable]:
         """This makes a dictionary of lambda functions that are closed over the class instance that they represent.
 
@@ -56,7 +57,8 @@ class Script:
         """
 
         def make_closure(
-            subclass: type[Script], task: SpiffTask, environment_identifier: str
+            subclass: type[Script],
+            script_attributes_context: ScriptAttributesContext,
         ) -> Callable:
             """Yes - this is black magic.
 
@@ -70,8 +72,7 @@ class Script:
             instance = subclass()
             return lambda *ar, **kw: subclass.run(
                 instance,
-                task,
-                environment_identifier,
+                script_attributes_context,
                 *ar,
                 **kw,
             )
@@ -81,7 +82,7 @@ class Script:
         for x in range(len(subclasses)):
             subclass = subclasses[x]
             execlist[subclass.__module__.split(".")[-1]] = make_closure(
-                subclass, task=task, environment_identifier=environment_identifier
+                subclass, script_attributes_context=script_attributes_context
             )
         return execlist
 
