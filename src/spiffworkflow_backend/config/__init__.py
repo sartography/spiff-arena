@@ -3,9 +3,12 @@ import os
 import threading
 
 from flask.app import Flask
+from spiffworkflow_backend.services.logging_service import setup_logger
 from werkzeug.utils import ImportStringError
 
-from spiffworkflow_backend.services.logging_service import setup_logger
+
+class ConfigurationError(Exception):
+    """ConfigurationError."""
 
 
 def setup_database_uri(app: Flask) -> None:
@@ -84,6 +87,9 @@ def setup_config(app: Flask) -> None:
     # unversioned (see .gitignore) config that can override everything and include secrets.
     # src/spiffworkflow_backend/config/secrets.py
     app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
+
+    if app.config["BPMN_SPEC_ABSOLUTE_DIR"] is None:
+        raise ConfigurationError("BPMN_SPEC_ABSOLUTE_DIR config must be set")
 
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data

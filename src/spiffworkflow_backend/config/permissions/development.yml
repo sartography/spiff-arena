@@ -65,7 +65,7 @@ permissions:
     uri: /v1.0/process-models/finance/*
 
   read-all:
-    groups: [finance, admin, "Project Lead"]
+    groups: [admin, "Project Lead"]
     users: []
     allowed_permissions: [read]
     uri: /*

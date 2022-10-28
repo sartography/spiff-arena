@@ -2,11 +2,10 @@
 import ast
 import base64
 
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.services.authentication_service import (
     AuthenticationService,
 )
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestAuthentication(BaseTest):
