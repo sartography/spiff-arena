@@ -31,7 +31,8 @@ docker run \
   -Dkeycloak.profile.feature.token_exchange=enabled \
   -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
 
-cp bin/spiffworkflow-realm.json /tmp/spiffworkflow-realm.json
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+cp "${script_dir}/spiffworkflow-realm.json" /tmp/spiffworkflow-realm.json
 spiff_subdomain="unused-for-local-dev"
 perl -pi -e "s/{{SPIFF_SUBDOMAIN}}/${spiff_subdomain}/g" /tmp/spiffworkflow-realm.json
 docker cp /tmp/spiffworkflow-realm.json keycloak:/tmp
