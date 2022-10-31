@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Button, Modal } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Modal } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';

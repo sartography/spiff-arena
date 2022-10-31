@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Form, InputGroup, Table } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Form, Table } from '@carbon/react';
+import { InputGroup } from 'react-bootstrap';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import { Option } from 'react-bootstrap-typeahead/types/types';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';

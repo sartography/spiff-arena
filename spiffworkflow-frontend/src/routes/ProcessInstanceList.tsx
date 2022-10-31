@@ -6,7 +6,9 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import { Button, Table, Stack, Form, InputGroup } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Table, Stack, Form } from '@carbon/react';
+import { InputGroup } from 'react-bootstrap';
 // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'reac... Remove this comment to see the full error message
 import DatePicker from 'react-datepicker';
 import { Typeahead } from 'react-bootstrap-typeahead';

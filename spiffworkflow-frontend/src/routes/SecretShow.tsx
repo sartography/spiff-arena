@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Stack, Table, Button } from 'react-bootstrap';
+// @ts-ignore
+import { Stack, Table, Button } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { Secret } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
