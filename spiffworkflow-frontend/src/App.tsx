@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Container } from 'react-bootstrap';
+// @ts-ignore
+// import { Container } from '@carbon/react';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ErrorContext from './contexts/ErrorContext';
@@ -48,7 +49,7 @@ export default function App() {
   return (
     <ErrorContext.Provider value={errorContextValueArray}>
       <NavigationBar />
-      <Container>
+      <div>
         {errorTag}
         <ErrorBoundary>
           <BrowserRouter>
@@ -70,7 +71,7 @@ export default function App() {
             </main>
           </BrowserRouter>
         </ErrorBoundary>
-      </Container>
+      </div>
     </ErrorContext.Provider>
   );
 }

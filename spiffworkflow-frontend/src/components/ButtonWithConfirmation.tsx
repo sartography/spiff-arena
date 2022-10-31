@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Modal } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Modal } from '@carbon/react';
 
 type OwnProps = {
   description?: string;

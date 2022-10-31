@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Button, Table } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Table } from '@carbon/react';
 import { MdDelete } from 'react-icons/md';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';

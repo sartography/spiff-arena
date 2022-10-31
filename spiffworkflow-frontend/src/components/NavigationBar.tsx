@@ -1,4 +1,6 @@
-import { Button, Navbar, Nav, Container } from 'react-bootstrap';
+// @ts-ignore
+import { Button } from '@carbon/react';
+import { Navbar, Nav, Container } from 'react-bootstrap';
 // @ts-expect-error TS(2307) FIXME: Cannot find module '../logo.svg' or its correspond... Remove this comment to see the full error message
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
