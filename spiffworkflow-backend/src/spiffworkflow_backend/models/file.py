@@ -8,10 +8,11 @@ from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from marshmallow import INCLUDE
 from marshmallow import Schema
-from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
-from spiffworkflow_backend.models.data_store import DataStoreModel
 from sqlalchemy.orm import deferred
 from sqlalchemy.orm import relationship
+
+from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+from spiffworkflow_backend.models.data_store import DataStoreModel
 
 
 class FileModel(SpiffworkflowBaseDBModel):

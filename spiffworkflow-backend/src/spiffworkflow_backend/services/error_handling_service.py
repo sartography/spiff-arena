@@ -5,6 +5,7 @@ from typing import Union
 
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
+
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.email_service import EmailService
