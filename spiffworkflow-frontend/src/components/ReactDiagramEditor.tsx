@@ -185,8 +185,8 @@ export default function ReactDiagramEditor({
     ) {
       if (onLaunchScriptEditor) {
         setPerformingXmlUpdates(true);
-        // const modeling = diagramModeler.get('modeling');
-        onLaunchScriptEditor(element, script, scriptType, eventBus);
+        const modeling = diagramModeler.get('modeling');
+        onLaunchScriptEditor(element, script, scriptType, eventBus, modeling);
       }
     }
 

@@ -280,15 +280,20 @@ export default function ProcessModelEditDiagram() {
   const onLaunchScriptEditor = (
     element: any,
     script: string,
-    scriptType: string,
-    eventBus: any
+    scriptTypeString: string,
+    eventBus: any,
+    modeling: any
   ) => {
+    // TODO: modeling is only needed for script unit tests.
+    // we should update this to act like updating scripts
+    // where we pass an event to bpmn-js
+    setScriptModeling(modeling);
+
     setScriptText(script || '');
-    setScriptType(scriptType);
+    setScriptType(scriptTypeString);
     setScriptEventBus(eventBus);
-    // setScriptModeling(modeling);
     setScriptElement(element);
-    // setScriptUnitTestElementWithIndex(0, element);
+    setScriptUnitTestElementWithIndex(0, element);
     handleShowScriptEditor();
   };
 
@@ -305,10 +310,6 @@ export default function ProcessModelEditDiagram() {
 
   const handleEditorScriptChange = (value: any) => {
     setScriptText(value);
-    // (scriptModeling as any).updateProperties(scriptElement, {
-    //   scriptFormat: 'python',
-    //   script: value,
-    // });
   };
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {
