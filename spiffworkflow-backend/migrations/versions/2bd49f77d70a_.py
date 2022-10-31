@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: a2f2e4f38657
+Revision ID: 2bd49f77d70a
 Revises: 
-Create Date: 2022-10-31 11:33:40.531625
+Create Date: 2022-10-31 11:38:59.963718
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'a2f2e4f38657'
+revision = '2bd49f77d70a'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -261,6 +261,17 @@ def upgrade():
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('spiff_step_details',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('spiff_step', sa.Integer(), nullable=False),
+    sa.Column('task_json', sa.JSON(), nullable=False),
+    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
+    sa.Column('completed_by_user_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('task_event',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -331,6 +342,7 @@ def downgrade():
     op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
     op.drop_table('active_task_user')
     op.drop_table('task_event')
+    op.drop_table('spiff_step_details')
     op.drop_table('spiff_logging')
     op.drop_table('permission_assignment')
     op.drop_table('message_instance')
