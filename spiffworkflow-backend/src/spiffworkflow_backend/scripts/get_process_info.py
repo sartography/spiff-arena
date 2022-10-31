@@ -1,7 +1,9 @@
 """Get_process_info."""
 from typing import Any
 
-from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
+from spiffworkflow_backend.models.script_attributes_context import (
+    ScriptAttributesContext,
+)
 from spiffworkflow_backend.scripts.script import Script
 
 
@@ -20,6 +22,6 @@ class GetProcessInfo(Script):
     ) -> Any:
         """Run."""
         return {
-            'process_instance_id': script_attributes_context.process_instance_id,
-            'process_model_identifier': script_attributes_context.process_model_identifier,
+            "process_instance_id": script_attributes_context.process_instance_id,
+            "process_model_identifier": script_attributes_context.process_model_identifier,
         }
