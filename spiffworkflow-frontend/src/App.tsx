@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 // @ts-ignore
-// import { Container } from '@carbon/react';
+import { Content } from '@carbon/react';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ErrorContext from './contexts/ErrorContext';
@@ -46,14 +46,14 @@ export default function App() {
     );
   }
 
+  // <SubNavigation />
   return (
     <ErrorContext.Provider value={errorContextValueArray}>
-      <NavigationBar />
-      <div>
-        {errorTag}
-        <ErrorBoundary>
-          <BrowserRouter>
-            <SubNavigation />
+      <BrowserRouter>
+        <NavigationBar />
+        <Content>
+          {errorTag}
+          <ErrorBoundary>
             <main style={{ padding: '1rem 0' }}>
               <Routes>
                 <Route path="/" element={<HomePage />} />
@@ -69,9 +69,9 @@ export default function App() {
                 />
               </Routes>
             </main>
-          </BrowserRouter>
-        </ErrorBoundary>
-      </div>
+          </ErrorBoundary>
+        </Content>
+      </BrowserRouter>
     </ErrorContext.Provider>
   );
 }
