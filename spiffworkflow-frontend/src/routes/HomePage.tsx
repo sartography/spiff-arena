@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Button, Table } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import { getPageInfoFromSearchParams } from '../helpers';
