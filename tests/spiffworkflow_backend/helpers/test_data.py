@@ -1,13 +1,14 @@
 """User."""
 from typing import Optional
 
+from tests.spiffworkflow_backend.helpers.example_data import ExampleDataLoader
+
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from tests.spiffworkflow_backend.helpers.example_data import ExampleDataLoader
 
 
 def assure_process_group_exists(process_group_id: Optional[str] = None) -> ProcessGroup:
