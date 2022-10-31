@@ -250,10 +250,9 @@ class ProcessInstanceProcessor:
         self, process_instance_model: ProcessInstanceModel, validate_only: bool = False
     ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
-        current_app.config[
-            "THREAD_LOCAL_DATA"
-        ].process_instance_id = process_instance_model.id
-        # TODO set spiff_step here
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.process_instance_id = process_instance_model.id
+        tld.spiff_step = process_instance_model.spiff_step
 
         self.process_instance_model = process_instance_model
         self.process_model_service = ProcessModelService()
@@ -954,6 +953,14 @@ class ProcessInstanceProcessor:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
+
+        spiff_step = self.process_instance_model.spiff_step or 0
+        spiff_step += 1
+        self.process_instance_model.spiff_step = spiff_step
+        current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
+        db.session.add(self.process_instance_model)
+        db.session.commit()
+
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
             self.bpmn_process_instance.do_engine_steps(exit_at=exit_at)

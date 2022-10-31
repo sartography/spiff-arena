@@ -1234,6 +1234,7 @@ def script_unit_test_run(
     """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works
     current_app.config["THREAD_LOCAL_DATA"].process_instance_id = None
+    current_app.config["THREAD_LOCAL_DATA"].spiff_step = None
 
     python_script = _get_required_parameter_or_raise("python_script", body)
     input_json = _get_required_parameter_or_raise("input_json", body)

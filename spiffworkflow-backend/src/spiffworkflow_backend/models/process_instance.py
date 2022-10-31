@@ -92,6 +92,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_xml_file_contents: bytes | None = None
     bpmn_version_control_type: str = db.Column(db.String(50))
     bpmn_version_control_identifier: str = db.Column(db.String(255))
+    spiff_step: int = db.Column(db.Integer)
 
     @property
     def serialized(self) -> dict[str, Any]:
