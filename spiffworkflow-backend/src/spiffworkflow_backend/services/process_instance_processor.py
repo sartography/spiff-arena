@@ -570,12 +570,11 @@ class ProcessInstanceProcessor:
         }
 
     def save_spiff_step_details(self, bpmn_json) -> None:
-        wf_json = json.loads(self.process_instance_model.bpmn_json)
-        if "tasks" not in wf_json:
-            return # raise?
-        task_json = json.dumps(wf_json["tasks"]).encode("utf-8")
-        # TODO
-        task_json = bpmn_json 
+        """SaveSpiffStepDetails."""
+        wf_json = json.loads(bpmn_json)
+        task_json = "{}"
+        if "tasks" in wf_json:
+            task_json = json.dumps(wf_json["tasks"])
         details_model = SpiffStepDetailsModel(
             process_instance_id=self.process_instance_model.id,
             spiff_step=self.process_instance_model.spiff_step or 1,
@@ -589,7 +588,6 @@ class ProcessInstanceProcessor:
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
-        self.save_spiff_step_details(self.process_instance_model.bpmn_json)
 
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())
@@ -976,15 +974,19 @@ class ProcessInstanceProcessor:
 
             db.session.commit()
 
-    def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
-        """Do_engine_steps."""
-
+    def increment_spiff_step(self) -> None:
+        """spiff_step++."""
         spiff_step = self.process_instance_model.spiff_step or 0
         spiff_step += 1
         self.process_instance_model.spiff_step = spiff_step
         current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
         db.session.add(self.process_instance_model)
         db.session.commit()
+
+
+    def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
+        """Do_engine_steps."""
+        self.increment_spiff_step()
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
@@ -998,8 +1000,10 @@ class ProcessInstanceProcessor:
         finally:
             if save:
                 self.save()
+                bpmn_json = self.process_instance_model.bpmn_json
             else:
-                self.save_spiff_step_details(self.serialize())
+                bpmn_json = self.serialize()
+            self.save_spiff_step_details(bpmn_json)
 
     def cancel_notify(self) -> None:
         """Cancel_notify."""
