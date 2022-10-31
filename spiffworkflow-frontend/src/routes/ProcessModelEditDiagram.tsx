@@ -18,7 +18,9 @@ export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
 
-  const [scriptText, setScriptText] = useState('');
+  const [scriptText, setScriptText] = useState<string>('');
+  const [scriptType, setScriptType] = useState<string>('');
+  const [scriptEventBus, setScriptEventBus] = useState<any>(null);
   const [scriptModeling, setScriptModeling] = useState(null);
   const [scriptElement, setScriptElement] = useState(null);
   const [showScriptEditor, setShowScriptEditor] = useState(false);
@@ -275,25 +277,38 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
-  const onLaunchScriptEditor = (element: any, modeling: any) => {
-    setScriptText(element.businessObject.script || '');
-    setScriptModeling(modeling);
+  const onLaunchScriptEditor = (
+    element: any,
+    script: string,
+    scriptType: string,
+    eventBus: any
+  ) => {
+    setScriptText(script || '');
+    setScriptType(scriptType);
+    setScriptEventBus(eventBus);
+    // setScriptModeling(modeling);
     setScriptElement(element);
-    setScriptUnitTestElementWithIndex(0, element);
+    // setScriptUnitTestElementWithIndex(0, element);
     handleShowScriptEditor();
   };
 
   const handleScriptEditorClose = () => {
+    scriptEventBus.fire('script.editor.update', {
+      scriptType,
+      script: scriptText,
+      element: scriptElement,
+    });
+
     resetUnitTextResult();
     setShowScriptEditor(false);
   };
 
   const handleEditorScriptChange = (value: any) => {
     setScriptText(value);
-    (scriptModeling as any).updateProperties(scriptElement, {
-      scriptFormat: 'python',
-      script: value,
-    });
+    // (scriptModeling as any).updateProperties(scriptElement, {
+    //   scriptFormat: 'python',
+    //   script: value,
+    // });
   };
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {
