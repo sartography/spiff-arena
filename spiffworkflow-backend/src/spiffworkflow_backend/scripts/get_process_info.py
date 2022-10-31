@@ -1,7 +1,7 @@
 """Get_process_info."""
 from typing import Any
-from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 
+from spiffworkflow_backend.models.script_attributes_context import ScriptAttributesContext
 from spiffworkflow_backend.scripts.script import Script
 
 

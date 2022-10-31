@@ -57,7 +57,7 @@ repos:
         entry: reorder-python-imports
         language: system
         types: [python]
-        args: [--application-directories=src]
+        args: [--application-directories=spiffworkflow-backend/src]
         exclude: "(/migrations/|load_database_models)"
       - id: trailing-whitespace
         files: ^spiffworkflow-backend/
