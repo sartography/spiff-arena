@@ -1,5 +1,4 @@
 """APIs for dealing with process groups, process models, and process instances."""
-import dataclasses
 import json
 import os
 import random
@@ -29,6 +28,9 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
+from sqlalchemy import asc
+from sqlalchemy import desc
+
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -73,8 +75,6 @@ from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
-from sqlalchemy import asc
-from sqlalchemy import desc
 
 
 class TaskDataSelectOption(TypedDict):
@@ -749,7 +749,6 @@ def process_instance_delete(
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
-    # import pdb; pdb.set_trace()
     # (Pdb) db.session.delete
     # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
     db.session.delete(process_instance)
@@ -1352,13 +1351,6 @@ def get_spiff_task_from_process_instance(
         processor = ProcessInstanceProcessor(process_instance)
     task_uuid = uuid.UUID(task_id)
     spiff_task = processor.bpmn_process_instance.get_task(task_uuid)
-
-    # FOR DEBUGGING: save this variable so we get it in sentry when something fails
-    active_task = ActiveTaskModel.query.filter_by(task_id=task_id).first()
-    if active_task:
-        task_json = dataclasses.asdict(active_task)
-        print(f"task_json: {task_json}")
-    ########
 
     if spiff_task is None:
         raise (

@@ -5,9 +5,10 @@ from dataclasses import dataclass
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
+from sqlalchemy import ForeignKey
+
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.user import UserModel
-from sqlalchemy import ForeignKey
 
 
 @dataclass

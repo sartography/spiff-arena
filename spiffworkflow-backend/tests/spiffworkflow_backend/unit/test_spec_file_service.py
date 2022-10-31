@@ -5,9 +5,10 @@ import pytest
 from flask import Flask
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
-from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+
+from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
 
 
 class TestSpecFileService(BaseTest):

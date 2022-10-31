@@ -55,6 +55,7 @@ from SpiffWorkflow.spiff.serializer import UserTaskConverter
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
@@ -73,6 +74,9 @@ from spiffworkflow_backend.models.message_instance import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.script_attributes_context import (
+    ScriptAttributesContext,
+)
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task_event import TaskAction
 from spiffworkflow_backend.models.task_event import TaskEventModel
@@ -127,6 +131,10 @@ class PotentialOwnerUserNotFoundError(Exception):
     """PotentialOwnerUserNotFoundError."""
 
 
+class MissingProcessInfoError(Exception):
+    """MissingProcessInfoError."""
+
+
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
 
@@ -140,9 +148,26 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 
     def __get_augment_methods(self, task: SpiffTask) -> Dict[str, Callable]:
         """__get_augment_methods."""
-        return Script.generate_augmented_list(
-            task, current_app.config["ENV_IDENTIFIER"]
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+
+        if not hasattr(tld, "process_model_identifier"):
+            raise MissingProcessInfoError(
+                "Could not find process_model_identifier from app config"
+            )
+        if not hasattr(tld, "process_instance_id"):
+            raise MissingProcessInfoError(
+                "Could not find process_instance_id from app config"
+            )
+
+        process_model_identifier = tld.process_model_identifier
+        process_instance_id = tld.process_instance_id
+        script_attributes_context = ScriptAttributesContext(
+            task=task,
+            environment_identifier=current_app.config["ENV_IDENTIFIER"],
+            process_instance_id=process_instance_id,
+            process_model_identifier=process_model_identifier,
         )
+        return Script.generate_augmented_list(script_attributes_context)
 
     def evaluate(self, task: SpiffTask, expression: str) -> Any:
         """Evaluate."""
@@ -254,6 +279,12 @@ class ProcessInstanceProcessor:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.process_instance_id = process_instance_model.id
         tld.spiff_step = process_instance_model.spiff_step
+
+        # we want this to be the fully qualified path to the process model including all group subcomponents
+        current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
+            f"{process_instance_model.process_group_identifier}/"
+            f"{process_instance_model.process_model_identifier}"
+        )
 
         self.process_instance_model = process_instance_model
         self.process_model_service = ProcessModelService()

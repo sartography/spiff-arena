@@ -4,6 +4,12 @@ import datetime
 import pytz
 from flask.app import Flask
 from flask.testing import FlaskClient
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+
+from spiffworkflow_backend.models.script_attributes_context import (
+    ScriptAttributesContext,
+)
 from spiffworkflow_backend.scripts.get_localtime import GetLocaltime
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -11,8 +17,6 @@ from spiffworkflow_backend.services.process_instance_processor import (
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestGetLocaltime(BaseTest):
@@ -22,9 +26,16 @@ class TestGetLocaltime(BaseTest):
         """Test_get_localtime_script_directly."""
         current_time = datetime.datetime.now()
         timezone = "US/Pacific"
-        result = GetLocaltime().run(
+        process_model_identifier = "test_process_model"
+        process_instance_id = 1
+        script_attributes_context = ScriptAttributesContext(
             task=None,
             environment_identifier="testing",
+            process_instance_id=process_instance_id,
+            process_model_identifier=process_model_identifier,
+        )
+        result = GetLocaltime().run(
+            script_attributes_context,
             datetime=current_time,
             timezone=timezone,
         )

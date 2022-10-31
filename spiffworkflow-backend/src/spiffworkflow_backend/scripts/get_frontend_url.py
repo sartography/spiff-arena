@@ -1,5 +1,6 @@
 """Get_env."""
 from typing import Any
+from flask import current_app
 
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
@@ -7,18 +8,18 @@ from spiffworkflow_backend.models.script_attributes_context import (
 from spiffworkflow_backend.scripts.script import Script
 
 
-class GetEnv(Script):
-    """GetEnv."""
+class GetFrontendUrl(Script):
+    """GetFrontendUrl."""
 
     def get_description(self) -> str:
         """Get_description."""
-        return """Returns the current environment - ie testing, staging, production."""
+        return """Return the url to the frontend."""
 
     def run(
         self,
         script_attributes_context: ScriptAttributesContext,
-        *_args: Any,
+        *args: Any,
         **kwargs: Any
     ) -> Any:
         """Run."""
-        return script_attributes_context.environment_identifier
+        return current_app.config['SPIFFWORKFLOW_FRONTEND_URL']

@@ -12,15 +12,16 @@ from marshmallow import INCLUDE
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import deferred
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import validates
+
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskSchema
 from spiffworkflow_backend.models.user import UserModel
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import deferred
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import validates
 
 
 class NavigationItemSchema(Schema):

@@ -21,7 +21,7 @@ groups:
       ]
 
   Finance Team:
-    users: [finance_user1]
+    users: [finance_user1, jason]
 
   Project Lead:
     users:
