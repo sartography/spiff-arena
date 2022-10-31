@@ -144,7 +144,7 @@ export default function TaskShow() {
 
   const instructionsElement = (taskToUse: any) => {
     let instructions = '';
-    if (taskToUse.type === 'Manual Task') {
+    if (taskToUse.properties.instructionsForEndUser) {
       instructions = taskToUse.properties.instructionsForEndUser;
     }
     return (
