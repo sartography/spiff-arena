@@ -1,15 +1,14 @@
 """Test_get_localtime."""
-from spiffworkflow_backend.services.user_service import UserService
-from flask_bpmn.models.db import db
-from spiffworkflow_backend.models.group import GroupModel
-
 from flask.app import Flask
+from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+from spiffworkflow_backend.services.user_service import UserService
 
 
 class TestGetGroupMembers(BaseTest):
@@ -25,18 +24,19 @@ class TestGetGroupMembers(BaseTest):
         testuser1 = self.find_or_create_user("testuser1")
         testuser2 = self.find_or_create_user("testuser2")
         testuser3 = self.find_or_create_user("testuser3")
-        groupA = GroupModel(identifier="groupA")
-        groupB = GroupModel(identifier="groupB")
-        db.session.add(groupA)
-        db.session.add(groupB)
+        group_a = GroupModel(identifier="groupA")
+        group_b = GroupModel(identifier="groupB")
+        db.session.add(group_a)
+        db.session.add(group_b)
         db.session.commit()
 
-        UserService.add_user_to_group(testuser1, groupA)
-        UserService.add_user_to_group(testuser2, groupA)
-        UserService.add_user_to_group(testuser3, groupB)
+        UserService.add_user_to_group(testuser1, group_a)
+        UserService.add_user_to_group(testuser2, group_a)
+        UserService.add_user_to_group(testuser3, group_b)
 
         process_model = load_test_spec(
-            process_model_id="get_group_members", bpmn_file_name="get_group_members.bpmn"
+            process_model_id="get_group_members",
+            bpmn_file_name="get_group_members.bpmn",
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user
@@ -45,5 +45,8 @@ class TestGetGroupMembers(BaseTest):
         processor.do_engine_steps(save=True)
 
         assert processor.bpmn_process_instance.data
-        assert processor.bpmn_process_instance.data['members_a'] == ['testuser1', 'testuser2']
-        assert processor.bpmn_process_instance.data['members_b'] == ['testuser3']
+        assert processor.bpmn_process_instance.data["members_a"] == [
+            "testuser1",
+            "testuser2",
+        ]
+        assert processor.bpmn_process_instance.data["members_b"] == ["testuser3"]
