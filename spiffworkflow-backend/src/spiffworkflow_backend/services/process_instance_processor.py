@@ -73,6 +73,7 @@ from spiffworkflow_backend.models.message_instance import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task_event import TaskAction
 from spiffworkflow_backend.models.task_event import TaskEventModel
 from spiffworkflow_backend.models.user import UserModel
@@ -379,10 +380,7 @@ class ProcessInstanceProcessor:
             bpmn_process_spec, subprocesses
         )
 
-    def add_user_info_to_process_instance(
-        self, bpmn_process_instance: BpmnWorkflow
-    ) -> None:
-        """Add_user_info_to_process_instance."""
+    def current_user(self) -> Any:
         current_user = None
         if UserService.has_user():
             current_user = UserService.current_user(allow_admin_impersonate=True)
@@ -392,6 +390,14 @@ class ProcessInstanceProcessor:
         #   coming in from the api
         elif self.process_instance_model.process_initiator_id:
             current_user = self.process_instance_model.process_initiator
+
+        return current_user
+
+    def add_user_info_to_process_instance(
+        self, bpmn_process_instance: BpmnWorkflow
+    ) -> None:
+        """Add_user_info_to_process_instance."""
+        current_user = self.current_user()
 
         if current_user:
             current_user_data = UserModelSchema().dump(current_user)
@@ -563,9 +569,28 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
+    def save_spiff_step_details(self, bpmn_json) -> None:
+        wf_json = json.loads(self.process_instance_model.bpmn_json)
+        if "tasks" not in wf_json:
+            return # raise?
+        task_json = json.dumps(wf_json["tasks"]).encode("utf-8")
+        # TODO
+        task_json = bpmn_json 
+        details_model = SpiffStepDetailsModel(
+            process_instance_id=self.process_instance_model.id,
+            spiff_step=self.process_instance_model.spiff_step or 1,
+            task_json=task_json,
+            timestamp=round(time.time()),
+            completed_by_user_id=self.current_user().id
+        )
+        db.session.add(details_model)
+        db.session.commit()
+
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
+        self.save_spiff_step_details(self.process_instance_model.bpmn_json)
+
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())
         self.process_instance_model.status = self.get_status().value
@@ -973,6 +998,8 @@ class ProcessInstanceProcessor:
         finally:
             if save:
                 self.save()
+            else:
+                self.save_spiff_step_details(self.serialize())
 
     def cancel_notify(self) -> None:
         """Cancel_notify."""
