@@ -13,7 +13,7 @@ class GetGroupMembers(Script):
 
     def get_description(self) -> str:
         """Get_description."""
-        return """Return the current user."""
+        return """Return the list of usernames of the users in the given group."""
 
     def run(
         self,
