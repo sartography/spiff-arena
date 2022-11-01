@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # flake8: noqa
 
-from .base import TaskSpec
+#from .base import TaskSpec
 from .AcquireMutex import AcquireMutex
 from .Cancel import Cancel
 from .CancelTask import CancelTask

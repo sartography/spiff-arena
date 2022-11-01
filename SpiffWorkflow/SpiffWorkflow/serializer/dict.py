@@ -24,10 +24,11 @@ from ..util.impl import get_class
 from ..task import Task
 from ..operators import (Attrib, PathAttrib, Equal, NotEqual,
                          Operator, GreaterThan, LessThan, Match)
+from ..specs.base import TaskSpec
 from ..specs import (Cancel, AcquireMutex, CancelTask, Celery, Choose,
                      ExclusiveChoice, Execute, Gate, Join, MultiChoice,
                      MultiInstance, ReleaseMutex, Simple, WorkflowSpec,
-                     TaskSpec, SubWorkflow, StartTask, ThreadMerge,
+                     SubWorkflow, StartTask, ThreadMerge,
                      ThreadSplit, ThreadStart, Merge, Trigger, LoopResetTask)
 from .base import Serializer
 from .exceptions import TaskNotSupportedError, MissingSpecError
