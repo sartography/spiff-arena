@@ -16,69 +16,19 @@ export const SCRIPT_TYPE = {
 function PythonScript(props) {
   const { element, id } = props;
   const { type } = props;
-  const { moddle } = props;
+  const { moddle, commandStack } = props;
   const { label } = props;
   const { description } = props;
 
   const translate = useService('translate');
   const debounce = useService('debounceInput');
 
-  /**
-   * Finds the value of the given type within the extensionElements
-   * given a type of "spiff:preScript", would find it in this, and return
-   * the object.
-   *
-   *  <bpmn:
-   <bpmn:userTask id="123" name="My User Task!">
-      <bpmn:extensionElements>
-         <spiff:preScript>
-           me = "100% awesome"
-         </spiff:preScript>
-      </bpmn:extensionElements>
-   ...
-   </bpmn:userTask>
-   *
-   * @returns {string|null|*}
-   */
-  const getScriptObject = () => {
-    const bizObj = element.businessObject;
-    if (type === SCRIPT_TYPE.bpmn) {
-      return bizObj;
-    }
-    if (!bizObj.extensionElements) {
-      return null;
-    }
-    return bizObj.extensionElements
-      .get('values')
-      .filter(function getInstanceOfType(e) {
-        return e.$instanceOf(type);
-      })[0];
-  };
-
   const getValue = () => {
-    const scriptObj = getScriptObject();
-    if (scriptObj) {
-      return scriptObj.script;
-    }
-    return '';
+    return getScriptString(element, type);
   };
 
   const setValue = (value) => {
-    const { businessObject } = element;
-    let scriptObj = getScriptObject();
-    // Create the script object if needed.
-    if (!scriptObj) {
-      scriptObj = moddle.create(type);
-      if (type !== SCRIPT_TYPE.bpmn) {
-        if (!businessObject.extensionElements) {
-          businessObject.extensionElements = moddle.create(
-            'bpmn:ExtensionElements'
-          );
-        }
-        businessObject.extensionElements.get('values').push(scriptObj);
-      }
-    }
-    scriptObj.script = value;
+    updateScript(commandStack, moddle, element, type, value);
   };
 
   return TextAreaEntry({
@@ -93,20 +43,107 @@ function PythonScript(props) {
 }
 
 function LaunchEditorButton(props) {
-  const { element, type } = props;
+  const { element, type, moddle, commandStack } = props;
   const eventBus = useService('eventBus');
-  // fixme: add a call up date as a property
   return HeaderButton({
     className: 'spiffworkflow-properties-panel-button',
     onClick: () => {
-      eventBus.fire('launch.script.editor', { element, type });
+      const script = getScriptString(element, type);
+      eventBus.fire('script.editor.launch', {
+        element,
+        scriptType: type,
+        script,
+        eventBus,
+      });
+      // Listen for a response, to update the script.
+      eventBus.once('script.editor.update', (event) => {
+        updateScript(
+          commandStack,
+          moddle,
+          element,
+          event.scriptType,
+          event.script
+        );
+      });
     },
     children: 'Launch Editor',
   });
 }
 
 /**
- * Generates a python script.
+ * Finds the value of the given type within the extensionElements
+ * given a type of "spiff:preScript", would find it in this, and return
+ * the object.
+ *
+ *  <bpmn:
+ <bpmn:userTask id="123" name="My User Task!">
+ <bpmn:extensionElements>
+ <spiff:preScript>
+ me = "100% awesome"
+ </spiff:preScript>
+ </bpmn:extensionElements>
+ ...
+ </bpmn:userTask>
+ *
+ * @returns {string|null|*}
+ */
+function getScriptObject(element, scriptType) {
+  const bizObj = element.businessObject;
+  if (scriptType === SCRIPT_TYPE.bpmn) {
+    return bizObj;
+  }
+  if (!bizObj.extensionElements) {
+    return null;
+  }
+  return bizObj.extensionElements
+    .get('values')
+    .filter(function getInstanceOfType(e) {
+      return e.$instanceOf(scriptType);
+    })[0];
+}
+
+function updateScript(commandStack, moddle, element, scriptType, newValue) {
+  const { businessObject } = element;
+  let scriptObj = getScriptObject(element, scriptType);
+  // Create the script object if needed.
+  if (!scriptObj) {
+    scriptObj = moddle.create(scriptType);
+    if (scriptType !== SCRIPT_TYPE.bpmn) {
+      let { extensionElements } = businessObject;
+      if (!extensionElements) {
+        extensionElements = moddle.create('bpmn:ExtensionElements');
+      }
+      scriptObj.script = newValue;
+      extensionElements.get('values').push(scriptObj);
+      commandStack.execute('element.updateModdleProperties', {
+        element,
+        moddleElement: businessObject,
+        properties: {
+          extensionElements,
+        },
+      });
+    }
+  } else {
+    commandStack.execute('element.updateModdleProperties', {
+      element,
+      moddleElement: scriptObj,
+      properties: {
+        script: newValue,
+      },
+    });
+  }
+}
+
+function getScriptString(element, scriptType) {
+  const scriptObj = getScriptObject(element, scriptType);
+  if (scriptObj && scriptObj.script) {
+    return scriptObj.script;
+  }
+  return '';
+}
+
+/**
+ * Generates a text box and button for editing a script.
  * @param element The elemment that should get the script task.
  * @param scriptType The type of script -- can be a preScript, postScript or a BPMN:Script for script tags
  * @param moddle For updating the underlying xml document when needed.
@@ -131,6 +168,7 @@ export default function getEntries(props) {
       component: PythonScript,
       isEdited: isTextFieldEntryEdited,
       moddle,
+      commandStack,
       label,
       description,
     },
@@ -141,6 +179,7 @@ export default function getEntries(props) {
       component: LaunchEditorButton,
       isEdited: isTextFieldEntryEdited,
       moddle,
+      commandStack,
     },
   ];
 
