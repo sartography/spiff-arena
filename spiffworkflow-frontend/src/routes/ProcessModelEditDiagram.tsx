@@ -19,7 +19,9 @@ export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
 
-  const [scriptText, setScriptText] = useState('');
+  const [scriptText, setScriptText] = useState<string>('');
+  const [scriptType, setScriptType] = useState<string>('');
+  const [scriptEventBus, setScriptEventBus] = useState<any>(null);
   const [scriptModeling, setScriptModeling] = useState(null);
   const [scriptElement, setScriptElement] = useState(null);
   const [showScriptEditor, setShowScriptEditor] = useState(false);
@@ -276,25 +278,39 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
-  const onLaunchScriptEditor = (element: any, modeling: any) => {
-    setScriptText(element.businessObject.script || '');
+  const onLaunchScriptEditor = (
+    element: any,
+    script: string,
+    scriptTypeString: string,
+    eventBus: any,
+    modeling: any
+  ) => {
+    // TODO: modeling is only needed for script unit tests.
+    // we should update this to act like updating scripts
+    // where we pass an event to bpmn-js
     setScriptModeling(modeling);
+
+    setScriptText(script || '');
+    setScriptType(scriptTypeString);
+    setScriptEventBus(eventBus);
     setScriptElement(element);
     setScriptUnitTestElementWithIndex(0, element);
     handleShowScriptEditor();
   };
 
   const handleScriptEditorClose = () => {
+    scriptEventBus.fire('script.editor.update', {
+      scriptType,
+      script: scriptText,
+      element: scriptElement,
+    });
+
     resetUnitTextResult();
     setShowScriptEditor(false);
   };
 
   const handleEditorScriptChange = (value: any) => {
     setScriptText(value);
-    (scriptModeling as any).updateProperties(scriptElement, {
-      scriptFormat: 'python',
-      script: value,
-    });
   };
 
   const handleEditorScriptTestUnitInputChange = (value: any) => {
