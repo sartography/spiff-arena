@@ -26,6 +26,10 @@ span.bjs-crumb {
   margin-bottom: 1em;
 }
 
+.spiffworkflow-header-container {
+  margin-bottom: 2em;
+}
+
 
 .active-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
   fill: yellow !important;
@@ -42,6 +46,17 @@ span.bjs-crumb {
   height:70vh;
   width:90vw;
   margin:auto;
+}
+
+.cds--btn.button-white-background {
+  color: #393939;
+  background: #FFFFFF;
+  background-blend-mode: multiply;
+  border: 1px solid #393939;
+}
+
+.with-bottom-margin {
+  margin-bottom: 1em;
 }
 
 .diagram-viewer-canvas {

@@ -54,7 +54,7 @@ export default function HomePage() {
               data-qa="process-instance-show-link"
               to={`/admin/process-models/${rowToUse.process_group_identifier}/${rowToUse.process_model_identifier}/process-instances/${rowToUse.process_instance_id}`}
             >
-              View
+              View {rowToUse.process_instance_id}
             </Link>
           </td>
           <td

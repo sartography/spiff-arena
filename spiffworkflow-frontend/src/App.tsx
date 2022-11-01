@@ -54,21 +54,19 @@ export default function App() {
         <Content>
           {errorTag}
           <ErrorBoundary>
-            <main style={{ padding: '1rem 0' }}>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/tasks" element={<HomePage />} />
-                <Route path="/admin/*" element={<AdminRoutes />} />
-                <Route
-                  path="/tasks/:process_instance_id/:task_id"
-                  element={<TaskShow />}
-                />
-                <Route
-                  path="/tasks/:process_instance_id/:task_id"
-                  element={<TaskShow />}
-                />
-              </Routes>
-            </main>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/tasks" element={<HomePage />} />
+              <Route path="/admin/*" element={<AdminRoutes />} />
+              <Route
+                path="/tasks/:process_instance_id/:task_id"
+                element={<TaskShow />}
+              />
+              <Route
+                path="/tasks/:process_instance_id/:task_id"
+                element={<TaskShow />}
+              />
+            </Routes>
           </ErrorBoundary>
         </Content>
       </BrowserRouter>

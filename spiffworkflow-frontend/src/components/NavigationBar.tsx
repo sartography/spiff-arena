@@ -2,14 +2,12 @@ import {
   Header,
   Theme,
   HeaderName,
-  HeaderContainer,
   HeaderNavigation,
   HeaderMenuItem,
   HeaderMenu,
   // @ts-ignore
 } from '@carbon/react';
 import { useEffect, useState } from 'react';
-import { Navbar, Nav } from 'react-bootstrap';
 import { useLocation } from 'react-router-dom';
 // @ts-expect-error TS(2307) FIXME: Cannot find module '../logo.svg' or its correspond... Remove this comment to see the full error message
 import logo from '../logo.svg';
@@ -89,44 +87,9 @@ export default function NavigationBar() {
     return activeKey === menuItemPath;
   };
 
-  //   return (
-  // <Theme theme="g100">
-  //     <Navbar bg="dark" expand="lg" variant="dark">
-  //       <Content>
-  //         <Navbar.Brand data-qa="spiffworkflow-logo" href="/admin">
-  //           <img src={logo} className="app-logo" alt="logo" />
-  //         </Navbar.Brand>
-  //         <Navbar.Toggle aria-controls="basic-navbar-nav" />
-  //         <Navbar.Collapse id="basic-navbar-nav">
-  //           <Nav className="me-auto">{navElements}</Nav>
-  //         </Navbar.Collapse>
-  //         {loginLink()}
-  //         {logoutLink()}
-  //       </Content>
-  //     </Navbar>
-  //     </Theme>
-  //   );
-
-  // <Theme theme="g100">
-  //   <Header aria-label="IBM Platform Name">
-  //     <HeaderName href="#" prefix="IBM">
-  //       [Platform]
-  //     </HeaderName>
-  //     <HeaderNavigation aria-label="IBM [Platform]">
-  //       <HeaderMenuItem href="#">Link 1</HeaderMenuItem>
-  //       <HeaderMenuItem href="#">Link 2</HeaderMenuItem>
-  //       <HeaderMenuItem href="#">Link 3</HeaderMenuItem>
-  //       <HeaderMenu aria-label="Link 4" menuLinkName="Link 4">
-  //         <HeaderMenuItem href="#">Sub-link 1</HeaderMenuItem>
-  //         <HeaderMenuItem href="#">Sub-link 2</HeaderMenuItem>
-  //         <HeaderMenuItem href="#">Sub-link 3</HeaderMenuItem>
-  //       </HeaderMenu>
-  //     </HeaderNavigation>
-  //   </Header>
-  // </Theme>
   if (activeKey) {
     return (
-      <HeaderContainer>
+      <div className="spiffworkflow-header-container">
         <Theme theme="g100">
           <Header aria-label="Spiffworkflow">
             <HeaderName href="/" prefix="">
@@ -151,7 +114,7 @@ export default function NavigationBar() {
             </HeaderNavigation>
           </Header>
         </Theme>
-      </HeaderContainer>
+      </div>
     );
   }
   return null;
