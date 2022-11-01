@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import dateparser
 import datetime
 import time
 import pytz
 
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
+from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
 from tests.SpiffWorkflow.bpmn.BpmnWorkflowTestCase import BpmnWorkflowTestCase
 
 __author__ = 'kellym'
@@ -15,8 +17,12 @@ __author__ = 'kellym'
 class TimerDateTest(BpmnWorkflowTestCase):
 
     def setUp(self):
+        self.script_engine = PythonScriptEngine(default_globals={
+            "dateparser": dateparser,
+            "timedelta": datetime.timedelta,
+        })
         self.spec, self.subprocesses = self.load_workflow_spec('timer-date-start.bpmn', 'date_timer')
-        self.workflow = BpmnWorkflow(self.spec, self.subprocesses)
+        self.workflow = BpmnWorkflow(self.spec, self.subprocesses, script_engine=self.script_engine)
 
     def testRunThroughHappy(self):
         self.actual_test(save_restore=False)
@@ -42,6 +48,7 @@ class TimerDateTest(BpmnWorkflowTestCase):
                 break
             if save_restore:
                 self.save_restore()
+                self.workflow.script_engine = self.script_engine
 
 
             waiting_tasks = self.workflow.get_tasks(TaskState.WAITING)
