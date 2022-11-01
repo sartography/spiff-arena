@@ -3,7 +3,7 @@ import os
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.camunda.parser.CamundaParser import CamundaParser
-from SpiffWorkflow.camunda.serializer import UserTaskConverter, StartEventConverter, EndEventConverter, \
+from SpiffWorkflow.camunda.serializer.task_spec_converters import UserTaskConverter, StartEventConverter, EndEventConverter, \
     IntermediateCatchEventConverter, IntermediateThrowEventConverter, BoundaryEventConverter
 
 from SpiffWorkflow.dmn.serializer import BusinessRuleTaskConverter
