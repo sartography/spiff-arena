@@ -9,6 +9,8 @@ import {
 import {
   Button,
   ButtonSet,
+  DatePicker,
+  DatePickerInput,
   Table,
   Stack,
   Form,
@@ -21,8 +23,6 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 import { InputGroup } from 'react-bootstrap';
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'reac... Remove this comment to see the full error message
-import DatePicker from 'react-datepicker';
 import { Typeahead } from 'react-bootstrap-typeahead';
 import { PROCESS_STATUSES, DATE_FORMAT } from '../config';
 import {
@@ -396,6 +396,20 @@ export default function ProcessInstanceList() {
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>{processModelSearch()}</Column>
           <Column md={8}>{processStatusSearch()}</Column>
+        </Grid>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={8}>
+            {' '}
+            <DatePicker dateFormat={DATE_FORMAT} datePickerType="single">
+              <DatePickerInput
+                id="date-picker-default-id"
+                placeholder={DATE_FORMAT}
+                labelText="Date picker label"
+                type="text"
+                size="md"
+              />
+            </DatePicker>
+          </Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={4}>
