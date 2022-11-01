@@ -24,7 +24,6 @@ import { InputGroup } from 'react-bootstrap';
 // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'reac... Remove this comment to see the full error message
 import DatePicker from 'react-datepicker';
 import { Typeahead } from 'react-bootstrap-typeahead';
-import { Option } from 'react-bootstrap-typeahead/types/types';
 import { PROCESS_STATUSES, DATE_FORMAT } from '../config';
 import {
   convertDateToSeconds,
@@ -61,10 +60,11 @@ export default function ProcessInstanceList() {
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const [processStatusSelectionOptions, setProcessStatusSelectionOptions] =
-    useState<any[]>([]);
+  const [processStatusAllOptions, setProcessStatusAllOptions] = useState<any[]>(
+    []
+  );
   const [processStatusSelection, setProcessStatusSelection] = useState<
-    Option[]
+    string[]
   >([]);
   const [processModelAvailableItems, setProcessModelAvailableItems] = useState<
     ProcessModel[]
@@ -72,9 +72,8 @@ export default function ProcessInstanceList() {
   const [processModelFilteredItems, setProcessModelFilteredItems] = useState<
     ProcessModel[]
   >([]);
-  const [processModelSelection, setProcessModelSelection] = useState<Option[]>(
-    []
-  );
+  const [processModelSelection, setProcessModelSelection] =
+    useState<ProcessModel | null>(null);
 
   const parametersToAlwaysFilterBy = useMemo(() => {
     return {
@@ -138,25 +137,25 @@ export default function ProcessInstanceList() {
         const label = `${item.process_group_id}/${item.id}`;
         Object.assign(item, { label });
         if (label === processModelFullIdentifier) {
-          setProcessModelSelection([item]);
+          setProcessModelSelection(item);
         }
         return item;
       });
       setProcessModelAvailableItems(selectionArray);
       setProcessModelFilteredItems(selectionArray);
 
-      const processStatusSelectedArray: Option[] = [];
-      const processStatusSelectionArray = PROCESS_STATUSES.map(
+      const processStatusSelectedArray: string[] = [];
+      const processStatusAllOptionsArray = PROCESS_STATUSES.map(
         (processStatusOption: any) => {
           const regex = new RegExp(`\\b${processStatusOption}\\b`);
           if ((searchParams.get('process_status') || '').match(regex)) {
-            processStatusSelectedArray.push({ label: processStatusOption });
+            processStatusSelectedArray.push(processStatusOption);
           }
-          return { label: processStatusOption };
+          return processStatusOption;
         }
       );
       setProcessStatusSelection(processStatusSelectedArray);
-      setProcessStatusSelectionOptions(processStatusSelectionArray);
+      setProcessStatusAllOptions(processStatusAllOptionsArray);
 
       getProcessInstances();
     }
@@ -191,7 +190,7 @@ export default function ProcessInstanceList() {
     }
   };
 
-  const handleFilter = (event: any) => {
+  const applyFilter = (event: any) => {
     event.preventDefault();
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     let queryParamString = `per_page=${perPage}&page=${page}`;
@@ -226,16 +225,11 @@ export default function ProcessInstanceList() {
       queryParamString += `&end_till=${endTill}`;
     }
     if (processStatusSelection.length > 0) {
-      const processStatusSelectionString = processStatusSelection.map(
-        (pss: any) => {
-          return pss.label;
-        }
-      );
-      queryParamString += `&process_status=${processStatusSelectionString}`;
+      queryParamString += `&process_status=${processStatusSelection}`;
     }
-    if (processModelSelection.length > 0) {
-      const currentProcessModel: any = processModelSelection[0];
-      queryParamString += `&process_group_identifier=${currentProcessModel.process_group_id}&process_model_identifier=${currentProcessModel.id}`;
+
+    if (processModelSelection) {
+      queryParamString += `&process_group_identifier=${processModelSelection.process_group_id}&process_model_identifier=${processModelSelection.id}`;
     }
 
     setErrorMessage(null);
@@ -294,65 +288,6 @@ export default function ProcessInstanceList() {
     return queryParamString;
   };
 
-  const processModelSearch = () => {
-    return (
-      <Form.Group>
-        <InputGroup>
-          <InputGroup.Text className="text-nowrap">
-            Process Model:{' '}
-          </InputGroup.Text>
-          <Typeahead
-            style={{ width: 500 }}
-            id="process-model-selection"
-            labelKey="label"
-            onChange={setProcessModelSelection}
-            options={processModelAvailableItems}
-            placeholder="Choose a process model..."
-            selected={processModelSelection}
-          />
-        </InputGroup>
-      </Form.Group>
-    );
-  };
-
-  const processStatusSearch = () => {
-    // return (
-    //   <Form.Group>
-    //     <InputGroup>
-    //       <InputGroup.Text className="text-nowrap">
-    //         Process Status:{' '}
-    //       </InputGroup.Text>
-    //       <Typeahead
-    //         multiple
-    //         style={{ width: 500 }}
-    //         id="process-status-selection"
-    //         // for cypress tests since data-qa does not work
-    //         inputProps={{
-    //           name: 'process-status-selection',
-    //         }}
-    //         labelKey="label"
-    //         onChange={setProcessStatusSelection}
-    //         options={processStatusSelectionOptions}
-    //         placeholder="Choose process statuses..."
-    //         selected={processStatusSelection}
-    //       />
-    //     </InputGroup>
-    //   </Form.Group>
-    // );
-    return (
-      <MultiSelect
-        label="Process Instance Status"
-        id="process-instance-status-select"
-        titleText="Process Instance Status Seleect"
-        items={processStatusSelectionOptions}
-        onChange={setProcessStatusSelection}
-        itemToString={(item: any) => {
-          return item.label || '';
-        }}
-        selectionFeedback="top-after-reopen"
-      />
-    );
-  };
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
     const { inputValue } = options;
@@ -361,6 +296,54 @@ export default function ProcessInstanceList() {
       processModel.id.match(inputValue) ||
       processModel.display_name.match(inputValue)
     );
+  };
+
+  const processModelSearch = () => {
+    return (
+      <ComboBox
+        onChange={(selection: any) =>
+          setProcessModelSelection(selection.selectedItem)
+        }
+        id="process-model-select"
+        items={processModelFilteredItems}
+        itemToString={(processModel: ProcessModel) => {
+          if (processModel) {
+            return `${processModel.process_group_id}/${
+              processModel.id
+            } (${truncateString(processModel.display_name, 20)})`;
+          }
+          return null;
+        }}
+        shouldFilterItem={shouldFilterProcessModel}
+        placeholder="Choose a process model"
+        titleText="Process model"
+        selectedItem={processModelSelection}
+      />
+    );
+  };
+
+  const processStatusSearch = () => {
+    return (
+      <MultiSelect
+        label="Choose Status"
+        id="process-instance-status-select"
+        titleText="Status"
+        items={processStatusAllOptions}
+        onChange={(selection: any) => {
+          setProcessStatusSelection(selection.selectedItems);
+        }}
+        itemToString={(item: any) => {
+          return item || '';
+        }}
+        selectionFeedback="top-after-reopen"
+        selectedItems={processStatusSelection}
+      />
+    );
+  };
+
+  const clearFilters = () => {
+    setProcessModelSelection(null);
+    setProcessStatusSelection([]);
   };
 
   const filterOptions = () => {
@@ -408,64 +391,25 @@ export default function ProcessInstanceList() {
     //     </div>
     //   </div>
     // );
-    // return (
-    //   <Grid columns={2} fullWidth>
-    //     <Column md={8} className="blueColumn">
-    //       Hello1
-    //     </Column>
-    //     <Column md={8} className="redColumn">
-    //       Hello2
-    //     </Column>
-    //   </Grid>
-    // );
-    // return (
-    //   <FlexGrid>
-    //     <Row>
-    //       <Column>
-    //         <DemoContent>Span 25%</DemoContent>
-    //       </Column>
-    //       <Column>
-    //         <DemoContent>Span 25%</DemoContent>
-    //       </Column>
-    //       <Column>
-    //         <DemoContent>Span 25%</DemoContent>
-    //       </Column>
-    //       <Column>
-    //         <DemoContent>Span 25%</DemoContent>
-    //       </Column>
-    //     </Row>
-    //   </FlexGrid>
-    // );
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
-          <Column md={8}>
-            <ComboBox
-              onChange={setProcessModelSelection}
-              id="process-model-select"
-              items={processModelFilteredItems}
-              itemToString={(processModel: ProcessModel) => {
-                if (processModel) {
-                  return `${processModel.process_group_id}/${
-                    processModel.id
-                  } (${truncateString(processModel.display_name, 20)})`;
-                }
-                return null;
-              }}
-              shouldFilterItem={shouldFilterProcessModel}
-              placeholder="Process Model"
-              titleText="Process model"
-            />
-          </Column>
+          <Column md={8}>{processModelSearch()}</Column>
           <Column md={8}>{processStatusSearch()}</Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={4}>
             <ButtonSet>
-              <Button kind="" className="button-white-background">
+              <Button
+                kind=""
+                className="button-white-background"
+                onClick={clearFilters}
+              >
                 Clear
               </Button>
-              <Button kind="secondary">Filter</Button>
+              <Button kind="secondary" onClick={applyFilter}>
+                Filter
+              </Button>
             </ButtonSet>
           </Column>
         </Grid>
