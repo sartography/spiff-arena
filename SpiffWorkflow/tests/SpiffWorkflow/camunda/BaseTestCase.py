@@ -6,7 +6,7 @@ from SpiffWorkflow.camunda.parser.CamundaParser import CamundaParser
 from SpiffWorkflow.camunda.serializer.task_spec_converters import UserTaskConverter, StartEventConverter, EndEventConverter, \
     IntermediateCatchEventConverter, IntermediateThrowEventConverter, BoundaryEventConverter
 
-from SpiffWorkflow.dmn.serializer import BusinessRuleTaskConverter
+from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter
 
 from tests.SpiffWorkflow.bpmn.BpmnWorkflowTestCase import BpmnWorkflowTestCase
 
