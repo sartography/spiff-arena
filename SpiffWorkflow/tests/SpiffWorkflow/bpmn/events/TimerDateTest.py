@@ -4,7 +4,6 @@ import unittest
 import dateparser
 import datetime
 import time
-import pytz
 
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
@@ -57,8 +56,7 @@ class TimerDateTest(BpmnWorkflowTestCase):
             loopcount = loopcount +1
         endtime = datetime.datetime.now()
         self.workflow.do_engine_steps()
-        tz = pytz.timezone('US/Eastern')
-        testdate = tz.localize(datetime.datetime.strptime('2021-09-01 10:00','%Y-%m-%d %H:%M'))
+        testdate = datetime.datetime.strptime('2021-09-01 10:00','%Y-%m-%d %H:%M')
         self.assertEqual(self.workflow.last_task.data['futuredate2'],testdate)
         self.assertTrue('completed' in self.workflow.last_task.data)
         self.assertTrue(self.workflow.last_task.data['completed'])
