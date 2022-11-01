@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-import dateparser
 import datetime
 import time
 
@@ -17,7 +16,7 @@ class TimerDateTest(BpmnWorkflowTestCase):
 
     def setUp(self):
         self.script_engine = PythonScriptEngine(default_globals={
-            "dateparser": dateparser,
+            "datetime": datetime.datetime,
             "timedelta": datetime.timedelta,
         })
         self.spec, self.subprocesses = self.load_workflow_spec('timer-date-start.bpmn', 'date_timer')
