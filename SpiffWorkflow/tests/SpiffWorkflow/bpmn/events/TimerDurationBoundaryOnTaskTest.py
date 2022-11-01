@@ -4,7 +4,7 @@ import unittest
 import datetime
 import time
 
-from SpiffWorkflow.bpmn.specs.events import EndEvent
+from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
 from tests.SpiffWorkflow.bpmn.BpmnWorkflowTestCase import BpmnWorkflowTestCase

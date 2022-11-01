@@ -19,7 +19,9 @@ from ..specs.ExclusiveGateway import ExclusiveGateway
 from ..specs.InclusiveGateway import InclusiveGateway
 from ..specs.ParallelGateway import ParallelGateway
 
-from ..specs.events import StartEvent, EndEvent, BoundaryEvent, IntermediateCatchEvent, IntermediateThrowEvent
+from ..specs.events.StartEvent import StartEvent
+from ..specs.events.EndEvent import EndEvent
+from ..specs.events.IntermediateEvent import BoundaryEvent, IntermediateCatchEvent, IntermediateThrowEvent
 from ..specs.events.IntermediateEvent import _BoundaryEventParent, SendTask, ReceiveTask
 
 from ..workflow import BpmnWorkflow
