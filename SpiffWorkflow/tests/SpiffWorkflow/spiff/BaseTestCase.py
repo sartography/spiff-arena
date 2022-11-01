@@ -2,7 +2,7 @@
 import os
 
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser, VALIDATOR
-from SpiffWorkflow.spiff.serializer import NoneTaskConverter, \
+from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverter, \
     ManualTaskConverter, UserTaskConverter, ScriptTaskConverter, \
     SubWorkflowTaskConverter, TransactionSubprocessConverter, \
     CallActivityTaskConverter, \
