@@ -42,7 +42,8 @@ class SpecFileService(FileSystemService):
         extension_filter: str = "",
     ) -> List[File]:
         """Return all files associated with a workflow specification."""
-        path = SpecFileService.workflow_path(process_model_info)
+        # path = SpecFileService.workflow_path(process_model_info)
+        path = os.path.join(FileSystemService.root_path(), process_model_info.id)
         files = SpecFileService._get_files(path, file_name)
         if extension_filter != "":
             files = list(
@@ -64,7 +65,8 @@ class SpecFileService(FileSystemService):
     ) -> File:
         """Update_file."""
         SpecFileService.assert_valid_file_name(file_name)
-        file_path = SpecFileService.file_path(process_model_info, file_name)
+        # file_path = SpecFileService.file_path(process_model_info, file_name)
+        file_path = os.path.join(FileSystemService.root_path(), process_model_info.id, file_name)
         SpecFileService.write_file_data_to_system(file_path, binary_data)
         file = SpecFileService.to_file_object(file_name, file_path)
 
@@ -88,7 +90,8 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
         """Get_data."""
-        file_path = SpecFileService.file_path(process_model_info, file_name)
+        # file_path = SpecFileService.file_path(process_model_info, file_name)
+        file_path = os.path.join(FileSystemService.root_path(), process_model_info.id, file_name)
         if not os.path.exists(file_path):
             raise ApiError(
                 "unknown_file",
@@ -123,7 +126,8 @@ class SpecFileService(FileSystemService):
         # for lf in lookup_files:
         #     session.query(LookupDataModel).filter_by(lookup_file_model_id=lf.id).delete()
         #     session.query(LookupFileModel).filter_by(id=lf.id).delete()
-        file_path = SpecFileService.file_path(spec, file_name)
+        # file_path = SpecFileService.file_path(spec, file_name)
+        file_path = os.path.join(FileSystemService.root_path(), spec.id, file_name)
         os.remove(file_path)
 
     @staticmethod
@@ -327,9 +331,8 @@ class SpecFileService(FileSystemService):
         process_model_info: ProcessModelInfo, bpmn_file_name: str, et_root: _Element
     ) -> None:
         """Store_bpmn_process_identifiers."""
-        relative_process_model_path = SpecFileService.process_model_relative_path(
-            process_model_info
-        )
+        relative_process_model_path = process_model_info.id
+
         relative_bpmn_file_path = os.path.join(
             relative_process_model_path, bpmn_file_name
         )
@@ -425,7 +428,7 @@ class SpecFileService(FileSystemService):
                         message_triggerable_process_model = MessageTriggerableProcessModel(
                             message_model_id=message_model.id,
                             process_model_identifier=process_model_info.id,
-                            process_group_identifier=process_model_info.process_group_id,
+                            process_group_identifier="process_group_identifier",
                         )
                         db.session.add(message_triggerable_process_model)
                         db.session.commit()
@@ -433,8 +436,8 @@ class SpecFileService(FileSystemService):
                         if (
                             message_triggerable_process_model.process_model_identifier
                             != process_model_info.id
-                            or message_triggerable_process_model.process_group_identifier
-                            != process_model_info.process_group_id
+                            # or message_triggerable_process_model.process_group_identifier
+                            # != process_model_info.process_group_id
                         ):
                             raise ValidationException(
                                 "Message model is already used to start process model"

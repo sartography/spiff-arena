@@ -37,40 +37,18 @@ def assure_process_group_exists(process_group_id: Optional[str] = None) -> Proce
 
 def load_test_spec(
     process_model_id: str,
-    process_group_id: Optional[str] = None,
     bpmn_file_name: Optional[str] = None,
-    process_model_source_directory: Optional[str] = None,
+    process_model_source_directory: str = None,
 ) -> ProcessModelInfo:
-    """Loads a process model into the bpmn dir based on a directory in tests/data."""
-    process_group = None
-    process_model_service = ProcessModelService()
-    if process_group_id is None:
-        process_group_id = "test_process_group_id"
-    process_group = assure_process_group_exists(process_group_id)
-    process_group_id = process_group.id
+    """Loads a bpmn file into the process model dir based on a directory in tests/data."""
 
-    try:
-        return process_model_service.get_process_model(
-            process_model_id, group_id=process_group_id
-        )
-    except ProcessEntityNotFoundError:
-        spec = ExampleDataLoader().create_spec(
-            process_model_id=process_model_id,
-            from_tests=True,
-            display_name=process_model_id,
-            process_group_id=process_group_id,
-            bpmn_file_name=bpmn_file_name,
-            process_model_source_directory=process_model_source_directory,
-        )
-        return spec
+    if process_model_source_directory is None:
+        raise Exception("You must inclode a `process_model_source_directory`.")
 
-
-# def user_info_to_query_string(user_info, redirect_url):
-#     query_string_list = []
-#     items = user_info.items()
-#     for key, value in items:
-#         query_string_list.append('%s=%s' % (key, urllib.parse.quote(value)))
-#
-#     query_string_list.append('redirect_url=%s' % redirect_url)
-#
-#     return '?%s' % '&'.join(query_string_list)
+    spec = ExampleDataLoader.create_spec(
+        process_model_id=process_model_id,
+        display_name=process_model_id,
+        bpmn_file_name=bpmn_file_name,
+        process_model_source_directory=process_model_source_directory,
+    )
+    return spec

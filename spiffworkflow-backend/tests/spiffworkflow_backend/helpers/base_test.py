@@ -12,6 +12,10 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
+
+from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from werkzeug.test import TestResponse  # type: ignore
 
@@ -33,6 +37,43 @@ from spiffworkflow_backend.services.user_service import UserService
 
 class BaseTest:
     """BaseTest."""
+
+    def basic_test_setup(
+        self,
+        client: FlaskClient,
+        user: UserModel,
+        process_group_id: Optional[str] = "test_group",
+        process_model_id: Optional[str] = "random_fact",
+        bpmn_file_name: Optional[str] = None,
+        bpmn_file_location: Optional[str] = None
+    ) -> str:
+        """Creates a process group
+         Creates a process model
+         Adds a bpmn file to the model"""
+
+        process_group_display_name = process_group_id
+        process_group_description = process_group_id
+        process_model_identifier = f"{process_group_id}/{process_model_id}"
+        if bpmn_file_location is None:
+            bpmn_file_location = process_model_id
+
+        self.create_process_group(client, user, process_group_id, process_group_display_name)
+
+        self.create_process_model_with_api(
+            client,
+            process_model_id=process_model_identifier,
+            process_model_display_name=process_group_display_name,
+            process_model_description=process_group_description,
+            user=user,
+        )
+
+        load_test_spec(
+            process_model_id=process_model_identifier,
+            bpmn_file_name=bpmn_file_name,
+            process_model_source_directory=bpmn_file_location
+        )
+
+        return process_model_identifier
 
     @staticmethod
     def find_or_create_user(username: str = "test_user_1") -> UserModel:
@@ -67,17 +108,18 @@ class BaseTest:
             open_id_client_secret_key,
         )
 
+    @staticmethod
     def create_process_instance(
-        self,
         client: FlaskClient,
-        test_process_group_id: str,
         test_process_model_id: str,
         headers: Dict[str, str],
     ) -> TestResponse:
-        """Create_process_instance."""
-        load_test_spec(test_process_model_id, process_group_id=test_process_group_id)
+        """Create_process_instance.
+        There must be an existing process model to instantiate."""
+
+        modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
-            f"/v1.0/process-models/{test_process_group_id}/{test_process_model_id}/process-instances",
+            f"/v1.0/process-models/{modified_process_model_id}/process-instances",
             headers=headers,
         )
         assert response.status_code == 201
@@ -86,8 +128,7 @@ class BaseTest:
     def create_process_model_with_api(
         self,
         client: FlaskClient,
-        process_group_id: Optional[str] = None,
-        process_model_id: str = "make_cookies",
+        process_model_id: Optional[str] = None,
         process_model_display_name: str = "Cooooookies",
         process_model_description: str = "Om nom nom delicious cookies",
         fault_or_suspend_on_exception: str = NotificationType.suspend.value,
@@ -97,65 +138,74 @@ class BaseTest:
         user: Optional[UserModel] = None,
     ) -> TestResponse:
         """Create_process_model."""
-        process_model_service = ProcessModelService()
 
-        # make sure we have a group
-        if process_group_id is None:
-            process_group_tmp = ProcessGroup(
-                id="test_cat",
-                display_name="Test Category",
-                display_order=0,
-                admin=False,
-            )
-            process_group = process_model_service.add_process_group(process_group_tmp)
+        if process_model_id is not None:
+
+            # make sure we have a group
+            process_group_id, _ = os.path.split(process_model_id)
+            process_group_path = f"{FileSystemService.root_path()}/{process_group_id}"
+            if ProcessModelService().is_group(process_group_path):
+
+                if exception_notification_addresses is None:
+                    exception_notification_addresses = []
+
+                model = ProcessModelInfo(
+                    id=process_model_id,
+                    display_name=process_model_display_name,
+                    description=process_model_description,
+                    is_review=False,
+                    primary_process_id=primary_process_id,
+                    primary_file_name=primary_file_name,
+                    fault_or_suspend_on_exception=fault_or_suspend_on_exception,
+                    exception_notification_addresses=exception_notification_addresses,
+                )
+                if user is None:
+                    user = self.find_or_create_user()
+
+                response = client.post(
+                    "/v1.0/process-models",
+                    content_type="application/json",
+                    data=json.dumps(ProcessModelInfoSchema().dump(model)),
+                    headers=self.logged_in_headers(user),
+                )
+                assert response.status_code == 201
+                return response
+
+            else:
+                raise Exception("You must create the group first")
         else:
-            process_group = ProcessModelService().get_process_group(process_group_id)
-
-        if exception_notification_addresses is None:
-            exception_notification_addresses = []
-        model = ProcessModelInfo(
-            id=process_model_id,
-            display_name=process_model_display_name,
-            description=process_model_description,
-            process_group_id=process_group.id,
-            is_review=False,
-            primary_process_id=primary_process_id,
-            primary_file_name=primary_file_name,
-            fault_or_suspend_on_exception=fault_or_suspend_on_exception,
-            exception_notification_addresses=exception_notification_addresses,
-        )
-        if user is None:
-            user = self.find_or_create_user()
-
-        response = client.post(
-            "/v1.0/process-models",
-            content_type="application/json",
-            data=json.dumps(ProcessModelInfoSchema().dump(model)),
-            headers=self.logged_in_headers(user),
-        )
-        assert response.status_code == 201
-        return response
+            raise Exception("You must include the process_model_id, which must be a path to the model")
 
     def create_spec_file(
         self,
         client: FlaskClient,
-        process_group_id: str = "random_fact",
-        process_model_id: str = "random_fact",
+        process_model_id: str,
+        process_model_location: Optional[str] = None,
         process_model: Optional[ProcessModelInfo] = None,
         file_name: str = "random_fact.svg",
         file_data: bytes = b"abcdef",
         user: Optional[UserModel] = None,
     ) -> Any:
-        """Test_create_spec_file."""
+        """Test_create_spec_file.
+        Adds a bpmn file to the model.
+        process_model_id is the destination path
+        process_model_location is the source path
+
+        because of permissions, user might be required now..., not sure yet"""
+        if process_model_location is None:
+            process_model_location = file_name.split(".")[0]
         if process_model is None:
             process_model = load_test_spec(
-                process_model_id, process_group_id=process_group_id
+                process_model_id=process_model_id,
+                bpmn_file_name=file_name,
+                process_model_source_directory=process_model_location
             )
         data = {"file": (io.BytesIO(file_data), file_name)}
         if user is None:
             user = self.find_or_create_user()
+        modified_process_model_id = process_model.id.replace("/", ":")
         response = client.post(
-            f"/v1.0/process-models/{process_model.process_group_id}/{process_model.id}/files",
+            f"/v1.0/process-models/{modified_process_model_id}/files",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -168,7 +218,7 @@ class BaseTest:
         # assert "image/svg+xml" == file["content_type"]
 
         response = client.get(
-            f"/v1.0/process-models/{process_model.process_group_id}/{process_model.id}/files/{file_name}",
+            f"/v1.0/process-models/{modified_process_model_id}/files/{file_name}",
             headers=self.logged_in_headers(user),
         )
         assert response.status_code == 200
@@ -221,7 +271,7 @@ class BaseTest:
             status=status,
             process_initiator=user,
             process_model_identifier=process_model.id,
-            process_group_identifier=process_model.process_group_id,
+            process_group_identifier="",
             updated_at_in_seconds=round(time.time()),
             start_in_seconds=current_time - (3600 * 1),
             end_in_seconds=current_time - (3600 * 1 - 20),

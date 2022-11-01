@@ -54,18 +54,20 @@ class FileSystemService:
     @staticmethod
     def process_group_path_for_spec(spec: ProcessModelInfo) -> str:
         """Category_path_for_spec."""
-        return FileSystemService.process_group_path(spec.process_group_id)
+        process_group_id, _ = os.path.split(spec.id)
+        return FileSystemService.process_group_path(process_group_id)
 
     @staticmethod
     def workflow_path(spec: ProcessModelInfo) -> str:
         """Workflow_path."""
-        process_group_path = FileSystemService.process_group_path_for_spec(spec)
-        return os.path.join(process_group_path, spec.id)
+        process_model_path = os.path.join(FileSystemService.root_path(), spec.id)
+        # process_group_path = FileSystemService.process_group_path_for_spec(spec)
+        return process_model_path
 
     @staticmethod
-    def full_path_to_process_model_file(spec: ProcessModelInfo, file_name: str) -> str:
+    def full_path_to_process_model_file(spec: ProcessModelInfo) -> str:
         """Full_path_to_process_model_file."""
-        return os.path.join(FileSystemService.workflow_path(spec), file_name)
+        return os.path.join(FileSystemService.workflow_path(spec), spec.primary_file_name)
 
     def next_display_order(self, spec: ProcessModelInfo) -> int:
         """Next_display_order."""

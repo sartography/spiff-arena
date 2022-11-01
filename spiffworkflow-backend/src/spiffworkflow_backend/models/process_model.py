@@ -29,7 +29,7 @@ class ProcessModelInfo:
     id: str
     display_name: str
     description: str
-    process_group_id: str = ""
+    # process_group_id: str = ""
     process_group: Any | None = None
     primary_file_name: str | None = None
     primary_process_id: str | None = None
@@ -41,7 +41,7 @@ class ProcessModelInfo:
 
     def __post_init__(self) -> None:
         """__post_init__."""
-        self.sort_index = f"{self.process_group_id}:{self.id}"
+        self.sort_index = self.id
 
     def __eq__(self, other: Any) -> bool:
         """__eq__."""
@@ -67,7 +67,6 @@ class ProcessModelInfoSchema(Schema):
     primary_file_name = marshmallow.fields.String(allow_none=True)
     primary_process_id = marshmallow.fields.String(allow_none=True)
     is_review = marshmallow.fields.Boolean(allow_none=True)
-    process_group_id = marshmallow.fields.String(allow_none=True)
     files = marshmallow.fields.List(marshmallow.fields.Nested("FileSchema"))
     fault_or_suspend_on_exception = marshmallow.fields.String()
     exception_notification_addresses = marshmallow.fields.List(
