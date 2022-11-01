@@ -6,8 +6,20 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-// @ts-ignore
-import { Button, Table, Stack, Form } from '@carbon/react';
+import {
+  Button,
+  ButtonSet,
+  Table,
+  Stack,
+  Form,
+  ComboBox,
+  Grid,
+  Column,
+  FlexGrid,
+  Row,
+  MultiSelect,
+  // @ts-ignore
+} from '@carbon/react';
 import { InputGroup } from 'react-bootstrap';
 // @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'reac... Remove this comment to see the full error message
 import DatePicker from 'react-datepicker';
@@ -19,6 +31,7 @@ import {
   convertSecondsToFormattedDate,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
+  truncateString,
 } from '../helpers';
 
 import PaginationForTable from '../components/PaginationForTable';
@@ -29,6 +42,7 @@ import HttpService from '../services/HttpService';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
+import { PaginationObject, ProcessModel } from '../interfaces';
 
 export default function ProcessInstanceList() {
   const params = useParams();
@@ -36,7 +50,7 @@ export default function ProcessInstanceList() {
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
@@ -47,13 +61,17 @@ export default function ProcessInstanceList() {
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const [processStatuseSelectionOptions, setProcessStatusSelectionOptions] =
+  const [processStatusSelectionOptions, setProcessStatusSelectionOptions] =
     useState<any[]>([]);
   const [processStatusSelection, setProcessStatusSelection] = useState<
     Option[]
   >([]);
-  const [processModeleSelectionOptions, setProcessModelSelectionOptions] =
-    useState([]);
+  const [processModelAvailableItems, setProcessModelAvailableItems] = useState<
+    ProcessModel[]
+  >([]);
+  const [processModelFilteredItems, setProcessModelFilteredItems] = useState<
+    ProcessModel[]
+  >([]);
   const [processModelSelection, setProcessModelSelection] = useState<Option[]>(
     []
   );
@@ -124,7 +142,8 @@ export default function ProcessInstanceList() {
         }
         return item;
       });
-      setProcessModelSelectionOptions(selectionArray);
+      setProcessModelAvailableItems(selectionArray);
+      setProcessModelFilteredItems(selectionArray);
 
       const processStatusSelectedArray: Option[] = [];
       const processStatusSelectionArray = PROCESS_STATUSES.map(
@@ -287,7 +306,7 @@ export default function ProcessInstanceList() {
             id="process-model-selection"
             labelKey="label"
             onChange={setProcessModelSelection}
-            options={processModeleSelectionOptions}
+            options={processModelAvailableItems}
             placeholder="Choose a process model..."
             selected={processModelSelection}
           />
@@ -297,74 +316,172 @@ export default function ProcessInstanceList() {
   };
 
   const processStatusSearch = () => {
+    // return (
+    //   <Form.Group>
+    //     <InputGroup>
+    //       <InputGroup.Text className="text-nowrap">
+    //         Process Status:{' '}
+    //       </InputGroup.Text>
+    //       <Typeahead
+    //         multiple
+    //         style={{ width: 500 }}
+    //         id="process-status-selection"
+    //         // for cypress tests since data-qa does not work
+    //         inputProps={{
+    //           name: 'process-status-selection',
+    //         }}
+    //         labelKey="label"
+    //         onChange={setProcessStatusSelection}
+    //         options={processStatusSelectionOptions}
+    //         placeholder="Choose process statuses..."
+    //         selected={processStatusSelection}
+    //       />
+    //     </InputGroup>
+    //   </Form.Group>
+    // );
     return (
-      <Form.Group>
-        <InputGroup>
-          <InputGroup.Text className="text-nowrap">
-            Process Status:{' '}
-          </InputGroup.Text>
-          <Typeahead
-            multiple
-            style={{ width: 500 }}
-            id="process-status-selection"
-            // for cypress tests since data-qa does not work
-            inputProps={{
-              name: 'process-status-selection',
-            }}
-            labelKey="label"
-            onChange={setProcessStatusSelection}
-            options={processStatuseSelectionOptions}
-            placeholder="Choose process statuses..."
-            selected={processStatusSelection}
-          />
-        </InputGroup>
-      </Form.Group>
+      <MultiSelect
+        label="Process Instance Status"
+        id="process-instance-status-select"
+        titleText="Process Instance Status Seleect"
+        items={processStatusSelectionOptions}
+        onChange={setProcessStatusSelection}
+        itemToString={(item: any) => {
+          return item.label || '';
+        }}
+        selectionFeedback="top-after-reopen"
+      />
+    );
+  };
+  const shouldFilterProcessModel = (options: any) => {
+    const processModel: ProcessModel = options.item;
+    const { inputValue } = options;
+    return (
+      processModel.process_group_id.match(inputValue) ||
+      processModel.id.match(inputValue) ||
+      processModel.display_name.match(inputValue)
     );
   };
 
   const filterOptions = () => {
+    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+    // return (
+    //   <div className="container">
+    //     <div className="row">
+    //       <div className="col">
+    //         <form onSubmit={handleFilter}>
+    //           <Stack direction="horizontal" gap={3}>
+    //             {processModelSearch()}
+    //           </Stack>
+    //           <br />
+    //           <Stack direction="horizontal" gap={3}>
+    //             {dateComponent(
+    //               'Start Range: ',
+    //               'start-from',
+    //               startFrom,
+    //               setStartFrom
+    //             )}
+    //             {dateComponent('-', 'start-till', startTill, setStartTill)}
+    //           </Stack>
+    //           <br />
+    //           <Stack direction="horizontal" gap={3}>
+    //             {dateComponent(
+    //               'End Range: \u00A0\u00A0',
+    //               'end-from',
+    //               endFrom,
+    //               setEndFrom
+    //             )}
+    //             {dateComponent('-', 'end-till', endTill, setEndTill)}
+    //           </Stack>
+    //           <br />
+    //           <Stack direction="horizontal" gap={3}>
+    //             {processStatusSearch()}
+    //           </Stack>
+    //           <Stack direction="horizontal" gap={3}>
+    //             <Button className="ms-auto" variant="secondary" type="submit">
+    //               Filter
+    //             </Button>
+    //           </Stack>
+    //         </form>
+    //       </div>
+    //       <div className="col" />
+    //     </div>
+    //   </div>
+    // );
+    // return (
+    //   <Grid columns={2} fullWidth>
+    //     <Column md={8} className="blueColumn">
+    //       Hello1
+    //     </Column>
+    //     <Column md={8} className="redColumn">
+    //       Hello2
+    //     </Column>
+    //   </Grid>
+    // );
+    // return (
+    //   <FlexGrid>
+    //     <Row>
+    //       <Column>
+    //         <DemoContent>Span 25%</DemoContent>
+    //       </Column>
+    //       <Column>
+    //         <DemoContent>Span 25%</DemoContent>
+    //       </Column>
+    //       <Column>
+    //         <DemoContent>Span 25%</DemoContent>
+    //       </Column>
+    //       <Column>
+    //         <DemoContent>Span 25%</DemoContent>
+    //       </Column>
+    //     </Row>
+    //   </FlexGrid>
+    // );
     return (
-      <div className="container">
-        <div className="row">
-          <div className="col">
-            <form onSubmit={handleFilter}>
-              <Stack direction="horizontal" gap={3}>
-                {processModelSearch()}
-              </Stack>
-              <br />
-              <Stack direction="horizontal" gap={3}>
-                {dateComponent(
-                  'Start Range: ',
-                  'start-from',
-                  startFrom,
-                  setStartFrom
-                )}
-                {dateComponent('-', 'start-till', startTill, setStartTill)}
-              </Stack>
-              <br />
-              <Stack direction="horizontal" gap={3}>
-                {dateComponent(
-                  'End Range: \u00A0\u00A0',
-                  'end-from',
-                  endFrom,
-                  setEndFrom
-                )}
-                {dateComponent('-', 'end-till', endTill, setEndTill)}
-              </Stack>
-              <br />
-              <Stack direction="horizontal" gap={3}>
-                {processStatusSearch()}
-              </Stack>
-              <Stack direction="horizontal" gap={3}>
-                <Button className="ms-auto" variant="secondary" type="submit">
-                  Filter
-                </Button>
-              </Stack>
-            </form>
-          </div>
-          <div className="col" />
-        </div>
-      </div>
+      <>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={8}>
+            <ComboBox
+              onChange={setProcessModelSelection}
+              id="process-model-select"
+              items={processModelFilteredItems}
+              itemToString={(processModel: ProcessModel) => {
+                if (processModel) {
+                  return `${processModel.process_group_id}/${
+                    processModel.id
+                  } (${truncateString(processModel.display_name, 20)})`;
+                }
+                return null;
+              }}
+              shouldFilterItem={shouldFilterProcessModel}
+              placeholder="Process Model"
+              titleText="Process model"
+            />
+          </Column>
+          <Column md={8}>{processStatusSearch()}</Column>
+        </Grid>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={4}>
+            <ButtonSet>
+              <Button kind="" className="button-white-background">
+                Clear
+              </Button>
+              <Button kind="secondary">Filter</Button>
+            </ButtonSet>
+          </Column>
+        </Grid>
+        <Grid fullWidth>
+          <Column lg={16}>
+            <PaginationForTable
+              page={page}
+              perPage={perPage}
+              pagination={pagination}
+              tableToDisplay={buildTable()}
+              queryParamString={getSearchParamsAsQueryString()}
+              path="/admin/process-instances"
+            />
+          </Column>
+        </Grid>
+      </>
     );
   };
 
@@ -444,14 +561,6 @@ export default function ProcessInstanceList() {
       <>
         {processInstanceTitleElement()}
         {filterOptions()}
-        <PaginationForTable
-          page={page}
-          perPage={perPage}
-          pagination={pagination}
-          tableToDisplay={buildTable()}
-          queryParamString={getSearchParamsAsQueryString()}
-          path="/admin/process-instances"
-        />
       </>
     );
   }

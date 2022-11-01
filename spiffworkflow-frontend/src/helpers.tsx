@@ -90,3 +90,11 @@ export const getProcessModelFullIdentifierFromSearchParams = (
   }
   return processModelFullIdentifier;
 };
+
+// https://stackoverflow.com/a/71352046/6090676
+export const truncateString = (text: string, len: number) => {
+  if (text.length > len && text.length > 0) {
+    return `${text.split(' ').slice(0, len).join(' ')} ...`;
+  }
+  return text;
+};

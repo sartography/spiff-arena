@@ -41,3 +41,9 @@ export interface AuthenticationItem {
   id: string;
   parameters: AuthenticationParam[];
 }
+
+export interface PaginationObject {
+  count: number;
+  total: number;
+  pages: number;
+}
