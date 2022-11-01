@@ -2,7 +2,7 @@ from uuid import UUID
 
 from .bpmn_converters import BpmnTaskSpecConverter
 
-from ...specs import StartTask
+from ...specs.StartTask import StartTask
 from ...specs.Simple import Simple
 from ...specs.LoopResetTask import LoopResetTask
 
