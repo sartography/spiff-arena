@@ -1,10 +1,11 @@
 """Get_env."""
 from typing import Any
+
 from flask import g
-from typing import Optional
 
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-
+from spiffworkflow_backend.models.script_attributes_context import (
+    ScriptAttributesContext,
+)
 from spiffworkflow_backend.scripts.script import Script
 
 
@@ -17,8 +18,7 @@ class GetUser(Script):
 
     def run(
         self,
-        task: Optional[SpiffTask],
-        environment_identifier: str,
+        script_attributes_context: ScriptAttributesContext,
         *_args: Any,
         **kwargs: Any
     ) -> Any:

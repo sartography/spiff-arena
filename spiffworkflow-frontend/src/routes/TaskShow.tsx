@@ -20,13 +20,14 @@ export default function TaskShow() {
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
       successCallback: setTask,
-      failureCallback: setErrorMessage,
+      // This causes the page to continuously reload
+      // failureCallback: setErrorMessage,
     });
     HttpService.makeCallToBackend({
       path: `/process-instance/${params.process_instance_id}/tasks`,
       successCallback: setUserTasks,
     });
-  }, [params, setErrorMessage]);
+  }, [params]);
 
   const processSubmitResult = (result: any) => {
     setErrorMessage(null);
@@ -143,7 +144,7 @@ export default function TaskShow() {
 
   const instructionsElement = (taskToUse: any) => {
     let instructions = '';
-    if (taskToUse.type === 'Manual Task') {
+    if (taskToUse.properties.instructionsForEndUser) {
       instructions = taskToUse.properties.instructionsForEndUser;
     }
     return (

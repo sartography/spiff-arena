@@ -8,6 +8,10 @@ from werkzeug.utils import ImportStringError
 from spiffworkflow_backend.services.logging_service import setup_logger
 
 
+class ConfigurationError(Exception):
+    """ConfigurationError."""
+
+
 def setup_database_uri(app: Flask) -> None:
     """Setup_database_uri."""
     if os.environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
@@ -54,13 +58,20 @@ def setup_config(app: Flask) -> None:
     else:
         app.config.from_pyfile(f"{app.instance_path}/config.py", silent=True)
 
-    env_config_module = "spiffworkflow_backend.config." + app.config["ENV_IDENTIFIER"]
+    env_config_prefix = "spiffworkflow_backend.config."
+    env_config_module = env_config_prefix + app.config["ENV_IDENTIFIER"]
     try:
         app.config.from_object(env_config_module)
     except ImportStringError as exception:
-        raise ModuleNotFoundError(
-            f"Cannot find config module: {env_config_module}"
-        ) from exception
+        if (
+            os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
+            and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
+        ):
+            app.config.from_object("{env_config_prefix}terraform_deployed_environment")
+        else:
+            raise ModuleNotFoundError(
+                f"Cannot find config module: {env_config_module}"
+            ) from exception
 
     setup_database_uri(app)
     setup_logger(app)
@@ -77,6 +88,9 @@ def setup_config(app: Flask) -> None:
     # unversioned (see .gitignore) config that can override everything and include secrets.
     # src/spiffworkflow_backend/config/secrets.py
     app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
+
+    if app.config["BPMN_SPEC_ABSOLUTE_DIR"] is None:
+        raise ConfigurationError("BPMN_SPEC_ABSOLUTE_DIR config must be set")
 
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data

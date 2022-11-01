@@ -1280,6 +1280,7 @@
         "http://localhost:7000/*",
         "http://67.205.133.116:7000/*",
         "http://167.172.242.138:7000/*",
+        "https://api.{{SPIFF_SUBDOMAIN}}.spiffworkflow.org/*",
         "https://api.demo.spiffworkflow.org/*"
       ],
       "webOrigins": [],
@@ -1552,6 +1553,7 @@
         "http://localhost:7001/*",
         "http://67.205.133.116:7000/*",
         "http://167.172.242.138:7001/*",
+        "https://api.{{SPIFF_SUBDOMAIN}}.spiffworkflow.org/*",
         "https://api.demo.spiffworkflow.org/*"
       ],
       "webOrigins": ["*"],
@@ -1623,6 +1625,7 @@
         "http://localhost:7001/*",
         "http://67.205.133.116:7000/*",
         "http://167.172.242.138:7001/*",
+        "https://api.{{SPIFF_SUBDOMAIN}}.spiffworkflow.org/*",
         "https://api.demo.spiffworkflow.org/*"
       ],
       "webOrigins": [],

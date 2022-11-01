@@ -88,7 +88,6 @@ class ApiError(Exception):
         # Assure that there is nothing in the json data that can't be serialized.
         instance.task_data = ApiError.remove_unserializeable_from_dict(task.data)
 
-        current_app.logger.error(message, exc_info=True)
         return instance
 
     @staticmethod
@@ -125,7 +124,6 @@ class ApiError(Exception):
         instance.task_name = task_spec.description or ""
         if task_spec._wf_spec:
             instance.file_name = task_spec._wf_spec.file
-        current_app.logger.error(message, exc_info=True)
         return instance
 
     @classmethod

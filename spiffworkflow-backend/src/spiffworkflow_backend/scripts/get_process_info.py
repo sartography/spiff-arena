@@ -1,4 +1,4 @@
-"""Get_env."""
+"""Get_process_info."""
 from typing import Any
 
 from spiffworkflow_backend.models.script_attributes_context import (
@@ -7,12 +7,12 @@ from spiffworkflow_backend.models.script_attributes_context import (
 from spiffworkflow_backend.scripts.script import Script
 
 
-class GetEnv(Script):
-    """GetEnv."""
+class GetProcessInfo(Script):
+    """GetUser."""
 
     def get_description(self) -> str:
         """Get_description."""
-        return """Returns the current environment - ie testing, staging, production."""
+        return """Returns a dictionary of information about the currently running process."""
 
     def run(
         self,
@@ -21,4 +21,7 @@ class GetEnv(Script):
         **kwargs: Any
     ) -> Any:
         """Run."""
-        return script_attributes_context.environment_identifier
+        return {
+            "process_instance_id": script_attributes_context.process_instance_id,
+            "process_model_identifier": script_attributes_context.process_model_identifier,
+        }

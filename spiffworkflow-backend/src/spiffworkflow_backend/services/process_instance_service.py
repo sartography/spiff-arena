@@ -166,9 +166,7 @@ class ProcessInstanceService:
                     f"task {spiff_task.task_spec.name}, it is not in the task event model, "
                     f"and it should be."
                 )
-                current_app.logger.error(
-                    "missing_form_data", missing_form_error, exc_info=True
-                )
+                current_app.logger.exception("missing_form_data", missing_form_error)
                 return {}
         else:
             return {}

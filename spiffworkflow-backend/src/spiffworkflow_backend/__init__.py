@@ -148,6 +148,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
     import sentry_sdk
     from sentry_sdk.integrations.flask import FlaskIntegration
 
+    # get rid of NotFound errors
     def before_send(event: Any, hint: Any) -> Any:
         """Before_send."""
         if "exc_info" in hint:
@@ -157,18 +158,26 @@ def configure_sentry(app: flask.app.Flask) -> None:
                 return None
         return event
 
-    sentry_sample_rate = app.config.get("SENTRY_SAMPLE_RATE")
-    if sentry_sample_rate is None:
-        return
+    sentry_errors_sample_rate = app.config.get("SENTRY_ERRORS_SAMPLE_RATE")
+    if sentry_errors_sample_rate is None:
+        raise Exception("SENTRY_ERRORS_SAMPLE_RATE is not set somehow")
+
+    sentry_traces_sample_rate = app.config.get("SENTRY_TRACES_SAMPLE_RATE")
+    if sentry_traces_sample_rate is None:
+        raise Exception("SENTRY_TRACES_SAMPLE_RATE is not set somehow")
+
     sentry_sdk.init(
         dsn=app.config.get("SENTRY_DSN"),
         integrations=[
             FlaskIntegration(),
         ],
         environment=app.config["ENV_IDENTIFIER"],
-        # Set traces_sample_rate to 1.0 to capture 100%
+        # sample_rate is the errors sample rate. we usually set it to 1 (100%)
+        # so we get all errors in sentry.
+        sample_rate=float(sentry_errors_sample_rate),
+        # Set traces_sample_rate to capture a certain percentage
         # of transactions for performance monitoring.
-        # We recommend adjusting this value in production.
-        traces_sample_rate=float(sentry_sample_rate),
+        # We recommend adjusting this value to less than 1(00%) in production.
+        traces_sample_rate=float(sentry_traces_sample_rate),
         before_send=before_send,
     )
