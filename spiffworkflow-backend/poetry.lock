@@ -1441,7 +1441,7 @@ docs = ["Sphinx (>=5.0.2,<6.0.0)", "alabaster (>=0.7.12,<0.8.0)", "commonmark (>
 
 [[package]]
 name = "pytz"
-version = "2022.5"
+version = "2022.6"
 description = "World timezone definitions, modern and historical"
 category = "main"
 optional = false
@@ -1855,7 +1855,7 @@ test = ["pytest"]
 
 [[package]]
 name = "SpiffWorkflow"
-version = "1.1.7"
+version = "1.2.1"
 description = "A workflow framework and BPMN/DMN Processor"
 category = "main"
 optional = false
@@ -1866,7 +1866,6 @@ develop = true
 celery = "*"
 configparser = "*"
 dateparser = "*"
-importlib-metadata = "<5.0"
 lxml = "*"
 pytz = "*"
 
@@ -2247,7 +2246,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "d67228672c432f68531b29ccd1f540328632aed109775179a910fe864809bc17"
+content-hash = "dc50e8f4bbc3828806485f9267309f830452c88872eb2b5cc94be905de41d969"
 
 [metadata.files]
 alabaster = [
@@ -3139,8 +3138,8 @@ python-keycloak = [
     {file = "python_keycloak-2.6.0-py3-none-any.whl", hash = "sha256:a1ce102b978beb56d385319b3ca20992b915c2c12d15a2d0c23f1104882f3fb6"},
 ]
 pytz = [
-    {file = "pytz-2022.5-py2.py3-none-any.whl", hash = "sha256:335ab46900b1465e714b4fda4963d87363264eb662aab5e65da039c25f1f5b22"},
-    {file = "pytz-2022.5.tar.gz", hash = "sha256:c4d88f472f54d615e9cd582a5004d1e5f624854a6a27a6211591c251f22a6914"},
+    {file = "pytz-2022.6-py2.py3-none-any.whl", hash = "sha256:222439474e9c98fced559f1709d89e6c9cbf8d79c794ff3eb9f8800064291427"},
+    {file = "pytz-2022.6.tar.gz", hash = "sha256:e89512406b793ca39f5971bc999cc538ce125c0e51c27941bef4568b460095e2"},
 ]
 pytz-deprecation-shim = [
     {file = "pytz_deprecation_shim-0.1.0.post0-py2.py3-none-any.whl", hash = "sha256:8314c9692a636c8eb3bda879b9f119e350e93223ae83e70e80c31675a0fdc1a6"},

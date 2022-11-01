@@ -69,6 +69,7 @@ types-pytz = "^2022.1.1"
 # for now use my fork
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
 simplejson = "^3.17.6"
+pytz = "^2022.6"
 
 
 [tool.poetry.dev-dependencies]
