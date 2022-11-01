@@ -17,7 +17,7 @@ class TestNestedGroups(BaseTest):
             with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         # /process-groups/{process_group_path}/show
-        target_uri = "/v1.0/process-groups/group_a,group_b/show"
+        target_uri = "/v1.0/process-groups/group_a,group_b"
         user = self.find_or_create_user()
         self.add_permissions_to_user(
             user, target_uri=target_uri, permission_names=["read"]
@@ -117,7 +117,6 @@ class TestNestedGroups(BaseTest):
             id="process_model",
             display_name="Process Model",
             description="Process Model",
-            process_group_id="group_a/group_b",
             primary_file_name="primary_file.bpmn",
             primary_process_id="primary_process_id",
             display_order=0
@@ -129,3 +128,45 @@ class TestNestedGroups(BaseTest):
             data=json.dumps(ProcessModelInfoSchema().dump(process_model))
         )
         print("test_process_model_add")
+
+    def test_process_group_show(
+            self,
+            app: Flask,
+            client: FlaskClient,
+            with_db_and_bpmn_file_cleanup: None,
+            with_super_admin_user: UserModel,
+    ) -> None:
+
+        # target_uri = "/process-groups/{process_group_id}"
+        # user = self.find_or_create_user("testadmin1")
+        # self.add_permissions_to_user(
+        #     user, target_uri="v1.0/process-groups", permission_names=["read", "create"]
+        # )
+        # self.add_permissions_to_user(
+        #     user, target_uri="/process-groups/{process_group_id}", permission_names=["read", "create"]
+        # )
+
+        process_group_a = ProcessGroup(
+            id="group_a",
+            display_name="Group A",
+            display_order=0,
+            admin=False,
+        )
+        response_create_a = client.post(
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+        )
+
+        target_uri = "/v1.0/process-groups/group_a"
+        user = self.find_or_create_user()
+        self.add_permissions_to_user(
+            user, target_uri=target_uri, permission_names=["read"]
+        )
+        response = client.get(
+            target_uri,
+            headers=self.logged_in_headers(user)
+        )
+
+        print("test_process_group_show: ")

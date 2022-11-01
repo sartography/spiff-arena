@@ -80,7 +80,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         """Add_fixtures."""
         try:
             process_model = ProcessModelService().get_process_model(
-                group_id="sartography-admin", process_model_id="ticket"
+                process_model_id="sartography-admin/ticket"
             )
             user = UserModel.query.first()
             columns = [
@@ -224,11 +224,11 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     ) -> ProcessInstanceReportModel:
         """Create_with_attributes."""
         process_model = ProcessModelService().get_process_model(
-            group_id=process_group_identifier, process_model_id=process_model_identifier
+            process_model_id=f"{process_model_identifier}"
         )
         process_instance_report = cls(
             identifier=identifier,
-            process_group_identifier=process_model.process_group_id,
+            process_group_identifier="process_model.process_group_id",
             process_model_identifier=process_model.id,
             created_by_id=user.id,
             report_metadata=report_metadata,

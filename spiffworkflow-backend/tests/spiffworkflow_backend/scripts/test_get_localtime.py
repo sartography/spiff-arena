@@ -29,8 +29,14 @@ class TestGetLocaltime(BaseTest):
     ) -> None:
         """Test_process_instance_run."""
         initiator_user = self.find_or_create_user("initiator_user")
+        self.add_permissions_to_user(
+            initiator_user, target_uri="/v1.0/process-groups", permission_names=["read", "create"]
+        )
+        self.create_process_group(client=client, user=initiator_user, process_group_id="test_group")
         process_model = load_test_spec(
-            process_model_id="get_localtime", bpmn_file_name="get_localtime.bpmn"
+            process_model_id="test_group/get_localtime",
+            bpmn_file_name="get_localtime.bpmn",
+            process_model_source_directory="get_localtime"
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user

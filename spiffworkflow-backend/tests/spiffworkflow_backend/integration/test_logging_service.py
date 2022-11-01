@@ -19,20 +19,43 @@ class TestLoggingService(BaseTest):
         """Test_process_instance_run."""
         process_group_id = "test_logging_spiff_logger"
         process_model_id = "simple_script"
+        self.create_process_group(client=client, user=with_super_admin_user, process_group_id=process_group_id)
+        process_model_identifier = f"{process_group_id}/{process_model_id}"
+        # create the model
+        process_model_info = self.create_process_model_with_api(
+            client=client,
+            process_model_id=process_model_identifier,
+            process_model_display_name="Simple Script",
+            process_model_description="Simple Script",
+            user=with_super_admin_user
+        )
+
+        bpmn_file_name = "simple_script.bpmn"
+        bpmn_file_data_bytes = self.get_test_data_file_contents(
+            bpmn_file_name, "simple_script"
+        )
+        # add bpmn to the model
+        self.create_spec_file(
+            client=client,
+            process_model_id=process_model_identifier,
+            file_name=bpmn_file_name,
+            file_data=bpmn_file_data_bytes,
+            user=with_super_admin_user
+        )
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance(
-            client, process_group_id, process_model_id, headers
+            client, process_model_identifier, headers
         )
         assert response.json is not None
         process_instance_id = response.json["id"]
         response = client.post(
-            f"/v1.0/process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{process_instance_id}/run",
             headers=headers,
         )
         assert response.status_code == 200
 
         log_response = client.get(
-            f"/v1.0/process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/logs",
+            f"/v1.0/process-instances/{process_instance_id}/logs",
             headers=headers,
         )
         assert log_response.status_code == 200

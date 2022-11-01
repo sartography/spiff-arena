@@ -36,7 +36,6 @@ class ProcessInstanceService:
     def create_process_instance(
         process_model_identifier: str,
         user: UserModel,
-        process_group_identifier: Optional[str] = None,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
         current_git_revision = GitService.get_current_revision()
@@ -44,7 +43,7 @@ class ProcessInstanceService:
             status=ProcessInstanceStatus.not_started.value,
             process_initiator=user,
             process_model_identifier=process_model_identifier,
-            process_group_identifier=process_group_identifier,
+            process_group_identifier="",
             start_in_seconds=round(time.time()),
             bpmn_version_control_type="git",
             bpmn_version_control_identifier=current_git_revision,
@@ -101,7 +100,7 @@ class ProcessInstanceService:
             next_task=None,
             # navigation=navigation,
             process_model_identifier=processor.process_model_identifier,
-            process_group_identifier=processor.process_group_identifier,
+            process_group_identifier="",
             # total_tasks=len(navigation),
             completed_tasks=processor.process_instance_model.completed_tasks,
             updated_at_in_seconds=processor.process_instance_model.updated_at_in_seconds,

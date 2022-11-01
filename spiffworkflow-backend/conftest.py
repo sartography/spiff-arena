@@ -4,6 +4,7 @@ import shutil
 
 import pytest
 from flask.app import Flask
+from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -78,17 +79,35 @@ def with_super_admin_user() -> UserModel:
 
 
 @pytest.fixture()
-def setup_process_instances_for_reports() -> list[ProcessInstanceModel]:
+def setup_process_instances_for_reports(client: FlaskClient, with_super_admin_user: UserModel) -> list[ProcessInstanceModel]:
     """Setup_process_instances_for_reports."""
-    user = BaseTest.find_or_create_user()
+    user = with_super_admin_user
     process_group_id = "runs_without_input"
     process_model_id = "sample"
-    load_test_spec(process_group_id=process_group_id, process_model_id=process_model_id)
+    bpmn_file_name = "sample.bpmn"
+    bpmn_file_location = "sample"
+    process_model_identifier = BaseTest().basic_test_setup(
+        client,
+        with_super_admin_user,
+        process_group_id=process_group_id,
+        process_model_id=process_model_id,
+        # bpmn_file_name=bpmn_file_name,
+        bpmn_file_location=bpmn_file_location
+    )
+
+    # BaseTest().create_process_group(
+    #     client=client, user=user, process_group_id=process_group_id, display_name=process_group_id
+    # )
+    # process_model_id = "runs_without_input/sample"
+    # load_test_spec(
+    #     process_model_id=f"{process_group_id}/{process_model_id}",
+    #     process_model_source_directory="sample"
+    # )
     process_instances = []
     for data in [kay(), ray(), jay()]:
         process_instance = ProcessInstanceService.create_process_instance(
-            process_group_identifier=process_group_id,
-            process_model_identifier=process_model_id,
+            # process_group_identifier=process_group_id,
+            process_model_identifier=process_model_identifier,
             user=user,
         )
         processor = ProcessInstanceProcessor(process_instance)

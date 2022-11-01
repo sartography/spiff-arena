@@ -35,7 +35,7 @@ class ErrorHandlingService:
     ) -> None:
         """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
         process_model = ProcessModelService().get_process_model(
-            _processor.process_model_identifier, _processor.process_group_identifier
+            _processor.process_model_identifier
         )
         if process_model.fault_or_suspend_on_exception == "suspend":
             self.set_instance_status(

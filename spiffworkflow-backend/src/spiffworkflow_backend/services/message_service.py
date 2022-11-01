@@ -120,7 +120,6 @@ class MessageService:
         process_instance_receive = ProcessInstanceService.create_process_instance(
             message_triggerable_process_model.process_model_identifier,
             user,
-            process_group_identifier=message_triggerable_process_model.process_group_identifier,
         )
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
         processor_receive.do_engine_steps(save=False)
