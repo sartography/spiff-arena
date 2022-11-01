@@ -11,7 +11,7 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverte
     IntermediateCatchEventConverter, IntermediateThrowEventConverter, \
     ServiceTaskConverter
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter
-from SpiffWorkflow.bpmn.serializer import BpmnWorkflowSerializer
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 
 from tests.SpiffWorkflow.bpmn.BpmnWorkflowTestCase import BpmnWorkflowTestCase
 

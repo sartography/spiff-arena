@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-from SpiffWorkflow.bpmn.serializer import BpmnWorkflowSerializer
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.camunda.parser.CamundaParser import CamundaParser
 from SpiffWorkflow.camunda.serializer import UserTaskConverter, StartEventConverter, EndEventConverter, \
     IntermediateCatchEventConverter, IntermediateThrowEventConverter, BoundaryEventConverter

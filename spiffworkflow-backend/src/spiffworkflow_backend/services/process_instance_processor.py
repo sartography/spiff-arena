@@ -27,7 +27,7 @@ from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  #
 from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import DEFAULT_GLOBALS
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
-from SpiffWorkflow.bpmn.serializer import BpmnWorkflowSerializer  # type: ignore
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.event_definitions import CancelEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent
