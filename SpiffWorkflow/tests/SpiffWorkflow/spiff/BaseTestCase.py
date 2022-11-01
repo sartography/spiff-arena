@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 
-from SpiffWorkflow.spiff.parser import SpiffBpmnParser, VALIDATOR
+from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser, VALIDATOR
 from SpiffWorkflow.spiff.serializer import NoneTaskConverter, \
     ManualTaskConverter, UserTaskConverter, ScriptTaskConverter, \
     SubWorkflowTaskConverter, TransactionSubprocessConverter, \
