@@ -38,6 +38,7 @@ export default class IoInterceptor extends CommandInterceptor {
         di.bpmnElement = dataIO;
         di.id = dataIO.id + 'DI';
         bpmnUpdater.updateBounds(context.shape);
+
         if (type == 'bpmn:DataInput') {
           collectionAdd(ioSpecification.get('dataInputs'), dataIO);
         } else {
@@ -59,6 +60,9 @@ export default class IoInterceptor extends CommandInterceptor {
         }
         if (context.shape.di.$parent) {
           collectionRemove(context.shape.di.$parent.planeElement, context.shape.di);
+        }
+        if (ioSpec.dataInputs.length === 0 && ioSpec.dataOutputs.length === 0) {
+          process.ioSpecification = null;
         }
       }
     });
@@ -88,19 +92,23 @@ function assureIOSpecificationExists(process, bpmnFactory) {
   let ioSpecification = process.get('ioSpecification');
 
   if (!ioSpecification) {
+    let inputSet = bpmnFactory.create('bpmn:InputSet');
+    let outputSet = bpmnFactory.create('bpmn:OutputSet');
 
     // Create the BPMN
     ioSpecification = bpmnFactory.create('bpmn:InputOutputSpecification', {
       dataInputs: [],
-      inputSets: [],
+      inputSets: [inputSet],
       dataOutputs: [],
-      outputSets: []
+      outputSets: [outputSet],
     });
     ioSpecification.$parent = process;
     process.ioSpecification = ioSpecification;
   }
   return ioSpecification;
 }
+
+
 
 IoInterceptor.$inject = [ 'eventBus', 'bpmnFactory', 'bpmnUpdater' ];
 

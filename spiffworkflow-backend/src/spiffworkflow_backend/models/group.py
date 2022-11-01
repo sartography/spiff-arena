@@ -14,6 +14,10 @@ if TYPE_CHECKING:
     from spiffworkflow_backend.models.user import UserModel  # noqa: F401
 
 
+class GroupNotFoundError(Exception):
+    """GroupNotFoundError."""
+
+
 class GroupModel(FlaskBpmnGroupModel):
     """GroupModel."""
 

@@ -871,7 +871,6 @@ def process_instance_delete(
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
-    # import pdb; pdb.set_trace()
     # (Pdb) db.session.delete
     # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
     db.session.delete(process_instance)
@@ -1212,12 +1211,13 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             )
             if ui_form_contents:
                 task.form_ui_schema = ui_form_contents
-    elif task.type == "Manual Task":
-        if task.properties and task.data:
-            if task.properties["instructionsForEndUser"]:
-                task.properties["instructionsForEndUser"] = render_jinja_template(
-                    task.properties["instructionsForEndUser"], task.data
-                )
+
+    if task.properties and task.data and "instructionsForEndUser" in task.properties:
+        print(f"task.properties['instructionsForEndUser']: {task.properties['instructionsForEndUser']}")
+        if task.properties["instructionsForEndUser"]:
+            task.properties["instructionsForEndUser"] = render_jinja_template(
+                task.properties["instructionsForEndUser"], task.data
+            )
     return make_response(jsonify(task), 200)
 
 

@@ -1,24 +1,44 @@
+"""Test_get_localtime."""
 import datetime
-import pytz
 
+import pytz
 from flask.app import Flask
 from flask.testing import FlaskClient
-
-from spiffworkflow_backend.scripts.get_localtime import GetLocaltime
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+
+from spiffworkflow_backend.models.script_attributes_context import (
+    ScriptAttributesContext,
+)
+from spiffworkflow_backend.scripts.get_localtime import GetLocaltime
+from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceProcessor,
+)
+from spiffworkflow_backend.services.process_instance_service import (
+    ProcessInstanceService,
+)
 
 
 class TestGetLocaltime(BaseTest):
     """TestProcessAPi."""
 
     def test_get_localtime_script_directly(self) -> None:
+        """Test_get_localtime_script_directly."""
         current_time = datetime.datetime.now()
         timezone = "US/Pacific"
-        result = GetLocaltime().run(task=None, environment_identifier='testing', datetime=current_time, timezone=timezone)
+        process_model_identifier = "test_process_model"
+        process_instance_id = 1
+        script_attributes_context = ScriptAttributesContext(
+            task=None,
+            environment_identifier="testing",
+            process_instance_id=process_instance_id,
+            process_model_identifier=process_model_identifier,
+        )
+        result = GetLocaltime().run(
+            script_attributes_context,
+            datetime=current_time,
+            timezone=timezone,
+        )
         assert result == current_time.astimezone(pytz.timezone(timezone))
 
     def test_get_localtime_script_through_bpmn(
@@ -60,8 +80,8 @@ class TestGetLocaltime(BaseTest):
 
         assert spiff_task
         data = spiff_task.data
-        some_time = data['some_time']
-        localtime = data['localtime']
-        timezone = data['timezone']
+        some_time = data["some_time"]
+        localtime = data["localtime"]
+        timezone = data["timezone"]
 
         assert localtime == some_time.astimezone(pytz.timezone(timezone))

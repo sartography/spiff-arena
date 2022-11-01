@@ -6,7 +6,7 @@ ENV KC_HEALTH_ENABLED="true"
 # ENV KC_METRICS_ENABLED=true
 ENV PROXY_ADDRESS_FORWARDING="true"
 # ENV KC_HOSTNAME="keycloak.demo.spiffworkflow.org"
-ENV KC_HOSTNAME_URL="https://keycloak.demo.spiffworkflow.org"
+# ENV KC_HOSTNAME_URL="https://keycloak.demo.spiffworkflow.org"
 ENV KC_FEATURES="token-exchange,admin-fine-grained-authz"
 # ENV KC_DB=postgres
 # Install custom providers

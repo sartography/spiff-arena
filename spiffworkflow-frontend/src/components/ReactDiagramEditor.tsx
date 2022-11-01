@@ -177,11 +177,16 @@ export default function ReactDiagramEditor({
       });
     }
 
-    function handleLaunchScriptEditor(element: any) {
+    function handleLaunchScriptEditor(
+      element: any,
+      script: string,
+      scriptType: string,
+      eventBus: any
+    ) {
       if (onLaunchScriptEditor) {
         setPerformingXmlUpdates(true);
         const modeling = diagramModeler.get('modeling');
-        onLaunchScriptEditor(element, modeling);
+        onLaunchScriptEditor(element, script, scriptType, eventBus, modeling);
       }
     }
 
@@ -199,12 +204,12 @@ export default function ReactDiagramEditor({
 
     setDiagramModelerState(diagramModeler);
 
-    diagramModeler.on('launch.script.editor', (event: any) => {
-      const { error, element } = event;
+    diagramModeler.on('script.editor.launch', (event: any) => {
+      const { error, element, scriptType, script, eventBus } = event;
       if (error) {
         console.log(error);
       }
-      handleLaunchScriptEditor(element);
+      handleLaunchScriptEditor(element, script, scriptType, eventBus);
     });
 
     // 'element.hover',

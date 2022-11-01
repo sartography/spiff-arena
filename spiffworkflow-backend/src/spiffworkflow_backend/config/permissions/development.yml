@@ -20,8 +20,23 @@ groups:
         natalia,
       ]
 
-  finance:
-    users: [finance_user1]
+  Finance Team:
+    users: [finance_user1, jason]
+
+  Project Lead:
+    users:
+      [
+        jakub,
+        alex,
+        dan,
+        mike,
+        jason,
+        jarrad,
+        elizabeth,
+        jon,
+        natalia,
+        manuchehr,
+      ]
 
 permissions:
   admin:
@@ -30,14 +45,27 @@ permissions:
     allowed_permissions: [create, read, update, delete, list, instantiate]
     uri: /*
 
-  finance-admin:
-    groups: [finance]
+  tasks-crud:
+    groups: [everybody]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/execute-procure-to-pay/*
+    uri: /v1.0/tasks/*
+
+  # TODO: all uris should really have the same structure
+  finance-admin-group:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-groups/finance/*
+
+  finance-admin-model:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/finance/*
 
   read-all:
-    groups: [finance, admin]
+    groups: [admin, "Project Lead"]
     users: []
     allowed_permissions: [read]
     uri: /*
