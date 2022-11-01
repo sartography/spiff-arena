@@ -1,10 +1,12 @@
 """Test_get_localtime."""
 from flask.app import Flask
+from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -17,7 +19,9 @@ class TestGetGroupMembers(BaseTest):
     def test_can_get_members_of_a_group(
         self,
         app: Flask,
+        client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel
     ) -> None:
         """Test_can_get_members_of_a_group."""
         initiator_user = self.find_or_create_user("initiator_user")
@@ -34,9 +38,11 @@ class TestGetGroupMembers(BaseTest):
         UserService.add_user_to_group(testuser2, group_a)
         UserService.add_user_to_group(testuser3, group_b)
 
+        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
-            process_model_id="get_group_members",
+            process_model_id="test_group/get_group_members",
             bpmn_file_name="get_group_members.bpmn",
+            process_model_source_directory="get_group_members"
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user
