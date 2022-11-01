@@ -29,8 +29,8 @@ from SpiffWorkflow.bpmn.PythonScriptEngine import DEFAULT_GLOBALS
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
 from SpiffWorkflow.bpmn.serializer import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
-from SpiffWorkflow.bpmn.specs.events import CancelEventDefinition  # type: ignore
-from SpiffWorkflow.bpmn.specs.events import EndEvent
+from SpiffWorkflow.bpmn.specs.events.event_definitions import CancelEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer import BusinessRuleTaskConverter  # type: ignore
