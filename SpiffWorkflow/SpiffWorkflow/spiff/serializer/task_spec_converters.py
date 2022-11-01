@@ -5,7 +5,7 @@ from SpiffWorkflow.bpmn.specs.events.StartEvent import StartEvent
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent
 from SpiffWorkflow.bpmn.specs.events.IntermediateEvent import IntermediateThrowEvent, IntermediateCatchEvent, BoundaryEvent
 from SpiffWorkflow.spiff.specs import NoneTask, ManualTask, UserTask, ScriptTask, ServiceTask, SubWorkflowTask, TransactionSubprocess, CallActivity
-from SpiffWorkflow.spiff.specs.events import SendTask, ReceiveTask
+from SpiffWorkflow.spiff.specs.events.event_types import SendTask, ReceiveTask
 from SpiffWorkflow.spiff.specs.events.event_definitions import MessageEventDefinition
 
 
