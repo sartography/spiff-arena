@@ -1154,7 +1154,10 @@ class ProcessInstanceProcessor:
 
     def complete_task(self, task: SpiffTask) -> None:
         """Complete_task."""
+        self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
+        bpmn_json = self.serialize()
+        self.save_spiff_step_details(bpmn_json)
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""
