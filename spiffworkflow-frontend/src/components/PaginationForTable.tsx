@@ -1,8 +1,7 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 // @ts-ignore
-import { Dropdown, Stack, Pagination } from '@carbon/react';
+import { Pagination } from '@carbon/react';
 import { PaginationObject } from '../interfaces';
 
 export const DEFAULT_PER_PAGE = 50;

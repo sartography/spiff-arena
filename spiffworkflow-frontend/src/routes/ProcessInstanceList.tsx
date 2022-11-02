@@ -14,25 +14,17 @@ import {
   DatePicker,
   DatePickerInput,
   Table,
-  Stack,
-  Form,
-  ComboBox,
   Grid,
   Column,
-  FlexGrid,
-  Row,
   MultiSelect,
   // @ts-ignore
 } from '@carbon/react';
-import { InputGroup } from 'react-bootstrap';
-import { Typeahead } from 'react-bootstrap-typeahead';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
   convertDateStringToSeconds,
   convertSecondsToFormattedDate,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
-  truncateString,
 } from '../helpers';
 
 import PaginationForTable from '../components/PaginationForTable';
@@ -44,6 +36,7 @@ import HttpService from '../services/HttpService';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
 import { PaginationObject, ProcessModel } from '../interfaces';
+import ProcessModelSearch from '../components/ProcessModelSearch';
 
 export default function ProcessInstanceList() {
   const params = useParams();
@@ -294,38 +287,6 @@ export default function ProcessInstanceList() {
     return queryParamString;
   };
 
-  const shouldFilterProcessModel = (options: any) => {
-    const processModel: ProcessModel = options.item;
-    const { inputValue } = options;
-    return `${processModel.process_group_id}/${processModel.id} (${processModel.display_name})`.includes(
-      inputValue
-    );
-  };
-
-  const processModelSearch = () => {
-    return (
-      <ComboBox
-        onChange={(selection: any) =>
-          setProcessModelSelection(selection.selectedItem)
-        }
-        id="process-model-select"
-        items={processModelAvailableItems}
-        itemToString={(processModel: ProcessModel) => {
-          if (processModel) {
-            return `${processModel.process_group_id}/${
-              processModel.id
-            } (${truncateString(processModel.display_name, 20)})`;
-          }
-          return null;
-        }}
-        shouldFilterItem={shouldFilterProcessModel}
-        placeholder="Choose a process model"
-        titleText="Process model"
-        selectedItem={processModelSelection}
-      />
-    );
-  };
-
   const processStatusSearch = () => {
     return (
       <MultiSelect
@@ -361,7 +322,15 @@ export default function ProcessInstanceList() {
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
-          <Column md={8}>{processModelSearch()}</Column>
+          <Column md={8}>
+            <ProcessModelSearch
+              onChange={(selection: any) =>
+                setProcessModelSelection(selection.selectedItem)
+              }
+              processModels={processModelAvailableItems}
+              selectedItem={processModelSelection}
+            />
+          </Column>
           <Column md={8}>{processStatusSearch()}</Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">

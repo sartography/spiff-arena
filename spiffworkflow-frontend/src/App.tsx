@@ -10,7 +10,6 @@ import HomePage from './routes/HomePage';
 import TaskShow from './routes/TaskShow';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminRoutes from './routes/AdminRoutes';
-import SubNavigation from './components/SubNavigation';
 import { ErrorForDisplay } from './interfaces';
 
 export default function App() {
@@ -46,7 +45,6 @@ export default function App() {
     );
   }
 
-  // <SubNavigation />
   return (
     <ErrorContext.Provider value={errorContextValueArray}>
       <BrowserRouter>

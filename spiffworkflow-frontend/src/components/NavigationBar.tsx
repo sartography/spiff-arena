@@ -1,11 +1,9 @@
 import {
   Header,
   Theme,
-  Button,
   HeaderName,
   HeaderNavigation,
   HeaderMenuItem,
-  HeaderMenu,
   HeaderGlobalAction,
   HeaderGlobalBar,
   // @ts-ignore
