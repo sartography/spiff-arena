@@ -2001,6 +2001,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "types-dateparser"
+version = "1.1.4.1"
+description = "Typing stubs for dateparser"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "types-Flask"
 version = "1.1.6"
 description = "Typing stubs for Flask"
@@ -2248,7 +2256,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "5718b307286dc039dfad88f14f58b0b6a9c96758f90cb8345a04aff7637bcd68"
+content-hash = "995be3a9a60b515b281f017ff32ff27a52ca178b1980611b348dccac6afb6b89"
 
 [metadata.files]
 alabaster = [
@@ -3548,6 +3556,10 @@ typeguard = [
 types-click = [
     {file = "types-click-7.1.8.tar.gz", hash = "sha256:b6604968be6401dc516311ca50708a0a28baa7a0cb840efd7412f0dbbff4e092"},
     {file = "types_click-7.1.8-py3-none-any.whl", hash = "sha256:8cb030a669e2e927461be9827375f83c16b8178c365852c060a34e24871e7e81"},
+]
+types-dateparser = [
+    {file = "types-dateparser-1.1.4.1.tar.gz", hash = "sha256:0f76578bbae15c8b8701b5efd94db98a97ce0a27aedfe6f14a531170de6db97d"},
+    {file = "types_dateparser-1.1.4.1-py3-none-any.whl", hash = "sha256:dd7b2343bb06225c0e358533609b66a8edfb95e5426d8f658664e7d0f27dea68"},
 ]
 types-Flask = [
     {file = "types-Flask-1.1.6.tar.gz", hash = "sha256:aac777b3abfff9436e6b01f6d08171cf23ea6e5be71cbf773aaabb1c5763e9cf"},

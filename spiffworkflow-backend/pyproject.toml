@@ -71,6 +71,7 @@ sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", r
 simplejson = "^3.17.6"
 pytz = "^2022.6"
 dateparser = "^1.1.2"
+types-dateparser = "^1.1.4.1"
 
 
 [tool.poetry.dev-dependencies]
