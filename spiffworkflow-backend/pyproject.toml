@@ -28,6 +28,7 @@ flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
+#SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
 flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
@@ -68,6 +69,9 @@ types-pytz = "^2022.1.1"
 # for now use my fork
 sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
 simplejson = "^3.17.6"
+pytz = "^2022.6"
+dateparser = "^1.1.2"
+types-dateparser = "^1.1.4.1"
 
 
 [tool.poetry.dev-dependencies]

@@ -3,7 +3,7 @@ import { is, isAny } from 'bpmn-js/lib/util/ModelUtil';
 import scriptGroup, { SCRIPT_TYPE } from './SpiffScriptGroup';
 import { SpiffExtensionCalledDecision } from './SpiffExtensionCalledDecision';
 import { SpiffExtensionTextInput } from './SpiffExtensionTextInput';
-import { SpiffExtensionInstructionsForEndUser } from './SpiffExtensionInstructionsForEndUser';
+import instructionsGroup from './SpiffExtensionInstructionsForEndUser';
 import {
   ServiceTaskParameterArray,
   ServiceTaskOperatorSelect, ServiceTaskResultTextInput,
@@ -16,7 +16,7 @@ export default function ExtensionsPropertiesProvider(
   translate,
   moddle,
   commandStack,
-  elementRegistry
+  elementRegistry,
 ) {
   this.getGroups = function (element) {
     return function (groups) {
@@ -27,7 +27,7 @@ export default function ExtensionsPropertiesProvider(
       } else if (
         isAny(element, ['bpmn:Task', 'bpmn:CallActivity', 'bpmn:SubProcess'])
       ) {
-        groups.push(preScriptPostScriptGroup(element, translate, moddle));
+        groups.push(preScriptPostScriptGroup(element, translate, moddle, commandStack));
       }
       if (is(element, 'bpmn:UserTask')) {
         groups.push(createUserGroup(element, translate, moddle, commandStack));
@@ -37,9 +37,9 @@ export default function ExtensionsPropertiesProvider(
           createBusinessRuleGroup(element, translate, moddle, commandStack)
         );
       }
-      if (is(element, 'bpmn:ManualTask')) {
+      if (isAny(element, ['bpmn:ManualTask', 'bpmn:UserTask', 'bpmn:EndEvent'])) {
         groups.push(
-          createManualTaskPropertiesGroup(
+          createUserInstructionsGroup (
             element,
             translate,
             moddle,
@@ -97,14 +97,15 @@ function createScriptGroup(element, translate, moddle, commandStack) {
  * @param moddle  For altering the underlying XML File.
  * @returns The components to add to the properties panel.
  */
-function preScriptPostScriptGroup(element, translate, moddle) {
+function preScriptPostScriptGroup(element, translate, moddle, commandStack) {
   return {
     id: 'spiff_pre_post_scripts',
-    label: translate('SpiffWorkflow Scripts'),
+    label: translate('Pre/Post Scripts'),
     entries: [
       ...scriptGroup({
         element,
         moddle,
+        commandStack,
         translate,
         scriptType: SCRIPT_TYPE.pre,
         label: 'Pre-Script',
@@ -113,6 +114,7 @@ function preScriptPostScriptGroup(element, translate, moddle) {
       ...scriptGroup({
         element,
         moddle,
+        commandStack,
         translate,
         scriptType: SCRIPT_TYPE.post,
         label: 'Post-Script',
@@ -132,7 +134,7 @@ function preScriptPostScriptGroup(element, translate, moddle) {
 function createUserGroup(element, translate, moddle, commandStack) {
   return {
     id: 'user_task_properties',
-    label: translate('SpiffWorkflow Web Form'),
+    label: translate('Web Form (with Json Schemas)'),
     entries: [
       {
         element,
@@ -187,26 +189,24 @@ function createBusinessRuleGroup(element, translate, moddle, commandStack) {
  * @param moddle
  * @returns entries
  */
-function createManualTaskPropertiesGroup(
+function createUserInstructionsGroup (
   element,
   translate,
   moddle,
   commandStack
 ) {
   return {
-    id: 'manual_task_properties',
-    label: translate('Manual Task Properties'),
+    id: 'instructions',
+    label: translate('Instructions'),
     entries: [
-      {
+      ...instructionsGroup({
         element,
         moddle,
         commandStack,
-        component: SpiffExtensionInstructionsForEndUser,
-        label: translate('Instructions For End User'),
-        description: translate(
-          'The instructions to show the user(s) who are responsible for completing the task.'
-        ),
-      },
+        translate,
+        label: 'Instructions',
+        description: 'The instructions to display when completing this task.',
+      }),
     ],
   };
 }
