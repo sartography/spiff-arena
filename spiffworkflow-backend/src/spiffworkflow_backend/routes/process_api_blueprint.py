@@ -651,9 +651,9 @@ def process_instance_list(
     page: int = 1,
     per_page: int = 100,
     start_from: Optional[int] = None,
-    start_till: Optional[int] = None,
+    start_to: Optional[int] = None,
     end_from: Optional[int] = None,
-    end_till: Optional[int] = None,
+    end_to: Optional[int] = None,
     process_status: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
@@ -684,17 +684,17 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.start_in_seconds >= start_from
         )
-    if start_till is not None:
+    if start_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds <= start_till
+            ProcessInstanceModel.start_in_seconds <= start_to
         )
     if end_from is not None:
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.end_in_seconds >= end_from
         )
-    if end_till is not None:
+    if end_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds <= end_till
+            ProcessInstanceModel.end_in_seconds <= end_to
         )
     if process_status is not None:
         process_status_array = process_status.split(",")

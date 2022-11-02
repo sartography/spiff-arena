@@ -24,9 +24,9 @@ import {
 } from '@carbon/react';
 import { InputGroup } from 'react-bootstrap';
 import { Typeahead } from 'react-bootstrap-typeahead';
-import { PROCESS_STATUSES, DATE_FORMAT } from '../config';
+import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
-  convertDateToSeconds,
+  convertDateStringToSeconds,
   convertSecondsToFormattedDate,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
@@ -53,10 +53,10 @@ export default function ProcessInstanceList() {
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
-  const [startFrom, setStartFrom] = useState(null);
-  const [startTill, setStartTill] = useState(null);
-  const [endFrom, setEndFrom] = useState(null);
-  const [endTill, setEndTill] = useState(null);
+  const [startFrom, setStartFrom] = useState<string>('');
+  const [startTo, setStartTo] = useState<string>('');
+  const [endFrom, setEndFrom] = useState<string>('');
+  const [endTo, setEndTo] = useState<string>('');
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
@@ -69,20 +69,17 @@ export default function ProcessInstanceList() {
   const [processModelAvailableItems, setProcessModelAvailableItems] = useState<
     ProcessModel[]
   >([]);
-  const [processModelFilteredItems, setProcessModelFilteredItems] = useState<
-    ProcessModel[]
-  >([]);
   const [processModelSelection, setProcessModelSelection] =
     useState<ProcessModel | null>(null);
 
   const parametersToAlwaysFilterBy = useMemo(() => {
     return {
       start_from: setStartFrom,
-      start_till: setStartTill,
+      start_to: setStartTo,
       end_from: setEndFrom,
-      end_till: setEndTill,
+      end_to: setEndTo,
     };
-  }, [setStartFrom, setStartTill, setEndFrom, setEndTill]);
+  }, [setStartFrom, setStartTo, setEndFrom, setEndTo]);
 
   const parametersToGetFromSearchParams = useMemo(() => {
     return {
@@ -109,7 +106,10 @@ export default function ProcessInstanceList() {
         const searchParamValue = searchParams.get(paramName);
         if (searchParamValue) {
           queryParamString += `&${paramName}=${searchParamValue}`;
-          functionToCall(searchParamValue);
+          const dateString = convertSecondsToFormattedDate(
+            searchParamValue as any
+          );
+          functionToCall(dateString);
         }
       });
 
@@ -142,7 +142,6 @@ export default function ProcessInstanceList() {
         return item;
       });
       setProcessModelAvailableItems(selectionArray);
-      setProcessModelFilteredItems(selectionArray);
 
       const processStatusSelectedArray: string[] = [];
       const processStatusAllOptionsArray = PROCESS_STATUSES.map(
@@ -195,34 +194,46 @@ export default function ProcessInstanceList() {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     let queryParamString = `per_page=${perPage}&page=${page}`;
 
-    if (isTrueComparison(startFrom, '>', startTill)) {
-      setErrorMessage({ message: 'startFrom cannot be after startTill' });
+    const startFromSeconds = convertDateStringToSeconds(startFrom);
+    const endFromSeconds = convertDateStringToSeconds(endFrom);
+    const startToSeconds = convertDateStringToSeconds(startTo);
+    const endToSeconds = convertDateStringToSeconds(endTo);
+    if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
+      setErrorMessage({
+        message: '"Start date from" cannot be after "start date to"',
+      });
       return;
     }
-    if (isTrueComparison(endFrom, '>', endTill)) {
-      setErrorMessage({ message: 'endFrom cannot be after endTill' });
+    if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
+      setErrorMessage({
+        message: '"End date from" cannot be after "end date to"',
+      });
       return;
     }
-    if (isTrueComparison(startFrom, '>', endFrom)) {
-      setErrorMessage({ message: 'startFrom cannot be after endFrom' });
+    if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
+      setErrorMessage({
+        message: '"Start date from" cannot be after "end date from"',
+      });
       return;
     }
-    if (isTrueComparison(startTill, '>', endTill)) {
-      setErrorMessage({ message: 'startTill cannot be after endTill' });
+    if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
+      setErrorMessage({
+        message: '"Start date to" cannot be after "end date to"',
+      });
       return;
     }
 
-    if (startFrom) {
-      queryParamString += `&start_from=${startFrom}`;
+    if (startFromSeconds) {
+      queryParamString += `&start_from=${startFromSeconds}`;
     }
-    if (startTill) {
-      queryParamString += `&start_till=${startTill}`;
+    if (startToSeconds) {
+      queryParamString += `&start_to=${startToSeconds}`;
     }
-    if (endFrom) {
-      queryParamString += `&end_from=${endFrom}`;
+    if (endFromSeconds) {
+      queryParamString += `&end_from=${endFromSeconds}`;
     }
-    if (endTill) {
-      queryParamString += `&end_till=${endTill}`;
+    if (endToSeconds) {
+      queryParamString += `&end_to=${endToSeconds}`;
     }
     if (processStatusSelection.length > 0) {
       queryParamString += `&process_status=${processStatusSelection}`;
@@ -242,30 +253,22 @@ export default function ProcessInstanceList() {
     initialDate: any,
     onChangeFunction: any
   ) => {
-    let selectedDate = null;
-    if (initialDate) {
-      selectedDate = new Date(initialDate * 1000);
-    }
     return (
-      <Form.Group>
-        <InputGroup>
-          <Stack className="ms-auto" direction="horizontal" gap={3}>
-            <InputGroup.Text className="text-nowrap">
-              {labelString}
-              {'\u00A0'}
-            </InputGroup.Text>
-            <DatePicker
-              id={`date-picker-${name}`}
-              selected={selectedDate}
-              onChange={(date: any) =>
-                convertDateToSeconds(date, onChangeFunction)
-              }
-              showTimeSelect
-              dateFormat={DATE_FORMAT}
-            />
-          </Stack>
-        </InputGroup>
-      </Form.Group>
+      <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
+        <DatePickerInput
+          id={`date-picker-${name}`}
+          placeholder={DATE_FORMAT}
+          labelText={labelString}
+          type="text"
+          size="md"
+          autocomplete="off"
+          allowInput={false}
+          onChange={(dateChangeEvent: any) => {
+            onChangeFunction(dateChangeEvent.srcElement.value);
+          }}
+          value={initialDate}
+        />
+      </DatePicker>
     );
   };
 
@@ -291,10 +294,8 @@ export default function ProcessInstanceList() {
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
     const { inputValue } = options;
-    return (
-      processModel.process_group_id.match(inputValue) ||
-      processModel.id.match(inputValue) ||
-      processModel.display_name.match(inputValue)
+    return `${processModel.process_group_id}/${processModel.id} (${processModel.display_name})`.includes(
+      inputValue
     );
   };
 
@@ -305,7 +306,7 @@ export default function ProcessInstanceList() {
           setProcessModelSelection(selection.selectedItem)
         }
         id="process-model-select"
-        items={processModelFilteredItems}
+        items={processModelAvailableItems}
         itemToString={(processModel: ProcessModel) => {
           if (processModel) {
             return `${processModel.process_group_id}/${
@@ -344,53 +345,14 @@ export default function ProcessInstanceList() {
   const clearFilters = () => {
     setProcessModelSelection(null);
     setProcessStatusSelection([]);
+    setStartFrom('');
+    setStartTo('');
+    setEndFrom('');
+    setEndTo('');
   };
 
   const filterOptions = () => {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    // return (
-    //   <div className="container">
-    //     <div className="row">
-    //       <div className="col">
-    //         <form onSubmit={handleFilter}>
-    //           <Stack direction="horizontal" gap={3}>
-    //             {processModelSearch()}
-    //           </Stack>
-    //           <br />
-    //           <Stack direction="horizontal" gap={3}>
-    //             {dateComponent(
-    //               'Start Range: ',
-    //               'start-from',
-    //               startFrom,
-    //               setStartFrom
-    //             )}
-    //             {dateComponent('-', 'start-till', startTill, setStartTill)}
-    //           </Stack>
-    //           <br />
-    //           <Stack direction="horizontal" gap={3}>
-    //             {dateComponent(
-    //               'End Range: \u00A0\u00A0',
-    //               'end-from',
-    //               endFrom,
-    //               setEndFrom
-    //             )}
-    //             {dateComponent('-', 'end-till', endTill, setEndTill)}
-    //           </Stack>
-    //           <br />
-    //           <Stack direction="horizontal" gap={3}>
-    //             {processStatusSearch()}
-    //           </Stack>
-    //           <Stack direction="horizontal" gap={3}>
-    //             <Button className="ms-auto" variant="secondary" type="submit">
-    //               Filter
-    //             </Button>
-    //           </Stack>
-    //         </form>
-    //       </div>
-    //       <div className="col" />
-    //     </div>
-    //   </div>
-    // );
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
@@ -398,17 +360,22 @@ export default function ProcessInstanceList() {
           <Column md={8}>{processStatusSearch()}</Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
-          <Column md={8}>
-            {' '}
-            <DatePicker dateFormat={DATE_FORMAT} datePickerType="single">
-              <DatePickerInput
-                id="date-picker-default-id"
-                placeholder={DATE_FORMAT}
-                labelText="Date picker label"
-                type="text"
-                size="md"
-              />
-            </DatePicker>
+          <Column md={4}>
+            {dateComponent(
+              'Start date from',
+              'start-from',
+              startFrom,
+              setStartFrom
+            )}
+          </Column>
+          <Column md={4}>
+            {dateComponent('Start date to', 'start-to', startTo, setStartTo)}
+          </Column>
+          <Column md={4}>
+            {dateComponent('End date from', 'end-from', endFrom, setEndFrom)}
+          </Column>
+          <Column md={4}>
+            {dateComponent('End date to', 'end-to', endTo, setEndTo)}
           </Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
