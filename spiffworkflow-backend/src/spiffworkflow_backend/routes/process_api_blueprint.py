@@ -56,6 +56,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -954,10 +955,23 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
 
 
 def process_instance_task_list(
-    process_instance_id: int, all_tasks: bool = False
+    process_instance_id: int, all_tasks: bool = False, spiff_step: int = 0
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+
+    if spiff_step > 0:
+        step_detail = (
+            db.session.query(SpiffStepDetailsModel)
+            .filter(
+                SpiffStepDetailsModel.process_instance_id == process_instance.id,
+                SpiffStepDetailsModel.spiff_step == spiff_step,
+            )
+            .first()
+        )
+        if step_detail is not None:
+            process_instance.bpmn_json = json.dumps(step_detail.task_json)
+
     processor = ProcessInstanceProcessor(process_instance)
 
     spiff_tasks = None
@@ -1233,6 +1247,7 @@ def script_unit_test_run(
     """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works
     current_app.config["THREAD_LOCAL_DATA"].process_instance_id = None
+    current_app.config["THREAD_LOCAL_DATA"].spiff_step = None
 
     python_script = _get_required_parameter_or_raise("python_script", body)
     input_json = _get_required_parameter_or_raise("input_json", body)
