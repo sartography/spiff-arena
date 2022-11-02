@@ -424,7 +424,6 @@ def process_instance_run(
                 task=task,
             ) from e
         processor.save()
-        ProcessInstanceService.update_task_assignments(processor)
 
         if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
@@ -1071,7 +1070,9 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 task.form_ui_schema = ui_form_contents
 
     if task.properties and task.data and "instructionsForEndUser" in task.properties:
-        print(f"task.properties['instructionsForEndUser']: {task.properties['instructionsForEndUser']}")
+        print(
+            f"task.properties['instructionsForEndUser']: {task.properties['instructionsForEndUser']}"
+        )
         if task.properties["instructionsForEndUser"]:
             task.properties["instructionsForEndUser"] = render_jinja_template(
                 task.properties["instructionsForEndUser"], task.data
@@ -1120,8 +1121,6 @@ def task_submit(
     #         __update_task(processor, next_task, form_data, user)
     #         last_index = next_task.task_info()["mi_index"]
     #         next_task = processor.next_task()
-
-    ProcessInstanceService.update_task_assignments(processor)
 
     next_active_task_assigned_to_me = (
         ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id)

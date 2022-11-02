@@ -275,25 +275,6 @@ class BaseTest:
         user: UserModel, _redirect_url: str = "http://some/frontend/url"
     ) -> Dict[str, str]:
         """Logged_in_headers."""
-        # if user is None:
-        #     uid = 'test_user'
-        #     user_info = {'uid': 'test_user'}
-        # else:
-        #     uid = user.uid
-        #     user_info = {'uid': user.uid}
-
-        # query_string = user_info_to_query_string(user_info, redirect_url)
-        # rv = self.app.get("/v1.0/login%s" % query_string, follow_redirects=False)
-        # self.assertTrue(rv.status_code == 302)
-        # self.assertTrue(str.startswith(rv.location, redirect_url))
-        #
-        # user_model = session.query(UserModel).filter_by(uid=uid).first()
-        # self.assertIsNotNone(user_model.ldap_info.display_name)
-        # self.assertEqual(user_model.uid, uid)
-        # self.assertTrue('user' in g, 'User should be in Flask globals')
-        # user = UserService.current_user(allow_admin_impersonate=True)
-        # self.assertEqual(uid, user.uid, 'Logged in user should match given user uid')
-
         return dict(Authorization="Bearer " + user.encode_auth_token())
 
     def get_test_data_file_contents(
