@@ -424,7 +424,6 @@ def process_instance_run(
                 task=task,
             ) from e
         processor.save()
-        ProcessInstanceService.update_task_assignments(processor)
 
         if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
@@ -1122,8 +1121,6 @@ def task_submit(
     #         __update_task(processor, next_task, form_data, user)
     #         last_index = next_task.task_info()["mi_index"]
     #         next_task = processor.next_task()
-
-    ProcessInstanceService.update_task_assignments(processor)
 
     next_active_task_assigned_to_me = (
         ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id)
