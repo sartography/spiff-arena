@@ -77,6 +77,10 @@ export default function AdminRoutes() {
           element={<ProcessInstanceShow />}
         />
         <Route
+          path="process-models/:process_group_id/:process_model_id/process-instances/:process_instance_id/:spiff_step"
+          element={<ProcessInstanceShow />}
+        />
+        <Route
           path="process-models/:process_group_id/:process_model_id/process-instances/reports"
           element={<ProcessInstanceReportList />}
         />

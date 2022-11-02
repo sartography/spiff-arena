@@ -36,6 +36,7 @@ class TestSpiffLogging(BaseTest):
             bpmn_task_identifier=bpmn_task_identifier,
             message=message,
             timestamp=timestamp,
+            spiff_step=1,
         )
         assert spiff_log.timestamp == timestamp
 
