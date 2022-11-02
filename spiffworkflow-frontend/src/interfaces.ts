@@ -47,3 +47,7 @@ export interface PaginationObject {
   total: number;
   pages: number;
 }
+
+export interface CarbonComboBoxSelection {
+  selectedItem: ProcessModel;
+}
