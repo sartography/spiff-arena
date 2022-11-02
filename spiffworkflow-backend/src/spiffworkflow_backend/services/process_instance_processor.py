@@ -604,8 +604,10 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def save_spiff_step_details(self, bpmn_json) -> None:
+    def save_spiff_step_details(self, bpmn_json: Optional[str]) -> None:
         """SaveSpiffStepDetails."""
+        if bpmn_json is None:
+            return
         wf_json = json.loads(bpmn_json)
         task_json = "{}"
         if "tasks" in wf_json:

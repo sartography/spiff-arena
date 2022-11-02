@@ -207,8 +207,8 @@ class DBHandler(logging.Handler):
             message = record.msg if hasattr(record, "msg") else None
             current_user_id = record.current_user_id if hasattr(record, "current_user_id") else None  # type: ignore
             spiff_step = (
-                record.spiff_step
-                if hasattr(record, "spiff_step") and record.spiff_step is not None
+                record.spiff_step  # type: ignore
+                if hasattr(record, "spiff_step") and record.spiff_step is not None  # type: ignore
                 else 1
             )
             spiff_log = SpiffLoggingModel(
