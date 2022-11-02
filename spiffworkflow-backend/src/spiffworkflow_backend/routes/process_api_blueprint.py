@@ -966,7 +966,7 @@ def process_instance_task_list(
             db.session.query(SpiffStepDetailsModel)
             .filter(
                 SpiffStepDetailsModel.process_instance_id == process_instance.id,
-                SpiffStepDetailsModel.spiff_step == spiff_step
+                SpiffStepDetailsModel.spiff_step == spiff_step,
             )
             .first()
         )
