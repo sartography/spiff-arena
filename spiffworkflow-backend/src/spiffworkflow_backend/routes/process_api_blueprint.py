@@ -1071,7 +1071,9 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 task.form_ui_schema = ui_form_contents
 
     if task.properties and task.data and "instructionsForEndUser" in task.properties:
-        print(f"task.properties['instructionsForEndUser']: {task.properties['instructionsForEndUser']}")
+        print(
+            f"task.properties['instructionsForEndUser']: {task.properties['instructionsForEndUser']}"
+        )
         if task.properties["instructionsForEndUser"]:
             task.properties["instructionsForEndUser"] = render_jinja_template(
                 task.properties["instructionsForEndUser"], task.data
