@@ -7,6 +7,7 @@ import os
 import re
 import time
 from datetime import datetime
+from datetime import timedelta
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -17,6 +18,8 @@ from typing import Tuple
 from typing import TypedDict
 from typing import Union
 
+import dateparser
+import pytz
 from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
@@ -25,7 +28,6 @@ from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
-from SpiffWorkflow.bpmn.PythonScriptEngine import DEFAULT_GLOBALS
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
 from SpiffWorkflow.bpmn.serializer import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
@@ -98,19 +100,6 @@ def _import(name: str, glbls: Dict[str, Any], *args: Any) -> None:
         raise ImportError(f"Import not allowed: {name}", name=name)
 
 
-DEFAULT_GLOBALS.update(
-    {
-        "datetime": datetime,
-        "time": time,
-        "decimal": decimal,
-        "_strptime": _strptime,
-    }
-)
-# This will overwrite the standard builtins
-DEFAULT_GLOBALS.update(safe_globals)
-DEFAULT_GLOBALS["__builtins__"]["__import__"] = _import
-
-
 class PotentialOwnerIdList(TypedDict):
     """PotentialOwnerIdList."""
 
@@ -143,7 +132,21 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 
     def __init__(self) -> None:
         """__init__."""
-        super().__init__(default_globals=DEFAULT_GLOBALS)
+        default_globals = {
+            "timedelta": timedelta,
+            "datetime": datetime,
+            "dateparser": dateparser,
+            "pytz": pytz,
+            "time": time,
+            "decimal": decimal,
+            "_strptime": _strptime,
+        }
+
+        # This will overwrite the standard builtins
+        default_globals.update(safe_globals)
+        default_globals["__builtins__"]["__import__"] = _import
+
+        super().__init__(default_globals=default_globals)
 
     def __get_augment_methods(self, task: SpiffTask) -> Dict[str, Callable]:
         """__get_augment_methods."""
