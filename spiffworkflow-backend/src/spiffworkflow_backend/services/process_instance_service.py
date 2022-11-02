@@ -1,7 +1,6 @@
 """Process_instance_service."""
 import time
 from typing import Any
-from typing import Dict
 from typing import List
 from typing import Optional
 
@@ -9,15 +8,12 @@ from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import MultiInstanceType
 from spiffworkflow_backend.models.task import Task
-from spiffworkflow_backend.models.task_event import TaskAction
-from spiffworkflow_backend.models.task_event import TaskEventModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
@@ -108,69 +104,8 @@ class ProcessInstanceService:
             is_review=is_review_value,
             title=title_value,
         )
-        next_task_trying_again = next_task
-        if (
-            not next_task
-        ):  # The Next Task can be requested to be a certain task, useful for parallel tasks.
-            # This may or may not work, sometimes there is no next task to complete.
-            next_task_trying_again = processor.next_task()
-
-        if next_task_trying_again is not None:
-            previous_form_data = ProcessInstanceService.get_previously_submitted_data(
-                processor.process_instance_model.id, next_task_trying_again
-            )
-            #            DeepMerge.merge(next_task_trying_again.data, previous_form_data)
-            next_task_trying_again.data = DeepMerge.merge(
-                previous_form_data, next_task_trying_again.data
-            )
-
-            process_instance_api.next_task = (
-                ProcessInstanceService.spiff_task_to_api_task(
-                    next_task_trying_again, add_docs_and_forms=True
-                )
-            )
-            # TODO: Hack for now, until we decide how to implment forms
-            process_instance_api.next_task.form = None
-
-            # Update the state of the task to locked if the current user does not own the task.
-            # user_uids = WorkflowService.get_users_assigned_to_task(processor, next_task)
-            # if not UserService.in_list(user_uids, allow_admin_impersonate=True):
-            #     workflow_api.next_task.state = WorkflowService.TASK_STATE_LOCKED
 
         return process_instance_api
-
-    @staticmethod
-    def get_previously_submitted_data(
-        process_instance_id: int, spiff_task: SpiffTask
-    ) -> Dict[Any, Any]:
-        """If the user has completed this task previously, find the form data for the last submission."""
-        query = (
-            db.session.query(TaskEventModel)
-            .filter_by(process_instance_id=process_instance_id)
-            .filter_by(task_name=spiff_task.task_spec.name)
-            .filter_by(action=TaskAction.COMPLETE.value)
-        )
-
-        if (
-            hasattr(spiff_task, "internal_data")
-            and "runtimes" in spiff_task.internal_data
-        ):
-            query = query.filter_by(mi_index=spiff_task.internal_data["runtimes"])
-
-        latest_event = query.order_by(TaskEventModel.date.desc()).first()
-        if latest_event:
-            if latest_event.form_data is not None:
-                return latest_event.form_data  # type: ignore
-            else:
-                missing_form_error = (
-                    f"We have lost data for workflow {process_instance_id}, "
-                    f"task {spiff_task.task_spec.name}, it is not in the task event model, "
-                    f"and it should be."
-                )
-                current_app.logger.exception("missing_form_data", missing_form_error)
-                return {}
-        else:
-            return {}
 
     def get_process_instance(self, process_instance_id: int) -> Any:
         """Get_process_instance."""
@@ -180,30 +115,6 @@ class ProcessInstanceService:
             .first()
         )
         return result
-
-    @staticmethod
-    def update_task_assignments(processor: ProcessInstanceProcessor) -> None:
-        """For every upcoming user task, log a task action that connects the assigned user(s) to that task.
-
-        All existing assignment actions for this workflow are removed from the database,
-        so that only the current valid actions are available. update_task_assignments
-        should be called whenever progress is made on a workflow.
-        """
-        db.session.query(TaskEventModel).filter(
-            TaskEventModel.process_instance_id == processor.process_instance_model.id
-        ).filter(TaskEventModel.action == TaskAction.ASSIGNMENT.value).delete()
-        db.session.commit()
-
-        tasks = processor.get_current_user_tasks()
-        for task in tasks:
-            user_ids = ProcessInstanceService.get_users_assigned_to_task(
-                processor, task
-            )
-
-            for user_id in user_ids:
-                ProcessInstanceService().log_task_action(
-                    user_id, processor, task, TaskAction.ASSIGNMENT.value
-                )
 
     @staticmethod
     def get_users_assigned_to_task(
@@ -279,51 +190,7 @@ class ProcessInstanceService:
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task)
-        # Log the action before doing the engine steps, as doing so could effect the state of the task
-        # the workflow could wrap around in the ngine steps, and the task could jump from being completed to
-        # another state.  What we are logging here is the completion.
-        ProcessInstanceService.log_task_action(
-            user.id, processor, spiff_task, TaskAction.COMPLETE.value
-        )
         processor.do_engine_steps(save=True)
-
-    @staticmethod
-    def log_task_action(
-        user_id: int,
-        processor: ProcessInstanceProcessor,
-        spiff_task: SpiffTask,
-        action: str,
-    ) -> None:
-        """Log_task_action."""
-        task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
-        form_data = ProcessInstanceService.extract_form_data(
-            spiff_task.data, spiff_task
-        )
-        multi_instance_type_value = ""
-        if task.multi_instance_type:
-            multi_instance_type_value = task.multi_instance_type.value
-
-        task_event = TaskEventModel(
-            # study_id=processor.workflow_model.study_id,
-            user_id=user_id,
-            process_instance_id=processor.process_instance_model.id,
-            # workflow_spec_id=processor.workflow_model.workflow_spec_id,
-            action=action,
-            task_id=str(task.id),
-            task_name=task.name,
-            task_title=task.title,
-            task_type=str(task.type),
-            task_state=task.state,
-            task_lane=task.lane,
-            form_data=form_data,
-            mi_type=multi_instance_type_value,  # Some tasks have a repeat behavior.
-            mi_count=task.multi_instance_count,  # This is the number of times the task could repeat.
-            mi_index=task.multi_instance_index,  # And the index of the currently repeating task.
-            process_name=task.process_name,
-            # date=datetime.utcnow(), <=== For future reference, NEVER do this. Let the database set the time.
-        )
-        db.session.add(task_event)
-        db.session.commit()
 
     @staticmethod
     def extract_form_data(latest_data: dict, task: SpiffTask) -> dict:

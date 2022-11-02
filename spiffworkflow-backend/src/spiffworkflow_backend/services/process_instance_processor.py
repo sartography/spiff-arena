@@ -87,8 +87,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
-from spiffworkflow_backend.models.task_event import TaskAction
-from spiffworkflow_backend.models.task_event import TaskEventModel
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserModelSchema
 from spiffworkflow_backend.scripts.script import Script
@@ -286,9 +285,9 @@ class ProcessInstanceProcessor:
         self, process_instance_model: ProcessInstanceModel, validate_only: bool = False
     ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
-        current_app.config[
-            "THREAD_LOCAL_DATA"
-        ].process_instance_id = process_instance_model.id
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.process_instance_id = process_instance_model.id
+        tld.spiff_step = process_instance_model.spiff_step
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
         current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
@@ -421,13 +420,11 @@ class ProcessInstanceProcessor:
             bpmn_process_spec, subprocesses
         )
 
-    def add_user_info_to_process_instance(
-        self, bpmn_process_instance: BpmnWorkflow
-    ) -> None:
-        """Add_user_info_to_process_instance."""
+    def current_user(self) -> Any:
+        """Current_user."""
         current_user = None
         if UserService.has_user():
-            current_user = UserService.current_user(allow_admin_impersonate=True)
+            current_user = UserService.current_user()
 
         # fall back to initiator if g.user is not set
         # this is for background processes when there will not be a user
@@ -435,64 +432,19 @@ class ProcessInstanceProcessor:
         elif self.process_instance_model.process_initiator_id:
             current_user = self.process_instance_model.process_initiator
 
+        return current_user
+
+    def add_user_info_to_process_instance(
+        self, bpmn_process_instance: BpmnWorkflow
+    ) -> None:
+        """Add_user_info_to_process_instance."""
+        current_user = self.current_user()
+
         if current_user:
             current_user_data = UserModelSchema().dump(current_user)
             tasks = bpmn_process_instance.get_tasks(TaskState.READY)
             for task in tasks:
                 task.data["current_user"] = current_user_data
-
-    @staticmethod
-    def reset(
-        process_instance_model: ProcessInstanceModel, clear_data: bool = False
-    ) -> None:
-        """Resets the process_instance back to an unstarted state - where nothing has happened yet.
-
-        If clear_data is set to false, then the information
-        previously used in forms will be re-populated when the form is re-
-        displayed, and any files that were updated will remain in place, otherwise
-        files will also be cleared out.
-        """
-        # Try to execute a cancel notify
-        try:
-            bpmn_process_instance = (
-                ProcessInstanceProcessor.__get_bpmn_process_instance(
-                    process_instance_model
-                )
-            )
-            ProcessInstanceProcessor.__cancel_notify(bpmn_process_instance)
-        except Exception as e:
-            db.session.rollback()  # in case the above left the database with a bad transaction
-            current_app.logger.error(
-                "Unable to send a cancel notify for process_instance %s during a reset."
-                " Continuing with the reset anyway so we don't get in an unresolvable"
-                " state. An %s error occured with the following information: %s"
-                % (process_instance_model.id, e.__class__.__name__, str(e))
-            )
-        process_instance_model.bpmn_json = None
-        process_instance_model.status = ProcessInstanceStatus.not_started.value
-
-        # clear out any task assignments
-        db.session.query(TaskEventModel).filter(
-            TaskEventModel.process_instance_id == process_instance_model.id
-        ).filter(TaskEventModel.action == TaskAction.ASSIGNMENT.value).delete()
-
-        if clear_data:
-            # Clear out data in previous task events
-            task_events = (
-                db.session.query(TaskEventModel)
-                .filter(TaskEventModel.process_instance_id == process_instance_model.id)
-                .all()
-            )
-            for task_event in task_events:
-                task_event.form_data = {}
-                db.session.add(task_event)
-            # Remove any uploaded files.
-
-            # TODO: grab UserFileService
-            # files = FileModel.query.filter(FileModel.process_instance_id == process_instance_model.id).all()
-            # for file in files:
-            #     UserFileService().delete_file(file.id)
-        db.session.commit()
 
     @staticmethod
     def get_bpmn_process_instance_from_workflow_spec(
@@ -605,9 +557,32 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
+    def save_spiff_step_details(self, bpmn_json: Optional[str]) -> None:
+        """SaveSpiffStepDetails."""
+        if bpmn_json is None:
+            return
+        wf_json = json.loads(bpmn_json)
+        task_json = "{}"
+        if "tasks" in wf_json:
+            task_json = json.dumps(wf_json["tasks"])
+
+        # TODO want to just save the tasks, something wasn't immediately working
+        # so after the flow works with the full wf_json revisit this
+        task_json = wf_json
+        details_model = SpiffStepDetailsModel(
+            process_instance_id=self.process_instance_model.id,
+            spiff_step=self.process_instance_model.spiff_step or 1,
+            task_json=task_json,
+            timestamp=round(time.time()),
+            completed_by_user_id=self.current_user().id,
+        )
+        db.session.add(details_model)
+        db.session.commit()
+
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
+
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())
         self.process_instance_model.status = self.get_status().value
@@ -993,8 +968,19 @@ class ProcessInstanceProcessor:
 
             db.session.commit()
 
+    def increment_spiff_step(self) -> None:
+        """Spiff_step++."""
+        spiff_step = self.process_instance_model.spiff_step or 0
+        spiff_step += 1
+        self.process_instance_model.spiff_step = spiff_step
+        current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
+        db.session.add(self.process_instance_model)
+        db.session.commit()
+
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
+        self.increment_spiff_step()
+
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
             self.bpmn_process_instance.do_engine_steps(exit_at=exit_at)
@@ -1007,6 +993,10 @@ class ProcessInstanceProcessor:
         finally:
             if save:
                 self.save()
+                bpmn_json = self.process_instance_model.bpmn_json
+            else:
+                bpmn_json = self.serialize()
+            self.save_spiff_step_details(bpmn_json)
 
     def cancel_notify(self) -> None:
         """Cancel_notify."""
@@ -1117,7 +1107,10 @@ class ProcessInstanceProcessor:
 
     def complete_task(self, task: SpiffTask) -> None:
         """Complete_task."""
+        self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
+        bpmn_json = self.serialize()
+        self.save_spiff_step_details(bpmn_json)
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""
