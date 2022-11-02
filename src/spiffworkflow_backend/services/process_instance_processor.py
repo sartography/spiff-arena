@@ -79,8 +79,6 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
-from spiffworkflow_backend.models.task_event import TaskAction
-from spiffworkflow_backend.models.task_event import TaskEventModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserModelSchema
 from spiffworkflow_backend.scripts.script import Script
@@ -419,7 +417,7 @@ class ProcessInstanceProcessor:
         """Add_user_info_to_process_instance."""
         current_user = None
         if UserService.has_user():
-            current_user = UserService.current_user(allow_admin_impersonate=True)
+            current_user = UserService.current_user()
 
         # fall back to initiator if g.user is not set
         # this is for background processes when there will not be a user
@@ -432,59 +430,6 @@ class ProcessInstanceProcessor:
             tasks = bpmn_process_instance.get_tasks(TaskState.READY)
             for task in tasks:
                 task.data["current_user"] = current_user_data
-
-    @staticmethod
-    def reset(
-        process_instance_model: ProcessInstanceModel, clear_data: bool = False
-    ) -> None:
-        """Resets the process_instance back to an unstarted state - where nothing has happened yet.
-
-        If clear_data is set to false, then the information
-        previously used in forms will be re-populated when the form is re-
-        displayed, and any files that were updated will remain in place, otherwise
-        files will also be cleared out.
-        """
-        # Try to execute a cancel notify
-        try:
-            bpmn_process_instance = (
-                ProcessInstanceProcessor.__get_bpmn_process_instance(
-                    process_instance_model
-                )
-            )
-            ProcessInstanceProcessor.__cancel_notify(bpmn_process_instance)
-        except Exception as e:
-            db.session.rollback()  # in case the above left the database with a bad transaction
-            current_app.logger.error(
-                "Unable to send a cancel notify for process_instance %s during a reset."
-                " Continuing with the reset anyway so we don't get in an unresolvable"
-                " state. An %s error occured with the following information: %s"
-                % (process_instance_model.id, e.__class__.__name__, str(e))
-            )
-        process_instance_model.bpmn_json = None
-        process_instance_model.status = ProcessInstanceStatus.not_started.value
-
-        # clear out any task assignments
-        db.session.query(TaskEventModel).filter(
-            TaskEventModel.process_instance_id == process_instance_model.id
-        ).filter(TaskEventModel.action == TaskAction.ASSIGNMENT.value).delete()
-
-        if clear_data:
-            # Clear out data in previous task events
-            task_events = (
-                db.session.query(TaskEventModel)
-                .filter(TaskEventModel.process_instance_id == process_instance_model.id)
-                .all()
-            )
-            for task_event in task_events:
-                task_event.form_data = {}
-                db.session.add(task_event)
-            # Remove any uploaded files.
-
-            # TODO: grab UserFileService
-            # files = FileModel.query.filter(FileModel.process_instance_id == process_instance_model.id).all()
-            # for file in files:
-            #     UserFileService().delete_file(file.id)
-        db.session.commit()
 
     @staticmethod
     def get_bpmn_process_instance_from_workflow_spec(

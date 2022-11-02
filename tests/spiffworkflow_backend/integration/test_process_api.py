@@ -25,7 +25,6 @@ from spiffworkflow_backend.models.process_instance_report import (
 )
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
-from spiffworkflow_backend.models.task_event import TaskEventModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -1088,56 +1087,13 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-
         assert response.json is not None
-        task_events = (
-            db.session.query(TaskEventModel)
-            .filter(TaskEventModel.process_instance_id == process_instance_id)
-            .all()
-        )
-        assert len(task_events) == 1
-        task_event = task_events[0]
-        assert task_event.user_id == with_super_admin_user.id
 
         delete_response = client.delete(
             f"/v1.0/process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert delete_response.status_code == 200
-
-    def test_process_instance_run_user_task_creates_task_event(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        """Test_process_instance_run_user_task."""
-        process_group_id = "my_process_group"
-        process_model_id = "user_task"
-
-        headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
-            client, process_group_id, process_model_id, headers
-        )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
-
-        response = client.post(
-            f"/v1.0/process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/run",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-
-        assert response.json is not None
-        task_events = (
-            db.session.query(TaskEventModel)
-            .filter(TaskEventModel.process_instance_id == process_instance_id)
-            .all()
-        )
-        assert len(task_events) == 1
-        task_event = task_events[0]
-        assert task_event.user_id == with_super_admin_user.id
-        # TODO: When user tasks work, we need to add some more assertions for action, task_state, etc.
 
     def test_task_show(
         self,

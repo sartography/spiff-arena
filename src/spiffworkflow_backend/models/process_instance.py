@@ -78,7 +78,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator = relationship("UserModel")
 
     active_tasks = relationship("ActiveTaskModel", cascade="delete")  # type: ignore
-    task_events = relationship("TaskEventModel", cascade="delete")  # type: ignore
     spiff_logs = relationship("SpiffLoggingModel", cascade="delete")  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
