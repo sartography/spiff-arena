@@ -429,7 +429,7 @@ paths:
         description: For filtering - beginning of start window - in seconds since epoch
         schema:
           type: integer
-      - name: start_till
+      - name: start_to
         in: query
         required: false
         description: For filtering - end of start window - in seconds since epoch
@@ -441,7 +441,7 @@ paths:
         description: For filtering - beginning of end window - in seconds since epoch
         schema:
           type: integer
-      - name: end_till
+      - name: end_to
         in: query
         required: false
         description: For filtering - end of end window - in seconds since epoch
