@@ -109,7 +109,7 @@ class SpiffFilter(logging.Filter):
             process_instance_id = tld.process_instance_id
         setattr(record, "process_instance_id", process_instance_id)  # noqa: B010
         if hasattr(tld, "spiff_step"):
-            setattr(record, "spiff_step", tld.spiff_step)
+            setattr(record, "spiff_step", tld.spiff_step)  # noqa: 8010
         if hasattr(g, "user") and g.user:
             setattr(record, "current_user_id", g.user.id)  # noqa: B010
         return True
