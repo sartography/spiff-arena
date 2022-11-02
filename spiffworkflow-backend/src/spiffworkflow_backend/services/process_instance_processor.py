@@ -412,6 +412,7 @@ class ProcessInstanceProcessor:
         )
 
     def current_user(self) -> Any:
+        """Current_user."""
         current_user = None
         if UserService.has_user():
             current_user = UserService.current_user(allow_admin_impersonate=True)
@@ -607,7 +608,7 @@ class ProcessInstanceProcessor:
         if "tasks" in wf_json:
             task_json = json.dumps(wf_json["tasks"])
 
-        # TODO want to just save the tasks, something wasn't immediately working 
+        # TODO want to just save the tasks, something wasn't immediately working
         # so after the flow works with the full wf_json revisit this
         task_json = wf_json
         details_model = SpiffStepDetailsModel(
@@ -615,7 +616,7 @@ class ProcessInstanceProcessor:
             spiff_step=self.process_instance_model.spiff_step or 1,
             task_json=task_json,
             timestamp=round(time.time()),
-            completed_by_user_id=self.current_user().id
+            completed_by_user_id=self.current_user().id,
         )
         db.session.add(details_model)
         db.session.commit()
@@ -1010,14 +1011,13 @@ class ProcessInstanceProcessor:
             db.session.commit()
 
     def increment_spiff_step(self) -> None:
-        """spiff_step++."""
+        """Spiff_step++."""
         spiff_step = self.process_instance_model.spiff_step or 0
         spiff_step += 1
         self.process_instance_model.spiff_step = spiff_step
         current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
         db.session.add(self.process_instance_model)
         db.session.commit()
-
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""

@@ -962,10 +962,14 @@ def process_instance_task_list(
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
     if spiff_step > 0:
-        step_detail = db.session.query(SpiffStepDetailsModel).filter(
-            SpiffStepDetailsModel.process_instance_id == process_instance.id and \
-                SpiffStepDetailsModel.spiff_step == spiff_step
-        ).first()
+        step_detail = (
+            db.session.query(SpiffStepDetailsModel)
+            .filter(
+                SpiffStepDetailsModel.process_instance_id == process_instance.id
+                and SpiffStepDetailsModel.spiff_step == spiff_step
+            )
+            .first()
+        )
         process_instance.bpmn_json = json.dumps(step_detail.task_json)
 
     processor = ProcessInstanceProcessor(process_instance)
