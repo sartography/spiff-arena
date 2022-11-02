@@ -31,8 +31,8 @@ from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
+from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.event_definitions import CancelEventDefinition  # type: ignore
-from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
@@ -40,10 +40,16 @@ from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
-from SpiffWorkflow.spiff.serializer.task_spec_converters import CallActivityTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    CallActivityTaskConverter,
+)
 from SpiffWorkflow.spiff.serializer.task_spec_converters import EndEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import IntermediateCatchEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import IntermediateThrowEventConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    IntermediateCatchEventConverter,
+)
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    IntermediateThrowEventConverter,
+)
 from SpiffWorkflow.spiff.serializer.task_spec_converters import ManualTaskConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import ReceiveTaskConverter
@@ -52,7 +58,9 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import SendTaskConverte
 from SpiffWorkflow.spiff.serializer.task_spec_converters import ServiceTaskConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import StartEventConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import SubWorkflowTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import TransactionSubprocessConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    TransactionSubprocessConverter,
+)
 from SpiffWorkflow.spiff.serializer.task_spec_converters import UserTaskConverter
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
