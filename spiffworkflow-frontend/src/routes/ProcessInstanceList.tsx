@@ -6,6 +6,8 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
+// @ts-ignore
+import { Filter } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -57,6 +59,7 @@ export default function ProcessInstanceList() {
   const [startTo, setStartTo] = useState<string>('');
   const [endFrom, setEndFrom] = useState<string>('');
   const [endTo, setEndTo] = useState<string>('');
+  const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
@@ -352,7 +355,9 @@ export default function ProcessInstanceList() {
   };
 
   const filterOptions = () => {
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+    if (!showFilterOptions) {
+      return null;
+    }
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
@@ -392,18 +397,6 @@ export default function ProcessInstanceList() {
                 Filter
               </Button>
             </ButtonSet>
-          </Column>
-        </Grid>
-        <Grid fullWidth>
-          <Column lg={16}>
-            <PaginationForTable
-              page={page}
-              perPage={perPage}
-              pagination={pagination}
-              tableToDisplay={buildTable()}
-              queryParamString={getSearchParamsAsQueryString()}
-              path="/admin/process-instances"
-            />
           </Column>
         </Grid>
       </>
@@ -480,12 +473,42 @@ export default function ProcessInstanceList() {
     );
   };
 
+  const toggleShowFilterOptions = () => {
+    setShowFilterOptions(!showFilterOptions);
+  };
+
   if (pagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     return (
       <>
         {processInstanceTitleElement()}
+        <Grid fullWidth>
+          <Column lg={15} />
+          <Column lg={1}>
+            <Button
+              kind="ghost"
+              renderIcon={Filter}
+              iconDescription="Filter Options"
+              hasIconOnly
+              size="lg"
+              onClick={toggleShowFilterOptions}
+            />
+          </Column>
+        </Grid>
         {filterOptions()}
+        <br />
+        <Grid fullWidth>
+          <Column lg={16}>
+            <PaginationForTable
+              page={page}
+              perPage={perPage}
+              pagination={pagination}
+              tableToDisplay={buildTable()}
+              queryParamString={getSearchParamsAsQueryString()}
+              path="/admin/process-instances"
+            />
+          </Column>
+        </Grid>
       </>
     );
   }
