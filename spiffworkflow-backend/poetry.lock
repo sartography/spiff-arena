@@ -1860,7 +1860,7 @@ description = "A workflow framework and BPMN/DMN Processor"
 category = "main"
 optional = false
 python-versions = "*"
-develop = true
+develop = false
 
 [package.dependencies]
 celery = "*"
@@ -1868,8 +1868,10 @@ configparser = "*"
 lxml = "*"
 
 [package.source]
-type = "directory"
-url = "../SpiffWorkflow"
+type = "git"
+url = "https://github.com/sartography/SpiffWorkflow"
+reference = "main"
+resolved_reference = "8d820dce1f439bb76bc07e39629832d998d6f634"
 
 [[package]]
 name = "SQLAlchemy"
@@ -2252,7 +2254,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "9562df87977dc1c9273401fa150dd26742a6786d5162ec3e71844482207b4fba"
+content-hash = "995be3a9a60b515b281f017ff32ff27a52ca178b1980611b348dccac6afb6b89"
 
 [metadata.files]
 alabaster = [
