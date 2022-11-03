@@ -979,10 +979,10 @@ class ProcessInstanceProcessor:
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         try:
-            self.increment_spiff_step()
-            # TODO will/did refresh waiting task callback?
-            self.bpmn_process_instance.refresh_waiting_tasks()
-            self.save_spiff_step_details()
+            self.bpmn_process_instance.refresh_waiting_tasks(
+                will_refresh_task=lambda t: self.increment_spiff_step(),
+                did_refresh_task=lambda t: self.save_spiff_step_details(),
+            )
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,

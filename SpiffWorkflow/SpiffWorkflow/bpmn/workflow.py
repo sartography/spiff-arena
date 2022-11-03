@@ -191,14 +191,23 @@ class BpmnWorkflow(Workflow):
                 [t for t in self.get_tasks(TaskState.READY)
                  if self._is_engine_task(t.task_spec)])
 
-    def refresh_waiting_tasks(self):
+    def refresh_waiting_tasks(self,
+        will_refresh_task=None,
+        did_refresh_task=None):
         """
         Refresh the state of all WAITING tasks. This will, for example, update
         Catching Timer Events whose waiting time has passed.
+
+        :param will_refresh_task: Callback that will be called prior to refreshing a task
+        :param did_refresh_task: Callback that will be called after refreshing a task
         """
         assert not self.read_only
         for my_task in self.get_tasks(TaskState.WAITING):
+            if will_refresh_task is not None:
+                will_refresh_task(my_task)
             my_task.task_spec._update(my_task)
+            if did_refresh_task is not None:
+                did_refresh_task(my_task)
 
     def get_tasks_from_spec_name(self, name, workflow=None):
         return [t for t in self.get_tasks(workflow=workflow) if t.task_spec.name == name]
