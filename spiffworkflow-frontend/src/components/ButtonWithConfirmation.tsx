@@ -41,23 +41,35 @@ export default function ButtonWithConfirmation({
   const confirmationDialog = () => {
     return (
       <Modal
-        show={showConfirmationPrompt}
-        onHide={handleConfirmationPromptCancel}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        {modalBodyElement()}
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleConfirmationPromptCancel}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleConfirmation}>
-            {confirmButtonLabel}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        open={showConfirmationPrompt}
+        danger
+        modalHeading={description}
+        modalLabel={title}
+        primaryButtonText={confirmButtonLabel}
+        secondaryButtonText="Cancel"
+        onSecondarySubmit={handleConfirmationPromptCancel}
+        onRequestSubmit={handleConfirmation}
+      />
     );
+    // return (
+    //   <Modal
+    //     show={showConfirmationPrompt}
+    //     onHide={handleConfirmationPromptCancel}
+    //   >
+    //     <Modal.Header closeButton>
+    //       <Modal.Title>{title}</Modal.Title>
+    //     </Modal.Header>
+    //     {modalBodyElement()}
+    //     <Modal.Footer>
+    //       <Button variant="secondary" onClick={handleConfirmationPromptCancel}>
+    //         Cancel
+    //       </Button>
+    //       <Button variant="primary" onClick={handleConfirmation}>
+    //         {confirmButtonLabel}
+    //       </Button>
+    //     </Modal.Footer>
+    //   </Modal>
+    // );
   };
 
   return (

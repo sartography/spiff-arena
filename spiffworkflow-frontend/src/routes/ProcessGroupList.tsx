@@ -1,15 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 // @ts-ignore
-import { Button, Form, Table } from '@carbon/react';
-import { InputGroup } from 'react-bootstrap';
-import { Typeahead } from 'react-bootstrap-typeahead';
-import { Option } from 'react-bootstrap-typeahead/types/types';
+import { Button, Table } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
 import { getPageInfoFromSearchParams } from '../helpers';
-import { CarbonComboBoxSelection, ProcessModel } from '../interfaces';
+import { CarbonComboBoxSelection } from '../interfaces';
 import ProcessModelSearch from '../components/ProcessModelSearch';
 
 // Example process group json
@@ -111,6 +108,7 @@ export default function ProcessGroupList() {
       <ProcessModelSearch
         onChange={processModelSearchOnChange}
         processModels={processModelAvailableItems}
+        titleText="Process model search"
       />
     );
   };
@@ -119,7 +117,9 @@ export default function ProcessGroupList() {
     return (
       <>
         <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
-        <Button href="/admin/process-groups/new">Add a process group</Button>
+        <Button kind="secondary" href="/admin/process-groups/new">
+          Add a process group
+        </Button>
         <br />
         <br />
         {processModelSearchArea()}
