@@ -112,6 +112,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "end_in_seconds": self.end_in_seconds,
             "process_initiator_id": self.process_initiator_id,
             "bpmn_xml_file_contents": local_bpmn_xml_file_contents,
+            "spiff_step": self.spiff_step,
         }
 
     @property
