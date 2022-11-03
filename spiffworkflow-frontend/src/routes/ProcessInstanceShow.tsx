@@ -233,8 +233,23 @@ export default function ProcessInstanceShow() {
     }
   };
 
+  const currentSpiffStep = (processInstanceToUse: any) => {
+    if (typeof params.spiff_step === 'undefined') {
+      return processInstanceToUse.spiff_step;
+    }
+
+    return params.spiff_step;
+  };
+
+  const showingLastSpiffStep = () => {
+    const processInstanceToUse: any = processInstance;
+    return (
+      currentSpiffStep(processInstanceToUse) === processInstanceToUse.spiff_step
+    );
+  };
+
   const canEditTaskData = (task: any) => {
-    return task.state === 'READY';
+    return task.state === 'READY' && showingLastSpiffStep();
   };
 
   const cancelEditingTaskData = () => {
