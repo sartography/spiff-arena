@@ -96,6 +96,61 @@ export default function ProcessInstanceShow() {
     return taskIds;
   };
 
+  const currentSpiffStep = (processInstanceToUse: any) => {
+    if (typeof params.spiff_step === 'undefined') {
+      return processInstanceToUse.spiff_step;
+    }
+
+    return Number(params.spiff_step);
+  };
+
+  const showingFirstSpiffStep = (processInstanceToUse: any) => {
+    return currentSpiffStep(processInstanceToUse) === 1;
+  };
+
+  const showingLastSpiffStep = (processInstanceToUse: any) => {
+    return (
+      currentSpiffStep(processInstanceToUse) === processInstanceToUse.spiff_step
+    );
+  };
+
+  const spiffStepLink = (
+    processInstanceToUse: any,
+    label: string,
+    distance: number
+  ) => {
+    return (
+      <li>
+        <Link
+          data-qa="process-instance-prev-step-link"
+          to={`/admin/process-models/${params.process_group_id}/${
+            params.process_model_id
+          }/process-instances/${params.process_instance_id}/${
+            currentSpiffStep(processInstanceToUse) + distance
+          }`}
+        >
+          {label}
+        </Link>
+      </li>
+    );
+  };
+
+  const previousStepLink = (processInstanceToUse: any) => {
+    if (showingFirstSpiffStep(processInstanceToUse)) {
+      return null;
+    }
+
+    return spiffStepLink(processInstanceToUse, 'Previous Step', -1);
+  };
+
+  const nextStepLink = (processInstanceToUse: any) => {
+    if (showingLastSpiffStep(processInstanceToUse)) {
+      return null;
+    }
+
+    return spiffStepLink(processInstanceToUse, 'Next Step', 1);
+  };
+
   const getInfoTag = (processInstanceToUse: any) => {
     const currentEndDate = convertSecondsToFormattedDate(
       processInstanceToUse.end_in_seconds
@@ -135,6 +190,12 @@ export default function ProcessInstanceShow() {
             Messages
           </Link>
         </li>
+        <li>
+          Step {currentSpiffStep(processInstanceToUse)} of{' '}
+          {processInstanceToUse.spiff_step}
+        </li>
+        {previousStepLink(processInstanceToUse)}
+        {nextStepLink(processInstanceToUse)}
       </ul>
     );
   };
@@ -233,23 +294,10 @@ export default function ProcessInstanceShow() {
     }
   };
 
-  const currentSpiffStep = (processInstanceToUse: any) => {
-    if (typeof params.spiff_step === 'undefined') {
-      return processInstanceToUse.spiff_step;
-    }
-
-    return params.spiff_step;
-  };
-
-  const showingLastSpiffStep = () => {
-    const processInstanceToUse: any = processInstance;
-    return (
-      currentSpiffStep(processInstanceToUse) === processInstanceToUse.spiff_step
-    );
-  };
-
   const canEditTaskData = (task: any) => {
-    return task.state === 'READY' && showingLastSpiffStep();
+    return (
+      task.state === 'READY' && showingLastSpiffStep(processInstance as any)
+    );
   };
 
   const cancelEditingTaskData = () => {
