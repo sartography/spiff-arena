@@ -94,6 +94,9 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
+from spiffworkflow_backend.services.spec_file_service import (
+    ProcessModelFileNotFoundError,
+)
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -669,10 +672,14 @@ class ProcessInstanceProcessor:
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
             if process_model.primary_file_name:
-                etree_element = SpecFileService.get_etree_element_from_file_name(
-                    process_model, process_model.primary_file_name
-                )
-                bpmn_process_identifiers = []
+                try:
+                    etree_element = SpecFileService.get_etree_element_from_file_name(
+                        process_model, process_model.primary_file_name
+                    )
+                    bpmn_process_identifiers = []
+                except ProcessModelFileNotFoundError:
+                    # if primary_file_name doesn't actually exist on disk, then just go on to the next process_model
+                    continue
 
                 try:
                     bpmn_process_identifiers = (
@@ -700,6 +707,11 @@ class ProcessInstanceProcessor:
         bpmn_process_identifier: str,
     ) -> str:
         """Bpmn_file_full_path_from_bpmn_process_identifier."""
+        if bpmn_process_identifier is None:
+            raise ValueError(
+                "bpmn_file_full_path_from_bpmn_process_identifier: bpmn_process_identifier is unexpectedly None"
+            )
+
         bpmn_process_id_lookup = BpmnProcessIdLookup.query.filter_by(
             bpmn_process_identifier=bpmn_process_identifier
         ).first()
