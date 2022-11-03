@@ -557,10 +557,9 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def save_spiff_step_details(self, bpmn_json: Optional[str]) -> None:
+    def save_spiff_step_details(self) -> None:
         """SaveSpiffStepDetails."""
-        if bpmn_json is None:
-            return
+        bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
         task_json = "{}"
         if "tasks" in wf_json:
@@ -979,11 +978,18 @@ class ProcessInstanceProcessor:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-        self.increment_spiff_step()
-
         try:
-            self.bpmn_process_instance.refresh_waiting_tasks()
-            self.bpmn_process_instance.do_engine_steps(exit_at=exit_at)
+            self.bpmn_process_instance.refresh_waiting_tasks(
+                will_refresh_task=lambda t: self.increment_spiff_step(),
+                did_refresh_task=lambda t: self.save_spiff_step_details(),
+            )
+
+            self.bpmn_process_instance.do_engine_steps(
+                exit_at=exit_at,
+                will_complete_task=lambda t: self.increment_spiff_step(),
+                did_complete_task=lambda t: self.save_spiff_step_details(),
+            )
+
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
 
@@ -993,10 +999,6 @@ class ProcessInstanceProcessor:
         finally:
             if save:
                 self.save()
-                bpmn_json = self.process_instance_model.bpmn_json
-            else:
-                bpmn_json = self.serialize()
-            self.save_spiff_step_details(bpmn_json)
 
     def cancel_notify(self) -> None:
         """Cancel_notify."""
@@ -1009,6 +1011,7 @@ class ProcessInstanceProcessor:
             # A little hackly, but make the bpmn_process_instance catch a cancel event.
             bpmn_process_instance.signal("cancel")  # generate a cancel signal.
             bpmn_process_instance.catch(CancelEventDefinition())
+            # Due to this being static, can't save granular step details in this case
             bpmn_process_instance.do_engine_steps()
         except WorkflowTaskExecException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
@@ -1109,8 +1112,7 @@ class ProcessInstanceProcessor:
         """Complete_task."""
         self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
-        bpmn_json = self.serialize()
-        self.save_spiff_step_details(bpmn_json)
+        self.save_spiff_step_details()
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""
