@@ -122,7 +122,8 @@ export default function ProcessInstanceShow() {
     return (
       <li>
         <Link
-          data-qa="process-instance-prev-step-link"
+          reloadDocument
+          data-qa="process-instance-step-link"
           to={`/admin/process-models/${params.process_group_id}/${
             params.process_model_id
           }/process-instances/${params.process_instance_id}/${
