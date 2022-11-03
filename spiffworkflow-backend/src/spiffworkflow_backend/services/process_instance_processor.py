@@ -560,8 +560,6 @@ class ProcessInstanceProcessor:
     def save_spiff_step_details(self) -> None:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
-        if bpmn_json is None:
-            return
         wf_json = json.loads(bpmn_json)
         task_json = "{}"
         if "tasks" in wf_json:
