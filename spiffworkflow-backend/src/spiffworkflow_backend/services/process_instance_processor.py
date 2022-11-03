@@ -969,6 +969,13 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+    def do_engine_steps_will_complete_task(task: SpiffTask) -> None:
+        self.increment_spiff_step()
+
+    def do_engine_steps_did_complete_task(task: SpiffTask) -> None:
+        bpmn_json = self.serialize()
+        self.save_spiff_step_details(bpmn_json)
+
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         self.increment_spiff_step()
