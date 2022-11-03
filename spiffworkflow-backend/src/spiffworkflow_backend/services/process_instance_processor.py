@@ -978,23 +978,19 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-    def _do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        bpmn_process_instance.do_engine_steps(
-            exit_at=exit_at,
-            will_complete_task=lambda t: self.increment_spiff_step(),
-            did_complete_task=lambda t: self.save_spiff_step_details()
-        )
-
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-
         try:
             self.increment_spiff_step()
             # TODO will/did refresh waiting task callback?
             self.bpmn_process_instance.refresh_waiting_tasks()
             self.save_spiff_step_details()
 
-            self._do_engine_steps(self.bpmn_process_instance, exit_at=exit_at)
+            self.bpmn_process_instance.do_engine_steps(
+                exit_at=exit_at,
+                will_complete_task=lambda t: self.increment_spiff_step(),
+                did_complete_task=lambda t: self.save_spiff_step_details(),
+            )
 
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
@@ -1017,7 +1013,8 @@ class ProcessInstanceProcessor:
             # A little hackly, but make the bpmn_process_instance catch a cancel event.
             bpmn_process_instance.signal("cancel")  # generate a cancel signal.
             bpmn_process_instance.catch(CancelEventDefinition())
-            self._do_engine_steps(bpmn_process_instance)
+            # Due to this being static, can't save granular step details in this case
+            bpmn_process_instance.do_engine_steps()
         except WorkflowTaskExecException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
