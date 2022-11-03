@@ -1017,7 +1017,7 @@ class ProcessInstanceProcessor:
             # A little hackly, but make the bpmn_process_instance catch a cancel event.
             bpmn_process_instance.signal("cancel")  # generate a cancel signal.
             bpmn_process_instance.catch(CancelEventDefinition())
-            self._do_engine_steps(bpmn_process_instance.do_engine_steps)
+            self._do_engine_steps(bpmn_process_instance)
         except WorkflowTaskExecException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
