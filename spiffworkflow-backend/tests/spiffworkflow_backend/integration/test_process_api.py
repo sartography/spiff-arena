@@ -1,4 +1,5 @@
 """Test Process Api Blueprint."""
+import dataclasses
 import io
 import json
 import time
@@ -8,6 +9,7 @@ import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
+from spiffworkflow_backend import MyJSONEncoder
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -17,7 +19,7 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
+# from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_report import (
@@ -388,25 +390,30 @@ class TestProcessApi(BaseTest):
             display_name="Another Test Category",
             display_order=0,
             admin=False,
+            description="Test Description"
         )
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group)),
+            data=json.dumps(process_group.serialized),
+
         )
         assert response.status_code == 201
+        assert response.json
 
         # Check what is returned
-        result = ProcessGroupSchema().loads(response.get_data(as_text=True))
+        result = ProcessGroup(**response.json)
         assert result is not None
         assert result.display_name == "Another Test Category"
         assert result.id == "test"
+        assert result.description == "Test Description"
 
         # Check what is persisted
         persisted = ProcessModelService().get_process_group("test")
         assert persisted.display_name == "Another Test Category"
         assert persisted.id == "test"
+        assert persisted.description == "Test Description"
 
     def test_process_group_delete(
         self,

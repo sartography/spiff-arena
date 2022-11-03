@@ -14,6 +14,7 @@ export interface RecentProcessModel {
 export interface ProcessGroup {
   id: string;
   display_name: string;
+  description?: string | null;
 }
 
 export interface ProcessModel {

@@ -9,12 +9,14 @@ type OwnProps = {
   onChange: (..._args: any[]) => any;
   processModels: ProcessModel[];
   selectedItem?: ProcessModel | null;
+  titleText?: string;
 };
 
 export default function ProcessModelSearch({
   processModels,
   selectedItem,
   onChange,
+  titleText = 'Process model',
 }: OwnProps) {
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
@@ -38,7 +40,7 @@ export default function ProcessModelSearch({
       }}
       shouldFilterItem={shouldFilterProcessModel}
       placeholder="Choose a process model"
-      titleText="Process model"
+      titleText={titleText}
       selectedItem={selectedItem}
     />
   );
