@@ -732,6 +732,10 @@ class ProcessInstanceProcessor:
         if processed_identifiers is None:
             processed_identifiers = set()
         processor_dependencies = parser.get_process_dependencies()
+
+        # since get_process_dependencies() returns a set with None sometimes, we need to remove it
+        processor_dependencies = processor_dependencies - {None}
+
         processor_dependencies_new = processor_dependencies - processed_identifiers
         bpmn_process_identifiers_in_parser = parser.get_process_ids()
 

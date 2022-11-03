@@ -9,8 +9,8 @@ from spiffworkflow_backend.models.script_attributes_context import (
 from spiffworkflow_backend.scripts.script import Script
 
 
-class GetUser(Script):
-    """GetUser."""
+class GetCurrentUser(Script):
+    """GetCurrentUser."""
 
     def get_description(self) -> str:
         """Get_description."""
