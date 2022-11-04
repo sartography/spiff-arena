@@ -1119,6 +1119,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.json is not None
+        # assert response.json['next_task'] is not None
+
         active_tasks = (
             db.session.query(ActiveTaskModel)
             .filter(ActiveTaskModel.process_instance_id == process_instance_id)
