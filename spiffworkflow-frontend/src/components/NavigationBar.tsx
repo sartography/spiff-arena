@@ -123,10 +123,14 @@ export default function NavigationBar() {
             <HeaderName href="/" prefix="" data-qa="spiffworkflow-logo">
               <img src={logo} className="app-logo" alt="logo" />
             </HeaderName>
-            <HeaderNavigation aria-label="Spiffworkflow">
+            <HeaderNavigation
+              data-qa="main-nav-header"
+              aria-label="Spiffworkflow"
+            >
               {headerMenuItems()}
             </HeaderNavigation>
             <SideNav
+              data-qa="side-nav-items"
               aria-label="Side navigation"
               expanded={isSideNavExpanded}
               isPersistent={false}

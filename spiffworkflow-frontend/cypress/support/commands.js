@@ -31,7 +31,9 @@ Cypress.Commands.add('getBySel', (selector, ...args) => {
 });
 
 Cypress.Commands.add('navigateToHome', () => {
-  cy.getBySel('nav-home').click();
+  cy.get('button[aria-label="Open menu"]').click();
+  cy.getBySel('side-nav-items').contains('Home').click();
+  // cy.getBySel('nav-home').click();
 });
 
 Cypress.Commands.add('navigateToAdmin', () => {
