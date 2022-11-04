@@ -378,144 +378,55 @@ export default function ProcessInstanceList() {
   };
 
   const buildTable = () => {
-    // const rows = processInstances.map((row: any) => {
-    //   const formattedStartDate =
-    //     convertSecondsToFormattedDate(row.start_in_seconds) || '-';
-    //   const formattedEndDate =
-    //     convertSecondsToFormattedDate(row.end_in_seconds) || '-';
-    //
-    //   return (
-    //     <tr key={row.id}>
-    //       <td>
-    //         <Link
-    //           data-qa="process-instance-show-link"
-    //           to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}/process-instances/${row.id}`}
-    //         >
-    //           {row.id}
-    //         </Link>
-    //       </td>
-    //       <td>
-    //         <Link to={`/admin/process-groups/${row.process_group_identifier}`}>
-    //           {row.process_group_identifier}
-    //         </Link>
-    //       </td>
-    //       <td>
-    //         <Link
-    //           to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}`}
-    //         >
-    //           {row.process_model_identifier}
-    //         </Link>
-    //       </td>
-    //       <td>{formattedStartDate}</td>
-    //       <td>{formattedEndDate}</td>
-    //       <td data-qa={`process-instance-status-${row.status}`}>
-    //         {row.status}
-    //       </td>
-    //     </tr>
-    //   );
-    // });
-    // return (
-    //   <Table size="lg">
-    //     <thead>
-    //       <tr>
-    //         <th>Process Instance Id</th>
-    //         <th>Process Group</th>
-    //         <th>Process Model</th>
-    //         <th>Start Time</th>
-    //         <th>End Time</th>
-    //         <th>Status</th>
-    //       </tr>
-    //     </thead>
-    //     <tbody>{rows}</tbody>
-    //   </Table>
-    // );
-    const rows = [
-      {
-        id: 'load-balancer-1',
-        name: 'Load Balancer 1',
-        rule: 'Round robin',
-        Status: 'Starting',
-        other: 'Test',
-        example: '22',
-      },
-      {
-        id: 'load-balancer-2',
-        name: 'Load Balancer 2',
-        rule: 'DNS delegation',
-        status: 'Active',
-        other: 'Test',
-        example: '22',
-      },
-      {
-        id: 'load-balancer-3',
-        name: 'Load Balancer 3',
-        rule: 'Round robin',
-        status: 'Disabled',
-        other: 'Test',
-        example: '22',
-      },
-      {
-        id: 'load-balancer-4',
-        name: 'Load Balancer 4',
-        rule: 'Round robin',
-        status: 'Disabled',
-        other: 'Test',
-        example: '22',
-      },
-      {
-        id: 'load-balancer-5',
-        name: 'Load Balancer 5',
-        rule: 'Round robin',
-        status: 'Disabled',
-        other: 'Test',
-        example: '22',
-      },
-      {
-        id: 'load-balancer-6',
-        name: 'Load Balancer 6',
-        rule: 'Round robin',
-        status: 'Disabled',
-        other: 'Test',
-        example: '22',
-      },
-      {
-        id: 'load-balancer-7',
-        name: 'Load Balancer 7',
-        rule: 'Round robin',
-        status: 'Disabled',
-        other: 'Test',
-        example: '22',
-      },
-    ];
-    const headers = ['Name', 'Rule', 'Status', 'Other', 'Example'];
+    const rows = processInstances.map((row: any) => {
+      const formattedStartDate =
+        convertSecondsToFormattedDate(row.start_in_seconds) || '-';
+      const formattedEndDate =
+        convertSecondsToFormattedDate(row.end_in_seconds) || '-';
 
+      return (
+        <tr key={row.id}>
+          <td>
+            <Link
+              data-qa="process-instance-show-link"
+              to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}/process-instances/${row.id}`}
+            >
+              {row.id}
+            </Link>
+          </td>
+          <td>
+            <Link to={`/admin/process-groups/${row.process_group_identifier}`}>
+              {row.process_group_identifier}
+            </Link>
+          </td>
+          <td>
+            <Link
+              to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}`}
+            >
+              {row.process_model_identifier}
+            </Link>
+          </td>
+          <td>{formattedStartDate}</td>
+          <td>{formattedEndDate}</td>
+          <td data-qa={`process-instance-status-${row.status}`}>
+            {row.status}
+          </td>
+        </tr>
+      );
+    });
     return (
-      <Table size="lg" useZebraStyles={false} isSortable>
-        <TableHead>
-          <TableRow>
-            {headers.map((header) => (
-              <TableHeader
-                id={header}
-                key={header}
-                isSortable
-                sortDirection="ASC"
-              >
-                {header}
-              </TableHeader>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id}>
-              {Object.keys(row)
-                .filter((key) => key !== 'id')
-                .map((key) => {
-                  return <TableCell key={key}>{(row as any)[key]}</TableCell>;
-                })}
-            </TableRow>
-          ))}
-        </TableBody>
+      <Table size="lg">
+        <thead>
+          <tr>
+            <th>Process Instance Id</th>
+            <th>Process Group</th>
+            <th>Process Model</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>{rows}</tbody>
       </Table>
     );
   };
