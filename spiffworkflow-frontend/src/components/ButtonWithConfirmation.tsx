@@ -45,30 +45,11 @@ export default function ButtonWithConfirmation({
         onRequestSubmit={handleConfirmation}
       />
     );
-    // return (
-    //   <Modal
-    //     show={showConfirmationPrompt}
-    //     onHide={handleConfirmationPromptCancel}
-    //   >
-    //     <Modal.Header closeButton>
-    //       <Modal.Title>{title}</Modal.Title>
-    //     </Modal.Header>
-    //     {modalBodyElement()}
-    //     <Modal.Footer>
-    //       <Button variant="secondary" onClick={handleConfirmationPromptCancel}>
-    //         Cancel
-    //       </Button>
-    //       <Button variant="primary" onClick={handleConfirmation}>
-    //         {confirmButtonLabel}
-    //       </Button>
-    //     </Modal.Footer>
-    //   </Modal>
-    // );
   };
 
   return (
     <>
-      <Button onClick={handleShowConfirmationPrompt} variant="danger">
+      <Button onClick={handleShowConfirmationPrompt} kind="danger">
         {buttonLabel}
       </Button>
       {confirmationDialog()}

@@ -119,31 +119,25 @@ export default function ReactFormEditor() {
 
   const newFileNameBox = () => {
     return (
-      <Modal show={showFileNameEditor} onHide={handleFileNameCancel}>
-        <Modal.Header closeButton>
-          <Modal.Title>Process Model File Name</Modal.Title>
-        </Modal.Header>
-        <form onSubmit={handleFileNameSave}>
-          <label>File Name:</label>
-          <span>
-            <input
-              name="file_name"
-              type="text"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              autoFocus
-            />
-            .{fileExtension}
-          </span>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleFileNameCancel}>
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit">
-              Save Changes
-            </Button>
-          </Modal.Footer>
-        </form>
+      <Modal
+        open={showFileNameEditor}
+        modalHeading="Processs Model File Name"
+        primaryButtonText="Save Changes"
+        secondaryButtonText="Cancel"
+        onSecondarySubmit={handleFileNameCancel}
+        onRequestSubmit={handleFileNameSave}
+      >
+        <label>File Name:</label>
+        <span>
+          <input
+            name="file_name"
+            type="text"
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            autoFocus
+          />
+          {fileExtension}
+        </span>
       </Modal>
     );
   };
@@ -161,7 +155,7 @@ export default function ReactFormEditor() {
           {processModelFile ? `: ${(processModelFile as any).name}` : ''}
         </h2>
         {newFileNameBox()}
-        <Button onClick={saveFile} variant="danger">
+        <Button onClick={saveFile} variant="danger" data-qa="file-save-button">
           Save
         </Button>
         {params.file_name ? (
