@@ -35,20 +35,24 @@ export default function PaginationForTable({
     navigate(`${path}?page=${newPage}&per_page=${pageSize}${queryParamString}`);
   };
 
-  return (
-    <>
-      {tableToDisplay}
-      <Pagination
-        backwardText="Previous page"
-        forwardText="Next page"
-        itemsPerPageText="Items per page:"
-        page={page}
-        pageNumberText="Page Number"
-        pageSize={perPage}
-        pageSizes={perPageOptions || PER_PAGE_OPTIONS}
-        totalItems={(pagination as any).total}
-        onChange={updateRows}
-      />
-    </>
-  );
+  if (pagination) {
+    return (
+      <>
+        {tableToDisplay}
+        <Pagination
+          data-qa="pagination-options"
+          backwardText="Previous page"
+          forwardText="Next page"
+          itemsPerPageText="Items per page:"
+          page={page}
+          pageNumberText="Page Number"
+          pageSize={perPage}
+          pageSizes={perPageOptions || PER_PAGE_OPTIONS}
+          totalItems={pagination.total}
+          onChange={updateRows}
+        />
+      </>
+    );
+  }
+  return null;
 }

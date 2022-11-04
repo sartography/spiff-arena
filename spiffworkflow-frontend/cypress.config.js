@@ -10,4 +10,9 @@ module.exports = defineConfig({
       // implement node event listeners here
     },
   },
+
+  // this scrolls away from the elements for some reason with carbon when set to top
+  // https://github.com/cypress-io/cypress/issues/2353
+  // https://docs.cypress.io/guides/core-concepts/interacting-with-elements#Scrolling
+  scrollBehavior: "center",
 });
