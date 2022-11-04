@@ -30,7 +30,7 @@ describe('process-groups', () => {
       newGroupDisplayName
     );
 
-    cy.contains('Delete Process Group').click();
+    cy.contains('Delete').click();
     cy.contains('Are you sure');
     cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.url().should('include', `process-groups`);
