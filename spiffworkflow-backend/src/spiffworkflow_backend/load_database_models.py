@@ -46,6 +46,9 @@ from spiffworkflow_backend.models.process_instance_report import (
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel  # noqa: F401
 from spiffworkflow_backend.models.secret_model import SecretModel  # noqa: F401
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel  # noqa: F401
+from spiffworkflow_backend.models.spiff_step_details import (
+    SpiffStepDetailsModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel  # noqa: F401
 from spiffworkflow_backend.models.group import GroupModel  # noqa: F401
 

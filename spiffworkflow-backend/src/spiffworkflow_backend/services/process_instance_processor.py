@@ -29,31 +29,39 @@ from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ign
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
-from SpiffWorkflow.bpmn.serializer import BpmnWorkflowSerializer  # type: ignore
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
-from SpiffWorkflow.bpmn.specs.events import CancelEventDefinition  # type: ignore
-from SpiffWorkflow.bpmn.specs.events import EndEvent
+from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.events.event_definitions import CancelEventDefinition  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
-from SpiffWorkflow.dmn.serializer import BusinessRuleTaskConverter  # type: ignore
+from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
-from SpiffWorkflow.spiff.serializer import BoundaryEventConverter  # type: ignore
-from SpiffWorkflow.spiff.serializer import CallActivityTaskConverter
-from SpiffWorkflow.spiff.serializer import EndEventConverter
-from SpiffWorkflow.spiff.serializer import IntermediateCatchEventConverter
-from SpiffWorkflow.spiff.serializer import IntermediateThrowEventConverter
-from SpiffWorkflow.spiff.serializer import ManualTaskConverter
-from SpiffWorkflow.spiff.serializer import NoneTaskConverter
-from SpiffWorkflow.spiff.serializer import ReceiveTaskConverter
-from SpiffWorkflow.spiff.serializer import ScriptTaskConverter
-from SpiffWorkflow.spiff.serializer import SendTaskConverter
-from SpiffWorkflow.spiff.serializer import ServiceTaskConverter
-from SpiffWorkflow.spiff.serializer import StartEventConverter
-from SpiffWorkflow.spiff.serializer import SubWorkflowTaskConverter
-from SpiffWorkflow.spiff.serializer import TransactionSubprocessConverter
-from SpiffWorkflow.spiff.serializer import UserTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    CallActivityTaskConverter,
+)
+from SpiffWorkflow.spiff.serializer.task_spec_converters import EndEventConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    IntermediateCatchEventConverter,
+)
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    IntermediateThrowEventConverter,
+)
+from SpiffWorkflow.spiff.serializer.task_spec_converters import ManualTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import ReceiveTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import ScriptTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import SendTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import ServiceTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import StartEventConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import SubWorkflowTaskConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    TransactionSubprocessConverter,
+)
+from SpiffWorkflow.spiff.serializer.task_spec_converters import UserTaskConverter
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
@@ -79,12 +87,16 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserModelSchema
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
+from spiffworkflow_backend.services.spec_file_service import (
+    ProcessModelFileNotFoundError,
+)
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -276,9 +288,9 @@ class ProcessInstanceProcessor:
         self, process_instance_model: ProcessInstanceModel, validate_only: bool = False
     ) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
-        current_app.config[
-            "THREAD_LOCAL_DATA"
-        ].process_instance_id = process_instance_model.id
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.process_instance_id = process_instance_model.id
+        tld.spiff_step = process_instance_model.spiff_step
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
         current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
@@ -411,10 +423,8 @@ class ProcessInstanceProcessor:
             bpmn_process_spec, subprocesses
         )
 
-    def add_user_info_to_process_instance(
-        self, bpmn_process_instance: BpmnWorkflow
-    ) -> None:
-        """Add_user_info_to_process_instance."""
+    def current_user(self) -> Any:
+        """Current_user."""
         current_user = None
         if UserService.has_user():
             current_user = UserService.current_user()
@@ -424,6 +434,14 @@ class ProcessInstanceProcessor:
         #   coming in from the api
         elif self.process_instance_model.process_initiator_id:
             current_user = self.process_instance_model.process_initiator
+
+        return current_user
+
+    def add_user_info_to_process_instance(
+        self, bpmn_process_instance: BpmnWorkflow
+    ) -> None:
+        """Add_user_info_to_process_instance."""
+        current_user = self.current_user()
 
         if current_user:
             current_user_data = UserModelSchema().dump(current_user)
@@ -542,9 +560,31 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
+    def save_spiff_step_details(self) -> None:
+        """SaveSpiffStepDetails."""
+        bpmn_json = self.serialize()
+        wf_json = json.loads(bpmn_json)
+        task_json = "{}"
+        if "tasks" in wf_json:
+            task_json = json.dumps(wf_json["tasks"])
+
+        # TODO want to just save the tasks, something wasn't immediately working
+        # so after the flow works with the full wf_json revisit this
+        task_json = wf_json
+        details_model = SpiffStepDetailsModel(
+            process_instance_id=self.process_instance_model.id,
+            spiff_step=self.process_instance_model.spiff_step or 1,
+            task_json=task_json,
+            timestamp=round(time.time()),
+            completed_by_user_id=self.current_user().id,
+        )
+        db.session.add(details_model)
+        db.session.commit()
+
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
+
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())
         self.process_instance_model.status = self.get_status().value
@@ -632,10 +672,14 @@ class ProcessInstanceProcessor:
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
             if process_model.primary_file_name:
-                etree_element = SpecFileService.get_etree_element_from_file_name(
-                    process_model, process_model.primary_file_name
-                )
-                bpmn_process_identifiers = []
+                try:
+                    etree_element = SpecFileService.get_etree_element_from_file_name(
+                        process_model, process_model.primary_file_name
+                    )
+                    bpmn_process_identifiers = []
+                except ProcessModelFileNotFoundError:
+                    # if primary_file_name doesn't actually exist on disk, then just go on to the next process_model
+                    continue
 
                 try:
                     bpmn_process_identifiers = (
@@ -663,6 +707,11 @@ class ProcessInstanceProcessor:
         bpmn_process_identifier: str,
     ) -> str:
         """Bpmn_file_full_path_from_bpmn_process_identifier."""
+        if bpmn_process_identifier is None:
+            raise ValueError(
+                "bpmn_file_full_path_from_bpmn_process_identifier: bpmn_process_identifier is unexpectedly None"
+            )
+
         bpmn_process_id_lookup = BpmnProcessIdLookup.query.filter_by(
             bpmn_process_identifier=bpmn_process_identifier
         ).first()
@@ -695,6 +744,10 @@ class ProcessInstanceProcessor:
         if processed_identifiers is None:
             processed_identifiers = set()
         processor_dependencies = parser.get_process_dependencies()
+
+        # since get_process_dependencies() returns a set with None sometimes, we need to remove it
+        processor_dependencies = processor_dependencies - {None}
+
         processor_dependencies_new = processor_dependencies - processed_identifiers
         bpmn_process_identifiers_in_parser = parser.get_process_ids()
 
@@ -930,11 +983,29 @@ class ProcessInstanceProcessor:
 
             db.session.commit()
 
+    def increment_spiff_step(self) -> None:
+        """Spiff_step++."""
+        spiff_step = self.process_instance_model.spiff_step or 0
+        spiff_step += 1
+        self.process_instance_model.spiff_step = spiff_step
+        current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
+        db.session.add(self.process_instance_model)
+        db.session.commit()
+
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         try:
-            self.bpmn_process_instance.refresh_waiting_tasks()
-            self.bpmn_process_instance.do_engine_steps(exit_at=exit_at)
+            self.bpmn_process_instance.refresh_waiting_tasks(
+                will_refresh_task=lambda t: self.increment_spiff_step(),
+                did_refresh_task=lambda t: self.save_spiff_step_details(),
+            )
+
+            self.bpmn_process_instance.do_engine_steps(
+                exit_at=exit_at,
+                will_complete_task=lambda t: self.increment_spiff_step(),
+                did_complete_task=lambda t: self.save_spiff_step_details(),
+            )
+
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
 
@@ -956,6 +1027,7 @@ class ProcessInstanceProcessor:
             # A little hackly, but make the bpmn_process_instance catch a cancel event.
             bpmn_process_instance.signal("cancel")  # generate a cancel signal.
             bpmn_process_instance.catch(CancelEventDefinition())
+            # Due to this being static, can't save granular step details in this case
             bpmn_process_instance.do_engine_steps()
         except WorkflowTaskExecException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
@@ -1054,7 +1126,9 @@ class ProcessInstanceProcessor:
 
     def complete_task(self, task: SpiffTask) -> None:
         """Complete_task."""
+        self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
+        self.save_spiff_step_details()
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""

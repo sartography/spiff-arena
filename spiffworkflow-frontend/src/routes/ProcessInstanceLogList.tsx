@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Table } from '@carbon/react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
@@ -40,7 +40,14 @@ export default function ProcessInstanceLogList() {
           <td>{rowToUse.bpmn_task_name}</td>
           <td>{rowToUse.bpmn_task_type}</td>
           <td>{rowToUse.username}</td>
-          <td>{convertSecondsToFormattedDate(rowToUse.timestamp)}</td>
+          <td>
+            <Link
+              data-qa="process-instance-show-link"
+              to={`/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
+            >
+              {convertSecondsToFormattedDate(rowToUse.timestamp)}
+            </Link>
+          </td>
         </tr>
       );
     });

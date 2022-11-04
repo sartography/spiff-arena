@@ -25,3 +25,4 @@ class SpiffLoggingModel(SpiffworkflowBaseDBModel):
     timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False)
     message: Optional[str] = db.Column(db.String(255), nullable=True)
     current_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True)
+    spiff_step: int = db.Column(db.Integer, nullable=False)

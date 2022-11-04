@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: bdd1d64689db
+Revision ID: b1647eff45c9
 Revises: 
-Create Date: 2022-11-02 11:31:50.606843
+Create Date: 2022-11-02 14:25:09.992800
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'bdd1d64689db'
+revision = 'b1647eff45c9'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -106,6 +106,7 @@ def upgrade():
     sa.Column('status', sa.String(length=50), nullable=True),
     sa.Column('bpmn_version_control_type', sa.String(length=50), nullable=True),
     sa.Column('bpmn_version_control_identifier', sa.String(length=255), nullable=True),
+    sa.Column('spiff_step', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['process_initiator_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -229,7 +230,19 @@ def upgrade():
     sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
     sa.Column('message', sa.String(length=255), nullable=True),
     sa.Column('current_user_id', sa.Integer(), nullable=True),
+    sa.Column('spiff_step', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['current_user_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('spiff_step_details',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('spiff_step', sa.Integer(), nullable=False),
+    sa.Column('task_json', sa.JSON(), nullable=False),
+    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
+    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -266,6 +279,7 @@ def downgrade():
     op.drop_index(op.f('ix_active_task_user_user_id'), table_name='active_task_user')
     op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
     op.drop_table('active_task_user')
+    op.drop_table('spiff_step_details')
     op.drop_table('spiff_logging')
     op.drop_table('permission_assignment')
     op.drop_table('message_instance')
