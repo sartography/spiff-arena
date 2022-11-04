@@ -1,5 +1,4 @@
 """Process_model_service."""
-import dataclasses
 import json
 import os
 import shutil
@@ -275,6 +274,5 @@ class ProcessModelService(FileSystemService):
             with open(spec_path, "w") as wf_json:
                 json.dump(self.WF_SCHEMA.dump(spec), wf_json, indent=4)
         if process_group:
-            spec.process_group = process_group
             spec.process_group_id = process_group.id
         return spec

@@ -43,7 +43,8 @@ from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.process_group import ProcessGroup, ProcessGroupSchema
+from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
@@ -134,9 +135,7 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
     return make_response(jsonify({"results": response_dict}), 200)
 
 
-def process_group_add(
-    body: dict
-) -> flask.wrappers.Response:
+def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_model_service = ProcessModelService()
     process_group = ProcessGroup(**body)
@@ -150,11 +149,16 @@ def process_group_delete(process_group_id: str) -> flask.wrappers.Response:
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_group_update(
-    process_group_id: str, body: dict
-) -> flask.wrappers.Response:
+def process_group_update(process_group_id: str, body: dict) -> flask.wrappers.Response:
     """Process Group Update."""
-    process_group = ProcessGroup(id=process_group_id, **body)
+    body_include_list = ["display_name", "description"]
+    body_filtered = {
+        include_item: body[include_item]
+        for include_item in body_include_list
+        if include_item in body
+    }
+
+    process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService().update_process_group(process_group)
     return make_response(jsonify(process_group), 200)
 
@@ -221,7 +225,6 @@ def process_model_add(
             status_code=400,
         )
 
-    process_model_info.process_group = process_group
     process_model_service.add_spec(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
