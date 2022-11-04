@@ -68,7 +68,7 @@ export default function SecretNew() {
             }}
           />
         </Form.Group>
-        <Stack direction="horizontal" gap={3}>
+        <Stack orientation="horizontal" gap={3}>
           <Button variant="primary" type="submit">
             Submit
           </Button>

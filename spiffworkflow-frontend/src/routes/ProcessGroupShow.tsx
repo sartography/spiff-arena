@@ -82,7 +82,7 @@ export default function ProcessGroupShow() {
           ]}
         />
         <ul>
-          <Stack direction="horizontal" gap={3}>
+          <Stack orientation="horizontal" gap={3}>
             <Button
               href={`/admin/process-models/${(processGroup as any).id}/new`}
             >

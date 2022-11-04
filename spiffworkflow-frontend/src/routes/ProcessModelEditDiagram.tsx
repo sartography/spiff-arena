@@ -514,10 +514,10 @@ export default function ProcessModelEditDiagram() {
               <Col xs={1}>{scriptUnitTestResultBoolElement}</Col>
             </Row>
           </Content>
-          <Stack direction="horizontal" gap={3}>
+          <Stack orientation="horizontal" gap={3}>
             {unitTestFailureElement()}
           </Stack>
-          <Stack direction="horizontal" gap={3}>
+          <Stack orientation="horizontal" gap={3}>
             <Stack>
               <div>Input Json:</div>
               <div>

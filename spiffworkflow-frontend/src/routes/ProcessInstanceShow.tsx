@@ -366,7 +366,7 @@ export default function ProcessInstanceShow() {
           processGroupId={params.process_group_id}
           linkProcessModel
         />
-        <Stack direction="horizontal" gap={3}>
+        <Stack orientation="horizontal" gap={3}>
           <h2>Process Instance Id: {processInstanceToUse.id}</h2>
           <ButtonWithConfirmation
             description="Delete Process Instance?"
