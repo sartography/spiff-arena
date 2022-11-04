@@ -35,7 +35,7 @@ Cypress.Commands.add('navigateToHome', () => {
 });
 
 Cypress.Commands.add('navigateToAdmin', () => {
-  cy.getBySel('spiffworkflow-logo').click();
+  cy.visit('/admin');
 });
 
 Cypress.Commands.add('login', (selector, ...args) => {

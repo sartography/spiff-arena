@@ -30,6 +30,10 @@ span.bjs-crumb {
   margin-bottom: 2em;
 }
 
+// forces the navigation items to be displayed at all viewport sizes
+.cds--header__nav {
+	display: block;
+}
 
 .active-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
   fill: yellow !important;

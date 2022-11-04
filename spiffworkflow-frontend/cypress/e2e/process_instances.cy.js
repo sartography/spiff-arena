@@ -48,7 +48,7 @@ const updateBpmnPythonScriptWithMonaco = (
     .focused() // change subject to currently focused element
     // .type('{ctrl}a') // had been doing it this way, but it turns out to be flaky relative to clear()
     .clear()
-    .type(pythonScript);
+    .type(pythonScript, { delay: 30 });
 
   cy.contains('Close').click();
   // wait for a little bit for the xml to get set before saving
@@ -111,8 +111,10 @@ describe('process-instances', () => {
   });
 
   it('can create a new instance and can modify with monaco text editor', () => {
-    const originalPythonScript = 'person = "Kevin"';
-    const newPythonScript = 'person = "Mike"';
+    // leave off the ending double quote since manco adds it
+    const originalPythonScript = 'person = "Kevin';
+    const newPythonScript = 'person = "Mike';
+
     const bpmnFile = 'process_model_one.bpmn';
 
     // Change bpmn
@@ -152,7 +154,7 @@ describe('process-instances', () => {
     cy.basicPaginationTest();
   });
 
-  it('can filter', () => {
+  it.only('can filter', () => {
     cy.getBySel('process-instance-list-link').click();
     cy.assertAtLeastOneItemInPaginatedResults();
 

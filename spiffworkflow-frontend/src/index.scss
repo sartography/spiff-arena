@@ -1,3 +1,5 @@
+// @use '@carbon/react/scss/themes';
+// @use '@carbon/react/scss/theme' with ($theme: themes.$g100);
 @use '@carbon/react';
 @use '@carbon/styles';
 // @include grid.flex-grid();
