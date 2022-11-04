@@ -20,6 +20,9 @@ SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
 # different places and this allows us to know exactly where we are at the start
 BPMN_SPEC_ABSOLUTE_DIR = os.path.join(
     os.path.dirname(__file__),
+    "..",
+    "..",
+    "..",
     "tests",
     "spiffworkflow_backend",
     "files",
