@@ -105,6 +105,7 @@ export default function ProcessGroupForm({
     const textInputs = [
       <TextInput
         id="process-group-display-name"
+        name="display_name"
         invalidText="Display Name is required."
         invalid={displayNameInvalid}
         labelText="Display Name*"
@@ -118,6 +119,7 @@ export default function ProcessGroupForm({
       textInputs.push(
         <TextInput
           id="process-group-identifier"
+          name="id"
           invalidText="Identifier is required and must be all lowercase characters and hyphens."
           invalid={identifierInvalid}
           labelText="Identifier*"
@@ -137,6 +139,7 @@ export default function ProcessGroupForm({
     textInputs.push(
       <TextInput
         id="process-group-description"
+        name="description"
         labelText="Description"
         value={processGroup.description}
         onChange={(event: any) =>
@@ -159,7 +162,7 @@ export default function ProcessGroupForm({
         <ButtonWithConfirmation
           description={`Delete Process Group ${processGroup.id}?`}
           onConfirmation={deleteProcessGroup}
-          buttonLabel="Delete"
+          buttonLabel="Delete Process Group"
           confirmButtonLabel="Delete"
         />
       );

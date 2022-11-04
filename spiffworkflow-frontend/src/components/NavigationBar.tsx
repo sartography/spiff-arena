@@ -56,14 +56,22 @@ export default function NavigationBar() {
       return (
         <>
           <HeaderGlobalAction>{UserService.getUsername()}</HeaderGlobalAction>
-          <HeaderGlobalAction aria-label="Logout" onClick={handleLogout}>
+          <HeaderGlobalAction
+            aria-label="Logout"
+            onClick={handleLogout}
+            data-qa="logout-button"
+          >
             <Logout />
           </HeaderGlobalAction>
         </>
       );
     }
     return (
-      <HeaderGlobalAction aria-label="Login" onClick={handleLogin}>
+      <HeaderGlobalAction
+        data-qa="login-button"
+        aria-label="Login"
+        onClick={handleLogin}
+      >
         <Login />
       </HeaderGlobalAction>
     );

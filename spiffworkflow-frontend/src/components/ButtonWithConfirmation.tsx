@@ -26,13 +26,6 @@ export default function ButtonWithConfirmation({
     setShowConfirmationPrompt(false);
   };
 
-  const modalBodyElement = () => {
-    if (description) {
-      return <Modal.Body>{description}</Modal.Body>;
-    }
-    return null;
-  };
-
   const handleConfirmation = () => {
     onConfirmation();
     setShowConfirmationPrompt(false);
@@ -43,6 +36,7 @@ export default function ButtonWithConfirmation({
       <Modal
         open={showConfirmationPrompt}
         danger
+        data-qa="modal-confirmation-dialog"
         modalHeading={description}
         modalLabel={title}
         primaryButtonText={confirmButtonLabel}

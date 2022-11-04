@@ -101,18 +101,15 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('basicPaginationTest', () => {
-  cy.get('#pagination-page-dropdown')
-    .type('typing_to_open_dropdown_box....FIXME')
-    .find('.dropdown-item')
-    .contains(/^2$/)
-    .click();
+  cy.getBySel('pagination-options').scrollIntoView();
+  cy.get('.cds--select__item-count').find('.cds--select-input').select('2');
 
-  cy.contains(/^1-2 of \d+$/);
-  cy.getBySel('pagination-previous-button-inactive');
-  cy.getBySel('pagination-next-button').click();
-  cy.contains(/^3-4 of \d+$/);
-  cy.getBySel('pagination-previous-button').click();
-  cy.contains(/^1-2 of \d+$/);
+  // NOTE: this is a em dash instead of en dash
+  cy.contains(/\b1–2 of \d+/);
+  cy.get('.cds--pagination__button--forward').click();
+  cy.contains(/\b3–4 of \d+/);
+  cy.get('.cds--pagination__button--backward').click();
+  cy.contains(/\b1–2 of \d+/);
 });
 
 Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
