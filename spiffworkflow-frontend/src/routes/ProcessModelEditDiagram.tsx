@@ -194,31 +194,25 @@ export default function ProcessModelEditDiagram() {
   const newFileNameBox = () => {
     const fileExtension = `.${searchParams.get('file_type')}`;
     return (
-      <Modal show={showFileNameEditor} onHide={handleFileNameCancel}>
-        <Modal.Header closeButton>
-          <Modal.Title>Process Model File Name</Modal.Title>
-        </Modal.Header>
-        <form onSubmit={handleFileNameSave}>
-          <label>File Name:</label>
-          <span>
-            <input
-              name="file_name"
-              type="text"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              autoFocus
-            />
-            {fileExtension}
-          </span>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleFileNameCancel}>
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit">
-              Save Changes
-            </Button>
-          </Modal.Footer>
-        </form>
+      <Modal
+        open={showFileNameEditor}
+        modalHeading="Processs Model File Name"
+        primaryButtonText="Save Changes"
+        secondaryButtonText="Cancel"
+        onSecondarySubmit={handleFileNameCancel}
+        onRequestSubmit={handleFileNameSave}
+      >
+        <label>File Name:</label>
+        <span>
+          <input
+            name="file_name"
+            type="text"
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            autoFocus
+          />
+          {fileExtension}
+        </span>
       </Modal>
     );
   };
