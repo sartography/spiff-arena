@@ -283,7 +283,6 @@ export default function ProcessModelEditDiagram() {
     // we should update this to act like updating scripts
     // where we pass an event to bpmn-js
     setScriptModeling(modeling);
-
     setScriptText(script || '');
     setScriptType(scriptTypeString);
     setScriptEventBus(eventBus);
@@ -559,28 +558,25 @@ export default function ProcessModelEditDiagram() {
     if (scriptElement) {
       scriptName = (scriptElement as any).di.bpmnElement.name;
     }
+
     return (
-      <Modal size="xl" show={showScriptEditor} onHide={handleScriptEditorClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Editing Script: {scriptName}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Editor
-            height={500}
-            width="auto"
-            options={generalEditorOptions()}
-            defaultLanguage="python"
-            defaultValue={scriptText}
-            onChange={handleEditorScriptChange}
-            onMount={handleEditorDidMount}
-          />
-          {scriptUnitTestEditorElement()}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleScriptEditorClose}>
-            Close
-          </Button>
-        </Modal.Footer>
+      <Modal
+        open={showScriptEditor}
+        modalHeading={`Editing Script: ${scriptName}`}
+        primaryButtonText="Close"
+        onRequestSubmit={handleScriptEditorClose}
+        size="lg"
+      >
+        <Editor
+          height={500}
+          width="auto"
+          options={generalEditorOptions()}
+          defaultLanguage="python"
+          value={scriptText}
+          onChange={handleEditorScriptChange}
+          onMount={handleEditorDidMount}
+        />
+        {scriptUnitTestEditorElement()}
       </Modal>
     );
   };

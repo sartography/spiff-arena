@@ -1,6 +1,14 @@
 import {
   Header,
+  HeaderContainer,
+  HeaderMenuButton,
+  SkipToContent,
   Theme,
+  HeaderMenu,
+  SideNav,
+  SideNavItem,
+  SideNavItems,
+  HeaderSideNavItems,
   HeaderName,
   HeaderNavigation,
   HeaderMenuItem,
@@ -77,35 +85,60 @@ export default function NavigationBar() {
     );
   };
 
-  if (activeKey) {
+  const headerMenuItems = () => {
     return (
-      <div className="spiffworkflow-header-container">
-        <Theme theme="g100">
-          <Header aria-label="Spiffworkflow">
-            <HeaderName href="/" prefix="">
+      <>
+        <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
+          Home
+        </HeaderMenuItem>
+        <HeaderMenuItem
+          href="/admin/process-groups"
+          isCurrentPage={isActivePage('/admin/process-groups')}
+          data-qa="header-nav-processes"
+        >
+          Processes
+        </HeaderMenuItem>
+        <HeaderMenuItem
+          href="/admin/process-instances"
+          isCurrentPage={isActivePage('/admin/process-instances')}
+        >
+          Process Instances
+        </HeaderMenuItem>
+      </>
+    );
+  };
+
+  if (activeKey) {
+    // TODO: apply theme g100 to the header
+    return (
+      <HeaderContainer
+        render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (
+          <Header aria-label="IBM Platform Name">
+            <SkipToContent />
+            <HeaderMenuButton
+              aria-label="Open menu"
+              onClick={onClickSideNavExpand}
+              isActive={isSideNavExpanded}
+            />
+            <HeaderName href="/" prefix="" data-qa="spiffworkflow-logo">
               <img src={logo} className="app-logo" alt="logo" />
             </HeaderName>
-            <HeaderNavigation aria-label="Spifffff">
-              <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
-                Home
-              </HeaderMenuItem>
-              <HeaderMenuItem
-                href="/admin/process-groups"
-                isCurrentPage={isActivePage('/admin/process-groups')}
-              >
-                Processes
-              </HeaderMenuItem>
-              <HeaderMenuItem
-                href="/admin/process-instances"
-                isCurrentPage={isActivePage('/admin/process-instances')}
-              >
-                Process Instances
-              </HeaderMenuItem>
+            <HeaderNavigation aria-label="Spiffworkflow">
+              {headerMenuItems()}
             </HeaderNavigation>
+            <SideNav
+              aria-label="Side navigation"
+              expanded={isSideNavExpanded}
+              isPersistent={false}
+            >
+              <SideNavItems>
+                <HeaderSideNavItems>{headerMenuItems()}</HeaderSideNavItems>
+              </SideNavItems>
+            </SideNav>
             <HeaderGlobalBar>{loginAndLogoutAction()}</HeaderGlobalBar>
           </Header>
-        </Theme>
-      </div>
+        )}
+      />
     );
   }
   return null;
