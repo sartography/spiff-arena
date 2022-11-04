@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Button, Table } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Table } from '@carbon/react';
 import { useParams, Link } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';

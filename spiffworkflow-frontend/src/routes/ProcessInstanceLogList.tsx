@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Table } from 'react-bootstrap';
+// @ts-ignore
+import { Table } from '@carbon/react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';

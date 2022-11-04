@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Stack, Table, Button } from 'react-bootstrap';
+// @ts-ignore
+import { Stack, Table, Button } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { Secret } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -64,8 +65,8 @@ export default function SecretShow() {
   if (secret) {
     return (
       <>
-        <Stack direction="horizontal" gap={3}>
-          <h2>Secret Key: {secret.key}</h2>
+        <h2>Secret Key: {secret.key}</h2>
+        <Stack orientation="horizontal" gap={3}>
           <ButtonWithConfirmation
             description="Delete Secret?"
             onConfirmation={deleteSecret}
