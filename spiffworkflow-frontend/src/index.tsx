@@ -4,6 +4,7 @@ import App from './App';
 
 import 'bootstrap/dist/css/bootstrap.css';
 import './index.css';
+import './index.scss';
 
 import reportWebVitals from './reportWebVitals';
 import UserService from './services/UserService';

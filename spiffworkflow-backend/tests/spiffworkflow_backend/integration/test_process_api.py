@@ -17,7 +17,6 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_report import (
@@ -388,25 +387,29 @@ class TestProcessApi(BaseTest):
             display_name="Another Test Category",
             display_order=0,
             admin=False,
+            description="Test Description",
         )
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group)),
+            data=json.dumps(process_group.serialized),
         )
         assert response.status_code == 201
+        assert response.json
 
         # Check what is returned
-        result = ProcessGroupSchema().loads(response.get_data(as_text=True))
+        result = ProcessGroup(**response.json)
         assert result is not None
         assert result.display_name == "Another Test Category"
         assert result.id == "test"
+        assert result.description == "Test Description"
 
         # Check what is persisted
         persisted = ProcessModelService().get_process_group("test")
         assert persisted.display_name == "Another Test Category"
         assert persisted.id == "test"
+        assert persisted.description == "Test Description"
 
     def test_process_group_delete(
         self,
@@ -461,7 +464,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-groups/{group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group)),
+            data=json.dumps(process_group.serialized),
         )
         assert response.status_code == 200
 
@@ -788,6 +791,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-groups/{test_process_group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["id"] == test_process_group_id
@@ -1299,7 +1303,7 @@ class TestProcessApi(BaseTest):
 
         # start > 2000, end < 5000 - this should eliminate the first 2 and the last
         response = client.get(
-            "/v1.0/process-instances?start_from=2001&end_till=5999",
+            "/v1.0/process-instances?start_from=2001&end_to=5999",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1310,7 +1314,7 @@ class TestProcessApi(BaseTest):
 
         # start > 1000, start < 4000 - this should eliminate the first and the last 2
         response = client.get(
-            "/v1.0/process-instances?start_from=1001&start_till=3999",
+            "/v1.0/process-instances?start_from=1001&start_to=3999",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1321,7 +1325,7 @@ class TestProcessApi(BaseTest):
 
         # end > 2000, end < 6000 - this should eliminate the first and the last
         response = client.get(
-            "/v1.0/process-instances?end_from=2001&end_till=5999",
+            "/v1.0/process-instances?end_from=2001&end_to=5999",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None

@@ -20,7 +20,10 @@ export const capitalizeFirstLetter = (string: any) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
-export const convertDateToSeconds = (date: any, onChangeFunction: any) => {
+export const convertDateToSeconds = (
+  date: any,
+  onChangeFunction: any = null
+) => {
   let dateInSeconds = date;
   if (date !== null) {
     let dateInMilliseconds = date;
@@ -39,12 +42,24 @@ export const convertDateToSeconds = (date: any, onChangeFunction: any) => {
   return null;
 };
 
-export const convertSecondsToFormattedDate = (seconds: number) => {
-  if (seconds) {
-    const startDate = new Date(seconds * 1000);
-    return format(startDate, DATE_FORMAT);
+export const convertStringToDate = (dateString: string) => {
+  if (dateString) {
+    return new Date(dateString);
   }
   return null;
+};
+
+export const convertSecondsToFormattedDate = (seconds: number) => {
+  if (seconds) {
+    const dateObject = new Date(seconds * 1000);
+    return format(dateObject, DATE_FORMAT);
+  }
+  return null;
+};
+
+export const convertDateStringToSeconds = (dateString: string) => {
+  const dateObject = convertStringToDate(dateString);
+  return convertDateToSeconds(dateObject);
 };
 
 export const objectIsEmpty = (obj: object) => {
@@ -89,4 +104,12 @@ export const getProcessModelFullIdentifierFromSearchParams = (
     )}/${searchParams.get('process_model_identifier')}`;
   }
   return processModelFullIdentifier;
+};
+
+// https://stackoverflow.com/a/71352046/6090676
+export const truncateString = (text: string, len: number) => {
+  if (text.length > len && text.length > 0) {
+    return `${text.split(' ').slice(0, len).join(' ')} ...`;
+  }
+  return text;
 };

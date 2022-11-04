@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Button, Modal, Stack } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Modal, Stack } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -408,15 +409,15 @@ export default function ProcessInstanceShow() {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     if (taskToDisplay) {
       return (
-        <Modal show={!!taskToUse} onHide={handleTaskDataDisplayClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              <Stack direction="horizontal" gap={2}>
-                {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-                {taskDataButtons(taskToUse)}
-              </Stack>
-            </Modal.Title>
-          </Modal.Header>
+        <Modal
+          open={!!taskToUse}
+          passiveModal
+          onRequestClose={handleTaskDataDisplayClose}
+        >
+          <Stack orientation="horizontal" gap={2}>
+            {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
+            {taskDataButtons(taskToUse)}
+          </Stack>
           {taskDataContainer()}
         </Modal>
       );
@@ -435,7 +436,7 @@ export default function ProcessInstanceShow() {
           processGroupId={params.process_group_id}
           linkProcessModel
         />
-        <Stack direction="horizontal" gap={3}>
+        <Stack orientation="horizontal" gap={3}>
           <h2>Process Instance Id: {processInstanceToUse.id}</h2>
           <ButtonWithConfirmation
             description="Delete Process Instance?"

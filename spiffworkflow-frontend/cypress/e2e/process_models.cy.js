@@ -99,7 +99,7 @@ describe('process-models', () => {
     cy.contains(/^Process Model File$/);
     // Some reason, cypress evals json strings so we have to escape it it with '{{}'
     cy.get('.view-line').type('{{} "test_key": "test_value" }');
-    cy.contains('Save').click();
+    cy.getBySel('file-save-button').click();
     cy.get('input[name=file_name]').type(jsonFileName);
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${jsonFileName}`);
@@ -168,12 +168,8 @@ describe('process-models', () => {
   });
 
   it('can allow searching for model', () => {
-    cy.get('[name=process-model-selection]').click();
-    cy.get('[name=process-model-selection]').type('model-3');
-    cy.get(
-      `[aria-label="acceptance-tests-group-one/acceptance-tests-model-3"]`
-    ).click();
-
-    cy.contains('Process Instances').click();
+    cy.getBySel('process-model-selection').click().type('model-3');
+    cy.contains('acceptance-tests-group-one/acceptance-tests-model-3').click();
+    cy.contains('List').click();
   });
 });

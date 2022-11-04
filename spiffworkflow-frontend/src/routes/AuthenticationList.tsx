@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
-import { Table } from 'react-bootstrap';
+// @ts-ignore
+import { Table } from '@carbon/react';
 import ErrorContext from '../contexts/ErrorContext';
 import { AuthenticationItem } from '../interfaces';
 import HttpService from '../services/HttpService';

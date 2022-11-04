@@ -43,6 +43,7 @@ from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
 from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -135,18 +136,12 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
     return make_response(jsonify({"results": response_dict}), 200)
 
 
-def process_group_add(
-    body: Dict[str, Union[str, bool, int]]
-) -> flask.wrappers.Response:
+def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_model_service = ProcessModelService()
-    process_group = ProcessGroupSchema().load(body)
+    process_group = ProcessGroup(**body)
     process_model_service.add_process_group(process_group)
-    return Response(
-        json.dumps(ProcessGroupSchema().dump(process_group)),
-        status=201,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(process_group), 201)
 
 
 def process_group_delete(process_group_id: str) -> flask.wrappers.Response:
@@ -155,13 +150,18 @@ def process_group_delete(process_group_id: str) -> flask.wrappers.Response:
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_group_update(
-    process_group_id: str, body: Dict[str, Union[str, bool, int]]
-) -> Dict[str, Union[str, bool, int]]:
+def process_group_update(process_group_id: str, body: dict) -> flask.wrappers.Response:
     """Process Group Update."""
-    process_group = ProcessGroupSchema().load(body)
+    body_include_list = ["display_name", "description"]
+    body_filtered = {
+        include_item: body[include_item]
+        for include_item in body_include_list
+        if include_item in body
+    }
+
+    process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService().update_process_group(process_group)
-    return ProcessGroupSchema().dump(process_group)  # type: ignore
+    return make_response(jsonify(process_group), 200)
 
 
 def process_groups_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
@@ -174,6 +174,7 @@ def process_groups_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Re
     remainder = len(process_groups) % per_page
     if remainder > 0:
         pages += 1
+
     response_json = {
         "results": ProcessGroupSchema(many=True).dump(batch),
         "pagination": {
@@ -199,7 +200,7 @@ def process_group_show(
                 status_code=400,
             )
         ) from exception
-    return ProcessGroupSchema().dump(process_group)
+    return make_response(jsonify(process_group), 200)
 
 
 def process_model_add(
@@ -225,7 +226,6 @@ def process_model_add(
             status_code=400,
         )
 
-    process_model_info.process_group = process_group
     process_model_service.add_spec(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
@@ -651,9 +651,9 @@ def process_instance_list(
     page: int = 1,
     per_page: int = 100,
     start_from: Optional[int] = None,
-    start_till: Optional[int] = None,
+    start_to: Optional[int] = None,
     end_from: Optional[int] = None,
-    end_till: Optional[int] = None,
+    end_to: Optional[int] = None,
     process_status: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
@@ -684,17 +684,17 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.start_in_seconds >= start_from
         )
-    if start_till is not None:
+    if start_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds <= start_till
+            ProcessInstanceModel.start_in_seconds <= start_to
         )
     if end_from is not None:
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.end_in_seconds >= end_from
         )
-    if end_till is not None:
+    if end_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds <= end_till
+            ProcessInstanceModel.end_in_seconds <= end_to
         )
     if process_status is not None:
         process_status_array = process_status.split(",")

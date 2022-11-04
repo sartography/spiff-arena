@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Button, Table } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import { getPageInfoFromSearchParams } from '../helpers';
 import HttpService from '../services/HttpService';
-import { RecentProcessModel } from '../interfaces';
+import { PaginationObject, RecentProcessModel } from '../interfaces';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 
 export default function HomePage() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(
@@ -53,7 +54,7 @@ export default function HomePage() {
               data-qa="process-instance-show-link"
               to={`/admin/process-models/${rowToUse.process_group_identifier}/${rowToUse.process_model_identifier}/process-instances/${rowToUse.process_instance_id}`}
             >
-              View
+              View {rowToUse.process_instance_id}
             </Link>
           </td>
           <td
@@ -125,10 +126,10 @@ export default function HomePage() {
     );
   };
 
-  const relevantProcessModelSection =
-    recentProcessModels.length > 0 && buildRecentProcessModelSection();
-
-  if (pagination) {
+  const tasksWaitingForMeComponent = () => {
+    if (pagination && pagination.total < 1) {
+      return null;
+    }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       PER_PAGE_FOR_TASKS_ON_HOME_PAGE
@@ -144,6 +145,17 @@ export default function HomePage() {
           tableToDisplay={buildTable()}
           path="/tasks"
         />
+      </>
+    );
+  };
+
+  const relevantProcessModelSection =
+    recentProcessModels.length > 0 && buildRecentProcessModelSection();
+
+  if (pagination) {
+    return (
+      <>
+        {tasksWaitingForMeComponent()}
         {relevantProcessModelSection}
       </>
     );

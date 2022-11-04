@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Form from '@rjsf/core';
-import { Button, Stack } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Stack } from '@carbon/react';
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -84,7 +85,7 @@ export default function TaskShow() {
       });
     }
     return (
-      <Stack direction="horizontal" gap={3}>
+      <Stack orientation="horizontal" gap={3}>
         <Button href="/tasks">Go Back To List</Button>
         {userTasksElement}
       </Stack>
