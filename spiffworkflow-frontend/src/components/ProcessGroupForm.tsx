@@ -162,7 +162,7 @@ export default function ProcessGroupForm({
         <ButtonWithConfirmation
           description={`Delete Process Group ${processGroup.id}?`}
           onConfirmation={deleteProcessGroup}
-          buttonLabel="Delete Process Group"
+          buttonLabel="Delete"
           confirmButtonLabel="Delete"
         />
       );

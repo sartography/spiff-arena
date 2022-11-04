@@ -43,6 +43,13 @@ const updateBpmnPythonScriptWithMonaco = (
   cy.contains('Launch Editor').click();
   // sometimes, Loading... appears for more than 4 seconds. not sure why.
   cy.contains('Loading...').should('not.exist');
+
+  // the delay 30 is because, at some point, monaco started automatically
+  // adding a second double quote when we type a double quote. when it does
+  // that, there is a race condition where it sometimes gets in more text
+  // before the second double quote appears because the robot is typing faster
+  // than a human being could, so we artificially slow it down to make it more
+  // human.
   cy.get('.monaco-editor textarea:first')
     .click()
     .focused() // change subject to currently focused element
