@@ -211,7 +211,7 @@ export default function ProcessModelShow() {
 
   const processModelButtons = () => {
     return (
-      <Stack direction="horizontal" gap={3}>
+      <Stack orientation="horizontal" gap={3}>
         <Button onClick={processInstanceCreateAndRun} variant="primary">
           Run
         </Button>

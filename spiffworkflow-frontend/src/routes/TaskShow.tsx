@@ -85,7 +85,7 @@ export default function TaskShow() {
       });
     }
     return (
-      <Stack direction="horizontal" gap={3}>
+      <Stack orientation="horizontal" gap={3}>
         <Button href="/tasks">Go Back To List</Button>
         {userTasksElement}
       </Stack>

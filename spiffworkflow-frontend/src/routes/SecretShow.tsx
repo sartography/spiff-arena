@@ -65,8 +65,8 @@ export default function SecretShow() {
   if (secret) {
     return (
       <>
-        <Stack direction="horizontal" gap={3}>
-          <h2>Secret Key: {secret.key}</h2>
+        <h2>Secret Key: {secret.key}</h2>
+        <Stack orientation="horizontal" gap={3}>
           <ButtonWithConfirmation
             description="Delete Secret?"
             onConfirmation={deleteSecret}

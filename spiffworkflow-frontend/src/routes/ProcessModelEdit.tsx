@@ -80,7 +80,7 @@ export default function ProcessModelEdit() {
           />
           <br />
           <br />
-          <Stack direction="horizontal" gap={3}>
+          <Stack orientation="horizontal" gap={3}>
             <Button type="submit">Submit</Button>
             <Button variant="secondary" href={`/admin/${processModelPath}`}>
               Cancel
