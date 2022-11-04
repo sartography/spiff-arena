@@ -17,11 +17,11 @@ import {
   Grid,
   Column,
   MultiSelect,
-  TableHeader,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell,
+  // TableHeader,
+  // TableHead,
+  // TableRow,
+  // TableBody,
+  // TableCell,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
