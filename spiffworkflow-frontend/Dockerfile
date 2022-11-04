@@ -6,6 +6,9 @@ ADD package.json /app/
 ADD package-lock.json /app/
 COPY . /app/
 
+# this matches total memory on spiffworkflow-demo
+ENV NODE_OPTIONS=--max_old_space_size=2048
+
 # npm ci because it respects the lock file.
 # --ignore-scripts because authors can do bad things in postinstall scripts.
 # https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html
