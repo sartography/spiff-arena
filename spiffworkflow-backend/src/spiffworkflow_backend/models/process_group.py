@@ -1,7 +1,7 @@
 """Process_group."""
 from __future__ import annotations
-import dataclasses
 
+import dataclasses
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -42,6 +42,7 @@ class ProcessGroup:
 
     @property
     def serialized(self) -> dict:
+        """Serialized."""
         original_dict = dataclasses.asdict(self)
         return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}
 

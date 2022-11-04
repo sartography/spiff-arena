@@ -1,12 +1,20 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-// @ts-ignore
-import { Button, Table } from '@carbon/react';
+import {
+  Button,
+  Table,
+  ExpandableTile,
+  TileAboveTheFoldContent,
+  TileBelowTheFoldContent,
+  TextInput,
+  ClickableTile,
+  // @ts-ignore
+} from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
 import { getPageInfoFromSearchParams } from '../helpers';
-import { CarbonComboBoxSelection } from '../interfaces';
+import { CarbonComboBoxSelection, ProcessGroup } from '../interfaces';
 import ProcessModelSearch from '../components/ProcessModelSearch';
 
 // Example process group json
@@ -49,7 +57,7 @@ export default function ProcessGroupList() {
   }, [searchParams]);
 
   const buildTable = () => {
-    const rows = processGroups.map((row) => {
+    const rows = processGroups.map((row: ProcessGroup) => {
       return (
         <tr key={(row as any).id}>
           <td>
@@ -73,6 +81,17 @@ export default function ProcessGroupList() {
         <tbody>{rows}</tbody>
       </Table>
     );
+    // const rows = processGroups.map((row: ProcessGroup) => {
+    //   return (
+    //     <span>
+    //       <ClickableTile href={`/admin/process-groups/${row.id}`}>
+    //         {row.display_name}
+    //       </ClickableTile>
+    //     </span>
+    //   );
+    // });
+    //
+    // return <div style={{ width: '400px' }}>{rows}</div>;
   };
 
   const processGroupsDisplayArea = () => {
