@@ -339,15 +339,15 @@ export default function ProcessInstanceShow() {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     if (taskToDisplay) {
       return (
-        <Modal show={!!taskToUse} onHide={handleTaskDataDisplayClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              <Stack direction="horizontal" gap={2}>
-                {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-                {taskDataButtons(taskToUse)}
-              </Stack>
-            </Modal.Title>
-          </Modal.Header>
+        <Modal
+          open={!!taskToUse}
+          passiveModal
+          onRequestClose={handleTaskDataDisplayClose}
+        >
+          <Stack orientation="horizontal" gap={2}>
+            {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
+            {taskDataButtons(taskToUse)}
+          </Stack>
           {taskDataContainer()}
         </Modal>
       );
