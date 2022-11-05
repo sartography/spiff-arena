@@ -110,7 +110,7 @@ export default function NavigationBar() {
     return (
       <HeaderContainer
         render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (
-          <Header aria-label="IBM Platform Name">
+          <Header aria-label="IBM Platform Name" className="cds--g100">
             <SkipToContent />
             <HeaderMenuButton
               aria-label="Open menu"
