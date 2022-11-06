@@ -101,6 +101,24 @@ export default function NavigationBar() {
         >
           Process Instances
         </HeaderMenuItem>
+        <HeaderMenuItem
+          href="/admin/messages"
+          isCurrentPage={isActivePage('/admin/messages')}
+        >
+          Messages
+        </HeaderMenuItem>
+        <HeaderMenuItem
+          href="/admin/secrets"
+          isCurrentPage={isActivePage('/admin/secrets')}
+        >
+          Secrets
+        </HeaderMenuItem>
+        <HeaderMenuItem
+          href="/admin/authentications"
+          isCurrentPage={isActivePage('/admin/authentications')}
+        >
+          Authentications
+        </HeaderMenuItem>
       </>
     );
   };
