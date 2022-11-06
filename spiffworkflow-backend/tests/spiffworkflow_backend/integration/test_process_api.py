@@ -1707,7 +1707,7 @@ class TestProcessApi(BaseTest):
         process_model_dir_name = "sample"
 
         response = client.get(
-            f"/v1.0/process-models/{test_process_group_id}/{process_model_dir_name}/process-instances/reports/sure?grade_level=1",
+            f"/v1.0/process-models/{test_process_group_id}:{process_model_dir_name}/process-instances/reports/sure?grade_level=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 404
