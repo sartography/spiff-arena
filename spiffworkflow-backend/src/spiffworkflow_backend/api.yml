@@ -318,57 +318,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/File"
 
-  /process-models/{process_group_id}/{process_model_id}/files:
-    parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The group containing the models we want to return
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model to validate.
-        schema:
-          type: string
-    # add_file
-    post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.add_file
-      summary: Add a new workflow spec file
-      tags:
-        - Process Model Files
-      requestBody:
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      responses:
-        "201":
-          description: Metadata about the uploaded file, but not the file content.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/File"
-    # get:
-    #   operationId: spiffworkflow_backend.api.process_api_blueprint.get_files
-    #   summary: Provide a list of workflow spec files for the given workflow_spec_id. IMPORTANT, only includes metadata, not the file content.
-    #   tags:
-    #     - Process Model Files
-    #   responses:
-    #     '200':
-    #       description: An array of file descriptions (not the file content)
-    #       content:
-    #         application/json:
-    #          schema:
-    #            type: array
-    #            items:
-    #              $ref: "#/components/schemas/File"
-
   /process-models/{modified_process_model_identifier}:
     parameters:
       - name: modified_process_model_identifier
@@ -418,64 +367,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
-
-  /process-models/{process_group_id}/{process_model_id}:
-    parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
-    # process_model_show
-    get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_show
-      summary: Returns a single process model
-      tags:
-        - Process Models
-      responses:
-        "200":
-          description: Workflow spec.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProcessModel"
-    # process_model_delete
-    delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_delete
-      summary: Removes an existing process model
-      tags:
-        - Process Models
-      responses:
-        "200":
-          description: The process model has been removed.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OkTrue"
-    put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_update
-      summary: Modifies an existing process mosel with the given parameters.
-      tags:
-        - Process Models
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ProcessModel"
-      responses:
-        "200":
-          description: Process model updated successfully.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProcessModel"
 
   /process-instances:
     parameters:
@@ -652,34 +543,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-models/{process_group_id}/{process_model_id}/process-instances:
-    parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
-    # process_instance_create
-    post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_create
-      summary: Creates an process instance from a process model and returns the instance
-      tags:
-        - Process Instances
-      responses:
-        "201":
-          description: Workflow generated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Workflow"
-
   /process-instances/{process_instance_id}:
     parameters:
       - name: process_instance_id
@@ -727,40 +590,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Workflow"
-
-  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}:
-    parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
-      - name: process_instance_id
-        in: path
-        required: true
-        description: The unique id of an existing process instance.
-        schema:
-          type: integer
-    get:
-      tags:
-        - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_show
-      summary: Show information about a process instance
-      responses:
-        "200":
-          description: One Process Instance
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Workflow"
-    # process_instance_delete
     delete:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_delete
       summary: Deletes a single process instance
@@ -802,46 +631,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/run:
-    parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
-      - name: process_instance_id
-        in: path
-        required: true
-        description: The unique id of an existing process instance.
-        schema:
-          type: integer
-      - name: do_engine_steps
-        in: query
-        required: false
-        description: Defaults to true, can be set to false if you are just looking at the workflow not completeing it.
-        schema:
-          type: boolean
-    # process_instance_run
-    post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_run
-      summary: Run a process instance
-      tags:
-        - Process Instances
-      responses:
-        "200":
-          description: Returns details about the workflows state and current task
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Workflow"
-
   /process-instances/{process_instance_id}/terminate:
     parameters:
       - name: process_instance_id
@@ -863,20 +652,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/terminate:
+  /process-instances/{process_instance_id}/suspend:
     parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
       - name: process_instance_id
         in: path
         required: true
@@ -884,40 +661,7 @@ paths:
         schema:
           type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_terminate
-      summary: Terminate a process instance
-      tags:
-        - Process Instances
-      responses:
-        "200":
-          description: Empty ok true response on successful termination.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OkTrue"
-
-  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/suspend:
-    parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
-      - name: process_instance_id
-        in: path
-        required: true
-        description: The unique id of an existing process instance.
-        schema:
-          type: integer
-    post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_suspend
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_suspend_2
       summary: Suspend a process instance
       tags:
         - Process Instances
@@ -929,20 +673,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/resume:
+  /process-instances/{process_instance_id}/resume:
     parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
       - name: process_instance_id
         in: path
         required: true
@@ -1224,75 +956,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-models/{process_group_id}/{process_model_id}/files/{file_name}:
-    parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model to validate.
-        schema:
-          type: string
-      - name: file_name
-        in: path
-        required: true
-        description: The id of the spec file
-        schema:
-          type: string
-    # get_file
-    get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.get_file
-      summary: Returns metadata about the file
-      tags:
-        - Process Model Files
-      responses:
-        "200":
-          description: Returns the file information requested.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/File"
-    put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_file_update
-      summary: save the contents to the given file
-      tags:
-        - Process Model Files
-      requestBody:
-        description: Log Pagination Request
-        required: false
-        content:
-          multipart/form-data:
-            schema:
-              type: object
-              properties:
-                file:
-                  type: string
-                  format: binary
-      responses:
-        "200":
-          description: Metadata about the uploaded file, but not the file content.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OkTrue"
-    delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_file_delete
-      summary: Removes an existing process model file
-      tags:
-        - Process Model Files
-      responses:
-        "200":
-          description: The process model has been removed.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OkTrue"
-
   /tasks:
     parameters:
       - name: page
@@ -1560,51 +1223,6 @@ paths:
       tags:
         - Process Instances
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_log_list_2
-      summary: returns a list of logs associated with the process instance
-      responses:
-        "200":
-          description: list of logs
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProcessInstanceLog"
-
-  /process-models/{process_group_id}/{process_model_id}/process-instances/{process_instance_id}/logs:
-    parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
-      - name: process_instance_id
-        in: path
-        required: true
-        description: the id of the process instance
-        schema:
-          type: integer
-      - name: page
-        in: query
-        required: false
-        description: The page number to return. Defaults to page 1.
-        schema:
-          type: integer
-      - name: per_page
-        in: query
-        required: false
-        description: The number of items to show per page. Defaults to page 10.
-        schema:
-          type: integer
-    get:
-      tags:
-        - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_log_list
       summary: returns a list of logs associated with the process instance
       responses:
         "200":

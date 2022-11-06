@@ -9,6 +9,8 @@ import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
+
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -259,6 +261,7 @@ class TestProcessApi(BaseTest):
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
         process_model_identifier = f"{test_process_group_id}/{test_process_model_id}"
+        modified_process_model_identifier = process_model_identifier.replace("/", ":")
         self.create_process_group(client, with_super_admin_user, test_process_group_id)
         self.create_process_model_with_api(client, process_model_identifier, user=with_super_admin_user)
         bpmn_file_data_bytes = self.get_test_data_file_contents(
@@ -284,7 +287,7 @@ class TestProcessApi(BaseTest):
 
         # try to delete the model
         response = client.delete(
-            f"/v1.0/process-models/{test_process_group_id}/{test_process_model_id}",
+            f"/v1.0/process-models/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -707,8 +710,9 @@ class TestProcessApi(BaseTest):
 
         # process_model = load_test_spec("random_fact")
         bad_process_model_identifier = f"x{process_model_identifier}"
+        modified_bad_process_model_identifier = bad_process_model_identifier.replace("/", ":")
         response = client.delete(
-            f"/v1.0/process-models/{bad_process_model_identifier}/files/random_fact.svg",
+            f"/v1.0/process-models/{modified_bad_process_model_identifier}/files/random_fact.svg",
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user),
         )
@@ -894,8 +898,10 @@ class TestProcessApi(BaseTest):
         """Test_get_process_model_when_not_found."""
         process_model_dir_name = "THIS_NO_EXISTS"
         group_id = self.create_process_group(client, with_super_admin_user, "my_group")
+        bad_process_model_id = f"{group_id}/{process_model_dir_name}"
+        modified_bad_process_model_id = bad_process_model_id.replace("/", ":")
         response = client.get(
-            f"/v1.0/process-models/{group_id}/{process_model_dir_name}",
+            f"/v1.0/process-models/{modified_bad_process_model_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
@@ -2220,3 +2226,64 @@ class TestProcessApi(BaseTest):
     #     assert "pagingInfo" in rpc_json_data["result"]
     #
     #     print("get_waku_messages")
+
+    def test_process_instance_suspend(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        bpmn_file_name = "manual_task.bpmn"
+        bpmn_file_location = "manual_task"
+        process_model_identifier = self.basic_test_setup(
+            client=client,
+            user=with_super_admin_user,
+            process_model_id="manual_task",
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location
+        )
+
+        bpmn_file_data_bytes = self.get_test_data_file_contents(
+            bpmn_file_name, bpmn_file_location
+        )
+        self.create_spec_file(
+            client=client,
+            process_model_id=process_model_identifier,
+            process_model_location=process_model_identifier,
+            file_name=bpmn_file_name,
+            file_data=bpmn_file_data_bytes,
+            user=with_super_admin_user
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance(
+            client, process_model_identifier, headers
+        )
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+
+        client.post(
+            f"/v1.0/process-instances/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
+        assert process_instance.status == "user_input_required"
+
+        client.post(
+            f"/v1.0/process-instances/{process_instance_id}/suspend",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
+        assert process_instance.status == "suspended"
+
+        # TODO: Why can I run a suspended process instance?
+        response = client.post(
+            f"/v1.0/process-instances/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        # task = response.json['next_task']
+
+        print("test_process_instance_suspend")

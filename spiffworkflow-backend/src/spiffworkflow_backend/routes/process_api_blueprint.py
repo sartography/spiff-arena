@@ -555,6 +555,10 @@ def process_instance_terminate(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
+def process_instance_suspend_2(process_instance_id: int) -> flask.wrappers.Response:
+    return process_instance_suspend(None, None, process_instance_id)
+
+
 def process_instance_suspend(
     process_group_id: str,
     process_model_id: str,
@@ -567,6 +571,10 @@ def process_instance_suspend(
     processor = ProcessInstanceProcessor(process_instance)
     processor.suspend()
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
+def process_instance_resume_2(process_instance_id) -> flask.wrappers.Response:
+    return process_instance_resume(None, None, process_instance_id)
 
 
 def process_instance_resume(
@@ -1283,7 +1291,7 @@ def task_submit(
 def script_unit_test_create(
     process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
-    """Script_unit_test_run."""
+    """Script_unit_test_create."""
     bpmn_task_identifier = _get_required_parameter_or_raise(
         "bpmn_task_identifier", body
     )
