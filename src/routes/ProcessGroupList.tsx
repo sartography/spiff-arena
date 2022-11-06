@@ -1,13 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Button, Form, InputGroup, Table } from 'react-bootstrap';
-import { Typeahead } from 'react-bootstrap-typeahead';
-import { Option } from 'react-bootstrap-typeahead/types/types';
+import {
+  Button,
+  Table,
+  // ExpandableTile,
+  // TileAboveTheFoldContent,
+  // TileBelowTheFoldContent,
+  // TextInput,
+  // ClickableTile,
+  // @ts-ignore
+} from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
 import { getPageInfoFromSearchParams } from '../helpers';
-import { ProcessModel } from '../interfaces';
+import { CarbonComboBoxSelection, ProcessGroup } from '../interfaces';
+import ProcessModelSearch from '../components/ProcessModelSearch';
 
 // Example process group json
 // {'process_group_id': 'sure', 'display_name': 'Test Workflows', 'id': 'test_process_group'}
@@ -17,8 +25,9 @@ export default function ProcessGroupList() {
 
   const [processGroups, setProcessGroups] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const [processModeleSelectionOptions, setProcessModelSelectionOptions] =
-    useState([]);
+  const [processModelAvailableItems, setProcessModelAvailableItems] = useState(
+    []
+  );
 
   useEffect(() => {
     const setProcessGroupsFromResult = (result: any) => {
@@ -31,7 +40,7 @@ export default function ProcessGroupList() {
         Object.assign(item, { label });
         return item;
       });
-      setProcessModelSelectionOptions(selectionArray);
+      setProcessModelAvailableItems(selectionArray);
     };
 
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
@@ -48,7 +57,7 @@ export default function ProcessGroupList() {
   }, [searchParams]);
 
   const buildTable = () => {
-    const rows = processGroups.map((row) => {
+    const rows = processGroups.map((row: ProcessGroup) => {
       return (
         <tr key={(row as any).id}>
           <td>
@@ -72,6 +81,17 @@ export default function ProcessGroupList() {
         <tbody>{rows}</tbody>
       </Table>
     );
+    // const rows = processGroups.map((row: ProcessGroup) => {
+    //   return (
+    //     <span>
+    //       <ClickableTile href={`/admin/process-groups/${row.id}`}>
+    //         {row.display_name}
+    //       </ClickableTile>
+    //     </span>
+    //   );
+    // });
+    //
+    // return <div style={{ width: '400px' }}>{rows}</div>;
   };
 
   const processGroupsDisplayArea = () => {
@@ -97,35 +117,18 @@ export default function ProcessGroupList() {
   };
 
   const processModelSearchArea = () => {
-    const processModelSearchOnChange = (selected: Option[]) => {
-      const processModel = selected[0] as ProcessModel;
+    const processModelSearchOnChange = (selection: CarbonComboBoxSelection) => {
+      const processModel = selection.selectedItem;
       navigate(
         `/admin/process-models/${processModel.process_group_id}/${processModel.id}`
       );
     };
     return (
-      <form onSubmit={function hey() {}}>
-        <h3>Search</h3>
-        <Form.Group>
-          <InputGroup>
-            <InputGroup.Text className="text-nowrap">
-              Process Model:{' '}
-            </InputGroup.Text>
-            <Typeahead
-              style={{ width: 500 }}
-              id="process-model-selection"
-              labelKey="label"
-              onChange={processModelSearchOnChange}
-              // for cypress tests since data-qa does not work
-              inputProps={{
-                name: 'process-model-selection',
-              }}
-              options={processModeleSelectionOptions}
-              placeholder="Choose a process model..."
-            />
-          </InputGroup>
-        </Form.Group>
-      </form>
+      <ProcessModelSearch
+        onChange={processModelSearchOnChange}
+        processModels={processModelAvailableItems}
+        titleText="Process model search"
+      />
     );
   };
 
@@ -133,7 +136,9 @@ export default function ProcessGroupList() {
     return (
       <>
         <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
-        <Button href="/admin/process-groups/new">Add a process group</Button>
+        <Button kind="secondary" href="/admin/process-groups/new">
+          Add a process group
+        </Button>
         <br />
         <br />
         {processModelSearchArea()}

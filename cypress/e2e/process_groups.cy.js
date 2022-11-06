@@ -32,7 +32,7 @@ describe('process-groups', () => {
 
     cy.contains('Delete').click();
     cy.contains('Are you sure');
-    cy.contains('OK').click();
+    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.url().should('include', `process-groups`);
     cy.contains(groupId).should('not.exist');
   });

@@ -6,6 +6,9 @@
     "@babel/core": "^7.18.10",
     "@babel/plugin-transform-react-jsx": "^7.18.6",
     "@babel/preset-react": "^7.18.6",
+    "@carbon/icons-react": "^11.10.0",
+    "@carbon/react": "^1.16.0",
+    "@carbon/styles": "^1.16.0",
     "@ginkgo-bioworks/react-json-schema-form-builder": "^2.9.0",
     "@monaco-editor/react": "^4.4.5",
     "@rjsf/core": "^4.2.0",
@@ -55,6 +58,10 @@
     "@ginkgo-bioworks/react-json-schema-form-builder": {
       "react": "^18.2.0",
       "bootstrap": "^5.2.0-beta1"
+    },
+    "@carbon/react": {
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0"
     }
   },
   "scripts": {

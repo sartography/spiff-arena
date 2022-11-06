@@ -21,6 +21,7 @@ describe('tasks', () => {
     cy.logout();
   });
 
+  // TODO: need to fix the next_task thing to make this pass
   it('can complete and navigate a form', () => {
     const groupDisplayName = 'Acceptance Tests Group One';
     const modelId = `acceptance-tests-model-2`;

@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Button, Stack } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Stack } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import FileInput from '../components/FileInput';
 import HttpService from '../services/HttpService';
@@ -210,7 +211,7 @@ export default function ProcessModelShow() {
 
   const processModelButtons = () => {
     return (
-      <Stack direction="horizontal" gap={3}>
+      <Stack orientation="horizontal" gap={3}>
         <Button onClick={processInstanceCreateAndRun} variant="primary">
           Run
         </Button>

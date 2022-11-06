@@ -1,7 +1,8 @@
 import { useContext, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Button, Modal, Stack } from 'react-bootstrap';
-import Container from 'react-bootstrap/Container';
+// @ts-ignore
+import { Button, Modal, Stack, Content } from '@carbon/react';
+// import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
@@ -193,31 +194,25 @@ export default function ProcessModelEditDiagram() {
   const newFileNameBox = () => {
     const fileExtension = `.${searchParams.get('file_type')}`;
     return (
-      <Modal show={showFileNameEditor} onHide={handleFileNameCancel}>
-        <Modal.Header closeButton>
-          <Modal.Title>Process Model File Name</Modal.Title>
-        </Modal.Header>
-        <form onSubmit={handleFileNameSave}>
-          <label>File Name:</label>
-          <span>
-            <input
-              name="file_name"
-              type="text"
-              value={newFileName}
-              onChange={(e) => setNewFileName(e.target.value)}
-              autoFocus
-            />
-            {fileExtension}
-          </span>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={handleFileNameCancel}>
-              Cancel
-            </Button>
-            <Button variant="primary" type="submit">
-              Save Changes
-            </Button>
-          </Modal.Footer>
-        </form>
+      <Modal
+        open={showFileNameEditor}
+        modalHeading="Processs Model File Name"
+        primaryButtonText="Save Changes"
+        secondaryButtonText="Cancel"
+        onSecondarySubmit={handleFileNameCancel}
+        onRequestSubmit={handleFileNameSave}
+      >
+        <label>File Name:</label>
+        <span>
+          <input
+            name="file_name"
+            type="text"
+            value={newFileName}
+            onChange={(e) => setNewFileName(e.target.value)}
+            autoFocus
+          />
+          {fileExtension}
+        </span>
       </Modal>
     );
   };
@@ -288,7 +283,6 @@ export default function ProcessModelEditDiagram() {
     // we should update this to act like updating scripts
     // where we pass an event to bpmn-js
     setScriptModeling(modeling);
-
     setScriptText(script || '');
     setScriptType(scriptTypeString);
     setScriptEventBus(eventBus);
@@ -478,7 +472,7 @@ export default function ProcessModelEditDiagram() {
       }
       return (
         <main>
-          <Container>
+          <Content>
             <Row>
               <Col xs={8}>
                 <Button variant="link" disabled style={{ fontSize: '1.5em' }}>
@@ -519,11 +513,11 @@ export default function ProcessModelEditDiagram() {
               </Col>
               <Col xs={1}>{scriptUnitTestResultBoolElement}</Col>
             </Row>
-          </Container>
-          <Stack direction="horizontal" gap={3}>
+          </Content>
+          <Stack orientation="horizontal" gap={3}>
             {unitTestFailureElement()}
           </Stack>
-          <Stack direction="horizontal" gap={3}>
+          <Stack orientation="horizontal" gap={3}>
             <Stack>
               <div>Input Json:</div>
               <div>
@@ -564,28 +558,25 @@ export default function ProcessModelEditDiagram() {
     if (scriptElement) {
       scriptName = (scriptElement as any).di.bpmnElement.name;
     }
+
     return (
-      <Modal size="xl" show={showScriptEditor} onHide={handleScriptEditorClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>Editing Script: {scriptName}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Editor
-            height={500}
-            width="auto"
-            options={generalEditorOptions()}
-            defaultLanguage="python"
-            defaultValue={scriptText}
-            onChange={handleEditorScriptChange}
-            onMount={handleEditorDidMount}
-          />
-          {scriptUnitTestEditorElement()}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleScriptEditorClose}>
-            Close
-          </Button>
-        </Modal.Footer>
+      <Modal
+        open={showScriptEditor}
+        modalHeading={`Editing Script: ${scriptName}`}
+        primaryButtonText="Close"
+        onRequestSubmit={handleScriptEditorClose}
+        size="lg"
+      >
+        <Editor
+          height={500}
+          width="auto"
+          options={generalEditorOptions()}
+          defaultLanguage="python"
+          value={scriptText}
+          onChange={handleEditorScriptChange}
+          onMount={handleEditorDidMount}
+        />
+        {scriptUnitTestEditorElement()}
       </Modal>
     );
   };

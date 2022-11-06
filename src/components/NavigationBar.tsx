@@ -1,12 +1,28 @@
-import { Button, Navbar, Nav, Container } from 'react-bootstrap';
+import {
+  Header,
+  HeaderContainer,
+  HeaderMenuButton,
+  SkipToContent,
+  SideNav,
+  SideNavItems,
+  HeaderSideNavItems,
+  HeaderName,
+  HeaderNavigation,
+  HeaderMenuItem,
+  HeaderGlobalAction,
+  HeaderGlobalBar,
+  // @ts-ignore
+} from '@carbon/react';
+// @ts-ignore
+import { Logout, Login } from '@carbon/icons-react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 // @ts-expect-error TS(2307) FIXME: Cannot find module '../logo.svg' or its correspond... Remove this comment to see the full error message
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
 
 // for ref: https://react-bootstrap.github.io/components/navbar/
 export default function NavigationBar() {
-  const navElements = null;
-
   const handleLogout = () => {
     UserService.doLogout();
   };
@@ -15,56 +31,116 @@ export default function NavigationBar() {
     UserService.doLogin();
   };
 
-  const loginLink = () => {
-    if (!UserService.isLoggedIn()) {
-      return (
-        <Navbar.Collapse className="justify-content-end">
-          <Navbar.Text>
-            <Button variant="link" onClick={handleLogin}>
-              Login
-            </Button>
-          </Navbar.Text>
-        </Navbar.Collapse>
-      );
+  const location = useLocation();
+  const [activeKey, setActiveKey] = useState<string>('');
+
+  useEffect(() => {
+    let newActiveKey = '/admin/process-groups';
+    if (location.pathname.match(/^\/admin\/messages\b/)) {
+      newActiveKey = '/admin/messages';
+    } else if (location.pathname.match(/^\/admin\/process-instances\b/)) {
+      newActiveKey = '/admin/process-instances';
+    } else if (location.pathname.match(/^\/admin\/secrets\b/)) {
+      newActiveKey = '/admin/secrets';
+    } else if (location.pathname.match(/^\/admin\/authentications\b/)) {
+      newActiveKey = '/admin/authentications';
+    } else if (location.pathname === '/') {
+      newActiveKey = '/';
+    } else if (location.pathname.match(/^\/tasks\b/)) {
+      newActiveKey = '/';
     }
-    return null;
+    setActiveKey(newActiveKey);
+  }, [location]);
+
+  const isActivePage = (menuItemPath: string) => {
+    return activeKey === menuItemPath;
   };
 
-  const logoutLink = () => {
+  const loginAndLogoutAction = () => {
     if (UserService.isLoggedIn()) {
       return (
-        <Navbar.Collapse className="justify-content-end">
-          <Navbar.Text>
-            Signed in as: <strong>{UserService.getUsername()}</strong>
-          </Navbar.Text>
-          <Navbar.Text>
-            <Button
-              variant="link"
-              onClick={handleLogout}
-              data-qa="logout-button"
-            >
-              Logout
-            </Button>
-          </Navbar.Text>
-        </Navbar.Collapse>
+        <>
+          <HeaderGlobalAction>{UserService.getUsername()}</HeaderGlobalAction>
+          <HeaderGlobalAction
+            aria-label="Logout"
+            onClick={handleLogout}
+            data-qa="logout-button"
+          >
+            <Logout />
+          </HeaderGlobalAction>
+        </>
       );
     }
-    return null;
+    return (
+      <HeaderGlobalAction
+        data-qa="login-button"
+        aria-label="Login"
+        onClick={handleLogin}
+      >
+        <Login />
+      </HeaderGlobalAction>
+    );
   };
 
-  return (
-    <Navbar bg="dark" expand="lg" variant="dark">
-      <Container>
-        <Navbar.Brand data-qa="spiffworkflow-logo" href="/admin">
-          <img src={logo} className="app-logo" alt="logo" />
-        </Navbar.Brand>
-        <Navbar.Toggle aria-controls="basic-navbar-nav" />
-        <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">{navElements}</Nav>
-        </Navbar.Collapse>
-        {loginLink()}
-        {logoutLink()}
-      </Container>
-    </Navbar>
-  );
+  const headerMenuItems = () => {
+    return (
+      <>
+        <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>
+          Home
+        </HeaderMenuItem>
+        <HeaderMenuItem
+          href="/admin/process-groups"
+          isCurrentPage={isActivePage('/admin/process-groups')}
+          data-qa="header-nav-processes"
+        >
+          Processes
+        </HeaderMenuItem>
+        <HeaderMenuItem
+          href="/admin/process-instances"
+          isCurrentPage={isActivePage('/admin/process-instances')}
+        >
+          Process Instances
+        </HeaderMenuItem>
+      </>
+    );
+  };
+
+  if (activeKey) {
+    // TODO: apply theme g100 to the header
+    return (
+      <HeaderContainer
+        render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (
+          <Header aria-label="IBM Platform Name" className="cds--g100">
+            <SkipToContent />
+            <HeaderMenuButton
+              aria-label="Open menu"
+              onClick={onClickSideNavExpand}
+              isActive={isSideNavExpanded}
+            />
+            <HeaderName href="/" prefix="" data-qa="spiffworkflow-logo">
+              <img src={logo} className="app-logo" alt="logo" />
+            </HeaderName>
+            <HeaderNavigation
+              data-qa="main-nav-header"
+              aria-label="Spiffworkflow"
+            >
+              {headerMenuItems()}
+            </HeaderNavigation>
+            <SideNav
+              data-qa="side-nav-items"
+              aria-label="Side navigation"
+              expanded={isSideNavExpanded}
+              isPersistent={false}
+            >
+              <SideNavItems>
+                <HeaderSideNavItems>{headerMenuItems()}</HeaderSideNavItems>
+              </SideNavItems>
+            </SideNav>
+            <HeaderGlobalBar>{loginAndLogoutAction()}</HeaderGlobalBar>
+          </Header>
+        )}
+      />
+    );
+  }
+  return null;
 }
