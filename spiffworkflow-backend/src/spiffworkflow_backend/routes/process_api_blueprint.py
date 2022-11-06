@@ -184,11 +184,6 @@ def process_groups_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Re
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
 
 
-def process_group_show_2(process_group_id: str) -> Any:
-    print(f"process_group_show_2: {process_group_id}")
-    return process_group_show(process_group_id)
-
-
 def process_group_show(
     process_group_id: str,
 ) -> Any:
@@ -204,13 +199,6 @@ def process_group_show(
             )
         ) from exception
     return ProcessGroupSchema().dump(process_group)
-
-
-def process_model_add_2(
-        body: Dict[str, Union[str, bool, int]]
-):
-    print("process_model_add_2")
-    return process_model_add(body)
 
 
 def process_model_add(
@@ -246,33 +234,21 @@ def process_model_add(
     )
 
 
-def process_model_delete_2(modified_process_model_identifier: str) -> flask.wrappers.Response:
-    process_model_id = modified_process_model_identifier.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_id)
-    return process_model_delete(process_group_id, process_model_id)
-
-
 def process_model_delete(
-    process_group_id: str, process_model_id: str
+    modified_process_model_identifier: str
 ) -> flask.wrappers.Response:
     """Process_model_delete."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    # process_model_identifier = f"{process_group_id}/{process_model_id}"
     ProcessModelService().process_model_delete(process_model_identifier)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_model_update_2(
-        modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
-):
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_identifier)
-    return process_model_update(process_group_id, process_model_id, body)
-
-
 def process_model_update(
-    process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
 ) -> Any:
     """Process_model_update."""
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     body_include_list = ["display_name", "primary_file_name", "primary_process_id"]
     body_filtered = {
         include_item: body[include_item]
@@ -280,21 +256,16 @@ def process_model_update(
         if include_item in body
     }
 
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
     ProcessModelService().update_spec(process_model, body_filtered)
     return ProcessModelInfoSchema().dump(process_model)
 
 
-def process_model_show_2(modified_process_model_identifier: str) -> Any:
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_identifier)
-    return process_model_show(process_group_id, process_model_id)
-
-
-def process_model_show(process_group_id: str, process_model_id: str) -> Any:
+def process_model_show(modified_process_model_identifier: str) -> Any:
     """Process_model_show."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
     # TODO: Temporary. Should not need the next line once models have correct ids
     # process_model.id = process_model_identifier
@@ -330,22 +301,16 @@ def process_model_list(
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
 
 
-def get_file_2(modified_process_model_id: str, file_name: str) -> Any:
-    process_model_id_string = modified_process_model_id.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_id_string)
-    return get_file(process_group_id, process_model_id, file_name)
-
-
-def get_file(process_group_id: str, process_model_id: str, file_name: str) -> Any:
+def get_file(modified_process_model_id: str, file_name: str) -> Any:
     """Get_file."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_id.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     files = SpecFileService.get_files(process_model, file_name)
     if len(files) == 0:
         raise ApiError(
             error_code="unknown file",
             message=f"No information exists for file {file_name}"
-            f" it does not exist in workflow {process_model_id}.",
+            f" it does not exist in workflow {process_model_identifier}.",
             status_code=404,
         )
 
@@ -357,20 +322,12 @@ def get_file(process_group_id: str, process_model_id: str, file_name: str) -> An
     return FileSchema().dump(file)
 
 
-def process_model_file_update_2(
-        modified_process_model_id: str,
-        file_name: str
-) -> flask.wrappers.Response:
-    process_model_id = modified_process_model_id.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_id)
-    return process_model_file_update(process_group_id, process_model_id, file_name)
-
-
 def process_model_file_update(
-    process_group_id: str, process_model_id: str, file_name: str
+    modified_process_model_id: str, file_name: str
 ) -> flask.wrappers.Response:
     """Process_model_file_update."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_id.replace(":", "/")
+    # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
 
     request_file = get_file_from_request()
@@ -386,7 +343,7 @@ def process_model_file_update(
 
     if current_app.config["GIT_COMMIT_ON_SAVE"]:
         git_output = GitService.commit(
-            message=f"User: {g.user.username} clicked save for {process_group_id}/{process_model_id}/{file_name}"
+            message=f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
         )
         current_app.logger.info(f"git output: {git_output}")
     else:
@@ -395,17 +352,11 @@ def process_model_file_update(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_model_file_delete_2(modified_process_model_id, file_name):
-    process_model_identifier = modified_process_model_id.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_identifier)
-    return process_model_file_delete(process_group_id, process_model_id, file_name)
-
-
 def process_model_file_delete(
-    process_group_id: str, process_model_id: str, file_name: str
+    modified_process_model_id: str, file_name: str
 ) -> flask.wrappers.Response:
     """Process_model_file_delete."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_id.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     try:
         SpecFileService.delete_file(process_model, file_name)
@@ -421,15 +372,9 @@ def process_model_file_delete(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def add_file_2(modified_process_model_id: str) -> flask.wrappers.Response:
-    process_model_id_string = modified_process_model_id.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_id_string)
-    return add_file(process_group_id, process_model_id)
-
-
-def add_file(process_group_id: str, process_model_id: str) -> flask.wrappers.Response:
+def add_file(modified_process_model_id: str) -> flask.wrappers.Response:
     """Add_file."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_id.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     request_file = get_file_from_request()
     if not request_file.filename:
@@ -445,33 +390,18 @@ def add_file(process_group_id: str, process_model_id: str) -> flask.wrappers.Res
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
     file.process_model_id = process_model.id
-    # file.process_group_id = process_model.process_group_id
     return Response(
         json.dumps(FileSchema().dump(file)), status=201, mimetype="application/json"
     )
 
 
-def process_instance_create_2(
+def process_instance_create(
     modified_process_model_id: str
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
-    process_model_id = modified_process_model_id.replace(":", "/")
-    process_instance = ProcessInstanceService.create_process_instance(
-        process_model_id, g.user
-    )
-    return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
-        status=201,
-        mimetype="application/json",
-    )
-
-
-def process_instance_create(
-    process_group_id: str, process_model_id: str
-) -> flask.wrappers.Response:
-    """Create_process_instance."""
     # process_model_id = modified_process_model_id.replace(":", "/")
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    # process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_id.replace(":", "/")
     process_instance = ProcessInstanceService.create_process_instance(
         process_model_identifier, g.user
     )
@@ -482,21 +412,11 @@ def process_instance_create(
     )
 
 
-def process_instance_run_2(
-        process_instance_id: int,
-        do_engine_steps: bool = True,
-):
-    return process_instance_run(None, None, process_instance_id, do_engine_steps)
-
-
 def process_instance_run(
-    process_group_id: str,
-    process_model_id: str,
     process_instance_id: int,
     do_engine_steps: bool = True,
 ) -> flask.wrappers.Response:
     """Process_instance_run."""
-    # process_model_id = modified_process_model_id.replace(":", "/")
     process_instance = ProcessInstanceService().get_process_instance(
         process_instance_id
     )
@@ -534,17 +454,8 @@ def process_instance_run(
     )
 
 
-def process_instance_terminate_2(
-        process_instance_id: int
-) -> flask.wrappers.Response:
-    return process_instance_terminate(None, None, process_instance_id, None)
-
-
 def process_instance_terminate(
-    process_group_id: str,
-    process_model_id: str,
     process_instance_id: int,
-    do_engine_steps: bool = True,
 ) -> flask.wrappers.Response:
     """Process_instance_run."""
     process_instance = ProcessInstanceService().get_process_instance(
@@ -555,13 +466,7 @@ def process_instance_terminate(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_instance_suspend_2(process_instance_id: int) -> flask.wrappers.Response:
-    return process_instance_suspend(None, None, process_instance_id)
-
-
 def process_instance_suspend(
-    process_group_id: str,
-    process_model_id: str,
     process_instance_id: int,
 ) -> flask.wrappers.Response:
     """Process_instance_suspend."""
@@ -573,13 +478,7 @@ def process_instance_suspend(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_instance_resume_2(process_instance_id) -> flask.wrappers.Response:
-    return process_instance_resume(None, None, process_instance_id)
-
-
 def process_instance_resume(
-    process_group_id: str,
-    process_model_id: str,
     process_instance_id: int,
 ) -> flask.wrappers.Response:
     """Process_instance_resume."""
@@ -591,18 +490,7 @@ def process_instance_resume(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_instance_log_list_2(
-        process_instance_id: str,
-        page: int = 1,
-        per_page: int = 100,
-) -> flask.wrappers.Response:
-    print("process_instance_log_list_2")
-    return process_instance_log_list(None, None, process_instance_id, page, per_page)
-
-
 def process_instance_log_list(
-    process_group_id: str,
-    process_model_id: str,
     process_instance_id: int,
     page: int = 1,
     per_page: int = 100,
@@ -835,17 +723,11 @@ def process_instance_list(
     return make_response(jsonify(response_json), 200)
 
 
-def process_instance_show_2(modified_process_model_identifier: str, process_instance_id: int) -> flask.wrappers.Response:
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_identifier)
-    return process_instance_show(process_group_id, process_model_id, process_instance_id)
-
-
 def process_instance_show(
-    process_group_id: str, process_model_id: str, process_instance_id: int
+    modified_process_model_identifier: str, process_instance_id: int
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
     current_version_control_revision = GitService.get_current_revision()
     process_model = get_process_model(process_model_identifier)
@@ -867,14 +749,8 @@ def process_instance_show(
     return make_response(jsonify(process_instance), 200)
 
 
-def process_instance_delete_2(
-        process_instance_id: int
-) -> flask.wrappers.Response:
-    return process_instance_delete(None, None, process_instance_id)
-
-
 def process_instance_delete(
-    process_group_id: str, process_model_id: str, process_instance_id: int
+    process_instance_id: int
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
@@ -886,23 +762,13 @@ def process_instance_delete(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_instance_report_list_2(
-        modified_process_model_identifier: str, page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_identifier)
-    return process_instance_report_list(process_group_id, process_model_id, page, per_page)
-
-
 def process_instance_report_list(
-    process_group_id: str, process_model_id: str, page: int = 1, per_page: int = 100
+    modified_process_model_identifier: str, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Process_instance_report_list."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
-    # process_model = get_process_model(process_model_identifier)
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
 
     process_instance_reports = ProcessInstanceReportModel.query.filter_by(
-        # process_group_identifier="process_group_id",
         process_model_identifier=process_model_identifier,
     ).all()
 
@@ -1010,27 +876,14 @@ def authentication_callback(
     )
 
 
-def process_instance_report_show_2(
+def process_instance_report_show(
     modified_process_model_identifier: str,
     report_identifier: str,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_group_id, process_model_id = os.path.split(process_model_identifier)
-    return process_instance_report_show(process_group_id, process_model_id, report_identifier, page, per_page)
-
-
-def process_instance_report_show(
-    process_group_id: str,
-    process_model_id: str,
-    report_identifier: str,
-    page: int = 1,
-    per_page: int = 100,
-) -> flask.wrappers.Response:
     """Process_instance_list."""
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
-    process_model = get_process_model(process_model_identifier)
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
 
     process_instances = (
         ProcessInstanceModel.query.filter_by(process_model_identifier=process_model_identifier)
