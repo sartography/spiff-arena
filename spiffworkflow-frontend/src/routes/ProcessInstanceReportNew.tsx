@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 
 export default function ProcessInstanceReportNew() {
-  const params = useParams();
   const navigate = useNavigate();
 
   const [identifier, setIdentifier] = useState('');
@@ -13,9 +12,7 @@ export default function ProcessInstanceReportNew() {
   const [filterBy, setFilterBy] = useState('');
 
   const navigateToNewProcessInstance = (_result: any) => {
-    navigate(
-      `/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports/${identifier}`
-    );
+    navigate(`/admin/process-instances/reports/${identifier}`);
   };
 
   const addProcessInstanceReport = (event: any) => {
@@ -42,7 +39,7 @@ export default function ProcessInstanceReportNew() {
       .filter((n) => n);
 
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports`,
+      path: `/process-instances/reports`,
       successCallback: navigateToNewProcessInstance,
       httpMethod: 'POST',
       postBody: {

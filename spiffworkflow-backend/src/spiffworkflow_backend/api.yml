@@ -761,20 +761,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-models/{process_group_id}/{process_model_id}/process-instances/reports:
+  /process-instances/reports:
     parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
       - name: page
         in: query
         required: false
@@ -814,20 +802,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-models/{process_group_id}/{process_model_id}/process-instances/reports/{report_identifier}:
+  /process-instances/reports/{report_identifier}:
     parameters:
-      - name: process_group_id
-        in: path
-        required: true
-        description: The unique id of an existing process group
-        schema:
-          type: string
-      - name: process_model_id
-        in: path
-        required: true
-        description: The unique id of an existing process model.
-        schema:
-          type: string
       - name: report_identifier
         in: path
         required: true

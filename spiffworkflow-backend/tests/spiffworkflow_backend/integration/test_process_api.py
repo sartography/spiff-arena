@@ -1352,13 +1352,11 @@ class TestProcessApi(BaseTest):
         report_metadata = {"order_by": ["month"]}
         ProcessInstanceReportModel.create_with_attributes(
             identifier=report_identifier,
-            process_group_identifier=process_group_identifier,
-            process_model_identifier=process_model_identifier,
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
         response = client.get(
-            f"/v1.0/process-models/{process_group_identifier}/{process_model_identifier}/process-instances/reports",
+            f"/v1.0/process-instances/reports",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1400,14 +1398,12 @@ class TestProcessApi(BaseTest):
 
         ProcessInstanceReportModel.create_with_attributes(
             identifier="sure",
-            process_group_identifier=test_process_group_id,
-            process_model_identifier=process_model_dir_name,
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
         response = client.get(
-            f"/v1.0/process-models/{test_process_group_id}/{process_model_dir_name}/process-instances/reports/sure",
+            f"/v1.0/process-instances/reports/sure",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1453,14 +1449,12 @@ class TestProcessApi(BaseTest):
 
         ProcessInstanceReportModel.create_with_attributes(
             identifier="sure",
-            process_group_identifier=test_process_group_id,
-            process_model_identifier=process_model_dir_name,
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
         response = client.get(
-            f"/v1.0/process-models/{test_process_group_id}/{process_model_dir_name}/process-instances/reports/sure?grade_level=1",
+            f"/v1.0/process-instances/reports/sure?grade_level=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1480,7 +1474,7 @@ class TestProcessApi(BaseTest):
         process_model_dir_name = "sample"
 
         response = client.get(
-            f"/v1.0/process-models/{test_process_group_id}/{process_model_dir_name}/process-instances/reports/sure?grade_level=1",
+            f"/v1.0/process-instances/reports/sure?grade_level=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 404
