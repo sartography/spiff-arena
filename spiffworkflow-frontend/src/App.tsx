@@ -46,28 +46,30 @@ export default function App() {
   }
 
   return (
-    <ErrorContext.Provider value={errorContextValueArray}>
-      <BrowserRouter>
-        <NavigationBar />
-        <Content>
-          {errorTag}
-          <ErrorBoundary>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/tasks" element={<HomePage />} />
-              <Route path="/admin/*" element={<AdminRoutes />} />
-              <Route
-                path="/tasks/:process_instance_id/:task_id"
-                element={<TaskShow />}
-              />
-              <Route
-                path="/tasks/:process_instance_id/:task_id"
-                element={<TaskShow />}
-              />
-            </Routes>
-          </ErrorBoundary>
-        </Content>
-      </BrowserRouter>
-    </ErrorContext.Provider>
+    <div className="cds--white">
+      <ErrorContext.Provider value={errorContextValueArray}>
+        <BrowserRouter>
+          <NavigationBar />
+          <Content>
+            {errorTag}
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/tasks" element={<HomePage />} />
+                <Route path="/admin/*" element={<AdminRoutes />} />
+                <Route
+                  path="/tasks/:process_instance_id/:task_id"
+                  element={<TaskShow />}
+                />
+                <Route
+                  path="/tasks/:process_instance_id/:task_id"
+                  element={<TaskShow />}
+                />
+              </Routes>
+            </ErrorBoundary>
+          </Content>
+        </BrowserRouter>
+      </ErrorContext.Provider>
+    </div>
   );
 }
