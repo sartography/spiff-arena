@@ -21,7 +21,6 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
 ReportMetadata = dict[str, Any]
@@ -76,9 +75,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     def add_fixtures(cls) -> None:
         """Add_fixtures."""
         try:
-            process_model = ProcessModelService().get_process_model(
-                group_id="sartography-admin", process_model_id="ticket"
-            )
             user = UserModel.query.first()
             columns = [
                 {"Header": "id", "accessor": "id"},

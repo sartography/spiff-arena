@@ -767,9 +767,7 @@ def process_instance_report_list(
     return make_response(jsonify(process_instance_reports), 200)
 
 
-def process_instance_report_create(
-    body: Dict[str, Any]
-) -> flask.wrappers.Response:
+def process_instance_report_create(body: Dict[str, Any]) -> flask.wrappers.Response:
     """Process_instance_report_create."""
     ProcessInstanceReportModel.create_report(
         identifier=body["identifier"],
@@ -866,13 +864,10 @@ def process_instance_report_show(
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-
-    process_instances = (
-        ProcessInstanceModel.query #.filter_by(process_model_identifier=process_model.id)
-        .order_by(
-            ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
+    process_instances = ProcessInstanceModel.query.order_by(  # .filter_by(process_model_identifier=process_model.id)
+        ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
+    ).paginate(
+        page=page, per_page=per_page, error_out=False
     )
 
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
