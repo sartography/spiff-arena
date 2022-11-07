@@ -387,6 +387,7 @@ export default function ProcessInstanceList() {
       start_in_seconds: 'Start Time',
       end_in_seconds: 'End Time',
       status: 'Status',
+      spiff_step: 'SpiffWorkflow Step',
     };
     const getHeaderLabel = (header: string) => {
       return headerLabels[header] ?? header;
