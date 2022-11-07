@@ -1,26 +1,14 @@
 import {useService } from 'bpmn-js-properties-panel';
-import { TextFieldEntry } from '@bpmn-io/properties-panel';
+import {TextAreaEntry, TextFieldEntry} from '@bpmn-io/properties-panel';
 import {
   getExtensionValue, setExtensionValue
 } from '../extensionHelpers';
 
 
 /**
- * A generic properties' editor for text input.
- * Allows you to provide additional SpiffWorkflow extension properties.  Just
- * uses whatever name is provide on the property, and adds or updates it as
- * needed.
- *
-       <bpmn:extensionElements>
-           <spiffworkflow:properties>
-               <spiffworkflow:property name="formJsonSchemaFilename" value="json_schema.json" />
-               <spiffworkflow:property name="formUiSchemaFilename" value="ui_schema.json" />
-           </spiffworkflow:properties>
-       </bpmn:extensionElements>
- *
- * @returns {string|null|*}
+ * A generic properties' editor for text area.
  */
-export function SpiffExtensionTextInput(props) {
+export function SpiffExtensionTextArea(props) {
   const element = props.element;
   const commandStack = props.commandStack, moddle = props.moddle;
   const name = props.name, label = props.label, description = props.description;
@@ -34,7 +22,7 @@ export function SpiffExtensionTextInput(props) {
     setExtensionValue(element, name, value, moddle, commandStack)
   };
 
-  return <TextFieldEntry
+  return <TextAreaEntry
     id={'extension_' + name}
     element={element}
     description={description}

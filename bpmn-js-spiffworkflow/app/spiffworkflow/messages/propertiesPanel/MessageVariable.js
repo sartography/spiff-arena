@@ -28,7 +28,7 @@ export function MessageVariable(props) {
   const getValue = () => {
     const messageVariableObject = getMessageVariableObject();
     if (messageVariableObject) {
-      return messageVariableObject.messageVariable;
+      return messageVariableObject.value;
     }
     return '';
   };
@@ -48,7 +48,7 @@ export function MessageVariable(props) {
         .get('values')
         .push(messageVariableObject);
     }
-    messageVariableObject.messageVariable = value;
+    messageVariableObject.value = value;
   };
 
   return (
