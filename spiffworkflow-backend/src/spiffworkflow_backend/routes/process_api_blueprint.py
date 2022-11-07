@@ -136,6 +136,14 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
     return make_response(jsonify({"results": response_dict}), 200)
 
 
+def modify_process_model_id(process_model_id: str) -> str:
+    return process_model_id.replace('/', ':')
+
+
+def un_modify_modified_process_model_id(modified_process_model_id: str) -> str:
+    return modified_process_model_id.replace(':', '/')
+
+
 def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_model_service = ProcessModelService()
@@ -400,9 +408,7 @@ def process_instance_create(
     modified_process_model_id: str
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
-    # process_model_id = modified_process_model_id.replace(":", "/")
-    # process_model_identifier = f"{process_group_id}/{process_model_id}"
-    process_model_identifier = modified_process_model_id.replace(":", "/")
+    process_model_identifier = un_modify_modified_process_model_id(modified_process_model_id)
     process_instance = ProcessInstanceService.create_process_instance(
         process_model_identifier, g.user
     )
@@ -651,7 +657,6 @@ def message_start(
 
 
 def process_instance_list(
-    process_group_identifier: Optional[str] = None,
     process_model_identifier: Optional[str] = None,
     page: int = 1,
     per_page: int = 100,
@@ -662,10 +667,11 @@ def process_instance_list(
     process_status: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
+    # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
-    if process_model_identifier is not None and process_group_identifier is not None:
+    if process_model_identifier is not None:
         process_model = get_process_model(
-            f"{process_group_identifier}/{process_model_identifier}",
+            f"{process_model_identifier}",
         )
 
         process_instance_query = process_instance_query.filter_by(

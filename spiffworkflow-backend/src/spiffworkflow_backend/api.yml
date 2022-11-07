@@ -368,12 +368,6 @@ paths:
 
   /process-instances:
     parameters:
-      - name: process_group_identifier
-        in: query
-        required: false
-        description: The unique id of an existing process group
-        schema:
-          type: string
       - name: process_model_identifier
         in: query
         required: false
