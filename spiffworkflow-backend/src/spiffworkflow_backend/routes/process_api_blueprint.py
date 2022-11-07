@@ -744,7 +744,7 @@ def process_instance_show(
 
 
 def process_instance_delete(
-    process_instance_id: int
+    process_group_id: str, process_model_id: str, process_instance_id: int
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
