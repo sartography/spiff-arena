@@ -395,6 +395,30 @@ export default function ProcessInstanceList() {
       return <th>{getHeaderLabel((column as any).Header)}</th>;
     });
 
+    const formatProcessInstanceId = (row: any, id: any) => {
+      return (
+        <Link
+          data-qa="process-instance-show-link"
+          to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}/process-instances/${row.id}`}
+        >
+          {id}
+        </Link>
+      );
+    };
+    const formatProcessGroupIdentifier = (row: any, identifier: any) => {
+      return (
+        <Link to={`/admin/process-groups/${identifier}`}>{identifier}</Link>
+      );
+    };
+    const formatProcessModelIdentifier = (row: any, identifier: any) => {
+      return (
+        <Link
+          to={`/admin/process-models/${row.process_group_identifier}/${identifier}`}
+        >
+          {identifier}
+        </Link>
+      );
+    };
     const formatSecondsForDisplay = (row: any, seconds: any) => {
       return convertSecondsToFormattedDate(seconds) || '-';
     };
@@ -403,6 +427,9 @@ export default function ProcessInstanceList() {
     };
 
     const columnFormatters: Record<string, any> = {
+      id: formatProcessInstanceId,
+      process_group_identifier: formatProcessGroupIdentifier,
+      process_model_identifier: formatProcessModelIdentifier,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
     };
@@ -426,60 +453,6 @@ export default function ProcessInstanceList() {
         <tbody>{rows}</tbody>
       </Table>
     );
-
-    /*
-    const rows = processInstances.map((row: any) => {
-      const formattedStartDate =
-        convertSecondsToFormattedDate(row.start_in_seconds) || '-';
-      const formattedEndDate =
-        convertSecondsToFormattedDate(row.end_in_seconds) || '-';
-
-      return (
-        <tr key={row.id}>
-          <td>
-            <Link
-              data-qa="process-instance-show-link"
-              to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}/process-instances/${row.id}`}
-            >
-              {row.id}
-            </Link>
-          </td>
-          <td>
-            <Link to={`/admin/process-groups/${row.process_group_identifier}`}>
-              {row.process_group_identifier}
-            </Link>
-          </td>
-          <td>
-            <Link
-              to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}`}
-            >
-              {row.process_model_identifier}
-            </Link>
-          </td>
-          <td>{formattedStartDate}</td>
-          <td>{formattedEndDate}</td>
-          <td data-qa={`process-instance-status-${row.status}`}>
-            {row.status}
-          </td>
-        </tr>
-      );
-    });
-    return (
-      <Table size="lg">
-        <thead>
-          <tr>
-            <th>Process Instance Id</th>
-            <th>Process Group</th>
-            <th>Process Model</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
-    );
-    */
   };
 
   const processInstanceTitleElement = () => {
