@@ -36,6 +36,7 @@ export interface ProcessFile {
 
 export interface ProcessModel {
   id: string;
+  description: string;
   process_group_id: string;
   display_name: string;
   primary_file_name: string;
