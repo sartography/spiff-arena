@@ -744,7 +744,7 @@ def process_instance_show(
 
 
 def process_instance_delete(
-    process_group_id: str, process_model_id: str, process_instance_id: int
+    process_instance_id: int
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
@@ -757,12 +757,11 @@ def process_instance_delete(
 
 
 def process_instance_report_list(
-    process_group_id: str, process_model_id: str, page: int = 1, per_page: int = 100
+    page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Process_instance_report_list."""
     process_instance_reports = ProcessInstanceReportModel.query.filter_by(
-        created_by_id=current_user.id,
-        user=g.user,
+        created_by_id=g.user.id,
     ).all()
 
     return make_response(jsonify(process_instance_reports), 200)
@@ -788,7 +787,7 @@ def process_instance_report_update(
     """Process_instance_report_create."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         identifier=report_identifier,
-        user=g.user,
+        created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
         raise ApiError(
@@ -809,7 +808,7 @@ def process_instance_report_delete(
     """Process_instance_report_create."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         identifier=report_identifier,
-        user=g.user,
+        created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
         raise ApiError(
@@ -862,17 +861,14 @@ def authentication_callback(
 
 
 def process_instance_report_show(
-    process_group_id: str,
-    process_model_id: str,
     report_identifier: str,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-    process_model = get_process_model(process_model_id, process_group_id)
 
     process_instances = (
-        ProcessInstanceModel.query.filter_by(process_model_identifier=process_model.id)
+        ProcessInstanceModel.query #.filter_by(process_model_identifier=process_model.id)
         .order_by(
             ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
         )
