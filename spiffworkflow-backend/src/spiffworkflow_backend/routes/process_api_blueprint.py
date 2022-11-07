@@ -1153,7 +1153,8 @@ def script_unit_test_create(
         "expected_output_json", body
     )
 
-    process_model = get_process_model(process_model_id, process_group_id)
+    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model = get_process_model(process_model_identifier)
     file = SpecFileService.get_files(process_model, process_model.primary_file_name)[0]
     if file is None:
         raise ApiError(
