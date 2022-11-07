@@ -2287,3 +2287,61 @@ class TestProcessApi(BaseTest):
         # task = response.json['next_task']
 
         print("test_process_instance_suspend")
+
+    def test_script_unit_test_run(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_group_id = "test_group"
+        process_model_id = "simple_script"
+        bpmn_file_name = "simple_script.bpmn"
+        bpmn_file_location = "simple_script"
+        process_model_identifier = self.basic_test_setup(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location
+        )
+
+        bpmn_file_data_bytes = self.get_test_data_file_contents(
+            bpmn_file_name, bpmn_file_location
+        )
+        self.create_spec_file(
+            client=client,
+            process_model_id=process_model_identifier,
+            process_model_location=process_model_identifier,
+            file_name=bpmn_file_name,
+            file_data=bpmn_file_data_bytes,
+            user=with_super_admin_user
+        )
+
+        # python_script = _get_required_parameter_or_raise("python_script", body)
+        # input_json = _get_required_parameter_or_raise("input_json", body)
+        # expected_output_json = _get_required_parameter_or_raise(
+        #     "expected_output_json", body
+        # )
+        python_script = "c = a + b"
+        input_json = {'a': 1, 'b': 2}
+        expected_output_json = {'a': 1, 'b': 2, 'c': 3}
+        # bpmn_task_identifier = "Activity_CalculateNewData"
+
+        data = {
+            'python_script': python_script,
+            'input_json': input_json,
+            'expected_output_json': expected_output_json,
+        }
+
+        response = client.post(
+            f"/v1.0/process-models/{process_group_id}/{process_model_id}/script-unit-tests/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(data),
+        )
+
+
+        print("test_script_unit_test_run")
