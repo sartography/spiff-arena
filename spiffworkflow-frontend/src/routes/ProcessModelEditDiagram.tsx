@@ -1,23 +1,29 @@
 import { useContext, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  generatePath,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 // @ts-ignore
 import { Button, Modal, Stack, Content } from '@carbon/react';
-// import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
 import Editor from '@monaco-editor/react';
 
+import MDEditor from '@uiw/react-md-editor';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { makeid } from '../helpers';
-import { ProcessModel } from '../interfaces';
+import { ProcessFile, ProcessModel } from '../interfaces';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
+  const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
 
   const [scriptText, setScriptText] = useState<string>('');
   const [scriptType, setScriptType] = useState<string>('');
@@ -26,6 +32,12 @@ export default function ProcessModelEditDiagram() {
   const [scriptElement, setScriptElement] = useState(null);
   const [showScriptEditor, setShowScriptEditor] = useState(false);
   const handleShowScriptEditor = () => setShowScriptEditor(true);
+
+  const [markdownText, setMarkdownText] = useState<string | undefined>('');
+  const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
+  const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
+
+  const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
   const editorRef = useRef(null);
   const monacoRef = useRef(null);
@@ -70,8 +82,6 @@ export default function ProcessModelEditDiagram() {
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
 
-  const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
-
   const processModelPath = `process-models/${params.process_group_id}/${params.process_model_id}`;
 
   useEffect(() => {
@@ -85,7 +95,7 @@ export default function ProcessModelEditDiagram() {
   }, [processModelPath]);
 
   useEffect(() => {
-    const processResult = (result: any) => {
+    const fileResult = (result: any) => {
       setProcessModelFile(result);
       setBpmnXmlForDiagramRendering(result.file_contents);
     };
@@ -93,7 +103,7 @@ export default function ProcessModelEditDiagram() {
     if (params.file_name) {
       HttpService.makeCallToBackend({
         path: `/${processModelPath}/files/${params.file_name}`,
-        successCallback: processResult,
+        successCallback: fileResult,
       });
     }
   }, [processModelPath, params]);
@@ -246,6 +256,34 @@ export default function ProcessModelEditDiagram() {
     });
   };
 
+  const onJsonFilesRequested = (event: any) => {
+    if (processModel) {
+      const jsonFiles = processModel.files.filter((f) => f.type === 'json');
+      const options = jsonFiles.map((f) => {
+        return { label: f.name, value: f.name };
+      });
+      event.eventBus.fire('spiff.json_files.returned', { options });
+    } else {
+      console.log('There is no process Model.');
+    }
+  };
+
+  const onDmnFilesRequested = (event: any) => {
+    if (processModel) {
+      const dmnFiles = processModel.files.filter((f) => f.type === 'dmn');
+      const options: any[] = [];
+      dmnFiles.forEach((file) => {
+        file.references.forEach((ref) => {
+          options.push({ label: ref.name, value: ref.id });
+        });
+      });
+      console.log('Options', options);
+      event.eventBus.fire('spiff.dmn_files.returned', { options });
+    } else {
+      console.log('There is no process model.');
+    }
+  };
+
   const getScriptUnitTestElements = (element: any) => {
     const { extensionElements } = element.businessObject;
     if (extensionElements && extensionElements.values.length > 0) {
@@ -292,7 +330,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const handleScriptEditorClose = () => {
-    scriptEventBus.fire('script.editor.update', {
+    scriptEventBus.fire('spiff.script.update', {
       scriptType,
       script: scriptText,
       element: scriptElement,
@@ -580,6 +618,107 @@ export default function ProcessModelEditDiagram() {
       </Modal>
     );
   };
+  const onLaunchMarkdownEditor = (
+    element: any,
+    markdown: string,
+    eventBus: any
+  ) => {
+    setMarkdownText(markdown || '');
+    setMarkdownEventBus(eventBus);
+    handleShowMarkdownEditor();
+  };
+  const handleMarkdownEditorClose = () => {
+    markdownEventBus.fire('spiff.markdown.update', {
+      value: markdownText,
+    });
+    setShowMarkdownEditor(false);
+  };
+
+  const markdownEditor = () => {
+    return (
+      <Modal
+        size="xl"
+        show={showMarkdownEditor}
+        onHide={handleMarkdownEditorClose}
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Markdown Content</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <MDEditor value={markdownText} onChange={setMarkdownText} />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleMarkdownEditorClose}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    );
+  };
+
+  const findFileNameForReferenceId = (
+    id: string,
+    type: string
+  ): ProcessFile | null => {
+    // Given a reference id (like a process_id, or decision_id) finds the file
+    // that contains that reference and returns it.
+    let matchFile = null;
+    if (processModel) {
+      const files = processModel.files.filter((f) => f.type === type);
+      files.some((file) => {
+        if (file.references.some((ref) => ref.id === id)) {
+          matchFile = file;
+          return true;
+        }
+        return false;
+      });
+    }
+    return matchFile;
+  };
+
+  /**
+   * fixme:  Not currently in use.  This would only work for bpmn files within the process model.  Which is right for DMN and json, but not right here.  Need to merge in work on the nested process groups before tackling this.
+   * @param processId
+   */
+  const onLaunchBpmnEditor = (processId: string) => {
+    const file = findFileNameForReferenceId(processId, 'bpmn');
+    if (file) {
+      const path = generatePath(
+        '/admin/process-models/:process_group_id/:process_model_id/files/:file_name',
+        {
+          process_group_id: params.process_group_id,
+          process_model_id: params.process_model_id,
+          file_name: file.name,
+        }
+      );
+      window.open(path);
+    }
+  };
+  const onLaunchJsonEditor = (fileName: string) => {
+    const path = generatePath(
+      '/admin/process-models/:process_group_id/:process_model_id/form/:file_name',
+      {
+        process_group_id: params.process_group_id,
+        process_model_id: params.process_model_id,
+        file_name: fileName,
+      }
+    );
+    window.open(path);
+  };
+  const onLaunchDmnEditor = (processId: string) => {
+    const file = findFileNameForReferenceId(processId, 'dmn');
+    if (file) {
+      const path = generatePath(
+        '/admin/process-models/:process_group_id/:process_model_id/files/:file_name',
+        {
+          process_group_id: params.process_group_id,
+          process_model_id: params.process_model_id,
+          file_name: file.name,
+        }
+      );
+      window.open(path);
+    }
+  };
 
   const isDmn = () => {
     const fileName = params.file_name || '';
@@ -622,12 +761,18 @@ export default function ProcessModelEditDiagram() {
         diagramType="bpmn"
         onLaunchScriptEditor={onLaunchScriptEditor}
         onServiceTasksRequested={onServiceTasksRequested}
+        onLaunchMarkdownEditor={onLaunchMarkdownEditor}
+        onLaunchBpmnEditor={onLaunchBpmnEditor}
+        onLaunchJsonEditor={onLaunchJsonEditor}
+        onJsonFilesRequested={onJsonFilesRequested}
+        onLaunchDmnEditor={onLaunchDmnEditor}
+        onDmnFilesRequested={onDmnFilesRequested}
       />
     );
   };
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
-  if (bpmnXmlForDiagramRendering || !params.file_name) {
+  if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
     return (
       <>
         <ProcessBreadcrumb
@@ -642,6 +787,7 @@ export default function ProcessModelEditDiagram() {
         {appropriateEditor()}
         {newFileNameBox()}
         {scriptEditor()}
+        {markdownEditor()}
 
         <div id="diagram-container" />
       </>
