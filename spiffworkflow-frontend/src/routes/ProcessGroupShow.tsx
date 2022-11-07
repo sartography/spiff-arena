@@ -24,6 +24,7 @@ export default function ProcessGroupShow() {
       setPagination(result.pagination);
     };
     const processResult = (result: any) => {
+      console.log(result);
       setProcessGroup(result);
       HttpService.makeCallToBackend({
         path: `/process-models?process_group_identifier=${params.process_group_id}&per_page=${perPage}&page=${page}`,
@@ -41,11 +42,12 @@ export default function ProcessGroupShow() {
       return null;
     }
     const rows = processModels.map((row) => {
+      const modifiedProcessModelId: String = (row as any).id.replace('/', ':');
       return (
         <tr key={(row as any).id}>
           <td>
             <Link
-              to={`/admin/process-models/${processGroup.id}/${(row as any).id}`}
+              to={`/admin/process-models/${modifiedProcessModelId}`}
               data-qa="process-model-show-link"
             >
               {(row as any).id}

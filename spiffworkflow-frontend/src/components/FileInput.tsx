@@ -1,5 +1,6 @@
 import React from 'react';
 import HttpService from '../services/HttpService';
+import { modifyProcessModelPath } from '../helpers';
 
 type Props = {
   processGroupId: string;
@@ -27,7 +28,8 @@ export default class FileInput extends React.Component<Props> {
 
   handleSubmit(event: any) {
     event.preventDefault();
-    const url = `/process-models/${this.processGroupId}/${this.processModelId}/files`;
+    const modifiedProcessModelId = modifyProcessModelPath(`${this.processGroupId}/${this.processModelId}`);
+    const url = `/process-models/${modifiedProcessModelId}/files`;
     const formData = new FormData();
     formData.append('file', this.fileInput.current.files[0]);
     formData.append('fileName', this.fileInput.current.files[0].name);

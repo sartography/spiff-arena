@@ -6,6 +6,7 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ErrorContext from '../contexts/ErrorContext';
+import {getGroupFromModifiedModelId, modifyProcessModelPath} from "../helpers";
 
 export default function ProcessModelEdit() {
   const [displayName, setDisplayName] = useState('');
@@ -14,13 +15,14 @@ export default function ProcessModelEdit() {
   const [processModel, setProcessModel] = useState(null);
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const processModelPath = `process-models/${params.process_group_id}/${params.process_model_id}`;
+  const processModelPath = `process-models/${params.process_model_id}`;
 
   useEffect(() => {
     const processResult = (result: any) => {
       setProcessModel(result);
       setDisplayName(result.display_name);
     };
+    console.log(`processModelPath: ${processModelPath}`);
     HttpService.makeCallToBackend({
       path: `/${processModelPath}`,
       successCallback: processResult,
@@ -28,11 +30,16 @@ export default function ProcessModelEdit() {
   }, [processModelPath]);
 
   const navigateToProcessModel = (_result: any) => {
+    console.log(`processModelPath: ${processModelPath}`);
     navigate(`/admin/${processModelPath}`);
   };
 
   const navigateToProcessModels = (_result: any) => {
-    navigate(`/admin/process-groups/${params.process_group_id}`);
+    const processGroupId = getGroupFromModifiedModelId(
+      (params as any).process_model_id
+    );
+    const modifiedProcessGroupId = modifyProcessModelPath(processGroupId);
+    navigate(`/admin/process-groups/${modifiedProcessGroupId}`);
   };
 
   const updateProcessModel = (event: any) => {
@@ -41,6 +48,7 @@ export default function ProcessModelEdit() {
     const processModelToPass = Object.assign(processModelToUse, {
       display_name: displayName,
     });
+    console.log(`processModelPath: ${processModelPath}`);
     HttpService.makeCallToBackend({
       path: `/${processModelPath}`,
       successCallback: navigateToProcessModel,
@@ -52,7 +60,11 @@ export default function ProcessModelEdit() {
   const deleteProcessModel = () => {
     setErrorMessage(null);
     const processModelToUse = processModel as any;
-    const processModelShowPath = `/process-models/${processModelToUse.process_group_id}/${processModelToUse.id}`;
+    const modifiedProcessModelId: String = modifyProcessModelPath(
+      (processModelToUse as any).id
+    );
+    const processModelShowPath = `/process-models/${modifiedProcessModelId}`;
+    console.log(`processModelShowPath: ${processModelShowPath}`);
     HttpService.makeCallToBackend({
       path: `${processModelShowPath}`,
       successCallback: navigateToProcessModels,

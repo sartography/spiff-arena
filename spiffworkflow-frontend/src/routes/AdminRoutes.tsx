@@ -53,15 +53,15 @@ export default function AdminRoutes() {
           element={<ProcessModelNew />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id"
+          path="process-models/:process_model_id"
           element={<ProcessModelShow />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/files"
+          path="process-models/:process_model_id/files"
           element={<ProcessModelEditDiagram />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/files/:file_name"
+          path="process-models/:process_model_id/files/:file_name"
           element={<ProcessModelEditDiagram />}
         />
         <Route
@@ -69,11 +69,11 @@ export default function AdminRoutes() {
           element={<ProcessInstanceList />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/edit"
+          path="process-models/:process_model_id/edit"
           element={<ProcessModelEdit />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/process-instances/:process_instance_id"
+          path="process-models/:process_model_id/process-instances/:process_instance_id"
           element={<ProcessInstanceShow />}
         />
         <Route
@@ -81,7 +81,7 @@ export default function AdminRoutes() {
           element={<ProcessInstanceShow />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/process-instances/reports"
+          path="process-models/:process_model_id/process-instances/reports"
           element={<ProcessInstanceReportList />}
         />
         <Route
@@ -97,11 +97,11 @@ export default function AdminRoutes() {
           element={<ProcessInstanceReportEdit />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/form"
+          path="process-models/:process_model_id/form"
           element={<ReactFormEditor />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/form/:file_name"
+          path="process-models/:process_model_id/form/:file_name"
           element={<ReactFormEditor />}
         />
         <Route

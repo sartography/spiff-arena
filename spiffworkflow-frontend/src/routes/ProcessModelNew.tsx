@@ -25,10 +25,9 @@ export default function ProcessModelNew() {
       successCallback: navigateToNewProcessModel,
       httpMethod: 'POST',
       postBody: {
-        id: identifier,
+        id: `${params.process_group_id}/${identifier}`,
         display_name: displayName,
         description: displayName,
-        process_group_id: params.process_group_id,
       },
     });
   };

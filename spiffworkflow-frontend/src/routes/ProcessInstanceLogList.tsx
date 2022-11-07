@@ -7,6 +7,7 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
   convertSecondsToFormattedDate,
+  modifyProcessModelPath,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -15,6 +16,9 @@ export default function ProcessInstanceLogList() {
   const [searchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
+  const modifiedProcessModelId = modifyProcessModelPath(
+    `${params.process_model_id}`
+  );
 
   useEffect(() => {
     const setProcessInstanceLogListFromResult = (result: any) => {
@@ -23,7 +27,7 @@ export default function ProcessInstanceLogList() {
     };
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/logs?per_page=${perPage}&page=${page}`,
+      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs?per_page=${perPage}&page=${page}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
   }, [searchParams, params]);
@@ -43,7 +47,7 @@ export default function ProcessInstanceLogList() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
+              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
             >
               {convertSecondsToFormattedDate(rowToUse.timestamp)}
             </Link>
@@ -83,7 +87,7 @@ export default function ProcessInstanceLogList() {
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path={`/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/logs`}
+          path={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
         />
       </main>
     );

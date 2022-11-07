@@ -59,7 +59,6 @@ import { makeid } from '../helpers';
 
 type OwnProps = {
   processModelId: string;
-  processGroupId: string;
   diagramType: string;
   readyOrWaitingBpmnTaskIds?: string[] | null;
   completedTasksBpmnIds?: string[] | null;
@@ -77,7 +76,6 @@ type OwnProps = {
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
 export default function ReactDiagramEditor({
   processModelId,
-  processGroupId,
   diagramType,
   readyOrWaitingBpmnTaskIds,
   completedTasksBpmnIds,
@@ -334,6 +332,7 @@ export default function ReactDiagramEditor({
     }
 
     function fetchDiagramFromURL(urlToUse: any) {
+      console.log(`urlToUse: ${urlToUse}`);
       fetch(urlToUse)
         .then((response) => response.text())
         .then((text) => {
@@ -350,7 +349,7 @@ export default function ReactDiagramEditor({
 
     function fetchDiagramFromJsonAPI() {
       HttpService.makeCallToBackend({
-        path: `/process-models/${processGroupId}/${processModelId}/files/${fileName}`,
+        path: `/process-models/${processModelId}/files/${fileName}`,
         successCallback: setDiagramXMLStringFromResponseJson,
       });
     }
@@ -396,7 +395,6 @@ export default function ReactDiagramEditor({
     completedTasksBpmnIds,
     fileName,
     performingXmlUpdates,
-    processGroupId,
     processModelId,
     url,
   ]);
