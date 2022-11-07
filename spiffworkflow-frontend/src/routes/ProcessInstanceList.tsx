@@ -438,7 +438,7 @@ export default function ProcessInstanceList() {
       const formatter = columnFormatters[column.accessor] ?? defaultFormatter;
       const value = row[column.accessor];
       return <td>{formatter(row, value)}</td>;
-    }
+    };
 
     const rows = processInstances.map((row) => {
       const currentRow = (reportMetadata as any).columns.map((column: any) => {
