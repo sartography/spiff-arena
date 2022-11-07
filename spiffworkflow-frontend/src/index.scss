@@ -1,12 +1,12 @@
 // @use '@carbon/react/scss/themes';
 // @use '@carbon/react/scss/theme' with ($theme: themes.$g100);
 
-@use '@carbon/react/scss/theme' with
-  (
-    $theme: (
-      cds-link-text-color: #525252
-    )
-  );
+// @use '@carbon/react/scss/theme' with
+//   (
+//     $theme: (
+//   cds-link-primary: #525252
+//     )
+//   );
 
 @use '@carbon/react';
 @use '@carbon/styles';
@@ -39,3 +39,42 @@
   color: #525252;
 }
 
+.cds--btn--ghost {
+  color: black;
+}
+.cds--btn--ghost:visited {
+  color: black;
+}
+.cds--btn--ghost:hover {
+  color: black;
+}
+.cds--btn--ghost:visited:hover {
+  color: black;
+}
+
+$slightly-lighter-gray: #474747;
+
+.cds--btn--primary {
+  background-color: #393939;
+}
+.cds--btn--primary:hover {
+  background-color: $slightly-lighter-gray;
+}
+// .cds--btn--ghost:visited {
+//   color: black;
+// }
+// .cds--btn--ghost:hover {
+//   color: black;
+// }
+// .cds--btn--ghost:visited:hover {
+//   color: black;
+// }
+
+
+// :root {
+//   --cds-link-primary: #525252;
+// }
+// .card {
+//   background: var(--orange);
+//   --orange: hsl(255, 72%, var(--lightness));
+// }

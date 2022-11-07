@@ -1,12 +1,25 @@
 import { useContext, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 // @ts-ignore
-import { Grid, Column, Dropdown, Button, Stack } from '@carbon/react';
+import { Add, Upload } from '@carbon/icons-react';
+import {
+  Accordion,
+  AccordionItem,
+  Grid,
+  Column,
+  Dropdown,
+  Button,
+  Stack,
+  ButtonSet,
+  Modal,
+  FileUploader,
+  // @ts-ignore
+} from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import FileInput from '../components/FileInput';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { RecentProcessModel } from '../interfaces';
+import { ProcessModel, RecentProcessModel } from '../interfaces';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: any,
@@ -66,12 +79,16 @@ export default function ProcessModelShow() {
   const params = useParams();
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const [processModel, setProcessModel] = useState({});
+  const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [processInstanceResult, setProcessInstanceResult] = useState(null);
-  const [reloadModel, setReloadModel] = useState(false);
+  const [reloadModel, setReloadModel] = useState<boolean>(false);
+  const [filesToUpload, setFilesToUpload] = useState<any>(null);
+  const [showFileUploadModal, setShowFileUploadModal] =
+    useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const processResult = (result: object) => {
+    const processResult = (result: ProcessModel) => {
       setProcessModel(result);
       setReloadModel(false);
       storeRecentProcessModelInLocalStorage(result, params);
@@ -100,40 +117,42 @@ export default function ProcessModelShow() {
     });
   };
 
-  let processInstanceResultTag = null;
-  if (processInstanceResult) {
-    let takeMeToMyTaskBlurb = null;
-    // FIXME: ensure that the task is actually for the current user as well
-    const processInstanceId = (processInstanceResult as any).id;
-    const nextTask = (processInstanceResult as any).next_task;
-    if (nextTask && nextTask.state === 'READY') {
-      takeMeToMyTaskBlurb = (
-        <span>
-          You have a task to complete. Go to{' '}
-          <Link to={`/tasks/${processInstanceId}/${nextTask.id}`}>my task</Link>
-          .
-        </span>
+  const processInstanceResultTag = () => {
+    if (processModel && processInstanceResult) {
+      let takeMeToMyTaskBlurb = null;
+      // FIXME: ensure that the task is actually for the current user as well
+      const processInstanceId = (processInstanceResult as any).id;
+      const nextTask = (processInstanceResult as any).next_task;
+      if (nextTask && nextTask.state === 'READY') {
+        takeMeToMyTaskBlurb = (
+          <span>
+            You have a task to complete. Go to{' '}
+            <Link to={`/tasks/${processInstanceId}/${nextTask.id}`}>
+              my task
+            </Link>
+            .
+          </span>
+        );
+      }
+      return (
+        <div className="alert alert-success" role="alert">
+          <p>
+            Process Instance {processInstanceId} kicked off (
+            <Link
+              to={`/admin/process-models/${processModel.process_group_id}/${
+                (processModel as any).id
+              }/process-instances/${processInstanceId}`}
+              data-qa="process-instance-show-link"
+            >
+              view
+            </Link>
+            ). {takeMeToMyTaskBlurb}
+          </p>
+        </div>
       );
     }
-    processInstanceResultTag = (
-      <div className="alert alert-success" role="alert">
-        <p>
-          Process Instance {processInstanceId} kicked off (
-          <Link
-            to={`/admin/process-models/${
-              (processModel as any).process_group_id
-            }/${
-              (processModel as any).id
-            }/process-instances/${processInstanceId}`}
-            data-qa="process-instance-show-link"
-          >
-            view
-          </Link>
-          ). {takeMeToMyTaskBlurb}
-        </p>
-      </div>
-    );
-  }
+    return null;
+  };
 
   const onUploadedCallback = () => {
     setReloadModel(true);
@@ -209,112 +228,131 @@ export default function ProcessModelShow() {
     );
   };
 
-  const processModelButtons = () => {
-    // <Button
-    //   href={`/admin/process-models/${
-    //     (processModel as any).process_group_id
-    //   }/${(processModel as any).id}/files?file_type=dmn`}
-    //   variant="success"
-    // >
-    //   Add New DMN File
-    // </Button>
-    // <Button
-    //   href={`/admin/process-models/${
-    //     (processModel as any).process_group_id
-    //   }/${(processModel as any).id}/form?file_ext=json`}
-    //   variant="info"
-    // >
-    //   Add New JSON File
-    // </Button>
-    // <Button
-    //   href={`/admin/process-models/${
-    //     (processModel as any).process_group_id
-    //   }/${(processModel as any).id}/form?file_ext=md`}
-    //   variant="info"
-    // >
-    //   Add New Markdown File
-    // </Button>
-    const items = [
-      {
-        key1: (
-          <Grid>
-            <Column md={1}>
-              <Button
-                onClick={(e2: any) => console.log('e2', e2)}
-                variant="primary"
-              >
-                b1
-              </Button>
-            </Column>
-            <Column md={1}>
-              <Button
-                onClick={(e3: any) => console.log('e3', e3)}
-                variant="primary"
-              >
-                b2
-              </Button>
-            </Column>
-          </Grid>
-        ),
-      },
-    ];
+  const handleFileUploadCancel = () => {
+    setShowFileUploadModal(false);
+  };
+
+  const handleFileUpload = (event: any) => {
+    event.preventDefault();
+    const url = `/process-models/${(processModel as any).process_group_id}/${
+      (processModel as any).id
+    }/files`;
+    const formData = new FormData();
+    formData.append('file', filesToUpload[0]);
+    formData.append('fileName', filesToUpload[0].name);
+    HttpService.makeCallToBackend({
+      path: url,
+      successCallback: onUploadedCallback,
+      httpMethod: 'POST',
+      postBody: formData,
+    });
+    setShowFileUploadModal(false);
+  };
+
+  const fileUploadModal = () => {
     return (
-      <Stack orientation="horizontal" gap={3}>
-        <Button onClick={processInstanceCreateAndRun} variant="primary">
-          Run
-        </Button>
-        <Button
-          href={`/admin/process-models/${
-            (processModel as any).process_group_id
-          }/${(processModel as any).id}/edit`}
-          variant="secondary"
-        >
-          Edit process model
-        </Button>
-        <Button
-          href={`/admin/process-models/${
-            (processModel as any).process_group_id
-          }/${(processModel as any).id}/files?file_type=bpmn`}
-          variant="warning"
-        >
-          Add New BPMN File
-        </Button>
-        <Dropdown
-          id="default"
-          titleText="Dropdown label"
-          helperText="This is some helper text"
-          label="Dropdown menu options"
-          items={items}
-          itemToString={(item: any) => (item ? item.key1 : '')}
-          onChange={(e: any) => console.log('e', e)}
+      <Modal
+        open={showFileUploadModal}
+        modalHeading="Upload File"
+        primaryButtonText="Upload"
+        secondaryButtonText="Cancel"
+        onSecondarySubmit={handleFileUploadCancel}
+        onRequestClose={handleFileUploadCancel}
+        onRequestSubmit={handleFileUpload}
+      >
+        <FileUploader
+          labelTitle="Upload files"
+          labelDescription="Max file size is 500mb. Only .bpmn, .dmn, and .json files are supported."
+          buttonLabel="Add file"
+          buttonKind="primary"
+          size="md"
+          filenameStatus="edit"
+          role="button"
+          accept={['.bpmn', '.dmn', '.json']}
+          disabled={false}
+          iconDescription="Delete file"
+          name=""
+          multiple={false}
+          onChange={(event: any) => setFilesToUpload(event.target.files)}
         />
-      </Stack>
+      </Modal>
     );
   };
 
-  if (Object.keys(processModel).length > 1) {
+  const processModelButtons = () => {
+    return (
+      <Accordion>
+        <AccordionItem
+          title={
+            <Stack orientation="horizontal">
+              <span>
+                <Button size="sm" kind="ghost">
+                  Files
+                </Button>
+              </span>
+            </Stack>
+          }
+        >
+          <ButtonSet>
+            <Button
+              renderIcon={Upload}
+              onClick={() => setShowFileUploadModal(true)}
+              size="sm"
+              kind=""
+              className="button-white-background"
+            >
+              Upload File
+            </Button>
+            <Button
+              renderIcon={Add}
+              href={`/admin/process-models/${
+                (processModel as any).process_group_id
+              }/${(processModel as any).id}/files?file_type=dmn`}
+              size="sm"
+            >
+              New DMN File
+            </Button>
+            <Button
+              renderIcon={Add}
+              href={`/admin/process-models/${
+                (processModel as any).process_group_id
+              }/${(processModel as any).id}/form?file_ext=json`}
+              size="sm"
+            >
+              New JSON File
+            </Button>
+            <Button
+              renderIcon={Add}
+              href={`/admin/process-models/${
+                (processModel as any).process_group_id
+              }/${(processModel as any).id}/form?file_ext=md`}
+              size="sm"
+            >
+              New Markdown File
+            </Button>
+          </ButtonSet>
+          <br />
+          {processModelFileList()}
+        </AccordionItem>
+      </Accordion>
+    );
+  };
+
+  if (processModel) {
     return (
       <>
         <ProcessBreadcrumb
-          processGroupId={(processModel as any).process_group_id}
-          processModelId={(processModel as any).id}
+          processGroupId={processModel.process_group_id}
+          processModelId={processModel.id}
         />
-        {processInstanceResultTag}
-        <FileInput
-          processModelId={(processModel as any).id}
-          processGroupId={(processModel as any).process_group_id}
-          onUploadedCallback={onUploadedCallback}
-        />
+        {fileUploadModal()}
+        {processInstanceResultTag()}
         <br />
         {processModelButtons()}
         <br />
         <br />
         <h3>Process Instances</h3>
         {processInstancesUl()}
-        <br />
-        <br />
-        <h3>Files</h3>
-        {processModelFileList()}
       </>
     );
   }
