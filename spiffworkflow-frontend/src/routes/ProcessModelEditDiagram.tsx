@@ -14,6 +14,7 @@ import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { makeid } from '../helpers';
 import { ProcessModel } from '../interfaces';
+import { modifyProcessModelPath } from '../helpers';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -72,7 +73,11 @@ export default function ProcessModelEditDiagram() {
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
 
-  const processModelPath = `process-models/${params.process_group_id}/${params.process_model_id}`;
+  const modifiedProcessModelId = modifyProcessModelPath(
+    (params as any).process_model_id
+  );
+
+  const processModelPath = `process-models/${modifiedProcessModelId}`;
 
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
@@ -91,6 +96,7 @@ export default function ProcessModelEditDiagram() {
     };
 
     if (params.file_name) {
+      console.log(`processModelPath: ${processModelPath}`);
       HttpService.makeCallToBackend({
         path: `/${processModelPath}/files/${params.file_name}`,
         successCallback: processResult,
@@ -109,7 +115,7 @@ export default function ProcessModelEditDiagram() {
         'file_type'
       )}`;
       navigate(
-        `/admin/process-models/${params.process_group_id}/${params.process_model_id}/files/${fileNameWithExtension}`
+        `/admin/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`
       );
     }
   };
@@ -118,7 +124,7 @@ export default function ProcessModelEditDiagram() {
     setErrorMessage(null);
     setBpmnXmlForDiagramRendering(bpmnXML);
 
-    let url = `/process-models/${params.process_group_id}/${params.process_model_id}/files`;
+    let url = `/process-models/${modifiedProcessModelId}/files`;
     let httpMethod = 'PUT';
     let fileNameWithExtension = fileName;
 
@@ -152,12 +158,12 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onDeleteFile = (fileName = params.file_name) => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}/files/${fileName}`;
+    const url = `/process-models/${modifiedProcessModelId}/files/${fileName}`;
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
       navigate(
-        `/admin/process-models/${params.process_group_id}/${params.process_model_id}`
+        `/admin/process-models/${modifiedProcessModelId}`
       );
     };
     HttpService.makeCallToBackend({
@@ -168,7 +174,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onSetPrimaryFile = (fileName = params.file_name) => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}`;
+    const url = `/process-models/${modifiedProcessModelId}`;
     const httpMethod = 'PUT';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
@@ -390,7 +396,7 @@ export default function ProcessModelEditDiagram() {
     if (currentScriptUnitTest && scriptElement) {
       resetUnitTextResult();
       HttpService.makeCallToBackend({
-        path: `/process-models/${params.process_group_id}/${params.process_model_id}/script-unit-tests/run`,
+        path: `/process-models/${modifiedProcessModelId}/script-unit-tests/run`,
         httpMethod: 'POST',
         successCallback: processScriptUnitTestRunResult,
         postBody: {
@@ -591,7 +597,6 @@ export default function ProcessModelEditDiagram() {
       return (
         <ReactDiagramEditor
           processModelId={params.process_model_id || ''}
-          processGroupId={params.process_group_id || ''}
           saveDiagram={saveDiagram}
           onDeleteFile={onDeleteFile}
           diagramXML={bpmnXmlForDiagramRendering}
@@ -613,7 +618,6 @@ export default function ProcessModelEditDiagram() {
     return (
       <ReactDiagramEditor
         processModelId={params.process_model_id || ''}
-        processGroupId={params.process_group_id || ''}
         saveDiagram={saveDiagram}
         onDeleteFile={onDeleteFile}
         onSetPrimaryFile={onSetPrimaryFileCallback}

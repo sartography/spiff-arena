@@ -6,6 +6,7 @@ import { Button, Modal } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import { modifyProcessModelPath } from '../helpers';
 
 // NOTE: This is mostly the same as ProcessModelEditDiagram and if we go this route could
 // possibly be merged into it. I'm leaving as a separate file now in case it does
@@ -34,6 +35,10 @@ export default function ReactFormEditor() {
 
   const editorDefaultLanguage = fileExtension === 'md' ? 'markdown' : 'json';
 
+  const modifiedProcessModelId = modifyProcessModelPath(
+    `${params.process_model_id}`
+  );
+
   useEffect(() => {
     const processResult = (result: any) => {
       setProcessModelFile(result);
@@ -42,7 +47,7 @@ export default function ReactFormEditor() {
 
     if (params.file_name) {
       HttpService.makeCallToBackend({
-        path: `/process-models/${params.process_group_id}/${params.process_model_id}/files/${params.file_name}`,
+        path: `/process-models/${modifiedProcessModelId}/files/${params.file_name}`,
         successCallback: processResult,
       });
     }
@@ -52,13 +57,13 @@ export default function ReactFormEditor() {
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${fileExtension}`;
       navigate(
-        `/admin/process-models/${params.process_group_id}/${params.process_model_id}/form/${fileNameWithExtension}`
+        `/admin/process-models/${modifiedProcessModelId}/form/${fileNameWithExtension}`
       );
     }
   };
 
   const saveFile = () => {
-    let url = `/process-models/${params.process_group_id}/${params.process_model_id}/files`;
+    let url = `/process-models/${modifiedProcessModelId}/files`;
     let httpMethod = 'PUT';
     let fileNameWithExtension = params.file_name;
 
@@ -90,13 +95,11 @@ export default function ReactFormEditor() {
   };
 
   const deleteFile = () => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}/files/${params.file_name}`;
+    const url = `/process-models/${modifiedProcessModelId}/files/${params.file_name}`;
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(
-        `/admin/process-models/${params.process_group_id}/${params.process_model_id}`
-      );
+      navigate(`/admin/process-models/${modifiedProcessModelId}`);
     };
 
     HttpService.makeCallToBackend({

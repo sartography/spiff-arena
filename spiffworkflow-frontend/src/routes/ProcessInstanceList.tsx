@@ -28,8 +28,10 @@ import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
   convertDateStringToSeconds,
   convertSecondsToFormattedDate,
+  getGroupFromModifiedModelId,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
+  modifyProcessModelPath,
 } from '../helpers';
 
 import PaginationForTable from '../components/PaginationForTable';
@@ -383,27 +385,27 @@ export default function ProcessInstanceList() {
         convertSecondsToFormattedDate(row.start_in_seconds) || '-';
       const formattedEndDate =
         convertSecondsToFormattedDate(row.end_in_seconds) || '-';
+      const modifiedProcessModelId: String = modifyProcessModelPath(
+        (row as any).process_model_identifier
+      );
+      const groupId = getGroupFromModifiedModelId(modifiedProcessModelId);
 
       return (
         <tr key={row.id}>
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}/process-instances/${row.id}`}
+              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${row.id}`}
             >
               {row.id}
             </Link>
           </td>
           <td>
-            <Link to={`/admin/process-groups/${row.process_group_identifier}`}>
-              {row.process_group_identifier}
-            </Link>
+            <Link to={`/admin/process-groups/${groupId}`}>{groupId}</Link>
           </td>
           <td>
-            <Link
-              to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}`}
-            >
-              {row.process_model_identifier}
+            <Link to={`/admin/process-models/${modifiedProcessModelId}`}>
+              {modifiedProcessModelId}
             </Link>
           </td>
           <td>{formattedStartDate}</td>

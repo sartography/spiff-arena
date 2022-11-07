@@ -7,6 +7,7 @@ import FileInput from '../components/FileInput';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { RecentProcessModel } from '../interfaces';
+import {modifyProcessModelPath, unModifyProcessModelPath} from '../helpers';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: any,
@@ -70,6 +71,10 @@ export default function ProcessModelShow() {
   const [processInstanceResult, setProcessInstanceResult] = useState(null);
   const [reloadModel, setReloadModel] = useState(false);
 
+  const modifiedProcessModelId = modifyProcessModelPath(
+    `${params.process_model_id}`
+  );
+
   useEffect(() => {
     const processResult = (result: object) => {
       setProcessModel(result);
@@ -77,7 +82,7 @@ export default function ProcessModelShow() {
       storeRecentProcessModelInLocalStorage(result, params);
     };
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}`,
+      path: `/process-models/${modifiedProcessModelId}`,
       successCallback: processResult,
     });
   }, [params, reloadModel]);
@@ -85,7 +90,7 @@ export default function ProcessModelShow() {
   const processModelRun = (processInstance: any) => {
     setErrorMessage(null);
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${processInstance.id}/run`,
+      path: `/process-instances/${processInstance.id}/run`,
       successCallback: setProcessInstanceResult,
       failureCallback: setErrorMessage,
       httpMethod: 'POST',
@@ -94,7 +99,7 @@ export default function ProcessModelShow() {
 
   const processInstanceCreateAndRun = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances`,
+      path: `/process-models/${modifiedProcessModelId}/process-instances`,
       successCallback: processModelRun,
       httpMethod: 'POST',
     });
@@ -120,11 +125,7 @@ export default function ProcessModelShow() {
         <p>
           Process Instance {processInstanceId} kicked off (
           <Link
-            to={`/admin/process-models/${
-              (processModel as any).process_group_id
-            }/${
-              (processModel as any).id
-            }/process-instances/${processInstanceId}`}
+            to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${processInstanceId}`}
             data-qa="process-instance-show-link"
           >
             view
@@ -147,12 +148,13 @@ export default function ProcessModelShow() {
         if (processModelFile.name === (processModel as any).primary_file_name) {
           primarySuffix = '- Primary File';
         }
+        // const modifiedProcessModelId = modifyProcessModelPath(
+        //   (processModel as any).id
+        // );
         constructedTag = (
           <li key={processModelFile.name}>
             <Link
-              to={`/admin/process-models/${
-                (processModel as any).process_group_id
-              }/${(processModel as any).id}/files/${processModelFile.name}`}
+              to={`/admin/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`}
             >
               {processModelFile.name}
             </Link>
@@ -163,9 +165,7 @@ export default function ProcessModelShow() {
         constructedTag = (
           <li key={processModelFile.name}>
             <Link
-              to={`/admin/process-models/${
-                (processModel as any).process_group_id
-              }/${(processModel as any).id}/form/${processModelFile.name}`}
+              to={`/admin/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`}
             >
               {processModelFile.name}
             </Link>
@@ -183,13 +183,12 @@ export default function ProcessModelShow() {
   };
 
   const processInstancesUl = () => {
+    const unmodifiedProcessModelId: String = unModifyProcessModelPath(`${params.process_model_id}`);
     return (
       <ul>
         <li>
           <Link
-            to={`/admin/process-instances?process_group_identifier=${
-              (processModel as any).process_group_id
-            }&process_model_identifier=${(processModel as any).id}`}
+            to={`/admin/process-instances?process_model_identifier=${unmodifiedProcessModelId}`}
             data-qa="process-instance-list-link"
           >
             List
@@ -197,9 +196,7 @@ export default function ProcessModelShow() {
         </li>
         <li>
           <Link
-            to={`/admin/process-models/${
-              (processModel as any).process_group_id
-            }/${(processModel as any).id}/process-instances/reports`}
+            to={`/admin/process-models/${modifiedProcessModelId}/process-instances/reports`}
             data-qa="process-instance-reports-link"
           >
             Reports
@@ -216,41 +213,31 @@ export default function ProcessModelShow() {
           Run
         </Button>
         <Button
-          href={`/admin/process-models/${
-            (processModel as any).process_group_id
-          }/${(processModel as any).id}/edit`}
+          href={`/admin/process-models/${modifiedProcessModelId}/edit`}
           variant="secondary"
         >
           Edit process model
         </Button>
         <Button
-          href={`/admin/process-models/${
-            (processModel as any).process_group_id
-          }/${(processModel as any).id}/files?file_type=bpmn`}
+          href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
           variant="warning"
         >
           Add New BPMN File
         </Button>
         <Button
-          href={`/admin/process-models/${
-            (processModel as any).process_group_id
-          }/${(processModel as any).id}/files?file_type=dmn`}
+          href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
           variant="success"
         >
           Add New DMN File
         </Button>
         <Button
-          href={`/admin/process-models/${
-            (processModel as any).process_group_id
-          }/${(processModel as any).id}/form?file_ext=json`}
+          href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
           variant="info"
         >
           Add New JSON File
         </Button>
         <Button
-          href={`/admin/process-models/${
-            (processModel as any).process_group_id
-          }/${(processModel as any).id}/form?file_ext=md`}
+          href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
           variant="info"
         >
           Add New Markdown File
