@@ -1,12 +1,10 @@
 import { useContext, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 // @ts-ignore
 import { Add, Upload } from '@carbon/icons-react';
 import {
   Accordion,
   AccordionItem,
-  Grid,
-  Column,
   Dropdown,
   Button,
   Stack,
@@ -22,10 +20,15 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
-import FileInput from '../components/FileInput';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { ProcessModel, RecentProcessModel } from '../interfaces';
+import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
+
+interface ProcessModelFileCarbonDropdownItem {
+  label: string;
+  action: string;
+  processModelFile: ProcessFile;
+}
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: any,
@@ -91,7 +94,6 @@ export default function ProcessModelShow() {
   const [filesToUpload, setFilesToUpload] = useState<any>(null);
   const [showFileUploadModal, setShowFileUploadModal] =
     useState<boolean>(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
@@ -164,9 +166,58 @@ export default function ProcessModelShow() {
     setReloadModel(true);
   };
 
+  // Remove this code from
+  const onDeleteFile = (fileName: string) => {
+    const url = `/process-models/${params.process_group_id}/${params.process_model_id}/files/${fileName}`;
+    const httpMethod = 'DELETE';
+    const reloadModelOhYeah = (_httpResult: any) => {
+      setReloadModel(!reloadModel);
+    };
+    HttpService.makeCallToBackend({
+      path: url,
+      successCallback: reloadModelOhYeah,
+      httpMethod,
+    });
+  };
+
+  const onProcessModelFileAction = (selection: any) => {
+    const { selectedItem } = selection;
+    if (selectedItem.action === 'delete') {
+      onDeleteFile(selectedItem.processModelFile.name);
+    }
+  };
+
   const processModelFileList = () => {
     let constructedTag;
     const tags = (processModel as any).files.map((processModelFile: any) => {
+      const items: ProcessModelFileCarbonDropdownItem[] = [
+        {
+          label: 'Delete',
+          action: 'delete',
+          processModelFile,
+        },
+        {
+          label: 'Mark as Primary',
+          action: 'mark_as_primary',
+          processModelFile,
+        },
+      ];
+      const actionsTableCell = (
+        <TableCell key={`${processModelFile.name}-cell`}>
+          <Dropdown
+            id="default"
+            direction="top"
+            label="Select an action"
+            onChange={(e: any) => {
+              onProcessModelFileAction(e);
+            }}
+            items={items}
+            itemToString={(item: ProcessModelFileCarbonDropdownItem) =>
+              item ? item.label : ''
+            }
+          />
+        </TableCell>
+      );
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
         let primarySuffix = '';
         if (processModelFile.name === (processModel as any).primary_file_name) {
@@ -184,6 +235,7 @@ export default function ProcessModelShow() {
               </Link>
               {primarySuffix}
             </TableCell>
+            {actionsTableCell}
           </TableRow>
         );
       } else if (processModelFile.name.match(/\.(json|md)$/)) {
@@ -198,6 +250,7 @@ export default function ProcessModelShow() {
                 {processModelFile.name}
               </Link>
             </TableCell>
+            {actionsTableCell}
           </TableRow>
         );
       } else {
@@ -213,7 +266,7 @@ export default function ProcessModelShow() {
     });
 
     // return <ul>{tags}</ul>;
-    const headers = ['name', 'Actions'];
+    const headers = ['Name', 'Actions'];
     return (
       <Table size="lg" useZebraStyles={false}>
         <TableHead>
@@ -374,6 +427,21 @@ export default function ProcessModelShow() {
           processGroupId={processModel.process_group_id}
           processModelId={processModel.id}
         />
+        <h1>{processModel.display_name}</h1>
+        <p>{processModel.description}</p>
+        <Stack orientation="horizontal" gap={3}>
+          <Button onClick={processInstanceCreateAndRun} variant="primary">
+            Run
+          </Button>
+          <Button
+            href={`/admin/process-models/${
+              (processModel as any).process_group_id
+            }/${(processModel as any).id}/edit`}
+            variant="secondary"
+          >
+            Edit process model
+          </Button>
+        </Stack>
         {fileUploadModal()}
         {processInstanceResultTag()}
         <br />

@@ -49,6 +49,7 @@ export default function ProcessModelEdit() {
     });
   };
 
+  // share with or delete from ProcessModelEditDiagram
   const deleteProcessModel = () => {
     setErrorMessage(null);
     const processModelToUse = processModel as any;
