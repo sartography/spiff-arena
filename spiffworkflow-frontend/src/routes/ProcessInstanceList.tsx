@@ -383,7 +383,7 @@ export default function ProcessInstanceList() {
     const headerLabels: Record<string, string> = {
       id: 'Process Instance Id',
       process_group_identifier: 'Process Group',
-      process_model_indetifier: 'Process Model',
+      process_model_identifier: 'Process Model',
       start_in_seconds: 'Start Time',
       end_in_seconds: 'End Time',
       status: 'Status',
