@@ -1417,7 +1417,7 @@ class TestProcessApi(BaseTest):
 
         # Without filtering we should get all 5 instances
         response = client.get(
-            f"/v1.0/process-instances?process_group_identifier={process_group_id}&process_model_identifier={process_model_id}",
+            f"/v1.0/process-instances?process_model_identifier={process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1428,7 +1428,7 @@ class TestProcessApi(BaseTest):
         # we should get 1 instance each time
         for i in range(5):
             response = client.get(
-                f"/v1.0/process-instances?process_status={ProcessInstanceStatus[statuses[i]].value}&process_group_identifier={process_group_id}&process_model_identifier={process_model_id}",
+                f"/v1.0/process-instances?process_status={ProcessInstanceStatus[statuses[i]].value}&process_model_identifier={process_model_identifier}",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.json is not None
@@ -1437,7 +1437,7 @@ class TestProcessApi(BaseTest):
             assert results[0]["status"] == ProcessInstanceStatus[statuses[i]].value
 
         response = client.get(
-            f"/v1.0/process-instances?process_status=not_started,complete&process_group_identifier={process_group_id}&process_model_identifier={process_model_id}",
+            f"/v1.0/process-instances?process_status=not_started,complete&process_model_identifier={process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
