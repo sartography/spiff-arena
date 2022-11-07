@@ -13,6 +13,12 @@ import {
   ButtonSet,
   Modal,
   FileUploader,
+  Table,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableCell,
+  TableBody,
   // @ts-ignore
 } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -167,38 +173,61 @@ export default function ProcessModelShow() {
           primarySuffix = '- Primary File';
         }
         constructedTag = (
-          <li key={processModelFile.name}>
-            <Link
-              to={`/admin/process-models/${
-                (processModel as any).process_group_id
-              }/${(processModel as any).id}/files/${processModelFile.name}`}
-            >
-              {processModelFile.name}
-            </Link>
-            {primarySuffix}
-          </li>
+          <TableRow key={processModelFile.name}>
+            <TableCell key={`${processModelFile.name}-cell`}>
+              <Link
+                to={`/admin/process-models/${
+                  (processModel as any).process_group_id
+                }/${(processModel as any).id}/files/${processModelFile.name}`}
+              >
+                {processModelFile.name}
+              </Link>
+              {primarySuffix}
+            </TableCell>
+          </TableRow>
         );
       } else if (processModelFile.name.match(/\.(json|md)$/)) {
         constructedTag = (
-          <li key={processModelFile.name}>
-            <Link
-              to={`/admin/process-models/${
-                (processModel as any).process_group_id
-              }/${(processModel as any).id}/form/${processModelFile.name}`}
-            >
-              {processModelFile.name}
-            </Link>
-          </li>
+          <TableRow key={processModelFile.name}>
+            <TableCell key={`${processModelFile.name}-cell`}>
+              <Link
+                to={`/admin/process-models/${
+                  (processModel as any).process_group_id
+                }/${(processModel as any).id}/form/${processModelFile.name}`}
+              >
+                {processModelFile.name}
+              </Link>
+            </TableCell>
+          </TableRow>
         );
       } else {
         constructedTag = (
-          <li key={processModelFile.name}>{processModelFile.name}</li>
+          <TableRow key={processModelFile.name}>
+            <TableCell key={`${processModelFile.name}-cell`}>
+              {processModelFile.name}
+            </TableCell>
+          </TableRow>
         );
       }
       return constructedTag;
     });
 
-    return <ul>{tags}</ul>;
+    // return <ul>{tags}</ul>;
+    const headers = ['name', 'Actions'];
+    return (
+      <Table size="lg" useZebraStyles={false}>
+        <TableHead>
+          <TableRow>
+            {headers.map((header) => (
+              <TableHeader id={header} key={header}>
+                {header}
+              </TableHeader>
+            ))}
+          </TableRow>
+        </TableHead>
+        <TableBody>{tags}</TableBody>
+      </Table>
+    );
   };
 
   const processInstancesUl = () => {
