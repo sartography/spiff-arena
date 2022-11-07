@@ -27,6 +27,10 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
+class ProcessModelFileNotFoundError(Exception):
+    """ProcessModelFileNotFoundError."""
+
+
 class SpecFileService(FileSystemService):
     """SpecFileService."""
 
@@ -93,9 +97,8 @@ class SpecFileService(FileSystemService):
         # file_path = SpecFileService.file_path(process_model_info, file_name)
         file_path = os.path.join(FileSystemService.root_path(), process_model_info.id, file_name)
         if not os.path.exists(file_path):
-            raise ApiError(
-                "unknown_file",
-                f"No file found with name {file_name} in {process_model_info.display_name}",
+            raise ProcessModelFileNotFoundError(
+                f"No file found with name {file_name} in {process_model_info.display_name}"
             )
         with open(file_path, "rb") as f_handle:
             spec_file_data = f_handle.read()

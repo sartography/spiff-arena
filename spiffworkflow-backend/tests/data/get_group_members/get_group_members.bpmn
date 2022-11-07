@@ -11,13 +11,13 @@
     <bpmn:scriptTask id="get_group_a">
       <bpmn:incoming>Flow_1j4jzft</bpmn:incoming>
       <bpmn:outgoing>Flow_10xyk22</bpmn:outgoing>
-      <bpmn:script>members_a = get_group_members("GroupA")</bpmn:script>
+      <bpmn:script>members_a = get_group_members("groupA")</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:sequenceFlow id="Flow_10xyk22" sourceRef="get_group_a" targetRef="get_group_b" />
     <bpmn:scriptTask id="get_group_b">
       <bpmn:incoming>Flow_10xyk22</bpmn:incoming>
       <bpmn:outgoing>Flow_01xr2ac</bpmn:outgoing>
-      <bpmn:script>members_b = get_group_members("GroupB")</bpmn:script>
+      <bpmn:script>members_b = get_group_members("groupB")</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:sequenceFlow id="Flow_01xr2ac" sourceRef="get_group_b" targetRef="Event_1s123jg" />
   </bpmn:process>

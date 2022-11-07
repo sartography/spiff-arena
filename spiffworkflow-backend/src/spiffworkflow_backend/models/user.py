@@ -112,12 +112,3 @@ class UserModelSchema(Schema):
 
     id = marshmallow.fields.String(required=True)
     username = marshmallow.fields.String(required=True)
-
-
-class AdminSessionModel(SpiffworkflowBaseDBModel):
-    """AdminSessionModel."""
-
-    __tablename__ = "admin_session"
-    id = db.Column(db.Integer, primary_key=True)
-    token = db.Column(db.String(50), unique=True)
-    admin_impersonate_uid = db.Column(db.String(50))

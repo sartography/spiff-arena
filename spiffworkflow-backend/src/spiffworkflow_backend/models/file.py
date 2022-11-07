@@ -4,40 +4,10 @@ from dataclasses import field
 from datetime import datetime
 from typing import Optional
 
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from marshmallow import INCLUDE
 from marshmallow import Schema
-from sqlalchemy.orm import deferred
-from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
-from spiffworkflow_backend.models.data_store import DataStoreModel
-
-
-class FileModel(SpiffworkflowBaseDBModel):
-    """FileModel."""
-
-    __tablename__ = "file"
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False)
-    type = db.Column(db.String(50), nullable=False)
-    content_type = db.Column(db.String(50), nullable=False)
-    process_instance_id = db.Column(
-        db.Integer, db.ForeignKey("process_instance.id"), nullable=True
-    )
-    task_spec = db.Column(db.String(50), nullable=True)
-    irb_doc_code = db.Column(
-        db.String(50), nullable=False
-    )  # Code reference to the documents.xlsx reference file.
-    data_stores = relationship(DataStoreModel, cascade="all,delete", backref="file")
-    md5_hash = db.Column(db.String(50), unique=False, nullable=False)
-    data = deferred(db.Column(db.LargeBinary))  # type: ignore
-    size = db.Column(db.Integer, default=0)
-    updated_at_in_seconds = db.Column(db.Integer)
-    created_at_in_seconds = db.Column(db.Integer)
-    user_uid = db.Column(db.String(50), db.ForeignKey("user.uid"), nullable=True)
-    archived = db.Column(db.Boolean, default=False)
 
 
 class FileType(SpiffEnum):

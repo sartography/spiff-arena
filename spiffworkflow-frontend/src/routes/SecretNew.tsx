@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stack } from 'react-bootstrap';
+// @ts-ignore
+import { Stack } from '@carbon/react';
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
 import HttpService from '../services/HttpService';
@@ -67,7 +68,7 @@ export default function SecretNew() {
             }}
           />
         </Form.Group>
-        <Stack direction="horizontal" gap={3}>
+        <Stack orientation="horizontal" gap={3}>
           <Button variant="primary" type="submit">
             Submit
           </Button>
