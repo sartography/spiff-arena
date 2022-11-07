@@ -3,7 +3,7 @@ import {
   BpmnPropertiesPanelModule,
   BpmnPropertiesProviderModule,
 } from 'bpmn-js-properties-panel';
-import diagramXML from '../test/spec/bpmn/user_form.bpmn';
+import diagramXML from '../test/spec/bpmn/diagram.bpmn';
 import spiffworkflow from './spiffworkflow';
 import setupFileOperations from './fileOperations';
 
@@ -89,32 +89,37 @@ const myCodeMirror = CodeMirror(document.getElementById('code_editor'), {
 const saveCodeBtn = document.getElementById('saveCode');
 let launchCodeEvent = null;
 
-bpmnModeler.on('script.editor.launch', (newEvent) => {
+bpmnModeler.on('spiff.script.edit', (newEvent) => {
   launchCodeEvent = newEvent;
   myCodeMirror.setValue(launchCodeEvent.script);
-  setTimeout(function() {
+  setTimeout(function () {
     myCodeMirror.refresh();
-  },1);  // We have to wait a moment before calling refresh.
+  }, 1); // We have to wait a moment before calling refresh.
   document.getElementById('code_overlay').style.display = 'block';
   document.getElementById('code_editor').focus();
 });
 
 saveCodeBtn.addEventListener('click', (_event) => {
   const { scriptType, element } = launchCodeEvent;
-  launchCodeEvent.eventBus.fire('script.editor.update', { element, scriptType, script: myCodeMirror.getValue()} )
+  launchCodeEvent.eventBus.fire('spiff.script.update', {
+    element,
+    scriptType,
+    script: myCodeMirror.getValue(),
+  });
   document.getElementById('code_overlay').style.display = 'none';
 });
-
 
 /**
  * Like Python Script Editing, it can be nice to edit your Markdown in a
  * good editor as well.
  */
-var simplemde = new SimpleMDE({ element: document.getElementById("markdown_textarea") });
+const simplemde = new SimpleMDE({
+  element: document.getElementById('markdown_textarea'),
+});
 let launchMarkdownEvent = null;
-bpmnModeler.on('markdown.editor.launch', (newEvent) => {
+bpmnModeler.on('spiff.markdown.edit', (newEvent) => {
   launchMarkdownEvent = newEvent;
-  simplemde.value(launchMarkdownEvent.markdown);
+  simplemde.value(launchMarkdownEvent.value);
   document.getElementById('markdown_overlay').style.display = 'block';
   document.getElementById('markdown_editor').focus();
 });
@@ -122,8 +127,58 @@ bpmnModeler.on('markdown.editor.launch', (newEvent) => {
 const saveMarkdownBtn = document.getElementById('saveMarkdown');
 saveMarkdownBtn.addEventListener('click', (_event) => {
   const { element } = launchMarkdownEvent;
-  launchMarkdownEvent.eventBus.fire('markdown.editor.update', { element, markdown:simplemde.value() });
+  launchMarkdownEvent.eventBus.fire('spiff.markdown.update', {
+    element,
+    value: simplemde.value(),
+  });
   document.getElementById('markdown_overlay').style.display = 'none';
+});
+
+/**
+ * Also can be good to launch an editor for a call activity, or file
+ * Not implemented here but imagine opening up a new browser tab
+ * and showing a different process or completly different file editor.
+ */
+bpmnModeler.on('spiff.callactivity.edit', (newEvent) => {
+  console.log(
+    'Open new window with editor for call activity: ',
+    newEvent.processId
+  );
+});
+
+/**
+ * Also can be good to launch an editor for a call activity, or DMN
+ * Not implemented here but imagine opening up a new browser tab
+ * and showing a different process.
+ */
+bpmnModeler.on('spiff.file.edit', (newEvent) => {
+  console.log('Open new window to edit file: ', newEvent.value);
+});
+bpmnModeler.on('spiff.dmn.edit', (newEvent) => {
+  console.log('Open new window to edit DMN table: ', newEvent.value);
+});
+
+/**
+ * Also handy to get a list of available files that can be used in a given
+ * context, say json files for a form, or a DMN file for a BusinessRuleTask
+ */
+bpmnModeler.on('spiff.json_files.requested', (event) => {
+  event.eventBus.fire('spiff.json_files.returned', {
+    options: [
+      { label: 'pizza_form.json', value: 'pizza_form.json' },
+      { label: 'credit_card_form.json', value: 'credit_card_form.json' },
+    ],
+  });
+});
+
+bpmnModeler.on('spiff.dmn_files.requested', (event) => {
+  event.eventBus.fire('spiff.dmn_files.returned', {
+    options: [
+      { label: 'Pizza Special Prices', value: 'pizza_prices' },
+      { label: 'Topping Prices', value: 'topping_prices' },
+      { label: 'Test Decision', value: 'test_decision' },
+    ],
+  });
 });
 
 // This handles the download and upload buttons - it isn't specific to
