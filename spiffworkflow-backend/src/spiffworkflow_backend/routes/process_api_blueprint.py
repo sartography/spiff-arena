@@ -706,6 +706,23 @@ def process_instance_list(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
+    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
+
+    if process_instance_report is not None:
+        substitution_variables = request.args.to_dict()
+        result_dict = process_instance_report.generate_report(
+            process_instances.items, substitution_variables
+        )
+
+        # update this if we go back to a database query instead of filtering in memory
+        result_dict["pagination"] = {
+            "count": len(result_dict["results"]),
+            "total": len(result_dict["results"]),
+            "pages": 1,
+        }
+
+        return Response(json.dumps(result_dict), status=200, mimetype="application/json")
+
     response_json = {
         "results": process_instances.items,
         "pagination": {
