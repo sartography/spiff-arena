@@ -871,7 +871,8 @@ def process_instance_report_show(
     )
 
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        identifier=report_identifier
+        identifier=report_identifier,
+        created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
         raise ApiError(
