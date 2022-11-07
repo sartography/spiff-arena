@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Button, Modal, Stack } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Modal, Stack } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -32,10 +33,16 @@ export default function ProcessInstanceShow() {
       path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}`,
       successCallback: setProcessInstance,
     });
-    HttpService.makeCallToBackend({
-      path: `/process-instance/${params.process_instance_id}/tasks?all_tasks=true`,
-      successCallback: setTasks,
-    });
+    if (typeof params.spiff_step === 'undefined')
+      HttpService.makeCallToBackend({
+        path: `/process-instance/${params.process_instance_id}/tasks?all_tasks=true`,
+        successCallback: setTasks,
+      });
+    else
+      HttpService.makeCallToBackend({
+        path: `/process-instance/${params.process_instance_id}/tasks?all_tasks=true&spiff_step=${params.spiff_step}`,
+        successCallback: setTasks,
+      });
   }, [params]);
 
   const deleteProcessInstance = () => {
@@ -90,6 +97,62 @@ export default function ProcessInstanceShow() {
     return taskIds;
   };
 
+  const currentSpiffStep = (processInstanceToUse: any) => {
+    if (typeof params.spiff_step === 'undefined') {
+      return processInstanceToUse.spiff_step;
+    }
+
+    return Number(params.spiff_step);
+  };
+
+  const showingFirstSpiffStep = (processInstanceToUse: any) => {
+    return currentSpiffStep(processInstanceToUse) === 1;
+  };
+
+  const showingLastSpiffStep = (processInstanceToUse: any) => {
+    return (
+      currentSpiffStep(processInstanceToUse) === processInstanceToUse.spiff_step
+    );
+  };
+
+  const spiffStepLink = (
+    processInstanceToUse: any,
+    label: string,
+    distance: number
+  ) => {
+    return (
+      <li>
+        <Link
+          reloadDocument
+          data-qa="process-instance-step-link"
+          to={`/admin/process-models/${params.process_group_id}/${
+            params.process_model_id
+          }/process-instances/${params.process_instance_id}/${
+            currentSpiffStep(processInstanceToUse) + distance
+          }`}
+        >
+          {label}
+        </Link>
+      </li>
+    );
+  };
+
+  const previousStepLink = (processInstanceToUse: any) => {
+    if (showingFirstSpiffStep(processInstanceToUse)) {
+      return null;
+    }
+
+    return spiffStepLink(processInstanceToUse, 'Previous Step', -1);
+  };
+
+  const nextStepLink = (processInstanceToUse: any) => {
+    if (showingLastSpiffStep(processInstanceToUse)) {
+      return null;
+    }
+
+    return spiffStepLink(processInstanceToUse, 'Next Step', 1);
+  };
+
   const getInfoTag = (processInstanceToUse: any) => {
     const currentEndDate = convertSecondsToFormattedDate(
       processInstanceToUse.end_in_seconds
@@ -129,6 +192,12 @@ export default function ProcessInstanceShow() {
             Messages
           </Link>
         </li>
+        <li>
+          Step {currentSpiffStep(processInstanceToUse)} of{' '}
+          {processInstanceToUse.spiff_step}
+        </li>
+        {previousStepLink(processInstanceToUse)}
+        {nextStepLink(processInstanceToUse)}
       </ul>
     );
   };
@@ -228,7 +297,9 @@ export default function ProcessInstanceShow() {
   };
 
   const canEditTaskData = (task: any) => {
-    return task.state === 'READY';
+    return (
+      task.state === 'READY' && showingLastSpiffStep(processInstance as any)
+    );
   };
 
   const cancelEditingTaskData = () => {
@@ -338,15 +409,15 @@ export default function ProcessInstanceShow() {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     if (taskToDisplay) {
       return (
-        <Modal show={!!taskToUse} onHide={handleTaskDataDisplayClose}>
-          <Modal.Header closeButton>
-            <Modal.Title>
-              <Stack direction="horizontal" gap={2}>
-                {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-                {taskDataButtons(taskToUse)}
-              </Stack>
-            </Modal.Title>
-          </Modal.Header>
+        <Modal
+          open={!!taskToUse}
+          passiveModal
+          onRequestClose={handleTaskDataDisplayClose}
+        >
+          <Stack orientation="horizontal" gap={2}>
+            {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
+            {taskDataButtons(taskToUse)}
+          </Stack>
           {taskDataContainer()}
         </Modal>
       );
@@ -365,7 +436,7 @@ export default function ProcessInstanceShow() {
           processGroupId={params.process_group_id}
           linkProcessModel
         />
-        <Stack direction="horizontal" gap={3}>
+        <Stack orientation="horizontal" gap={3}>
           <h2>Process Instance Id: {processInstanceToUse.id}</h2>
           <ButtonWithConfirmation
             description="Delete Process Instance?"

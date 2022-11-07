@@ -1,6 +1,7 @@
 """Process_group."""
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -20,6 +21,7 @@ class ProcessGroup:
 
     id: str  # A unique string name, lower case, under scores (ie, 'my_group')
     display_name: str
+    description: str | None = None
     display_order: int | None = 0
     admin: bool | None = False
     process_models: list[ProcessModelInfo] = field(
@@ -37,6 +39,12 @@ class ProcessGroup:
         if other.id == self.id:
             return True
         return False
+
+    @property
+    def serialized(self) -> dict:
+        """Serialized."""
+        original_dict = dataclasses.asdict(self)
+        return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}
 
 
 class ProcessGroupSchema(Schema):

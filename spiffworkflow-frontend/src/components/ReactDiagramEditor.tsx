@@ -18,7 +18,8 @@ import {
 } from 'dmn-js-properties-panel';
 
 import React, { useRef, useEffect, useState } from 'react';
-import Button from 'react-bootstrap/Button';
+// @ts-ignore
+import { Button } from '@carbon/react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';

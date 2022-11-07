@@ -78,10 +78,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator = relationship("UserModel")
 
     active_tasks = relationship("ActiveTaskModel", cascade="delete")  # type: ignore
-    task_events = relationship("TaskEventModel", cascade="delete")  # type: ignore
     spiff_logs = relationship("SpiffLoggingModel", cascade="delete")  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
+    spiff_step_details = relationship("SpiffStepDetailsModel", cascade="delete")  # type: ignore
 
     bpmn_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
     start_in_seconds: int | None = db.Column(db.Integer)
@@ -93,6 +93,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_xml_file_contents: bytes | None = None
     bpmn_version_control_type: str = db.Column(db.String(50))
     bpmn_version_control_identifier: str = db.Column(db.String(255))
+    spiff_step: int = db.Column(db.Integer)
 
     @property
     def serialized(self) -> dict[str, Any]:
@@ -111,6 +112,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "end_in_seconds": self.end_in_seconds,
             "process_initiator_id": self.process_initiator_id,
             "bpmn_xml_file_contents": local_bpmn_xml_file_contents,
+            "spiff_step": self.spiff_step,
         }
 
     @property

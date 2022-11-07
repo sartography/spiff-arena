@@ -20,7 +20,6 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_report import (
@@ -28,7 +27,6 @@ from spiffworkflow_backend.models.process_instance_report import (
 )
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
-from spiffworkflow_backend.models.task_event import TaskEventModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -439,25 +437,29 @@ class TestProcessApi(BaseTest):
             display_name="Another Test Category",
             display_order=0,
             admin=False,
+            description="Test Description",
         )
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group)),
+            data=json.dumps(process_group.serialized),
         )
         assert response.status_code == 201
+        assert response.json
 
         # Check what is returned
-        result = ProcessGroupSchema().loads(response.get_data(as_text=True))
+        result = ProcessGroup(**response.json)
         assert result is not None
         assert result.display_name == "Another Test Category"
         assert result.id == "test"
+        assert result.description == "Test Description"
 
         # Check what is persisted
         persisted = ProcessModelService().get_process_group("test")
         assert persisted.display_name == "Another Test Category"
         assert persisted.id == "test"
+        assert persisted.description == "Test Description"
 
     def test_process_group_delete(
         self,
@@ -512,7 +514,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-groups/{group_id}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group)),
+            data=json.dumps(process_group.serialized),
         )
         assert response.status_code == 200
 
@@ -1210,67 +1212,13 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-
         assert response.json is not None
-        task_events = (
-            db.session.query(TaskEventModel)
-            .filter(TaskEventModel.process_instance_id == process_instance_id)
-            .all()
-        )
-        assert len(task_events) == 1
-        task_event = task_events[0]
-        assert task_event.user_id == with_super_admin_user.id
 
         delete_response = client.delete(
             f"/v1.0/process-instances/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert delete_response.status_code == 200
-
-    def test_process_instance_run_user_task_creates_task_event(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        """Test_process_instance_run_user_task."""
-        process_group_id = "my_process_group"
-        process_model_id = "user_task"
-        bpmn_file_name = "user_task.bpmn"
-        bpmn_file_location = "user_task"
-        process_model_identifier = self.basic_test_setup(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location
-        )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
-
-        headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
-            client, process_model_identifier, headers
-        )
-        assert response.json is not None
-        process_instance_id = response.json["id"]
-
-        response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-
-        assert response.json is not None
-        task_events = (
-            db.session.query(TaskEventModel)
-            .filter(TaskEventModel.process_instance_id == process_instance_id)
-            .all()
-        )
-        assert len(task_events) == 1
-        task_event = task_events[0]
-        assert task_event.user_id == with_super_admin_user.id
-        # TODO: When user tasks work, we need to add some more assertions for action, task_state, etc.
 
     def test_task_show(
         self,
@@ -1307,6 +1255,8 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.json is not None
+        # assert response.json['next_task'] is not None
+
         active_tasks = (
             db.session.query(ActiveTaskModel)
             .filter(ActiveTaskModel.process_instance_id == process_instance_id)
@@ -1510,7 +1460,7 @@ class TestProcessApi(BaseTest):
 
         # start > 2000, end < 5000 - this should eliminate the first 2 and the last
         response = client.get(
-            "/v1.0/process-instances?start_from=2001&end_till=5999",
+            "/v1.0/process-instances?start_from=2001&end_to=5999",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1521,7 +1471,7 @@ class TestProcessApi(BaseTest):
 
         # start > 1000, start < 4000 - this should eliminate the first and the last 2
         response = client.get(
-            "/v1.0/process-instances?start_from=1001&start_till=3999",
+            "/v1.0/process-instances?start_from=1001&start_to=3999",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1532,7 +1482,7 @@ class TestProcessApi(BaseTest):
 
         # end > 2000, end < 6000 - this should eliminate the first and the last
         response = client.get(
-            "/v1.0/process-instances?end_from=2001&end_till=5999",
+            "/v1.0/process-instances?end_from=2001&end_to=5999",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None

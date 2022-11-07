@@ -6,14 +6,27 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import { Button, Table, Stack, Form, InputGroup } from 'react-bootstrap';
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'reac... Remove this comment to see the full error message
-import DatePicker from 'react-datepicker';
-import { Typeahead } from 'react-bootstrap-typeahead';
-import { Option } from 'react-bootstrap-typeahead/types/types';
-import { PROCESS_STATUSES, DATE_FORMAT } from '../config';
+// @ts-ignore
+import { Filter } from '@carbon/icons-react';
 import {
-  convertDateToSeconds,
+  Button,
+  ButtonSet,
+  DatePicker,
+  DatePickerInput,
+  Table,
+  Grid,
+  Column,
+  MultiSelect,
+  // TableHeader,
+  // TableHead,
+  // TableRow,
+  // TableBody,
+  // TableCell,
+  // @ts-ignore
+} from '@carbon/react';
+import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
+import {
+  convertDateStringToSeconds,
   convertSecondsToFormattedDate,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
@@ -27,6 +40,8 @@ import HttpService from '../services/HttpService';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
+import { PaginationObject, ProcessModel } from '../interfaces';
+import ProcessModelSearch from '../components/ProcessModelSearch';
 
 export default function ProcessInstanceList() {
   const params = useParams();
@@ -34,36 +49,38 @@ export default function ProcessInstanceList() {
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
-  const [startFrom, setStartFrom] = useState(null);
-  const [startTill, setStartTill] = useState(null);
-  const [endFrom, setEndFrom] = useState(null);
-  const [endTill, setEndTill] = useState(null);
+  const [startFrom, setStartFrom] = useState<string>('');
+  const [startTo, setStartTo] = useState<string>('');
+  const [endFrom, setEndFrom] = useState<string>('');
+  const [endTo, setEndTo] = useState<string>('');
+  const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const [processStatuseSelectionOptions, setProcessStatusSelectionOptions] =
-    useState<any[]>([]);
-  const [processStatusSelection, setProcessStatusSelection] = useState<
-    Option[]
-  >([]);
-  const [processModeleSelectionOptions, setProcessModelSelectionOptions] =
-    useState([]);
-  const [processModelSelection, setProcessModelSelection] = useState<Option[]>(
+  const [processStatusAllOptions, setProcessStatusAllOptions] = useState<any[]>(
     []
   );
+  const [processStatusSelection, setProcessStatusSelection] = useState<
+    string[]
+  >([]);
+  const [processModelAvailableItems, setProcessModelAvailableItems] = useState<
+    ProcessModel[]
+  >([]);
+  const [processModelSelection, setProcessModelSelection] =
+    useState<ProcessModel | null>(null);
 
   const parametersToAlwaysFilterBy = useMemo(() => {
     return {
       start_from: setStartFrom,
-      start_till: setStartTill,
+      start_to: setStartTo,
       end_from: setEndFrom,
-      end_till: setEndTill,
+      end_to: setEndTo,
     };
-  }, [setStartFrom, setStartTill, setEndFrom, setEndTill]);
+  }, [setStartFrom, setStartTo, setEndFrom, setEndTo]);
 
   const parametersToGetFromSearchParams = useMemo(() => {
     return {
@@ -90,7 +107,10 @@ export default function ProcessInstanceList() {
         const searchParamValue = searchParams.get(paramName);
         if (searchParamValue) {
           queryParamString += `&${paramName}=${searchParamValue}`;
-          functionToCall(searchParamValue);
+          const dateString = convertSecondsToFormattedDate(
+            searchParamValue as any
+          );
+          functionToCall(dateString);
         }
       });
 
@@ -118,24 +138,24 @@ export default function ProcessInstanceList() {
         const label = `${item.process_group_id}/${item.id}`;
         Object.assign(item, { label });
         if (label === processModelFullIdentifier) {
-          setProcessModelSelection([item]);
+          setProcessModelSelection(item);
         }
         return item;
       });
-      setProcessModelSelectionOptions(selectionArray);
+      setProcessModelAvailableItems(selectionArray);
 
-      const processStatusSelectedArray: Option[] = [];
-      const processStatusSelectionArray = PROCESS_STATUSES.map(
+      const processStatusSelectedArray: string[] = [];
+      const processStatusAllOptionsArray = PROCESS_STATUSES.map(
         (processStatusOption: any) => {
           const regex = new RegExp(`\\b${processStatusOption}\\b`);
           if ((searchParams.get('process_status') || '').match(regex)) {
-            processStatusSelectedArray.push({ label: processStatusOption });
+            processStatusSelectedArray.push(processStatusOption);
           }
-          return { label: processStatusOption };
+          return processStatusOption;
         }
       );
       setProcessStatusSelection(processStatusSelectedArray);
-      setProcessStatusSelectionOptions(processStatusSelectionArray);
+      setProcessStatusAllOptions(processStatusAllOptionsArray);
 
       getProcessInstances();
     }
@@ -170,51 +190,58 @@ export default function ProcessInstanceList() {
     }
   };
 
-  const handleFilter = (event: any) => {
+  const applyFilter = (event: any) => {
     event.preventDefault();
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     let queryParamString = `per_page=${perPage}&page=${page}`;
 
-    if (isTrueComparison(startFrom, '>', startTill)) {
-      setErrorMessage({ message: 'startFrom cannot be after startTill' });
+    const startFromSeconds = convertDateStringToSeconds(startFrom);
+    const endFromSeconds = convertDateStringToSeconds(endFrom);
+    const startToSeconds = convertDateStringToSeconds(startTo);
+    const endToSeconds = convertDateStringToSeconds(endTo);
+    if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
+      setErrorMessage({
+        message: '"Start date from" cannot be after "start date to"',
+      });
       return;
     }
-    if (isTrueComparison(endFrom, '>', endTill)) {
-      setErrorMessage({ message: 'endFrom cannot be after endTill' });
+    if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
+      setErrorMessage({
+        message: '"End date from" cannot be after "end date to"',
+      });
       return;
     }
-    if (isTrueComparison(startFrom, '>', endFrom)) {
-      setErrorMessage({ message: 'startFrom cannot be after endFrom' });
+    if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
+      setErrorMessage({
+        message: '"Start date from" cannot be after "end date from"',
+      });
       return;
     }
-    if (isTrueComparison(startTill, '>', endTill)) {
-      setErrorMessage({ message: 'startTill cannot be after endTill' });
+    if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
+      setErrorMessage({
+        message: '"Start date to" cannot be after "end date to"',
+      });
       return;
     }
 
-    if (startFrom) {
-      queryParamString += `&start_from=${startFrom}`;
+    if (startFromSeconds) {
+      queryParamString += `&start_from=${startFromSeconds}`;
     }
-    if (startTill) {
-      queryParamString += `&start_till=${startTill}`;
+    if (startToSeconds) {
+      queryParamString += `&start_to=${startToSeconds}`;
     }
-    if (endFrom) {
-      queryParamString += `&end_from=${endFrom}`;
+    if (endFromSeconds) {
+      queryParamString += `&end_from=${endFromSeconds}`;
     }
-    if (endTill) {
-      queryParamString += `&end_till=${endTill}`;
+    if (endToSeconds) {
+      queryParamString += `&end_to=${endToSeconds}`;
     }
     if (processStatusSelection.length > 0) {
-      const processStatusSelectionString = processStatusSelection.map(
-        (pss: any) => {
-          return pss.label;
-        }
-      );
-      queryParamString += `&process_status=${processStatusSelectionString}`;
+      queryParamString += `&process_status=${processStatusSelection}`;
     }
-    if (processModelSelection.length > 0) {
-      const currentProcessModel: any = processModelSelection[0];
-      queryParamString += `&process_group_identifier=${currentProcessModel.process_group_id}&process_model_identifier=${currentProcessModel.id}`;
+
+    if (processModelSelection) {
+      queryParamString += `&process_group_identifier=${processModelSelection.process_group_id}&process_model_identifier=${processModelSelection.id}`;
     }
 
     setErrorMessage(null);
@@ -227,30 +254,22 @@ export default function ProcessInstanceList() {
     initialDate: any,
     onChangeFunction: any
   ) => {
-    let selectedDate = null;
-    if (initialDate) {
-      selectedDate = new Date(initialDate * 1000);
-    }
     return (
-      <Form.Group>
-        <InputGroup>
-          <Stack className="ms-auto" direction="horizontal" gap={3}>
-            <InputGroup.Text className="text-nowrap">
-              {labelString}
-              {'\u00A0'}
-            </InputGroup.Text>
-            <DatePicker
-              id={`date-picker-${name}`}
-              selected={selectedDate}
-              onChange={(date: any) =>
-                convertDateToSeconds(date, onChangeFunction)
-              }
-              showTimeSelect
-              dateFormat={DATE_FORMAT}
-            />
-          </Stack>
-        </InputGroup>
-      </Form.Group>
+      <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
+        <DatePickerInput
+          id={`date-picker-${name}`}
+          placeholder={DATE_FORMAT}
+          labelText={labelString}
+          type="text"
+          size="md"
+          autocomplete="off"
+          allowInput={false}
+          onChange={(dateChangeEvent: any) => {
+            onChangeFunction(dateChangeEvent.srcElement.value);
+          }}
+          value={initialDate}
+        />
+      </DatePicker>
     );
   };
 
@@ -273,96 +292,88 @@ export default function ProcessInstanceList() {
     return queryParamString;
   };
 
-  const processModelSearch = () => {
+  const processStatusSearch = () => {
     return (
-      <Form.Group>
-        <InputGroup>
-          <InputGroup.Text className="text-nowrap">
-            Process Model:{' '}
-          </InputGroup.Text>
-          <Typeahead
-            style={{ width: 500 }}
-            id="process-model-selection"
-            labelKey="label"
-            onChange={setProcessModelSelection}
-            options={processModeleSelectionOptions}
-            placeholder="Choose a process model..."
-            selected={processModelSelection}
-          />
-        </InputGroup>
-      </Form.Group>
+      <MultiSelect
+        label="Choose Status"
+        id="process-instance-status-select"
+        titleText="Status"
+        items={processStatusAllOptions}
+        onChange={(selection: any) => {
+          setProcessStatusSelection(selection.selectedItems);
+        }}
+        itemToString={(item: any) => {
+          return item || '';
+        }}
+        selectionFeedback="top-after-reopen"
+        selectedItems={processStatusSelection}
+      />
     );
   };
 
-  const processStatusSearch = () => {
-    return (
-      <Form.Group>
-        <InputGroup>
-          <InputGroup.Text className="text-nowrap">
-            Process Status:{' '}
-          </InputGroup.Text>
-          <Typeahead
-            multiple
-            style={{ width: 500 }}
-            id="process-status-selection"
-            // for cypress tests since data-qa does not work
-            inputProps={{
-              name: 'process-status-selection',
-            }}
-            labelKey="label"
-            onChange={setProcessStatusSelection}
-            options={processStatuseSelectionOptions}
-            placeholder="Choose process statuses..."
-            selected={processStatusSelection}
-          />
-        </InputGroup>
-      </Form.Group>
-    );
+  const clearFilters = () => {
+    setProcessModelSelection(null);
+    setProcessStatusSelection([]);
+    setStartFrom('');
+    setStartTo('');
+    setEndFrom('');
+    setEndTo('');
   };
 
   const filterOptions = () => {
+    if (!showFilterOptions) {
+      return null;
+    }
     return (
-      <div className="container">
-        <div className="row">
-          <div className="col">
-            <form onSubmit={handleFilter}>
-              <Stack direction="horizontal" gap={3}>
-                {processModelSearch()}
-              </Stack>
-              <br />
-              <Stack direction="horizontal" gap={3}>
-                {dateComponent(
-                  'Start Range: ',
-                  'start-from',
-                  startFrom,
-                  setStartFrom
-                )}
-                {dateComponent('-', 'start-till', startTill, setStartTill)}
-              </Stack>
-              <br />
-              <Stack direction="horizontal" gap={3}>
-                {dateComponent(
-                  'End Range: \u00A0\u00A0',
-                  'end-from',
-                  endFrom,
-                  setEndFrom
-                )}
-                {dateComponent('-', 'end-till', endTill, setEndTill)}
-              </Stack>
-              <br />
-              <Stack direction="horizontal" gap={3}>
-                {processStatusSearch()}
-              </Stack>
-              <Stack direction="horizontal" gap={3}>
-                <Button className="ms-auto" variant="secondary" type="submit">
-                  Filter
-                </Button>
-              </Stack>
-            </form>
-          </div>
-          <div className="col" />
-        </div>
-      </div>
+      <>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={8}>
+            <ProcessModelSearch
+              onChange={(selection: any) =>
+                setProcessModelSelection(selection.selectedItem)
+              }
+              processModels={processModelAvailableItems}
+              selectedItem={processModelSelection}
+            />
+          </Column>
+          <Column md={8}>{processStatusSearch()}</Column>
+        </Grid>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={4}>
+            {dateComponent(
+              'Start date from',
+              'start-from',
+              startFrom,
+              setStartFrom
+            )}
+          </Column>
+          <Column md={4}>
+            {dateComponent('Start date to', 'start-to', startTo, setStartTo)}
+          </Column>
+          <Column md={4}>
+            {dateComponent('End date from', 'end-from', endFrom, setEndFrom)}
+          </Column>
+          <Column md={4}>
+            {dateComponent('End date to', 'end-to', endTo, setEndTo)}
+          </Column>
+        </Grid>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={4}>
+            <ButtonSet>
+              <Button
+                kind=""
+                className="button-white-background"
+                onClick={clearFilters}
+              >
+                Clear
+              </Button>
+              <Button kind="secondary" onClick={applyFilter}>
+                Filter
+              </Button>
+            </ButtonSet>
+          </Column>
+        </Grid>
+      </>
     );
   };
 
@@ -404,7 +415,7 @@ export default function ProcessInstanceList() {
       );
     });
     return (
-      <Table striped bordered>
+      <Table size="lg">
         <thead>
           <tr>
             <th>Process Instance Id</th>
@@ -436,20 +447,42 @@ export default function ProcessInstanceList() {
     );
   };
 
+  const toggleShowFilterOptions = () => {
+    setShowFilterOptions(!showFilterOptions);
+  };
+
   if (pagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     return (
       <>
         {processInstanceTitleElement()}
+        <Grid fullWidth>
+          <Column lg={15} />
+          <Column lg={1}>
+            <Button
+              kind="ghost"
+              renderIcon={Filter}
+              iconDescription="Filter Options"
+              hasIconOnly
+              size="lg"
+              onClick={toggleShowFilterOptions}
+            />
+          </Column>
+        </Grid>
         {filterOptions()}
-        <PaginationForTable
-          page={page}
-          perPage={perPage}
-          pagination={pagination}
-          tableToDisplay={buildTable()}
-          queryParamString={getSearchParamsAsQueryString()}
-          path="/admin/process-instances"
-        />
+        <br />
+        <Grid fullWidth>
+          <Column lg={16}>
+            <PaginationForTable
+              page={page}
+              perPage={perPage}
+              pagination={pagination}
+              tableToDisplay={buildTable()}
+              queryParamString={getSearchParamsAsQueryString()}
+              path="/admin/process-instances"
+            />
+          </Column>
+        </Grid>
       </>
     );
   }

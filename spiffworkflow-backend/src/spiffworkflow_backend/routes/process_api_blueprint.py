@@ -43,6 +43,7 @@ from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
 from spiffworkflow_backend.models.principal import PrincipalModel
+from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -56,6 +57,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -134,18 +136,12 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
     return make_response(jsonify({"results": response_dict}), 200)
 
 
-def process_group_add(
-    body: Dict[str, Union[str, bool, int]]
-) -> flask.wrappers.Response:
+def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_model_service = ProcessModelService()
-    process_group = ProcessGroupSchema().load(body)
+    process_group = ProcessGroup(**body)
     process_model_service.add_process_group(process_group)
-    return Response(
-        json.dumps(ProcessGroupSchema().dump(process_group)),
-        status=201,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(process_group), 201)
 
 
 def process_group_delete(process_group_id: str) -> flask.wrappers.Response:
@@ -154,13 +150,18 @@ def process_group_delete(process_group_id: str) -> flask.wrappers.Response:
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_group_update(
-    process_group_id: str, body: Dict[str, Union[str, bool, int]]
-) -> Dict[str, Union[str, bool, int]]:
+def process_group_update(process_group_id: str, body: dict) -> flask.wrappers.Response:
     """Process Group Update."""
-    process_group = ProcessGroupSchema().load(body)
+    body_include_list = ["display_name", "description"]
+    body_filtered = {
+        include_item: body[include_item]
+        for include_item in body_include_list
+        if include_item in body
+    }
+
+    process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService().update_process_group(process_group)
-    return ProcessGroupSchema().dump(process_group)  # type: ignore
+    return make_response(jsonify(process_group), 200)
 
 
 def process_groups_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
@@ -173,6 +174,7 @@ def process_groups_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Re
     remainder = len(process_groups) % per_page
     if remainder > 0:
         pages += 1
+
     response_json = {
         "results": ProcessGroupSchema(many=True).dump(batch),
         "pagination": {
@@ -198,7 +200,7 @@ def process_group_show(
                 status_code=400,
             )
         ) from exception
-    return ProcessGroupSchema().dump(process_group)
+    return make_response(jsonify(process_group), 200)
 
 
 def process_model_add(
@@ -225,7 +227,6 @@ def process_model_add(
             status_code=400,
         )
 
-    process_model_info.process_group = process_group
     process_model_service.add_spec(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
@@ -438,7 +439,6 @@ def process_instance_run(
                 task=task,
             ) from e
         processor.save()
-        ProcessInstanceService.update_task_assignments(processor)
 
         if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
@@ -656,9 +656,9 @@ def process_instance_list(
     page: int = 1,
     per_page: int = 100,
     start_from: Optional[int] = None,
-    start_till: Optional[int] = None,
+    start_to: Optional[int] = None,
     end_from: Optional[int] = None,
-    end_till: Optional[int] = None,
+    end_to: Optional[int] = None,
     process_status: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
@@ -689,17 +689,17 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.start_in_seconds >= start_from
         )
-    if start_till is not None:
+    if start_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds <= start_till
+            ProcessInstanceModel.start_in_seconds <= start_to
         )
     if end_from is not None:
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.end_in_seconds >= end_from
         )
-    if end_till is not None:
+    if end_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds <= end_till
+            ProcessInstanceModel.end_in_seconds <= end_to
         )
     if process_status is not None:
         process_status_array = process_status.split(",")
@@ -959,10 +959,23 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
 
 
 def process_instance_task_list(
-    process_instance_id: int, all_tasks: bool = False
+    process_instance_id: int, all_tasks: bool = False, spiff_step: int = 0
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+
+    if spiff_step > 0:
+        step_detail = (
+            db.session.query(SpiffStepDetailsModel)
+            .filter(
+                SpiffStepDetailsModel.process_instance_id == process_instance.id,
+                SpiffStepDetailsModel.spiff_step == spiff_step,
+            )
+            .first()
+        )
+        if step_detail is not None:
+            process_instance.bpmn_json = json.dumps(step_detail.task_json)
+
     processor = ProcessInstanceProcessor(process_instance)
 
     spiff_tasks = None
@@ -1074,7 +1087,9 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 task.form_ui_schema = ui_form_contents
 
     if task.properties and task.data and "instructionsForEndUser" in task.properties:
-        print(f"task.properties['instructionsForEndUser']: {task.properties['instructionsForEndUser']}")
+        print(
+            f"task.properties['instructionsForEndUser']: {task.properties['instructionsForEndUser']}"
+        )
         if task.properties["instructionsForEndUser"]:
             task.properties["instructionsForEndUser"] = render_jinja_template(
                 task.properties["instructionsForEndUser"], task.data
@@ -1123,8 +1138,6 @@ def task_submit(
     #         __update_task(processor, next_task, form_data, user)
     #         last_index = next_task.task_info()["mi_index"]
     #         next_task = processor.next_task()
-
-    ProcessInstanceService.update_task_assignments(processor)
 
     next_active_task_assigned_to_me = (
         ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id)
@@ -1238,6 +1251,7 @@ def script_unit_test_run(
     """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works
     current_app.config["THREAD_LOCAL_DATA"].process_instance_id = None
+    current_app.config["THREAD_LOCAL_DATA"].spiff_step = None
 
     python_script = _get_required_parameter_or_raise("python_script", body)
     input_json = _get_required_parameter_or_raise("input_json", body)

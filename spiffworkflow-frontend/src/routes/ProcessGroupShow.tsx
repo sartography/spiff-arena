@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams, useParams } from 'react-router-dom';
-import { Button, Table, Stack } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Table, Stack } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
@@ -81,7 +82,7 @@ export default function ProcessGroupShow() {
           ]}
         />
         <ul>
-          <Stack direction="horizontal" gap={3}>
+          <Stack orientation="horizontal" gap={3}>
             <Button
               href={`/admin/process-models/${(processGroup as any).id}/new`}
             >

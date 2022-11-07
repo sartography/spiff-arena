@@ -21,8 +21,6 @@ from spiffworkflow_backend.models.active_task import ActiveTaskModel  # noqa: F4
 from spiffworkflow_backend.models.bpmn_process_id_lookup import (
     BpmnProcessIdLookup,
 )  # noqa: F401
-from spiffworkflow_backend.models.data_store import DataStoreModel  # noqa: F401
-from spiffworkflow_backend.models.file import FileModel  # noqa: F401
 from spiffworkflow_backend.models.message_correlation_property import (
     MessageCorrelationPropertyModel,
 )  # noqa: F401
@@ -48,7 +46,9 @@ from spiffworkflow_backend.models.process_instance_report import (
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel  # noqa: F401
 from spiffworkflow_backend.models.secret_model import SecretModel  # noqa: F401
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel  # noqa: F401
-from spiffworkflow_backend.models.task_event import TaskEventModel  # noqa: F401
+from spiffworkflow_backend.models.spiff_step_details import (
+    SpiffStepDetailsModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel  # noqa: F401
 from spiffworkflow_backend.models.group import GroupModel  # noqa: F401
 

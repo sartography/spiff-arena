@@ -1,5 +1,6 @@
 """Get_env."""
 from typing import Any
+
 from flask import current_app
 
 from spiffworkflow_backend.models.script_attributes_context import (
@@ -22,4 +23,4 @@ class GetFrontendUrl(Script):
         **kwargs: Any
     ) -> Any:
         """Run."""
-        return current_app.config['SPIFFWORKFLOW_FRONTEND_URL']
+        return current_app.config["SPIFFWORKFLOW_FRONTEND_URL"]

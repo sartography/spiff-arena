@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Modal } from 'react-bootstrap';
+// @ts-ignore
+import { Button, Modal } from '@carbon/react';
 
 type OwnProps = {
   description?: string;
@@ -25,13 +26,6 @@ export default function ButtonWithConfirmation({
     setShowConfirmationPrompt(false);
   };
 
-  const modalBodyElement = () => {
-    if (description) {
-      return <Modal.Body>{description}</Modal.Body>;
-    }
-    return null;
-  };
-
   const handleConfirmation = () => {
     onConfirmation();
     setShowConfirmationPrompt(false);
@@ -40,28 +34,22 @@ export default function ButtonWithConfirmation({
   const confirmationDialog = () => {
     return (
       <Modal
-        show={showConfirmationPrompt}
-        onHide={handleConfirmationPromptCancel}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        {modalBodyElement()}
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleConfirmationPromptCancel}>
-            Cancel
-          </Button>
-          <Button variant="primary" onClick={handleConfirmation}>
-            {confirmButtonLabel}
-          </Button>
-        </Modal.Footer>
-      </Modal>
+        open={showConfirmationPrompt}
+        danger
+        data-qa="modal-confirmation-dialog"
+        modalHeading={description}
+        modalLabel={title}
+        primaryButtonText={confirmButtonLabel}
+        secondaryButtonText="Cancel"
+        onSecondarySubmit={handleConfirmationPromptCancel}
+        onRequestSubmit={handleConfirmation}
+      />
     );
   };
 
   return (
     <>
-      <Button onClick={handleShowConfirmationPrompt} variant="danger">
+      <Button onClick={handleShowConfirmationPrompt} kind="danger">
         {buttonLabel}
       </Button>
       {confirmationDialog()}

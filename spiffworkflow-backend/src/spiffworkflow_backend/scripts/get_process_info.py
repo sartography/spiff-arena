@@ -8,7 +8,7 @@ from spiffworkflow_backend.scripts.script import Script
 
 
 class GetProcessInfo(Script):
-    """GetUser."""
+    """GetProcessInfo."""
 
     def get_description(self) -> str:
         """Get_description."""

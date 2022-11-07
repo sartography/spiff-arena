@@ -29,7 +29,6 @@ class ProcessModelInfo:
     id: str
     display_name: str
     description: str
-    # process_group_id: str = ""
     process_group: Any | None = None
     primary_file_name: str | None = None
     primary_process_id: str | None = None

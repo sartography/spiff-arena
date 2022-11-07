@@ -14,6 +14,7 @@ export interface RecentProcessModel {
 export interface ProcessGroup {
   id: string;
   display_name: string;
+  description?: string | null;
 }
 
 export interface ProcessModel {
@@ -40,4 +41,14 @@ export interface AuthenticationParam {
 export interface AuthenticationItem {
   id: string;
   parameters: AuthenticationParam[];
+}
+
+export interface PaginationObject {
+  count: number;
+  total: number;
+  pages: number;
+}
+
+export interface CarbonComboBoxSelection {
+  selectedItem: ProcessModel;
 }
