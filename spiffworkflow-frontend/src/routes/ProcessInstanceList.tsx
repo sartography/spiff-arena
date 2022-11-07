@@ -49,6 +49,7 @@ export default function ProcessInstanceList() {
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
+  const [reportMetadata, setReportMetadata] = useState({});
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   const oneHourInSeconds = 3600;
@@ -95,6 +96,7 @@ export default function ProcessInstanceList() {
     function setProcessInstancesFromResult(result: any) {
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
+      setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
     }
     function getProcessInstances() {
@@ -378,6 +380,54 @@ export default function ProcessInstanceList() {
   };
 
   const buildTable = () => {
+    const headerLabels: Record<string, string> = {
+      id: 'Process Instance Id',
+      process_group_identifier: 'Process Group',
+      process_model_indetifier: 'Process Model',
+      start_in_seconds: 'Start Time',
+      end_in_seconds: 'End Time',
+      status: 'Status',
+    };
+    const getHeaderLabel = (header: string) => {
+      return headerLabels[header] ?? header;
+    };
+    const headers = (reportMetadata as any).columns.map((column: any) => {
+      return <th>{getHeaderLabel((column as any).Header)}</th>;
+    });
+
+    const formatSecondsForDisplay = (row: any, seconds: any) => {
+      return convertSecondsToFormattedDate(seconds) || '-';
+    };
+    const defaultFormatter = (row: any, value: any) => {
+      return value;
+    };
+
+    const columnFormatters: Record<string, any> = {
+      start_in_seconds: formatSecondsForDisplay,
+      end_in_seconds: formatSecondsForDisplay,
+    };
+    const formattedColumn = (row: any, column: any) => {
+      const formatter = columnFormatters[column.accessor] ?? defaultFormatter;
+      const value = row[column.accessor];
+      return <td>{formatter(row, value)}</td>;
+    }
+
+    const rows = processInstances.map((row) => {
+      const currentRow = (reportMetadata as any).columns.map((column: any) => {
+        return formattedColumn(row, column);
+      });
+      return <tr key={(row as any).id}>{currentRow}</tr>;
+    });
+    return (
+      <Table size="lg">
+        <thead>
+          <tr>{headers}</tr>
+        </thead>
+        <tbody>{rows}</tbody>
+      </Table>
+    );
+
+    /*
     const rows = processInstances.map((row: any) => {
       const formattedStartDate =
         convertSecondsToFormattedDate(row.start_in_seconds) || '-';
@@ -429,6 +479,7 @@ export default function ProcessInstanceList() {
         <tbody>{rows}</tbody>
       </Table>
     );
+    */
   };
 
   const processInstanceTitleElement = () => {
