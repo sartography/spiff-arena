@@ -713,18 +713,18 @@ def process_instance_list(
 
     process_instance_report = ProcessInstanceReportModel.default_report(g.user)
 
-    # TODO need to look into this more - how the filter here interacts with the 
+    # TODO need to look into this more - how the filter here interacts with the
     # one defined in the report.
-    # TODO need to look into test failures when the results from result_dict is 
+    # TODO need to look into test failures when the results from result_dict is
     # used instead of the process instances
 
-    #substitution_variables = request.args.to_dict()
-    #result_dict = process_instance_report.generate_report(
+    # substitution_variables = request.args.to_dict()
+    # result_dict = process_instance_report.generate_report(
     #    process_instances.items, substitution_variables
-    #)
+    # )
 
-    #results = result_dict["results"]
-    #report_metadata = result_dict["report_metadata"]
+    # results = result_dict["results"]
+    # report_metadata = result_dict["report_metadata"]
 
     results = process_instances.items
     report_metadata = process_instance_report.report_metadata
