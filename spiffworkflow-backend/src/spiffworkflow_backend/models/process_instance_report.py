@@ -103,7 +103,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                 report_metadata=report_metadata,
             )
 
-        return process_instance_report
+        return process_instance_report  # type: ignore
 
     @classmethod
     def add_fixtures(cls) -> None:

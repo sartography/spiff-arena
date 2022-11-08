@@ -713,27 +713,19 @@ def process_instance_list(
         process_instances.items, substitution_variables
     )
 
-    # update this if we go back to a database query instead of filtering in memory
-    result_dict["pagination"] = {
-        "count": len(result_dict["results"]),
-        "total": len(result_dict["results"]),
-        "pages": 1,
+    results = result_dict["results"]
+
+    response_json = {
+        "report_metadata": result_dict["report_metadata"],
+        "results": results,
+        "pagination": {
+            "count": len(results),
+            "total": process_instances.total,
+            "pages": process_instances.pages,
+        },
     }
 
-    return Response(
-        json.dumps(result_dict), status=200, mimetype="application/json"
-    )
-
-    #response_json = {
-    #    "results": process_instances.items,
-    #    "pagination": {
-    #        "count": len(process_instances.items),
-    #        "total": process_instances.total,
-    #        "pages": process_instances.pages,
-    #    },
-    #}
-
-    #return make_response(jsonify(response_json), 200)
+    return make_response(jsonify(response_json), 200)
 
 
 def process_instance_show(

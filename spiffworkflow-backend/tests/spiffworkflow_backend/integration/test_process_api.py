@@ -1178,7 +1178,7 @@ class TestProcessApi(BaseTest):
         )
         assert type(process_instance_dict["start_in_seconds"]) is int
         assert process_instance_dict["start_in_seconds"] > 0
-        assert process_instance_dict["end_in_seconds"] is None
+        assert "end_in_seconds" not in process_instance_dict
         assert process_instance_dict["status"] == "not_started"
 
     def test_process_instance_list_with_paginated_items(
