@@ -1168,8 +1168,6 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["pages"] == 1
         assert response.json["pagination"]["total"] == 1
 
-        print(response.json)
-
         process_instance_dict = response.json["results"][0]
         assert type(process_instance_dict["id"]) is int
         assert (
@@ -1266,7 +1264,6 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
-        print(response.json)
         results = response.json["results"]
         assert len(results) == 5
 
