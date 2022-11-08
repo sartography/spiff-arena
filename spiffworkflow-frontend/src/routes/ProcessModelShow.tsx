@@ -28,6 +28,7 @@ import {
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
+import { modifyProcessModelPath, unModifyProcessModelPath } from '../helpers';
 import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 
@@ -97,6 +98,10 @@ export default function ProcessModelShow() {
     useState<boolean>(false);
   const navigate = useNavigate();
 
+  const modifiedProcessModelId = modifyProcessModelPath(
+    `${params.process_model_id}`
+  );
+
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
       setProcessModel(result);
@@ -104,15 +109,15 @@ export default function ProcessModelShow() {
       storeRecentProcessModelInLocalStorage(result, params);
     };
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}`,
+      path: `/process-models/${modifiedProcessModelId}`,
       successCallback: processResult,
     });
-  }, [params, reloadModel]);
+  }, [params, reloadModel, modifiedProcessModelId]);
 
   const processModelRun = (processInstance: any) => {
     setErrorMessage(null);
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${processInstance.id}/run`,
+      path: `/process-instances/${processInstance.id}/run`,
       successCallback: setProcessInstanceResult,
       failureCallback: setErrorMessage,
       httpMethod: 'POST',
@@ -121,7 +126,7 @@ export default function ProcessModelShow() {
 
   const processInstanceCreateAndRun = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances`,
+      path: `/process-models/${modifiedProcessModelId}/process-instances`,
       successCallback: processModelRun,
       httpMethod: 'POST',
     });
@@ -149,7 +154,7 @@ export default function ProcessModelShow() {
           <p>
             Process Instance {processInstanceId} kicked off (
             <Link
-              to={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/process-instances/${processInstanceId}`}
+              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${processInstanceId}`}
               data-qa="process-instance-show-link"
             >
               view
@@ -171,7 +176,7 @@ export default function ProcessModelShow() {
 
   // Remove this code from
   const onDeleteFile = (fileName: string) => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}/files/${fileName}`;
+    const url = `/process-models/${modifiedProcessModelId}/files/${fileName}`;
     const httpMethod = 'DELETE';
     HttpService.makeCallToBackend({
       path: url,
@@ -181,7 +186,7 @@ export default function ProcessModelShow() {
   };
 
   const onSetPrimaryFile = (fileName: string) => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}`;
+    const url = `/process-models/${modifiedProcessModelId}`;
     const httpMethod = 'PUT';
 
     const processModelToPass = {
@@ -221,7 +226,7 @@ export default function ProcessModelShow() {
 
   const downloadFile = (fileName: string) => {
     setErrorMessage(null);
-    const processModelPath = `process-models/${params.process_group_id}/${params.process_model_id}`;
+    const processModelPath = `process-models/${modifiedProcessModelId}`;
     HttpService.makeCallToBackend({
       path: `/${processModelPath}/files/${fileName}`,
       successCallback: handleProcessModelFileResult,
@@ -232,11 +237,11 @@ export default function ProcessModelShow() {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
         navigate(
-          `/admin/process-models/${processModel.process_group_id}/${processModel.id}/files/${processModelFile.name}`
+          `/admin/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`
         );
       } else if (processModelFile.name.match(/\.(json|md)$/)) {
         navigate(
-          `/admin/process-models/${processModel.process_group_id}/${processModel.id}/form/${processModelFile.name}`
+          `/admin/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`
         );
       }
     }
@@ -254,6 +259,7 @@ export default function ProcessModelShow() {
         iconDescription="Edit File"
         hasIconOnly
         size="lg"
+        data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
         onClick={() => navigateToFileEdit(processModelFile)}
       />
     );
@@ -349,6 +355,9 @@ export default function ProcessModelShow() {
   };
 
   const processInstancesUl = () => {
+    const unmodifiedProcessModelId: String = unModifyProcessModelPath(
+      `${params.process_model_id}`
+    );
     if (!processModel) {
       return null;
     }
@@ -356,7 +365,7 @@ export default function ProcessModelShow() {
       <ul>
         <li>
           <Link
-            to={`/admin/process-instances?process_group_identifier=${processModel.process_group_id}&process_model_identifier=${processModel.id}`}
+            to={`/admin/process-instances?process_model_identifier=${unmodifiedProcessModelId}`}
             data-qa="process-instance-list-link"
           >
             List
@@ -364,7 +373,7 @@ export default function ProcessModelShow() {
         </li>
         <li>
           <Link
-            to={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/process-instances/reports`}
+            to={`/admin/process-models/${modifiedProcessModelId}/process-instances/reports`}
             data-qa="process-instance-reports-link"
           >
             Reports
@@ -381,7 +390,7 @@ export default function ProcessModelShow() {
   const handleFileUpload = (event: any) => {
     if (processModel) {
       event.preventDefault();
-      const url = `/process-models/${processModel.process_group_id}/${processModel.id}/files`;
+      const url = `/process-models/${modifiedProcessModelId}/files`;
       const formData = new FormData();
       formData.append('file', filesToUpload[0]);
       formData.append('fileName', filesToUpload[0].name);
@@ -432,6 +441,7 @@ export default function ProcessModelShow() {
     return (
       <Accordion>
         <AccordionItem
+          data-qa="files-accordion"
           title={
             <Stack orientation="horizontal">
               <span>
@@ -454,28 +464,28 @@ export default function ProcessModelShow() {
             </Button>
             <Button
               renderIcon={Add}
-              href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/files?file_type=bpmn`}
+              href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
               size="sm"
             >
               New BPMN File
             </Button>
             <Button
               renderIcon={Add}
-              href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/files?file_type=dmn`}
+              href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
               size="sm"
             >
               New DMN File
             </Button>
             <Button
               renderIcon={Add}
-              href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/form?file_ext=json`}
+              href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
               size="sm"
             >
               New JSON File
             </Button>
             <Button
               renderIcon={Add}
-              href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/form?file_ext=md`}
+              href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
               size="sm"
             >
               New Markdown File
@@ -493,17 +503,22 @@ export default function ProcessModelShow() {
       <>
         {fileUploadModal()}
         <ProcessBreadcrumb
-          processGroupId={processModel.process_group_id}
-          processModelId={processModel.id}
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${processModel.id}`,
+              `process_model:${processModel.id}`,
+            ],
+          ]}
         />
-        <h1>{processModel.display_name}</h1>
-        <p>{processModel.description}</p>
+        <h1>Process Model: {processModel.display_name}</h1>
+        <p className="process-description">{processModel.description}</p>
         <Stack orientation="horizontal" gap={3}>
           <Button onClick={processInstanceCreateAndRun} variant="primary">
             Run
           </Button>
           <Button
-            href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/edit`}
+            href={`/admin/process-models/${modifiedProcessModelId}/edit`}
             variant="secondary"
           >
             Edit process model

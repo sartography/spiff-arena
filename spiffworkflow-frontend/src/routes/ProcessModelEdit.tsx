@@ -8,7 +8,7 @@ import ProcessModelForm from '../components/ProcessModelForm';
 export default function ProcessModelEdit() {
   const params = useParams();
   const [processModel, setProcessModel] = useState(null);
-  const processModelPath = `process-models/${params.process_group_id}/${params.process_model_id}`;
+  const processModelPath = `process-models/${params.process_model_id}`;
 
   useEffect(() => {
     HttpService.makeCallToBackend({

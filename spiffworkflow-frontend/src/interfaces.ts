@@ -27,7 +27,6 @@ export interface ProcessFile {
   content_type: string;
   last_modified: string;
   name: string;
-  process_group_id: string;
   process_model_id: string;
   references: ProcessFileReference[];
   size: number;
@@ -38,7 +37,6 @@ export interface ProcessFile {
 export interface ProcessModel {
   id: string;
   description: string;
-  process_group_id: string;
   display_name: string;
   primary_file_name: string;
   files: ProcessFile[];
