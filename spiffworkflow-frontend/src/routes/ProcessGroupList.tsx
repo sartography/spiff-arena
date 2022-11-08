@@ -13,7 +13,10 @@ import {
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
-import { getPageInfoFromSearchParams } from '../helpers';
+import {
+  getPageInfoFromSearchParams,
+  modifyProcessModelPath,
+} from '../helpers';
 import { CarbonComboBoxSelection, ProcessGroup } from '../interfaces';
 import ProcessModelSearch from '../components/ProcessModelSearch';
 
@@ -36,7 +39,7 @@ export default function ProcessGroupList() {
     };
     const processResultForProcessModels = (result: any) => {
       const selectionArray = result.results.map((item: any) => {
-        const label = `${item.process_group_id}/${item.id}`;
+        const label = `${item.id}`;
         Object.assign(item, { label });
         return item;
       });
@@ -120,7 +123,7 @@ export default function ProcessGroupList() {
     const processModelSearchOnChange = (selection: CarbonComboBoxSelection) => {
       const processModel = selection.selectedItem;
       navigate(
-        `/admin/process-models/${processModel.process_group_id}/${processModel.id}`
+        `/admin/process-models/${modifyProcessModelPath(processModel.id)}`
       );
     };
     return (

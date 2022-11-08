@@ -32,14 +32,6 @@ import { modifyProcessModelPath, unModifyProcessModelPath } from '../helpers';
 import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 
-// interface ProcessModelFileCarbonDropdownItem {
-//   label: string;
-//   action: string;
-//   processModelFile: ProcessFile;
-//   needsConfirmation: boolean;
-//   icon: any;
-// }
-
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: any,
   params: any
@@ -184,7 +176,7 @@ export default function ProcessModelShow() {
 
   // Remove this code from
   const onDeleteFile = (fileName: string) => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}/files/${fileName}`;
+    const url = `/process-models/${modifiedProcessModelId}/files/${fileName}`;
     const httpMethod = 'DELETE';
     HttpService.makeCallToBackend({
       path: url,
@@ -193,15 +185,8 @@ export default function ProcessModelShow() {
     });
   };
 
-  // const onProcessModelFileAction = (selection: any) => {
-  //   const { selectedItem } = selection;
-  //   if (selectedItem.action === 'delete') {
-  //     onDeleteFile(selectedItem.processModelFile.name);
-  //   }
-  // };
-
   const onSetPrimaryFile = (fileName: string) => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}`;
+    const url = `/process-models/${modifiedProcessModelId}`;
     const httpMethod = 'PUT';
 
     const processModelToPass = {
@@ -241,7 +226,7 @@ export default function ProcessModelShow() {
 
   const downloadFile = (fileName: string) => {
     setErrorMessage(null);
-    const processModelPath = `process-models/${params.process_group_id}/${params.process_model_id}`;
+    const processModelPath = `process-models/${modifiedProcessModelId}`;
     HttpService.makeCallToBackend({
       path: `/${processModelPath}/files/${fileName}`,
       successCallback: handleProcessModelFileResult,
@@ -405,7 +390,7 @@ export default function ProcessModelShow() {
   const handleFileUpload = (event: any) => {
     if (processModel) {
       event.preventDefault();
-      const url = `/process-models/${processModel.process_group_id}/${processModel.id}/files`;
+      const url = `/process-models/${modifiedProcessModelId}/files`;
       const formData = new FormData();
       formData.append('file', filesToUpload[0]);
       formData.append('fileName', filesToUpload[0].name);

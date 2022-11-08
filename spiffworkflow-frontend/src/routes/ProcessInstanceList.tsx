@@ -86,7 +86,6 @@ export default function ProcessInstanceList() {
 
   const parametersToGetFromSearchParams = useMemo(() => {
     return {
-      process_group_identifier: null,
       process_model_identifier: null,
       process_status: null,
     };
@@ -138,7 +137,7 @@ export default function ProcessInstanceList() {
       const processModelFullIdentifier =
         getProcessModelFullIdentifierFromSearchParams(searchParams);
       const selectionArray = result.results.map((item: any) => {
-        const label = `${item.process_group_id}/${item.id}`;
+        const label = `${item.id}`;
         Object.assign(item, { label });
         if (label === processModelFullIdentifier) {
           setProcessModelSelection(item);
@@ -244,7 +243,7 @@ export default function ProcessInstanceList() {
     }
 
     if (processModelSelection) {
-      queryParamString += `&process_group_identifier=${processModelSelection.process_group_id}&process_model_identifier=${processModelSelection.id}`;
+      queryParamString += `&process_model_identifier=${processModelSelection.id}`;
     }
 
     setErrorMessage(null);
@@ -383,7 +382,6 @@ export default function ProcessInstanceList() {
   const buildTable = () => {
     const headerLabels: Record<string, string> = {
       id: 'Process Instance Id',
-      process_group_identifier: 'Process Group',
       process_model_identifier: 'Process Model',
       start_in_seconds: 'Start Time',
       end_in_seconds: 'End Time',
@@ -418,7 +416,7 @@ export default function ProcessInstanceList() {
     const formatProcessModelIdentifier = (row: any, identifier: any) => {
       return (
         <Link
-          to={`/admin/process-models/${row.process_group_identifier}/${identifier}`}
+          to={`/admin/process-models/${modifyProcessModelPath(identifier)}`}
         >
           {identifier}
         </Link>
@@ -433,7 +431,6 @@ export default function ProcessInstanceList() {
 
     const columnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
-      process_group_identifier: formatProcessGroupIdentifier,
       process_model_identifier: formatProcessModelIdentifier,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
