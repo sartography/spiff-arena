@@ -77,7 +77,9 @@ export default function ProcessModelEditDiagram() {
   const [searchParams] = useSearchParams();
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
-  const [processModelFile, setProcessModelFile] = useState(null);
+  const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
+    null
+  );
   const [newFileName, setNewFileName] = useState('');
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
@@ -774,16 +776,24 @@ export default function ProcessModelEditDiagram() {
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
   if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
+    const processModelFileName = processModelFile
+      ? `: ${processModelFile.name}`
+      : '';
     return (
       <>
         <ProcessBreadcrumb
-          processGroupId={params.process_group_id}
-          processModelId={params.process_model_id}
-          linkProcessModel
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${processModel.id}`,
+              `process_model:${processModel.id}:link`,
+            ],
+            [processModelFileName],
+          ]}
         />
         <h2>
           Process Model File
-          {processModelFile ? `: ${(processModelFile as any).name}` : ''}
+          {processModelFileName}
         </h2>
         {appropriateEditor()}
         {newFileNameBox()}

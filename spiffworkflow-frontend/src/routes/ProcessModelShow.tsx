@@ -274,6 +274,7 @@ export default function ProcessModelShow() {
         iconDescription="Edit File"
         hasIconOnly
         size="lg"
+        data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
         onClick={() => navigateToFileEdit(processModelFile)}
       />
     );
@@ -455,6 +456,7 @@ export default function ProcessModelShow() {
     return (
       <Accordion>
         <AccordionItem
+          data-qa="files-accordion"
           title={
             <Stack orientation="horizontal">
               <span>
@@ -524,8 +526,8 @@ export default function ProcessModelShow() {
             ],
           ]}
         />
-        <h1>{processModel.display_name}</h1>
-        <p>{processModel.description}</p>
+        <h1>Process Model: {processModel.display_name}</h1>
+        <p className="process-description">{processModel.description}</p>
         <Stack orientation="horizontal" gap={3}>
           <Button onClick={processInstanceCreateAndRun} variant="primary">
             Run
