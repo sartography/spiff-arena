@@ -1168,6 +1168,8 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["pages"] == 1
         assert response.json["pagination"]["total"] == 1
 
+        print(response.json)
+
         process_instance_dict = response.json["results"][0]
         assert type(process_instance_dict["id"]) is int
         assert (
@@ -1178,7 +1180,7 @@ class TestProcessApi(BaseTest):
         )
         assert type(process_instance_dict["start_in_seconds"]) is int
         assert process_instance_dict["start_in_seconds"] > 0
-        assert "end_in_seconds" not in process_instance_dict
+        assert process_instance_dict["end_in_seconds"] is None
         assert process_instance_dict["status"] == "not_started"
 
     def test_process_instance_list_with_paginated_items(
