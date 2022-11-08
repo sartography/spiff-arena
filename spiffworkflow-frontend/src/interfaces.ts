@@ -32,10 +32,12 @@ export interface ProcessFile {
   references: ProcessFileReference[];
   size: number;
   type: string;
+  file_contents?: string;
 }
 
 export interface ProcessModel {
   id: string;
+  description: string;
   process_group_id: string;
   display_name: string;
   primary_file_name: string;
@@ -43,7 +45,7 @@ export interface ProcessModel {
 }
 
 // tuple of display value and URL
-export type BreadcrumbItem = [displayValue: string, url?: string];
+export type HotCrumbItem = [displayValue: string, url?: string];
 
 export interface ErrorForDisplay {
   message: string;
