@@ -247,7 +247,7 @@ def process_model_update(
     process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
 ) -> Any:
     """Process_model_update."""
-    body_include_list = ["display_name", "primary_file_name", "primary_process_id"]
+    body_include_list = ["display_name", "primary_file_name", "primary_process_id", "description"]
     body_filtered = {
         include_item: body[include_item]
         for include_item in body_include_list
