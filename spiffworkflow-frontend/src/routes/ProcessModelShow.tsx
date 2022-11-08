@@ -12,7 +12,6 @@ import {
 import {
   Accordion,
   AccordionItem,
-  Dropdown,
   Button,
   Stack,
   ButtonSet,
@@ -31,14 +30,6 @@ import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-
-interface ProcessModelFileCarbonDropdownItem {
-  label: string;
-  action: string;
-  processModelFile: ProcessFile;
-  needsConfirmation: boolean;
-  icon: any;
-}
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: any,
@@ -187,13 +178,6 @@ export default function ProcessModelShow() {
       successCallback: reloadModelOhYeah,
       httpMethod,
     });
-  };
-
-  const onProcessModelFileAction = (selection: any) => {
-    const { selectedItem } = selection;
-    if (selectedItem.action === 'delete') {
-      onDeleteFile(selectedItem.processModelFile.name);
-    }
   };
 
   const onSetPrimaryFile = (fileName: string) => {
