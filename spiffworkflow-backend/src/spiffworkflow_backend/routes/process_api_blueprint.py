@@ -711,10 +711,29 @@ def process_instance_list(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
+    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
+
+    # TODO need to look into this more - how the filter here interacts with the
+    # one defined in the report.
+    # TODO need to look into test failures when the results from result_dict is
+    # used instead of the process instances
+
+    # substitution_variables = request.args.to_dict()
+    # result_dict = process_instance_report.generate_report(
+    #    process_instances.items, substitution_variables
+    # )
+
+    # results = result_dict["results"]
+    # report_metadata = result_dict["report_metadata"]
+
+    results = process_instances.items
+    report_metadata = process_instance_report.report_metadata
+
     response_json = {
-        "results": process_instances.items,
+        "report_metadata": report_metadata,
+        "results": results,
         "pagination": {
-            "count": len(process_instances.items),
+            "count": len(results),
             "total": process_instances.total,
             "pages": process_instances.pages,
         },
@@ -762,27 +781,20 @@ def process_instance_delete(
 
 
 def process_instance_report_list(
-    process_group_id: str, process_model_id: str, page: int = 1, per_page: int = 100
+    page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Process_instance_report_list."""
-    process_model = get_process_model(process_model_id, process_group_id)
-
     process_instance_reports = ProcessInstanceReportModel.query.filter_by(
-        process_group_identifier=process_group_id,
-        process_model_identifier=process_model.id,
+        created_by_id=g.user.id,
     ).all()
 
     return make_response(jsonify(process_instance_reports), 200)
 
 
-def process_instance_report_create(
-    process_group_id: str, process_model_id: str, body: Dict[str, Any]
-) -> flask.wrappers.Response:
+def process_instance_report_create(body: Dict[str, Any]) -> flask.wrappers.Response:
     """Process_instance_report_create."""
     ProcessInstanceReportModel.create_report(
         identifier=body["identifier"],
-        process_group_identifier=process_group_id,
-        process_model_identifier=process_model_id,
         user=g.user,
         report_metadata=body["report_metadata"],
     )
@@ -791,16 +803,13 @@ def process_instance_report_create(
 
 
 def process_instance_report_update(
-    process_group_id: str,
-    process_model_id: str,
     report_identifier: str,
     body: Dict[str, Any],
 ) -> flask.wrappers.Response:
     """Process_instance_report_create."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         identifier=report_identifier,
-        process_group_identifier=process_group_id,
-        process_model_identifier=process_model_id,
+        created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
         raise ApiError(
@@ -816,15 +825,12 @@ def process_instance_report_update(
 
 
 def process_instance_report_delete(
-    process_group_id: str,
-    process_model_id: str,
     report_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_instance_report_create."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         identifier=report_identifier,
-        process_group_identifier=process_group_id,
-        process_model_identifier=process_model_id,
+        created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
         raise ApiError(
@@ -877,25 +883,20 @@ def authentication_callback(
 
 
 def process_instance_report_show(
-    process_group_id: str,
-    process_model_id: str,
     report_identifier: str,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-    process_model = get_process_model(process_model_id, process_group_id)
-
-    process_instances = (
-        ProcessInstanceModel.query.filter_by(process_model_identifier=process_model.id)
-        .order_by(
-            ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
+    process_instances = ProcessInstanceModel.query.order_by(  # .filter_by(process_model_identifier=process_model.id)
+        ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
+    ).paginate(
+        page=page, per_page=per_page, error_out=False
     )
 
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        identifier=report_identifier
+        identifier=report_identifier,
+        created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
         raise ApiError(
