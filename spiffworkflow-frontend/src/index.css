@@ -44,6 +44,14 @@ span.bjs-crumb {
   vertical-align: middle;
 }
 
+.cds--breadcrumb {
+  margin-bottom: 2em;
+}
+
+.process-description {
+  margin-bottom: 2em;
+}
+
 .diagram-editor-canvas {
   border:1px solid #000000;
   height:70vh;

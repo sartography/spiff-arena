@@ -2,7 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import { slugifyString } from '../helpers';
+import {
+  getGroupFromModifiedModelId,
+  modifyProcessModelPath,
+  slugifyString,
+} from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessModel } from '../interfaces';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
@@ -23,17 +27,20 @@ export default function ProcessModelForm({
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
   const navigate = useNavigate();
+  const modifiedProcessModelPath = modifyProcessModelPath(processModel.id);
 
   const navigateToProcessModel = (_result: any) => {
     if (processModel) {
-      navigate(
-        `/admin/process-models/${processModel.process_group_id}/${processModel.id}`
-      );
+      navigate(`/admin/process-models/${modifiedProcessModelPath}`);
     }
   };
 
   const navigateToProcessModels = (_result: any) => {
-    navigate(`/admin/process-models/${processModel.process_group_id}`);
+    navigate(
+      `/admin/process-groups/${getGroupFromModifiedModelId(
+        modifiedProcessModelPath
+      )}`
+    );
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {
@@ -42,7 +49,7 @@ export default function ProcessModelForm({
 
   const deleteProcessModel = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${processModel.process_group_id}/${processModel.id}`,
+      path: `/process-models/${modifiedProcessModelPath}`,
       successCallback: navigateToProcessModels,
       httpMethod: 'DELETE',
     });
@@ -64,7 +71,7 @@ export default function ProcessModelForm({
     }
     let path = `/process-models`;
     if (mode === 'edit') {
-      path = `/process-models/${processModel.process_group_id}/${processModel.id}`;
+      path = `/process-models/${modifiedProcessModelPath}`;
     }
     let httpMethod = 'POST';
     if (mode === 'edit') {
@@ -77,10 +84,9 @@ export default function ProcessModelForm({
     if (mode === 'new') {
       Object.assign(postBody, {
         id: processModel.id,
-        process_group_id: processModel.process_group_id,
       });
     }
-    console.log('postBody', postBody);
+
     HttpService.makeCallToBackend({
       path,
       successCallback: navigateToProcessModel,
@@ -176,7 +182,6 @@ export default function ProcessModelForm({
     }
     return <ButtonSet>{buttons}</ButtonSet>;
   };
-  console.log('processModel.process_group_id', processModel.process_group_id);
   return (
     <Form onSubmit={handleFormSubmission}>
       <Stack gap={5}>

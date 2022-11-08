@@ -42,16 +42,16 @@ class SecretServiceTestHelpers(BaseTest):
             self.test_process_group_id,
             display_name=self.test_process_group_display_name,
         )
+        process_model_identifier = f"{self.test_process_group_id}/{self.test_process_model_id}"
         self.create_process_model_with_api(
             client,
-            process_group_id=self.test_process_group_id,
-            process_model_id=self.test_process_model_id,
+            process_model_id=process_model_identifier,
             process_model_display_name=self.test_process_model_display_name,
             process_model_description=self.test_process_model_description,
             user=user,
         )
         process_model_info = ProcessModelService().get_process_model(
-            self.test_process_model_id, self.test_process_group_id
+            process_model_identifier
         )
         return process_model_info
 

@@ -13,27 +13,30 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 class ExampleDataLoader:
     """ExampleDataLoader."""
 
+    @staticmethod
     def create_spec(
-        self,
         process_model_id: str,
         display_name: str = "",
         description: str = "",
-        process_group_id: str = "",
         display_order: int = 0,
-        from_tests: bool = False,
+        # from_tests: bool = False,
         bpmn_file_name: Optional[str] = None,
-        process_model_source_directory: Optional[str] = None,
+        process_model_source_directory: str = None,
     ) -> ProcessModelInfo:
-        """Assumes that a directory exists in static/bpmn with the same name as the given process_model_id.
+        """Assumes that process_model_source_directory exists in static/bpmn and contains bpmn_file_name.
 
-        further assumes that the [process_model_id].bpmn is the primary file for the process model.
-        returns an array of data models to be added to the database.
+        further assumes that bpmn_file_name is the primary file for the process model.
+
+        if bpmn_file_name is None we load all files in process_model_source_directory,
+        otherwise, we only load bpmn_file_name
         """
+        if process_model_source_directory is None:
+            raise Exception("You must include `process_model_source_directory`.")
+
         spec = ProcessModelInfo(
             id=process_model_id,
             display_name=display_name,
             description=description,
-            process_group_id=process_group_id,
             display_order=display_order,
             is_review=False,
         )
@@ -55,25 +58,16 @@ class ExampleDataLoader:
         if bpmn_file_name:
             file_name_matcher = bpmn_file_name_with_extension
 
-        file_glob = ""
-        if from_tests:
-            file_glob = os.path.join(
-                current_app.instance_path,
-                "..",
-                "..",
-                "tests",
-                "data",
-                process_model_source_directory_to_use,
-                file_name_matcher,
-            )
-        else:
-            file_glob = os.path.join(
-                current_app.root_path,
-                "static",
-                "bpmn",
-                process_model_source_directory_to_use,
-                file_name_matcher,
-            )
+        # file_glob = ""
+        file_glob = os.path.join(
+            current_app.root_path,
+            "..",
+            "..",
+            "tests",
+            "data",
+            process_model_source_directory_to_use,
+            file_name_matcher,
+        )
 
         files = glob.glob(file_glob)
         for file_path in files:

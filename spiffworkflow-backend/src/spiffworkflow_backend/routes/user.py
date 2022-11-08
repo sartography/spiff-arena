@@ -46,6 +46,7 @@ def verify_token(
         ApiError:  If not on production and token is not valid, returns an 'invalid_token' 403 error.
         If on production and user is not authenticated, returns a 'no_user' 403 error.
     """
+    user_info = None
     if not force_run and AuthorizationService.should_disable_auth_for_request():
         return None
 
@@ -104,6 +105,7 @@ def verify_token(
                     raise ApiError(
                         error_code="fail_get_user_info",
                         message="Cannot get user info from token",
+                        status_code=401
                     ) from e
 
                 if (

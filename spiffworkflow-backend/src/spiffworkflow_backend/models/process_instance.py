@@ -72,7 +72,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "process_instance"
     id: int = db.Column(db.Integer, primary_key=True)
-    process_model_identifier: str = db.Column(db.String(50), nullable=False, index=True)
+    process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     process_group_identifier: str = db.Column(db.String(50), nullable=False, index=True)
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
     process_initiator = relationship("UserModel")

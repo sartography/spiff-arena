@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react';
 import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
-import { getPageInfoFromSearchParams } from '../helpers';
+import {
+  getPageInfoFromSearchParams,
+  modifyProcessModelPath,
+} from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject, RecentProcessModel } from '../interfaces';
 
@@ -39,12 +42,15 @@ export default function HomePage() {
     const rows = tasks.map((row) => {
       const rowToUse = row as any;
       const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.id}`;
+      const modifiedProcessModelIdentifier = modifyProcessModelPath(
+        rowToUse.process_model_identifier
+      );
       return (
         <tr key={rowToUse.id}>
           <td>
             <Link
               data-qa="process-model-show-link"
-              to={`/admin/process-models/${rowToUse.process_group_identifier}/${rowToUse.process_model_identifier}`}
+              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
             >
               {rowToUse.process_model_display_name}
             </Link>
@@ -52,7 +58,7 @@ export default function HomePage() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${rowToUse.process_group_identifier}/${rowToUse.process_model_identifier}/process-instances/${rowToUse.process_instance_id}`}
+              to={`/admin/process-models/${modifiedProcessModelIdentifier}/process-instances/${rowToUse.process_instance_id}`}
             >
               View {rowToUse.process_instance_id}
             </Link>
@@ -96,6 +102,9 @@ export default function HomePage() {
   const buildRecentProcessModelSection = () => {
     const rows = recentProcessModels.map((row) => {
       const rowToUse = row as any;
+      const modifiedProcessModelId = modifyProcessModelPath(
+        rowToUse.processModelIdentifier
+      );
       return (
         <tr
           key={`${rowToUse.processGroupIdentifier}/${rowToUse.processModelIdentifier}`}
@@ -103,7 +112,7 @@ export default function HomePage() {
           <td>
             <Link
               data-qa="process-model-show-link"
-              to={`/admin/process-models/${rowToUse.processGroupIdentifier}/${rowToUse.processModelIdentifier}`}
+              to={`/admin/process-models/${modifiedProcessModelId}`}
             >
               {rowToUse.processModelDisplayName}
             </Link>

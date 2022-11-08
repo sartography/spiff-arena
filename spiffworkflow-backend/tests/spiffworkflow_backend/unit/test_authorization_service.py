@@ -1,10 +1,13 @@
 """Test_message_service."""
 import pytest
 from flask import Flask
+from flask.testing import FlaskClient
+
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.models.user import UserNotFoundError
+from spiffworkflow_backend.models.user import UserModel, UserNotFoundError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -89,7 +92,11 @@ class TestAuthorizationService(BaseTest):
         )
 
     def test_user_can_be_added_to_active_task_on_first_login(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel
     ) -> None:
         """Test_user_can_be_added_to_active_task_on_first_login."""
         initiator_user = self.find_or_create_user("initiator_user")
@@ -98,8 +105,17 @@ class TestAuthorizationService(BaseTest):
         self.find_or_create_user("testuser1")
         AuthorizationService.import_permissions_from_yaml_file()
 
-        process_model = load_test_spec(
-            process_model_id="model_with_lanes", bpmn_file_name="lanes.bpmn"
+        process_model_identifier = self.basic_test_setup(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group",
+            process_model_id="model_with_lanes",
+            bpmn_file_name="lanes.bpmn",
+            bpmn_file_location="model_with_lanes"
+        )
+
+        process_model = ProcessModelService().get_process_model(
+            process_model_id=process_model_identifier
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user
