@@ -1,10 +1,22 @@
 // @use '@carbon/react/scss/themes';
 // @use '@carbon/react/scss/theme' with ($theme: themes.$g100);
+
+// @use '@carbon/react/scss/theme' with
+//   (
+//     $theme: (
+//   cds-link-primary: #525252
+//     )
+//   );
+
 @use '@carbon/react';
 @use '@carbon/styles';
 // @include grid.flex-grid();
 
+@use '@carbon/colors';
 // @use '@carbon/react/scss/colors';
+@use '@carbon/react/scss/themes';
+
+// var(--cds-link-text-color, var(--cds-link-primary, #0f62fe))
 
 // site is mainly using white theme.
 // header is mainly using g100
@@ -13,3 +25,60 @@
   // background-color: colors.$gray-100;
   color: white;
 }
+
+.cds--breadcrumb-item a.cds--link:hover {
+  color: #525252;
+}
+.cds--breadcrumb-item a.cds--link:visited {
+  color: #525252;
+}
+.cds--breadcrumb-item a.cds--link:visited:hover {
+  color: #525252;
+}
+.cds--breadcrumb-item a.cds--link {
+  color: #525252;
+}
+
+.cds--btn--ghost {
+  color: black;
+}
+.cds--btn--ghost:visited {
+  color: black;
+}
+.cds--btn--ghost:hover {
+  color: black;
+}
+.cds--btn--ghost:visited:hover {
+  color: black;
+}
+
+$slightly-lighter-gray: #474747;
+$spiff-header-background-color: #161616;
+
+.cds--header__global .cds--btn--primary {
+  background-color: $spiff-header-background-color;
+}
+.cds--btn--primary {
+  background-color: #393939;
+}
+.cds--btn--primary:hover {
+  background-color: $slightly-lighter-gray;
+}
+// .cds--btn--ghost:visited {
+//   color: black;
+// }
+// .cds--btn--ghost:hover {
+//   color: black;
+// }
+// .cds--btn--ghost:visited:hover {
+//   color: black;
+// }
+
+
+// :root {
+//   --cds-link-primary: #525252;
+// }
+// .card {
+//   background: var(--orange);
+//   --orange: hsl(255, 72%, var(--lightness));
+// }

@@ -1,12 +1,12 @@
-import { Link } from 'react-router-dom';
-import Breadcrumb from 'react-bootstrap/Breadcrumb';
-import { BreadcrumbItem } from '../interfaces';
+// @ts-ignore
+import { Breadcrumb, BreadcrumbItem } from '@carbon/react';
+import { HotCrumbItem } from '../interfaces';
 
 type OwnProps = {
   processModelId?: string;
   processGroupId?: string;
   linkProcessModel?: boolean;
-  hotCrumbs?: BreadcrumbItem[];
+  hotCrumbs?: HotCrumbItem[];
 };
 
 export default function ProcessBreadcrumb({
@@ -22,18 +22,20 @@ export default function ProcessBreadcrumb({
     if (lastItem === undefined) {
       return null;
     }
-    const lastCrumb = <Breadcrumb.Item active>{lastItem[0]}</Breadcrumb.Item>;
-    const leadingCrumbLinks = hotCrumbs.map((crumb) => {
+    const lastCrumb = (
+      <BreadcrumbItem isCurrentPage>{lastItem[0]}</BreadcrumbItem>
+    );
+    const leadingCrumbLinks = hotCrumbs.map((crumb: any) => {
       const valueLabel = crumb[0];
       const url = crumb[1];
       return (
-        <Breadcrumb.Item key={valueLabel} linkAs={Link} linkProps={{ to: url }}>
+        <BreadcrumbItem key={valueLabel} href={url}>
           {valueLabel}
-        </Breadcrumb.Item>
+        </BreadcrumbItem>
       );
     });
     return (
-      <Breadcrumb>
+      <Breadcrumb noTrailingSlash>
         {leadingCrumbLinks}
         {lastCrumb}
       </Breadcrumb>
@@ -42,42 +44,38 @@ export default function ProcessBreadcrumb({
   if (processModelId) {
     if (linkProcessModel) {
       processModelBreadcrumb = (
-        <Breadcrumb.Item
-          linkAs={Link}
-          linkProps={{
-            to: `/admin/process-models/${processGroupId}/${processModelId}`,
-          }}
+        <BreadcrumbItem
+          href={`/admin/process-models/${processGroupId}/${processModelId}`}
         >
-          Process Model: {processModelId}
-        </Breadcrumb.Item>
+          {`Process Model: ${processModelId}`}
+        </BreadcrumbItem>
       );
     } else {
       processModelBreadcrumb = (
-        <Breadcrumb.Item active>
-          Process Model: {processModelId}
-        </Breadcrumb.Item>
+        <BreadcrumbItem isCurrentPage>
+          {`Process Model: ${processModelId}`}
+        </BreadcrumbItem>
       );
     }
     processGroupBreadcrumb = (
-      <Breadcrumb.Item
-        linkAs={Link}
+      <BreadcrumbItem
         data-qa="process-group-breadcrumb-link"
-        linkProps={{ to: `/admin/process-groups/${processGroupId}` }}
+        href={`/admin/process-groups/${processGroupId}`}
       >
-        Process Group: {processGroupId}
-      </Breadcrumb.Item>
+        {`Process Group: ${processGroupId}`}
+      </BreadcrumbItem>
     );
   } else if (processGroupId) {
     processGroupBreadcrumb = (
-      <Breadcrumb.Item active>Process Group: {processGroupId}</Breadcrumb.Item>
+      <BreadcrumbItem isCurrentPage>
+        {`Process Group: ${processGroupId}`}
+      </BreadcrumbItem>
     );
   }
 
   return (
-    <Breadcrumb>
-      <Breadcrumb.Item linkAs={Link} linkProps={{ to: '/admin' }}>
-        Process Groups
-      </Breadcrumb.Item>
+    <Breadcrumb noTrailingSlash>
+      <BreadcrumbItem href="/admin">Process Groups</BreadcrumbItem>
       {processGroupBreadcrumb}
       {processModelBreadcrumb}
     </Breadcrumb>
