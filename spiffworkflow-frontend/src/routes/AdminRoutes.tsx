@@ -65,7 +65,7 @@ export default function AdminRoutes() {
           element={<ProcessModelEditDiagram />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/process-instances"
+          path="process-models/:process_model_id/process-instances"
           element={<ProcessInstanceList />}
         />
         <Route
@@ -77,7 +77,7 @@ export default function AdminRoutes() {
           element={<ProcessInstanceShow />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/process-instances/:process_instance_id/:spiff_step"
+          path="process-models/:process_model_id/process-instances/:process_instance_id/:spiff_step"
           element={<ProcessInstanceShow />}
         />
         <Route
@@ -105,7 +105,7 @@ export default function AdminRoutes() {
           element={<ReactFormEditor />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/process-instances/:process_instance_id/logs"
+          path="process-models/:process_model_id/process-instances/:process_instance_id/logs"
           element={<ProcessInstanceLogList />}
         />
         <Route path="process-instances" element={<ProcessInstanceList />} />
