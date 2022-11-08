@@ -1,7 +1,14 @@
 import { useContext, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-// @ts-ignore
-import { Add, Upload } from '@carbon/icons-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import {
+  Add,
+  Upload,
+  Download,
+  TrashCan,
+  Favorite,
+  Edit,
+  // @ts-ignore
+} from '@carbon/icons-react';
 import {
   Accordion,
   AccordionItem,
@@ -23,11 +30,14 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
+import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 
 interface ProcessModelFileCarbonDropdownItem {
   label: string;
   action: string;
   processModelFile: ProcessFile;
+  needsConfirmation: boolean;
+  icon: any;
 }
 
 const storeRecentProcessModelInLocalStorage = (
@@ -94,6 +104,7 @@ export default function ProcessModelShow() {
   const [filesToUpload, setFilesToUpload] = useState<any>(null);
   const [showFileUploadModal, setShowFileUploadModal] =
     useState<boolean>(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
@@ -163,14 +174,14 @@ export default function ProcessModelShow() {
   const onUploadedCallback = () => {
     setReloadModel(true);
   };
+  const reloadModelOhYeah = (_httpResult: any) => {
+    setReloadModel(!reloadModel);
+  };
 
   // Remove this code from
   const onDeleteFile = (fileName: string) => {
     const url = `/process-models/${params.process_group_id}/${params.process_model_id}/files/${fileName}`;
     const httpMethod = 'DELETE';
-    const reloadModelOhYeah = (_httpResult: any) => {
-      setReloadModel(!reloadModel);
-    };
     HttpService.makeCallToBackend({
       path: url,
       successCallback: reloadModelOhYeah,
@@ -185,99 +196,155 @@ export default function ProcessModelShow() {
     }
   };
 
+  const onSetPrimaryFile = (fileName: string) => {
+    const url = `/process-models/${params.process_group_id}/${params.process_model_id}`;
+    const httpMethod = 'PUT';
+
+    const processModelToPass = {
+      primary_file_name: fileName,
+    };
+    HttpService.makeCallToBackend({
+      path: url,
+      successCallback: onUploadedCallback,
+      httpMethod,
+      postBody: processModelToPass,
+    });
+  };
+  const handleProcessModelFileResult = (processModelFile: ProcessFile) => {
+    if (
+      !('file_contents' in processModelFile) ||
+      processModelFile.file_contents === undefined
+    ) {
+      setErrorMessage({
+        message: `Could not file file contents for file: ${processModelFile.name}`,
+      });
+      return;
+    }
+    let contentType = 'application/xml';
+    if (processModelFile.type === 'json') {
+      contentType = 'application/json';
+    }
+    const element = document.createElement('a');
+    const file = new Blob([processModelFile.file_contents], {
+      type: contentType,
+    });
+    const downloadFileName = processModelFile.name;
+    element.href = URL.createObjectURL(file);
+    element.download = downloadFileName;
+    document.body.appendChild(element);
+    element.click();
+  };
+
+  const downloadFile = (fileName: string) => {
+    setErrorMessage(null);
+    const processModelPath = `process-models/${params.process_group_id}/${params.process_model_id}`;
+    HttpService.makeCallToBackend({
+      path: `/${processModelPath}/files/${fileName}`,
+      successCallback: handleProcessModelFileResult,
+    });
+  };
+
+  const navigateToFileEdit = (processModelFile: ProcessFile) => {
+    if (processModel) {
+      if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
+        navigate(
+          `/admin/process-models/${processModel.process_group_id}/${processModel.id}/files/${processModelFile.name}`
+        );
+      } else if (processModelFile.name.match(/\.(json|md)$/)) {
+        navigate(
+          `/admin/process-models/${processModel.process_group_id}/${processModel.id}/form/${processModelFile.name}`
+        );
+      }
+    }
+  };
+
+  const renderButtonElements = (
+    processModelFile: ProcessFile,
+    isPrimaryBpmnFile: boolean
+  ) => {
+    const elements = [];
+    elements.push(
+      <Button
+        kind="ghost"
+        renderIcon={Edit}
+        iconDescription="Edit File"
+        hasIconOnly
+        size="lg"
+        onClick={() => navigateToFileEdit(processModelFile)}
+      />
+    );
+    elements.push(
+      <Button
+        kind="ghost"
+        renderIcon={Download}
+        iconDescription="Download File"
+        hasIconOnly
+        size="lg"
+        onClick={() => downloadFile(processModelFile.name)}
+      />
+    );
+
+    elements.push(
+      <ButtonWithConfirmation
+        kind="ghost"
+        renderIcon={TrashCan}
+        iconDescription="Delete File"
+        hasIconOnly
+        description={`Delete file: ${processModelFile.name}`}
+        onConfirmation={() => {
+          onDeleteFile(processModelFile.name);
+        }}
+        confirmButtonLabel="Delete"
+      />
+    );
+    if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
+      elements.push(
+        <Button
+          kind="ghost"
+          renderIcon={Favorite}
+          iconDescription="Set As Primary File"
+          hasIconOnly
+          size="lg"
+          onClick={() => onSetPrimaryFile(processModelFile.name)}
+        />
+      );
+    }
+    return elements;
+  };
+
   const processModelFileList = () => {
     if (!processModel) {
       return null;
     }
     let constructedTag;
-    const tags = processModel.files.map(
-      (processModelFile: any, index: number) => {
-        const isPrimaryBpmnFile =
-          processModelFile.name === processModel.primary_file_name;
-        const items: ProcessModelFileCarbonDropdownItem[] = [
-          {
-            label: 'Delete',
-            action: 'delete',
-            processModelFile,
-          },
-        ];
-        if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
-          items.push({
-            label: 'Mark as Primary',
-            action: 'mark_as_primary',
-            processModelFile,
-          });
-        }
+    const tags = processModel.files.map((processModelFile: ProcessFile) => {
+      const isPrimaryBpmnFile =
+        processModelFile.name === processModel.primary_file_name;
 
-        let actionDropDirection = 'bottom';
-        if (index + 1 === processModel.files.length) {
-          actionDropDirection = 'bottom';
-        }
-
-        // The dropdown will get covered up if it extends passed the table container.
-        // Using bottom direction at least gives a scrollbar so use that and hopefully
-        // carbon will give access to z-index at some point.
-        // https://github.com/carbon-design-system/carbon-addons-iot-react/issues/1487
-        const actionsTableCell = (
+      let actionsTableCell = null;
+      if (processModelFile.name.match(/\.(dmn|bpmn|json|md)$/)) {
+        actionsTableCell = (
           <TableCell key={`${processModelFile.name}-cell`}>
-            <Dropdown
-              id="default"
-              direction={actionDropDirection}
-              label="Select an action"
-              onChange={(e: any) => {
-                onProcessModelFileAction(e);
-              }}
-              items={items}
-              itemToString={(item: ProcessModelFileCarbonDropdownItem) =>
-                item ? item.label : ''
-              }
-            />
+            {renderButtonElements(processModelFile, isPrimaryBpmnFile)}
           </TableCell>
         );
-
-        if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
-          let primarySuffix = '';
-          if (isPrimaryBpmnFile) {
-            primarySuffix = '- Primary File';
-          }
-          constructedTag = (
-            <TableRow key={processModelFile.name}>
-              <TableCell key={`${processModelFile.name}-cell`}>
-                <Link
-                  to={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/files/${processModelFile.name}`}
-                >
-                  {processModelFile.name}
-                </Link>
-                {primarySuffix}
-              </TableCell>
-              {actionsTableCell}
-            </TableRow>
-          );
-        } else if (processModelFile.name.match(/\.(json|md)$/)) {
-          constructedTag = (
-            <TableRow key={processModelFile.name}>
-              <TableCell key={`${processModelFile.name}-cell`}>
-                <Link
-                  to={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/form/${processModelFile.name}`}
-                >
-                  {processModelFile.name}
-                </Link>
-              </TableCell>
-              {actionsTableCell}
-            </TableRow>
-          );
-        } else {
-          constructedTag = (
-            <TableRow key={processModelFile.name}>
-              <TableCell key={`${processModelFile.name}-cell`}>
-                {processModelFile.name}
-              </TableCell>
-            </TableRow>
-          );
-        }
-        return constructedTag;
       }
-    );
+
+      let primarySuffix = '';
+      if (isPrimaryBpmnFile) {
+        primarySuffix = '- Primary File';
+      }
+      constructedTag = (
+        <TableRow key={processModelFile.name}>
+          <TableCell key={`${processModelFile.name}-cell`}>
+            {processModelFile.name}
+            {primarySuffix}
+          </TableCell>
+          {actionsTableCell}
+        </TableRow>
+      );
+      return constructedTag;
+    });
 
     // return <ul>{tags}</ul>;
     const headers = ['Name', 'Actions'];
