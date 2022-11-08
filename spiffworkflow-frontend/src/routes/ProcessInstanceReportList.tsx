@@ -11,7 +11,7 @@ export default function ProcessInstanceReportList() {
 
   useEffect(() => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports`,
+      path: `/process-instances/reports`,
       successCallback: setProcessInstanceReports,
     });
   }, [params]);

@@ -128,8 +128,6 @@ def do_report_with_metadata_and_instances(
     """Do_report_with_metadata_and_instances."""
     process_instance_report = ProcessInstanceReportModel.create_with_attributes(
         identifier="sure",
-        process_group_identifier=process_instances[0].process_group_identifier,
-        process_model_identifier=process_instances[0].process_model_identifier,
         report_metadata=report_metadata,
         user=BaseTest.find_or_create_user(),
     )
