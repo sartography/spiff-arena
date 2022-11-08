@@ -32,6 +32,7 @@ export interface ProcessFile {
   references: ProcessFileReference[];
   size: number;
   type: string;
+  file_contents?: string;
 }
 
 export interface ProcessModel {

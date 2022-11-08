@@ -4,12 +4,12 @@ import { Button, Modal } from '@carbon/react';
 
 type OwnProps = {
   description?: string;
-  buttonLabel: string;
+  buttonLabel?: string;
   onConfirmation: (..._args: any[]) => any;
   title?: string;
   confirmButtonLabel?: string;
   kind?: string;
-  renderIcon?: boolean | null;
+  renderIcon?: boolean;
   iconDescription?: string | null;
   hasIconOnly?: boolean;
 };
@@ -21,7 +21,7 @@ export default function ButtonWithConfirmation({
   title = 'Are you sure?',
   confirmButtonLabel = 'OK',
   kind = 'danger',
-  renderIcon = null,
+  renderIcon = false,
   iconDescription = null,
   hasIconOnly = false,
 }: OwnProps) {
