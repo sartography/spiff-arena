@@ -408,11 +408,6 @@ export default function ProcessInstanceList() {
         </Link>
       );
     };
-    const formatProcessGroupIdentifier = (row: any, identifier: any) => {
-      return (
-        <Link to={`/admin/process-groups/${identifier}`}>{identifier}</Link>
-      );
-    };
     const formatProcessModelIdentifier = (row: any, identifier: any) => {
       return (
         <Link
