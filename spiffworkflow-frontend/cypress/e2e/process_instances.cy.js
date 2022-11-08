@@ -68,6 +68,7 @@ describe('process-instances', () => {
     cy.login();
     cy.navigateToProcessModel(
       'Acceptance Tests Group One',
+      'Acceptance Tests Model 1',
       'acceptance-tests-model-1'
     );
   });
@@ -75,7 +76,7 @@ describe('process-instances', () => {
     cy.logout();
   });
 
-  it.only('can create a new instance and can modify', () => {
+  it('can create a new instance and can modify', () => {
     const originalDmnOutputForKevin = 'Very wonderful';
     const newDmnOutputForKevin = 'The new wonderful';
     const dmnOutputForDan = 'pretty wonderful';
@@ -90,28 +91,29 @@ describe('process-instances', () => {
     cy.runPrimaryBpmnFile();
 
     // Change dmn
-    cy.contains(dmnFile).click();
-    cy.contains(`Process Model File: ${dmnFile}`);
+    cy.getBySel('files-accordion').click();
+    cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(originalDmnOutputForKevin, newDmnOutputForKevin);
 
     cy.contains('acceptance-tests-model-1').click();
     cy.runPrimaryBpmnFile();
 
-    cy.contains(dmnFile).click();
-    cy.contains(`Process Model File: ${dmnFile}`);
+    cy.getBySel('files-accordion').click();
+    cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(newDmnOutputForKevin, originalDmnOutputForKevin);
     cy.contains('acceptance-tests-model-1').click();
     cy.runPrimaryBpmnFile();
 
     // Change bpmn
-    cy.contains(bpmnFile).click();
+    cy.getBySel('files-accordion').click();
+    cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     cy.contains(`Process Model File: ${bpmnFile}`);
     updateBpmnPythonScript(newPythonScript);
     cy.contains('acceptance-tests-model-1').click();
     cy.runPrimaryBpmnFile();
 
-    cy.contains(bpmnFile).click();
-    cy.contains(`Process Model File: ${bpmnFile}`);
+    cy.getBySel('files-accordion').click();
+    cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     updateBpmnPythonScript(originalPythonScript);
     cy.contains('acceptance-tests-model-1').click();
     cy.runPrimaryBpmnFile();
@@ -125,13 +127,15 @@ describe('process-instances', () => {
     const bpmnFile = 'process_model_one.bpmn';
 
     // Change bpmn
-    cy.contains(bpmnFile).click();
+    cy.getBySel('files-accordion').click();
+    cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     cy.contains(`Process Model File: ${bpmnFile}`);
     updateBpmnPythonScriptWithMonaco(newPythonScript);
     cy.contains('acceptance-tests-model-1').click();
     cy.runPrimaryBpmnFile();
 
-    cy.contains(bpmnFile).click();
+    cy.getBySel('files-accordion').click();
+    cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     cy.contains(`Process Model File: ${bpmnFile}`);
     updateBpmnPythonScriptWithMonaco(originalPythonScript);
     cy.contains('acceptance-tests-model-1').click();

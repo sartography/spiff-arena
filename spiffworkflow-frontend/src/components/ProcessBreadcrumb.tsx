@@ -55,7 +55,10 @@ export default function ProcessBreadcrumb({
     const leadingCrumbLinks = hotCrumbs.map((crumb: any) => {
       const valueLabel = crumb[0];
       const url = crumb[1];
-      if (url.startsWith('process_model:')) {
+      if (!url) {
+        return <BreadcrumbItem isCurrentPage>{valueLabel}</BreadcrumbItem>;
+      }
+      if (url && url.startsWith('process_model:')) {
         return explodeCrumb(crumb);
       }
       return (

@@ -91,13 +91,12 @@ Cypress.Commands.add('runPrimaryBpmnFile', (reload = true) => {
 
 Cypress.Commands.add(
   'navigateToProcessModel',
-  (groupDisplayName, modelDisplayName) => {
+  (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
-    cy.getBySel('process-model-show-link').contains(modelDisplayName).click();
-    // cy.url().should('include', `process-models/${groupDisplayName}/${modelDisplayName}`);
+    cy.getBySel('process-model-show-link').contains(modelIdentifier).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
   }
 );
@@ -115,10 +114,7 @@ Cypress.Commands.add('basicPaginationTest', () => {
 });
 
 Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
-  cy.getBySel('total-paginated-items')
-    .invoke('text')
-    .then(parseFloat)
-    .should('be.gt', 0);
+  cy.contains(/\b[1-9]\d*–[1-9]\d* of [1-9]\d*/);
 });
 
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
