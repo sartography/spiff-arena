@@ -211,7 +211,7 @@ export default function ProcessModelShow() {
 
         let actionDropDirection = 'bottom';
         if (index + 1 === processModel.files.length) {
-          actionDropDirection = 'top';
+          actionDropDirection = 'bottom';
         }
 
         // The dropdown will get covered up if it extends passed the table container.
@@ -403,6 +403,13 @@ export default function ProcessModelShow() {
             </Button>
             <Button
               renderIcon={Add}
+              href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/files?file_type=bpmn`}
+              size="sm"
+            >
+              New BPMN File
+            </Button>
+            <Button
+              renderIcon={Add}
               href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/files?file_type=dmn`}
               size="sm"
             >
@@ -433,6 +440,7 @@ export default function ProcessModelShow() {
   if (processModel) {
     return (
       <>
+        {fileUploadModal()}
         <ProcessBreadcrumb
           processGroupId={processModel.process_group_id}
           processModelId={processModel.id}
@@ -450,9 +458,9 @@ export default function ProcessModelShow() {
             Edit process model
           </Button>
         </Stack>
-        {fileUploadModal()}
-        {processInstanceResultTag()}
         <br />
+        <br />
+        {processInstanceResultTag()}
         {processModelButtons()}
         <br />
         <br />
