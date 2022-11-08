@@ -147,9 +147,7 @@ export default function ProcessModelShow() {
           <p>
             Process Instance {processInstanceId} kicked off (
             <Link
-              to={`/admin/process-models/${processModel.process_group_id}/${
-                (processModel as any).id
-              }/process-instances/${processInstanceId}`}
+              to={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/process-instances/${processInstanceId}`}
               data-qa="process-instance-show-link"
             >
               view
@@ -188,82 +186,98 @@ export default function ProcessModelShow() {
   };
 
   const processModelFileList = () => {
+    if (!processModel) {
+      return null;
+    }
     let constructedTag;
-    const tags = (processModel as any).files.map((processModelFile: any) => {
-      const items: ProcessModelFileCarbonDropdownItem[] = [
-        {
-          label: 'Delete',
-          action: 'delete',
-          processModelFile,
-        },
-        {
-          label: 'Mark as Primary',
-          action: 'mark_as_primary',
-          processModelFile,
-        },
-      ];
-      const actionsTableCell = (
-        <TableCell key={`${processModelFile.name}-cell`}>
-          <Dropdown
-            id="default"
-            direction="top"
-            label="Select an action"
-            onChange={(e: any) => {
-              onProcessModelFileAction(e);
-            }}
-            items={items}
-            itemToString={(item: ProcessModelFileCarbonDropdownItem) =>
-              item ? item.label : ''
-            }
-          />
-        </TableCell>
-      );
-      if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
-        let primarySuffix = '';
-        if (processModelFile.name === (processModel as any).primary_file_name) {
-          primarySuffix = '- Primary File';
+    const tags = processModel.files.map(
+      (processModelFile: any, index: number) => {
+        const isPrimaryBpmnFile =
+          processModelFile.name === processModel.primary_file_name;
+        const items: ProcessModelFileCarbonDropdownItem[] = [
+          {
+            label: 'Delete',
+            action: 'delete',
+            processModelFile,
+          },
+        ];
+        if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
+          items.push({
+            label: 'Mark as Primary',
+            action: 'mark_as_primary',
+            processModelFile,
+          });
         }
-        constructedTag = (
-          <TableRow key={processModelFile.name}>
-            <TableCell key={`${processModelFile.name}-cell`}>
-              <Link
-                to={`/admin/process-models/${
-                  (processModel as any).process_group_id
-                }/${(processModel as any).id}/files/${processModelFile.name}`}
-              >
+
+        let actionDropDirection = 'bottom';
+        if (index + 1 === processModel.files.length) {
+          actionDropDirection = 'top';
+        }
+
+        // The dropdown will get covered up if it extends passed the table container.
+        // Using bottom direction at least gives a scrollbar so use that and hopefully
+        // carbon will give access to z-index at some point.
+        // https://github.com/carbon-design-system/carbon-addons-iot-react/issues/1487
+        const actionsTableCell = (
+          <TableCell key={`${processModelFile.name}-cell`}>
+            <Dropdown
+              id="default"
+              direction={actionDropDirection}
+              label="Select an action"
+              onChange={(e: any) => {
+                onProcessModelFileAction(e);
+              }}
+              items={items}
+              itemToString={(item: ProcessModelFileCarbonDropdownItem) =>
+                item ? item.label : ''
+              }
+            />
+          </TableCell>
+        );
+
+        if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
+          let primarySuffix = '';
+          if (isPrimaryBpmnFile) {
+            primarySuffix = '- Primary File';
+          }
+          constructedTag = (
+            <TableRow key={processModelFile.name}>
+              <TableCell key={`${processModelFile.name}-cell`}>
+                <Link
+                  to={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/files/${processModelFile.name}`}
+                >
+                  {processModelFile.name}
+                </Link>
+                {primarySuffix}
+              </TableCell>
+              {actionsTableCell}
+            </TableRow>
+          );
+        } else if (processModelFile.name.match(/\.(json|md)$/)) {
+          constructedTag = (
+            <TableRow key={processModelFile.name}>
+              <TableCell key={`${processModelFile.name}-cell`}>
+                <Link
+                  to={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/form/${processModelFile.name}`}
+                >
+                  {processModelFile.name}
+                </Link>
+              </TableCell>
+              {actionsTableCell}
+            </TableRow>
+          );
+        } else {
+          constructedTag = (
+            <TableRow key={processModelFile.name}>
+              <TableCell key={`${processModelFile.name}-cell`}>
                 {processModelFile.name}
-              </Link>
-              {primarySuffix}
-            </TableCell>
-            {actionsTableCell}
-          </TableRow>
-        );
-      } else if (processModelFile.name.match(/\.(json|md)$/)) {
-        constructedTag = (
-          <TableRow key={processModelFile.name}>
-            <TableCell key={`${processModelFile.name}-cell`}>
-              <Link
-                to={`/admin/process-models/${
-                  (processModel as any).process_group_id
-                }/${(processModel as any).id}/form/${processModelFile.name}`}
-              >
-                {processModelFile.name}
-              </Link>
-            </TableCell>
-            {actionsTableCell}
-          </TableRow>
-        );
-      } else {
-        constructedTag = (
-          <TableRow key={processModelFile.name}>
-            <TableCell key={`${processModelFile.name}-cell`}>
-              {processModelFile.name}
-            </TableCell>
-          </TableRow>
-        );
+              </TableCell>
+            </TableRow>
+          );
+        }
+        return constructedTag;
       }
-      return constructedTag;
-    });
+    );
 
     // return <ul>{tags}</ul>;
     const headers = ['Name', 'Actions'];
@@ -284,13 +298,14 @@ export default function ProcessModelShow() {
   };
 
   const processInstancesUl = () => {
+    if (!processModel) {
+      return null;
+    }
     return (
       <ul>
         <li>
           <Link
-            to={`/admin/process-instances?process_group_identifier=${
-              (processModel as any).process_group_id
-            }&process_model_identifier=${(processModel as any).id}`}
+            to={`/admin/process-instances?process_group_identifier=${processModel.process_group_id}&process_model_identifier=${processModel.id}`}
             data-qa="process-instance-list-link"
           >
             List
@@ -298,9 +313,7 @@ export default function ProcessModelShow() {
         </li>
         <li>
           <Link
-            to={`/admin/process-models/${
-              (processModel as any).process_group_id
-            }/${(processModel as any).id}/process-instances/reports`}
+            to={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/process-instances/reports`}
             data-qa="process-instance-reports-link"
           >
             Reports
@@ -315,20 +328,20 @@ export default function ProcessModelShow() {
   };
 
   const handleFileUpload = (event: any) => {
-    event.preventDefault();
-    const url = `/process-models/${(processModel as any).process_group_id}/${
-      (processModel as any).id
-    }/files`;
-    const formData = new FormData();
-    formData.append('file', filesToUpload[0]);
-    formData.append('fileName', filesToUpload[0].name);
-    HttpService.makeCallToBackend({
-      path: url,
-      successCallback: onUploadedCallback,
-      httpMethod: 'POST',
-      postBody: formData,
-    });
-    setShowFileUploadModal(false);
+    if (processModel) {
+      event.preventDefault();
+      const url = `/process-models/${processModel.process_group_id}/${processModel.id}/files`;
+      const formData = new FormData();
+      formData.append('file', filesToUpload[0]);
+      formData.append('fileName', filesToUpload[0].name);
+      HttpService.makeCallToBackend({
+        path: url,
+        successCallback: onUploadedCallback,
+        httpMethod: 'POST',
+        postBody: formData,
+      });
+      setShowFileUploadModal(false);
+    }
   };
 
   const fileUploadModal = () => {
@@ -362,6 +375,9 @@ export default function ProcessModelShow() {
   };
 
   const processModelButtons = () => {
+    if (!processModel) {
+      return null;
+    }
     return (
       <Accordion>
         <AccordionItem
@@ -387,27 +403,21 @@ export default function ProcessModelShow() {
             </Button>
             <Button
               renderIcon={Add}
-              href={`/admin/process-models/${
-                (processModel as any).process_group_id
-              }/${(processModel as any).id}/files?file_type=dmn`}
+              href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/files?file_type=dmn`}
               size="sm"
             >
               New DMN File
             </Button>
             <Button
               renderIcon={Add}
-              href={`/admin/process-models/${
-                (processModel as any).process_group_id
-              }/${(processModel as any).id}/form?file_ext=json`}
+              href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/form?file_ext=json`}
               size="sm"
             >
               New JSON File
             </Button>
             <Button
               renderIcon={Add}
-              href={`/admin/process-models/${
-                (processModel as any).process_group_id
-              }/${(processModel as any).id}/form?file_ext=md`}
+              href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/form?file_ext=md`}
               size="sm"
             >
               New Markdown File
@@ -434,9 +444,7 @@ export default function ProcessModelShow() {
             Run
           </Button>
           <Button
-            href={`/admin/process-models/${
-              (processModel as any).process_group_id
-            }/${(processModel as any).id}/edit`}
+            href={`/admin/process-models/${processModel.process_group_id}/${processModel.id}/edit`}
             variant="secondary"
           >
             Edit process model
