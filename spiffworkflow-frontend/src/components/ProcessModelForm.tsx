@@ -4,19 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
 import { slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
-import { ProcessGroup } from '../interfaces';
+import { ProcessModel } from '../interfaces';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 
 type OwnProps = {
   mode: string;
-  processGroup: ProcessGroup;
-  setProcessGroup: (..._args: any[]) => any;
+  processModel: ProcessModel;
+  setProcessModel: (..._args: any[]) => any;
 };
 
-export default function ProcessGroupForm({
+export default function ProcessModelForm({
   mode,
-  processGroup,
-  setProcessGroup,
+  processModel,
+  setProcessModel,
 }: OwnProps) {
   const [identifierInvalid, setIdentifierInvalid] = useState<boolean>(false);
   const [idHasBeenUpdatedByUser, setIdHasBeenUpdatedByUser] =
@@ -24,24 +24,26 @@ export default function ProcessGroupForm({
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  const navigateToProcessGroup = (_result: any) => {
-    if (processGroup) {
-      navigate(`/admin/process-groups/${processGroup.id}`);
+  const navigateToProcessModel = (_result: any) => {
+    if (processModel) {
+      navigate(
+        `/admin/process-models/${processModel.process_group_id}/${processModel.id}`
+      );
     }
   };
 
-  const navigateToProcessGroups = (_result: any) => {
-    navigate(`/admin/process-groups`);
+  const navigateToProcessModels = (_result: any) => {
+    navigate(`/admin/process-models/${processModel.process_group_id}`);
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {
     return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
   };
 
-  const deleteProcessGroup = () => {
+  const deleteProcessModel = () => {
     HttpService.makeCallToBackend({
-      path: `/process-groups/${processGroup.id}`,
-      successCallback: navigateToProcessGroups,
+      path: `/process-models/${processModel.process_group_id}/${processModel.id}`,
+      successCallback: navigateToProcessModels,
       httpMethod: 'DELETE',
     });
   };
@@ -49,47 +51,50 @@ export default function ProcessGroupForm({
   const handleFormSubmission = (event: any) => {
     event.preventDefault();
     let hasErrors = false;
-    if (!hasValidIdentifier(processGroup.id)) {
+    if (!hasValidIdentifier(processModel.id)) {
       setIdentifierInvalid(true);
       hasErrors = true;
     }
-    if (processGroup.display_name === '') {
+    if (processModel.display_name === '') {
       setDisplayNameInvalid(true);
       hasErrors = true;
     }
     if (hasErrors) {
       return;
     }
-    let path = '/process-groups';
+    let path = `/process-models`;
     if (mode === 'edit') {
-      path = `/process-groups/${processGroup.id}`;
+      path = `/process-models/${processModel.process_group_id}/${processModel.id}`;
     }
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
     }
     const postBody = {
-      display_name: processGroup.display_name,
-      description: processGroup.description,
+      display_name: processModel.display_name,
+      description: processModel.description,
     };
     if (mode === 'new') {
-      Object.assign(postBody, { id: processGroup.id });
+      Object.assign(postBody, {
+        id: processModel.id,
+        process_group_id: processModel.process_group_id,
+      });
     }
-
+    console.log('postBody', postBody);
     HttpService.makeCallToBackend({
       path,
-      successCallback: navigateToProcessGroup,
+      successCallback: navigateToProcessModel,
       httpMethod,
       postBody,
     });
   };
 
-  const updateProcessGroup = (newValues: any) => {
-    const processGroupToCopy = {
-      ...processGroup,
+  const updateProcessModel = (newValues: any) => {
+    const processModelToCopy = {
+      ...processModel,
     };
-    Object.assign(processGroupToCopy, newValues);
-    setProcessGroup(processGroupToCopy);
+    Object.assign(processModelToCopy, newValues);
+    setProcessModel(processModelToCopy);
   };
 
   const onDisplayNameChanged = (newDisplayName: any) => {
@@ -98,19 +103,21 @@ export default function ProcessGroupForm({
     if (!idHasBeenUpdatedByUser && mode === 'new') {
       Object.assign(updateDict, { id: slugifyString(newDisplayName) });
     }
-    updateProcessGroup(updateDict);
+    updateProcessModel(updateDict);
   };
 
   const formElements = () => {
     const textInputs = [
       <TextInput
-        id="process-group-display-name"
+        id="process-model-display-name"
         name="display_name"
         invalidText="Display Name is required."
         invalid={displayNameInvalid}
         labelText="Display Name*"
-        value={processGroup.display_name}
-        onChange={(event: any) => onDisplayNameChanged(event.target.value)}
+        value={processModel.display_name}
+        onChange={(event: any) => {
+          onDisplayNameChanged(event.target.value);
+        }}
         onBlur={(event: any) => console.log('event', event)}
       />,
     ];
@@ -118,14 +125,14 @@ export default function ProcessGroupForm({
     if (mode === 'new') {
       textInputs.push(
         <TextInput
-          id="process-group-identifier"
+          id="process-model-identifier"
           name="id"
           invalidText="Identifier is required and must be all lowercase characters and hyphens."
           invalid={identifierInvalid}
           labelText="Identifier*"
-          value={processGroup.id}
+          value={processModel.id}
           onChange={(event: any) => {
-            updateProcessGroup({ id: event.target.value });
+            updateProcessModel({ id: event.target.value });
             // was invalid, and now valid
             if (identifierInvalid && hasValidIdentifier(event.target.value)) {
               setIdentifierInvalid(false);
@@ -138,12 +145,12 @@ export default function ProcessGroupForm({
 
     textInputs.push(
       <TextInput
-        id="process-group-description"
+        id="process-model-description"
         name="description"
         labelText="Description"
-        value={processGroup.description}
+        value={processModel.description}
         onChange={(event: any) =>
-          updateProcessGroup({ description: event.target.value })
+          updateProcessModel({ description: event.target.value })
         }
       />
     );
@@ -160,8 +167,8 @@ export default function ProcessGroupForm({
     if (mode === 'edit') {
       buttons.push(
         <ButtonWithConfirmation
-          description={`Delete Process Group ${processGroup.id}?`}
-          onConfirmation={deleteProcessGroup}
+          description={`Delete Process Model ${processModel.id}?`}
+          onConfirmation={deleteProcessModel}
           buttonLabel="Delete"
           confirmButtonLabel="Delete"
         />
@@ -169,7 +176,7 @@ export default function ProcessGroupForm({
     }
     return <ButtonSet>{buttons}</ButtonSet>;
   };
-
+  console.log('processModel.process_group_id', processModel.process_group_id);
   return (
     <Form onSubmit={handleFormSubmission}>
       <Stack gap={5}>
