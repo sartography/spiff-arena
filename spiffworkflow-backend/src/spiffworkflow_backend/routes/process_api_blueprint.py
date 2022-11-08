@@ -259,7 +259,7 @@ def process_model_update(
 ) -> Any:
     """Process_model_update."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    body_include_list = ["display_name", "primary_file_name", "primary_process_id"]
+    body_include_list = ["display_name", "primary_file_name", "primary_process_id", "description"]
     body_filtered = {
         include_item: body[include_item]
         for include_item in body_include_list

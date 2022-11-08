@@ -152,6 +152,14 @@ export default function ReactFormEditor() {
           processGroupId={params.process_group_id}
           processModelId={params.process_model_id}
           linkProcessModel
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${params.process_model_id}`,
+              `process_model:${params.process_model_id}:link`,
+            ],
+            [(processModelFile as any).name || ''],
+          ]}
         />
         <h2>
           Process Model File
