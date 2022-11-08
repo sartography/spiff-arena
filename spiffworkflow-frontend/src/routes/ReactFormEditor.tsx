@@ -51,7 +51,7 @@ export default function ReactFormEditor() {
         successCallback: processResult,
       });
     }
-  }, [params]);
+  }, [params, modifiedProcessModelId]);
 
   const navigateToProcessModelFile = (_result: any) => {
     if (!params.file_name) {

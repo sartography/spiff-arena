@@ -120,7 +120,7 @@ export default function ProcessModelShow() {
       path: `/process-models/${modifiedProcessModelId}`,
       successCallback: processResult,
     });
-  }, [params, reloadModel]);
+  }, [params, reloadModel, modifiedProcessModelId]);
 
   const processModelRun = (processInstance: any) => {
     setErrorMessage(null);
@@ -516,8 +516,13 @@ export default function ProcessModelShow() {
       <>
         {fileUploadModal()}
         <ProcessBreadcrumb
-          processGroupId={processModel.process_group_id}
-          processModelId={processModel.id}
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${processModel.id}`,
+              `process_model:${processModel.id}`,
+            ],
+          ]}
         />
         <h1>{processModel.display_name}</h1>
         <p>{processModel.description}</p>

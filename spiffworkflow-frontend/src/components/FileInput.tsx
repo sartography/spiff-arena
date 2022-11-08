@@ -28,7 +28,9 @@ export default class FileInput extends React.Component<Props> {
 
   handleSubmit(event: any) {
     event.preventDefault();
-    const modifiedProcessModelId = modifyProcessModelPath(`${this.processGroupId}/${this.processModelId}`);
+    const modifiedProcessModelId = modifyProcessModelPath(
+      `${this.processGroupId}/${this.processModelId}`
+    );
     const url = `/process-models/${modifiedProcessModelId}/files`;
     const formData = new FormData();
     formData.append('file', this.fileInput.current.files[0]);

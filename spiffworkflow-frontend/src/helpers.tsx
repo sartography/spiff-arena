@@ -126,7 +126,9 @@ export const unModifyProcessModelPath = (path: String) => {
 
 export const getGroupFromModifiedModelId = (modifiedId: String) => {
   const finalSplitIndex = modifiedId.lastIndexOf(':');
-  const groupId = modifiedId.slice(0, finalSplitIndex);
-  console.log(`groupId: ${groupId}`);
-  return groupId;
+  return modifiedId.slice(0, finalSplitIndex);
+};
+
+export const splitProcessModelId = (processModelId: String) => {
+  return processModelId.split('/');
 };

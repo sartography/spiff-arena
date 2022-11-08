@@ -6,7 +6,10 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ErrorContext from '../contexts/ErrorContext';
-import {getGroupFromModifiedModelId, modifyProcessModelPath} from "../helpers";
+import {
+  getGroupFromModifiedModelId,
+  modifyProcessModelPath,
+} from '../helpers';
 
 export default function ProcessModelEdit() {
   const [displayName, setDisplayName] = useState('');
