@@ -42,7 +42,7 @@ export default function ProcessInstanceReportNew() {
       .filter((n) => n);
 
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports`,
+      path: `/process-instances/reports`,
       successCallback: navigateToNewProcessInstance,
       httpMethod: 'POST',
       postBody: {
