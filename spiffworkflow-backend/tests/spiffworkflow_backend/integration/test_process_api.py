@@ -1123,7 +1123,7 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.json is not None
-        # assert response.json['next_task'] is not None
+        assert response.json['next_task'] is not None
 
         active_tasks = (
             db.session.query(ActiveTaskModel)
