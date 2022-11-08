@@ -51,6 +51,7 @@ export default function ProcessInstanceList() {
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
+  const [reportMetadata, setReportMetadata] = useState({});
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   const oneHourInSeconds = 3600;
@@ -97,6 +98,7 @@ export default function ProcessInstanceList() {
     function setProcessInstancesFromResult(result: any) {
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
+      setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
     }
     function getProcessInstances() {
@@ -380,53 +382,79 @@ export default function ProcessInstanceList() {
   };
 
   const buildTable = () => {
-    const rows = processInstances.map((row: any) => {
-      const formattedStartDate =
-        convertSecondsToFormattedDate(row.start_in_seconds) || '-';
-      const formattedEndDate =
-        convertSecondsToFormattedDate(row.end_in_seconds) || '-';
+    const headerLabels: Record<string, string> = {
+      id: 'Process Instance Id',
+      process_group_identifier: 'Process Group',
+      process_model_identifier: 'Process Model',
+      start_in_seconds: 'Start Time',
+      end_in_seconds: 'End Time',
+      status: 'Status',
+      spiff_step: 'SpiffWorkflow Step',
+    };
+    const getHeaderLabel = (header: string) => {
+      return headerLabels[header] ?? header;
+    };
+    const headers = (reportMetadata as any).columns.map((column: any) => {
+      return <th>{getHeaderLabel((column as any).Header)}</th>;
+    });
+
+    const formatProcessInstanceId = (row: any, id: any) => {
       const modifiedProcessModelId: String = modifyProcessModelPath(
         (row as any).process_model_identifier
       );
-      const groupId = getGroupFromModifiedModelId(modifiedProcessModelId);
-
       return (
-        <tr key={row.id}>
-          <td>
-            <Link
-              data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${row.id}`}
-            >
-              {row.id}
-            </Link>
-          </td>
-          <td>
-            <Link to={`/admin/process-groups/${groupId}`}>{groupId}</Link>
-          </td>
-          <td>
-            <Link to={`/admin/process-models/${modifiedProcessModelId}`}>
-              {modifiedProcessModelId}
-            </Link>
-          </td>
-          <td>{formattedStartDate}</td>
-          <td>{formattedEndDate}</td>
-          <td data-qa={`process-instance-status-${row.status}`}>
-            {row.status}
-          </td>
-        </tr>
+        <Link
+          data-qa="process-instance-show-link"
+          to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${row.id}`}
+        >
+          {id}
+        </Link>
       );
+    };
+    const formatProcessGroupIdentifier = (row: any, identifier: any) => {
+      return (
+        <Link to={`/admin/process-groups/${identifier}`}>{identifier}</Link>
+      );
+    };
+    const formatProcessModelIdentifier = (row: any, identifier: any) => {
+      return (
+        <Link
+          to={`/admin/process-models/${row.process_group_identifier}/${identifier}`}
+        >
+          {identifier}
+        </Link>
+      );
+    };
+    const formatSecondsForDisplay = (row: any, seconds: any) => {
+      return convertSecondsToFormattedDate(seconds) || '-';
+    };
+    const defaultFormatter = (row: any, value: any) => {
+      return value;
+    };
+
+    const columnFormatters: Record<string, any> = {
+      id: formatProcessInstanceId,
+      process_group_identifier: formatProcessGroupIdentifier,
+      process_model_identifier: formatProcessModelIdentifier,
+      start_in_seconds: formatSecondsForDisplay,
+      end_in_seconds: formatSecondsForDisplay,
+    };
+    const formattedColumn = (row: any, column: any) => {
+      const formatter = columnFormatters[column.accessor] ?? defaultFormatter;
+      const value = row[column.accessor];
+      return <td>{formatter(row, value)}</td>;
+    };
+
+    const rows = processInstances.map((row) => {
+      const currentRow = (reportMetadata as any).columns.map((column: any) => {
+        return formattedColumn(row, column);
+      });
+      return <tr key={(row as any).id}>{currentRow}</tr>;
     });
     return (
       <Table size="lg">
         <thead>
-          <tr>
-            <th>Process Instance Id</th>
-            <th>Process Group</th>
-            <th>Process Model</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-            <th>Status</th>
-          </tr>
+          <tr>{headers}</tr>
         </thead>
         <tbody>{rows}</tbody>
       </Table>

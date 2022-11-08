@@ -27,3 +27,6 @@ cypress/screenshots
 
 # i keep accidentally committing these
 /test*.json
+
+# Editors
+.idea

@@ -1255,7 +1255,7 @@ class TestProcessApi(BaseTest):
         )
 
         assert response.json is not None
-        # assert response.json['next_task'] is not None
+        assert response.json['next_task'] is not None
 
         active_tasks = (
             db.session.query(ActiveTaskModel)
@@ -1518,13 +1518,11 @@ class TestProcessApi(BaseTest):
         report_metadata = {"order_by": ["month"]}
         ProcessInstanceReportModel.create_with_attributes(
             identifier=report_identifier,
-            process_group_identifier="",
-            process_model_identifier=process_model_identifier,
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
         response = client.get(
-            f"/v1.0/process-models/{modified_process_model_identifier}/process-instances/reports",
+            "/v1.0/process-instances/reports",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1578,14 +1576,12 @@ class TestProcessApi(BaseTest):
 
         ProcessInstanceReportModel.create_with_attributes(
             identifier="sure",
-            process_group_identifier="test_process_group_id",
-            process_model_identifier=process_model_identifier,
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
         response = client.get(
-            f"/v1.0/process-models/{modified_process_model_identifier}/process-instances/reports/sure",
+            "/v1.0/process-instances/reports/sure",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1613,10 +1609,6 @@ class TestProcessApi(BaseTest):
         setup_process_instances_for_reports: list[ProcessInstanceModel],
     ) -> None:
         """Test_process_instance_report_show_with_default_list."""
-        test_process_group_id = "runs_without_input"
-        process_model_dir_name = "sample"
-        process_model_identifier = f"{test_process_group_id}/{process_model_dir_name}"
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         report_metadata = {
             "filter_by": [
@@ -1630,14 +1622,12 @@ class TestProcessApi(BaseTest):
 
         ProcessInstanceReportModel.create_with_attributes(
             identifier="sure",
-            process_group_identifier="test_process_group_id",
-            process_model_identifier=process_model_identifier,
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
         response = client.get(
-            f"/v1.0/process-models/{modified_process_model_identifier}/process-instances/reports/sure?grade_level=1",
+            "/v1.0/process-instances/reports/sure?grade_level=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1653,11 +1643,8 @@ class TestProcessApi(BaseTest):
         setup_process_instances_for_reports: list[ProcessInstanceModel],
     ) -> None:
         """Test_process_instance_report_show_with_default_list."""
-        test_process_group_id = "runs_without_input"
-        process_model_dir_name = "sample"
-
         response = client.get(
-            f"/v1.0/process-models/{test_process_group_id}:{process_model_dir_name}/process-instances/reports/sure?grade_level=1",
+            "/v1.0/process-instances/reports/sure?grade_level=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 404
