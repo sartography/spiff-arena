@@ -1035,6 +1035,10 @@ class ProcessInstanceProcessor:
             self.queue_waiting_receive_messages()
 
             db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
+            spiff_logger = logging.getLogger("spiff")
+            for handler in spiff_logger.handlers:
+                if hasattr(handler, "bulk_insert_logs"):
+                    handler.bulk_insert_logs()
             db.session.commit()
 
         except WorkflowTaskExecException as we:

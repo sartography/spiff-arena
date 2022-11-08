@@ -196,11 +196,7 @@ class DBHandler(logging.Handler):
         self.logs = []
         super().__init__()
 
-    def __del__(self):
-        if len(self.logs) > 0:
-            self._bulk_insert_logs()
-
-    def _bulk_insert_logs(self):
+    def bulk_insert_logs(self):
         db.session.bulk_insert_mappings(SpiffLoggingModel, self.logs)
         db.session.commit()
         self.logs = []
@@ -236,4 +232,4 @@ class DBHandler(logging.Handler):
                 "spiff_step": spiff_step,
             })
             if len(self.logs) % 100 == 0:
-                self._bulk_insert_logs()
+                self.bulk_insert_logs()
