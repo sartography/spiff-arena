@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: b1647eff45c9
+Revision ID: 7c12964efde1
 Revises: 
-Create Date: 2022-11-02 14:25:09.992800
+Create Date: 2022-11-08 07:48:44.265652
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b1647eff45c9'
+revision = '7c12964efde1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -115,19 +115,16 @@ def upgrade():
     op.create_table('process_instance_report',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('identifier', sa.String(length=50), nullable=False),
-    sa.Column('process_model_identifier', sa.String(length=50), nullable=False),
-    sa.Column('process_group_identifier', sa.String(length=50), nullable=False),
     sa.Column('report_metadata', sa.JSON(), nullable=True),
     sa.Column('created_by_id', sa.Integer(), nullable=False),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('process_group_identifier', 'process_model_identifier', 'identifier', name='process_instance_report_unique')
+    sa.UniqueConstraint('created_by_id', 'identifier', name='process_instance_report_unique')
     )
+    op.create_index(op.f('ix_process_instance_report_created_by_id'), 'process_instance_report', ['created_by_id'], unique=False)
     op.create_index(op.f('ix_process_instance_report_identifier'), 'process_instance_report', ['identifier'], unique=False)
-    op.create_index(op.f('ix_process_instance_report_process_group_identifier'), 'process_instance_report', ['process_group_identifier'], unique=False)
-    op.create_index(op.f('ix_process_instance_report_process_model_identifier'), 'process_instance_report', ['process_model_identifier'], unique=False)
     op.create_table('refresh_token',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -292,9 +289,8 @@ def downgrade():
     op.drop_table('user_group_assignment')
     op.drop_table('secret')
     op.drop_table('refresh_token')
-    op.drop_index(op.f('ix_process_instance_report_process_model_identifier'), table_name='process_instance_report')
-    op.drop_index(op.f('ix_process_instance_report_process_group_identifier'), table_name='process_instance_report')
     op.drop_index(op.f('ix_process_instance_report_identifier'), table_name='process_instance_report')
+    op.drop_index(op.f('ix_process_instance_report_created_by_id'), table_name='process_instance_report')
     op.drop_table('process_instance_report')
     op.drop_index(op.f('ix_process_instance_process_model_identifier'), table_name='process_instance')
     op.drop_index(op.f('ix_process_instance_process_group_identifier'), table_name='process_instance')

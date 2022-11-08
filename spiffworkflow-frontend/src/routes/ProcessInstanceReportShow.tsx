@@ -39,7 +39,7 @@ export default function ProcessInstanceReport() {
         }
       });
       HttpService.makeCallToBackend({
-        path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports/${params.report_identifier}?${query}`,
+        path: `/process-instances/reports/${params.report_identifier}${query}`,
         successCallback: processResult,
       });
     }
