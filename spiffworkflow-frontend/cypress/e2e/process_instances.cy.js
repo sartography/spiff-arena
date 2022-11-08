@@ -75,7 +75,7 @@ describe('process-instances', () => {
     cy.logout();
   });
 
-  it('can create a new instance and can modify', () => {
+  it.only('can create a new instance and can modify', () => {
     const originalDmnOutputForKevin = 'Very wonderful';
     const newDmnOutputForKevin = 'The new wonderful';
     const dmnOutputForDan = 'pretty wonderful';

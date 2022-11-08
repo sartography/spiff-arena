@@ -8,7 +8,6 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDate,
-  modifyProcessModelPath,
   unModifyProcessModelPath,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -29,10 +28,7 @@ export default function ProcessInstanceShow() {
   const unModifiedProcessModelId = unModifyProcessModelPath(
     `${params.process_model_id}`
   );
-  const modifiedProcessModelId = params.process_model_id
-
-  console.log(`params.process_model_id: ${params.process_model_id}`);
-  console.log(`modifiedProcessModelId: ${modifiedProcessModelId}`);
+  const modifiedProcessModelId = params.process_model_id;
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -55,7 +51,7 @@ export default function ProcessInstanceShow() {
         path: `/process-instance/${params.process_instance_id}/tasks?all_tasks=true&spiff_step=${params.spiff_step}`,
         successCallback: setTasks,
       });
-  }, [params]);
+  }, [params, modifiedProcessModelId]);
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({

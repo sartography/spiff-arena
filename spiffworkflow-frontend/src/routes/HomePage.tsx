@@ -3,7 +3,10 @@ import { useEffect, useState } from 'react';
 import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
-import {getPageInfoFromSearchParams, modifyProcessModelPath} from '../helpers';
+import {
+  getPageInfoFromSearchParams,
+  modifyProcessModelPath,
+} from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject, RecentProcessModel } from '../interfaces';
 

@@ -17,8 +17,7 @@ import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { makeid } from '../helpers';
-import { modifyProcessModelPath } from '../helpers';
+import { makeid, modifyProcessModelPath } from '../helpers';
 import { ProcessFile, ProcessModel } from '../interfaces';
 
 export default function ProcessModelEditDiagram() {

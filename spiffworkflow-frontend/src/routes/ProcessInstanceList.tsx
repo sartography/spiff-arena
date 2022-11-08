@@ -28,7 +28,6 @@ import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
   convertDateStringToSeconds,
   convertSecondsToFormattedDate,
-  getGroupFromModifiedModelId,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessModelPath,
