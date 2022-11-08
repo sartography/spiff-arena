@@ -41,3 +41,15 @@ permissions:
     users: [testuser4]
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-models/finance/*
+
+  finance-admin-model-lanes:
+    groups: ["Finance Team"]
+    users: [testuser4]
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/finance:model_with_lanes/*
+
+  finance-admin-instance-run:
+    groups: ["Finance Team"]
+    users: [testuser4]
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/*

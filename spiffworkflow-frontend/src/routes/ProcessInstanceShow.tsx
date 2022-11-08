@@ -6,7 +6,10 @@ import { Button, Modal, Stack } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
-import { convertSecondsToFormattedDate } from '../helpers';
+import {
+  convertSecondsToFormattedDate,
+  unModifyProcessModelPath,
+} from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ErrorContext from '../contexts/ErrorContext';
 
@@ -22,15 +25,20 @@ export default function ProcessInstanceShow() {
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
+  const unModifiedProcessModelId = unModifyProcessModelPath(
+    `${params.process_model_id}`
+  );
+  const modifiedProcessModelId = params.process_model_id;
+
   const navigateToProcessInstances = (_result: any) => {
     navigate(
-      `/admin/process-instances?process_group_identifier=${params.process_group_id}&process_model_identifier=${params.process_model_id}`
+      `/admin/process-instances?process_model_identifier=${unModifiedProcessModelId}`
     );
   };
 
   useEffect(() => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}`,
+      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}`,
       successCallback: setProcessInstance,
     });
     if (typeof params.spiff_step === 'undefined')
@@ -43,11 +51,11 @@ export default function ProcessInstanceShow() {
         path: `/process-instance/${params.process_instance_id}/tasks?all_tasks=true&spiff_step=${params.spiff_step}`,
         successCallback: setTasks,
       });
-  }, [params]);
+  }, [params, modifiedProcessModelId]);
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}`,
+      path: `/process-instances/${params.process_instance_id}`,
       successCallback: navigateToProcessInstances,
       httpMethod: 'DELETE',
     });
@@ -60,7 +68,7 @@ export default function ProcessInstanceShow() {
 
   const terminateProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/terminate`,
+      path: `/process-instances/${params.process_instance_id}/terminate`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -68,7 +76,7 @@ export default function ProcessInstanceShow() {
 
   const suspendProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/suspend`,
+      path: `/process-instances/${params.process_instance_id}/suspend`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -76,7 +84,7 @@ export default function ProcessInstanceShow() {
 
   const resumeProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/resume`,
+      path: `/process-instances/${params.process_instance_id}/resume`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -125,7 +133,7 @@ export default function ProcessInstanceShow() {
         <Link
           reloadDocument
           data-qa="process-instance-step-link"
-          to={`/admin/process-models/${params.process_group_id}/${
+          to={`/admin/process-models/${
             params.process_model_id
           }/process-instances/${params.process_instance_id}/${
             currentSpiffStep(processInstanceToUse) + distance
@@ -179,7 +187,7 @@ export default function ProcessInstanceShow() {
         <li>
           <Link
             data-qa="process-instance-log-list-link"
-            to={`/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/${params.process_instance_id}/logs`}
+            to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
           >
             Logs
           </Link>
@@ -187,7 +195,7 @@ export default function ProcessInstanceShow() {
         <li>
           <Link
             data-qa="process-instance-message-instance-list-link"
-            to={`/admin/messages?process_group_id=${params.process_group_id}&process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
+            to={`/admin/messages?process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
           >
             Messages
           </Link>
@@ -284,7 +292,7 @@ export default function ProcessInstanceShow() {
       const taskToUse: any = taskToDisplay;
       const previousTask: any = getTaskById(taskToUse.parent);
       HttpService.makeCallToBackend({
-        path: `/process-models/${params.process_group_id}/${params.process_model_id}/script-unit-tests`,
+        path: `/process-models/${modifiedProcessModelId}/script-unit-tests`,
         httpMethod: 'POST',
         successCallback: processScriptUnitTestCreateResult,
         postBody: {
@@ -428,11 +436,14 @@ export default function ProcessInstanceShow() {
   if (processInstance && tasks) {
     const processInstanceToUse = processInstance as any;
     const taskIds = getTaskIds();
+    const processModelId = unModifyProcessModelPath(
+      params.process_model_id ? params.process_model_id : ''
+    );
 
     return (
       <>
         <ProcessBreadcrumb
-          processModelId={params.process_model_id}
+          processModelId={processModelId}
           processGroupId={params.process_group_id}
           linkProcessModel
         />
@@ -450,8 +461,7 @@ export default function ProcessInstanceShow() {
         {getInfoTag(processInstanceToUse)}
         {taskDataDisplayArea()}
         <ReactDiagramEditor
-          processModelId={params.process_model_id || ''}
-          processGroupId={params.process_group_id || ''}
+          processModelId={processModelId || ''}
           diagramXML={processInstanceToUse.bpmn_xml_file_contents || ''}
           fileName={processInstanceToUse.bpmn_xml_file_contents || ''}
           readyOrWaitingBpmnTaskIds={taskIds.readyOrWaiting}

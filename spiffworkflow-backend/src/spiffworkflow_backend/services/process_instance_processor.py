@@ -307,8 +307,7 @@ class ProcessInstanceProcessor:
                 bpmn_process_spec,
                 subprocesses,
             ) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
-                process_instance_model.process_model_identifier,
-                process_instance_model.process_group_identifier,
+                process_instance_model.process_model_identifier
             )
         else:
             bpmn_json_length = len(process_instance_model.bpmn_json.encode("utf-8"))
@@ -359,7 +358,7 @@ class ProcessInstanceProcessor:
                     check_sub_specs(test_spec, 5)
 
         self.process_model_identifier = process_instance_model.process_model_identifier
-        self.process_group_identifier = process_instance_model.process_group_identifier
+        # self.process_group_identifier = process_instance_model.process_group_identifier
 
         try:
             self.bpmn_process_instance = self.__get_bpmn_process_instance(
@@ -394,17 +393,17 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def get_process_model_and_subprocesses(
-        cls, process_model_identifier: str, process_group_identifier: str
+        cls, process_model_identifier: str
     ) -> Tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         """Get_process_model_and_subprocesses."""
         process_model_info = ProcessModelService().get_process_model(
-            process_model_identifier, process_group_identifier
+            process_model_identifier
         )
         if process_model_info is None:
             raise (
                 ApiError(
                     "process_model_not_found",
-                    f"The given process model was not found: {process_group_identifier}/{process_model_identifier}.",
+                    f"The given process model was not found: {process_model_identifier}.",
                 )
             )
         spec_files = SpecFileService.get_files(process_model_info)
@@ -412,12 +411,11 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def get_bpmn_process_instance_from_process_model(
-        cls, process_model_identifier: str, process_group_identifier: str
+        cls, process_model_identifier: str
     ) -> BpmnWorkflow:
         """Get_all_bpmn_process_identifiers_for_process_model."""
         (bpmn_process_spec, subprocesses) = cls.get_process_model_and_subprocesses(
             process_model_identifier,
-            process_group_identifier,
         )
         return cls.get_bpmn_process_instance_from_workflow_spec(
             bpmn_process_spec, subprocesses
@@ -714,7 +712,7 @@ class ProcessInstanceProcessor:
                         etree_element,
                     )
                     return FileSystemService.full_path_to_process_model_file(
-                        process_model, process_model.primary_file_name
+                        process_model
                     )
         return None
 

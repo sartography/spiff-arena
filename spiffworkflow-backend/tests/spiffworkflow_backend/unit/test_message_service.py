@@ -1,5 +1,6 @@
 """Test_message_service."""
 from flask import Flask
+from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -9,6 +10,7 @@ from spiffworkflow_backend.models.message_correlation_message_instance import (
 )
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -22,25 +24,26 @@ class TestMessageService(BaseTest):
     """TestMessageService."""
 
     def test_can_send_message_to_waiting_message(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
     ) -> None:
         """Test_can_send_message_to_waiting_message."""
-        process_model_sender = load_test_spec(
-            "message_sender",
-            process_model_source_directory="message_send_one_conversation",
-            bpmn_file_name="message_sender",
-        )
+        process_group_id = "test_group"
+        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+
         load_test_spec(
-            "message_receiver",
+            "test_group/message_receiver",
             process_model_source_directory="message_send_one_conversation",
-            bpmn_file_name="message_receiver",
+            bpmn_file_name="message_receiver.bpmn"
         )
-        user = self.find_or_create_user()
+        process_model_sender = load_test_spec(
+            "test_group/message_sender",
+            process_model_source_directory="message_send_one_conversation",
+            bpmn_file_name="message_sender.bpmn",
+        )
 
         process_instance_sender = ProcessInstanceService.create_process_instance(
             process_model_sender.id,
-            user,
-            process_group_identifier=process_model_sender.process_group_id,
+            with_super_admin_user,
         )
 
         processor_sender = ProcessInstanceProcessor(process_instance_sender)
@@ -115,21 +118,25 @@ class TestMessageService(BaseTest):
             assert process_instance.status == "complete"
 
     def test_can_send_message_to_multiple_process_models(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
     ) -> None:
         """Test_can_send_message_to_multiple_process_models."""
+
+        process_group_id = "test_group"
+        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+
         process_model_sender = load_test_spec(
-            "message_sender",
+            "test_group/message_sender",
             process_model_source_directory="message_send_two_conversations",
             bpmn_file_name="message_sender",
         )
         load_test_spec(
-            "message_receiver_one",
+            "test_group/message_receiver_one",
             process_model_source_directory="message_send_two_conversations",
             bpmn_file_name="message_receiver_one",
         )
         load_test_spec(
-            "message_receiver_two",
+            "test_group/message_receiver_two",
             process_model_source_directory="message_send_two_conversations",
             bpmn_file_name="message_receiver_two",
         )
@@ -139,7 +146,7 @@ class TestMessageService(BaseTest):
         process_instance_sender = ProcessInstanceService.create_process_instance(
             process_model_sender.id,
             user,
-            process_group_identifier=process_model_sender.process_group_id,
+            # process_group_identifier=process_model_sender.process_group_id,
         )
 
         processor_sender = ProcessInstanceProcessor(process_instance_sender)
@@ -189,24 +196,24 @@ class TestMessageService(BaseTest):
 
         assert len(process_instance_result) == 3
         process_instance_receiver_one = ProcessInstanceModel.query.filter_by(
-            process_model_identifier="message_receiver_one"
+            process_model_identifier="test_group/message_receiver_one"
         ).first()
         assert process_instance_receiver_one is not None
         process_instance_receiver_two = ProcessInstanceModel.query.filter_by(
-            process_model_identifier="message_receiver_two"
+            process_model_identifier="test_group/message_receiver_two"
         ).first()
         assert process_instance_receiver_two is not None
 
         # just make sure it's a different process instance
         assert (
             process_instance_receiver_one.process_model_identifier
-            == "message_receiver_one"
+            == "test_group/message_receiver_one"
         )
         assert process_instance_receiver_one.id != process_instance_sender.id
         assert process_instance_receiver_one.status == "complete"
         assert (
             process_instance_receiver_two.process_model_identifier
-            == "message_receiver_two"
+            == "test_group/message_receiver_two"
         )
         assert process_instance_receiver_two.id != process_instance_sender.id
         assert process_instance_receiver_two.status == "complete"

@@ -7,6 +7,7 @@ from typing import Optional
 from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
+from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
@@ -32,7 +33,6 @@ class ProcessInstanceService:
     def create_process_instance(
         process_model_identifier: str,
         user: UserModel,
-        process_group_identifier: Optional[str] = None,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
         current_git_revision = GitService.get_current_revision()
@@ -40,7 +40,7 @@ class ProcessInstanceService:
             status=ProcessInstanceStatus.not_started.value,
             process_initiator=user,
             process_model_identifier=process_model_identifier,
-            process_group_identifier=process_group_identifier,
+            process_group_identifier="",
             start_in_seconds=round(time.time()),
             bpmn_version_control_type="git",
             bpmn_version_control_identifier=current_git_revision,
@@ -97,13 +97,27 @@ class ProcessInstanceService:
             next_task=None,
             # navigation=navigation,
             process_model_identifier=processor.process_model_identifier,
-            process_group_identifier=processor.process_group_identifier,
+            process_group_identifier="",
             # total_tasks=len(navigation),
             completed_tasks=processor.process_instance_model.completed_tasks,
             updated_at_in_seconds=processor.process_instance_model.updated_at_in_seconds,
             is_review=is_review_value,
             title=title_value,
         )
+
+        next_task_trying_again = next_task
+        if (
+            not next_task
+        ):  # The Next Task can be requested to be a certain task, useful for parallel tasks.
+            # This may or may not work, sometimes there is no next task to complete.
+            next_task_trying_again = processor.next_task()
+
+        if next_task_trying_again is not None:
+            process_instance_api.next_task = (
+                ProcessInstanceService.spiff_task_to_api_task(
+                    next_task_trying_again, add_docs_and_forms=True
+                )
+            )
 
         return process_instance_api
 

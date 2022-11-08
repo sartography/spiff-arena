@@ -4,10 +4,14 @@ import { Button, Modal } from '@carbon/react';
 
 type OwnProps = {
   description?: string;
-  buttonLabel: string;
+  buttonLabel?: string;
   onConfirmation: (..._args: any[]) => any;
   title?: string;
   confirmButtonLabel?: string;
+  kind?: string;
+  renderIcon?: boolean;
+  iconDescription?: string | null;
+  hasIconOnly?: boolean;
 };
 
 export default function ButtonWithConfirmation({
@@ -16,6 +20,10 @@ export default function ButtonWithConfirmation({
   onConfirmation,
   title = 'Are you sure?',
   confirmButtonLabel = 'OK',
+  kind = 'danger',
+  renderIcon = false,
+  iconDescription = null,
+  hasIconOnly = false,
 }: OwnProps) {
   const [showConfirmationPrompt, setShowConfirmationPrompt] = useState(false);
 
@@ -49,7 +57,13 @@ export default function ButtonWithConfirmation({
 
   return (
     <>
-      <Button onClick={handleShowConfirmationPrompt} kind="danger">
+      <Button
+        onClick={handleShowConfirmationPrompt}
+        kind={kind}
+        renderIcon={renderIcon}
+        iconDescription={iconDescription}
+        hasIconOnly={hasIconOnly}
+      >
         {buttonLabel}
       </Button>
       {confirmationDialog()}
