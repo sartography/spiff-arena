@@ -49,14 +49,14 @@ function LaunchEditorButton(props) {
     className: 'spiffworkflow-properties-panel-button',
     onClick: () => {
       const script = getScriptString(element, type);
-      eventBus.fire('script.editor.launch', {
+      eventBus.fire('spiff.script.edit', {
         element,
         scriptType: type,
         script,
         eventBus,
       });
       // Listen for a response, to update the script.
-      eventBus.once('script.editor.update', (event) => {
+      eventBus.once('spiff.script.update', (event) => {
         updateScript(
           commandStack,
           moddle,
@@ -113,7 +113,7 @@ function updateScript(commandStack, moddle, element, scriptType, newValue) {
       if (!extensionElements) {
         extensionElements = moddle.create('bpmn:ExtensionElements');
       }
-      scriptObj.script = newValue;
+      scriptObj.value = newValue;
       extensionElements.get('values').push(scriptObj);
       commandStack.execute('element.updateModdleProperties', {
         element,
@@ -124,18 +124,23 @@ function updateScript(commandStack, moddle, element, scriptType, newValue) {
       });
     }
   } else {
+    let newProps = { value: newValue };
+    if (scriptType === SCRIPT_TYPE.bpmn) {
+      newProps = { script: newValue };
+    }
     commandStack.execute('element.updateModdleProperties', {
       element,
       moddleElement: scriptObj,
-      properties: {
-        script: newValue,
-      },
+      properties: newProps,
     });
   }
 }
 
 function getScriptString(element, scriptType) {
   const scriptObj = getScriptObject(element, scriptType);
+  if (scriptObj && scriptObj.value) {
+    return scriptObj.value;
+  }
   if (scriptObj && scriptObj.script) {
     return scriptObj.script;
   }

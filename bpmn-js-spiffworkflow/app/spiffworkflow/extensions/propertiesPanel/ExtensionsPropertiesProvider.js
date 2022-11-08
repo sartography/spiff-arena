@@ -1,13 +1,13 @@
 import { ListGroup } from '@bpmn-io/properties-panel';
 import { is, isAny } from 'bpmn-js/lib/util/ModelUtil';
 import scriptGroup, { SCRIPT_TYPE } from './SpiffScriptGroup';
-import { SpiffExtensionCalledDecision } from './SpiffExtensionCalledDecision';
-import { SpiffExtensionTextInput } from './SpiffExtensionTextInput';
-import instructionsGroup from './SpiffExtensionInstructionsForEndUser';
 import {
   ServiceTaskParameterArray,
   ServiceTaskOperatorSelect, ServiceTaskResultTextInput,
 } from './SpiffExtensionServiceProperties';
+import {OPTION_TYPE, SpiffExtensionSelect} from './SpiffExtensionSelect';
+import {SpiffExtensionLaunchButton} from './SpiffExtensionLaunchButton';
+import {SpiffExtensionTextArea} from './SpiffExtensionTextArea';
 
 const LOW_PRIORITY = 500;
 
@@ -140,30 +140,51 @@ function createUserGroup(element, translate, moddle, commandStack) {
         element,
         moddle,
         commandStack,
-        component: SpiffExtensionTextInput,
-        label: translate('JSON Schema Filename'),
-        description: translate('RJSF Json Data Structure Filename'),
+        component: SpiffExtensionSelect,
+        optionType: OPTION_TYPE.json_files,
         name: 'formJsonSchemaFilename',
+        label: translate('JSON Schema Filename'),
+        description: translate('Form Description (RSJF)'),
+      },
+      {
+        component: SpiffExtensionLaunchButton,
+        element,
+        name: 'formJsonSchemaFilename',
+        label: translate('Launch Editor'),
+        event: 'spiff.file.edit',
+        description: translate('Edit the form description'),
       },
       {
         element,
         moddle,
         commandStack,
-        component: SpiffExtensionTextInput,
+        component: SpiffExtensionSelect,
+        optionType: OPTION_TYPE.json_files,
         label: translate('UI Schema Filename'),
-        description: translate('RJSF User Interface Filename'),
+        event: 'spiff.file.edit',
+        description: translate('Rules for displaying the form. (RSJF Schema)'),
         name: 'formUiSchemaFilename',
+      },
+      {
+        component: SpiffExtensionLaunchButton,
+        element,
+        name: 'formUiSchemaFilename',
+        label: translate('Launch Editor'),
+        event: 'spiff.file.edit',
+        description: translate('Edit the form schema'),
       },
     ],
   };
 }
 
 /**
- * Create a group on the main panel with a text box (for choosing the dmn to connect)
+ * Select and launch for Business Rules
+ *
  * @param element
  * @param translate
  * @param moddle
- * @returns entries
+ * @param commandStack
+ * @returns {{entries: [{moddle, component: ((function(*): preact.VNode<any>)|*), name: string, description, label, commandStack, element},{component: ((function(*): preact.VNode<any>)|*), name: string, description, label, event: string, element}], id: string, label}}
  */
 function createBusinessRuleGroup(element, translate, moddle, commandStack) {
   return {
@@ -174,9 +195,19 @@ function createBusinessRuleGroup(element, translate, moddle, commandStack) {
         element,
         moddle,
         commandStack,
-        component: SpiffExtensionCalledDecision,
-        label: translate('Decision Id'),
-        description: translate('Id of the decision'),
+        component: SpiffExtensionSelect,
+        optionType: OPTION_TYPE.dmn_files,
+        name: 'spiffworkflow:calledDecisionId',
+        label: translate('Select Decision Table'),
+        description: translate('Select a decision table from the list'),
+      },
+      {
+        element,
+        component: SpiffExtensionLaunchButton,
+        name: 'spiffworkflow:calledDecisionId',
+        label: translate('Launch Editor'),
+        event: 'spiff.dmn.edit',
+        description: translate('Modify the Decision Table'),
       },
     ],
   };
@@ -199,14 +230,26 @@ function createUserInstructionsGroup (
     id: 'instructions',
     label: translate('Instructions'),
     entries: [
-      ...instructionsGroup({
+      {
         element,
         moddle,
         commandStack,
-        translate,
+        component: SpiffExtensionTextArea,
+        name: 'spiffworkflow:instructionsForEndUser',
         label: 'Instructions',
         description: 'The instructions to display when completing this task.',
-      }),
+      },
+      {
+        element,
+        moddle,
+        commandStack,
+        component: SpiffExtensionLaunchButton,
+        name: 'spiffworkflow:instructionsForEndUser',
+        label: translate('Launch Editor'),
+        event: 'spiff.markdown.edit',
+        listenEvent: 'spiff.markdown.update',
+        description: translate('Edit the form schema'),
+      }
     ],
   };
 }

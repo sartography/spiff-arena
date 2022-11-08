@@ -40,7 +40,7 @@ class TestScriptUnitTestRunner(BaseTest):
             )
         )
         task = ProcessInstanceProcessor.get_task_by_bpmn_identifier(
-            "Activity_RunScript", bpmn_process_instance
+            "Activity_CalculateNewData", bpmn_process_instance
         )
         assert task is not None
 
@@ -81,7 +81,7 @@ class TestScriptUnitTestRunner(BaseTest):
             )
         )
         task = ProcessInstanceProcessor.get_task_by_bpmn_identifier(
-            "Activity_RunScript", bpmn_process_instance
+            "Activity_CalculateNewData", bpmn_process_instance
         )
         assert task is not None
 

@@ -17,15 +17,35 @@ export interface ProcessGroup {
   description?: string | null;
 }
 
+export interface ProcessFileReference {
+  id: string; // The unique id of the process or decision table.
+  name: string; // The process or decision table name.
+  type: string; // either "decision" or "process"
+}
+
+export interface ProcessFile {
+  content_type: string;
+  last_modified: string;
+  name: string;
+  process_group_id: string;
+  process_model_id: string;
+  references: ProcessFileReference[];
+  size: number;
+  type: string;
+  file_contents?: string;
+}
+
 export interface ProcessModel {
   id: string;
+  description: string;
   process_group_id: string;
   display_name: string;
   primary_file_name: string;
+  files: ProcessFile[];
 }
 
 // tuple of display value and URL
-export type BreadcrumbItem = [displayValue: string, url?: string];
+export type HotCrumbItem = [displayValue: string, url?: string];
 
 export interface ErrorForDisplay {
   message: string;

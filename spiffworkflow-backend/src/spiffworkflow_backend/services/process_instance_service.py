@@ -7,6 +7,7 @@ from typing import Optional
 from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
+from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
@@ -103,6 +104,20 @@ class ProcessInstanceService:
             is_review=is_review_value,
             title=title_value,
         )
+
+        next_task_trying_again = next_task
+        if (
+            not next_task
+        ):  # The Next Task can be requested to be a certain task, useful for parallel tasks.
+            # This may or may not work, sometimes there is no next task to complete.
+            next_task_trying_again = processor.next_task()
+
+        if next_task_trying_again is not None:
+            process_instance_api.next_task = (
+                ProcessInstanceService.spiff_task_to_api_task(
+                    next_task_trying_again, add_docs_and_forms=True
+                )
+            )
 
         return process_instance_api
 

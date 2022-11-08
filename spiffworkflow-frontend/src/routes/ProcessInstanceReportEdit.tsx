@@ -56,7 +56,7 @@ export default function ProcessInstanceReportEdit() {
     };
     function getProcessInstanceReport() {
       HttpService.makeCallToBackend({
-        path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports/${params.report_identifier}?per_page=1`,
+        path: `/process-instances/reports/${params.report_identifier}?per_page=1`,
         successCallback: processResult,
       });
     }
@@ -88,7 +88,7 @@ export default function ProcessInstanceReportEdit() {
       .filter((n) => n);
 
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports/${params.report_identifier}`,
+      path: `/process-instances/reports/${params.report_identifier}`,
       successCallback: navigateToProcessInstanceReport,
       httpMethod: 'PUT',
       postBody: {
@@ -103,7 +103,7 @@ export default function ProcessInstanceReportEdit() {
 
   const deleteProcessInstanceReport = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports/${params.report_identifier}`,
+      path: `/process-instances/reports/${params.report_identifier}`,
       successCallback: navigateToProcessInstanceReports,
       httpMethod: 'DELETE',
     });

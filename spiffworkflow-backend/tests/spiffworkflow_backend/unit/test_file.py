@@ -21,7 +21,6 @@ def create_test_file(type: str, name: str) -> File:
         type=type,
         name=name,
         content_type=type,
-        document={},
         last_modified=datetime.now(),
         size=1,
     )
