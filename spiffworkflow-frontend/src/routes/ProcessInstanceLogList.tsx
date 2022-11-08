@@ -27,7 +27,7 @@ export default function ProcessInstanceLogList() {
     };
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs?per_page=${perPage}&page=${page}`,
+      path: `/process-instances/${params.process_instance_id}/logs?per_page=${perPage}&page=${page}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
   }, [searchParams, params]);
@@ -36,6 +36,7 @@ export default function ProcessInstanceLogList() {
     // return null;
     const rows = processInstanceLogs.map((row) => {
       const rowToUse = row as any;
+      console.log(`rowToUse: ${rowToUse}`);
       return (
         <tr key={rowToUse.id}>
           <td>{rowToUse.bpmn_process_identifier}</td>
@@ -87,7 +88,7 @@ export default function ProcessInstanceLogList() {
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
+          path={`/admin/process-instances/${params.process_instance_id}/logs`}
         />
       </main>
     );

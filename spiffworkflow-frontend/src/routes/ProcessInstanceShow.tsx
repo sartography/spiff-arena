@@ -26,13 +26,17 @@ export default function ProcessInstanceShow() {
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const unModifiedProcessModelId = unModifyProcessModelPath(
     `${params.process_model_id}`
   );
+  const modifiedProcessModelId = params.process_model_id
+
+  console.log(`params.process_model_id: ${params.process_model_id}`);
+  console.log(`modifiedProcessModelId: ${modifiedProcessModelId}`);
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
-      `/admin/process-instances?process_group_identifier=${params.process_group_id}&process_model_identifier=${params.process_model_id}`
+      `/admin/process-instances?process_model_identifier=${unModifiedProcessModelId}`
     );
   };
 
@@ -55,7 +59,7 @@ export default function ProcessInstanceShow() {
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}`,
+      path: `/process-instances/${params.process_instance_id}`,
       successCallback: navigateToProcessInstances,
       httpMethod: 'DELETE',
     });
@@ -68,7 +72,7 @@ export default function ProcessInstanceShow() {
 
   const terminateProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/terminate`,
+      path: `/process-instances/${params.process_instance_id}/terminate`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -76,7 +80,7 @@ export default function ProcessInstanceShow() {
 
   const suspendProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/suspend`,
+      path: `/process-instances/${params.process_instance_id}/suspend`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -84,7 +88,7 @@ export default function ProcessInstanceShow() {
 
   const resumeProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/resume`,
+      path: `/process-instances/${params.process_instance_id}/resume`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -133,7 +137,7 @@ export default function ProcessInstanceShow() {
         <Link
           reloadDocument
           data-qa="process-instance-step-link"
-          to={`/admin/process-models/${params.process_group_id}/${
+          to={`/admin/process-models/${
             params.process_model_id
           }/process-instances/${params.process_instance_id}/${
             currentSpiffStep(processInstanceToUse) + distance
@@ -195,7 +199,7 @@ export default function ProcessInstanceShow() {
         <li>
           <Link
             data-qa="process-instance-message-instance-list-link"
-            to={`/admin/messages?process_group_id=${params.process_group_id}&process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
+            to={`/admin/messages?process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
           >
             Messages
           </Link>
