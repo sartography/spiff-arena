@@ -1008,7 +1008,9 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
 
     # TODO remove after done with the performance improvements
-    def __do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
+    # to use delete the _ prefix here and add it to the real def below
+    def _do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
+        """__do_engine_steps."""
         import cProfile
         from pstats import SortKey
 
@@ -1022,13 +1024,17 @@ class ProcessInstanceProcessor:
         try:
             self.bpmn_process_instance.refresh_waiting_tasks(
                 will_refresh_task=lambda t: self.increment_spiff_step(),
-                did_refresh_task=lambda t: step_details.append(self.spiff_step_details_mapping()),
+                did_refresh_task=lambda t: step_details.append(
+                    self.spiff_step_details_mapping()
+                ),
             )
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,
                 will_complete_task=lambda t: self.increment_spiff_step(),
-                did_complete_task=lambda t: step_details.append(self.spiff_step_details_mapping()),
+                did_complete_task=lambda t: step_details.append(
+                    self.spiff_step_details_mapping()
+                ),
             )
 
             self.process_bpmn_messages()
@@ -1038,7 +1044,7 @@ class ProcessInstanceProcessor:
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
                 if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()
+                    handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
 
         except WorkflowTaskExecException as we:

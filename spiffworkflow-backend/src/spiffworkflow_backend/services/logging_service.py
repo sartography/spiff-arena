@@ -192,11 +192,14 @@ def setup_logger(app: Flask) -> None:
 # https://9to5answer.com/python-logging-to-database
 class DBHandler(logging.Handler):
     """DBHandler."""
-    def __init__(self):
-        self.logs = []
+
+    def __init__(self) -> None:
+        """__init__."""
+        self.logs: list[dict] = []
         super().__init__()
 
-    def bulk_insert_logs(self):
+    def bulk_insert_logs(self) -> None:
+        """Bulk_insert_logs."""
         db.session.bulk_insert_mappings(SpiffLoggingModel, self.logs)
         db.session.commit()
         self.logs = []
@@ -219,17 +222,19 @@ class DBHandler(logging.Handler):
                 if hasattr(record, "spiff_step") and record.spiff_step is not None  # type: ignore
                 else 1
             )
-            self.logs.append({
-                "process_instance_id": record.process_instance_id,  # type: ignore
-                "bpmn_process_identifier": bpmn_process_identifier,
-                "spiff_task_guid": spiff_task_guid,
-                "bpmn_task_name": bpmn_task_name,
-                "bpmn_task_identifier": bpmn_task_identifier,
-                "bpmn_task_type": bpmn_task_type,
-                "message": message,
-                "timestamp": timestamp,
-                "current_user_id": current_user_id,
-                "spiff_step": spiff_step,
-            })
-            if len(self.logs) % 100 == 0:
+            self.logs.append(
+                {
+                    "process_instance_id": record.process_instance_id,  # type: ignore
+                    "bpmn_process_identifier": bpmn_process_identifier,
+                    "spiff_task_guid": spiff_task_guid,
+                    "bpmn_task_name": bpmn_task_name,
+                    "bpmn_task_identifier": bpmn_task_identifier,
+                    "bpmn_task_type": bpmn_task_type,
+                    "message": message,
+                    "timestamp": timestamp,
+                    "current_user_id": current_user_id,
+                    "spiff_step": spiff_step,
+                }
+            )
+            if len(self.logs) % 1000 == 0:
                 self.bulk_insert_logs()
