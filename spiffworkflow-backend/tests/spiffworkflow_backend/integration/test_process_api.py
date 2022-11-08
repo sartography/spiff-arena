@@ -1266,6 +1266,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
+        print(response.json)
         results = response.json["results"]
         assert len(results) == 5
 
