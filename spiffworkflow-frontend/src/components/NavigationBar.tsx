@@ -124,7 +124,6 @@ export default function NavigationBar() {
   };
 
   if (activeKey) {
-    // TODO: apply theme g100 to the header
     return (
       <HeaderContainer
         render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (

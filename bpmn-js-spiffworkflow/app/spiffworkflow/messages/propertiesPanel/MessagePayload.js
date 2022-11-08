@@ -28,7 +28,7 @@ export function MessagePayload(props) {
   const getValue = () => {
     const messagePayloadObject = getMessagePayloadObject();
     if (messagePayloadObject) {
-      return messagePayloadObject.messagePayload;
+      return messagePayloadObject.value;
     }
     return '';
   };
@@ -46,7 +46,7 @@ export function MessagePayload(props) {
       }
       messageElement.extensionElements.get('values').push(messagePayloadObject);
     }
-    messagePayloadObject.messagePayload = value;
+    messagePayloadObject.value = value;
   };
 
   return (

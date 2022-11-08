@@ -69,8 +69,14 @@ type OwnProps = {
   diagramXML?: string | null;
   fileName?: string;
   onLaunchScriptEditor?: (..._args: any[]) => any;
+  onLaunchMarkdownEditor?: (..._args: any[]) => any;
+  onLaunchBpmnEditor?: (..._args: any[]) => any;
+  onLaunchJsonEditor?: (..._args: any[]) => any;
+  onLaunchDmnEditor?: (..._args: any[]) => any;
   onElementClick?: (..._args: any[]) => any;
   onServiceTasksRequested?: (..._args: any[]) => any;
+  onJsonFilesRequested?: (..._args: any[]) => any;
+  onDmnFilesRequested?: (..._args: any[]) => any;
   url?: string;
 };
 
@@ -87,8 +93,14 @@ export default function ReactDiagramEditor({
   diagramXML,
   fileName,
   onLaunchScriptEditor,
+  onLaunchMarkdownEditor,
+  onLaunchBpmnEditor,
+  onLaunchJsonEditor,
+  onLaunchDmnEditor,
   onElementClick,
   onServiceTasksRequested,
+  onJsonFilesRequested,
+  onDmnFilesRequested,
   url,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
@@ -191,6 +203,17 @@ export default function ReactDiagramEditor({
       }
     }
 
+    function handleLaunchMarkdownEditor(
+      element: any,
+      value: string,
+      eventBus: any
+    ) {
+      if (onLaunchMarkdownEditor) {
+        setPerformingXmlUpdates(true);
+        onLaunchMarkdownEditor(element, value, eventBus);
+      }
+    }
+
     function handleElementClick(event: any) {
       if (onElementClick) {
         onElementClick(event.element);
@@ -205,12 +228,41 @@ export default function ReactDiagramEditor({
 
     setDiagramModelerState(diagramModeler);
 
-    diagramModeler.on('script.editor.launch', (event: any) => {
+    diagramModeler.on('spiff.script.edit', (event: any) => {
       const { error, element, scriptType, script, eventBus } = event;
       if (error) {
         console.log(error);
       }
       handleLaunchScriptEditor(element, script, scriptType, eventBus);
+    });
+
+    diagramModeler.on('spiff.markdown.edit', (event: any) => {
+      const { error, element, value, eventBus } = event;
+      if (error) {
+        console.log(error);
+      }
+      handleLaunchMarkdownEditor(element, value, eventBus);
+    });
+
+    /**
+     * fixme:  this is not in use yet, we need the ability to find bpmn files by id.
+     */
+    diagramModeler.on('spiff.callactivity.edit', (event: any) => {
+      if (onLaunchBpmnEditor) {
+        onLaunchBpmnEditor(event.processId);
+      }
+    });
+
+    diagramModeler.on('spiff.file.edit', (event: any) => {
+      if (onLaunchJsonEditor) {
+        onLaunchJsonEditor(event.value);
+      }
+    });
+
+    diagramModeler.on('spiff.dmn.edit', (event: any) => {
+      if (onLaunchDmnEditor) {
+        onLaunchDmnEditor(event.value);
+      }
     });
 
     // 'element.hover',
@@ -226,12 +278,34 @@ export default function ReactDiagramEditor({
     diagramModeler.on('spiff.service_tasks.requested', (event: any) => {
       handleServiceTasksRequested(event);
     });
+
+    diagramModeler.on('spiff.json_files.requested', (event: any) => {
+      if (onJsonFilesRequested) {
+        onJsonFilesRequested(event);
+      }
+    });
+
+    diagramModeler.on('spiff.dmn_files.requested', (event: any) => {
+      if (onDmnFilesRequested) {
+        onDmnFilesRequested(event);
+      }
+    });
+
+    diagramModeler.on('spiff.json_files.requested', (event: any) => {
+      handleServiceTasksRequested(event);
+    });
   }, [
     diagramModelerState,
     diagramType,
     onLaunchScriptEditor,
+    onLaunchMarkdownEditor,
+    onLaunchBpmnEditor,
+    onLaunchDmnEditor,
+    onLaunchJsonEditor,
     onElementClick,
     onServiceTasksRequested,
+    onJsonFilesRequested,
+    onDmnFilesRequested,
   ]);
 
   useEffect(() => {

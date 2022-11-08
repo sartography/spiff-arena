@@ -5,6 +5,11 @@
 // @include grid.flex-grid();
 
 // @use '@carbon/react/scss/colors';
-// .cds--header, a.cds--header__menu-item {
-//   background-color: colors.$gray-100;
-// }
+
+// site is mainly using white theme.
+// header is mainly using g100
+// mockup wanted white, not grey, text
+.cds--header, a.cds--header__menu-item {
+  // background-color: colors.$gray-100;
+  color: white;
+}
