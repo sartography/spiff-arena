@@ -169,30 +169,30 @@ describe('process-instances', () => {
     cy.getBySel('process-instance-list-link').click();
     cy.assertAtLeastOneItemInPaginatedResults();
 
-    // PROCESS_STATUSES.forEach((processStatus) => {
-    //   if (!['all', 'waiting'].includes(processStatus)) {
-    //     cy.get('#process-instance-status-select').click();
-    //     cy.get('#process-instance-status-select')
-    //       .contains(processStatus)
-    //       .click();
-    //     // close the dropdown again
-    //     cy.get('#process-instance-status-select').click();
-    //     cy.getBySel('filter-button').click();
-    //     cy.assertAtLeastOneItemInPaginatedResults();
-    //     cy.getBySel(`process-instance-status-${processStatus}`).contains(
-    //       processStatus
-    //     );
-    //     // there should really only be one, but in CI there are sometimes more
-    //     cy.get('div[aria-label="Clear all selected items"]:first').click();
-    //   }
-    // });
+    PROCESS_STATUSES.forEach((processStatus) => {
+      if (!['all', 'waiting'].includes(processStatus)) {
+        cy.get('#process-instance-status-select').click();
+        cy.get('#process-instance-status-select')
+          .contains(processStatus)
+          .click();
+        // close the dropdown again
+        cy.get('#process-instance-status-select').click();
+        cy.getBySel('filter-button').click();
+        cy.assertAtLeastOneItemInPaginatedResults();
+        cy.getBySel(`process-instance-status-${processStatus}`).contains(
+          processStatus
+        );
+        // there should really only be one, but in CI there are sometimes more
+        cy.get('div[aria-label="Clear all selected items"]:first').click();
+      }
+    });
 
     const date = new Date();
     date.setHours(date.getHours() - 1);
     filterByDate(date);
     cy.assertAtLeastOneItemInPaginatedResults();
 
-    date.setHours(date.getHours() + 2);
+    date.setHours(date.getHours() + 26);
     filterByDate(date);
     cy.assertNoItemInPaginatedResults();
   });

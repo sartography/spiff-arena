@@ -118,7 +118,12 @@ Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
 });
 
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
-  cy.getBySel('total-paginated-items').contains('0');
+  cy.contains(/\b0–0 of 0 items/);
+});
+
+Cypress.Commands.add('modifyProcessModelPath', (path) => {
+  path.replace('/', ':');
+  return path;
 });
 
 Cypress.Commands.add('modifyProcessModelPath', (path) => {
