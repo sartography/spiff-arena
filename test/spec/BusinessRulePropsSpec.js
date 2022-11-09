@@ -35,7 +35,6 @@ describe('Business Rule Properties Panel', function () {
 
 
   const return_files = (event) => {
-    console.log("Return Files called.")
     event.eventBus.fire('spiff.dmn_files.returned', {
       options: [
         { label: 'Calculate Pizza Price', value: 'Decision_Pizza_Price' },
