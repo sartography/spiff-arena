@@ -46,9 +46,9 @@ export function SpiffExtensionSelect(props) {
 
   if (
     !(optionType in spiffExtensionOptions) ||
-    spiffExtensionOptions[optionType].length === 0
+    spiffExtensionOptions[optionType] === null
   ) {
-    spiffExtensionOptions[optionType] = [];
+    spiffExtensionOptions[optionType] = null;
     requestOptions(eventBus, element, commandStack, optionType);
   }
   const getOptions = () => {

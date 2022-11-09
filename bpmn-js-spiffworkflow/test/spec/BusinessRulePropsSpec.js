@@ -33,23 +33,22 @@ describe('Business Rule Properties Panel', function () {
     })
   );
 
-  function addOptionsToEventBus(bpmnModeler) {
-    bpmnModeler.on('spiff.dmn_files.requested', (event) => {
-      event.eventBus.fire('spiff.dmn_files.returned', {
-        options: [
-          { label: 'Calculate Pizza Price', value: 'Decision_Pizza_Price' },
-          { label: 'Viking Availability', value: 'Decision_Vikings' },
-          { label: 'Test Decision', value: 'test_decision' },
-        ],
-      });
+
+  const return_files = (event) => {
+    console.log("Return Files called.")
+    event.eventBus.fire('spiff.dmn_files.returned', {
+      options: [
+        { label: 'Calculate Pizza Price', value: 'Decision_Pizza_Price' },
+        { label: 'Viking Availability', value: 'Decision_Vikings' },
+        { label: 'Test Decision', value: 'test_decision' },
+      ],
     });
   }
 
   it('should display a dropdown to select from available decision tables', async function () {
     const modeler = getBpmnJS();
-    addOptionsToEventBus(modeler);
+    modeler.get('eventBus').once('spiff.dmn_files.requested', return_files);
     expectSelected('business_rule_task');
-
     // THEN - a properties panel exists with a section for editing that script
     const entry = findEntry('extension_spiffworkflow:calledDecisionId', getPropertiesPanel());
     expect(entry, 'No Entry').to.exist;
@@ -60,7 +59,7 @@ describe('Business Rule Properties Panel', function () {
   it('should update the spiffworkflow:calledDecisionId tag when you modify the called decision select box', async function () {
     // IF - a script tag is selected, and you change the script in the properties panel
     const modeler = getBpmnJS();
-    addOptionsToEventBus(modeler);
+    modeler.get('eventBus').once('spiff.dmn_files.requested', return_files);
     const businessRuleTask = await expectSelected('business_rule_task');
     const entry = findEntry('extension_calledDecisionId', getPropertiesPanel());
     const selectList = findSelect(entry);
@@ -85,4 +84,5 @@ describe('Business Rule Properties Panel', function () {
     const element = businessObject.extensionElements.values[0];
     expect(element.value).to.equal('test_decision');
   });
+
 });
