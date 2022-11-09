@@ -19,7 +19,6 @@ class ExampleDataLoader:
         display_name: str = "",
         description: str = "",
         display_order: int = 0,
-        # from_tests: bool = False,
         bpmn_file_name: Optional[str] = None,
         process_model_source_directory: Optional[str] = None,
     ) -> ProcessModelInfo:
@@ -58,9 +57,9 @@ class ExampleDataLoader:
         if bpmn_file_name:
             file_name_matcher = bpmn_file_name_with_extension
 
-        # file_glob = ""
+        # we need instance_path here for nox tests
         file_glob = os.path.join(
-            current_app.root_path,
+            current_app.instance_path,
             "..",
             "..",
             "tests",
