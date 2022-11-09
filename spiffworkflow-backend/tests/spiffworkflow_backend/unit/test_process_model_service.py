@@ -12,14 +12,20 @@ class TestProcessModelService(BaseTest):
     """TestProcessModelService."""
 
     def test_can_update_specified_attributes(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_update_specified_attributes."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
         process_model = load_test_spec(
             "test_group/hello_world",
             bpmn_file_name="hello_world.bpmn",
-            process_model_source_directory="hello_world"
+            process_model_source_directory="hello_world",
         )
         assert process_model.display_name == "test_group/hello_world"
 

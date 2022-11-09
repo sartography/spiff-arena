@@ -107,7 +107,9 @@ class SpecFileService(FileSystemService):
         """Update_file."""
         SpecFileService.assert_valid_file_name(file_name)
         # file_path = SpecFileService.file_path(process_model_info, file_name)
-        file_path = os.path.join(FileSystemService.root_path(), process_model_info.id, file_name)
+        file_path = os.path.join(
+            FileSystemService.root_path(), process_model_info.id, file_name
+        )
         SpecFileService.write_file_data_to_system(file_path, binary_data)
         file = SpecFileService.to_file_object(file_name, file_path)
 
@@ -132,7 +134,9 @@ class SpecFileService(FileSystemService):
     def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
         """Get_data."""
         # file_path = SpecFileService.file_path(process_model_info, file_name)
-        file_path = os.path.join(FileSystemService.root_path(), process_model_info.id, file_name)
+        file_path = os.path.join(
+            FileSystemService.root_path(), process_model_info.id, file_name
+        )
         if not os.path.exists(file_path):
             raise ProcessModelFileNotFoundError(
                 f"No file found with name {file_name} in {process_model_info.display_name}"
@@ -465,10 +469,12 @@ class SpecFileService(FileSystemService):
                     )
 
                     if message_triggerable_process_model is None:
-                        message_triggerable_process_model = MessageTriggerableProcessModel(
-                            message_model_id=message_model.id,
-                            process_model_identifier=process_model_info.id,
-                            process_group_identifier="process_group_identifier",
+                        message_triggerable_process_model = (
+                            MessageTriggerableProcessModel(
+                                message_model_id=message_model.id,
+                                process_model_identifier=process_model_info.id,
+                                process_group_identifier="process_group_identifier",
+                            )
                         )
                         db.session.add(message_triggerable_process_model)
                         db.session.commit()
@@ -480,8 +486,7 @@ class SpecFileService(FileSystemService):
                             # != process_model_info.process_group_id
                         ):
                             raise ValidationException(
-                                "Message model is already used to start process model"
-                                f"'{process_model_info.process_group_id}/{process_model_info.id}'"
+                                f"Message model is already used to start process model {process_model_info.id}"
                             )
 
         for child in et_root:

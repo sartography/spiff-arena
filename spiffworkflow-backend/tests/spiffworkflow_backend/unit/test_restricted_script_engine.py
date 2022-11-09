@@ -16,10 +16,16 @@ class TestOpenFile(BaseTest):
     """TestVariousBpmnConstructs."""
 
     def test_dot_notation(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_form_data_conversion_to_dot_dict."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
         process_model = load_test_spec(
             "test_group/dangerous",
             bpmn_file_name="read_etc_passwd.bpmn",
@@ -41,10 +47,16 @@ class TestImportModule(BaseTest):
     """TestVariousBpmnConstructs."""
 
     def test_dot_notation(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_form_data_conversion_to_dot_dict."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
         process_model = load_test_spec(
             "test_group/dangerous",
             bpmn_file_name="read_env.bpmn",
