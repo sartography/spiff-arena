@@ -623,7 +623,6 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_model_file_update."""
-
         process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
         modified_process_model_id = process_model_identifier.replace("/", ":")
 
@@ -972,7 +971,6 @@ class TestProcessApi(BaseTest):
         )
         assert response.json is not None
         process_instance_id = response.json["id"]
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
         response = client.post(
             f"/v1.0/process-instances/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -1099,7 +1097,6 @@ class TestProcessApi(BaseTest):
             bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         message_model_identifier = "message_response"
         payload = {
@@ -1168,7 +1165,6 @@ class TestProcessApi(BaseTest):
             bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         response = self.create_process_instance(
             client,
@@ -1218,7 +1214,6 @@ class TestProcessApi(BaseTest):
             bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance(
