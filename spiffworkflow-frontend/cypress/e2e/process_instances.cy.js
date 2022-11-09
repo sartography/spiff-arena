@@ -3,10 +3,10 @@ import { DATE_FORMAT, PROCESS_STATUSES } from '../../src/config';
 
 const filterByDate = (fromDate) => {
   cy.get('#date-picker-start-from').clear().type(format(fromDate, DATE_FORMAT));
-  cy.contains('Start Range').click();
+  cy.contains('Start date from').click();
   cy.get('#date-picker-end-from').clear().type(format(fromDate, DATE_FORMAT));
-  cy.contains('Start Range').click();
-  cy.contains('Filter').click();
+  cy.contains('End date from').click();
+  cy.getBySel('filter-button').click();
 };
 
 const updateDmnText = (oldText, newText, elementId = 'wonderful_process') => {
@@ -165,23 +165,25 @@ describe('process-instances', () => {
     cy.basicPaginationTest();
   });
 
-  it('can filter', () => {
+  it.only('can filter', () => {
     cy.getBySel('process-instance-list-link').click();
     cy.assertAtLeastOneItemInPaginatedResults();
 
     PROCESS_STATUSES.forEach((processStatus) => {
       if (!['all', 'waiting'].includes(processStatus)) {
-        cy.get('[name=process-status-selection]').click();
-        cy.get('[name=process-status-selection]').type(processStatus);
-        cy.get(`[aria-label=${processStatus}]`).click();
-        cy.contains('Process Status').click();
-        cy.contains('Filter').click();
+        cy.get('#process-instance-status-select').click();
+        cy.get('#process-instance-status-select')
+          .contains(processStatus)
+          .click();
+        // close the dropdown again
+        cy.get('#process-instance-status-select').click();
+        cy.getBySel('filter-button').click();
         cy.assertAtLeastOneItemInPaginatedResults();
         cy.getBySel(`process-instance-status-${processStatus}`).contains(
           processStatus
         );
         // there should really only be one, but in CI there are sometimes more
-        cy.get('button[aria-label=Remove]:first').click();
+        cy.get('div[aria-label="Clear all selected items"]:first').click();
       }
     });
 
@@ -190,7 +192,7 @@ describe('process-instances', () => {
     filterByDate(date);
     cy.assertAtLeastOneItemInPaginatedResults();
 
-    date.setHours(date.getHours() + 2);
+    date.setHours(date.getHours() + 26);
     filterByDate(date);
     cy.assertNoItemInPaginatedResults();
   });

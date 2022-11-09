@@ -72,16 +72,16 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "process_instance"
     id: int = db.Column(db.Integer, primary_key=True)
-    process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
+    process_model_identifier: str = db.Column(
+        db.String(255), nullable=False, index=True
+    )
     process_group_identifier: str = db.Column(db.String(50), nullable=False, index=True)
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
     process_initiator = relationship("UserModel")
 
     active_tasks = relationship("ActiveTaskModel", cascade="delete")  # type: ignore
-    spiff_logs = relationship("SpiffLoggingModel", cascade="delete")  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
-    spiff_step_details = relationship("SpiffStepDetailsModel", cascade="delete")  # type: ignore
 
     bpmn_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
     start_in_seconds: int | None = db.Column(db.Integer)
@@ -265,7 +265,7 @@ class ProcessInstanceMetadata:
             id=process_instance.id,
             display_name=process_model.display_name,
             description=process_model.description,
-            process_group_id=process_model.process_group_id,
+            process_group_id=process_model.process_group,
             state_message=process_instance.state_message,
             status=process_instance.status,
             completed_tasks=process_instance.completed_tasks,

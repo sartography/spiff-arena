@@ -38,10 +38,9 @@ def assure_process_group_exists(process_group_id: Optional[str] = None) -> Proce
 def load_test_spec(
     process_model_id: str,
     bpmn_file_name: Optional[str] = None,
-    process_model_source_directory: str = None,
+    process_model_source_directory: Optional[str] = None,
 ) -> ProcessModelInfo:
     """Loads a bpmn file into the process model dir based on a directory in tests/data."""
-
     if process_model_source_directory is None:
         raise Exception("You must inclode a `process_model_source_directory`.")
 

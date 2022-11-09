@@ -107,7 +107,6 @@ export default function ProcessModelEditDiagram() {
     };
 
     if (params.file_name) {
-      console.log(`processModelPath: ${processModelPath}`);
       HttpService.makeCallToBackend({
         path: `/${processModelPath}/files/${params.file_name}`,
         successCallback: fileResult,
@@ -685,42 +684,34 @@ export default function ProcessModelEditDiagram() {
    * fixme:  Not currently in use.  This would only work for bpmn files within the process model.  Which is right for DMN and json, but not right here.  Need to merge in work on the nested process groups before tackling this.
    * @param processId
    */
+
+  const fileNameTemplatePath =
+    '/admin/process-models/:process_model_id/files/:file_name';
+
   const onLaunchBpmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'bpmn');
     if (file) {
-      const path = generatePath(
-        '/admin/process-models/:process_group_id/:process_model_id/files/:file_name',
-        {
-          process_group_id: params.process_group_id,
-          process_model_id: params.process_model_id,
-          file_name: file.name,
-        }
-      );
+      const path = generatePath(fileNameTemplatePath, {
+        process_model_id: params.process_model_id,
+        file_name: file.name,
+      });
       window.open(path);
     }
   };
   const onLaunchJsonEditor = (fileName: string) => {
-    const path = generatePath(
-      '/admin/process-models/:process_group_id/:process_model_id/form/:file_name',
-      {
-        process_group_id: params.process_group_id,
-        process_model_id: params.process_model_id,
-        file_name: fileName,
-      }
-    );
+    const path = generatePath(fileNameTemplatePath, {
+      process_model_id: params.process_model_id,
+      file_name: fileName,
+    });
     window.open(path);
   };
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
-      const path = generatePath(
-        '/admin/process-models/:process_group_id/:process_model_id/files/:file_name',
-        {
-          process_group_id: params.process_group_id,
-          process_model_id: params.process_model_id,
-          file_name: file.name,
-        }
-      );
+      const path = generatePath(fileNameTemplatePath, {
+        process_model_id: params.process_model_id,
+        file_name: file.name,
+      });
       window.open(path);
     }
   };
@@ -776,9 +767,7 @@ export default function ProcessModelEditDiagram() {
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
   if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
-    const processModelFileName = processModelFile
-      ? `: ${processModelFile.name}`
-      : '';
+    const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <>
         <ProcessBreadcrumb
@@ -792,7 +781,7 @@ export default function ProcessModelEditDiagram() {
           ]}
         />
         <h2>
-          Process Model File
+          Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h2>
         {appropriateEditor()}

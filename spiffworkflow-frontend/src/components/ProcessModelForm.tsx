@@ -14,14 +14,14 @@ import ButtonWithConfirmation from './ButtonWithConfirmation';
 type OwnProps = {
   mode: string;
   processModel: ProcessModel;
-  process_group_id?: string;
+  processGroupId?: string;
   setProcessModel: (..._args: any[]) => any;
 };
 
 export default function ProcessModelForm({
   mode,
   processModel,
-  process_group_id,
+  processGroupId,
   setProcessModel,
 }: OwnProps) {
   const [identifierInvalid, setIdentifierInvalid] = useState<boolean>(false);
@@ -88,7 +88,7 @@ export default function ProcessModelForm({
     };
     if (mode === 'new') {
       Object.assign(postBody, {
-        id: `${process_group_id}:${processModel.id}`,
+        id: `${processGroupId}:${processModel.id}`,
       });
     }
 

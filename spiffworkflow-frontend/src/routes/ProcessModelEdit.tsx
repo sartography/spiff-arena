@@ -24,7 +24,7 @@ export default function ProcessModelEdit() {
         <h2>Edit Process Model: {(processModel as any).id}</h2>
         <ProcessModelForm
           mode="edit"
-          process_group_id={params.process_group_id}
+          processGroupId={params.process_group_id}
           processModel={processModel}
           setProcessModel={setProcessModel}
         />
