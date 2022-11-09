@@ -5,7 +5,7 @@ import { Button, Table, Stack } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
-import { getPageInfoFromSearchParams } from '../helpers';
+import {getPageInfoFromSearchParams, modifyProcessModelPath, unModifyProcessModelPath} from '../helpers';
 import { ProcessGroup } from '../interfaces';
 
 export default function ProcessGroupShow() {
@@ -14,6 +14,7 @@ export default function ProcessGroupShow() {
 
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [processModels, setProcessModels] = useState([]);
+  const [processGroups, setProcessGroups] = useState([]);
   const [pagination, setPagination] = useState(null);
 
   useEffect(() => {
@@ -24,12 +25,15 @@ export default function ProcessGroupShow() {
       setPagination(result.pagination);
     };
     const processResult = (result: any) => {
-      console.log(result);
       setProcessGroup(result);
+      const unmodifiedProcessGroupId = unModifyProcessModelPath(
+        (params as any).process_group_id
+      );
       HttpService.makeCallToBackend({
-        path: `/process-models?process_group_identifier=${params.process_group_id}&per_page=${perPage}&page=${page}`,
+        path: `/process-models?process_group_identifier=${unmodifiedProcessGroupId}&per_page=${perPage}&page=${page}`,
         successCallback: setProcessModelFromResult,
       });
+      setProcessGroups(result.process_groups);
     };
     HttpService.makeCallToBackend({
       path: `/process-groups/${params.process_group_id}`,
@@ -37,7 +41,7 @@ export default function ProcessGroupShow() {
     });
   }, [params, searchParams]);
 
-  const buildTable = () => {
+  const buildModelTable = () => {
     if (processGroup === null) {
       return null;
     }
@@ -73,8 +77,45 @@ export default function ProcessGroupShow() {
     );
   };
 
+  const buildGroupTable = () => {
+    if (processGroup === null) {
+      return null;
+    }
+    const rows = processGroups.map((row) => {
+      const modifiedProcessGroupId: String = modifyProcessModelPath((row as any).id);
+      return (
+        <tr key={(row as any).id}>
+          <td>
+            <Link
+              to={`/admin/process-groups/${modifiedProcessGroupId}`}
+              data-qa="process-model-show-link"
+            >
+              {(row as any).id}
+            </Link>
+          </td>
+          <td>{(row as any).display_name}</td>
+        </tr>
+      );
+    });
+    return (
+      <div>
+        <h3>Process Groups</h3>
+        <Table striped bordered>
+          <thead>
+            <tr>
+              <th>Process Group Id</th>
+              <th>Display Name</th>
+            </tr>
+          </thead>
+          <tbody>{rows}</tbody>
+        </Table>
+      </div>
+    );
+  };
+
   if (processGroup && pagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+    const modifiedProcessGroupId = modifyProcessModelPath((processGroup as any).id);
     return (
       <>
         <ProcessBreadcrumb
@@ -86,12 +127,18 @@ export default function ProcessGroupShow() {
         <ul>
           <Stack orientation="horizontal" gap={3}>
             <Button
-              href={`/admin/process-models/${(processGroup as any).id}/new`}
+              kind="secondary"
+              href={`/admin/process-groups/new?parentGroupId=${processGroup.id}`}
+            >
+              Add a process group
+            </Button>
+            <Button
+              href={`/admin/process-models/${modifiedProcessGroupId}/new`}
             >
               Add a process model
             </Button>
             <Button
-              href={`/admin/process-groups/${(processGroup as any).id}/edit`}
+              href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
               variant="secondary"
             >
               Edit process group
@@ -103,7 +150,16 @@ export default function ProcessGroupShow() {
             page={page}
             perPage={perPage}
             pagination={pagination}
-            tableToDisplay={buildTable()}
+            tableToDisplay={buildModelTable()}
+            path={`/admin/process-groups/${(processGroup as any).id}`}
+          />
+          <br />
+          <br />
+          <PaginationForTable
+            page={page}
+            perPage={perPage}
+            pagination={pagination}
+            tableToDisplay={buildGroupTable()}
             path={`/admin/process-groups/${(processGroup as any).id}`}
           />
         </ul>

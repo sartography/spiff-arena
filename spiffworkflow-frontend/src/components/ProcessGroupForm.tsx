@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import { slugifyString } from '../helpers';
+import {modifyProcessModelPath, slugifyString} from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
@@ -23,10 +23,13 @@ export default function ProcessGroupForm({
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
   const navigate = useNavigate();
+  let newProcessGroupId = processGroup.id;
 
   const navigateToProcessGroup = (_result: any) => {
-    if (processGroup) {
-      navigate(`/admin/process-groups/${processGroup.id}`);
+    if (newProcessGroupId) {
+      navigate(
+        `/admin/process-groups/${modifyProcessModelPath(newProcessGroupId)}`
+      );
     }
   };
 
@@ -40,13 +43,16 @@ export default function ProcessGroupForm({
 
   const deleteProcessGroup = () => {
     HttpService.makeCallToBackend({
-      path: `/process-groups/${processGroup.id}`,
+      path: `/process-groups/${modifyProcessModelPath(processGroup.id)}`,
       successCallback: navigateToProcessGroups,
       httpMethod: 'DELETE',
     });
   };
 
   const handleFormSubmission = (event: any) => {
+    const searchParams = new URLSearchParams(document.location.search);
+    const parentGroupId = searchParams.get('parentGroupId');
+
     event.preventDefault();
     let hasErrors = false;
     if (!hasValidIdentifier(processGroup.id)) {
@@ -73,7 +79,17 @@ export default function ProcessGroupForm({
       description: processGroup.description,
     };
     if (mode === 'new') {
-      Object.assign(postBody, { id: processGroup.id });
+      console.log(`parentGroupId: ${parentGroupId}`);
+      console.log(`processGroup.id: ${processGroup.id}`);
+      if (parentGroupId) {
+        newProcessGroupId = `${parentGroupId}/${processGroup.id}`;
+      }
+      console.log(`newProcessGroupId: ${newProcessGroupId}`);
+      Object.assign(postBody, {
+        id: parentGroupId
+          ? `${parentGroupId}/${processGroup.id}`
+          : `${processGroup.id}`,
+      });
     }
 
     HttpService.makeCallToBackend({
