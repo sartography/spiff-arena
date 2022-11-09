@@ -200,7 +200,7 @@ class DBHandler(logging.Handler):
 
     def bulk_insert_logs(self) -> None:
         """Bulk_insert_logs."""
-        db.session.bulk_insert_mappings(SpiffLoggingModel, self.logs)
+        #db.session.bulk_insert_mappings(SpiffLoggingModel, self.logs)
         db.session.commit()
         self.logs = []
 
@@ -222,7 +222,8 @@ class DBHandler(logging.Handler):
                 if hasattr(record, "spiff_step") and record.spiff_step is not None  # type: ignore
                 else 1
             )
-            self.logs.append(
+            #self.logs.append(
+            db.session.bulk_insert_mappings(SpiffLoggingModel, [
                 {
                     "process_instance_id": record.process_instance_id,  # type: ignore
                     "bpmn_process_identifier": bpmn_process_identifier,
@@ -235,6 +236,6 @@ class DBHandler(logging.Handler):
                     "current_user_id": current_user_id,
                     "spiff_step": spiff_step,
                 }
-            )
+            ])
             if len(self.logs) % 100 == 0:
                 self.bulk_insert_logs()
