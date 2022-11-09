@@ -76,8 +76,8 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.get('input[name=id]').should('have.value', modelId);
   cy.contains('Submit').click();
 
-  cy.url().should('include', `process-models/${groupId}/${modelId}`);
-  cy.contains(`Process Model: ${modelId}`);
+  cy.url().should('include', `process-models/${groupId}:${modelId}`);
+  cy.contains(`Process Model: ${modelDisplayName}`);
 });
 
 Cypress.Commands.add('runPrimaryBpmnFile', (reload = true) => {
@@ -119,4 +119,9 @@ Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
 
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
   cy.getBySel('total-paginated-items').contains('0');
+});
+
+Cypress.Commands.add('modifyProcessModelPath', (path) => {
+  path.replace('/', ':');
+  return path;
 });

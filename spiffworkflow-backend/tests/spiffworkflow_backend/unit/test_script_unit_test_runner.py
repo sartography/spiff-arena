@@ -20,19 +20,21 @@ class TestScriptUnitTestRunner(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_takes_data_and_returns_expected_result."""
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_id
+        )
         process_model_id = "simple_script"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         load_test_spec(
             process_model_identifier,
             bpmn_file_name=process_model_id,
-            process_model_source_directory=process_model_id
+            process_model_source_directory=process_model_id,
         )
         bpmn_process_instance = (
             ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
@@ -60,20 +62,22 @@ class TestScriptUnitTestRunner(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_fails_when_expected_output_does_not_match_actual_output."""
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_id
+        )
 
         process_model_id = "simple_script"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         load_test_spec(
             process_model_identifier,
             bpmn_file_name=process_model_id,
-            process_model_source_directory=process_model_id
+            process_model_source_directory=process_model_id,
         )
         bpmn_process_instance = (
             ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
@@ -101,20 +105,22 @@ class TestScriptUnitTestRunner(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_script_with_unit_tests_when_hey_is_passed_in."""
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_id
+        )
 
         process_model_id = "script_with_unit_tests"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         load_test_spec(
             process_model_identifier,
             bpmn_file_name=process_model_id,
-            process_model_source_directory=process_model_id
+            process_model_source_directory=process_model_id,
         )
         bpmn_process_instance = (
             ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
@@ -140,13 +146,15 @@ class TestScriptUnitTestRunner(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_script_with_unit_tests_when_hey_is_not_passed_in."""
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_id
+        )
 
         process_model_id = "script_with_unit_tests"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -154,7 +162,7 @@ class TestScriptUnitTestRunner(BaseTest):
         load_test_spec(
             process_model_identifier,
             bpmn_file_name=process_model_id,
-            process_model_source_directory=process_model_id
+            process_model_source_directory=process_model_id,
         )
         bpmn_process_instance = (
             ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
