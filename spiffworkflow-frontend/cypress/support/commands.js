@@ -122,5 +122,6 @@ Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
 });
 
 Cypress.Commands.add('modifyProcessModelPath', (path) => {
-  return path.replace('/', ':') || '';
+  path.replace('/', ':');
+  return path;
 });
