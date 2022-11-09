@@ -790,6 +790,8 @@ def process_instance_delete(process_instance_id: int) -> flask.wrappers.Response
 
     # (Pdb) db.session.delete
     # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
+    db.session.query(SpiffLoggingModel).filter_by(process_instance_id=process_instance.id).delete()
+    db.session.query(SpiffStepDetailsModel).filter_by(process_instance_id=process_instance.id).delete()
     db.session.delete(process_instance)
     db.session.commit()
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
