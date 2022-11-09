@@ -37,7 +37,7 @@ const explodeCrumb = (crumb: HotCrumbItem) => {
     );
   } else {
     breadcrumbItems.push(
-      <BreadcrumbItem isCurrentPage>{lastPathItem}</BreadcrumbItem>
+      <BreadcrumbItem isCurrentPage key={lastPathItem}>{lastPathItem}</BreadcrumbItem>
     );
   }
   return breadcrumbItems;
@@ -56,7 +56,7 @@ export default function ProcessBreadcrumb({
       const valueLabel = crumb[0];
       const url = crumb[1];
       if (!url) {
-        return <BreadcrumbItem isCurrentPage>{valueLabel}</BreadcrumbItem>;
+        return <BreadcrumbItem isCurrentPage key={valueLabel}>{valueLabel}</BreadcrumbItem>;
       }
       if (url && url.startsWith('process_model:')) {
         return explodeCrumb(crumb);
