@@ -294,7 +294,6 @@ class ProcessInstanceProcessor:
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
         current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
-            f"{process_instance_model.process_group_identifier}/"
             f"{process_instance_model.process_model_identifier}"
         )
 
