@@ -21,7 +21,7 @@ class ExampleDataLoader:
         display_order: int = 0,
         # from_tests: bool = False,
         bpmn_file_name: Optional[str] = None,
-        process_model_source_directory: str = None,
+        process_model_source_directory: Optional[str] = None,
     ) -> ProcessModelInfo:
         """Assumes that process_model_source_directory exists in static/bpmn and contains bpmn_file_name.
 

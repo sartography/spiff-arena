@@ -28,7 +28,11 @@ class TestSpecFileService(BaseTest):
     )
 
     def test_can_store_process_ids_for_lookup(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_store_process_ids_for_lookup."""
         self.basic_test_setup(
@@ -37,7 +41,7 @@ class TestSpecFileService(BaseTest):
             process_group_id=self.process_group_id,
             process_model_id=self.process_model_id,
             bpmn_file_name=self.bpmn_file_name,
-            bpmn_file_location="call_activity_nested"
+            bpmn_file_location="call_activity_nested",
         )
         bpmn_process_id_lookups = BpmnProcessIdLookup.query.all()
         assert len(bpmn_process_id_lookups) == 1
@@ -48,7 +52,11 @@ class TestSpecFileService(BaseTest):
         )
 
     def test_fails_to_save_duplicate_process_id(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_fails_to_save_duplicate_process_id."""
         bpmn_process_identifier = "Level1"
@@ -58,7 +66,7 @@ class TestSpecFileService(BaseTest):
             process_group_id=self.process_group_id,
             process_model_id=self.process_model_id,
             bpmn_file_name=self.bpmn_file_name,
-            bpmn_file_location=self.process_model_id
+            bpmn_file_location=self.process_model_id,
         )
         bpmn_process_id_lookups = BpmnProcessIdLookup.query.all()
         assert len(bpmn_process_id_lookups) == 1
@@ -81,7 +89,11 @@ class TestSpecFileService(BaseTest):
         )
 
     def test_updates_relative_file_path_when_appropriate(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_updates_relative_file_path_when_appropriate."""
         bpmn_process_identifier = "Level1"
@@ -98,7 +110,7 @@ class TestSpecFileService(BaseTest):
             process_group_id=self.process_group_id,
             process_model_id=self.process_model_id,
             bpmn_file_name=self.bpmn_file_name,
-            bpmn_file_location=self.process_model_id
+            bpmn_file_location=self.process_model_id,
         )
 
         bpmn_process_id_lookups = BpmnProcessIdLookup.query.all()
@@ -113,7 +125,11 @@ class TestSpecFileService(BaseTest):
         )
 
     def test_load_reference_information(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_load_reference_information.
 
@@ -128,14 +144,13 @@ class TestSpecFileService(BaseTest):
         """
         process_group_id = "test_group"
         process_model_id = "call_activity_nested"
-        bpmn_file_name = "call_activity_nested.bpmn"
         process_model_identifier = self.basic_test_setup(
             client=client,
             user=with_super_admin_user,
             process_group_id=process_group_id,
             process_model_id=process_model_id,
             # bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=process_model_id
+            bpmn_file_location=process_model_id,
         )
         # load_test_spec(
         #     ,

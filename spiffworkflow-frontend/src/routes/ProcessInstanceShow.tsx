@@ -443,9 +443,14 @@ export default function ProcessInstanceShow() {
     return (
       <>
         <ProcessBreadcrumb
-          processModelId={processModelId}
-          processGroupId={params.process_group_id}
-          linkProcessModel
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${processModelId}`,
+              `process_model:${processModelId}:link`,
+            ],
+            [`Process Instance: ${params.process_instance_id}`],
+          ]}
         />
         <Stack orientation="horizontal" gap={3}>
           <h2>Process Instance Id: {processInstanceToUse.id}</h2>

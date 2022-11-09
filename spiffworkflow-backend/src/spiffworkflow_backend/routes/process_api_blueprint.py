@@ -138,11 +138,13 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
 
 
 def modify_process_model_id(process_model_id: str) -> str:
-    return process_model_id.replace('/', ':')
+    """Modify_process_model_id."""
+    return process_model_id.replace("/", ":")
 
 
 def un_modify_modified_process_model_id(modified_process_model_id: str) -> str:
-    return modified_process_model_id.replace(':', '/')
+    """Un_modify_modified_process_model_id."""
+    return modified_process_model_id.replace(":", "/")
 
 
 def process_group_add(body: dict) -> flask.wrappers.Response:
@@ -251,7 +253,7 @@ def process_model_add(
 
 
 def process_model_delete(
-    modified_process_model_identifier: str
+    modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
@@ -265,7 +267,12 @@ def process_model_update(
 ) -> Any:
     """Process_model_update."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    body_include_list = ["display_name", "primary_file_name", "primary_process_id", "description"]
+    body_include_list = [
+        "display_name",
+        "primary_file_name",
+        "primary_process_id",
+        "description",
+    ]
     body_filtered = {
         include_item: body[include_item]
         for include_item in body_include_list
@@ -415,11 +422,11 @@ def add_file(modified_process_model_id: str) -> flask.wrappers.Response:
     )
 
 
-def process_instance_create(
-    modified_process_model_id: str
-) -> flask.wrappers.Response:
+def process_instance_create(modified_process_model_id: str) -> flask.wrappers.Response:
     """Create_process_instance."""
-    process_model_identifier = un_modify_modified_process_model_id(modified_process_model_id)
+    process_model_identifier = un_modify_modified_process_model_id(
+        modified_process_model_id
+    )
     process_instance = ProcessInstanceService.create_process_instance(
         process_model_identifier, g.user
     )
@@ -522,7 +529,7 @@ def process_instance_log_list(
         )
         .order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
         .join(
-            UserModel, isouter=True
+            UserModel, UserModel.id == SpiffLoggingModel.current_user_id, isouter=True
         )  # isouter since if we don't have a user, we still want the log
         .add_columns(
             UserModel.username,
@@ -785,14 +792,18 @@ def process_instance_show(
     return make_response(jsonify(process_instance), 200)
 
 
-def process_instance_delete(
-    process_instance_id: int
-) -> flask.wrappers.Response:
+def process_instance_delete(process_instance_id: int) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
     # (Pdb) db.session.delete
     # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
+    db.session.query(SpiffLoggingModel).filter_by(
+        process_instance_id=process_instance.id
+    ).delete()
+    db.session.query(SpiffStepDetailsModel).filter_by(
+        process_instance_id=process_instance.id
+    ).delete()
     db.session.delete(process_instance)
     db.session.commit()
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -906,7 +917,6 @@ def process_instance_report_show(
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-
     process_instances = ProcessInstanceModel.query.order_by(  # .filter_by(process_model_identifier=process_model.id)
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(
@@ -1302,9 +1312,7 @@ def get_process_model(process_model_id: str) -> ProcessModelInfo:
     """Get_process_model."""
     process_model = None
     try:
-        process_model = ProcessModelService().get_process_model(
-            process_model_id
-        )
+        process_model = ProcessModelService().get_process_model(process_model_id)
     except ProcessEntityNotFoundError as exception:
         raise (
             ApiError(
