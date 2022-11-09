@@ -13,8 +13,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
     """Load_fixtures."""
     current_app.logger.debug("load_acceptance_test_fixtures() start")
-    test_process_group_id = "acceptance-tests-group-one"
-    test_process_model_id = "acceptance-tests-model-1"
+    test_process_group_id = ""
+    test_process_model_id = "acceptance-tests-group-one/acceptance-tests-model-1"
     user = BaseTest.find_or_create_user()
     statuses = ProcessInstanceStatus.list()
     current_time = round(time.time())

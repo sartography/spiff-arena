@@ -17,11 +17,12 @@ import {
   Grid,
   Column,
   MultiSelect,
-  // TableHeader,
-  // TableHead,
-  // TableRow,
-  // TableBody,
-  // TableCell,
+  TableHeader,
+  TableHead,
+  TableRow,
+  TableBody,
+  TableCell,
+  Row,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
@@ -113,6 +114,7 @@ export default function ProcessInstanceList() {
             searchParamValue as any
           );
           functionToCall(dateString);
+          setShowFilterOptions(true);
         }
       });
 
@@ -125,6 +127,7 @@ export default function ProcessInstanceList() {
             if (functionToCall !== null) {
               functionToCall(searchParams.get(paramName) || '');
             }
+            setShowFilterOptions(true);
           }
         }
       );
@@ -162,6 +165,7 @@ export default function ProcessInstanceList() {
       getProcessInstances();
     }
 
+    // populate process model selection
     HttpService.makeCallToBackend({
       path: `/process-models?per_page=1000`,
       successCallback: processResultForProcessModels,
@@ -298,6 +302,7 @@ export default function ProcessInstanceList() {
     return (
       <MultiSelect
         label="Choose Status"
+        className="our-class"
         id="process-instance-status-select"
         titleText="Status"
         items={processStatusAllOptions}
@@ -369,7 +374,11 @@ export default function ProcessInstanceList() {
               >
                 Clear
               </Button>
-              <Button kind="secondary" onClick={applyFilter}>
+              <Button
+                kind="secondary"
+                onClick={applyFilter}
+                data-qa="filter-button"
+              >
                 Filter
               </Button>
             </ButtonSet>
@@ -392,12 +401,13 @@ export default function ProcessInstanceList() {
       return headerLabels[header] ?? header;
     };
     const headers = (reportMetadata as any).columns.map((column: any) => {
-      return <th>{getHeaderLabel((column as any).Header)}</th>;
+      // return <th>{getHeaderLabel((column as any).Header)}</th>;
+      return getHeaderLabel((column as any).Header);
     });
 
     const formatProcessInstanceId = (row: any, id: any) => {
       const modifiedProcessModelId: String = modifyProcessModelPath(
-        (row as any).process_model_identifier
+        row.process_model_identifier
       );
       return (
         <Link
@@ -408,7 +418,7 @@ export default function ProcessInstanceList() {
         </Link>
       );
     };
-    const formatProcessModelIdentifier = (row: any, identifier: any) => {
+    const formatProcessModelIdentifier = (_row: any, identifier: any) => {
       return (
         <Link
           to={`/admin/process-models/${modifyProcessModelPath(identifier)}`}
@@ -417,10 +427,10 @@ export default function ProcessInstanceList() {
         </Link>
       );
     };
-    const formatSecondsForDisplay = (row: any, seconds: any) => {
+    const formatSecondsForDisplay = (_row: any, seconds: any) => {
       return convertSecondsToFormattedDate(seconds) || '-';
     };
-    const defaultFormatter = (row: any, value: any) => {
+    const defaultFormatter = (_row: any, value: any) => {
       return value;
     };
 
@@ -433,20 +443,32 @@ export default function ProcessInstanceList() {
     const formattedColumn = (row: any, column: any) => {
       const formatter = columnFormatters[column.accessor] ?? defaultFormatter;
       const value = row[column.accessor];
+      if (column.accessor === 'status') {
+        return (
+          <td data-qa={`process-instance-status-${value}`}>
+            {formatter(row, value)}
+          </td>
+        );
+      }
       return <td>{formatter(row, value)}</td>;
     };
 
-    const rows = processInstances.map((row) => {
+    const rows = processInstances.map((row: any) => {
       const currentRow = (reportMetadata as any).columns.map((column: any) => {
         return formattedColumn(row, column);
       });
-      return <tr key={(row as any).id}>{currentRow}</tr>;
+      return <tr key={row.id}>{currentRow}</tr>;
     });
+
     return (
       <Table size="lg">
-        <thead>
-          <tr>{headers}</tr>
-        </thead>
+        <TableHead>
+          <TableRow>
+            {headers.map((header: any) => (
+              <TableHeader key={header}>{header}</TableHeader>
+            ))}
+          </TableRow>
+        </TableHead>
         <tbody>{rows}</tbody>
       </Table>
     );
@@ -482,9 +504,13 @@ export default function ProcessInstanceList() {
       <>
         {processInstanceTitleElement()}
         <Grid fullWidth>
-          <Column lg={15} />
-          <Column lg={1}>
+          <Column
+            sm={{ span: 1, offset: 3 }}
+            md={{ span: 1, offset: 7 }}
+            lg={{ span: 1, offset: 15 }}
+          >
             <Button
+              data-qa="filter-section-expand-toggle"
               kind="ghost"
               renderIcon={Filter}
               iconDescription="Filter Options"
@@ -496,18 +522,14 @@ export default function ProcessInstanceList() {
         </Grid>
         {filterOptions()}
         <br />
-        <Grid fullWidth>
-          <Column lg={16}>
-            <PaginationForTable
-              page={page}
-              perPage={perPage}
-              pagination={pagination}
-              tableToDisplay={buildTable()}
-              queryParamString={getSearchParamsAsQueryString()}
-              path="/admin/process-instances"
-            />
-          </Column>
-        </Grid>
+        <PaginationForTable
+          page={page}
+          perPage={perPage}
+          pagination={pagination}
+          tableToDisplay={buildTable()}
+          queryParamString={getSearchParamsAsQueryString()}
+          path="/admin/process-instances"
+        />
       </>
     );
   }
