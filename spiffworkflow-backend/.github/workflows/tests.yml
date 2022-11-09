@@ -12,23 +12,30 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { python: "3.10", os: "ubuntu-latest", session: "pre-commit" }
-          - { python: "3.10", os: "ubuntu-latest", session: "safety" }
+          - { python: "3.11", os: "ubuntu-latest", session: "pre-commit" }
+          - { python: "3.11", os: "ubuntu-latest", session: "safety" }
+          - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
           - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
           - { python: "3.9", os: "ubuntu-latest", session: "mypy" }
           - {
-              python: "3.10",
+              python: "3.11",
               os: "ubuntu-latest",
               session: "tests",
               database: "mysql",
             }
           - {
-              python: "3.10",
+              python: "3.11",
               os: "ubuntu-latest",
               session: "tests",
               database: "postgres",
             }
           - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
               python: "3.10",
               os: "ubuntu-latest",
               session: "tests",
@@ -41,28 +48,28 @@ jobs:
               database: "sqlite",
             }
           - {
-              python: "3.10",
+              python: "3.11",
               os: "windows-latest",
               session: "tests",
               database: "sqlite",
             }
           - {
-              python: "3.10",
+              python: "3.11",
               os: "macos-latest",
               session: "tests",
               database: "sqlite",
             }
           - {
-              # typeguard 2.13.3 is broken with TypeDict in 3.10.
+              # typeguard 2.13.3 is broken with TypeDict in 3.11.
               # probably the next release fixes it.
               # https://github.com/agronholm/typeguard/issues/242
-              python: "3.9",
+              python: "3.11",
               os: "ubuntu-latest",
               session: "typeguard",
               database: "sqlite",
             }
-          - { python: "3.10", os: "ubuntu-latest", session: "xdoctest" }
-          - { python: "3.10", os: "ubuntu-latest", session: "docs-build" }
+          - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
+          - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
 
     env:
       NOXSESSION: ${{ matrix.session }}
@@ -149,7 +156,7 @@ jobs:
 
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: always() && matrix.session == 'tests' && matrix.python == '3.10' && matrix.os == 'ubuntu-latest'
+        if: always() && matrix.session == 'tests' && matrix.python == '3.11' && matrix.os == 'ubuntu-latest'
         uses: "actions/upload-artifact@v3.0.0"
         with:
           name: coverage-data
@@ -198,7 +205,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4.2.0
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Upgrade pip
         run: |
