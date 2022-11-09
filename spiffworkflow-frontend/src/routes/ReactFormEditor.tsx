@@ -145,6 +145,9 @@ export default function ReactFormEditor() {
     );
   };
 
+  const processModelFilePossibleNameString = processModelFile
+    ? (processModelFile as any).name
+    : '';
   if (processModelFile || !params.file_name) {
     return (
       <main>
@@ -158,7 +161,7 @@ export default function ReactFormEditor() {
               `Process Model: ${params.process_model_id}`,
               `process_model:${params.process_model_id}:link`,
             ],
-            [(processModelFile as any).name || ''],
+            [processModelFilePossibleNameString],
           ]}
         />
         <h2>

@@ -20,7 +20,7 @@ export default function ProcessModelNew() {
       <h2>Add Process Model</h2>
       <ProcessModelForm
         mode="new"
-        process_group_id={params.process_group_id}
+        processGroupId={params.process_group_id}
         processModel={processModel}
         setProcessModel={setProcessModel}
       />
