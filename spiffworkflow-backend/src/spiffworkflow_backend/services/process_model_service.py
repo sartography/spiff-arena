@@ -34,14 +34,14 @@ class ProcessModelService(FileSystemService):
     GROUP_SCHEMA = ProcessGroupSchema()
     WF_SCHEMA = ProcessModelInfoSchema()
 
-    def is_group(self, path):
+    def is_group(self, path) -> bool:
         """Is_group."""
         group_json_path = os.path.join(path, self.CAT_JSON_FILE)
         if os.path.exists(group_json_path):
             return True
         return False
 
-    def is_model(self, path):
+    def is_model(self, path) -> bool:
         """Is_model."""
         model_json_path = os.path.join(path, self.WF_JSON_FILE)
         if os.path.exists(model_json_path):

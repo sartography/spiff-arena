@@ -49,14 +49,14 @@ class BaseTest:
         Creates a process model
         Adds a bpmn file to the model.
         """
-        process_group_display_name = process_group_id
-        process_group_description = process_group_id
+        process_group_display_name = process_group_id or ""
+        process_group_description = process_group_id or ""
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         if bpmn_file_location is None:
             bpmn_file_location = process_model_id
 
         self.create_process_group(
-            client, user, process_group_id, process_group_display_name
+            client, user, process_group_description, process_group_display_name
         )
 
         self.create_process_model_with_api(

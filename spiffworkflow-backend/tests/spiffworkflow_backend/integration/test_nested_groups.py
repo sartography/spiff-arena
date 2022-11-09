@@ -90,7 +90,7 @@ class TestNestedGroups(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-    ):
+    ) -> None:
         """Test_process_model_add."""
         process_group_a = ProcessGroup(
             id="group_a",
