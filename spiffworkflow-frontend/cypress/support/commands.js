@@ -125,3 +125,8 @@ Cypress.Commands.add('modifyProcessModelPath', (path) => {
   path.replace('/', ':');
   return path;
 });
+
+Cypress.Commands.add('modifyProcessModelPath', (path) => {
+  path.replace('/', ':');
+  return path;
+});

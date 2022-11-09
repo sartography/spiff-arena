@@ -165,7 +165,7 @@ describe('process-instances', () => {
     cy.basicPaginationTest();
   });
 
-  it('can filter', () => {
+  it.only('can filter', () => {
     cy.getBySel('process-instance-list-link').click();
     cy.assertAtLeastOneItemInPaginatedResults();
 
