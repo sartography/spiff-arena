@@ -5,7 +5,11 @@ import { Button, Table, Stack } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
-import {getPageInfoFromSearchParams, modifyProcessModelPath, unModifyProcessModelPath} from '../helpers';
+import {
+  getPageInfoFromSearchParams,
+  modifyProcessModelPath,
+  unModifyProcessModelPath,
+} from '../helpers';
 import { ProcessGroup } from '../interfaces';
 
 export default function ProcessGroupShow() {
@@ -82,7 +86,9 @@ export default function ProcessGroupShow() {
       return null;
     }
     const rows = processGroups.map((row) => {
-      const modifiedProcessGroupId: String = modifyProcessModelPath((row as any).id);
+      const modifiedProcessGroupId: String = modifyProcessModelPath(
+        (row as any).id
+      );
       return (
         <tr key={(row as any).id}>
           <td>
@@ -115,7 +121,9 @@ export default function ProcessGroupShow() {
 
   if (processGroup && pagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    const modifiedProcessGroupId = modifyProcessModelPath((processGroup as any).id);
+    const modifiedProcessGroupId = modifyProcessModelPath(
+      (processGroup as any).id
+    );
     return (
       <>
         <ProcessBreadcrumb
