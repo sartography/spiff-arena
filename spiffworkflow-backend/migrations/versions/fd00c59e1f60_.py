@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 50dd2e016d94
+Revision ID: fd00c59e1f60
 Revises: 
-Create Date: 2022-11-08 16:28:18.991635
+Create Date: 2022-11-09 14:04:14.169379
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '50dd2e016d94'
+revision = 'fd00c59e1f60'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -44,6 +44,29 @@ def upgrade():
     sa.Column('uri', sa.String(length=255), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uri')
+    )
+    op.create_table('spiff_logging',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('bpmn_process_identifier', sa.String(length=255), nullable=False),
+    sa.Column('bpmn_task_identifier', sa.String(length=255), nullable=False),
+    sa.Column('bpmn_task_name', sa.String(length=255), nullable=True),
+    sa.Column('bpmn_task_type', sa.String(length=255), nullable=True),
+    sa.Column('spiff_task_guid', sa.String(length=50), nullable=False),
+    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
+    sa.Column('message', sa.String(length=255), nullable=True),
+    sa.Column('current_user_id', sa.Integer(), nullable=True),
+    sa.Column('spiff_step', sa.Integer(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('spiff_step_details',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('spiff_step', sa.Integer(), nullable=False),
+    sa.Column('task_json', sa.JSON(), nullable=False),
+    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
+    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -216,33 +239,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('principal_id', 'permission_target_id', 'permission', name='permission_assignment_uniq')
     )
-    op.create_table('spiff_logging',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('bpmn_process_identifier', sa.String(length=255), nullable=False),
-    sa.Column('bpmn_task_identifier', sa.String(length=255), nullable=False),
-    sa.Column('bpmn_task_name', sa.String(length=255), nullable=True),
-    sa.Column('bpmn_task_type', sa.String(length=255), nullable=True),
-    sa.Column('spiff_task_guid', sa.String(length=50), nullable=False),
-    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
-    sa.Column('message', sa.String(length=255), nullable=True),
-    sa.Column('current_user_id', sa.Integer(), nullable=True),
-    sa.Column('spiff_step', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['current_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('spiff_step_details',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('spiff_step', sa.Integer(), nullable=False),
-    sa.Column('task_json', sa.JSON(), nullable=False),
-    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
-    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('active_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('active_task_id', sa.Integer(), nullable=False),
@@ -276,8 +272,6 @@ def downgrade():
     op.drop_index(op.f('ix_active_task_user_user_id'), table_name='active_task_user')
     op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
     op.drop_table('active_task_user')
-    op.drop_table('spiff_step_details')
-    op.drop_table('spiff_logging')
     op.drop_table('permission_assignment')
     op.drop_table('message_instance')
     op.drop_index(op.f('ix_message_correlation_value'), table_name='message_correlation')
@@ -302,6 +296,8 @@ def downgrade():
     op.drop_index(op.f('ix_message_correlation_property_identifier'), table_name='message_correlation_property')
     op.drop_table('message_correlation_property')
     op.drop_table('user')
+    op.drop_table('spiff_step_details')
+    op.drop_table('spiff_logging')
     op.drop_table('permission_target')
     op.drop_index(op.f('ix_message_model_name'), table_name='message_model')
     op.drop_index(op.f('ix_message_model_identifier'), table_name='message_model')
