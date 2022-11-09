@@ -3,6 +3,7 @@ import os
 
 import pytest
 from flask import Flask
+from flask.testing import FlaskClient
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
@@ -10,6 +11,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
+from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -17,18 +19,29 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 class TestSpecFileService(BaseTest):
     """TestSpecFileService."""
 
+    process_group_id = "test_process_group_id"
+    process_model_id = "call_activity_nested"
+    bpmn_file_name = "call_activity_nested.bpmn"
+
     call_activity_nested_relative_file_path = os.path.join(
-        "test_process_group_id", "call_activity_nested", "call_activity_nested.bpmn"
+        process_group_id, process_model_id, bpmn_file_name
     )
 
     def test_can_store_process_ids_for_lookup(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_store_process_ids_for_lookup."""
-        load_test_spec(
-            "call_activity_nested",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="call_activity_nested",
+        self.basic_test_setup(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=self.process_group_id,
+            process_model_id=self.process_model_id,
+            bpmn_file_name=self.bpmn_file_name,
+            bpmn_file_location="call_activity_nested",
         )
         bpmn_process_id_lookups = BpmnProcessIdLookup.query.all()
         assert len(bpmn_process_id_lookups) == 1
@@ -39,14 +52,21 @@ class TestSpecFileService(BaseTest):
         )
 
     def test_fails_to_save_duplicate_process_id(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_fails_to_save_duplicate_process_id."""
         bpmn_process_identifier = "Level1"
-        load_test_spec(
-            "call_activity_nested",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="call_activity_nested",
+        self.basic_test_setup(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=self.process_group_id,
+            process_model_id=self.process_model_id,
+            bpmn_file_name=self.bpmn_file_name,
+            bpmn_file_location=self.process_model_id,
         )
         bpmn_process_id_lookups = BpmnProcessIdLookup.query.all()
         assert len(bpmn_process_id_lookups) == 1
@@ -69,25 +89,30 @@ class TestSpecFileService(BaseTest):
         )
 
     def test_updates_relative_file_path_when_appropriate(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_updates_relative_file_path_when_appropriate."""
         bpmn_process_identifier = "Level1"
-        bpmn_file_relative_path = os.path.join(
-            "test_process_group_id", "call_activity_nested", "new_bpmn_file.bpmn"
-        )
         process_id_lookup = BpmnProcessIdLookup(
             bpmn_process_identifier=bpmn_process_identifier,
-            bpmn_file_relative_path=bpmn_file_relative_path,
+            bpmn_file_relative_path=self.call_activity_nested_relative_file_path,
         )
         db.session.add(process_id_lookup)
         db.session.commit()
 
-        load_test_spec(
-            "call_activity_nested",
-            process_model_source_directory="call_activity_nested",
-            bpmn_file_name="call_activity_nested",
+        self.basic_test_setup(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=self.process_group_id,
+            process_model_id=self.process_model_id,
+            bpmn_file_name=self.bpmn_file_name,
+            bpmn_file_location=self.process_model_id,
         )
+
         bpmn_process_id_lookups = BpmnProcessIdLookup.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert (
@@ -100,7 +125,11 @@ class TestSpecFileService(BaseTest):
         )
 
     def test_load_reference_information(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_load_reference_information.
 
@@ -113,12 +142,22 @@ class TestSpecFileService(BaseTest):
         a DMN file can (theoretically) contain many decisions.  So this
         is an array.
         """
-        load_test_spec(
-            "call_activity_nested",
-            process_model_source_directory="call_activity_nested",
+        process_group_id = "test_group"
+        process_model_id = "call_activity_nested"
+        process_model_identifier = self.basic_test_setup(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            # bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=process_model_id,
         )
+        # load_test_spec(
+        #     ,
+        #     process_model_source_directory="call_activity_nested",
+        # )
         process_model_info = ProcessModelService().get_process_model(
-            "call_activity_nested"
+            process_model_identifier
         )
         files = SpecFileService.get_files(process_model_info)
 
