@@ -153,13 +153,14 @@ def process_group_add(body: dict) -> flask.wrappers.Response:
     return make_response(jsonify(process_group), 201)
 
 
-def process_group_delete(process_group_id: str) -> flask.wrappers.Response:
+def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Response:
     """Process_group_delete."""
+    process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     ProcessModelService().process_group_delete(process_group_id)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_group_update(process_group_id: str, body: dict) -> flask.wrappers.Response:
+def process_group_update(modified_process_group_id: str, body: dict) -> flask.wrappers.Response:
     """Process Group Update."""
     body_include_list = ["display_name", "description"]
     body_filtered = {
@@ -168,6 +169,7 @@ def process_group_update(process_group_id: str, body: dict) -> flask.wrappers.Re
         if include_item in body
     }
 
+    process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService().update_process_group(process_group)
     return make_response(jsonify(process_group), 200)
@@ -196,9 +198,10 @@ def process_groups_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Re
 
 
 def process_group_show(
-    process_group_id: str,
+    modified_process_group_id: str,
 ) -> Any:
     """Process_group_show."""
+    process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     try:
         process_group = ProcessModelService().get_process_group(process_group_id)
     except ProcessEntityNotFoundError as exception:
@@ -224,10 +227,13 @@ def process_model_add(
             status_code=400,
         )
 
+    modified_process_model_id = process_model_info.id
+    unmodified_process_model_id = un_modify_modified_process_model_id(modified_process_model_id)
+    process_model_info.id = unmodified_process_model_id
     process_group_id, _ = os.path.split(process_model_info.id)
     process_model_service = ProcessModelService()
     process_group = process_model_service.get_process_group(
-        process_group_id
+        un_modify_modified_process_model_id(process_group_id)
     )
     if process_group is None:
         raise ApiError(

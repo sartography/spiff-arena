@@ -185,9 +185,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModelCategory"
 
-  /process-groups/{process_group_id}:
+  /process-groups/{modified_process_group_id}:
     parameters:
-      - name: process_group_id
+      - name: modified_process_group_id
         in: path
         required: true
         description: The unique id of an existing process group.

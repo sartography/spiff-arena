@@ -125,7 +125,7 @@ def verify_token(
                 # no user_info
                 else:
                     raise ApiError(
-                        error_code="no_user_info", message="Cannot retrieve user info"
+                        error_code="no_user_info", message="Cannot retrieve user info", status_code=401
                     )
 
             else:
