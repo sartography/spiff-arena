@@ -1253,7 +1253,6 @@ class TestProcessApi(BaseTest):
             # bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         headers = self.logged_in_headers(with_super_admin_user)
         response = self.create_process_instance(
@@ -1505,7 +1504,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.basic_test_setup(  # noqa: F841
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1513,7 +1512,6 @@ class TestProcessApi(BaseTest):
             bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
         self.logged_in_headers(with_super_admin_user)
 
         report_identifier = "testreport"
@@ -1555,7 +1553,6 @@ class TestProcessApi(BaseTest):
         #     bpmn_file_location=bpmn_file_location
         # )
         process_model_identifier = f"{process_group_id}/{process_model_id}"
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         report_metadata = {
             "columns": [
@@ -1612,7 +1609,6 @@ class TestProcessApi(BaseTest):
         setup_process_instances_for_reports: list[ProcessInstanceModel],
     ) -> None:
         """Test_process_instance_report_show_with_default_list."""
-
         report_metadata = {
             "filter_by": [
                 {
@@ -2280,7 +2276,7 @@ class TestProcessApi(BaseTest):
             "expected_output_json": expected_output_json,
         }
 
-        response = client.post(
+        response = client.post(  # noqa: F841
             f"/v1.0/process-models/{process_group_id}/{process_model_id}/script-unit-tests/run",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
