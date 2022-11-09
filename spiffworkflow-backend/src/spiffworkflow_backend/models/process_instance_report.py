@@ -238,18 +238,18 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         user: UserModel,
     ) -> ProcessInstanceReportModel:
         """Create_with_attributes."""
-# <<<<<<< HEAD
-#         process_model = ProcessModelService().get_process_model(
-#             process_model_id=f"{process_model_identifier}"
-#         )
-#         process_instance_report = cls(
-#             identifier=identifier,
-#             process_group_identifier="process_model.process_group_id",
-#             process_model_identifier=process_model.id,
-# =======
+        # <<<<<<< HEAD
+        #         process_model = ProcessModelService().get_process_model(
+        #             process_model_id=f"{process_model_identifier}"
+        #         )
+        #         process_instance_report = cls(
+        #             identifier=identifier,
+        #             process_group_identifier="process_model.process_group_id",
+        #             process_model_identifier=process_model.id,
+        # =======
         process_instance_report = cls(
             identifier=identifier,
-# >>>>>>> main
+            # >>>>>>> main
             created_by_id=user.id,
             report_metadata=report_metadata,
         )

@@ -105,7 +105,7 @@ def verify_token(
                     raise ApiError(
                         error_code="fail_get_user_info",
                         message="Cannot get user info from token",
-                        status_code=401
+                        status_code=401,
                     ) from e
 
                 if (

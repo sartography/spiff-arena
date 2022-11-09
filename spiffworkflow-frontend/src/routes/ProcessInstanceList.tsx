@@ -20,9 +20,6 @@ import {
   TableHeader,
   TableHead,
   TableRow,
-  TableBody,
-  TableCell,
-  Row,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
