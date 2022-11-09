@@ -107,7 +107,6 @@ export default function ProcessModelEditDiagram() {
     };
 
     if (params.file_name) {
-      console.log(`processModelPath: ${processModelPath}`);
       HttpService.makeCallToBackend({
         path: `/${processModelPath}/files/${params.file_name}`,
         successCallback: fileResult,
@@ -689,9 +688,8 @@ export default function ProcessModelEditDiagram() {
     const file = findFileNameForReferenceId(processId, 'bpmn');
     if (file) {
       const path = generatePath(
-        '/admin/process-models/:process_group_id/:process_model_id/files/:file_name',
+        '/admin/process-models/:process_model_id/files/:file_name',
         {
-          process_group_id: params.process_group_id,
           process_model_id: params.process_model_id,
           file_name: file.name,
         }
@@ -701,9 +699,8 @@ export default function ProcessModelEditDiagram() {
   };
   const onLaunchJsonEditor = (fileName: string) => {
     const path = generatePath(
-      '/admin/process-models/:process_group_id/:process_model_id/form/:file_name',
+      '/admin/process-models/:process_model_id/files/:file_name',
       {
-        process_group_id: params.process_group_id,
         process_model_id: params.process_model_id,
         file_name: fileName,
       }
@@ -714,9 +711,8 @@ export default function ProcessModelEditDiagram() {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
       const path = generatePath(
-        '/admin/process-models/:process_group_id/:process_model_id/files/:file_name',
+        '/admin/process-models/:process_model_id/files/:file_name',
         {
-          process_group_id: params.process_group_id,
           process_model_id: params.process_model_id,
           file_name: file.name,
         }
