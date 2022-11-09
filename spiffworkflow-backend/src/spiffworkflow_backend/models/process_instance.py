@@ -80,10 +80,8 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator = relationship("UserModel")
 
     active_tasks = relationship("ActiveTaskModel", cascade="delete")  # type: ignore
-    spiff_logs = relationship("SpiffLoggingModel", cascade="delete")  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
-    spiff_step_details = relationship("SpiffStepDetailsModel", cascade="delete")  # type: ignore
 
     bpmn_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
     start_in_seconds: int | None = db.Column(db.Integer)

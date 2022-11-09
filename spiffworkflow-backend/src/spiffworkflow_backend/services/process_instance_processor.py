@@ -559,7 +559,7 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def save_spiff_step_details(self) -> None:
+    def spiff_step_details_mapping(self) -> dict:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
@@ -570,13 +570,29 @@ class ProcessInstanceProcessor:
         # TODO want to just save the tasks, something wasn't immediately working
         # so after the flow works with the full wf_json revisit this
         task_json = wf_json
+        return {
+            "process_instance_id": self.process_instance_model.id,
+            "spiff_step": self.process_instance_model.spiff_step or 1,
+            "task_json": task_json,
+            "timestamp": round(time.time()),
+            "completed_by_user_id": self.current_user().id,
+        }
+
+    def spiff_step_details(self) -> SpiffStepDetailsModel:
+        """SaveSpiffStepDetails."""
+        details_mapping = self.spiff_step_details_mapping()
         details_model = SpiffStepDetailsModel(
-            process_instance_id=self.process_instance_model.id,
-            spiff_step=self.process_instance_model.spiff_step or 1,
-            task_json=task_json,
-            timestamp=round(time.time()),
-            completed_by_user_id=self.current_user().id,
+            process_instance_id=details_mapping["process_instance_id"],
+            spiff_step=details_mapping["spiff_step"],
+            task_json=details_mapping["task_json"],
+            timestamp=details_mapping["timestamp"],
+            completed_by_user_id=details_mapping["completed_by_user_id"],
         )
+        return details_model
+
+    def save_spiff_step_details(self) -> None:
+        """SaveSpiffStepDetails."""
+        details_model = self.spiff_step_details()
         db.session.add(details_model)
         db.session.commit()
 
@@ -989,24 +1005,46 @@ class ProcessInstanceProcessor:
         self.process_instance_model.spiff_step = spiff_step
         current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
         db.session.add(self.process_instance_model)
-        db.session.commit()
+
+    # TODO remove after done with the performance improvements
+    # to use delete the _ prefix here and add it to the real def below
+    def _do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
+        """__do_engine_steps."""
+        import cProfile
+        from pstats import SortKey
+
+        with cProfile.Profile() as pr:
+            self._do_engine_steps(exit_at=exit_at, save=save)
+        pr.print_stats(sort=SortKey.CUMULATIVE)
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
+        step_details = []
         try:
             self.bpmn_process_instance.refresh_waiting_tasks(
                 will_refresh_task=lambda t: self.increment_spiff_step(),
-                did_refresh_task=lambda t: self.save_spiff_step_details(),
+                did_refresh_task=lambda t: step_details.append(
+                    self.spiff_step_details_mapping()
+                ),
             )
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,
                 will_complete_task=lambda t: self.increment_spiff_step(),
-                did_complete_task=lambda t: self.save_spiff_step_details(),
+                did_complete_task=lambda t: step_details.append(
+                    self.spiff_step_details_mapping()
+                ),
             )
 
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
+
+            db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
+            spiff_logger = logging.getLogger("spiff")
+            for handler in spiff_logger.handlers:
+                if hasattr(handler, "bulk_insert_logs"):
+                    handler.bulk_insert_logs()  # type: ignore
+            db.session.commit()
 
         except WorkflowTaskExecException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
