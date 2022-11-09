@@ -26,7 +26,8 @@ describe('process-models', () => {
     cy.contains('Edit process model').click();
     cy.get('input[name=display_name]').clear().type(newModelDisplayName);
     cy.contains('Submit').click();
-    cy.contains(`Process Model: ${modelId}`);
+    const modifiedModelId = cy.modifyProcessModelPath(modelId);
+    cy.contains(`Process Model: ${modifiedModelId}`);
 
     cy.contains('Edit process model').click();
     cy.get('input[name=display_name]').should(
@@ -55,18 +56,19 @@ describe('process-models', () => {
 
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
-    cy.contains(`Process Group: ${groupId}`).click();
+    cy.contains(groupId).click();
     cy.contains(modelId);
 
     cy.contains(modelId).click();
-    cy.url().should('include', `process-models/${groupId}/${modelId}`);
-    cy.contains(`Process Model: ${modelId}`);
+    cy.url().should('include', `process-models/${groupId}:${modelId}`);
+    cy.contains(`Process Model: ${modelDisplayName}`);
+    cy.getBySel('files-accordion').click();
     cy.contains(`${bpmnFileName}.bpmn`).should('not.exist');
     cy.contains(`${dmnFileName}.dmn`).should('not.exist');
     cy.contains(`${jsonFileName}.json`).should('not.exist');
 
     // add new bpmn file
-    cy.contains('Add New BPMN File').click();
+    cy.contains('New BPMN File').click();
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=StartEvent_1]').click().should('exist');
     cy.contains('General').click();
@@ -78,11 +80,12 @@ describe('process-models', () => {
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${bpmnFileName}`);
     cy.contains(modelId).click();
-    cy.contains(`Process Model: ${modelId}`);
+    cy.contains(`Process Model: ${modelDisplayName}`);
+    cy.getBySel('files-accordion').click();
     cy.contains(`${bpmnFileName}.bpmn`).should('exist');
 
     // add new dmn file
-    cy.contains('Add New DMN File').click();
+    cy.contains('New DMN File').click();
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=decision_1]').click().should('exist');
     cy.contains('General').click();
@@ -91,11 +94,12 @@ describe('process-models', () => {
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${dmnFileName}`);
     cy.contains(modelId).click();
-    cy.contains(`Process Model: ${modelId}`);
+    cy.contains(`Process Model: ${modelDisplayName}`);
+    cy.getBySel('files-accordion').click();
     cy.contains(`${dmnFileName}.dmn`).should('exist');
 
     // add new json file
-    cy.contains('Add New JSON File').click();
+    cy.contains('New JSON File').click();
     cy.contains(/^Process Model File$/);
     // Some reason, cypress evals json strings so we have to escape it it with '{{}'
     cy.get('.view-line').type('{{} "test_key": "test_value" }');
@@ -106,7 +110,8 @@ describe('process-models', () => {
     // wait for json to load before clicking away to avoid network errors
     cy.wait(500);
     cy.contains(modelId).click();
-    cy.contains(`Process Model: ${modelId}`);
+    cy.contains(`Process Model: ${modelDisplayName}`);
+    cy.getBySel('files-accordion').click();
     cy.contains(`${jsonFileName}.json`).should('exist');
 
     cy.contains('Edit process model').click();
