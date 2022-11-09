@@ -16,20 +16,14 @@ describe('process-models', () => {
     const modelId = `test-model-2-${id}`;
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
-    cy.contains(`Process Group: ${groupId}`).click();
-    cy.contains(modelId);
-
-    cy.contains(modelId).click();
-    cy.url().should('include', `process-models/${groupId}/${modelId}`);
-    cy.contains(`Process Model: ${modelId}`);
+    cy.url().should('include', `process-models/${groupId}:${modelId}`);
+    cy.contains(`Process Model: ${modelDisplayName}`);
 
     cy.contains('Edit process model').click();
     cy.get('input[name=display_name]').clear().type(newModelDisplayName);
     cy.contains('Submit').click();
-    const modifiedModelId = cy.modifyProcessModelPath(modelId);
-    cy.contains(`Process Model: ${modifiedModelId}`);
-
-    cy.contains('Edit process model').click();
+    cy.contains(`Process Model: ${groupId}/${modelId}`);
+    cy.contains('Submit').click();
     cy.get('input[name=display_name]').should(
       'have.value',
       newModelDisplayName
@@ -37,7 +31,7 @@ describe('process-models', () => {
 
     cy.contains('Delete').click();
     cy.contains('Are you sure');
-    cy.contains('OK').click();
+    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.url().should('include', `process-groups/${groupId}`);
     cy.contains(modelId).should('not.exist');
   });
@@ -57,8 +51,6 @@ describe('process-models', () => {
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.contains(groupId).click();
-    cy.contains(modelId);
-
     cy.contains(modelId).click();
     cy.url().should('include', `process-models/${groupId}:${modelId}`);
     cy.contains(`Process Model: ${modelDisplayName}`);
@@ -117,7 +109,7 @@ describe('process-models', () => {
     cy.contains('Edit process model').click();
     cy.contains('Delete').click();
     cy.contains('Are you sure');
-    cy.contains('OK').click();
+    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.url().should('include', `process-groups/${groupId}`);
     cy.contains(modelId).should('not.exist');
   });
@@ -133,36 +125,35 @@ describe('process-models', () => {
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
 
-    // seeing if getBySel works better, because we are seeing tests fail in CI
-    // when looking for the "Add a process model" link, so it seems like the
-    // click on the breadcrumb element must have failed.
-    cy.getBySel('process-group-breadcrumb-link').click();
-    // cy.contains(`Process Group: ${groupId}`).click();
-
+    cy.contains(`${groupId}`).click();
     cy.contains('Add a process model');
-
     cy.contains(modelId).click();
-    cy.url().should('include', `process-models/${groupId}/${modelId}`);
-    cy.contains(`Process Model: ${modelId}`);
+    cy.url().should('include', `process-models/${groupId}:${modelId}`);
+    cy.contains(`Process Model: ${modelDisplayName}`);
 
-    cy.get('input[type=file]').selectFile(
+    cy.getBySel('files-accordion').click();
+    cy.getBySel('upload-file-button').click();
+    cy.contains('Add file').selectFile(
       'cypress/fixtures/test_bpmn_file_upload.bpmn'
     );
-    cy.contains('Submit').click();
+    cy.getBySel('modal-upload-file-dialog')
+      .find('.cds--btn--primary')
+      .contains('Upload')
+      .click();
     cy.runPrimaryBpmnFile();
 
     cy.getBySel('process-instance-list-link').click();
     cy.getBySel('process-instance-show-link').click();
     cy.contains('Delete').click();
     cy.contains('Are you sure');
-    cy.contains('OK').click();
+    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.contains(`Process Instances for: ${groupId}/${modelId}`);
     cy.contains(modelId).click();
 
     cy.contains('Edit process model').click();
     cy.contains('Delete').click();
     cy.contains('Are you sure');
-    cy.contains('OK').click();
+    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.url().should('include', `process-groups/${groupId}`);
     cy.contains(modelId).should('not.exist');
   });

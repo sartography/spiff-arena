@@ -95,13 +95,10 @@ export const getProcessModelFullIdentifierFromSearchParams = (
   searchParams: any
 ) => {
   let processModelFullIdentifier = null;
-  if (
-    searchParams.get('process_model_identifier') &&
-    searchParams.get('process_group_identifier')
-  ) {
+  if (searchParams.get('process_model_identifier')) {
     processModelFullIdentifier = `${searchParams.get(
-      'process_group_identifier'
-    )}/${searchParams.get('process_model_identifier')}`;
+      'process_model_identifier'
+    )}`;
   }
   return processModelFullIdentifier;
 };
@@ -116,19 +113,19 @@ export const truncateString = (text: string, len: number) => {
 
 // Because of limitations in the way openapi defines parameters, we have to modify process models ids
 // which are basically paths to the models
-export const modifyProcessModelPath = (path: String) => {
+export const modifyProcessModelPath = (path: string) => {
   return path.replace('/', ':') || '';
 };
 
-export const unModifyProcessModelPath = (path: String) => {
+export const unModifyProcessModelPath = (path: string) => {
   return path.replace(':', '/') || '';
 };
 
-export const getGroupFromModifiedModelId = (modifiedId: String) => {
+export const getGroupFromModifiedModelId = (modifiedId: string) => {
   const finalSplitIndex = modifiedId.lastIndexOf(':');
   return modifiedId.slice(0, finalSplitIndex);
 };
 
-export const splitProcessModelId = (processModelId: String) => {
+export const splitProcessModelId = (processModelId: string) => {
   return processModelId.split('/');
 };

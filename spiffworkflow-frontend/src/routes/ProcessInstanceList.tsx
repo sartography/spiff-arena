@@ -461,7 +461,11 @@ export default function ProcessInstanceList() {
     return (
       <h2>
         Process Instances for:{' '}
-        <Link to={`/admin/process-models/${processModelFullIdentifier}`}>
+        <Link
+          to={`/admin/process-models/${modifyProcessModelPath(
+            processModelFullIdentifier
+          )}`}
+        >
           {processModelFullIdentifier}
         </Link>
       </h2>
