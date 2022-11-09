@@ -17,7 +17,7 @@ import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { makeid } from '../helpers';
+import { makeid, modifyProcessModelPath } from '../helpers';
 import { ProcessFile, ProcessModel } from '../interfaces';
 
 export default function ProcessModelEditDiagram() {
@@ -77,12 +77,18 @@ export default function ProcessModelEditDiagram() {
   const [searchParams] = useSearchParams();
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
-  const [processModelFile, setProcessModelFile] = useState(null);
+  const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
+    null
+  );
   const [newFileName, setNewFileName] = useState('');
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
 
-  const processModelPath = `process-models/${params.process_group_id}/${params.process_model_id}`;
+  const modifiedProcessModelId = modifyProcessModelPath(
+    (params as any).process_model_id
+  );
+
+  const processModelPath = `process-models/${modifiedProcessModelId}`;
 
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
@@ -119,7 +125,7 @@ export default function ProcessModelEditDiagram() {
         'file_type'
       )}`;
       navigate(
-        `/admin/process-models/${params.process_group_id}/${params.process_model_id}/files/${fileNameWithExtension}`
+        `/admin/process-models/${modifiedProcessModelId}/files/${fileNameWithExtension}`
       );
     }
   };
@@ -128,7 +134,7 @@ export default function ProcessModelEditDiagram() {
     setErrorMessage(null);
     setBpmnXmlForDiagramRendering(bpmnXML);
 
-    let url = `/process-models/${params.process_group_id}/${params.process_model_id}/files`;
+    let url = `/process-models/${modifiedProcessModelId}/files`;
     let httpMethod = 'PUT';
     let fileNameWithExtension = fileName;
 
@@ -162,13 +168,11 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onDeleteFile = (fileName = params.file_name) => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}/files/${fileName}`;
+    const url = `/process-models/${modifiedProcessModelId}/files/${fileName}`;
     const httpMethod = 'DELETE';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
-      navigate(
-        `/admin/process-models/${params.process_group_id}/${params.process_model_id}`
-      );
+      navigate(`/admin/process-models/${modifiedProcessModelId}`);
     };
     HttpService.makeCallToBackend({
       path: url,
@@ -178,7 +182,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onSetPrimaryFile = (fileName = params.file_name) => {
-    const url = `/process-models/${params.process_group_id}/${params.process_model_id}`;
+    const url = `/process-models/${modifiedProcessModelId}`;
     const httpMethod = 'PUT';
 
     const navigateToProcessModelShow = (_httpResult: any) => {
@@ -428,7 +432,7 @@ export default function ProcessModelEditDiagram() {
     if (currentScriptUnitTest && scriptElement) {
       resetUnitTextResult();
       HttpService.makeCallToBackend({
-        path: `/process-models/${params.process_group_id}/${params.process_model_id}/script-unit-tests/run`,
+        path: `/process-models/${modifiedProcessModelId}/script-unit-tests/run`,
         httpMethod: 'POST',
         successCallback: processScriptUnitTestRunResult,
         postBody: {
@@ -680,42 +684,34 @@ export default function ProcessModelEditDiagram() {
    * fixme:  Not currently in use.  This would only work for bpmn files within the process model.  Which is right for DMN and json, but not right here.  Need to merge in work on the nested process groups before tackling this.
    * @param processId
    */
+
+  const fileNameTemplatePath =
+    '/admin/process-models/:process_model_id/files/:file_name';
+
   const onLaunchBpmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'bpmn');
     if (file) {
-      const path = generatePath(
-        '/admin/process-models/:process_group_id/:process_model_id/files/:file_name',
-        {
-          process_group_id: params.process_group_id,
-          process_model_id: params.process_model_id,
-          file_name: file.name,
-        }
-      );
+      const path = generatePath(fileNameTemplatePath, {
+        process_model_id: params.process_model_id,
+        file_name: file.name,
+      });
       window.open(path);
     }
   };
   const onLaunchJsonEditor = (fileName: string) => {
-    const path = generatePath(
-      '/admin/process-models/:process_group_id/:process_model_id/form/:file_name',
-      {
-        process_group_id: params.process_group_id,
-        process_model_id: params.process_model_id,
-        file_name: fileName,
-      }
-    );
+    const path = generatePath(fileNameTemplatePath, {
+      process_model_id: params.process_model_id,
+      file_name: fileName,
+    });
     window.open(path);
   };
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
-      const path = generatePath(
-        '/admin/process-models/:process_group_id/:process_model_id/files/:file_name',
-        {
-          process_group_id: params.process_group_id,
-          process_model_id: params.process_model_id,
-          file_name: file.name,
-        }
-      );
+      const path = generatePath(fileNameTemplatePath, {
+        process_model_id: params.process_model_id,
+        file_name: file.name,
+      });
       window.open(path);
     }
   };
@@ -730,7 +726,6 @@ export default function ProcessModelEditDiagram() {
       return (
         <ReactDiagramEditor
           processModelId={params.process_model_id || ''}
-          processGroupId={params.process_group_id || ''}
           saveDiagram={saveDiagram}
           onDeleteFile={onDeleteFile}
           diagramXML={bpmnXmlForDiagramRendering}
@@ -752,7 +747,6 @@ export default function ProcessModelEditDiagram() {
     return (
       <ReactDiagramEditor
         processModelId={params.process_model_id || ''}
-        processGroupId={params.process_group_id || ''}
         saveDiagram={saveDiagram}
         onDeleteFile={onDeleteFile}
         onSetPrimaryFile={onSetPrimaryFileCallback}
@@ -773,16 +767,22 @@ export default function ProcessModelEditDiagram() {
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
   if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
+    const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <>
         <ProcessBreadcrumb
-          processGroupId={params.process_group_id}
-          processModelId={params.process_model_id}
-          linkProcessModel
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${processModel.id}`,
+              `process_model:${processModel.id}:link`,
+            ],
+            [processModelFileName],
+          ]}
         />
         <h2>
-          Process Model File
-          {processModelFile ? `: ${(processModelFile as any).name}` : ''}
+          Process Model File{processModelFile ? ': ' : ''}
+          {processModelFileName}
         </h2>
         {appropriateEditor()}
         {newFileNameBox()}

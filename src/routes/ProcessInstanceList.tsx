@@ -17,11 +17,9 @@ import {
   Grid,
   Column,
   MultiSelect,
-  // TableHeader,
-  // TableHead,
-  // TableRow,
-  // TableBody,
-  // TableCell,
+  TableHeader,
+  TableHead,
+  TableRow,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
@@ -30,6 +28,7 @@ import {
   convertSecondsToFormattedDate,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
+  modifyProcessModelPath,
 } from '../helpers';
 
 import PaginationForTable from '../components/PaginationForTable';
@@ -49,6 +48,7 @@ export default function ProcessInstanceList() {
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
+  const [reportMetadata, setReportMetadata] = useState({});
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   const oneHourInSeconds = 3600;
@@ -84,7 +84,6 @@ export default function ProcessInstanceList() {
 
   const parametersToGetFromSearchParams = useMemo(() => {
     return {
-      process_group_identifier: null,
       process_model_identifier: null,
       process_status: null,
     };
@@ -95,6 +94,7 @@ export default function ProcessInstanceList() {
     function setProcessInstancesFromResult(result: any) {
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
+      setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
     }
     function getProcessInstances() {
@@ -111,6 +111,7 @@ export default function ProcessInstanceList() {
             searchParamValue as any
           );
           functionToCall(dateString);
+          setShowFilterOptions(true);
         }
       });
 
@@ -123,6 +124,7 @@ export default function ProcessInstanceList() {
             if (functionToCall !== null) {
               functionToCall(searchParams.get(paramName) || '');
             }
+            setShowFilterOptions(true);
           }
         }
       );
@@ -135,7 +137,7 @@ export default function ProcessInstanceList() {
       const processModelFullIdentifier =
         getProcessModelFullIdentifierFromSearchParams(searchParams);
       const selectionArray = result.results.map((item: any) => {
-        const label = `${item.process_group_id}/${item.id}`;
+        const label = `${item.id}`;
         Object.assign(item, { label });
         if (label === processModelFullIdentifier) {
           setProcessModelSelection(item);
@@ -160,6 +162,7 @@ export default function ProcessInstanceList() {
       getProcessInstances();
     }
 
+    // populate process model selection
     HttpService.makeCallToBackend({
       path: `/process-models?per_page=1000`,
       successCallback: processResultForProcessModels,
@@ -241,7 +244,7 @@ export default function ProcessInstanceList() {
     }
 
     if (processModelSelection) {
-      queryParamString += `&process_group_identifier=${processModelSelection.process_group_id}&process_model_identifier=${processModelSelection.id}`;
+      queryParamString += `&process_model_identifier=${processModelSelection.id}`;
     }
 
     setErrorMessage(null);
@@ -296,6 +299,7 @@ export default function ProcessInstanceList() {
     return (
       <MultiSelect
         label="Choose Status"
+        className="our-class"
         id="process-instance-status-select"
         titleText="Status"
         items={processStatusAllOptions}
@@ -367,7 +371,11 @@ export default function ProcessInstanceList() {
               >
                 Clear
               </Button>
-              <Button kind="secondary" onClick={applyFilter}>
+              <Button
+                kind="secondary"
+                onClick={applyFilter}
+                data-qa="filter-button"
+              >
                 Filter
               </Button>
             </ButtonSet>
@@ -378,54 +386,86 @@ export default function ProcessInstanceList() {
   };
 
   const buildTable = () => {
-    const rows = processInstances.map((row: any) => {
-      const formattedStartDate =
-        convertSecondsToFormattedDate(row.start_in_seconds) || '-';
-      const formattedEndDate =
-        convertSecondsToFormattedDate(row.end_in_seconds) || '-';
-
-      return (
-        <tr key={row.id}>
-          <td>
-            <Link
-              data-qa="process-instance-show-link"
-              to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}/process-instances/${row.id}`}
-            >
-              {row.id}
-            </Link>
-          </td>
-          <td>
-            <Link to={`/admin/process-groups/${row.process_group_identifier}`}>
-              {row.process_group_identifier}
-            </Link>
-          </td>
-          <td>
-            <Link
-              to={`/admin/process-models/${row.process_group_identifier}/${row.process_model_identifier}`}
-            >
-              {row.process_model_identifier}
-            </Link>
-          </td>
-          <td>{formattedStartDate}</td>
-          <td>{formattedEndDate}</td>
-          <td data-qa={`process-instance-status-${row.status}`}>
-            {row.status}
-          </td>
-        </tr>
-      );
+    const headerLabels: Record<string, string> = {
+      id: 'Process Instance Id',
+      process_model_identifier: 'Process Model',
+      start_in_seconds: 'Start Time',
+      end_in_seconds: 'End Time',
+      status: 'Status',
+      spiff_step: 'SpiffWorkflow Step',
+    };
+    const getHeaderLabel = (header: string) => {
+      return headerLabels[header] ?? header;
+    };
+    const headers = (reportMetadata as any).columns.map((column: any) => {
+      // return <th>{getHeaderLabel((column as any).Header)}</th>;
+      return getHeaderLabel((column as any).Header);
     });
+
+    const formatProcessInstanceId = (row: any, id: any) => {
+      const modifiedProcessModelId: String = modifyProcessModelPath(
+        row.process_model_identifier
+      );
+      return (
+        <Link
+          data-qa="process-instance-show-link"
+          to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${row.id}`}
+        >
+          {id}
+        </Link>
+      );
+    };
+    const formatProcessModelIdentifier = (_row: any, identifier: any) => {
+      return (
+        <Link
+          to={`/admin/process-models/${modifyProcessModelPath(identifier)}`}
+        >
+          {identifier}
+        </Link>
+      );
+    };
+    const formatSecondsForDisplay = (_row: any, seconds: any) => {
+      return convertSecondsToFormattedDate(seconds) || '-';
+    };
+    const defaultFormatter = (_row: any, value: any) => {
+      return value;
+    };
+
+    const columnFormatters: Record<string, any> = {
+      id: formatProcessInstanceId,
+      process_model_identifier: formatProcessModelIdentifier,
+      start_in_seconds: formatSecondsForDisplay,
+      end_in_seconds: formatSecondsForDisplay,
+    };
+    const formattedColumn = (row: any, column: any) => {
+      const formatter = columnFormatters[column.accessor] ?? defaultFormatter;
+      const value = row[column.accessor];
+      if (column.accessor === 'status') {
+        return (
+          <td data-qa={`process-instance-status-${value}`}>
+            {formatter(row, value)}
+          </td>
+        );
+      }
+      return <td>{formatter(row, value)}</td>;
+    };
+
+    const rows = processInstances.map((row: any) => {
+      const currentRow = (reportMetadata as any).columns.map((column: any) => {
+        return formattedColumn(row, column);
+      });
+      return <tr key={row.id}>{currentRow}</tr>;
+    });
+
     return (
       <Table size="lg">
-        <thead>
-          <tr>
-            <th>Process Instance Id</th>
-            <th>Process Group</th>
-            <th>Process Model</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-            <th>Status</th>
-          </tr>
-        </thead>
+        <TableHead>
+          <TableRow>
+            {headers.map((header: any) => (
+              <TableHeader key={header}>{header}</TableHeader>
+            ))}
+          </TableRow>
+        </TableHead>
         <tbody>{rows}</tbody>
       </Table>
     );
@@ -440,7 +480,11 @@ export default function ProcessInstanceList() {
     return (
       <h2>
         Process Instances for:{' '}
-        <Link to={`/admin/process-models/${processModelFullIdentifier}`}>
+        <Link
+          to={`/admin/process-models/${modifyProcessModelPath(
+            processModelFullIdentifier
+          )}`}
+        >
           {processModelFullIdentifier}
         </Link>
       </h2>
@@ -457,9 +501,13 @@ export default function ProcessInstanceList() {
       <>
         {processInstanceTitleElement()}
         <Grid fullWidth>
-          <Column lg={15} />
-          <Column lg={1}>
+          <Column
+            sm={{ span: 1, offset: 3 }}
+            md={{ span: 1, offset: 7 }}
+            lg={{ span: 1, offset: 15 }}
+          >
             <Button
+              data-qa="filter-section-expand-toggle"
               kind="ghost"
               renderIcon={Filter}
               iconDescription="Filter Options"
@@ -471,18 +519,14 @@ export default function ProcessInstanceList() {
         </Grid>
         {filterOptions()}
         <br />
-        <Grid fullWidth>
-          <Column lg={16}>
-            <PaginationForTable
-              page={page}
-              perPage={perPage}
-              pagination={pagination}
-              tableToDisplay={buildTable()}
-              queryParamString={getSearchParamsAsQueryString()}
-              path="/admin/process-instances"
-            />
-          </Column>
-        </Grid>
+        <PaginationForTable
+          page={page}
+          perPage={perPage}
+          pagination={pagination}
+          tableToDisplay={buildTable()}
+          queryParamString={getSearchParamsAsQueryString()}
+          path="/admin/process-instances"
+        />
       </>
     );
   }

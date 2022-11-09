@@ -21,7 +21,7 @@ export default function ProcessModelSearch({
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
     const { inputValue } = options;
-    return `${processModel.process_group_id}/${processModel.id} (${processModel.display_name})`.includes(
+    return `${processModel.id} (${processModel.display_name})`.includes(
       inputValue
     );
   };
@@ -33,9 +33,10 @@ export default function ProcessModelSearch({
       items={processModels}
       itemToString={(processModel: ProcessModel) => {
         if (processModel) {
-          return `${processModel.process_group_id}/${
-            processModel.id
-          } (${truncateString(processModel.display_name, 20)})`;
+          return `${processModel.id} (${truncateString(
+            processModel.display_name,
+            20
+          )})`;
         }
         return null;
       }}
