@@ -24,7 +24,7 @@ class TestLoggingService(BaseTest):
         )
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         # create the model
-        process_model_info = self.create_process_model_with_api(
+        self.create_process_model_with_api(
             client=client,
             process_model_id=process_model_identifier,
             process_model_display_name="Simple Script",

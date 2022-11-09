@@ -131,7 +131,6 @@ class TestMessageService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_send_message_to_multiple_process_models."""
-
         process_group_id = "test_group"
         self.create_process_group(
             client, with_super_admin_user, process_group_id, process_group_id

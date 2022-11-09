@@ -41,7 +41,6 @@ def load_test_spec(
     process_model_source_directory: str = None,
 ) -> ProcessModelInfo:
     """Loads a bpmn file into the process model dir based on a directory in tests/data."""
-
     if process_model_source_directory is None:
         raise Exception("You must inclode a `process_model_source_directory`.")
 

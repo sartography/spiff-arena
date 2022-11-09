@@ -1,4 +1,4 @@
-"""test_nested_groups."""
+"""Test_nested_groups."""
 import json
 
 from flask.app import Flask
@@ -39,7 +39,6 @@ class TestNestedGroups(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_add_nested_group."""
-        pass
         # user = self.find_or_create_user()
         # self.add_permissions_to_user(
         #     user, target_uri=target_uri, permission_names=["read", "create"]

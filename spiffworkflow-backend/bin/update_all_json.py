@@ -1,4 +1,4 @@
-"""Updates all JSON files, based on the current state of BPMN_SPEC_ABSOLUTE_DIR"""
+"""Updates all JSON files, based on the current state of BPMN_SPEC_ABSOLUTE_DIR."""
 from spiffworkflow_backend import get_hacked_up_app_for_script
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 

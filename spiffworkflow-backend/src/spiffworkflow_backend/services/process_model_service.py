@@ -111,7 +111,9 @@ class ProcessModelService(FileSystemService):
 
     def get_process_model(self, process_model_id: str) -> ProcessModelInfo:
         """Get a process model from a model and group id.
-        process_model_id is the full path to the model--including groups."""
+
+        process_model_id is the full path to the model--including groups.
+        """
         if not os.path.exists(FileSystemService.root_path()):
             raise ProcessEntityNotFoundError("process_model_root_not_found")
 
