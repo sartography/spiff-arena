@@ -48,7 +48,7 @@ jobs:
               database: "sqlite",
             }
           - {
-              python: "3.11",
+              python: "3.10",
               os: "windows-latest",
               session: "tests",
               database: "sqlite",
