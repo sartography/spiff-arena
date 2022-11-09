@@ -6,7 +6,8 @@ import { Button, Modal } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-import { modifyProcessModelPath } from '../helpers';
+import { modifyProcessModelPath, unModifyProcessModelPath } from '../helpers';
+import { ProcessFile } from '../interfaces';
 
 // NOTE: This is mostly the same as ProcessModelEditDiagram and if we go this route could
 // possibly be merged into it. I'm leaving as a separate file now in case it does
@@ -19,7 +20,9 @@ export default function ReactFormEditor() {
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
   const navigate = useNavigate();
 
-  const [processModelFile, setProcessModelFile] = useState(null);
+  const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
+    null
+  );
   const [processModelFileContents, setProcessModelFileContents] = useState('');
 
   const fileExtension = (() => {
@@ -145,10 +148,8 @@ export default function ReactFormEditor() {
     );
   };
 
-  const processModelFilePossibleNameString = processModelFile
-    ? (processModelFile as any).name
-    : '';
   if (processModelFile || !params.file_name) {
+    const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <main>
         <ProcessBreadcrumb
@@ -158,15 +159,19 @@ export default function ReactFormEditor() {
           hotCrumbs={[
             ['Process Groups', '/admin'],
             [
-              `Process Model: ${params.process_model_id}`,
-              `process_model:${params.process_model_id}:link`,
+              `Process Model: ${unModifyProcessModelPath(
+                params.process_model_id || ''
+              )}`,
+              `process_model:${unModifyProcessModelPath(
+                params.process_model_id || ''
+              )}:link`,
             ],
-            [processModelFilePossibleNameString],
+            [processModelFileName],
           ]}
         />
         <h2>
-          Process Model File
-          {processModelFile ? `: ${(processModelFile as any).name}` : ''}
+          Process Model File{processModelFile ? ': ' : ''}
+          {processModelFileName}
         </h2>
         {newFileNameBox()}
         <Button onClick={saveFile} variant="danger" data-qa="file-save-button">

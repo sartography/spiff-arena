@@ -400,13 +400,14 @@ export default function ProcessModelShow() {
         httpMethod: 'POST',
         postBody: formData,
       });
-      setShowFileUploadModal(false);
     }
+    setShowFileUploadModal(false);
   };
 
   const fileUploadModal = () => {
     return (
       <Modal
+        data-qa="modal-upload-file-dialog"
         open={showFileUploadModal}
         modalHeading="Upload File"
         primaryButtonText="Upload"
@@ -455,6 +456,7 @@ export default function ProcessModelShow() {
           <ButtonSet>
             <Button
               renderIcon={Upload}
+              data-qa="upload-file-button"
               onClick={() => setShowFileUploadModal(true)}
               size="sm"
               kind=""
