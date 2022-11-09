@@ -521,7 +521,7 @@ def process_instance_log_list(
         )
         .order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
         .join(
-            UserModel, isouter=True
+            UserModel, UserModel.id == SpiffLoggingModel.current_user_id, isouter=True
         )  # isouter since if we don't have a user, we still want the log
         .add_columns(
             UserModel.username,
