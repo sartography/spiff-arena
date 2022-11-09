@@ -44,7 +44,9 @@ export const convertDateToSeconds = (
 
 export const convertStringToDate = (dateString: string) => {
   if (dateString) {
-    return new Date(dateString);
+    // add midnight time to the date so it c uses the correct date
+    // after converting to timezone
+    return new Date(`${dateString}T00:10:00`);
   }
   return null;
 };
