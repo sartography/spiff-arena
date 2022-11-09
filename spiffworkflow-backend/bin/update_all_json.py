@@ -12,8 +12,8 @@ def main() -> None:
         for group in groups:
             for process_model in group.process_models:
                 update_items = {
-                    'process_group_id': '',
-                    'id': f"{group.id}/{process_model.id}"
+                    "process_group_id": "",
+                    "id": f"{group.id}/{process_model.id}",
                 }
                 ProcessModelService().update_spec(process_model, update_items)
 

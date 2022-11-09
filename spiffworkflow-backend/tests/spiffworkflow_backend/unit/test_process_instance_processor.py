@@ -54,10 +54,12 @@ class TestProcessInstanceProcessor(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_sets_permission_correctly_on_active_task."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user = self.find_or_create_user("testuser2")
         assert initiator_user.principal is not None
@@ -70,7 +72,7 @@ class TestProcessInstanceProcessor(BaseTest):
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
             bpmn_file_name="lanes.bpmn",
-            process_model_source_directory="model_with_lanes"
+            process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user
@@ -132,10 +134,12 @@ class TestProcessInstanceProcessor(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_sets_permission_correctly_on_active_task_when_using_dict."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user_three = self.find_or_create_user("testuser3")
         finance_user_four = self.find_or_create_user("testuser4")
@@ -150,7 +154,7 @@ class TestProcessInstanceProcessor(BaseTest):
         process_model = load_test_spec(
             process_model_id="test_group/model_with_lanes",
             bpmn_file_name="lanes_with_owner_dict.bpmn",
-            process_model_source_directory="model_with_lanes"
+            process_model_source_directory="model_with_lanes",
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user

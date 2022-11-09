@@ -12,10 +12,6 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
-
-from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from werkzeug.test import TestResponse  # type: ignore
 
@@ -29,6 +25,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -45,11 +42,11 @@ class BaseTest:
         process_group_id: Optional[str] = "test_group",
         process_model_id: Optional[str] = "random_fact",
         bpmn_file_name: Optional[str] = None,
-        bpmn_file_location: Optional[str] = None
+        bpmn_file_location: Optional[str] = None,
     ) -> str:
         """Creates a process group
-         Creates a process model
-         Adds a bpmn file to the model"""
+        Creates a process model
+        Adds a bpmn file to the model."""
 
         process_group_display_name = process_group_id
         process_group_description = process_group_id
@@ -57,7 +54,9 @@ class BaseTest:
         if bpmn_file_location is None:
             bpmn_file_location = process_model_id
 
-        self.create_process_group(client, user, process_group_id, process_group_display_name)
+        self.create_process_group(
+            client, user, process_group_id, process_group_display_name
+        )
 
         self.create_process_model_with_api(
             client,
@@ -70,7 +69,7 @@ class BaseTest:
         load_test_spec(
             process_model_id=process_model_identifier,
             bpmn_file_name=bpmn_file_name,
-            process_model_source_directory=bpmn_file_location
+            process_model_source_directory=bpmn_file_location,
         )
 
         return process_model_identifier
@@ -174,7 +173,9 @@ class BaseTest:
             else:
                 raise Exception("You must create the group first")
         else:
-            raise Exception("You must include the process_model_id, which must be a path to the model")
+            raise Exception(
+                "You must include the process_model_id, which must be a path to the model"
+            )
 
     def create_spec_file(
         self,
@@ -191,14 +192,14 @@ class BaseTest:
         process_model_id is the destination path
         process_model_location is the source path
 
-        because of permissions, user might be required now..., not sure yet"""
+        because of permissions, user might be required now..., not sure yet."""
         if process_model_location is None:
             process_model_location = file_name.split(".")[0]
         if process_model is None:
             process_model = load_test_spec(
                 process_model_id=process_model_id,
                 bpmn_file_name=file_name,
-                process_model_source_directory=process_model_location
+                process_model_source_directory=process_model_location,
             )
         data = {"file": (io.BytesIO(file_data), file_name)}
         if user is None:

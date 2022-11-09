@@ -67,7 +67,9 @@ def with_super_admin_user() -> UserModel:
 
 
 @pytest.fixture()
-def setup_process_instances_for_reports(client: FlaskClient, with_super_admin_user: UserModel) -> list[ProcessInstanceModel]:
+def setup_process_instances_for_reports(
+    client: FlaskClient, with_super_admin_user: UserModel
+) -> list[ProcessInstanceModel]:
     """Setup_process_instances_for_reports."""
     user = with_super_admin_user
     process_group_id = "runs_without_input"
@@ -80,7 +82,7 @@ def setup_process_instances_for_reports(client: FlaskClient, with_super_admin_us
         process_group_id=process_group_id,
         process_model_id=process_model_id,
         # bpmn_file_name=bpmn_file_name,
-        bpmn_file_location=bpmn_file_location
+        bpmn_file_location=bpmn_file_location,
     )
 
     # BaseTest().create_process_group(
