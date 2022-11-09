@@ -684,39 +684,34 @@ export default function ProcessModelEditDiagram() {
    * fixme:  Not currently in use.  This would only work for bpmn files within the process model.  Which is right for DMN and json, but not right here.  Need to merge in work on the nested process groups before tackling this.
    * @param processId
    */
+
+  const fileNameTemplatePath =
+    '/admin/process-models/:process_model_id/files/:file_name';
+
   const onLaunchBpmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'bpmn');
     if (file) {
-      const path = generatePath(
-        '/admin/process-models/:process_model_id/files/:file_name',
-        {
-          process_model_id: params.process_model_id,
-          file_name: file.name,
-        }
-      );
+      const path = generatePath(fileNameTemplatePath, {
+        process_model_id: params.process_model_id,
+        file_name: file.name,
+      });
       window.open(path);
     }
   };
   const onLaunchJsonEditor = (fileName: string) => {
-    const path = generatePath(
-      '/admin/process-models/:process_model_id/files/:file_name',
-      {
-        process_model_id: params.process_model_id,
-        file_name: fileName,
-      }
-    );
+    const path = generatePath(fileNameTemplatePath, {
+      process_model_id: params.process_model_id,
+      file_name: fileName,
+    });
     window.open(path);
   };
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
-      const path = generatePath(
-        '/admin/process-models/:process_model_id/files/:file_name',
-        {
-          process_model_id: params.process_model_id,
-          file_name: file.name,
-        }
-      );
+      const path = generatePath(fileNameTemplatePath, {
+        process_model_id: params.process_model_id,
+        file_name: file.name,
+      });
       window.open(path);
     }
   };
