@@ -267,7 +267,7 @@ class ProcessInstanceMetadata:
             id=process_instance.id,
             display_name=process_model.display_name,
             description=process_model.description,
-            process_group_id=process_model.process_group_id,
+            process_group_id=process_model.process_group,
             state_message=process_instance.state_message,
             status=process_instance.status,
             completed_tasks=process_instance.completed_tasks,

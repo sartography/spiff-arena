@@ -68,7 +68,7 @@ class FileSystemService:
     def full_path_to_process_model_file(spec: ProcessModelInfo) -> str:
         """Full_path_to_process_model_file."""
         return os.path.join(
-            FileSystemService.workflow_path(spec), spec.primary_file_name
+            FileSystemService.workflow_path(spec), spec.primary_file_name  # type: ignore
         )
 
     def next_display_order(self, spec: ProcessModelInfo) -> int:

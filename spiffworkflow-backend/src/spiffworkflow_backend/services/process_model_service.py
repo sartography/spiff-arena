@@ -34,14 +34,14 @@ class ProcessModelService(FileSystemService):
     GROUP_SCHEMA = ProcessGroupSchema()
     WF_SCHEMA = ProcessModelInfoSchema()
 
-    def is_group(self, path) -> bool:
+    def is_group(self, path: str) -> bool:
         """Is_group."""
         group_json_path = os.path.join(path, self.CAT_JSON_FILE)
         if os.path.exists(group_json_path):
             return True
         return False
 
-    def is_model(self, path) -> bool:
+    def is_model(self, path: str) -> bool:
         """Is_model."""
         model_json_path = os.path.join(path, self.WF_JSON_FILE)
         if os.path.exists(model_json_path):
@@ -239,7 +239,7 @@ class ProcessModelService(FileSystemService):
             process_groups = []
             for item in directory_items:
                 # if item.is_dir() and not item.name[0] == ".":
-                if item.is_dir() and self.is_group(item):
+                if item.is_dir() and self.is_group(item):  # type: ignore
                     scanned_process_group = self.__scan_process_group(item.path)
                     process_groups.append(scanned_process_group)
             return process_groups
@@ -322,5 +322,5 @@ class ProcessModelService(FileSystemService):
             with open(spec_path, "w") as wf_json:
                 json.dump(self.WF_SCHEMA.dump(spec), wf_json, indent=4)
         if process_group:
-            spec.process_group_id = process_group.id
+            spec.process_group = process_group.id
         return spec

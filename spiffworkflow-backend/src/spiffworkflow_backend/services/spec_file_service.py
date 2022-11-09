@@ -487,7 +487,7 @@ class SpecFileService(FileSystemService):
                         ):
                             raise ValidationException(
                                 "Message model is already used to start process model"
-                                f"'{process_model_info.process_group_id}/{process_model_info.id}'"
+                                f"'{process_model_info.process_group}/{process_model_info.id}'"
                             )
 
         for child in et_root:
