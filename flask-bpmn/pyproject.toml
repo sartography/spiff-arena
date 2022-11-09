@@ -30,6 +30,7 @@ werkzeug = "*"
 spiffworkflow = "*"
 sentry-sdk = "*"
 sphinx-autoapi = "^2.0.0"
+greenlet = "^2.0.1"
 
 
 [tool.poetry.dev-dependencies]

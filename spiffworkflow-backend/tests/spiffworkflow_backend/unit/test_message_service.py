@@ -24,16 +24,22 @@ class TestMessageService(BaseTest):
     """TestMessageService."""
 
     def test_can_send_message_to_waiting_message(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_send_message_to_waiting_message."""
         process_group_id = "test_group"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_id
+        )
 
         load_test_spec(
             "test_group/message_receiver",
             process_model_source_directory="message_send_one_conversation",
-            bpmn_file_name="message_receiver.bpmn"
+            bpmn_file_name="message_receiver.bpmn",
         )
         process_model_sender = load_test_spec(
             "test_group/message_sender",
@@ -118,12 +124,17 @@ class TestMessageService(BaseTest):
             assert process_instance.status == "complete"
 
     def test_can_send_message_to_multiple_process_models(
-        self, app: Flask, client: FlaskClient, with_db_and_bpmn_file_cleanup: None, with_super_admin_user: UserModel
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_send_message_to_multiple_process_models."""
-
         process_group_id = "test_group"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_id
+        )
 
         process_model_sender = load_test_spec(
             "test_group/message_sender",

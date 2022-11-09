@@ -21,7 +21,7 @@ class TestGetGroupMembers(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel
+        with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_get_members_of_a_group."""
         initiator_user = self.find_or_create_user("initiator_user")
@@ -38,11 +38,13 @@ class TestGetGroupMembers(BaseTest):
         UserService.add_user_to_group(testuser2, group_a)
         UserService.add_user_to_group(testuser3, group_b)
 
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
         process_model = load_test_spec(
             process_model_id="test_group/get_group_members",
             bpmn_file_name="get_group_members.bpmn",
-            process_model_source_directory="get_group_members"
+            process_model_source_directory="get_group_members",
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user

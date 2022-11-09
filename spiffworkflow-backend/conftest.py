@@ -8,7 +8,6 @@ from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -20,6 +19,8 @@ from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+
+# from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 # We need to call this before importing spiffworkflow_backend
@@ -67,12 +68,14 @@ def with_super_admin_user() -> UserModel:
 
 
 @pytest.fixture()
-def setup_process_instances_for_reports(client: FlaskClient, with_super_admin_user: UserModel) -> list[ProcessInstanceModel]:
+def setup_process_instances_for_reports(
+    client: FlaskClient, with_super_admin_user: UserModel
+) -> list[ProcessInstanceModel]:
     """Setup_process_instances_for_reports."""
     user = with_super_admin_user
     process_group_id = "runs_without_input"
     process_model_id = "sample"
-    bpmn_file_name = "sample.bpmn"
+    # bpmn_file_name = "sample.bpmn"
     bpmn_file_location = "sample"
     process_model_identifier = BaseTest().basic_test_setup(
         client,
@@ -80,7 +83,7 @@ def setup_process_instances_for_reports(client: FlaskClient, with_super_admin_us
         process_group_id=process_group_id,
         process_model_id=process_model_id,
         # bpmn_file_name=bpmn_file_name,
-        bpmn_file_location=bpmn_file_location
+        bpmn_file_location=bpmn_file_location,
     )
 
     # BaseTest().create_process_group(
