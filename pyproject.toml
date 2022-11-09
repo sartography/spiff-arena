@@ -16,7 +16,7 @@ classifiers = [
 Changelog = "https://github.com/sartography/spiffworkflow-backend/releases"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
+python = ">=3.9,<3.12"
 click = "^8.0.1"
 flask = "2.2.2"
 flask-admin = "*"
