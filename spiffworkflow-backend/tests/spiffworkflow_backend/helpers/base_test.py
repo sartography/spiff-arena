@@ -44,10 +44,11 @@ class BaseTest:
         bpmn_file_name: Optional[str] = None,
         bpmn_file_location: Optional[str] = None,
     ) -> str:
-        """Creates a process group
-        Creates a process model
-        Adds a bpmn file to the model."""
+        """Creates a process group.
 
+        Creates a process model
+        Adds a bpmn file to the model.
+        """
         process_group_display_name = process_group_id
         process_group_description = process_group_id
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -114,8 +115,9 @@ class BaseTest:
         headers: Dict[str, str],
     ) -> TestResponse:
         """Create_process_instance.
-        There must be an existing process model to instantiate."""
 
+        There must be an existing process model to instantiate.
+        """
         modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-models/{modified_process_model_id}/process-instances",
@@ -137,7 +139,6 @@ class BaseTest:
         user: Optional[UserModel] = None,
     ) -> TestResponse:
         """Create_process_model."""
-
         if process_model_id is not None:
 
             # make sure we have a group
@@ -188,11 +189,13 @@ class BaseTest:
         user: Optional[UserModel] = None,
     ) -> Any:
         """Test_create_spec_file.
+
         Adds a bpmn file to the model.
         process_model_id is the destination path
         process_model_location is the source path
 
-        because of permissions, user might be required now..., not sure yet."""
+        because of permissions, user might be required now..., not sure yet.
+        """
         if process_model_location is None:
             process_model_location = file_name.split(".")[0]
         if process_model is None:

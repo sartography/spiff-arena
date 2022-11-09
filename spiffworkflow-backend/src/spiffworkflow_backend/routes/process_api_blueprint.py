@@ -903,7 +903,6 @@ def process_instance_report_show(
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-
     process_instances = ProcessInstanceModel.query.order_by(  # .filter_by(process_model_identifier=process_model.id)
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(
