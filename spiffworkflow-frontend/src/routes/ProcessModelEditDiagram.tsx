@@ -107,7 +107,6 @@ export default function ProcessModelEditDiagram() {
     };
 
     if (params.file_name) {
-      console.log(`processModelPath: ${processModelPath}`);
       HttpService.makeCallToBackend({
         path: `/${processModelPath}/files/${params.file_name}`,
         successCallback: fileResult,
@@ -711,7 +710,6 @@ export default function ProcessModelEditDiagram() {
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
-      console.log()
       const path = generatePath(
         '/admin/process-models/:process_model_id/files/:file_name',
         {
