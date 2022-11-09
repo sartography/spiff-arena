@@ -14,12 +14,14 @@ import ButtonWithConfirmation from './ButtonWithConfirmation';
 type OwnProps = {
   mode: string;
   processModel: ProcessModel;
+  process_group_id?: string;
   setProcessModel: (..._args: any[]) => any;
 };
 
 export default function ProcessModelForm({
   mode,
   processModel,
+  process_group_id,
   setProcessModel,
 }: OwnProps) {
   const [identifierInvalid, setIdentifierInvalid] = useState<boolean>(false);
@@ -29,9 +31,12 @@ export default function ProcessModelForm({
   const navigate = useNavigate();
   const modifiedProcessModelPath = modifyProcessModelPath(processModel.id);
 
-  const navigateToProcessModel = (_result: any) => {
-    if (processModel) {
-      navigate(`/admin/process-models/${modifiedProcessModelPath}`);
+  const navigateToProcessModel = (result: ProcessModel) => {
+    if ('id' in result) {
+      const modifiedProcessModelPathFromResult = modifyProcessModelPath(
+        result.id
+      );
+      navigate(`/admin/process-models/${modifiedProcessModelPathFromResult}`);
     }
   };
 
@@ -83,7 +88,7 @@ export default function ProcessModelForm({
     };
     if (mode === 'new') {
       Object.assign(postBody, {
-        id: processModel.id,
+        id: `${process_group_id}/${processModel.id}`,
       });
     }
 
