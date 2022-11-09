@@ -34,13 +34,15 @@ class ProcessModelService(FileSystemService):
     GROUP_SCHEMA = ProcessGroupSchema()
     WF_SCHEMA = ProcessModelInfoSchema()
 
-    def is_group(self, path):
+    def is_group(self, path: str) -> bool:
+        """Is_group."""
         group_json_path = os.path.join(path, self.CAT_JSON_FILE)
         if os.path.exists(group_json_path):
             return True
         return False
 
-    def is_model(self, path):
+    def is_model(self, path: str) -> bool:
+        """Is_model."""
         model_json_path = os.path.join(path, self.WF_JSON_FILE)
         if os.path.exists(model_json_path):
             return True
@@ -92,7 +94,7 @@ class ProcessModelService(FileSystemService):
                 error_code="existing_instances",
                 message=f"We cannot delete the model `{process_model_id}`, there are existing instances that depend on it.",
             )
-        process_model = self.get_process_model(process_model_id)
+        self.get_process_model(process_model_id)
         # path = self.workflow_path(process_model)
         path = f"{FileSystemService.root_path()}/{process_model_id}"
         shutil.rmtree(path)
@@ -107,11 +109,11 @@ class ProcessModelService(FileSystemService):
         path = os.path.join(FileSystemService.root_path(), relative_path)
         return cls().__scan_spec(path, process_group=process_group)
 
-    def get_process_model(
-        self, process_model_id: str
-    ) -> ProcessModelInfo:
+    def get_process_model(self, process_model_id: str) -> ProcessModelInfo:
         """Get a process model from a model and group id.
-        process_model_id is the full path to the model--including groups"""
+
+        process_model_id is the full path to the model--including groups.
+        """
         if not os.path.exists(FileSystemService.root_path()):
             raise ProcessEntityNotFoundError("process_model_root_not_found")
 
@@ -168,7 +170,9 @@ class ProcessModelService(FileSystemService):
     def get_process_group(self, process_group_id: str) -> ProcessGroup:
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
-            process_group_path = os.path.join(FileSystemService.root_path(), process_group_id)
+            process_group_path = os.path.join(
+                FileSystemService.root_path(), process_group_id
+            )
             if self.is_group(process_group_path):
                 return self.__scan_process_group(process_group_path)
                 # nested_groups = []
@@ -235,7 +239,7 @@ class ProcessModelService(FileSystemService):
             process_groups = []
             for item in directory_items:
                 # if item.is_dir() and not item.name[0] == ".":
-                if item.is_dir() and self.is_group(item):
+                if item.is_dir() and self.is_group(item):  # type: ignore
                     scanned_process_group = self.__scan_process_group(item.path)
                     process_groups.append(scanned_process_group)
             return process_groups
@@ -253,7 +257,7 @@ class ProcessModelService(FileSystemService):
                         message=f"We could not load the process_group from disk from: {dir_path}",
                     )
         else:
-            process_group_id = dir_path.replace(FileSystemService.root_path(), '')
+            process_group_id = dir_path.replace(FileSystemService.root_path(), "")
             process_group = ProcessGroup(
                 id=process_group_id,
                 display_name=process_group_id,
@@ -273,7 +277,9 @@ class ProcessModelService(FileSystemService):
                     elif self.is_model(nested_item.path):
                         process_group.process_models.append(
                             self.__scan_spec(
-                                nested_item.path, nested_item.name, process_group=process_group
+                                nested_item.path,
+                                nested_item.name,
+                                process_group=process_group,
                             )
                         )
             process_group.process_models.sort()
@@ -316,5 +322,5 @@ class ProcessModelService(FileSystemService):
             with open(spec_path, "w") as wf_json:
                 json.dump(self.WF_SCHEMA.dump(spec), wf_json, indent=4)
         if process_group:
-            spec.process_group_id = process_group.id
+            spec.process_group = process_group.id
         return spec

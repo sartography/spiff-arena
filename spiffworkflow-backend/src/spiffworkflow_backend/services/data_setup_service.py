@@ -48,7 +48,7 @@ class DataSetupService:
                 except Exception as ex:
                     failing_process_models.append(
                         (
-                            f"{process_model.process_group_id}/{process_model.id}/{process_model_file.name}",
+                            f"{process_model.process_group}/{process_model.id}/{process_model_file.name}",
                             str(ex),
                         )
                     )
@@ -87,7 +87,7 @@ class DataSetupService:
             else:
                 failing_process_models.append(
                     (
-                        f"{process_model.process_group_id}/{process_model.id}",
+                        f"{process_model.process_group}/{process_model.id}",
                         "primary_file_name not set",
                     )
                 )

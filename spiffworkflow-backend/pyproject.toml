@@ -16,7 +16,7 @@ classifiers = [
 Changelog = "https://github.com/sartography/spiffworkflow-backend/releases"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
+python = ">=3.11,<3.12"
 click = "^8.0.1"
 flask = "2.2.2"
 flask-admin = "*"
@@ -47,7 +47,7 @@ gunicorn = "^20.1.0"
 python-keycloak = "^2.5.0"
 APScheduler = "^3.9.1"
 Jinja2 = "^3.1.2"
-RestrictedPython = "^5.2"
+RestrictedPython = "^6.0"
 Flask-SQLAlchemy = "^3"
 orjson = "^3.8.0"
 
