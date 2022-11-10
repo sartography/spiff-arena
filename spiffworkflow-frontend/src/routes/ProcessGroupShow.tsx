@@ -50,7 +50,7 @@ export default function ProcessGroupShow() {
       return null;
     }
     const rows = processModels.map((row) => {
-      const modifiedProcessModelId: String = (row as any).id.replace('/', ':');
+      const modifiedProcessModelId: String = modifyProcessModelPath((row as any).id);
       return (
         <tr key={(row as any).id}>
           <td>
