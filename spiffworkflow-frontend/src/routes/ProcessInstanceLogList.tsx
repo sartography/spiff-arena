@@ -36,7 +36,6 @@ export default function ProcessInstanceLogList() {
     // return null;
     const rows = processInstanceLogs.map((row) => {
       const rowToUse = row as any;
-      console.log(`rowToUse: ${rowToUse}`);
       return (
         <tr key={rowToUse.id}>
           <td>{rowToUse.bpmn_process_identifier}</td>

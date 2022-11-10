@@ -79,12 +79,9 @@ export default function ProcessGroupForm({
       description: processGroup.description,
     };
     if (mode === 'new') {
-      console.log(`parentGroupId: ${parentGroupId}`);
-      console.log(`processGroup.id: ${processGroup.id}`);
       if (parentGroupId) {
         newProcessGroupId = `${parentGroupId}/${processGroup.id}`;
       }
-      console.log(`newProcessGroupId: ${newProcessGroupId}`);
       Object.assign(postBody, {
         id: parentGroupId
           ? `${parentGroupId}/${processGroup.id}`
