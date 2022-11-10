@@ -378,14 +378,6 @@ export default function ProcessModelShow() {
             List
           </Link>
         </li>
-        <li>
-          <Link
-            to="/admin/process-instances/reports"
-            data-qa="process-instance-reports-link"
-          >
-            Reports
-          </Link>
-        </li>
       </ul>
     );
   };
