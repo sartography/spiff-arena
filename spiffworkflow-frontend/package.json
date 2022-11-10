@@ -9,7 +9,7 @@
     "@carbon/icons-react": "^11.10.0",
     "@carbon/react": "^1.16.0",
     "@carbon/styles": "^1.16.0",
-    "@ginkgo-bioworks/react-json-schema-form-builder": "^2.9.0",
+    "@ginkgo-bioworks/react-json-schema-form-builder": "^2.10.0",
     "@monaco-editor/react": "^4.4.5",
     "@rjsf/core": "^4.2.0",
     "@tanstack/react-table": "^8.2.2",
