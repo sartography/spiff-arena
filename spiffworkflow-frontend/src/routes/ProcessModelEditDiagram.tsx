@@ -640,21 +640,13 @@ export default function ProcessModelEditDiagram() {
   const markdownEditor = () => {
     return (
       <Modal
-        size="xl"
-        show={showMarkdownEditor}
-        onHide={handleMarkdownEditorClose}
+        open={showMarkdownEditor}
+        modalHeading={`Edit Markdown`}
+        primaryButtonText="Close"
+        onRequestSubmit={handleMarkdownEditorClose}
+        size="lg"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Markdown Content</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <MDEditor value={markdownText} onChange={setMarkdownText} />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleMarkdownEditorClose}>
-            Close
-          </Button>
-        </Modal.Footer>
+        <MDEditor height={500} highlightEnable={false} value={markdownText} onChange={setMarkdownText} />
       </Modal>
     );
   };
@@ -684,33 +676,41 @@ export default function ProcessModelEditDiagram() {
    * @param processId
    */
 
-  const fileNameTemplatePath =
-    '/admin/process-models/:process_model_id/files/:file_name';
+
 
   const onLaunchBpmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'bpmn');
     if (file) {
-      const path = generatePath(fileNameTemplatePath, {
-        process_model_id: params.process_model_id,
-        file_name: file.name,
-      });
+      const path = generatePath(
+        '/admin/process-models/:process_model_id/files/:file_name',
+        {
+          process_model_id: params.process_model_id,
+          file_name: file.name,
+        }
+      );
       window.open(path);
     }
   };
   const onLaunchJsonEditor = (fileName: string) => {
-    const path = generatePath(fileNameTemplatePath, {
-      process_model_id: params.process_model_id,
-      file_name: fileName,
-    });
+    const path = generatePath(
+      '/admin/process-models/:process_model_id/form/:file_name',
+      {
+        process_model_id: params.process_model_id,
+        file_name: fileName,
+      }
+    );
     window.open(path);
   };
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
-      const path = generatePath(fileNameTemplatePath, {
-        process_model_id: params.process_model_id,
-        file_name: file.name,
-      });
+      const path = generatePath(
+        '/admin/process-models/:process_model_id/files/:file_name',
+        {
+          process_model_id: params.process_model_id,
+          file_name: file.name,
+        }
+      );
       window.open(path);
     }
   };
