@@ -13,6 +13,7 @@ from typing import Union
 import connexion  # type: ignore
 import flask.wrappers
 import jinja2
+from spiffworkflow_backend.models.group import GroupModel
 import werkzeug
 from flask import Blueprint
 from flask import current_app
@@ -979,6 +980,42 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
 
     response_json = {
         "results": tasks,
+        "pagination": {
+            "count": len(active_tasks.items),
+            "total": active_tasks.total,
+            "pages": active_tasks.pages,
+        },
+    }
+
+    return make_response(jsonify(response_json), 200)
+
+
+# @process_api_blueprint.route("/v1.0/tasks", methods=["GET"])
+def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    user_id = g.user.id
+    active_tasks = (
+        ActiveTaskModel.query.order_by(desc(ActiveTaskModel.id))  # type: ignore
+        .join(ProcessInstanceModel)
+        .filter_by(process_initiator_id=user_id)
+        .outerjoin(GroupModel)
+        # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
+        .add_columns(
+            ProcessInstanceModel.process_model_identifier,
+            ProcessInstanceModel.status,
+            ProcessInstanceModel.updated_at_in_seconds,
+            ProcessInstanceModel.created_at_in_seconds,
+            GroupModel.identifier.label("group_identifier"),
+            ActiveTaskModel.task_name,
+            ActiveTaskModel.task_title,
+            ActiveTaskModel.process_model_display_name,
+            ActiveTaskModel.process_instance_id,
+        )
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
+    # tasks = [ActiveTaskModel.to_task(active_task) for active_task in active_tasks.items]
+
+    response_json = {
+        "results": active_tasks.items,
         "pagination": {
             "count": len(active_tasks.items),
             "total": active_tasks.total,
