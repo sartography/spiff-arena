@@ -641,12 +641,17 @@ export default function ProcessModelEditDiagram() {
     return (
       <Modal
         open={showMarkdownEditor}
-        modalHeading={`Edit Markdown`}
+        modalHeading="Edit Markdown"
         primaryButtonText="Close"
         onRequestSubmit={handleMarkdownEditorClose}
         size="lg"
       >
-        <MDEditor height={500} highlightEnable={false} value={markdownText} onChange={setMarkdownText} />
+        <MDEditor
+          height={500}
+          highlightEnable={false}
+          value={markdownText}
+          onChange={setMarkdownText}
+        />
       </Modal>
     );
   };
@@ -675,8 +680,6 @@ export default function ProcessModelEditDiagram() {
    * fixme:  Not currently in use.  This would only work for bpmn files within the process model.  Which is right for DMN and json, but not right here.  Need to merge in work on the nested process groups before tackling this.
    * @param processId
    */
-
-
 
   const onLaunchBpmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'bpmn');
