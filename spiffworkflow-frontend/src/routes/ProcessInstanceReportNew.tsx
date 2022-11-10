@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 
 export default function ProcessInstanceReportNew() {
-  const params = useParams();
   const navigate = useNavigate();
 
   const [identifier, setIdentifier] = useState('');
