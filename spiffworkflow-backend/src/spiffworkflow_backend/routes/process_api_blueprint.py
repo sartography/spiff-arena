@@ -162,7 +162,9 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_group_update(modified_process_group_id: str, body: dict) -> flask.wrappers.Response:
+def process_group_update(
+    modified_process_group_id: str, body: dict
+) -> flask.wrappers.Response:
     """Process Group Update."""
     body_include_list = ["display_name", "description"]
     body_filtered = {
@@ -230,7 +232,9 @@ def process_model_add(
         )
 
     modified_process_model_id = process_model_info.id
-    unmodified_process_model_id = un_modify_modified_process_model_id(modified_process_model_id)
+    unmodified_process_model_id = un_modify_modified_process_model_id(
+        modified_process_model_id
+    )
     process_model_info.id = unmodified_process_model_id
     process_group_id, _ = os.path.split(process_model_info.id)
     process_model_service = ProcessModelService()
