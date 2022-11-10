@@ -158,13 +158,18 @@ export default function HomePage() {
     );
   };
 
+  const tasksWaitingForMe = tasksWaitingForMeComponent();
   const relevantProcessModelSection =
-    recentProcessModels.length > 0 && buildRecentProcessModelSection();
+    (recentProcessModels.length > 0 && buildRecentProcessModelSection()) ||
+    null;
 
   if (pagination) {
+    if (tasksWaitingForMe === null && relevantProcessModelSection === null) {
+      return <p>No tasks are waiting for you.</p>;
+    }
     return (
       <>
-        {tasksWaitingForMeComponent()}
+        {tasksWaitingForMe}
         {relevantProcessModelSection}
       </>
     );

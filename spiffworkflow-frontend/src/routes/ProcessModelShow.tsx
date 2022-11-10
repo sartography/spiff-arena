@@ -35,15 +35,8 @@ import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 
 const storeRecentProcessModelInLocalStorage = (
-  processModelForStorage: any,
-  params: any
+  processModelForStorage: ProcessModel
 ) => {
-  if (
-    params.process_group_id === undefined ||
-    params.process_model_id === undefined
-  ) {
-    return;
-  }
   // All values stored in localStorage are strings.
   // Grab our recentProcessModels string from localStorage.
   const stringFromLocalStorage = window.localStorage.getItem(
@@ -60,16 +53,16 @@ const storeRecentProcessModelInLocalStorage = (
 
   // Here's the value we want to add
   const value = {
-    processGroupIdentifier: processModelForStorage.process_group_id,
     processModelIdentifier: processModelForStorage.id,
     processModelDisplayName: processModelForStorage.display_name,
   };
 
+  // anything with a processGroupIdentifier is old and busted. leave it behind.
+  array = array.filter((item) => item.processGroupIdentifier === undefined);
+
   // If our parsed/empty array doesn't already have this value in it...
   const matchingItem = array.find(
-    (item) =>
-      item.processGroupIdentifier === value.processGroupIdentifier &&
-      item.processModelIdentifier === value.processModelIdentifier
+    (item) => item.processModelIdentifier === value.processModelIdentifier
   );
   if (matchingItem === undefined) {
     // add the value to the beginning of the array
@@ -79,13 +72,15 @@ const storeRecentProcessModelInLocalStorage = (
     if (array.length > 3) {
       array.pop();
     }
-
-    // turn the array WITH THE NEW VALUE IN IT into a string to prepare it to be stored in localStorage
-    const stringRepresentingArray = JSON.stringify(array);
-
-    // and store it in localStorage as "recentProcessModels"
-    window.localStorage.setItem('recentProcessModels', stringRepresentingArray);
   }
+
+  // once the old and busted serializations are gone, we can put these two statements inside the above if statement
+
+  // turn the array WITH THE NEW VALUE IN IT into a string to prepare it to be stored in localStorage
+  const stringRepresentingArray = JSON.stringify(array);
+
+  // and store it in localStorage as "recentProcessModels"
+  window.localStorage.setItem('recentProcessModels', stringRepresentingArray);
 };
 
 export default function ProcessModelShow() {
@@ -108,13 +103,13 @@ export default function ProcessModelShow() {
     const processResult = (result: ProcessModel) => {
       setProcessModel(result);
       setReloadModel(false);
-      storeRecentProcessModelInLocalStorage(result, params);
+      storeRecentProcessModelInLocalStorage(result);
     };
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}`,
       successCallback: processResult,
     });
-  }, [params, reloadModel, modifiedProcessModelId]);
+  }, [reloadModel, modifiedProcessModelId]);
 
   const processModelRun = (processInstance: any) => {
     setErrorMessage(null);
