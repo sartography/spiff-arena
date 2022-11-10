@@ -1,9 +1,8 @@
 """Test_logging_service."""
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.user import UserModel
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestLoggingService(BaseTest):
