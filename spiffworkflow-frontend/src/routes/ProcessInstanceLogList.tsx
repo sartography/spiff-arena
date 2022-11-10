@@ -88,9 +88,10 @@ export default function ProcessInstanceLogList() {
               )}:link`,
             ],
             [
-              `${params.process_instance_id}`,
+              `Process Instance: ${params.process_instance_id}`,
               `/admin/process-models/${params.process_model_id}/process-instances/${params.process_instance_id}`,
             ],
+            ['Logs'],
           ]}
         />
         <PaginationForTable
