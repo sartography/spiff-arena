@@ -380,7 +380,7 @@ export default function ProcessModelShow() {
         </li>
         <li>
           <Link
-            to={`/admin/process-models/${modifiedProcessModelId}/process-instances/reports`}
+            to="/admin/process-instances/reports"
             data-qa="process-instance-reports-link"
           >
             Reports

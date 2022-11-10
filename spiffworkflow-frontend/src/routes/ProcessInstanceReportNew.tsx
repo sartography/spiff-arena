@@ -13,9 +13,7 @@ export default function ProcessInstanceReportNew() {
   const [filterBy, setFilterBy] = useState('');
 
   const navigateToNewProcessInstance = (_result: any) => {
-    navigate(
-      `/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports/${identifier}`
-    );
+    navigate(`/admin/process-instances/reports/${identifier}`);
   };
 
   const addProcessInstanceReport = (event: any) => {
