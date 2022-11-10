@@ -78,7 +78,8 @@ jobs:
       FLASK_SESSION_SECRET_KEY: super_secret_key
 
     defaults:
-      working-directory: subworkflow-backend
+      run:
+        working-directory: subworkflow-backend
 
     steps:
       - name: Check out the repository
