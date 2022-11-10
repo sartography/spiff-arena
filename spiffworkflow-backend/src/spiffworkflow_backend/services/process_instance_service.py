@@ -64,7 +64,7 @@ class ProcessInstanceService:
                 processor.do_engine_steps(save=True)
             except Exception as e:
                 db.session.rollback()  # in case the above left the database with a bad transaction
-                process_instance.status = ProcessInstanceStatus.erroring.value
+                process_instance.status = ProcessInstanceStatus.faulted.value
                 db.session.add(process_instance)
                 db.session.commit()
                 error_message = (
