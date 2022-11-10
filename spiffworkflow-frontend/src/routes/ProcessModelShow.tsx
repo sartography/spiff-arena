@@ -13,6 +13,8 @@ import {
   Accordion,
   AccordionItem,
   Button,
+  Grid,
+  Column,
   Stack,
   ButtonSet,
   Modal,
@@ -233,17 +235,22 @@ export default function ProcessModelShow() {
     });
   };
 
-  const navigateToFileEdit = (processModelFile: ProcessFile) => {
+  const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
-        navigate(
-          `/admin/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`
-        );
-      } else if (processModelFile.name.match(/\.(json|md)$/)) {
-        navigate(
-          `/admin/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`
-        );
+        return `/admin/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
       }
+      if (processModelFile.name.match(/\.(json|md)$/)) {
+        return `/admin/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
+      }
+    }
+    return null;
+  };
+
+  const navigateToFileEdit = (processModelFile: ProcessFile) => {
+    const url = profileModelFileEditUrl(processModelFile);
+    if (url) {
+      navigate(url);
     }
   };
 
@@ -324,10 +331,15 @@ export default function ProcessModelShow() {
       if (isPrimaryBpmnFile) {
         primarySuffix = '- Primary File';
       }
+      let fileLink = null;
+      const fileUrl = profileModelFileEditUrl(processModelFile);
+      if (fileUrl) {
+        fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
+      }
       constructedTag = (
         <TableRow key={processModelFile.name}>
           <TableCell key={`${processModelFile.name}-cell`}>
-            {processModelFile.name}
+            {fileLink}
             {primarySuffix}
           </TableCell>
           {actionsTableCell}
@@ -440,63 +452,67 @@ export default function ProcessModelShow() {
       return null;
     }
     return (
-      <Accordion>
-        <AccordionItem
-          data-qa="files-accordion"
-          title={
-            <Stack orientation="horizontal">
-              <span>
-                <Button size="sm" kind="ghost">
-                  Files
+      <Grid fullWidth>
+        <Column md={4} lg={8}>
+          <Accordion align="end">
+            <AccordionItem
+              data-qa="files-accordion"
+              title={
+                <Stack orientation="horizontal">
+                  <span>
+                    <Button size="sm" kind="ghost">
+                      Files
+                    </Button>
+                  </span>
+                </Stack>
+              }
+            >
+              <ButtonSet>
+                <Button
+                  renderIcon={Upload}
+                  data-qa="upload-file-button"
+                  onClick={() => setShowFileUploadModal(true)}
+                  size="sm"
+                  kind=""
+                  className="button-white-background"
+                >
+                  Upload File
                 </Button>
-              </span>
-            </Stack>
-          }
-        >
-          <ButtonSet>
-            <Button
-              renderIcon={Upload}
-              data-qa="upload-file-button"
-              onClick={() => setShowFileUploadModal(true)}
-              size="sm"
-              kind=""
-              className="button-white-background"
-            >
-              Upload File
-            </Button>
-            <Button
-              renderIcon={Add}
-              href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
-              size="sm"
-            >
-              New BPMN File
-            </Button>
-            <Button
-              renderIcon={Add}
-              href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
-              size="sm"
-            >
-              New DMN File
-            </Button>
-            <Button
-              renderIcon={Add}
-              href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
-              size="sm"
-            >
-              New JSON File
-            </Button>
-            <Button
-              renderIcon={Add}
-              href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
-              size="sm"
-            >
-              New Markdown File
-            </Button>
-          </ButtonSet>
-          <br />
-          {processModelFileList()}
-        </AccordionItem>
-      </Accordion>
+                <Button
+                  renderIcon={Add}
+                  href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
+                  size="sm"
+                >
+                  New BPMN File
+                </Button>
+                <Button
+                  renderIcon={Add}
+                  href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
+                  size="sm"
+                >
+                  New DMN File
+                </Button>
+                <Button
+                  renderIcon={Add}
+                  href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
+                  size="sm"
+                >
+                  New JSON File
+                </Button>
+                <Button
+                  renderIcon={Add}
+                  href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
+                  size="sm"
+                >
+                  New Markdown File
+                </Button>
+              </ButtonSet>
+              <br />
+              {processModelFileList()}
+            </AccordionItem>
+          </Accordion>
+        </Column>
+      </Grid>
     );
   };
 
