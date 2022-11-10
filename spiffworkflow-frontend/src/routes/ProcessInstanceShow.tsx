@@ -206,7 +206,7 @@ export default function ProcessInstanceShow() {
       statusIcon = <Checkmark />;
     } else if (processInstanceToUse.status === 'terminated') {
       statusIcon = <StopOutline />;
-    } else if (processInstanceToUse.status === 'faulted') {
+    } else if (processInstanceToUse.status === 'error') {
       statusIcon = <Warning />;
     }
 
@@ -262,7 +262,7 @@ export default function ProcessInstanceShow() {
 
   const terminateButton = (processInstanceToUse: any) => {
     if (
-      ['complete', 'terminated', 'faulted'].indexOf(
+      ['complete', 'terminated', 'error'].indexOf(
         processInstanceToUse.status
       ) === -1
     ) {
@@ -283,7 +283,7 @@ export default function ProcessInstanceShow() {
 
   const suspendButton = (processInstanceToUse: any) => {
     if (
-      ['complete', 'terminated', 'faulted', 'suspended'].indexOf(
+      ['complete', 'terminated', 'error', 'suspended'].indexOf(
         processInstanceToUse.status
       ) === -1
     ) {

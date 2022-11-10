@@ -12,7 +12,7 @@ export const PROCESS_STATUSES = [
   'user_input_required',
   'waiting',
   'complete',
-  'faulted',
+  'error',
   'suspended',
 ];
 
