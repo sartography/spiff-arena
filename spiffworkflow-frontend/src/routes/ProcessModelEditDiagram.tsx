@@ -268,7 +268,7 @@ export default function ProcessModelEditDiagram() {
       });
       event.eventBus.fire('spiff.json_files.returned', { options });
     } else {
-      console.log('There is no process Model.');
+      console.error('There is no process Model.');
     }
   };
 
@@ -281,10 +281,9 @@ export default function ProcessModelEditDiagram() {
           options.push({ label: ref.name, value: ref.id });
         });
       });
-      console.log('Options', options);
       event.eventBus.fire('spiff.dmn_files.returned', { options });
     } else {
-      console.log('There is no process model.');
+      console.error('There is no process model.');
     }
   };
 

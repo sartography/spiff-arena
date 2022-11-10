@@ -32,9 +32,10 @@ const explodeCrumb = (crumb: HotCrumbItem) => {
     if (lastPathItem !== undefined) {
       paths.push(lastPathItem);
     }
-    const lastUrl = `/admin/${endingUrlType.replace('_', '-')}s/${paths.join(
-      ':'
-    )}`;
+    // process_models to process-models
+    const lastUrl = `/admin/${endingUrlType
+      .replace('_', '-')
+      .replace(/s*$/, 's')}/${paths.join(':')}`;
     breadcrumbItems.push(
       <BreadcrumbItem key={lastPathItem} href={lastUrl}>
         {lastPathItem}
@@ -69,7 +70,7 @@ export default function ProcessBreadcrumb({
           </BreadcrumbItem>
         );
       }
-      if (url && url.match(/^process_(model|group):/)) {
+      if (url && url.match(/^process[_-](model|group)s?:/)) {
         return explodeCrumb(crumb);
       }
       return (
