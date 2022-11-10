@@ -20,7 +20,7 @@ export default function ProcessGroupNew() {
   return (
     <>
       <ProcessBreadcrumb hotCrumbs={hotCrumbs} />
-      <h2>Add Process Group</h2>
+      <h1>Add Process Group</h1>
       <ProcessGroupForm
         mode="new"
         processGroup={processGroup}

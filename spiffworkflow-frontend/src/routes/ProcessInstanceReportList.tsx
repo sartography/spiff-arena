@@ -44,7 +44,7 @@ export default function ProcessInstanceReportList() {
 
   const headerStuff = (
     <>
-      <h2>Process Instance Reports</h2>
+      <h1>Process Instance Reports</h1>
       <Button href="/admin/process-instances/reports/new">
         Add a process instance report
       </Button>

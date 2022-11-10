@@ -84,10 +84,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                 "columns": [
                     {"Header": "id", "accessor": "id"},
                     {
-                        "Header": "process_group_identifier",
-                        "accessor": "process_group_identifier",
-                    },
-                    {
                         "Header": "process_model_identifier",
                         "accessor": "process_model_identifier",
                     },

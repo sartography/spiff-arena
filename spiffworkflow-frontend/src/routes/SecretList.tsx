@@ -95,7 +95,7 @@ export default function SecretList() {
   if (pagination) {
     return (
       <div>
-        <h2>Secrets</h2>
+        <h1>Secrets</h1>
         {SecretsDisplayArea()}
         <Button href="/admin/secrets/new">Add a secret</Button>
       </div>

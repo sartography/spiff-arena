@@ -413,7 +413,7 @@ paths:
       - name: process_status
         in: query
         required: false
-        description: For filtering - not_started, user_input_required, waiting, complete, faulted, or suspended
+        description: For filtering - not_started, user_input_required, waiting, complete, error, or suspended
         schema:
           type: string
     # process_instance_list

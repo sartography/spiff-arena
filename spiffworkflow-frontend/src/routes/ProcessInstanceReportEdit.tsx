@@ -106,7 +106,7 @@ export default function ProcessInstanceReportEdit() {
 
   return (
     <>
-      <h2>Edit Process Instance Report: {params.report_identifier}</h2>
+      <h1>Edit Process Instance Report: {params.report_identifier}</h1>
       <ButtonWithConfirmation
         description={`Delete Report ${params.report_identifier}?`}
         onConfirmation={deleteProcessInstanceReport}
