@@ -3,9 +3,8 @@ import os
 import threading
 
 from flask.app import Flask
-from werkzeug.utils import ImportStringError
-
 from spiffworkflow_backend.services.logging_service import setup_logger
+from werkzeug.utils import ImportStringError
 
 
 class ConfigurationError(Exception):

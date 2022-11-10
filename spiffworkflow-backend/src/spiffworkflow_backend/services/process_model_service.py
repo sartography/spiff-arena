@@ -8,7 +8,6 @@ from typing import Optional
 from typing import TypeVar
 
 from flask_bpmn.api.api_error import ApiError
-
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -213,10 +212,35 @@ class ProcessModelService(FileSystemService):
             )
         return process_group
 
+    def __get_all_nested_models(self, group_path: str) -> list:
+        """__get_all_nested_models."""
+        all_nested_models = []
+        for root, dirs, files in os.walk(group_path):
+            for dir in dirs:
+                model_dir = os.path.join(group_path, dir)
+                if ProcessModelService().is_model(model_dir):
+                    process_model = self.get_process_model(model_dir)
+                    all_nested_models.append(process_model)
+        return all_nested_models
+
     def process_group_delete(self, process_group_id: str) -> None:
         """Delete_process_group."""
+        problem_models = []
         path = self.process_group_path(process_group_id)
         if os.path.exists(path):
+            nested_models = self.__get_all_nested_models(path)
+            for process_model in nested_models:
+                instances = ProcessInstanceModel.query.filter(
+                    ProcessInstanceModel.process_model_identifier == process_model.id
+                ).all()
+                if len(instances) > 0:
+                    problem_models.append(process_model)
+            if len(problem_models) > 0:
+                raise ApiError(
+                    error_code="existing_instances",
+                    message=f"We cannot delete the group `{process_group_id}`, "
+                    f"there are models with existing instances inside the group. {problem_models}",
+                )
             shutil.rmtree(path)
         self.cleanup_process_group_display_order()
 
@@ -275,9 +299,7 @@ class ProcessModelService(FileSystemService):
                     if self.is_group(nested_item.path):
                         # This is a nested group
                         process_group.process_groups.append(
-                            self.__scan_process_group(
-                                nested_item.path
-                            )
+                            self.__scan_process_group(nested_item.path)
                         )
                     elif self.is_model(nested_item.path):
                         process_group.process_models.append(
