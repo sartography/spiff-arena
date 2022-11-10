@@ -166,10 +166,10 @@ export default function ReactFormEditor() {
             [processModelFileName],
           ]}
         />
-        <h2>
+        <h1>
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
-        </h2>
+        </h1>
         {newFileNameBox()}
         <Button onClick={saveFile} variant="danger" data-qa="file-save-button">
           Save

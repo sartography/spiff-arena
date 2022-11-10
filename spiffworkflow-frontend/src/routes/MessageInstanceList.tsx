@@ -126,7 +126,7 @@ export default function MessageInstanceList() {
     return (
       <>
         {breadcrumbElement}
-        <h2>Messages</h2>
+        <h1>Messages</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}
