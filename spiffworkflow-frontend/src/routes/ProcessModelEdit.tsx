@@ -30,7 +30,6 @@ export default function ProcessModelEdit() {
             ],
           ]}
         />
-        <ProcessBreadcrumb processGroupId={params.process_group_id} />
         <h2>Edit Process Model: {(processModel as any).id}</h2>
         <ProcessModelForm
           mode="edit"

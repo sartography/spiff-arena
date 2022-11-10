@@ -32,7 +32,7 @@ const explodeCrumb = (crumb: HotCrumbItem) => {
     if (lastPathItem !== undefined) {
       paths.push(lastPathItem);
     }
-    // process_models to process-models
+    // process_model to process-models
     const lastUrl = `/admin/${endingUrlType
       .replace('_', '-')
       .replace(/s*$/, 's')}/${paths.join(':')}`;

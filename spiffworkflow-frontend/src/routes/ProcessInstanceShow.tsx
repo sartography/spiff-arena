@@ -1,8 +1,15 @@
 import { useContext, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-// @ts-ignore
-import { Button, Modal, Stack } from '@carbon/react';
+import {
+  Grid,
+  Column,
+  Button,
+  Modal,
+  Stack,
+  UnorderedList,
+  // @ts-ignore
+} from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -129,19 +136,17 @@ export default function ProcessInstanceShow() {
     distance: number
   ) => {
     return (
-      <li>
-        <Link
-          reloadDocument
-          data-qa="process-instance-step-link"
-          to={`/admin/process-models/${
-            params.process_model_id
-          }/process-instances/${params.process_instance_id}/${
-            currentSpiffStep(processInstanceToUse) + distance
-          }`}
-        >
-          {label}
-        </Link>
-      </li>
+      <Link
+        reloadDocument
+        data-qa="process-instance-step-link"
+        to={`/admin/process-models/${
+          params.process_model_id
+        }/process-instances/${params.process_instance_id}/${
+          currentSpiffStep(processInstanceToUse) + distance
+        }`}
+      >
+        {label}
+      </Link>
     );
   };
 
@@ -150,7 +155,7 @@ export default function ProcessInstanceShow() {
       return null;
     }
 
-    return spiffStepLink(processInstanceToUse, 'Previous Step', -1);
+    return spiffStepLink(processInstanceToUse, '<<', -1);
   };
 
   const nextStepLink = (processInstanceToUse: any) => {
@@ -158,7 +163,7 @@ export default function ProcessInstanceShow() {
       return null;
     }
 
-    return spiffStepLink(processInstanceToUse, 'Next Step', 1);
+    return spiffStepLink(processInstanceToUse, '>>', 1);
   };
 
   const getInfoTag = (processInstanceToUse: any) => {
@@ -177,7 +182,7 @@ export default function ProcessInstanceShow() {
     }
 
     return (
-      <ul>
+      <UnorderedList>
         <li>
           Started:{' '}
           {convertSecondsToFormattedDate(processInstanceToUse.start_in_seconds)}
@@ -200,13 +205,7 @@ export default function ProcessInstanceShow() {
             Messages
           </Link>
         </li>
-        <li>
-          Step {currentSpiffStep(processInstanceToUse)} of{' '}
-          {processInstanceToUse.spiff_step}
-        </li>
-        {previousStepLink(processInstanceToUse)}
-        {nextStepLink(processInstanceToUse)}
-      </ul>
+      </UnorderedList>
     );
   };
 
@@ -433,6 +432,21 @@ export default function ProcessInstanceShow() {
     return null;
   };
 
+  const stepsElement = (processInstanceToUse: any) => {
+    return (
+      <Grid fullWidth>
+        <Column sm={3} md={3} lg={3}>
+          <Stack orientation="horizontal" gap={3}>
+            {previousStepLink(processInstanceToUse)}
+            Step {currentSpiffStep(processInstanceToUse)} of{' '}
+            {processInstanceToUse.spiff_step}
+            {nextStepLink(processInstanceToUse)}
+          </Stack>
+        </Column>
+      </Grid>
+    );
+  };
+
   if (processInstance && tasks) {
     const processInstanceToUse = processInstance as any;
     const taskIds = getTaskIds();
@@ -449,22 +463,28 @@ export default function ProcessInstanceShow() {
               `Process Model: ${processModelId}`,
               `process_model:${processModelId}:link`,
             ],
-            [`Process Instance: ${params.process_instance_id}`],
+            [`${processInstanceToUse.id}`],
           ]}
         />
+        <h1>Process Instance Id: {processInstanceToUse.id}</h1>
         <Stack orientation="horizontal" gap={3}>
-          <h2>Process Instance Id: {processInstanceToUse.id}</h2>
           <ButtonWithConfirmation
             description="Delete Process Instance?"
             onConfirmation={deleteProcessInstance}
             buttonLabel="Delete"
+            confirmButtonLabel="Delete"
           />
           {terminateButton(processInstanceToUse)}
           {suspendButton(processInstanceToUse)}
           {resumeButton(processInstanceToUse)}
         </Stack>
+        <br />
+        <br />
         {getInfoTag(processInstanceToUse)}
+        <br />
         {taskDataDisplayArea()}
+        {stepsElement(processInstanceToUse)}
+        <br />
         <ReactDiagramEditor
           processModelId={processModelId || ''}
           diagramXML={processInstanceToUse.bpmn_xml_file_contents || ''}
