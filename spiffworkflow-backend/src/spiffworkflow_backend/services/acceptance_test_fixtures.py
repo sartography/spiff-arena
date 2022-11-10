@@ -23,7 +23,7 @@ def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
     # user_input_required - 2 hours ago
     # waiting - 3 hourse ago
     # complete - 4 hours ago
-    # faulted - 5 hours ago
+    # error - 5 hours ago
     # suspended - 6 hours ago
     process_instances = []
     for i in range(len(statuses)):

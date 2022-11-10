@@ -10,7 +10,7 @@ import {
   modifyProcessModelPath,
   unModifyProcessModelPath,
 } from '../helpers';
-import { ProcessGroup } from '../interfaces';
+import { ProcessGroup, ProcessModel } from '../interfaces';
 
 export default function ProcessGroupShow() {
   const params = useParams();
@@ -49,19 +49,19 @@ export default function ProcessGroupShow() {
     if (processGroup === null) {
       return null;
     }
-    const rows = processModels.map((row) => {
+    const rows = processModels.map((row: ProcessModel) => {
       const modifiedProcessModelId: String = modifyProcessModelPath((row as any).id);
       return (
-        <tr key={(row as any).id}>
+        <tr key={row.id}>
           <td>
             <Link
               to={`/admin/process-models/${modifiedProcessModelId}`}
               data-qa="process-model-show-link"
             >
-              {(row as any).id}
+              {row.id}
             </Link>
           </td>
-          <td>{(row as any).display_name}</td>
+          <td>{row.display_name}</td>
         </tr>
       );
     });
@@ -85,21 +85,19 @@ export default function ProcessGroupShow() {
     if (processGroup === null) {
       return null;
     }
-    const rows = processGroups.map((row) => {
-      const modifiedProcessGroupId: String = modifyProcessModelPath(
-        (row as any).id
-      );
+    const rows = processGroups.map((row: ProcessGroup) => {
+      const modifiedProcessGroupId: String = modifyProcessModelPath(row.id);
       return (
-        <tr key={(row as any).id}>
+        <tr key={row.id}>
           <td>
             <Link
               to={`/admin/process-groups/${modifiedProcessGroupId}`}
               data-qa="process-model-show-link"
             >
-              {(row as any).id}
+              {row.id}
             </Link>
           </td>
-          <td>{(row as any).display_name}</td>
+          <td>{row.display_name}</td>
         </tr>
       );
     });
@@ -121,15 +119,13 @@ export default function ProcessGroupShow() {
 
   if (processGroup && pagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    const modifiedProcessGroupId = modifyProcessModelPath(
-      (processGroup as any).id
-    );
+    const modifiedProcessGroupId = modifyProcessModelPath(processGroup.id);
     return (
       <>
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [`Process Group: ${processGroup.display_name}`],
+            ['', `process_group:${processGroup.id}`],
           ]}
         />
         <ul>
@@ -159,7 +155,7 @@ export default function ProcessGroupShow() {
             perPage={perPage}
             pagination={pagination}
             tableToDisplay={buildModelTable()}
-            path={`/admin/process-groups/${(processGroup as any).id}`}
+            path={`/admin/process-groups/${processGroup.id}`}
           />
           <br />
           <br />
@@ -168,7 +164,7 @@ export default function ProcessGroupShow() {
             perPage={perPage}
             pagination={pagination}
             tableToDisplay={buildGroupTable()}
-            path={`/admin/process-groups/${(processGroup as any).id}`}
+            path={`/admin/process-groups/${processGroup.id}`}
           />
         </ul>
       </>

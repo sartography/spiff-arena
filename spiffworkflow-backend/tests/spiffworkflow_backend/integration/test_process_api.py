@@ -1715,7 +1715,7 @@ class TestProcessApi(BaseTest):
             .first()
         )
         assert process is not None
-        assert process.status == "faulted"
+        assert process.status == "error"
 
     def test_error_handler_suspend(
         self,
@@ -1826,7 +1826,7 @@ class TestProcessApi(BaseTest):
             .first()
         )
         assert process is not None
-        assert process.status == "faulted"
+        assert process.status == "error"
 
     def test_process_model_file_create(
         self,

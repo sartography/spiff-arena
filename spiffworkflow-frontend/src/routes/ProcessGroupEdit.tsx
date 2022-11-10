@@ -24,8 +24,16 @@ export default function ProcessGroupEdit() {
   if (processGroup) {
     return (
       <>
-        <ProcessBreadcrumb processGroupId={(processGroup as any).id} />
-        <h2>Edit Process Group: {(processGroup as any).id}</h2>
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Group: ${processGroup.id}:link`,
+              `process_group:${processGroup.id}:link`,
+            ],
+          ]}
+        />
+        <h1>Edit Process Group: {(processGroup as any).id}</h1>
         <ProcessGroupForm
           mode="edit"
           processGroup={processGroup}

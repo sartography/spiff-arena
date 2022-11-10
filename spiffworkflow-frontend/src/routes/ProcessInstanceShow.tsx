@@ -1,13 +1,33 @@
 import { useContext, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-// @ts-ignore
-import { Button, Modal, Stack } from '@carbon/react';
+import {
+  TrashCan,
+  StopOutline,
+  PauseOutline,
+  PlayOutline,
+  CaretLeft,
+  CaretRight,
+  InProgress,
+  Checkmark,
+  Warning,
+  // @ts-ignore
+} from '@carbon/icons-react';
+import {
+  Grid,
+  Column,
+  Button,
+  ButtonSet,
+  Tag,
+  Modal,
+  Stack,
+  // @ts-ignore
+} from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
-  convertSecondsToFormattedDate,
+  convertSecondsToFormattedDateTime,
   unModifyProcessModelPath,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -125,23 +145,21 @@ export default function ProcessInstanceShow() {
 
   const spiffStepLink = (
     processInstanceToUse: any,
-    label: string,
+    label: any,
     distance: number
   ) => {
     return (
-      <li>
-        <Link
-          reloadDocument
-          data-qa="process-instance-step-link"
-          to={`/admin/process-models/${
-            params.process_model_id
-          }/process-instances/${params.process_instance_id}/${
-            currentSpiffStep(processInstanceToUse) + distance
-          }`}
-        >
-          {label}
-        </Link>
-      </li>
+      <Link
+        reloadDocument
+        data-qa="process-instance-step-link"
+        to={`/admin/process-models/${
+          params.process_model_id
+        }/process-instances/${params.process_instance_id}/${
+          currentSpiffStep(processInstanceToUse) + distance
+        }`}
+      >
+        {label}
+      </Link>
     );
   };
 
@@ -150,7 +168,7 @@ export default function ProcessInstanceShow() {
       return null;
     }
 
-    return spiffStepLink(processInstanceToUse, 'Previous Step', -1);
+    return spiffStepLink(processInstanceToUse, <CaretLeft />, -1);
   };
 
   const nextStepLink = (processInstanceToUse: any) => {
@@ -158,68 +176,106 @@ export default function ProcessInstanceShow() {
       return null;
     }
 
-    return spiffStepLink(processInstanceToUse, 'Next Step', 1);
+    return spiffStepLink(processInstanceToUse, <CaretRight />, 1);
   };
 
   const getInfoTag = (processInstanceToUse: any) => {
-    const currentEndDate = convertSecondsToFormattedDate(
+    const currentEndDate = convertSecondsToFormattedDateTime(
       processInstanceToUse.end_in_seconds
     );
     let currentEndDateTag;
     if (currentEndDate) {
       currentEndDateTag = (
-        <li>
-          Completed:{' '}
-          {convertSecondsToFormattedDate(processInstanceToUse.end_in_seconds) ||
-            'N/A'}
-        </li>
+        <Grid condensed fullWidth>
+          <Column sm={1} md={1} lg={1} className="grid-list-title">
+            Completed:{' '}
+          </Column>
+          <Column sm={3} md={3} lg={3} className="grid-date">
+            {convertSecondsToFormattedDateTime(
+              processInstanceToUse.end_in_seconds
+            ) || 'N/A'}
+          </Column>
+        </Grid>
       );
     }
 
+    let statusIcon = <InProgress />;
+    if (processInstanceToUse.status === 'suspended') {
+      statusIcon = <PauseOutline />;
+    } else if (processInstanceToUse.status === 'complete') {
+      statusIcon = <Checkmark />;
+    } else if (processInstanceToUse.status === 'terminated') {
+      statusIcon = <StopOutline />;
+    } else if (processInstanceToUse.status === 'error') {
+      statusIcon = <Warning />;
+    }
+
     return (
-      <ul>
-        <li>
-          Started:{' '}
-          {convertSecondsToFormattedDate(processInstanceToUse.start_in_seconds)}
-        </li>
+      <>
+        <Grid condensed fullWidth>
+          <Column sm={1} md={1} lg={1} className="grid-list-title">
+            Started:{' '}
+          </Column>
+          <Column sm={3} md={3} lg={3} className="grid-date">
+            {convertSecondsToFormattedDateTime(
+              processInstanceToUse.start_in_seconds
+            )}
+          </Column>
+        </Grid>
         {currentEndDateTag}
-        <li>Status: {processInstanceToUse.status}</li>
-        <li>
-          <Link
-            data-qa="process-instance-log-list-link"
-            to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
-          >
-            Logs
-          </Link>
-        </li>
-        <li>
-          <Link
-            data-qa="process-instance-message-instance-list-link"
-            to={`/admin/messages?process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
-          >
-            Messages
-          </Link>
-        </li>
-        <li>
-          Step {currentSpiffStep(processInstanceToUse)} of{' '}
-          {processInstanceToUse.spiff_step}
-        </li>
-        {previousStepLink(processInstanceToUse)}
-        {nextStepLink(processInstanceToUse)}
-      </ul>
+        <Grid condensed fullWidth>
+          <Column sm={1} md={1} lg={1} className="grid-list-title">
+            Status:{' '}
+          </Column>
+          <Column sm={3} md={3} lg={3}>
+            <Tag type="gray" size="sm" className="span-tag">
+              {processInstanceToUse.status} {statusIcon}
+            </Tag>
+          </Column>
+        </Grid>
+        <br />
+        <Grid condensed fullWidth>
+          <Column sm={2} md={2} lg={2}>
+            <ButtonSet>
+              <Button
+                size="sm"
+                className="button-white-background"
+                data-qa="process-instance-log-list-link"
+                href={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
+              >
+                Logs
+              </Button>
+              <Button
+                size="sm"
+                className="button-white-background"
+                data-qa="process-instance-message-instance-list-link"
+                href={`/admin/messages?process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
+              >
+                Messages
+              </Button>
+            </ButtonSet>
+          </Column>
+        </Grid>
+      </>
     );
   };
 
   const terminateButton = (processInstanceToUse: any) => {
     if (
-      ['complete', 'terminated', 'faulted'].indexOf(
+      ['complete', 'terminated', 'error'].indexOf(
         processInstanceToUse.status
       ) === -1
     ) {
       return (
-        <Button onClick={terminateProcessInstance} variant="warning">
-          Terminate
-        </Button>
+        <ButtonWithConfirmation
+          kind="ghost"
+          renderIcon={StopOutline}
+          iconDescription="Terminate"
+          hasIconOnly
+          description={`Terminate Process Instance: ${processInstanceToUse.id}`}
+          onConfirmation={terminateProcessInstance}
+          confirmButtonLabel="Terminate"
+        />
       );
     }
     return <div />;
@@ -227,14 +283,19 @@ export default function ProcessInstanceShow() {
 
   const suspendButton = (processInstanceToUse: any) => {
     if (
-      ['complete', 'terminated', 'faulted', 'suspended'].indexOf(
+      ['complete', 'terminated', 'error', 'suspended'].indexOf(
         processInstanceToUse.status
       ) === -1
     ) {
       return (
-        <Button onClick={suspendProcessInstance} variant="warning">
-          Suspend
-        </Button>
+        <Button
+          onClick={suspendProcessInstance}
+          kind="ghost"
+          renderIcon={PauseOutline}
+          iconDescription="Suspend"
+          hasIconOnly
+          size="lg"
+        />
       );
     }
     return <div />;
@@ -243,9 +304,14 @@ export default function ProcessInstanceShow() {
   const resumeButton = (processInstanceToUse: any) => {
     if (processInstanceToUse.status === 'suspended') {
       return (
-        <Button onClick={resumeProcessInstance} variant="warning">
-          Resume
-        </Button>
+        <Button
+          onClick={resumeProcessInstance}
+          kind="ghost"
+          renderIcon={PlayOutline}
+          iconDescription="Resume"
+          hasIconOnly
+          size="lg"
+        />
       );
     }
     return <div />;
@@ -433,6 +499,40 @@ export default function ProcessInstanceShow() {
     return null;
   };
 
+  const stepsElement = (processInstanceToUse: any) => {
+    return (
+      <Grid condensed fullWidth>
+        <Column sm={3} md={3} lg={3}>
+          <Stack orientation="horizontal" gap={3} className="smaller-text">
+            {previousStepLink(processInstanceToUse)}
+            Step {currentSpiffStep(processInstanceToUse)} of{' '}
+            {processInstanceToUse.spiff_step}
+            {nextStepLink(processInstanceToUse)}
+          </Stack>
+        </Column>
+      </Grid>
+    );
+  };
+
+  const buttonIcons = (processInstanceToUse: any) => {
+    const elements = [];
+    elements.push(terminateButton(processInstanceToUse));
+    elements.push(suspendButton(processInstanceToUse));
+    elements.push(resumeButton(processInstanceToUse));
+    elements.push(
+      <ButtonWithConfirmation
+        kind="ghost"
+        renderIcon={TrashCan}
+        iconDescription="Delete"
+        hasIconOnly
+        description={`Delete Process Instance: ${processInstanceToUse.id}`}
+        onConfirmation={deleteProcessInstance}
+        confirmButtonLabel="Delete"
+      />
+    );
+    return elements;
+  };
+
   if (processInstance && tasks) {
     const processInstanceToUse = processInstance as any;
     const taskIds = getTaskIds();
@@ -449,22 +549,22 @@ export default function ProcessInstanceShow() {
               `Process Model: ${processModelId}`,
               `process_model:${processModelId}:link`,
             ],
-            [`Process Instance: ${params.process_instance_id}`],
+            [`Process Instance Id: ${processInstanceToUse.id}`],
           ]}
         />
-        <Stack orientation="horizontal" gap={3}>
-          <h2>Process Instance Id: {processInstanceToUse.id}</h2>
-          <ButtonWithConfirmation
-            description="Delete Process Instance?"
-            onConfirmation={deleteProcessInstance}
-            buttonLabel="Delete"
-          />
-          {terminateButton(processInstanceToUse)}
-          {suspendButton(processInstanceToUse)}
-          {resumeButton(processInstanceToUse)}
+        <Stack orientation="horizontal" gap={1}>
+          <h1 className="with-icons">
+            Process Instance Id: {processInstanceToUse.id}
+          </h1>
+          {buttonIcons(processInstanceToUse)}
         </Stack>
+        <br />
+        <br />
         {getInfoTag(processInstanceToUse)}
+        <br />
         {taskDataDisplayArea()}
+        {stepsElement(processInstanceToUse)}
+        <br />
         <ReactDiagramEditor
           processModelId={processModelId || ''}
           diagramXML={processInstanceToUse.bpmn_xml_file_contents || ''}

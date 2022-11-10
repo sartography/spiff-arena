@@ -153,9 +153,6 @@ export default function ReactFormEditor() {
     return (
       <main>
         <ProcessBreadcrumb
-          processGroupId={params.process_group_id}
-          processModelId={params.process_model_id}
-          linkProcessModel
           hotCrumbs={[
             ['Process Groups', '/admin'],
             [
@@ -169,10 +166,10 @@ export default function ReactFormEditor() {
             [processModelFileName],
           ]}
         />
-        <h2>
+        <h1>
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
-        </h2>
+        </h1>
         {newFileNameBox()}
         <Button onClick={saveFile} variant="danger" data-qa="file-save-button">
           Save

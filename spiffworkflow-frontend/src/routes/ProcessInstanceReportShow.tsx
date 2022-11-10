@@ -80,7 +80,7 @@ export default function ProcessInstanceReport() {
           processGroupId={params.process_group_id}
           linkProcessModel
         />
-        <h2>Process Instance Report: {params.report_identifier}</h2>
+        <h1>Process Instance Report: {params.report_identifier}</h1>
         <Button
           href={`/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports/${params.report_identifier}/edit`}
         >
