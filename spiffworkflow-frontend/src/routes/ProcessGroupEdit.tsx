@@ -33,7 +33,7 @@ export default function ProcessGroupEdit() {
             ],
           ]}
         />
-        <h2>Edit Process Group: {(processGroup as any).id}</h2>
+        <h1>Edit Process Group: {(processGroup as any).id}</h1>
         <ProcessGroupForm
           mode="edit"
           processGroup={processGroup}

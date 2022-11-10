@@ -122,7 +122,7 @@ export default function HomePage() {
     });
     return (
       <>
-        <h2>Processes I can start</h2>
+        <h1>Processes I can start</h1>
         <Table striped bordered>
           <thead>
             <tr>
@@ -145,7 +145,7 @@ export default function HomePage() {
     );
     return (
       <>
-        <h2>Tasks waiting for me</h2>
+        <h1>Tasks waiting for me</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}

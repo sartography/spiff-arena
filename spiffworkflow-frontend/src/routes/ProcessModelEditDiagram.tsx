@@ -782,10 +782,10 @@ export default function ProcessModelEditDiagram() {
             [processModelFileName],
           ]}
         />
-        <h2>
+        <h1>
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
-        </h2>
+        </h1>
         {appropriateEditor()}
         {newFileNameBox()}
         {scriptEditor()}
