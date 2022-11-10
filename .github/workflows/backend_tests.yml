@@ -34,24 +34,6 @@ jobs:
               database: "sqlite",
             }
           - {
-              python: "3.10",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          - {
-              python: "3.9",
-              os: "ubuntu-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          - {
-              python: "3.10",
-              os: "windows-latest",
-              session: "tests",
-              database: "sqlite",
-            }
-          - {
               python: "3.11",
               os: "macos-latest",
               session: "tests",
@@ -79,7 +61,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: subworkflow-backend
+        working-directory: spiffworkflow-backend
 
     steps:
       - name: Check out the repository
