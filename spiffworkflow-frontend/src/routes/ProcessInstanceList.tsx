@@ -494,7 +494,7 @@ export default function ProcessInstanceList() {
   };
 
   const processInstanceTitleElement = () => {
-    return <h2>Process Instances</h2>;
+    return <h1>Process Instances</h1>;
   };
 
   const toggleShowFilterOptions = () => {

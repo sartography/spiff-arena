@@ -59,7 +59,7 @@ export default function ProcessInstanceReportNew() {
   return (
     <>
       <ProcessBreadcrumb />
-      <h2>Add Process Model</h2>
+      <h1>Add Process Model</h1>
       <form onSubmit={addProcessInstanceReport}>
         <label htmlFor="identifier">
           identifier:

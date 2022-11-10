@@ -3,8 +3,8 @@ import * as ReactDOMClient from 'react-dom/client';
 import App from './App';
 
 import 'bootstrap/dist/css/bootstrap.css';
-import './index.css';
 import './index.scss';
+import './index.css';
 
 import reportWebVitals from './reportWebVitals';
 import UserService from './services/UserService';

@@ -113,11 +113,12 @@ export default function MessageInstanceList() {
               )}:link`,
             ],
             [
-              `${searchParams.get('process_instance_id')}`,
+              `Process Instance: ${searchParams.get('process_instance_id')}`,
               `/admin/process-models/${searchParams.get(
                 'process_model_id'
               )}/process-instances/${searchParams.get('process_instance_id')}`,
             ],
+            ['Messages'],
           ]}
         />
       );
@@ -125,7 +126,7 @@ export default function MessageInstanceList() {
     return (
       <>
         {breadcrumbElement}
-        <h2>Messages</h2>
+        <h1>Messages</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}
