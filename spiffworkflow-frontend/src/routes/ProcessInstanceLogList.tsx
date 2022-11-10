@@ -8,6 +8,7 @@ import {
   getPageInfoFromSearchParams,
   convertSecondsToFormattedDate,
   modifyProcessModelPath,
+  unModifyProcessModelPath,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -33,7 +34,6 @@ export default function ProcessInstanceLogList() {
   }, [searchParams, params]);
 
   const buildTable = () => {
-    // return null;
     const rows = processInstanceLogs.map((row) => {
       const rowToUse = row as any;
       return (
@@ -56,7 +56,7 @@ export default function ProcessInstanceLogList() {
       );
     });
     return (
-      <Table striped bordered>
+      <Table size="lg">
         <thead>
           <tr>
             <th>Bpmn Process Identifier</th>
@@ -74,13 +74,24 @@ export default function ProcessInstanceLogList() {
   };
 
   if (pagination) {
+    console.log('params.process_model_id', params.process_model_id);
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     return (
       <main>
         <ProcessBreadcrumb
-          processModelId={params.process_model_id}
-          processGroupId={params.process_group_id}
-          linkProcessModel
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${params.process_model_id}`,
+              `process_model:${unModifyProcessModelPath(
+                params.process_model_id || ''
+              )}:link`,
+            ],
+            [
+              `${params.process_instance_id}`,
+              `/admin/process-models/${params.process_model_id}/process-instances/${params.process_instance_id}`,
+            ],
+          ]}
         />
         <PaginationForTable
           page={page}

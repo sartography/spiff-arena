@@ -153,9 +153,6 @@ export default function ReactFormEditor() {
     return (
       <main>
         <ProcessBreadcrumb
-          processGroupId={params.process_group_id}
-          processModelId={params.process_model_id}
-          linkProcessModel
           hotCrumbs={[
             ['Process Groups', '/admin'],
             [

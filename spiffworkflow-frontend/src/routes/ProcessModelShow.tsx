@@ -448,7 +448,7 @@ export default function ProcessModelShow() {
     }
     return (
       <Grid fullWidth>
-        <Column md={4} lg={8}>
+        <Column md={5} lg={9} sm={3}>
           <Accordion align="end">
             <AccordionItem
               data-qa="files-accordion"
