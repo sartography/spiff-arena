@@ -12,10 +12,11 @@ export const PROCESS_STATUSES = [
   'user_input_required',
   'waiting',
   'complete',
-  'faulted',
+  'error',
   'suspended',
 ];
 
 // with time: yyyy-MM-dd HH:mm:ss
+export const DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm:ss';
 export const DATE_FORMAT = 'yyyy-MM-dd';
 export const DATE_FORMAT_CARBON = 'Y-m-d';

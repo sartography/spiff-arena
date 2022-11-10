@@ -1,22 +1,77 @@
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* site is mainly using white theme. */
+/* header is mainly using g100 */
+/* mockup wanted white, not grey, text */
+.cds--header, a.cds--header__menu-item {
+  color: white;
 }
 
+h1{
+  height: 36px;
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28px;
+  line-height: 36px;
+  color: #161616;
+  flex: none;
+  order: 0;
+  align-self: stretch;
+  flex-grow: 0;
+  margin-bottom: 1em
+}
+
+.span-tag {
+  color: black;
+}
+
+.cds--btn.button-white-background {
+  color: #393939;
+  background: #FFFFFF;
+  background-blend-mode: multiply;
+  border: 1px solid #393939;
+}
+.cds--btn.button-white-background:hover {
+  background: #525252;
+}
+
+.cds--breadcrumb-item a.cds--link:hover {
+  color: #525252;
+}
+.cds--breadcrumb-item a.cds--link:visited {
+  color: #525252;
+}
+.cds--breadcrumb-item a.cds--link:visited:hover {
+  color: #525252;
+}
+.cds--breadcrumb-item a.cds--link {
+  color: #525252;
+}
+
+.cds--btn--ghost {
+  color: black;
+}
+.cds--btn--ghost:visited {
+  color: black;
+}
+.cds--btn--ghost:hover {
+  color: black;
+}
+.cds--btn--ghost:visited:hover {
+  color: black;
+}
+
+.cds--header__global .cds--btn--primary {
+  background-color: #161616
+}
+.cds--btn--primary {
+  background-color: #393939;
+}
+.cds--btn--primary:hover {
+  background-color: #474747;
+}
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
-}
-
-span.bjs-crumb {
-  color: #0000ff;
-}
-.bjs-breadcrumbs li:last-of-type span.bjs-crumb a {
-  color: black;
 }
 
 .app-logo {
@@ -52,18 +107,31 @@ span.bjs-crumb {
   margin-bottom: 2em;
 }
 
+h1.with-icons {
+  margin-top: 5px;
+}
+
+.grid-list-title {
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 18px;
+  color: #161616;
+}
+.grid-date {
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  color: #525252;
+}
+.smaller-text {
+  font-size: 14px;
+}
+
 .diagram-editor-canvas {
   border:1px solid #000000;
   height:70vh;
   width:90vw;
   margin:auto;
-}
-
-.cds--btn.button-white-background {
-  color: #393939;
-  background: #FFFFFF;
-  background-blend-mode: multiply;
-  border: 1px solid #393939;
 }
 
 .with-bottom-margin {
