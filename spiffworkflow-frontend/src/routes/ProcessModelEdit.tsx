@@ -4,10 +4,11 @@ import { useParams } from 'react-router-dom';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ProcessModelForm from '../components/ProcessModelForm';
+import { ProcessModel } from '../interfaces';
 
 export default function ProcessModelEdit() {
   const params = useParams();
-  const [processModel, setProcessModel] = useState(null);
+  const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const processModelPath = `process-models/${params.process_model_id}`;
 
   useEffect(() => {
@@ -20,6 +21,15 @@ export default function ProcessModelEdit() {
   if (processModel) {
     return (
       <>
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${processModel.id}`,
+              `process_model:${processModel.id}:link`,
+            ],
+          ]}
+        />
         <ProcessBreadcrumb processGroupId={params.process_group_id} />
         <h2>Edit Process Model: {(processModel as any).id}</h2>
         <ProcessModelForm
