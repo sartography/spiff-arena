@@ -46,7 +46,7 @@ export default function SecretNew() {
 
   return (
     <main style={{ padding: '1rem 0' }}>
-      <h2>Add Secret</h2>
+      <h1>Add Secret</h1>
       <Form onSubmit={addSecret}>
         <Form.Group className="mb-3" controlId="formDisplayName">
           <Form.Label>

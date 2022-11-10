@@ -229,7 +229,7 @@ export default function ReactDiagramEditor({
     diagramModeler.on('spiff.script.edit', (event: any) => {
       const { error, element, scriptType, script, eventBus } = event;
       if (error) {
-        console.log(error);
+        console.error(error);
       }
       handleLaunchScriptEditor(element, script, scriptType, eventBus);
     });
@@ -237,7 +237,7 @@ export default function ReactDiagramEditor({
     diagramModeler.on('spiff.markdown.edit', (event: any) => {
       const { error, element, value, eventBus } = event;
       if (error) {
-        console.log(error);
+        console.error(error);
       }
       handleLaunchMarkdownEditor(element, value, eventBus);
     });
@@ -318,7 +318,7 @@ export default function ReactDiagramEditor({
     }
 
     function handleError(err: any) {
-      console.log('ERROR:', err);
+      console.error('ERROR:', err);
     }
 
     function checkTaskCanBeHighlighted(taskBpmnId: string) {
@@ -406,7 +406,6 @@ export default function ReactDiagramEditor({
     }
 
     function fetchDiagramFromURL(urlToUse: any) {
-      console.log(`urlToUse: ${urlToUse}`);
       fetch(urlToUse)
         .then((response) => response.text())
         .then((text) => {

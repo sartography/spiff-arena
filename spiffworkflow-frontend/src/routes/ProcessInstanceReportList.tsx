@@ -54,7 +54,7 @@ export default function ProcessInstanceReportList() {
         processModelId={params.process_model_id}
         linkProcessModel
       />
-      <h2>Reports for Process Model: {params.process_model_id}</h2>
+      <h1>Reports for Process Model: {params.process_model_id}</h1>
       <Button
         href={`/admin/process-models/${modifiedProcessModelId}/process-instances/reports/new`}
       >

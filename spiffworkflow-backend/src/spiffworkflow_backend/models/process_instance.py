@@ -60,10 +60,9 @@ class ProcessInstanceStatus(SpiffEnum):
     user_input_required = "user_input_required"
     waiting = "waiting"
     complete = "complete"
-    faulted = "faulted"
+    error = "error"
     suspended = "suspended"
     terminated = "terminated"
-    erroring = "erroring"
 
 
 class ProcessInstanceModel(SpiffworkflowBaseDBModel):

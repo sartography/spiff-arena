@@ -16,8 +16,16 @@ export default function ProcessModelNew() {
 
   return (
     <>
-      <ProcessBreadcrumb />
-      <h2>Add Process Model</h2>
+      <ProcessBreadcrumb
+        hotCrumbs={[
+          ['Process Groups', '/admin'],
+          [
+            `Process Group: ${params.process_group_id}`,
+            `process_group:${params.process_group_id}:link`,
+          ],
+        ]}
+      />
+      <h1>Add Process Model</h1>
       <ProcessModelForm
         mode="new"
         processGroupId={params.process_group_id}

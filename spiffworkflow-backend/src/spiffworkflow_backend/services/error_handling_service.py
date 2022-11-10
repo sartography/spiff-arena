@@ -45,7 +45,7 @@ class ErrorHandlingService:
             # fault is the default
             self.set_instance_status(
                 _processor.process_instance_model.id,
-                ProcessInstanceStatus.faulted.value,
+                ProcessInstanceStatus.error.value,
             )
 
         if len(process_model.exception_notification_addresses) > 0:
