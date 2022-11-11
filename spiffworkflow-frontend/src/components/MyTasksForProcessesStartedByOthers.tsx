@@ -63,6 +63,7 @@ export default function MyTasksForProcessesStartedByOthers() {
           >
             {rowToUse.task_title}
           </td>
+          <td>{rowToUse.username}</td>
           <td>{rowToUse.process_instance_status}</td>
           <td>{rowToUse.group_identifier || '-'}</td>
           <td>
@@ -95,6 +96,7 @@ export default function MyTasksForProcessesStartedByOthers() {
             <th>Process Model</th>
             <th>Process Instance</th>
             <th>Task Name</th>
+            <th>Process Started By</th>
             <th>Process Instance Status</th>
             <th>Assigned Group</th>
             <th>Process Started</th>
