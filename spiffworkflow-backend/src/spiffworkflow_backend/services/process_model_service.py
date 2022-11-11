@@ -160,7 +160,7 @@ class ProcessModelService(FileSystemService):
         process_models.sort()
         return process_models
 
-    def get_process_groups(self, process_group_id: str = None) -> list[ProcessGroup]:
+    def get_process_groups(self, process_group_id: Optional[str] = None) -> list[ProcessGroup]:
         """Returns the process_groups as a list in display order."""
         process_groups = self.__scan_process_groups(process_group_id)
         process_groups.sort()
@@ -254,7 +254,7 @@ class ProcessModelService(FileSystemService):
             index += 1
         return process_groups
 
-    def __scan_process_groups(self, process_group_id: str = None) -> list[ProcessGroup]:
+    def __scan_process_groups(self, process_group_id: Optional[str] = None) -> list[ProcessGroup]:
         """__scan_process_groups."""
         if not os.path.exists(FileSystemService.root_path()):
             return []  # Nothing to scan yet.  There are no files.
