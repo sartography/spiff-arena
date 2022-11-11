@@ -38,11 +38,14 @@ class MyJSONEncoder(DefaultJSONProvider):
             return_dict = {}
             for row_key in obj.keys():
                 row_value = obj[row_key]
-                if hasattr(row_value, "__dict__"):
+                if hasattr(row_value, "serialized"):
+                    return_dict.update(row_value.serialized)
+                elif hasattr(row_value, "__dict__"):
                     return_dict.update(row_value.__dict__)
                 else:
                     return_dict.update({row_key: row_value})
-            return_dict.pop("_sa_instance_state")
+            if "_sa_instance_state" in return_dict:
+                return_dict.pop("_sa_instance_state")
             return return_dict
         return super().default(obj)
 

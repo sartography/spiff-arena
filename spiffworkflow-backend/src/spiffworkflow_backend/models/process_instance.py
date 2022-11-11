@@ -99,17 +99,17 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         local_bpmn_xml_file_contents = ""
         if self.bpmn_xml_file_contents:
             local_bpmn_xml_file_contents = self.bpmn_xml_file_contents.decode("utf-8")
-
         return {
             "id": self.id,
             "process_model_identifier": self.process_model_identifier,
             "process_group_identifier": self.process_group_identifier,
             "status": self.status,
-            "bpmn_json": self.bpmn_json,
             "start_in_seconds": self.start_in_seconds,
             "end_in_seconds": self.end_in_seconds,
             "process_initiator_id": self.process_initiator_id,
             "bpmn_xml_file_contents": local_bpmn_xml_file_contents,
+            "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
+            "bpmn_version_control_type": self.bpmn_version_control_type,
             "spiff_step": self.spiff_step,
         }
 

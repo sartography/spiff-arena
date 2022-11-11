@@ -901,6 +901,35 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
+  /tasks/for-processes-started-by-others:
+    parameters:
+      - name: page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+      - name: per_page
+        in: query
+        required: false
+        description: The page number to return. Defaults to page 1.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_for_processes_started_by_others
+      summary: returns the list of tasks for given user's open process instances
+      responses:
+        "200":
+          description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
   /process-instance/{process_instance_id}/tasks:
     parameters:
       - name: process_instance_id
