@@ -7,13 +7,12 @@ from flask.testing import FlaskClient
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestSpecFileService(BaseTest):
@@ -35,7 +34,7 @@ class TestSpecFileService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_store_process_ids_for_lookup."""
-        self.basic_test_setup(
+        self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=self.process_group_id,
@@ -60,7 +59,7 @@ class TestSpecFileService(BaseTest):
     ) -> None:
         """Test_fails_to_save_duplicate_process_id."""
         bpmn_process_identifier = "Level1"
-        self.basic_test_setup(
+        self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=self.process_group_id,
@@ -104,7 +103,7 @@ class TestSpecFileService(BaseTest):
         db.session.add(process_id_lookup)
         db.session.commit()
 
-        self.basic_test_setup(
+        self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=self.process_group_id,
@@ -144,7 +143,7 @@ class TestSpecFileService(BaseTest):
         """
         process_group_id = "test_group"
         process_model_id = "call_activity_nested"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=process_group_id,

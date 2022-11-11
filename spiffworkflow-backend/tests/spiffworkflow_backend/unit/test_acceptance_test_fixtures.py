@@ -1,6 +1,5 @@
 """Test_acceptance_test_fixtures."""
 from flask.app import Flask
-
 from spiffworkflow_backend.services.acceptance_test_fixtures import (
     load_acceptance_test_fixtures,
 )
