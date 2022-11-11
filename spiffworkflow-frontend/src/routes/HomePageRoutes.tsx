@@ -14,30 +14,36 @@ export default function HomePageRoutes() {
 
   useEffect(() => {
     setErrorMessage(null);
+    let newSelectedTabIndex = 0;
+    if (location.pathname.match(/^\/tasks\/\d/)) {
+      newSelectedTabIndex = 1;
+    }
+    setSelectedTabIndex(newSelectedTabIndex);
   }, [location, setErrorMessage]);
 
-  // selectedIndex={selectedTabIndex}
-  // onChange={(event: any) => {
-  //   setSelectedTabIndex(event.selectedIndex);
-  // }}
   return (
     <>
-      <h1>HELO</h1>
-      <Tabs>
+      <Tabs
+        selectedIndex={selectedTabIndex}
+        onChange={(event: any) => {
+          setSelectedTabIndex(event.selectedIndex);
+        }}
+      >
         <TabList aria-label="List of tabs">
-          <Tab onClick={() => navigate('http://www.google.com')}>
-            Tab Label 1
+          <Tab onClick={() => navigate('/tasks/my-tasks')}>My Tasks</Tab>
+          <Tab
+            onClick={() =>
+              navigate('/tasks/9/4dc9f6e3-2256-47b2-9f78-6bc2f061db80')
+            }
+          >
+            One Task
           </Tab>
-          <Tab>Tab Label 2</Tab>
-          <Tab disabled>Tab Label 3</Tab>
-          <Tab title="Tab Label 4 with a very long long title">
-            Tab Label 4 with a very long long title
-          </Tab>
-          <Tab>Tab Label 5</Tab>
         </TabList>
       </Tabs>
+      <br />
       <Routes>
         <Route path="/" element={<MyTasks />} />
+        <Route path="/my-tasks" element={<MyTasks />} />
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
       </Routes>
     </>
