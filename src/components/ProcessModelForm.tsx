@@ -88,7 +88,7 @@ export default function ProcessModelForm({
     };
     if (mode === 'new') {
       Object.assign(postBody, {
-        id: `${processGroupId}/${processModel.id}`,
+        id: `${processGroupId}:${processModel.id}`,
       });
     }
 
