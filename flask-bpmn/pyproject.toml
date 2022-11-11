@@ -62,7 +62,7 @@ reorder-python-imports = "^3.9.0"
 pre-commit-hooks = "^4.3.0"
 sphinx-click = "^4.3.0"
 Pygments = "^2.13.0"
-pyupgrade = "^3.2.0"
+pyupgrade = "^3.2.2"
 furo = ">=2021.11.12"
 MonkeyType = "^22.2.0"
 
