@@ -34,7 +34,30 @@ from werkzeug.test import TestResponse  # type: ignore
 class BaseTest:
     """BaseTest."""
 
-    def basic_test_setup(
+    @staticmethod
+    def find_or_create_user(username: str = "test_user_1") -> UserModel:
+        """Find_or_create_user."""
+        user = UserModel.query.filter_by(username=username).first()
+        if isinstance(user, UserModel):
+            return user
+
+        user = UserService.create_user("internal", username, username=username)
+        if isinstance(user, UserModel):
+            return user
+
+        raise ApiError(
+            error_code="create_user_error",
+            message=f"Cannot find or create user: {username}",
+        )
+
+    @staticmethod
+    def logged_in_headers(
+        user: UserModel, _redirect_url: str = "http://some/frontend/url"
+    ) -> Dict[str, str]:
+        """Logged_in_headers."""
+        return dict(Authorization="Bearer " + user.encode_auth_token())
+
+    def create_group_and_model_with_bpmn(
         self,
         client: FlaskClient,
         user: UserModel,
@@ -74,56 +97,27 @@ class BaseTest:
 
         return process_model_identifier
 
-    @staticmethod
-    def find_or_create_user(username: str = "test_user_1") -> UserModel:
-        """Find_or_create_user."""
-        user = UserModel.query.filter_by(username=username).first()
-        if isinstance(user, UserModel):
-            return user
-
-        user = UserService.create_user("internal", username, username=username)
-        if isinstance(user, UserModel):
-            return user
-
-        raise ApiError(
-            error_code="create_user_error",
-            message=f"Cannot find or create user: {username}",
-        )
-
-    @staticmethod
-    def get_open_id_constants(app: Flask) -> tuple:
-        """Get_open_id_constants."""
-        open_id_server_url = app.config["OPEN_ID_SERVER_URL"]
-        open_id_client_id = app.config["OPEN_ID_CLIENT_ID"]
-        open_id_realm_name = app.config["OPEN_ID_REALM_NAME"]
-        open_id_client_secret_key = app.config[
-            "OPEN_ID_CLIENT_SECRET_KEY"
-        ]  # noqa: S105
-
-        return (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        )
-
-    @staticmethod
-    def create_process_instance(
+    def create_process_group(
+        self,
         client: FlaskClient,
-        test_process_model_id: str,
-        headers: Dict[str, str],
-    ) -> TestResponse:
-        """Create_process_instance.
-
-        There must be an existing process model to instantiate.
-        """
-        modified_process_model_id = test_process_model_id.replace("/", ":")
+        user: Any,
+        process_group_id: str,
+        display_name: str = "",
+    ) -> str:
+        """Create_process_group."""
+        process_group = ProcessGroup(
+            id=process_group_id, display_name=display_name, display_order=0, admin=False
+        )
         response = client.post(
-            f"/v1.0/process-models/{modified_process_model_id}/process-instances",
-            headers=headers,
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(user),
+            content_type="application/json",
+            data=json.dumps(ProcessGroupSchema().dump(process_group)),
         )
         assert response.status_code == 201
-        return response
+        assert response.json is not None
+        assert response.json["id"] == process_group_id
+        return process_group_id
 
     def create_process_model_with_api(
         self,
@@ -177,6 +171,22 @@ class BaseTest:
                 "You must include the process_model_id, which must be a path to the model"
             )
 
+    def get_test_data_file_contents(
+        self, file_name: str, process_model_test_data_dir: str
+    ) -> bytes:
+        """Get_test_data_file_contents."""
+        file_full_path = os.path.join(
+            current_app.instance_path,
+            "..",
+            "..",
+            "tests",
+            "data",
+            process_model_test_data_dir,
+            file_name,
+        )
+        with open(file_full_path, "rb") as file:
+            return file.read()
+
     def create_spec_file(
         self,
         client: FlaskClient,
@@ -229,27 +239,23 @@ class BaseTest:
         assert file["file_contents"] == file2["file_contents"]
         return file
 
-    def create_process_group(
-        self,
+    @staticmethod
+    def create_process_instance_from_process_model_id(
         client: FlaskClient,
-        user: Any,
-        process_group_id: str,
-        display_name: str = "",
-    ) -> str:
-        """Create_process_group."""
-        process_group = ProcessGroup(
-            id=process_group_id, display_name=display_name, display_order=0, admin=False
-        )
+        test_process_model_id: str,
+        headers: Dict[str, str],
+    ) -> TestResponse:
+        """Create_process_instance.
+
+        There must be an existing process model to instantiate.
+        """
+        modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
-            "/v1.0/process-groups",
-            headers=self.logged_in_headers(user),
-            content_type="application/json",
-            data=json.dumps(ProcessGroupSchema().dump(process_group)),
+            f"/v1.0/process-models/{modified_process_model_id}/process-instances",
+            headers=headers,
         )
         assert response.status_code == 201
-        assert response.json is not None
-        assert response.json["id"] == process_group_id
-        return process_group_id
+        return response
 
     # @staticmethod
     # def get_public_access_token(username: str, password: str) -> dict:
@@ -322,13 +328,6 @@ class BaseTest:
                 permission=permission,
             )
         return user
-
-    @staticmethod
-    def logged_in_headers(
-        user: UserModel, _redirect_url: str = "http://some/frontend/url"
-    ) -> Dict[str, str]:
-        """Logged_in_headers."""
-        return dict(Authorization="Bearer " + user.encode_auth_token())
 
     def get_test_data_file_contents(
         self, file_name: str, process_model_test_data_dir: str

@@ -26,7 +26,7 @@ class TestDotNotation(BaseTest):
         process_model_id = "test_dot_notation"
         bpmn_file_name = "diagram.bpmn"
         bpmn_file_location = "dot_notation"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -36,7 +36,7 @@ class TestDotNotation(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
         process_instance_id = response.json["id"]

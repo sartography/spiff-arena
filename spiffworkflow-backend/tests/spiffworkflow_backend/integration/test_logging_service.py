@@ -44,7 +44,7 @@ class TestLoggingService(BaseTest):
             user=with_super_admin_user,
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
         assert response.json is not None

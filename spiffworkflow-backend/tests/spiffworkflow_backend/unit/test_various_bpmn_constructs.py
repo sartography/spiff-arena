@@ -20,7 +20,7 @@ class TestVariousBpmnConstructs(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_running_process_with_timer_intermediate_catch_event."""
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             "test_group",

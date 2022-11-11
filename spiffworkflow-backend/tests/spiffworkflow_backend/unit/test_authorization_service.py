@@ -103,7 +103,7 @@ class TestAuthorizationService(BaseTest):
         self.find_or_create_user("testuser1")
         AuthorizationService.import_permissions_from_yaml_file()
 
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id="test_group",
