@@ -160,9 +160,9 @@ class ProcessModelService(FileSystemService):
         process_models.sort()
         return process_models
 
-    def get_process_groups(self) -> list[ProcessGroup]:
+    def get_process_groups(self, process_group_id: str = None) -> list[ProcessGroup]:
         """Returns the process_groups as a list in display order."""
-        process_groups = self.__scan_process_groups()
+        process_groups = self.__scan_process_groups(process_group_id)
         process_groups.sort()
         return process_groups
 
@@ -254,12 +254,16 @@ class ProcessModelService(FileSystemService):
             index += 1
         return process_groups
 
-    def __scan_process_groups(self) -> list[ProcessGroup]:
+    def __scan_process_groups(self, process_group_id: str = None) -> list[ProcessGroup]:
         """__scan_process_groups."""
         if not os.path.exists(FileSystemService.root_path()):
             return []  # Nothing to scan yet.  There are no files.
+        if process_group_id is not None:
+            scan_path = os.path.join(FileSystemService.root_path(), process_group_id)
+        else:
+            scan_path = FileSystemService.root_path()
 
-        with os.scandir(FileSystemService.root_path()) as directory_items:
+        with os.scandir(scan_path) as directory_items:
             process_groups = []
             for item in directory_items:
                 # if item.is_dir() and not item.name[0] == ".":
