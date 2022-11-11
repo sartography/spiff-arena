@@ -375,7 +375,7 @@ class SpecFileService(FileSystemService):
         process_model_info: ProcessModelInfo, bpmn_file_name: str, et_root: _Element
     ) -> None:
         """Store_bpmn_process_identifiers."""
-        relative_process_model_path = process_model_info.id
+        relative_process_model_path = process_model_info.id_for_file_path()
 
         relative_bpmn_file_path = os.path.join(
             relative_process_model_path, bpmn_file_name
