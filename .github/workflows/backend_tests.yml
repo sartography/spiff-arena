@@ -4,6 +4,10 @@ on:
   - push
   - pull_request
 
+defaults:
+  run:
+    working-directory: spiffworkflow-backend
+
 jobs:
   tests:
     name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }} ${{ matrix.database }}
@@ -58,10 +62,6 @@ jobs:
       PRE_COMMIT_COLOR: "always"
       DB_PASSWORD: password
       FLASK_SESSION_SECRET_KEY: super_secret_key
-
-    defaults:
-      run:
-        working-directory: spiffworkflow-backend
 
     steps:
       - name: Check out the repository
