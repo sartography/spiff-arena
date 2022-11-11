@@ -160,7 +160,9 @@ jobs:
           path: "./log/*.log"
 
   run_pre_commit_checks:
-    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3.0.2
@@ -172,16 +174,13 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install Poetry
-        working-directory: .
         run: |
-          pipx install
+          pipx install poetry
           poetry --version
       - name: Poetry Install
         run: poetry install
-        working-directory: .
       - name: run_pre_commit
         run: ./bin/run_pre_commit_in_ci
-        working-directory: .
 
   check_docker_start_script:
     runs-on: ubuntu-latest
