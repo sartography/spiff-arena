@@ -286,7 +286,7 @@ class TestProcessApi(BaseTest):
         )
         headers = self.logged_in_headers(with_super_admin_user)
         # create an instance from a model
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
 
@@ -623,7 +623,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_model_file_update."""
-        process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
         modified_process_model_id = process_model_identifier.replace("/", ":")
 
         data = {"key1": "THIS DATA"}
@@ -647,7 +649,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_model_file_update."""
-        process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
         modified_process_model_id = process_model_identifier.replace("/", ":")
 
         data = {"file": (io.BytesIO(b""), "random_fact.svg")}
@@ -723,7 +727,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_model_file_update."""
-        process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
         # self.create_spec_file(client, user=with_super_admin_user)
 
         # process_model = load_test_spec("random_fact")
@@ -749,7 +755,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_model_file_update."""
-        process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         response = client.delete(
@@ -770,7 +778,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_model_file_update."""
-        process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         response = client.delete(
@@ -797,7 +807,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_get_file."""
-        process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         response = client.get(
@@ -817,7 +829,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_get_workflow_from_workflow_spec."""
-        process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         response = client.post(
@@ -852,7 +866,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_get_process_groups_when_there_are_some."""
-        self.basic_test_setup(client, with_super_admin_user)
+        self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         response = client.get(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -872,7 +886,9 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_get_process_group_when_found."""
-        process_model_identifier = self.basic_test_setup(client, with_super_admin_user)
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
         process_group_id, process_model_id = os.path.split(process_model_identifier)
 
         response = client.get(
@@ -893,7 +909,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_get_process_model_when_found."""
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client, with_super_admin_user, bpmn_file_name="random_fact.bpmn"
         )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
@@ -938,7 +954,9 @@ class TestProcessApi(BaseTest):
         """Test_process_instance_create."""
         test_process_model_id = "runs_without_input/sample"
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(client, test_process_model_id, headers)
+        response = self.create_process_instance_from_process_model_id(
+            client, test_process_model_id, headers
+        )
         assert response.json is not None
         assert response.json["updated_at_in_seconds"] is not None
         assert response.json["status"] == "not_started"
@@ -956,7 +974,7 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_process_instance_run."""
         # process_model_id = "runs_without_input/sample"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id="runs_without_input",
@@ -966,7 +984,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -998,7 +1016,7 @@ class TestProcessApi(BaseTest):
         """Test_process_instance_show."""
         process_group_id = "simple_script"
         process_model_id = "simple_script"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1006,7 +1024,7 @@ class TestProcessApi(BaseTest):
         )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
         headers = self.logged_in_headers(with_super_admin_user)
-        create_response = self.create_process_instance(
+        create_response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
         assert create_response.json is not None
@@ -1041,7 +1059,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "message_receiver"
         bpmn_file_name = "message_receiver.bpmn"
         bpmn_file_location = "message_send_one_conversation"
-        self.basic_test_setup(
+        self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1089,7 +1107,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
         bpmn_file_location = "message_send_one_conversation"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1106,7 +1124,7 @@ class TestProcessApi(BaseTest):
                 "andThis": "another_item_non_key",
             }
         }
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
@@ -1157,7 +1175,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
         bpmn_file_location = "message_send_one_conversation"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1166,7 +1184,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
@@ -1206,7 +1224,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "user_task"
         bpmn_file_name = "user_task.bpmn"
         bpmn_file_location = "user_task"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1216,7 +1234,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -1245,7 +1263,7 @@ class TestProcessApi(BaseTest):
         process_group_id = "my_process_group"
         process_model_id = "dynamic_enum_select_fields"
         bpmn_file_location = "dynamic_enum_select_fields"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1255,7 +1273,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -1297,7 +1315,7 @@ class TestProcessApi(BaseTest):
         process_group_id = "runs_without_input"
         process_model_id = "sample"
         bpmn_file_location = "sample"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1306,7 +1324,9 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        self.create_process_instance(client, process_model_identifier, headers)
+        self.create_process_instance_from_process_model_id(
+            client, process_model_identifier, headers
+        )
 
         response = client.get(
             "/v1.0/process-instances",
@@ -1342,7 +1362,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1351,11 +1371,21 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        self.create_process_instance(client, process_model_identifier, headers)
-        self.create_process_instance(client, process_model_identifier, headers)
-        self.create_process_instance(client, process_model_identifier, headers)
-        self.create_process_instance(client, process_model_identifier, headers)
-        self.create_process_instance(client, process_model_identifier, headers)
+        self.create_process_instance_from_process_model_id(
+            client, process_model_identifier, headers
+        )
+        self.create_process_instance_from_process_model_id(
+            client, process_model_identifier, headers
+        )
+        self.create_process_instance_from_process_model_id(
+            client, process_model_identifier, headers
+        )
+        self.create_process_instance_from_process_model_id(
+            client, process_model_identifier, headers
+        )
+        self.create_process_instance_from_process_model_id(
+            client, process_model_identifier, headers
+        )
 
         response = client.get(
             "/v1.0/process-instances?per_page=2&page=3",
@@ -1391,7 +1421,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1504,7 +1534,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "sample"
         bpmn_file_name = "sample.bpmn"
         bpmn_file_location = "sample"
-        process_model_identifier = self.basic_test_setup(  # noqa: F841
+        process_model_identifier = self.create_group_and_model_with_bpmn(  # noqa: F841
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1544,7 +1574,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "sample"
         # bpmn_file_name = "sample.bpmn"
         # bpmn_file_location = "sample"
-        # process_model_identifier = self.basic_test_setup(
+        # process_model_identifier = self.create_group_and_model_with_bpmn(
         #     client,
         #     with_super_admin_user,
         #     process_group_id=process_group_id,
@@ -1658,7 +1688,9 @@ class TestProcessApi(BaseTest):
     ) -> Any:
         """Setup_testing_instance."""
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(client, process_model_id, headers)
+        response = self.create_process_instance_from_process_model_id(
+            client, process_model_id, headers
+        )
         process_instance = response.json
         assert isinstance(process_instance, dict)
         process_instance_id = process_instance["id"]
@@ -1676,7 +1708,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "error"
         bpmn_file_name = "error.bpmn"
         bpmn_file_location = "error"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1716,7 +1748,7 @@ class TestProcessApi(BaseTest):
             .first()
         )
         assert process is not None
-        assert process.status == "faulted"
+        assert process.status == "error"
 
     def test_error_handler_suspend(
         self,
@@ -1730,7 +1762,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "error"
         bpmn_file_name = "error.bpmn"
         bpmn_file_location = "error"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1784,7 +1816,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "error"
         bpmn_file_name = "error.bpmn"
         bpmn_file_location = "error"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1827,7 +1859,7 @@ class TestProcessApi(BaseTest):
             .first()
         )
         assert process is not None
-        assert process.status == "faulted"
+        assert process.status == "error"
 
     def test_process_model_file_create(
         self,
@@ -1843,7 +1875,7 @@ class TestProcessApi(BaseTest):
         file_data = b"abc123"
         bpmn_file_name = "hello_world.bpmn"
         bpmn_file_location = "hello_world"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1876,7 +1908,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "message_receiver"
         bpmn_file_name = "message_receiver.bpmn"
         bpmn_file_location = "message_send_one_conversation"
-        self.basic_test_setup(
+        self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1968,7 +2000,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "model_with_lanes"
         bpmn_file_name = "lanes.bpmn"
         bpmn_file_location = "model_with_lanes"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -1983,7 +2015,7 @@ class TestProcessApi(BaseTest):
         #     process_group_id="finance",
         # )
 
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client,
             # process_model.process_group_id,
             process_model_identifier,
@@ -2171,7 +2203,7 @@ class TestProcessApi(BaseTest):
         """Test_process_instance_suspend."""
         bpmn_file_name = "manual_task.bpmn"
         bpmn_file_location = "manual_task"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_model_id="manual_task",
@@ -2192,7 +2224,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -2239,7 +2271,7 @@ class TestProcessApi(BaseTest):
         process_model_id = "simple_script"
         bpmn_file_name = "simple_script.bpmn"
         bpmn_file_location = "simple_script"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=process_group_id,
