@@ -19,14 +19,19 @@ export default function ProcessGroupShow() {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [processModels, setProcessModels] = useState([]);
   const [processGroups, setProcessGroups] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [modelPagination, setModelPagination] = useState(null);
+  const [groupPagination, setGroupPagination] = useState(null);
 
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
 
     const setProcessModelFromResult = (result: any) => {
       setProcessModels(result.results);
-      setPagination(result.pagination);
+      setModelPagination(result.pagination);
+    };
+    const setProcessGroupFromResult = (result: any) => {
+      setProcessGroups(result.results);
+      setGroupPagination(result.pagination);
     };
     const processResult = (result: any) => {
       setProcessGroup(result);
@@ -37,7 +42,10 @@ export default function ProcessGroupShow() {
         path: `/process-models?process_group_identifier=${unmodifiedProcessGroupId}&per_page=${perPage}&page=${page}`,
         successCallback: setProcessModelFromResult,
       });
-      setProcessGroups(result.process_groups);
+      HttpService.makeCallToBackend({
+        path: `/process-groups?process_group_identifier=${unmodifiedProcessGroupId}&per_page=${perPage}&page=${page}`,
+        successCallback: setProcessGroupFromResult,
+      });
     };
     HttpService.makeCallToBackend({
       path: `/process-groups/${params.process_group_id}`,
@@ -117,7 +125,7 @@ export default function ProcessGroupShow() {
     );
   };
 
-  if (processGroup && pagination) {
+  if (processGroup && groupPagination && modelPagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     const modifiedProcessGroupId = modifyProcessModelPath(processGroup.id);
     return (
@@ -153,7 +161,7 @@ export default function ProcessGroupShow() {
           <PaginationForTable
             page={page}
             perPage={perPage}
-            pagination={pagination}
+            pagination={modelPagination}
             tableToDisplay={buildModelTable()}
             path={`/admin/process-groups/${processGroup.id}`}
           />
@@ -162,7 +170,7 @@ export default function ProcessGroupShow() {
           <PaginationForTable
             page={page}
             perPage={perPage}
-            pagination={pagination}
+            pagination={groupPagination}
             tableToDisplay={buildGroupTable()}
             path={`/admin/process-groups/${processGroup.id}`}
           />
