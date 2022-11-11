@@ -160,6 +160,7 @@ jobs:
           path: "./log/*.log"
 
   run_pre_commit_checks:
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: .
