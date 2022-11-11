@@ -16,7 +16,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { python: "3.11", os: "ubuntu-latest", session: "pre-commit" }
           - { python: "3.11", os: "ubuntu-latest", session: "safety" }
           - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
           - {
@@ -97,29 +96,29 @@ jobs:
           pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
 
-      - name: Compute pre-commit cache key
-        if: matrix.session == 'pre-commit'
-        id: pre-commit-cache
-        shell: python
-        run: |
-          import hashlib
-          import sys
-
-          python = "py{}.{}".format(*sys.version_info[:2])
-          payload = sys.version.encode() + sys.executable.encode()
-          digest = hashlib.sha256(payload).hexdigest()
-          result = "${{ runner.os }}-{}-{}-pre-commit".format(python, digest[:8])
-
-          print("::set-output name=result::{}".format(result))
-
-      - name: Restore pre-commit cache
-        uses: actions/cache@v3.0.11
-        if: matrix.session == 'pre-commit'
-        with:
-          path: ~/.cache/pre-commit
-          key: ${{ steps.pre-commit-cache.outputs.result }}-${{ hashFiles('.pre-commit-config.yaml') }}
-          restore-keys: |
-            ${{ steps.pre-commit-cache.outputs.result }}-
+      # - name: Compute pre-commit cache key
+      #   if: matrix.session == 'pre-commit'
+      #   id: pre-commit-cache
+      #   shell: python
+      #   run: |
+      #     import hashlib
+      #     import sys
+      #
+      #     python = "py{}.{}".format(*sys.version_info[:2])
+      #     payload = sys.version.encode() + sys.executable.encode()
+      #     digest = hashlib.sha256(payload).hexdigest()
+      #     result = "${{ runner.os }}-{}-{}-pre-commit".format(python, digest[:8])
+      #
+      #     print("::set-output name=result::{}".format(result))
+      #
+      # - name: Restore pre-commit cache
+      #   uses: actions/cache@v3.0.11
+      #   if: matrix.session == 'pre-commit'
+      #   with:
+      #     path: ~/.cache/pre-commit
+      #     key: ${{ steps.pre-commit-cache.outputs.result }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      #     restore-keys: |
+      #       ${{ steps.pre-commit-cache.outputs.result }}-
       - name: Setup Mysql
         uses: mirromutth/mysql-action@v1.1
         with:
@@ -159,6 +158,35 @@ jobs:
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./log/*.log"
+
+  run_pre_commit_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.0.2
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v4.2.0
+        with:
+          python-version: "3.11"
+      - name: Upgrade pip
+        working-directory: .
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt pip
+          pip --version
+      - name: Install Poetry
+        working-directory: .
+        run: |
+          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          poetry --version
+      - name: Poetry Install
+        run: poetry install
+        working-directory: .
+      - name: run_pre_commit
+        run: ./bin/run_pre_commit_in_ci
+        working-directory: .
 
   check_docker_start_script:
     runs-on: ubuntu-latest
