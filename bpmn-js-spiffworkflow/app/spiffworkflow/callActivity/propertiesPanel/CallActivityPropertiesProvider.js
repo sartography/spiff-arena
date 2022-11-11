@@ -46,7 +46,6 @@ function createCalledElementGroup(element, translate, moddle, commandStack) {
         translate,
       },
       /* Commented out until such time as we can effectively calculate the list of available processes by process id */
-      /*
       {
         id: `called_element_launch_button`,
         element,
@@ -55,7 +54,14 @@ function createCalledElementGroup(element, translate, moddle, commandStack) {
         commandStack,
         translate,
       },
-      */
+      {
+        id: `called_element_find_button`,
+        element,
+        component: FindProcessButton,
+        moddle,
+        commandStack,
+        translate,
+      },
     ],
   };
 }
@@ -88,6 +94,27 @@ function CalledElementTextField(props) {
     getValue,
     setValue,
     debounce,
+  });
+}
+
+function FindProcessButton(props) {
+  const { element } = props;
+  const eventBus = useService('eventBus');
+  return HeaderButton({
+    id: 'spiffworkflow-search-call-activity-button',
+    class: 'spiffworkflow-properties-panel-button',
+    onClick: () => {
+      const processId = getCalledElementValue(element);
+      eventBus.fire('spiff.callactivity.search', {
+        element,
+        processId,
+      });
+      // Listen for a response, to update the script.
+      eventBus.once('spiff.callactivity.update', (response) => {
+        element.businessObject.calledElement = response.value;
+      });
+    },
+    children: 'Search',
   });
 }
 

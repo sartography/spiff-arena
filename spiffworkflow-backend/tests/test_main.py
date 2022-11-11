@@ -1,6 +1,7 @@
 """Test cases for the __main__ module."""
 import pytest
 from click.testing import CliRunner
+
 from spiffworkflow_backend import __main__
 
 

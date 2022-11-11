@@ -72,7 +72,7 @@ this in the app.js file.
 Below is a table of all the events that are sent and accepted:
 
 | Event Name                     | Description                                                                  | Fired or Acceped | Parameters           | Description                                                              |
-| ------------------------------ | ---------------------------------------------------------------------------- | ---------------- |----------------------| ------------------------------------------------------------------------ |
+|--------------------------------|------------------------------------------------------------------------------| ---------------- |----------------------|--------------------------------------------------------------------------|
 | spiff.service\_tasks.requested | Request a list of available services that can be called from a service task. | Fired            | \-                   |                                                                          |
 | spiff.service\_tasks.returned  | Provides a list of services.                                                 | Recieved         | serviceTaskOperators | ex: \[{id:'Chuck Facts', parameters\[{id:'category', type:'string'}\]}\] |
 | spiff.script.edit              | Request to edit a python script in some sort of facy editor.                 | Fired            | scriptType           | one of: script, preScript, postScript                                    |
@@ -87,6 +87,8 @@ Below is a table of all the events that are sent and accepted:
 | spiff.markdown.update          | Update Markdown content for a paticular elements 'instructions'.             | Recieved         | element              | The element that needs updating                                          |
 |                                |                                                                              |                  | value                | Tne updated Markdown content                                             |
 | spiff.callactivity.edit        | Requst to edit a call activity by process id.                                | Fired            | processId            | The Process the users wants to edit                                      |
+| spiff.callactivity.search      | Requst to search for a call activity                                         | Fired            |                      |                                                                          |
+| spiff.callactivity.update      | Update the process id from a call activity (based on search)                 | Fired            | processId            | The Process the users wants to edit                                      |
 | spiff.file.edit                | request to edit a file, but file name.                                       | Fired            | value                | The file name the user wants to edit                                     |
 | spiff.dmn.edit                 | request to edit a dmn by process id.                                         | Fired            | value                | The DMN id the user wants to edit                                        |
 | spiff.json\_files.requested    | request a list of local json files.                                          | Fired            | optionType           | The type of options required ('json' or 'dmn')                           |

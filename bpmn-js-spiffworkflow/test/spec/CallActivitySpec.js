@@ -9,12 +9,13 @@ import { inject } from 'bpmn-js/test/helper';
 import {
   bootstrapPropertiesPanel,
   changeInput,
-  expectSelected, findButton,
-  findGroupEntry, pressButton,
+  expectSelected,
+  findButton,
+  findGroupEntry,
+  pressButton,
 } from './helpers';
 import spiffModdleExtension from '../../app/spiffworkflow/moddle/spiffworkflow.json';
 import callActivity from '../../app/spiffworkflow/callActivity';
-
 
 describe('Call Activities should work', function () {
   const xml = require('./bpmn/call_activity.bpmn').default;
@@ -60,9 +61,9 @@ describe('Call Activities should work', function () {
     expect(businessObject.get('calledElement')).to.equal('newProcessId');
   });
 
-  /** fixme: Reenable this when we add this button back in.
-  it('should issue an event to the event bus if user clicks the edit button', inject(
-      async function(eventBus) {
+  it('should issue an event to the event bus if user clicks the edit button', inject(async function (
+    eventBus
+  ) {
     const shapeElement = await expectSelected('the_call_activity');
     expect(shapeElement, "Can't find Call Activity").to.exist;
     const businessObject = getBusinessObject(shapeElement);
@@ -79,5 +80,32 @@ describe('Call Activities should work', function () {
     await pressButton(button);
     expect(launchEvent.processId).to.exist;
   }));
-  */
+
+  it('should issue an event to the event bus if user clicks the search button', inject(async function (
+    eventBus
+  ) {
+    const shapeElement = await expectSelected('the_call_activity');
+    expect(shapeElement, "Can't find Call Activity").to.exist;
+    const businessObject = getBusinessObject(shapeElement);
+    expect(businessObject.get('calledElement')).to.equal('ProcessIdTBD1');
+
+    const entry = findGroupEntry('called_element', container);
+    const button = findButton(
+      'spiffworkflow-search-call-activity-button',
+      entry
+    );
+    expect(button).to.exist;
+
+    let launchEvent;
+    eventBus.on('spiff.callactivity.search', function (event) {
+      launchEvent = event;
+    });
+    await pressButton(button);
+    expect(launchEvent.processId).to.exist;
+
+    eventBus.fire('spiff.callactivity.update', {value: 'searchedProcessId'});
+    const textInput = domQuery('input', entry);
+    expect(businessObject.get('calledElement')).to.equal('searchedProcessId');
+
+  }));
 });
