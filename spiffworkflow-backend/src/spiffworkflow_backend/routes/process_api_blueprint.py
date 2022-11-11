@@ -1007,7 +1007,7 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
         # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.status,
+            ProcessInstanceModel.status.label("process_instance_status"),
             ProcessInstanceModel.updated_at_in_seconds,
             ProcessInstanceModel.created_at_in_seconds,
             GroupModel.identifier.label("group_identifier"),
