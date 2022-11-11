@@ -5,6 +5,7 @@ import { Tabs, TabList, Tab } from '@carbon/react';
 import TaskShow from './TaskShow';
 import ErrorContext from '../contexts/ErrorContext';
 import MyTasks from './MyTasks';
+import TasksForMyOpenProcesses from './TasksForMyOpenProcesses';
 
 export default function HomePageRoutes() {
   const location = useLocation();
@@ -15,7 +16,7 @@ export default function HomePageRoutes() {
   useEffect(() => {
     setErrorMessage(null);
     let newSelectedTabIndex = 0;
-    if (location.pathname.match(/^\/tasks\/\d/)) {
+    if (location.pathname.match(/^\/tasks\/for-my-open-processes/)) {
       newSelectedTabIndex = 1;
     }
     setSelectedTabIndex(newSelectedTabIndex);
@@ -23,28 +24,23 @@ export default function HomePageRoutes() {
 
   return (
     <>
-      <Tabs
-        selectedIndex={selectedTabIndex}
-        onChange={(event: any) => {
-          setSelectedTabIndex(event.selectedIndex);
-        }}
-      >
+      <Tabs selectedIndex={selectedTabIndex}>
         <TabList aria-label="List of tabs">
           <Tab onClick={() => navigate('/tasks/my-tasks')}>My Tasks</Tab>
-          <Tab
-            onClick={() =>
-              navigate('/tasks/9/4dc9f6e3-2256-47b2-9f78-6bc2f061db80')
-            }
-          >
-            One Task
+          <Tab onClick={() => navigate('/tasks/for-my-open-processes')}>
+            Tasks for My Open Processes
           </Tab>
         </TabList>
       </Tabs>
       <br />
       <Routes>
         <Route path="/" element={<MyTasks />} />
-        <Route path="/my-tasks" element={<MyTasks />} />
+        <Route path="my-tasks" element={<MyTasks />} />
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
+        <Route
+          path="for-my-open-processes"
+          element={<TasksForMyOpenProcesses />}
+        />
       </Routes>
     </>
   );
