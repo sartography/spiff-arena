@@ -76,7 +76,7 @@ def setup_process_instances_for_reports(
     process_model_id = "sample"
     # bpmn_file_name = "sample.bpmn"
     bpmn_file_location = "sample"
-    process_model_identifier = BaseTest().basic_test_setup(
+    process_model_identifier = BaseTest().create_group_and_model_with_bpmn(
         client,
         with_super_admin_user,
         process_group_id=process_group_id,

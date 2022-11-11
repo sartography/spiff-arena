@@ -34,7 +34,7 @@ class TestSpecFileService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_store_process_ids_for_lookup."""
-        self.basic_test_setup(
+        self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=self.process_group_id,
@@ -59,7 +59,7 @@ class TestSpecFileService(BaseTest):
     ) -> None:
         """Test_fails_to_save_duplicate_process_id."""
         bpmn_process_identifier = "Level1"
-        self.basic_test_setup(
+        self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=self.process_group_id,
@@ -103,7 +103,7 @@ class TestSpecFileService(BaseTest):
         db.session.add(process_id_lookup)
         db.session.commit()
 
-        self.basic_test_setup(
+        self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=self.process_group_id,
@@ -143,7 +143,7 @@ class TestSpecFileService(BaseTest):
         """
         process_group_id = "test_group"
         process_model_id = "call_activity_nested"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id=process_group_id,

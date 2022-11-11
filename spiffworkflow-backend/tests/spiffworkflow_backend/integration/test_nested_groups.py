@@ -29,7 +29,7 @@ class TestNestedGroups(BaseTest):
         process_model_id = "manual_task"
         bpmn_file_name = "manual_task.bpmn"
         bpmn_file_location = "manual_task"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -37,7 +37,7 @@ class TestNestedGroups(BaseTest):
             bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
@@ -90,7 +90,7 @@ class TestNestedGroups(BaseTest):
         process_model_id = "manual_task"
         bpmn_file_name = "manual_task.bpmn"
         bpmn_file_location = "manual_task"
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
@@ -98,7 +98,7 @@ class TestNestedGroups(BaseTest):
             bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
