@@ -81,19 +81,19 @@ export default function AdminRoutes() {
           element={<ProcessInstanceShow />}
         />
         <Route
-          path="process-models/:process_model_id/process-instances/reports"
+          path="process-instances/reports"
           element={<ProcessInstanceReportList />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/process-instances/reports/:report_identifier"
+          path="process-instances/reports/:report_identifier"
           element={<ProcessInstanceReportShow />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/process-instances/reports/new"
+          path="process-instances/reports/new"
           element={<ProcessInstanceReportNew />}
         />
         <Route
-          path="process-models/:process_group_id/:process_model_id/process-instances/reports/:report_identifier/edit"
+          path="process-instances/reports/:report_identifier/edit"
           element={<ProcessInstanceReportEdit />}
         />
         <Route
