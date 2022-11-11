@@ -171,15 +171,10 @@ jobs:
         uses: actions/setup-python@v4.2.0
         with:
           python-version: "3.11"
-      - name: Upgrade pip
-        working-directory: .
-        run: |
-          pip install --constraint=.github/workflows/constraints.txt pip
-          pip --version
       - name: Install Poetry
         working-directory: .
         run: |
-          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          pipx install
           poetry --version
       - name: Poetry Install
         run: poetry install
