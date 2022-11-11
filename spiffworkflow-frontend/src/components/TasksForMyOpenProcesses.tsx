@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
-import PaginationForTable from '../components/PaginationForTable';
+import PaginationForTable from './PaginationForTable';
 import {
   convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
@@ -36,7 +36,7 @@ export default function MyOpenProcesses() {
   const buildTable = () => {
     const rows = tasks.map((row) => {
       const rowToUse = row as any;
-      const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.id}`;
+      const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.task_id}`;
       const modifiedProcessModelIdentifier = modifyProcessModelPath(
         rowToUse.process_model_identifier
       );
@@ -80,6 +80,7 @@ export default function MyOpenProcesses() {
               variant="primary"
               href={taskUrl}
               hidden={rowToUse.process_instance_status === 'suspended'}
+              disabled={!rowToUse.current_user_is_potential_owner}
             >
               Go
             </Button>
@@ -106,7 +107,7 @@ export default function MyOpenProcesses() {
     );
   };
 
-  const tasksWaitingForMeComponent = () => {
+  const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
       return null;
     }
@@ -129,13 +130,8 @@ export default function MyOpenProcesses() {
     );
   };
 
-  const tasksWaitingForMe = tasksWaitingForMeComponent();
-
   if (pagination) {
-    if (tasksWaitingForMe === null) {
-      return <p>No tasks are waiting for you.</p>;
-    }
-    return <>{tasksWaitingForMe}</>;
+    return tasksComponent();
   }
   return null;
 }

@@ -76,7 +76,7 @@ from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
-from sqlalchemy import asc
+from sqlalchemy import and_, asc
 from sqlalchemy import desc
 
 
@@ -996,14 +996,30 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
     return make_response(jsonify(response_json), 200)
 
 
-# @process_api_blueprint.route("/v1.0/tasks", methods=["GET"])
 def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    return get_tasks(page=page, per_page=per_page)
+
+
+def task_list_for_processes_started_by_others(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    return get_tasks(processes_started_by_user=False, page=page, per_page=per_page)
+
+
+def get_tasks(processes_started_by_user: bool = True, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     user_id = g.user.id
-    active_tasks = (
-        ActiveTaskModel.query.order_by(desc(ActiveTaskModel.id))  # type: ignore
+    active_tasks_query = (
+        ActiveTaskModel.query
         .join(ProcessInstanceModel)
-        .filter_by(process_initiator_id=user_id)
-        .outerjoin(GroupModel)
+        .order_by(desc(ProcessInstanceModel.created_at_in_seconds))  # type: ignore
+        )
+
+    if processes_started_by_user:
+        active_tasks_query = active_tasks_query.filter_by(process_initiator_id=user_id)
+    else:
+        active_tasks_query = active_tasks_query.filter(ProcessInstanceModel.process_initiator_id != user_id)
+
+    active_tasks = (
+        active_tasks_query.outerjoin(GroupModel)
+        .outerjoin(ActiveTaskUserModel, and_(ActiveTaskUserModel.user_id == user_id))
         # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
@@ -1015,10 +1031,10 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
             ActiveTaskModel.task_title,
             ActiveTaskModel.process_model_display_name,
             ActiveTaskModel.process_instance_id,
+            ActiveTaskUserModel.user_id.label("current_user_is_potential_owner")
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
-    # tasks = [ActiveTaskModel.to_task(active_task) for active_task in active_tasks.items]
 
     response_json = {
         "results": active_tasks.items,
@@ -1028,7 +1044,6 @@ def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask
             "pages": active_tasks.pages,
         },
     }
-
     return make_response(jsonify(response_json), 200)
 
 
@@ -1383,12 +1398,21 @@ def find_principal_or_raise() -> PrincipalModel:
 
 
 def find_process_instance_by_id_or_raise(
-    process_instance_id: int,
+        process_instance_id: int
 ) -> ProcessInstanceModel:
     """Find_process_instance_by_id_or_raise."""
-    process_instance = ProcessInstanceModel.query.filter_by(
+    process_instance_query = ProcessInstanceModel.query.filter_by(
         id=process_instance_id
-    ).first()
+    )
+
+    # we had a frustrating session trying to do joins and access columns from two tables. here's some notes for our future selves:
+    # this returns an object that allows you to do: process_instance.UserModel.username
+    # process_instance = db.session.query(ProcessInstanceModel, UserModel).filter_by(id=process_instance_id).first()
+    # you can also use splat with add_columns, but it still didn't ultimately give us access to the process instance
+    # attributes or username like we wanted:
+    # process_instance_query.join(UserModel).add_columns(*ProcessInstanceModel.__table__.columns, UserModel.username)
+
+    process_instance = process_instance_query.first()
     if process_instance is None:
         raise (
             ApiError(
