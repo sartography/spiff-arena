@@ -268,12 +268,17 @@ class ProcessModelService(FileSystemService):
                 json.dump(self.GROUP_SCHEMA.dump(process_group), wf_json, indent=4)
         with os.scandir(dir_path) as nested_items:
             process_group.process_models = []
+            process_group.process_groups = []
             for nested_item in nested_items:
                 if nested_item.is_dir():
                     # TODO: check whether this is a group or model
                     if self.is_group(nested_item.path):
                         # This is a nested group
-                        ...
+                        process_group.process_groups.append(
+                            self.__scan_process_group(
+                                nested_item.path
+                            )
+                        )
                     elif self.is_model(nested_item.path):
                         process_group.process_models.append(
                             self.__scan_spec(
@@ -283,6 +288,7 @@ class ProcessModelService(FileSystemService):
                             )
                         )
             process_group.process_models.sort()
+            # process_group.process_groups.sort()
         return process_group
 
     def __scan_spec(
