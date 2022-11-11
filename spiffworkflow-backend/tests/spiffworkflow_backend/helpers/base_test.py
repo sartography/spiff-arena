@@ -329,22 +329,6 @@ class BaseTest:
             )
         return user
 
-    def get_test_data_file_contents(
-        self, file_name: str, process_model_test_data_dir: str
-    ) -> bytes:
-        """Get_test_data_file_contents."""
-        file_full_path = os.path.join(
-            current_app.instance_path,
-            "..",
-            "..",
-            "tests",
-            "data",
-            process_model_test_data_dir,
-            file_name,
-        )
-        with open(file_full_path, "rb") as file:
-            return file.read()
-
     def assert_user_has_permission(
         self,
         user: UserModel,
