@@ -9,7 +9,6 @@ from typing import Any
 import marshmallow
 from marshmallow import Schema
 from marshmallow.decorators import post_load
-
 from spiffworkflow_backend.models.file import File
 
 

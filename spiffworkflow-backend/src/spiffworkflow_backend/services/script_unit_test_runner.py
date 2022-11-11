@@ -8,7 +8,6 @@ from typing import Optional
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-
 from spiffworkflow_backend.services.process_instance_processor import (
     CustomBpmnScriptEngine,
 )

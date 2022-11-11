@@ -7,7 +7,6 @@ from typing import Optional
 import pytz
 from flask import current_app
 from flask_bpmn.api.api_error import ApiError
-
 from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -34,7 +33,7 @@ class FileSystemService:
     @staticmethod
     def process_group_path(name: str) -> str:
         """Category_path."""
-        return os.path.join(FileSystemService.root_path(), name)
+        return os.path.abspath(os.path.join(FileSystemService.root_path(), name))
 
     @staticmethod
     def full_path_from_relative_path(relative_path: str) -> str:

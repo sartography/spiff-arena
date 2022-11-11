@@ -2,7 +2,6 @@
 import time
 
 from apscheduler.schedulers.background import BlockingScheduler  # type: ignore
-
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend import start_scheduler
 from spiffworkflow_backend.helpers.db_helper import try_to_connect
