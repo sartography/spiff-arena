@@ -7,6 +7,8 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -17,7 +19,6 @@ from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 # from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 

@@ -1,12 +1,13 @@
 """Test_various_bpmn_constructs."""
 from flask.app import Flask
 from flask.testing import FlaskClient
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestVariousBpmnConstructs(BaseTest):

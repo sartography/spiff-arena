@@ -9,6 +9,7 @@ from typing import Any
 import marshmallow
 from marshmallow import post_load
 from marshmallow import Schema
+
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 
@@ -26,9 +27,7 @@ class ProcessGroup:
     process_models: list[ProcessModelInfo] = field(
         default_factory=list[ProcessModelInfo]
     )
-    process_groups: list[ProcessGroup] = field(
-        default_factory=list['ProcessGroup']
-    )
+    process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
 
     def __post_init__(self) -> None:
         """__post_init__."""

@@ -4,8 +4,9 @@ from dataclasses import dataclass
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from marshmallow import Schema
-from spiffworkflow_backend.models.user import UserModel
 from sqlalchemy import ForeignKey
+
+from spiffworkflow_backend.models.user import UserModel
 
 
 @dataclass()

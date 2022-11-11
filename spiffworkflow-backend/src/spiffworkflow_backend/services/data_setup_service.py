@@ -1,5 +1,6 @@
 """Data_setup_service."""
 from flask import current_app
+
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 

@@ -7,13 +7,14 @@ from typing import TYPE_CHECKING
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.message_model import MessageModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from sqlalchemy import ForeignKey
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import validates
+
+from spiffworkflow_backend.models.message_model import MessageModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 if TYPE_CHECKING:
     from spiffworkflow_backend.models.message_correlation_message_instance import (  # noqa: F401
