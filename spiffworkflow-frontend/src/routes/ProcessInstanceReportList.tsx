@@ -2,16 +2,11 @@ import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
 import { useParams, Link } from 'react-router-dom';
-import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import { modifyProcessModelPath } from '../helpers';
 
 export default function ProcessInstanceReportList() {
   const params = useParams();
   const [processInstanceReports, setProcessInstanceReports] = useState([]);
-  const modifiedProcessModelId = modifyProcessModelPath(
-    params.process_model_id || ''
-  );
 
   useEffect(() => {
     HttpService.makeCallToBackend({
@@ -27,7 +22,7 @@ export default function ProcessInstanceReportList() {
         <tr key={(row as any).id}>
           <td>
             <Link
-              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/reports/${rowToUse.identifier}`}
+              to={`/admin/process-instances/reports/${rowToUse.identifier}`}
             >
               {rowToUse.identifier}
             </Link>
@@ -49,15 +44,8 @@ export default function ProcessInstanceReportList() {
 
   const headerStuff = (
     <>
-      <ProcessBreadcrumb
-        processGroupId={params.process_group_id}
-        processModelId={params.process_model_id}
-        linkProcessModel
-      />
-      <h1>Reports for Process Model: {params.process_model_id}</h1>
-      <Button
-        href={`/admin/process-models/${modifiedProcessModelId}/process-instances/reports/new`}
-      >
+      <h1>Process Instance Reports</h1>
+      <Button href="/admin/process-instances/reports/new">
         Add a process instance report
       </Button>
     </>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 
@@ -24,15 +23,11 @@ export default function ProcessInstanceReportEdit() {
   const [filterBy, setFilterBy] = useState('');
 
   const navigateToProcessInstanceReport = (_result: any) => {
-    navigate(
-      `/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports/${params.report_identifier}`
-    );
+    navigate(`/admin/process-instances/reports/${params.report_identifier}`);
   };
 
   const navigateToProcessInstanceReports = (_result: any) => {
-    navigate(
-      `/admin/process-models/${params.process_group_id}/${params.process_model_id}/process-instances/reports`
-    );
+    navigate(`/admin/process-instances/reports`);
   };
 
   useEffect(() => {
@@ -111,7 +106,6 @@ export default function ProcessInstanceReportEdit() {
 
   return (
     <>
-      <ProcessBreadcrumb />
       <h1>Edit Process Instance Report: {params.report_identifier}</h1>
       <ButtonWithConfirmation
         description={`Delete Report ${params.report_identifier}?`}
