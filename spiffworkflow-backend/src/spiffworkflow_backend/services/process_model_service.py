@@ -303,7 +303,9 @@ class ProcessModelService(FileSystemService):
                     if self.is_group(nested_item.path):
                         # This is a nested group
                         process_group.process_groups.append(
-                            self.__scan_process_group(nested_item.path)
+                            self.__scan_process_group(
+                                nested_item.path
+                            )
                         )
                     elif self.is_model(nested_item.path):
                         process_group.process_models.append(
