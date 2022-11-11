@@ -7,7 +7,6 @@ from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -64,7 +63,7 @@ class ProcessInstanceService:
                 processor.do_engine_steps(save=True)
             except Exception as e:
                 db.session.rollback()  # in case the above left the database with a bad transaction
-                process_instance.status = ProcessInstanceStatus.erroring.value
+                process_instance.status = ProcessInstanceStatus.error.value
                 db.session.add(process_instance)
                 db.session.commit()
                 error_message = (

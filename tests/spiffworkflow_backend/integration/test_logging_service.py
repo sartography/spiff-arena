@@ -1,9 +1,8 @@
 """Test_logging_service."""
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.user import UserModel
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestLoggingService(BaseTest):
@@ -45,7 +44,7 @@ class TestLoggingService(BaseTest):
             user=with_super_admin_user,
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance(
+        response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
         )
         assert response.json is not None

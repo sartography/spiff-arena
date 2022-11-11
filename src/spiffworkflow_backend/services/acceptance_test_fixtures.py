@@ -4,10 +4,9 @@ import time
 
 from flask import current_app
 from flask_bpmn.models.db import db
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
@@ -24,7 +23,7 @@ def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
     # user_input_required - 2 hours ago
     # waiting - 3 hourse ago
     # complete - 4 hours ago
-    # faulted - 5 hours ago
+    # error - 5 hours ago
     # suspended - 6 hours ago
     process_instances = []
     for i in range(len(statuses)):

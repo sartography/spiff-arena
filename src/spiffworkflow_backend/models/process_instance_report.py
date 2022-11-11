@@ -9,10 +9,6 @@ from typing import TypedDict
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import deferred
-from sqlalchemy.orm import relationship
-
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -21,6 +17,9 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import deferred
+from sqlalchemy.orm import relationship
 
 
 ReportMetadata = dict[str, Any]
@@ -83,10 +82,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
             report_metadata = {
                 "columns": [
                     {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_group_identifier",
-                        "accessor": "process_group_identifier",
-                    },
                     {
                         "Header": "process_model_identifier",
                         "accessor": "process_model_identifier",
