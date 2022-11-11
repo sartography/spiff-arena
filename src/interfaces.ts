@@ -6,7 +6,7 @@ export interface Secret {
 }
 
 export interface RecentProcessModel {
-  processGroupIdentifier: string;
+  processGroupIdentifier?: string;
   processModelIdentifier: string;
   processModelDisplayName: string;
 }

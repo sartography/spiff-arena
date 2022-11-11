@@ -268,7 +268,7 @@ export default function ProcessModelEditDiagram() {
       });
       event.eventBus.fire('spiff.json_files.returned', { options });
     } else {
-      console.log('There is no process Model.');
+      console.error('There is no process Model.');
     }
   };
 
@@ -281,10 +281,9 @@ export default function ProcessModelEditDiagram() {
           options.push({ label: ref.name, value: ref.id });
         });
       });
-      console.log('Options', options);
       event.eventBus.fire('spiff.dmn_files.returned', { options });
     } else {
-      console.log('There is no process model.');
+      console.error('There is no process model.');
     }
   };
 
@@ -641,21 +640,18 @@ export default function ProcessModelEditDiagram() {
   const markdownEditor = () => {
     return (
       <Modal
-        size="xl"
-        show={showMarkdownEditor}
-        onHide={handleMarkdownEditorClose}
+        open={showMarkdownEditor}
+        modalHeading="Edit Markdown"
+        primaryButtonText="Close"
+        onRequestSubmit={handleMarkdownEditorClose}
+        size="lg"
       >
-        <Modal.Header closeButton>
-          <Modal.Title>Edit Markdown Content</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <MDEditor value={markdownText} onChange={setMarkdownText} />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleMarkdownEditorClose}>
-            Close
-          </Button>
-        </Modal.Footer>
+        <MDEditor
+          height={500}
+          highlightEnable={false}
+          value={markdownText}
+          onChange={setMarkdownText}
+        />
       </Modal>
     );
   };
@@ -685,33 +681,39 @@ export default function ProcessModelEditDiagram() {
    * @param processId
    */
 
-  const fileNameTemplatePath =
-    '/admin/process-models/:process_model_id/files/:file_name';
-
   const onLaunchBpmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'bpmn');
     if (file) {
-      const path = generatePath(fileNameTemplatePath, {
-        process_model_id: params.process_model_id,
-        file_name: file.name,
-      });
+      const path = generatePath(
+        '/admin/process-models/:process_model_id/files/:file_name',
+        {
+          process_model_id: params.process_model_id,
+          file_name: file.name,
+        }
+      );
       window.open(path);
     }
   };
   const onLaunchJsonEditor = (fileName: string) => {
-    const path = generatePath(fileNameTemplatePath, {
-      process_model_id: params.process_model_id,
-      file_name: fileName,
-    });
+    const path = generatePath(
+      '/admin/process-models/:process_model_id/form/:file_name',
+      {
+        process_model_id: params.process_model_id,
+        file_name: fileName,
+      }
+    );
     window.open(path);
   };
   const onLaunchDmnEditor = (processId: string) => {
     const file = findFileNameForReferenceId(processId, 'dmn');
     if (file) {
-      const path = generatePath(fileNameTemplatePath, {
-        process_model_id: params.process_model_id,
-        file_name: file.name,
-      });
+      const path = generatePath(
+        '/admin/process-models/:process_model_id/files/:file_name',
+        {
+          process_model_id: params.process_model_id,
+          file_name: file.name,
+        }
+      );
       window.open(path);
     }
   };
@@ -780,10 +782,10 @@ export default function ProcessModelEditDiagram() {
             [processModelFileName],
           ]}
         />
-        <h2>
+        <h1>
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
-        </h2>
+        </h1>
         {appropriateEditor()}
         {newFileNameBox()}
         {scriptEditor()}
