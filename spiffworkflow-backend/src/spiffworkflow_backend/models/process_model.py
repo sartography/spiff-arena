@@ -53,6 +53,7 @@ class ProcessModelInfo:
 
     # for use with os.path.join so it can work on windows
     def id_for_file_path(self) -> str:
+        """Id_for_file_path."""
         return self.id.replace("/", os.sep)
 
 
