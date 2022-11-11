@@ -141,6 +141,12 @@ paths:
 
   /process-groups:
     parameters:
+      - name: process_group_identifier
+        in: query
+        required: false
+        description: Optional parameter to filter by a single group
+        schema:
+          type: string
       - name: page
         in: query
         required: false
