@@ -1012,32 +1012,34 @@ def get_tasks(processes_started_by_user: bool = True, page: int = 1, per_page: i
     user_id = g.user.id
     active_tasks_query = (
         ActiveTaskModel.query
+        .outerjoin(GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
-        .order_by(desc(ProcessInstanceModel.created_at_in_seconds))  # type: ignore
-        )
+        .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
+    )
 
     if processes_started_by_user:
-        active_tasks_query = active_tasks_query.filter_by(process_initiator_id=user_id)
+        active_tasks_query = (active_tasks_query.filter(ProcessInstanceModel.process_initiator_id==user_id)
+        .outerjoin(ActiveTaskUserModel, and_(ActiveTaskUserModel.user_id == user_id))
+        )
     else:
-        active_tasks_query = active_tasks_query.filter(ProcessInstanceModel.process_initiator_id != user_id)
+        active_tasks_query = (active_tasks_query.filter(ProcessInstanceModel.process_initiator_id != user_id)
+        .join(ActiveTaskUserModel, and_(ActiveTaskUserModel.user_id == user_id))
+        )
 
     active_tasks = (
-        active_tasks_query.outerjoin(GroupModel)
-        .outerjoin(ActiveTaskUserModel, and_(ActiveTaskUserModel.user_id == user_id))
-        # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
-        .add_columns(
+        active_tasks_query.add_columns(
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.status.label("process_instance_status"),
             ProcessInstanceModel.updated_at_in_seconds,
             ProcessInstanceModel.created_at_in_seconds,
+            UserModel.username,
             GroupModel.identifier.label("group_identifier"),
             ActiveTaskModel.task_name,
             ActiveTaskModel.task_title,
             ActiveTaskModel.process_model_display_name,
             ActiveTaskModel.process_instance_id,
             ActiveTaskUserModel.user_id.label("current_user_is_potential_owner")
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
+            ).paginate(page=page, per_page=per_page, error_out=False)
     )
 
     response_json = {
