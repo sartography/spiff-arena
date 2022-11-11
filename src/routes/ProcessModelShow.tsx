@@ -13,6 +13,8 @@ import {
   Accordion,
   AccordionItem,
   Button,
+  Grid,
+  Column,
   Stack,
   ButtonSet,
   Modal,
@@ -33,15 +35,8 @@ import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 
 const storeRecentProcessModelInLocalStorage = (
-  processModelForStorage: any,
-  params: any
+  processModelForStorage: ProcessModel
 ) => {
-  if (
-    params.process_group_id === undefined ||
-    params.process_model_id === undefined
-  ) {
-    return;
-  }
   // All values stored in localStorage are strings.
   // Grab our recentProcessModels string from localStorage.
   const stringFromLocalStorage = window.localStorage.getItem(
@@ -58,16 +53,16 @@ const storeRecentProcessModelInLocalStorage = (
 
   // Here's the value we want to add
   const value = {
-    processGroupIdentifier: processModelForStorage.process_group_id,
     processModelIdentifier: processModelForStorage.id,
     processModelDisplayName: processModelForStorage.display_name,
   };
 
+  // anything with a processGroupIdentifier is old and busted. leave it behind.
+  array = array.filter((item) => item.processGroupIdentifier === undefined);
+
   // If our parsed/empty array doesn't already have this value in it...
   const matchingItem = array.find(
-    (item) =>
-      item.processGroupIdentifier === value.processGroupIdentifier &&
-      item.processModelIdentifier === value.processModelIdentifier
+    (item) => item.processModelIdentifier === value.processModelIdentifier
   );
   if (matchingItem === undefined) {
     // add the value to the beginning of the array
@@ -77,13 +72,15 @@ const storeRecentProcessModelInLocalStorage = (
     if (array.length > 3) {
       array.pop();
     }
-
-    // turn the array WITH THE NEW VALUE IN IT into a string to prepare it to be stored in localStorage
-    const stringRepresentingArray = JSON.stringify(array);
-
-    // and store it in localStorage as "recentProcessModels"
-    window.localStorage.setItem('recentProcessModels', stringRepresentingArray);
   }
+
+  // once the old and busted serializations are gone, we can put these two statements inside the above if statement
+
+  // turn the array WITH THE NEW VALUE IN IT into a string to prepare it to be stored in localStorage
+  const stringRepresentingArray = JSON.stringify(array);
+
+  // and store it in localStorage as "recentProcessModels"
+  window.localStorage.setItem('recentProcessModels', stringRepresentingArray);
 };
 
 export default function ProcessModelShow() {
@@ -106,13 +103,13 @@ export default function ProcessModelShow() {
     const processResult = (result: ProcessModel) => {
       setProcessModel(result);
       setReloadModel(false);
-      storeRecentProcessModelInLocalStorage(result, params);
+      storeRecentProcessModelInLocalStorage(result);
     };
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}`,
       successCallback: processResult,
     });
-  }, [params, reloadModel, modifiedProcessModelId]);
+  }, [reloadModel, modifiedProcessModelId]);
 
   const processModelRun = (processInstance: any) => {
     setErrorMessage(null);
@@ -233,17 +230,22 @@ export default function ProcessModelShow() {
     });
   };
 
-  const navigateToFileEdit = (processModelFile: ProcessFile) => {
+  const profileModelFileEditUrl = (processModelFile: ProcessFile) => {
     if (processModel) {
       if (processModelFile.name.match(/\.(dmn|bpmn)$/)) {
-        navigate(
-          `/admin/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`
-        );
-      } else if (processModelFile.name.match(/\.(json|md)$/)) {
-        navigate(
-          `/admin/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`
-        );
+        return `/admin/process-models/${modifiedProcessModelId}/files/${processModelFile.name}`;
       }
+      if (processModelFile.name.match(/\.(json|md)$/)) {
+        return `/admin/process-models/${modifiedProcessModelId}/form/${processModelFile.name}`;
+      }
+    }
+    return null;
+  };
+
+  const navigateToFileEdit = (processModelFile: ProcessFile) => {
+    const url = profileModelFileEditUrl(processModelFile);
+    if (url) {
+      navigate(url);
     }
   };
 
@@ -324,10 +326,15 @@ export default function ProcessModelShow() {
       if (isPrimaryBpmnFile) {
         primarySuffix = '- Primary File';
       }
+      let fileLink = null;
+      const fileUrl = profileModelFileEditUrl(processModelFile);
+      if (fileUrl) {
+        fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
+      }
       constructedTag = (
         <TableRow key={processModelFile.name}>
           <TableCell key={`${processModelFile.name}-cell`}>
-            {processModelFile.name}
+            {fileLink}
             {primarySuffix}
           </TableCell>
           {actionsTableCell}
@@ -369,14 +376,6 @@ export default function ProcessModelShow() {
             data-qa="process-instance-list-link"
           >
             List
-          </Link>
-        </li>
-        <li>
-          <Link
-            to={`/admin/process-models/${modifiedProcessModelId}/process-instances/reports`}
-            data-qa="process-instance-reports-link"
-          >
-            Reports
           </Link>
         </li>
       </ul>
@@ -440,63 +439,67 @@ export default function ProcessModelShow() {
       return null;
     }
     return (
-      <Accordion>
-        <AccordionItem
-          data-qa="files-accordion"
-          title={
-            <Stack orientation="horizontal">
-              <span>
-                <Button size="sm" kind="ghost">
-                  Files
+      <Grid fullWidth>
+        <Column md={5} lg={9} sm={3}>
+          <Accordion align="end">
+            <AccordionItem
+              data-qa="files-accordion"
+              title={
+                <Stack orientation="horizontal">
+                  <span>
+                    <Button size="sm" kind="ghost">
+                      Files
+                    </Button>
+                  </span>
+                </Stack>
+              }
+            >
+              <ButtonSet>
+                <Button
+                  renderIcon={Upload}
+                  data-qa="upload-file-button"
+                  onClick={() => setShowFileUploadModal(true)}
+                  size="sm"
+                  kind=""
+                  className="button-white-background"
+                >
+                  Upload File
                 </Button>
-              </span>
-            </Stack>
-          }
-        >
-          <ButtonSet>
-            <Button
-              renderIcon={Upload}
-              data-qa="upload-file-button"
-              onClick={() => setShowFileUploadModal(true)}
-              size="sm"
-              kind=""
-              className="button-white-background"
-            >
-              Upload File
-            </Button>
-            <Button
-              renderIcon={Add}
-              href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
-              size="sm"
-            >
-              New BPMN File
-            </Button>
-            <Button
-              renderIcon={Add}
-              href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
-              size="sm"
-            >
-              New DMN File
-            </Button>
-            <Button
-              renderIcon={Add}
-              href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
-              size="sm"
-            >
-              New JSON File
-            </Button>
-            <Button
-              renderIcon={Add}
-              href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
-              size="sm"
-            >
-              New Markdown File
-            </Button>
-          </ButtonSet>
-          <br />
-          {processModelFileList()}
-        </AccordionItem>
-      </Accordion>
+                <Button
+                  renderIcon={Add}
+                  href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
+                  size="sm"
+                >
+                  New BPMN File
+                </Button>
+                <Button
+                  renderIcon={Add}
+                  href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
+                  size="sm"
+                >
+                  New DMN File
+                </Button>
+                <Button
+                  renderIcon={Add}
+                  href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
+                  size="sm"
+                >
+                  New JSON File
+                </Button>
+                <Button
+                  renderIcon={Add}
+                  href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
+                  size="sm"
+                >
+                  New Markdown File
+                </Button>
+              </ButtonSet>
+              <br />
+              {processModelFileList()}
+            </AccordionItem>
+          </Accordion>
+        </Column>
+      </Grid>
     );
   };
 

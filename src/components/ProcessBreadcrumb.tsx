@@ -13,7 +13,7 @@ type OwnProps = {
 const explodeCrumb = (crumb: HotCrumbItem) => {
   const url: string = crumb[1] || '';
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_unused, processModelId, link] = url.split(':');
+  const [endingUrlType, processModelId, link] = url.split(':');
   const processModelIdSegments = splitProcessModelId(processModelId);
   const paths: string[] = [];
   const lastPathItem = processModelIdSegments.pop();
@@ -29,7 +29,13 @@ const explodeCrumb = (crumb: HotCrumbItem) => {
     }
   );
   if (link === 'link') {
-    const lastUrl = `/admin/process-models/${paths.join(':')}:${lastPathItem}`;
+    if (lastPathItem !== undefined) {
+      paths.push(lastPathItem);
+    }
+    // process_model to process-models
+    const lastUrl = `/admin/${endingUrlType
+      .replace('_', '-')
+      .replace(/s*$/, 's')}/${paths.join(':')}`;
     breadcrumbItems.push(
       <BreadcrumbItem key={lastPathItem} href={lastUrl}>
         {lastPathItem}
@@ -64,7 +70,7 @@ export default function ProcessBreadcrumb({
           </BreadcrumbItem>
         );
       }
-      if (url && url.startsWith('process_model:')) {
+      if (url && url.match(/^process[_-](model|group)s?:/)) {
         return explodeCrumb(crumb);
       }
       return (

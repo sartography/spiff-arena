@@ -122,7 +122,7 @@ export default function HomePage() {
     });
     return (
       <>
-        <h2>Processes I can start</h2>
+        <h1>Processes I can start</h1>
         <Table striped bordered>
           <thead>
             <tr>
@@ -145,7 +145,7 @@ export default function HomePage() {
     );
     return (
       <>
-        <h2>Tasks waiting for me</h2>
+        <h1>Tasks waiting for me</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}
@@ -158,13 +158,18 @@ export default function HomePage() {
     );
   };
 
+  const tasksWaitingForMe = tasksWaitingForMeComponent();
   const relevantProcessModelSection =
-    recentProcessModels.length > 0 && buildRecentProcessModelSection();
+    (recentProcessModels.length > 0 && buildRecentProcessModelSection()) ||
+    null;
 
   if (pagination) {
+    if (tasksWaitingForMe === null && relevantProcessModelSection === null) {
+      return <p>No tasks are waiting for you.</p>;
+    }
     return (
       <>
-        {tasksWaitingForMeComponent()}
+        {tasksWaitingForMe}
         {relevantProcessModelSection}
       </>
     );

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import {modifyProcessModelPath, slugifyString} from '../helpers';
+import { modifyProcessModelPath, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
@@ -79,12 +79,9 @@ export default function ProcessGroupForm({
       description: processGroup.description,
     };
     if (mode === 'new') {
-      console.log(`parentGroupId: ${parentGroupId}`);
-      console.log(`processGroup.id: ${processGroup.id}`);
       if (parentGroupId) {
         newProcessGroupId = `${parentGroupId}/${processGroup.id}`;
       }
-      console.log(`newProcessGroupId: ${newProcessGroupId}`);
       Object.assign(postBody, {
         id: parentGroupId
           ? `${parentGroupId}/${processGroup.id}`

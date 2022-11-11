@@ -7,6 +7,8 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   convertSecondsToFormattedDate,
   getPageInfoFromSearchParams,
+  modifyProcessModelPath,
+  unModifyProcessModelPath,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -44,15 +46,9 @@ export default function MessageInstanceList() {
           <td>
             <Link
               data-qa="process-model-show-link"
-              to={`/admin/process-groups/${rowToUse.process_group_identifier}`}
-            >
-              {rowToUse.process_group_identifier}
-            </Link>
-          </td>
-          <td>
-            <Link
-              data-qa="process-model-show-link"
-              to={`/admin/process-models/${rowToUse.process_group_identifier}/${rowToUse.process_model_identifier}`}
+              to={`/admin/process-models/${modifyProcessModelPath(
+                rowToUse.process_model_identifier
+              )}`}
             >
               {rowToUse.process_model_identifier}
             </Link>
@@ -60,7 +56,9 @@ export default function MessageInstanceList() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${rowToUse.process_group_identifier}/${rowToUse.process_model_identifier}/process-instances/${rowToUse.process_instance_id}`}
+              to={`/admin/process-models/${modifyProcessModelPath(
+                rowToUse.process_model_identifier
+              )}/process-instances/${rowToUse.process_instance_id}`}
             >
               {rowToUse.process_instance_id}
             </Link>
@@ -80,7 +78,6 @@ export default function MessageInstanceList() {
         <thead>
           <tr>
             <th>Instance Id</th>
-            <th>Process Group</th>
             <th>Process Model</th>
             <th>Process Instance</th>
             <th>Message Model</th>
@@ -107,16 +104,29 @@ export default function MessageInstanceList() {
       )}&process_instance_id=${searchParams.get('process_instance_id')}`;
       breadcrumbElement = (
         <ProcessBreadcrumb
-          processModelId={searchParams.get('process_model_id') as any}
-          processGroupId={searchParams.get('process_group_id') as any}
-          linkProcessModel
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            [
+              `Process Model: ${params.process_model_id}`,
+              `process_model:${unModifyProcessModelPath(
+                searchParams.get('process_model_id') || ''
+              )}:link`,
+            ],
+            [
+              `Process Instance: ${searchParams.get('process_instance_id')}`,
+              `/admin/process-models/${searchParams.get(
+                'process_model_id'
+              )}/process-instances/${searchParams.get('process_instance_id')}`,
+            ],
+            ['Messages'],
+          ]}
         />
       );
     }
     return (
       <>
         {breadcrumbElement}
-        <h2>Messages</h2>
+        <h1>Messages</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}

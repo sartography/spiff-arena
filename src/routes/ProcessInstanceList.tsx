@@ -41,6 +41,7 @@ import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
 import { PaginationObject, ProcessModel } from '../interfaces';
 import ProcessModelSearch from '../components/ProcessModelSearch';
+import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
 export default function ProcessInstanceList() {
   const params = useParams();
@@ -471,24 +472,29 @@ export default function ProcessInstanceList() {
     );
   };
 
-  const processInstanceTitleElement = () => {
+  const processInstanceBreadcrumbElement = () => {
     const processModelFullIdentifier =
       getProcessModelFullIdentifierFromSearchParams(searchParams);
     if (processModelFullIdentifier === null) {
-      return <h2>Process Instances</h2>;
+      return null;
     }
+
     return (
-      <h2>
-        Process Instances for:{' '}
-        <Link
-          to={`/admin/process-models/${modifyProcessModelPath(
-            processModelFullIdentifier
-          )}`}
-        >
-          {processModelFullIdentifier}
-        </Link>
-      </h2>
+      <ProcessBreadcrumb
+        hotCrumbs={[
+          ['Process Groups', '/admin'],
+          [
+            `Process Model: ${processModelFullIdentifier}`,
+            `process_model:${processModelFullIdentifier}:link`,
+          ],
+          ['Process Instances'],
+        ]}
+      />
     );
+  };
+
+  const processInstanceTitleElement = () => {
+    return <h1>Process Instances</h1>;
   };
 
   const toggleShowFilterOptions = () => {
@@ -499,6 +505,7 @@ export default function ProcessInstanceList() {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     return (
       <>
+        {processInstanceBreadcrumbElement()}
         {processInstanceTitleElement()}
         <Grid fullWidth>
           <Column

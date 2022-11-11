@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { DATE_FORMAT } from './config';
+import { DATE_TIME_FORMAT, DATE_FORMAT } from './config';
 import {
   DEFAULT_PER_PAGE,
   DEFAULT_PAGE,
@@ -47,6 +47,14 @@ export const convertStringToDate = (dateString: string) => {
     // add midnight time to the date so it c uses the correct date
     // after converting to timezone
     return new Date(`${dateString}T00:10:00`);
+  }
+  return null;
+};
+
+export const convertSecondsToFormattedDateTime = (seconds: number) => {
+  if (seconds) {
+    const dateObject = new Date(seconds * 1000);
+    return format(dateObject, DATE_TIME_FORMAT);
   }
   return null;
 };
