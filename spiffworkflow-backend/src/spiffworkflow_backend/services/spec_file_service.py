@@ -12,6 +12,7 @@ from lxml import etree  # type: ignore
 from lxml.etree import _Element  # type: ignore
 from lxml.etree import Element as EtreeElement
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
+
 from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileReference
@@ -374,7 +375,7 @@ class SpecFileService(FileSystemService):
         process_model_info: ProcessModelInfo, bpmn_file_name: str, et_root: _Element
     ) -> None:
         """Store_bpmn_process_identifiers."""
-        relative_process_model_path = process_model_info.id
+        relative_process_model_path = process_model_info.id_for_file_path()
 
         relative_bpmn_file_path = os.path.join(
             relative_process_model_path, bpmn_file_name

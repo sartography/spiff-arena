@@ -29,6 +29,8 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
+from sqlalchemy import and_, asc, desc
+
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -76,8 +78,6 @@ from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
-from sqlalchemy import and_, asc
-from sqlalchemy import desc
 
 
 class TaskDataSelectOption(TypedDict):
@@ -179,10 +179,14 @@ def process_group_update(
     return make_response(jsonify(process_group), 200)
 
 
-def process_groups_list(process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+def process_groups_list(
+    process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+) -> flask.wrappers.Response:
     """Process_groups_list."""
     if process_group_identifier is not None:
-        process_groups = ProcessModelService().get_process_groups(process_group_identifier)
+        process_groups = ProcessModelService().get_process_groups(
+            process_group_identifier
+        )
     else:
         process_groups = ProcessModelService().get_process_groups()
     batch = ProcessModelService().get_batch(
