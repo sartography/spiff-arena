@@ -1,11 +1,10 @@
 """UserGroupAssignment."""
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
-
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 
 class UserGroupAssignmentModel(SpiffworkflowBaseDBModel):

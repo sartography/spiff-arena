@@ -5,6 +5,7 @@ from typing import Any
 import connexion  # type: ignore
 import flask.app
 import flask.json
+import spiffworkflow_backend.load_database_models  # noqa: F401
 import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
@@ -14,9 +15,6 @@ from flask_bpmn.models.db import db
 from flask_bpmn.models.db import migrate
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
-from werkzeug.exceptions import NotFound
-
-import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.config import setup_config
 from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_blueprint
 from spiffworkflow_backend.routes.process_api_blueprint import process_api_blueprint
@@ -26,6 +24,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.background_processing_service import (
     BackgroundProcessingService,
 )
+from werkzeug.exceptions import NotFound
 
 
 class MyJSONEncoder(DefaultJSONProvider):

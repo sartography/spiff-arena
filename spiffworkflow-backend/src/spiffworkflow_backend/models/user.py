@@ -10,13 +10,12 @@ from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from marshmallow import Schema
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import validates
-
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.services.authentication_service import (
     AuthenticationProviderTypes,
 )
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import validates
 
 
 class UserNotFoundError(Exception):
