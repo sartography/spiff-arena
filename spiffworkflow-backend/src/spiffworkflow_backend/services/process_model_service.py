@@ -218,7 +218,7 @@ class ProcessModelService(FileSystemService):
     def __get_all_nested_models(self, group_path: str) -> list:
         """__get_all_nested_models."""
         all_nested_models = []
-        for root, dirs, files in os.walk(group_path):
+        for _root, dirs, _files in os.walk(group_path):
             for dir in dirs:
                 model_dir = os.path.join(group_path, dir)
                 if ProcessModelService().is_model(model_dir):
