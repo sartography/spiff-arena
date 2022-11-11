@@ -1,9 +1,6 @@
 Spiffworkflow Backend
 ==========
-
-|Tests| |Codecov|
-
-|pre-commit| |Black|
+|Tests| |Codecov| |pre-commit| |Black|
 
 .. |Tests| image:: https://github.com/sartography/spiffworkflow-backend/workflows/Tests/badge.svg
    :target: https://github.com/sartography/spiffworkflow-backend/actions?workflow=Tests

@@ -21,7 +21,7 @@ export function SpiffExtensionLaunchButton(props) {
         listenEvent,
       });
 
-      // Listen for a respose if the listenEvent is provided, and
+      // Listen for a response if the listenEvent is provided, and
       // set the value to the response
       // Optional additional arguments if we should listen for a reponse.
       if (listenEvent) {
