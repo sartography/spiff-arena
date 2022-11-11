@@ -18,6 +18,8 @@ jobs:
         include:
           - { python: "3.11", os: "ubuntu-latest", session: "safety" }
           - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
+          - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
+          - { python: "3.9", os: "ubuntu-latest", session: "mypy" }
           - {
               python: "3.11",
               os: "ubuntu-latest",
@@ -33,6 +35,24 @@ jobs:
           - {
               python: "3.11",
               os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.10",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.9",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.10",
+              os: "windows-latest",
               session: "tests",
               database: "sqlite",
             }
