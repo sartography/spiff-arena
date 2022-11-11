@@ -3,17 +3,128 @@ import json
 
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.process_instance_service import (
+    ProcessInstanceService,
+)
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestNestedGroups(BaseTest):
     """TestNestedGroups."""
+
+    def test_delete_group_with_running_instance(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_delete_group_with_running_instance."""
+        process_group_id = "test_group"
+        process_model_id = "manual_task"
+        bpmn_file_name = "manual_task.bpmn"
+        bpmn_file_location = "manual_task"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+        response = self.create_process_instance_from_process_model_id(
+            client,
+            process_model_identifier,
+            self.logged_in_headers(with_super_admin_user),
+        )
+        process_instance_id = response.json["id"]
+
+        client.post(
+            f"/v1.0/process-instances/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        process_instance = ProcessInstanceService().get_process_instance(
+            process_instance_id
+        )
+        assert process_instance
+        modified_process_group_id = process_group_id.replace("/", ":")
+        response = client.delete(
+            f"/v1.0/process-groups/{modified_process_group_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 400
+        assert response.json["error_code"] == "existing_instances"
+        assert "We cannot delete the group" in response.json["message"]
+        assert (
+            "there are models with existing instances inside the group"
+            in response.json["message"]
+        )
+
+    def test_delete_group_with_running_instance_in_nested_group(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_delete_group_with_running_instance_in_nested_group."""
+        process_group_a = ProcessGroup(
+            id="group_a",
+            display_name="Group A",
+            display_order=0,
+            admin=False,
+        )
+        response_a = client.post(  # noqa: F841
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(ProcessGroupSchema().dump(process_group_a)),
+        )
+
+        process_group_id = "group_a/test_group"
+        process_model_id = "manual_task"
+        bpmn_file_name = "manual_task.bpmn"
+        bpmn_file_location = "manual_task"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+        response = self.create_process_instance_from_process_model_id(
+            client,
+            process_model_identifier,
+            self.logged_in_headers(with_super_admin_user),
+        )
+        process_instance_id = response.json["id"]
+
+        client.post(
+            f"/v1.0/process-instances/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        process_instance = ProcessInstanceService().get_process_instance(
+            process_instance_id
+        )
+        assert process_instance
+        modified_process_group_id = process_group_id.replace("/", ":")
+        response = client.delete(
+            f"/v1.0/process-groups/{modified_process_group_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 400
+        assert response.json["error_code"] == "existing_instances"
+        assert "We cannot delete the group" in response.json["message"]
+        assert (
+            "there are models with existing instances inside the group"
+            in response.json["message"]
+        )
 
     def test_nested_groups(
         self,

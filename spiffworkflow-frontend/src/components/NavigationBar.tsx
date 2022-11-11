@@ -38,6 +38,10 @@ export default function NavigationBar() {
     let newActiveKey = '/admin/process-groups';
     if (location.pathname.match(/^\/admin\/messages\b/)) {
       newActiveKey = '/admin/messages';
+    } else if (
+      location.pathname.match(/^\/admin\/process-instances\/reports\b/)
+    ) {
+      newActiveKey = '/admin/process-instances/reports';
     } else if (location.pathname.match(/^\/admin\/process-instances\b/)) {
       newActiveKey = '/admin/process-instances';
     } else if (location.pathname.match(/^\/admin\/secrets\b/)) {
@@ -118,6 +122,12 @@ export default function NavigationBar() {
           isCurrentPage={isActivePage('/admin/authentications')}
         >
           Authentications
+        </HeaderMenuItem>
+        <HeaderMenuItem
+          href="/admin/process-instances/reports"
+          isCurrentPage={isActivePage('/admin/process-instances/reports')}
+        >
+          Reports
         </HeaderMenuItem>
       </>
     );

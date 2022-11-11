@@ -2,8 +2,6 @@
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -14,6 +12,7 @@ from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestAuthorizationService(BaseTest):
@@ -104,7 +103,7 @@ class TestAuthorizationService(BaseTest):
         self.find_or_create_user("testuser1")
         AuthorizationService.import_permissions_from_yaml_file()
 
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
             process_group_id="test_group",

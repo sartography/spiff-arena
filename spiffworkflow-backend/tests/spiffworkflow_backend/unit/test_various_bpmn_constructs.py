@@ -1,13 +1,12 @@
 """Test_various_bpmn_constructs."""
 from flask.app import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestVariousBpmnConstructs(BaseTest):
@@ -21,7 +20,7 @@ class TestVariousBpmnConstructs(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_running_process_with_timer_intermediate_catch_event."""
-        process_model_identifier = self.basic_test_setup(
+        process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             "test_group",

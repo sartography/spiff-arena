@@ -2,7 +2,6 @@
 from typing import Any
 
 from flask import current_app
-
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )

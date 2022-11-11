@@ -1,10 +1,9 @@
 """Test_environment_var_script."""
 from flask import Flask
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestEnvironmentVarScript(BaseTest):
