@@ -312,7 +312,7 @@ jobs:
           # like sub '/' with '-'
           TAG: ${{ github.ref_name }}-${{ steps.date.outputs.date }}
         with:
-          context: .
+          context: spiffworkflow-backend
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
           labels: ${{ steps.meta.outputs.labels }}
