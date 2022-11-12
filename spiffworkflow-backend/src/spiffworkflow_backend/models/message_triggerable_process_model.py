@@ -15,6 +15,7 @@ class MessageTriggerableProcessModel(SpiffworkflowBaseDBModel):
         ForeignKey(MessageModel.id), nullable=False, unique=True
     )
     process_model_identifier: str = db.Column(db.String(50), nullable=False, index=True)
+    # fixme:  Maybe we don't need this anymore?
     process_group_identifier: str = db.Column(db.String(50), nullable=False, index=True)
 
     updated_at_in_seconds: int = db.Column(db.Integer)

@@ -28,6 +28,7 @@ class ExampleDataLoader:
         if bpmn_file_name is None we load all files in process_model_source_directory,
         otherwise, we only load bpmn_file_name
         """
+
         if process_model_source_directory is None:
             raise Exception("You must include `process_model_source_directory`.")
 
@@ -79,15 +80,14 @@ class ExampleDataLoader:
             try:
                 file = open(file_path, "rb")
                 data = file.read()
-                SpecFileService.add_file(
+                file_info = SpecFileService.add_file(
                     process_model_info=spec, file_name=filename, binary_data=data
                 )
                 if is_primary:
-                    SpecFileService.process_bpmn_file(
-                        spec, filename, data, set_primary_file=True
-                    )
-                    workflow_spec_service = ProcessModelService()
-                    workflow_spec_service.save_process_model(spec)
+                    references = SpecFileService.get_references_for_file(file_info, spec)
+                    spec.primary_process_id = references[0].id
+                    spec.primary_file_name = filename
+                    ProcessModelService().save_process_model(spec)
             finally:
                 if file:
                     file.close()
