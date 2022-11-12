@@ -521,6 +521,7 @@ export default function ProcessInstanceShow() {
     elements.push(resumeButton(processInstanceToUse));
     elements.push(
       <ButtonWithConfirmation
+        data-qa="process-instance-delete"
         kind="ghost"
         renderIcon={TrashCan}
         iconDescription="Delete"

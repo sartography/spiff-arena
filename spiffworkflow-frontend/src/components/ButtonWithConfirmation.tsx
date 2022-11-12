@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Button, Modal } from '@carbon/react';
 
 type OwnProps = {
+  'data-qa'?: string;
   description?: string;
   buttonLabel?: string;
   onConfirmation: (..._args: any[]) => any;
@@ -18,6 +19,7 @@ export default function ButtonWithConfirmation({
   description,
   buttonLabel,
   onConfirmation,
+  'data-qa': dataQa,
   title = 'Are you sure?',
   confirmButtonLabel = 'OK',
   kind = 'danger',
@@ -58,6 +60,7 @@ export default function ButtonWithConfirmation({
   return (
     <>
       <Button
+        data-qa={dataQa}
         onClick={handleShowConfirmationPrompt}
         kind={kind}
         renderIcon={renderIcon}
