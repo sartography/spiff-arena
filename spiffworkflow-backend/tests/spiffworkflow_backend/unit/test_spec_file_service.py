@@ -13,7 +13,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
+from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException
 
 class TestSpecFileService(BaseTest):
     """TestSpecFileService."""
@@ -77,15 +77,15 @@ class TestSpecFileService(BaseTest):
             bpmn_process_id_lookups[0].bpmn_file_relative_path
             == self.call_activity_nested_relative_file_path
         )
-        with pytest.raises(ApiError) as exception:
+        with pytest.raises(ValidationException) as exception:
             load_test_spec(
                 "call_activity_nested_duplicate",
                 process_model_source_directory="call_activity_duplicate",
                 bpmn_file_name="call_activity_nested_duplicate",
             )
-        assert f"Process id ({bpmn_process_identifier}) has already been used" in str(
-            exception.value
-        )
+            assert f"Process id ({bpmn_process_identifier}) has already been used" in str(
+                exception.value
+            )
 
     def test_updates_relative_file_path_when_appropriate(
         self,
@@ -161,18 +161,14 @@ class TestSpecFileService(BaseTest):
         files = SpecFileService.get_files(process_model_info)
 
         file = next(filter(lambda f: f.name == "call_activity_level_3.bpmn", files))
-        ca_3 = SpecFileService.get_references_for_file(
-            file, process_model_info, BpmnDmnParser
-        )
+        ca_3 = SpecFileService.get_references_for_file(file, process_model_info)
         assert len(ca_3) == 1
         assert ca_3[0].name == "Level 3"
         assert ca_3[0].id == "Level3"
         assert ca_3[0].type == "process"
 
         file = next(filter(lambda f: f.name == "level2c.dmn", files))
-        dmn1 = SpecFileService.get_references_for_file(
-            file, process_model_info, BpmnDmnParser
-        )
+        dmn1 = SpecFileService.get_references_for_file(file, process_model_info)
         assert len(dmn1) == 1
         assert dmn1[0].name == "Decision 1"
         assert dmn1[0].id == "Decision_0vrtcmk"
