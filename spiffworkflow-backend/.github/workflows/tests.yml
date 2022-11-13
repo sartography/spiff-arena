@@ -231,6 +231,10 @@ jobs:
       - name: Combine coverage data and display human readable report
         run: |
           find . -name \*.pyc -delete
+          echo debug
+          pwd
+          ls -ltr
+          ls -ltr spiffworkflow-backend
           nox --force-color --session=coverage
 
       - name: Create coverage report
