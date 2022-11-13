@@ -144,10 +144,11 @@ describe('process-models', () => {
 
     cy.getBySel('process-instance-list-link').click();
     cy.getBySel('process-instance-show-link').click();
-    cy.contains('Delete').click();
+    cy.getBySel('process-instance-delete').click();
     cy.contains('Are you sure');
     cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
-    cy.contains(`Process Instances for: ${groupId}/${modelId}`);
+
+    // in breadcrumb
     cy.contains(modelId).click();
 
     cy.contains('Edit process model').click();

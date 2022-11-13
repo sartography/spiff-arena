@@ -439,10 +439,11 @@ export default function ProcessModelShow() {
       return null;
     }
     return (
-      <Grid fullWidth>
+      <Grid condensed fullWidth>
         <Column md={5} lg={9} sm={3}>
-          <Accordion align="end">
+          <Accordion align="end" open>
             <AccordionItem
+              open
               data-qa="files-accordion"
               title={
                 <Stack orientation="horizontal">
@@ -532,11 +533,11 @@ export default function ProcessModelShow() {
         <br />
         <br />
         {processInstanceResultTag()}
-        {processModelButtons()}
-        <br />
         <br />
         <h3>Process Instances</h3>
         {processInstancesUl()}
+        <br />
+        {processModelButtons()}
       </>
     );
   }

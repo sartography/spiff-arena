@@ -169,14 +169,13 @@ describe('process-instances', () => {
     cy.getBySel('process-instance-list-link').click();
     cy.assertAtLeastOneItemInPaginatedResults();
 
+    const statusSelect = '#process-instance-status-select';
     PROCESS_STATUSES.forEach((processStatus) => {
       if (!['all', 'waiting'].includes(processStatus)) {
-        cy.get('#process-instance-status-select').click();
-        cy.get('#process-instance-status-select')
-          .contains(processStatus)
-          .click();
+        cy.get(statusSelect).click();
+        cy.get(statusSelect).contains(processStatus).click();
         // close the dropdown again
-        cy.get('#process-instance-status-select').click();
+        cy.get(statusSelect).click();
         cy.getBySel('filter-button').click();
         cy.assertAtLeastOneItemInPaginatedResults();
         cy.getBySel(`process-instance-status-${processStatus}`).contains(
