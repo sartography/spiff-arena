@@ -261,8 +261,7 @@ jobs:
           find . -name \*.pyc -delete
           echo debug
           pwd
-          ls -ltr
-          ls -ltr spiffworkflow-backend
+          ls -altr
           nox --force-color --session=coverage
 
       - name: Create coverage report
