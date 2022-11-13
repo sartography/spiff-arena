@@ -163,6 +163,7 @@ export default function ProcessGroupShow() {
           </Stack>
           <br />
           <br />
+          {/* eslint-disable-next-line sonarjs/no-gratuitous-expressions */}
           {modelPagination && modelPagination.total > 0 && (
             <PaginationForTable
               page={page}
@@ -174,6 +175,7 @@ export default function ProcessGroupShow() {
           )}
           <br />
           <br />
+          {/* eslint-disable-next-line sonarjs/no-gratuitous-expressions */}
           {groupPagination && groupPagination.total > 0 && (
             <PaginationForTable
               page={page}
