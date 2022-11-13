@@ -1441,7 +1441,7 @@ class TestProcessApi(BaseTest):
                 updated_at_in_seconds=round(time.time()),
                 start_in_seconds=(1000 * i) + 1000,
                 end_in_seconds=(1000 * i) + 2000,
-                bpmn_json=json.dumps({"i": i}),
+                bpmn_version_control_identifier=i,
             )
             db.session.add(process_instance)
         db.session.commit()
@@ -1487,7 +1487,12 @@ class TestProcessApi(BaseTest):
         results = response.json["results"]
         assert len(results) == 4
         for i in range(4):
-            assert json.loads(results[i]["bpmn_json"])["i"] in (1, 2, 3, 4)
+            assert json.loads(results[i]["bpmn_version_control_identifier"]) in (
+                1,
+                2,
+                3,
+                4,
+            )
 
         # start > 2000, end < 5000 - this should eliminate the first 2 and the last
         response = client.get(
@@ -1497,8 +1502,8 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         results = response.json["results"]
         assert len(results) == 2
-        assert json.loads(results[0]["bpmn_json"])["i"] in (2, 3)
-        assert json.loads(results[1]["bpmn_json"])["i"] in (2, 3)
+        assert json.loads(results[0]["bpmn_version_control_identifier"]) in (2, 3)
+        assert json.loads(results[1]["bpmn_version_control_identifier"]) in (2, 3)
 
         # start > 1000, start < 4000 - this should eliminate the first and the last 2
         response = client.get(
@@ -1508,8 +1513,8 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         results = response.json["results"]
         assert len(results) == 2
-        assert json.loads(results[0]["bpmn_json"])["i"] in (1, 2)
-        assert json.loads(results[1]["bpmn_json"])["i"] in (1, 2)
+        assert json.loads(results[0]["bpmn_version_control_identifier"]) in (1, 2)
+        assert json.loads(results[1]["bpmn_version_control_identifier"]) in (1, 2)
 
         # end > 2000, end < 6000 - this should eliminate the first and the last
         response = client.get(
@@ -1520,7 +1525,11 @@ class TestProcessApi(BaseTest):
         results = response.json["results"]
         assert len(results) == 3
         for i in range(3):
-            assert json.loads(results[i]["bpmn_json"])["i"] in (1, 2, 3)
+            assert json.loads(results[i]["bpmn_version_control_identifier"]) in (
+                1,
+                2,
+                3,
+            )
 
     def test_process_instance_report_list(
         self,
