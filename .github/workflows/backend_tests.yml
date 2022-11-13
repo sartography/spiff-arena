@@ -159,11 +159,12 @@ jobs:
 
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-        if: always() && matrix.session == 'tests' && matrix.python == '3.11' && matrix.os == 'ubuntu-latest'
+        if: always() && matrix.session == 'tests' && matrix.python == '3.11' && matrix.os == 'ubuntu-latest' && matrix.database == 'mysql'
         uses: "actions/upload-artifact@v3.0.0"
+        # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
-          path: ".coverage.*"
+          path: "spiffworkflow-backend/.coverage.*"
 
       - name: Upload documentation
         if: matrix.session == 'docs-build'
