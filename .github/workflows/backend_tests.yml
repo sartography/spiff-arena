@@ -301,8 +301,8 @@ jobs:
           path: pr/
 
   build-and-push-image:
-    if: github.ref_name == 'main' && ${{ github.event_name == 'push' }}
     needs: tests
+    if: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: sartography/spiffworkflow-backend
