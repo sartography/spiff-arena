@@ -5,7 +5,7 @@ from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -116,7 +116,7 @@ class TestProcessModel(BaseTest):
 
         # delete all of the id lookup items to force to processor to find the correct
         # process model when running the process
-        db.session.query(BpmnProcessIdLookup).delete()
+        db.session.query(SpecReferenceCache).delete()
         db.session.commit()
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)

@@ -18,8 +18,8 @@ from spiffworkflow_backend.models.principal import PrincipalModel  # noqa: F401
 
 
 from spiffworkflow_backend.models.active_task import ActiveTaskModel  # noqa: F401
-from spiffworkflow_backend.models.bpmn_process_id_lookup import (
-    BpmnProcessIdLookup,
+from spiffworkflow_backend.models.spec_reference import (
+    SpecReferenceCache,
 )  # noqa: F401
 from spiffworkflow_backend.models.message_correlation_property import (
     MessageCorrelationPropertyModel,
