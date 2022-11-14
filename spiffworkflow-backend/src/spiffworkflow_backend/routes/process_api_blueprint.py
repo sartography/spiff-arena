@@ -1029,7 +1029,17 @@ def task_list_for_my_open_processes(
     return get_tasks(page=page, per_page=per_page)
 
 
-def task_list_for_processes_started_by_others(
+def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    """Task_list_for_processes_started_by_others."""
+    return get_tasks(
+        processes_started_by_user=False,
+        has_lane_assignment_id=False,
+        page=page,
+        per_page=per_page,
+    )
+
+
+def task_list_for_my_groups(
     page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Task_list_for_processes_started_by_others."""
@@ -1037,14 +1047,21 @@ def task_list_for_processes_started_by_others(
 
 
 def get_tasks(
-    processes_started_by_user: bool = True, page: int = 1, per_page: int = 100
+    processes_started_by_user: bool = True,
+    has_lane_assignment_id: bool = True,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Get_tasks."""
     user_id = g.user.id
+
+    # use distinct to ensure we only get one row per active task otherwise
+    # we can get back multiple for the same active task row which throws off
+    # pagination later on
+    # https://stackoverflow.com/q/34582014/6090676
     active_tasks_query = (
-        ActiveTaskModel.query.outerjoin(
-            GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id
-        )
+        ActiveTaskModel.query.distinct()
+        .outerjoin(GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
     )
@@ -1052,11 +1069,29 @@ def get_tasks(
     if processes_started_by_user:
         active_tasks_query = active_tasks_query.filter(
             ProcessInstanceModel.process_initiator_id == user_id
-        ).outerjoin(ActiveTaskUserModel, and_(ActiveTaskUserModel.user_id == user_id))
+        ).outerjoin(
+            ActiveTaskUserModel,
+            and_(
+                ActiveTaskUserModel.user_id == user_id,
+                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+            ),
+        )
     else:
         active_tasks_query = active_tasks_query.filter(
             ProcessInstanceModel.process_initiator_id != user_id
-        ).join(ActiveTaskUserModel, and_(ActiveTaskUserModel.user_id == user_id))
+        ).join(
+            ActiveTaskUserModel,
+            and_(
+                ActiveTaskUserModel.user_id == user_id,
+                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+            ),
+        )
+        if has_lane_assignment_id:
+            active_tasks_query = active_tasks_query.filter(
+                ActiveTaskModel.lane_assignment_id.is_not(None)  # type: ignore
+            )
+        else:
+            active_tasks_query = active_tasks_query.filter(ActiveTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
     active_tasks = active_tasks_query.add_columns(
         ProcessInstanceModel.process_model_identifier,

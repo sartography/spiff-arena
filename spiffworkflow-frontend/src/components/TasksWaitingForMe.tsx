@@ -13,7 +13,7 @@ import { PaginationObject } from '../interfaces';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 
-export default function MyOpenProcesses() {
+export default function TasksWaitingForMe() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
@@ -28,7 +28,7 @@ export default function MyOpenProcesses() {
       setPagination(result.pagination);
     };
     HttpService.makeCallToBackend({
-      path: `/tasks/for-my-open-processes?per_page=${perPage}&page=${page}`,
+      path: `/tasks/for-me?per_page=${perPage}&page=${page}`,
       successCallback: setTasksFromResult,
     });
   }, [searchParams]);
@@ -63,6 +63,7 @@ export default function MyOpenProcesses() {
           >
             {rowToUse.task_title}
           </td>
+          <td>{rowToUse.username}</td>
           <td>{rowToUse.process_instance_status}</td>
           <td>{rowToUse.group_identifier || '-'}</td>
           <td>
@@ -95,6 +96,7 @@ export default function MyOpenProcesses() {
             <th>Process Model</th>
             <th>Process Instance</th>
             <th>Task Name</th>
+            <th>Process Started By</th>
             <th>Process Instance Status</th>
             <th>Assigned Group</th>
             <th>Process Started</th>
@@ -117,7 +119,7 @@ export default function MyOpenProcesses() {
     );
     return (
       <>
-        <h1>Tasks for my open processes</h1>
+        <h1>Tasks waiting for me</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}
