@@ -3,11 +3,12 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestMessageInstance(BaseTest):

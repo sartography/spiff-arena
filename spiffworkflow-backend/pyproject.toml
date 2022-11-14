@@ -27,7 +27,7 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "feature/parser_info_features"}
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 #SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
