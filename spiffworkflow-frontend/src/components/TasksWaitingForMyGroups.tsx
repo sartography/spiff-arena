@@ -13,7 +13,7 @@ import { PaginationObject } from '../interfaces';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 
-export default function MyTasksForProcessesStartedByOthers() {
+export default function TasksForWaitingForMyGroups() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
@@ -28,7 +28,7 @@ export default function MyTasksForProcessesStartedByOthers() {
       setPagination(result.pagination);
     };
     HttpService.makeCallToBackend({
-      path: `/tasks/for-processes-started-by-others?per_page=${perPage}&page=${page}`,
+      path: `/tasks/for-my-groups?per_page=${perPage}&page=${page}`,
       successCallback: setTasksFromResult,
     });
   }, [searchParams]);
@@ -119,14 +119,14 @@ export default function MyTasksForProcessesStartedByOthers() {
     );
     return (
       <>
-        <h1>Tasks waiting for me</h1>
+        <h1>Tasks waiting for my groups</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}
           perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path="/tasks/for-my-open-processes"
+          path="/tasks/grouped"
         />
       </>
     );
