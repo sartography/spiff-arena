@@ -6,9 +6,9 @@ from typing import List
 from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
-from SpiffWorkflow.task import Task as SpiffTask
-from spiffworkflow_backend.models.active_task import ActiveTaskModel  # type: ignore
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -189,7 +189,7 @@ class ProcessInstanceService:
         spiff_task: SpiffTask,
         data: dict[str, Any],
         user: UserModel,
-        active_task: ActiveTaskModel
+        active_task: ActiveTaskModel,
     ) -> None:
         """All the things that need to happen when we complete a form.
 

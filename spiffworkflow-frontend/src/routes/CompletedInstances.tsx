@@ -1,3 +1,5 @@
+import MyCompletedInstances from '../components/MyCompletedInstances';
+
 export default function CompletedInstances() {
-  return <></>;
+  return <MyCompletedInstances />;
 }

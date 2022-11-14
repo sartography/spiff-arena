@@ -46,12 +46,14 @@ type OwnProps = {
   filtersEnabled?: boolean;
   processModelFullIdentifier?: string;
   paginationQueryParamPrefix?: string;
+  perPageOptions?: number[];
 };
 
 export default function ProcessInstanceListTable({
   filtersEnabled = true,
   processModelFullIdentifier,
   paginationQueryParamPrefix,
+  perPageOptions,
 }: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -108,12 +110,17 @@ export default function ProcessInstanceListTable({
       setPagination(result.pagination);
     }
     function getProcessInstances() {
-      const { page, perPage } = getPageInfoFromSearchParams(
+      // eslint-disable-next-line prefer-const
+      let { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
         undefined,
         undefined,
         paginationQueryParamPrefix
       );
+      if (perPageOptions && !perPageOptions.includes(perPage)) {
+        // eslint-disable-next-line prefer-destructuring
+        perPage = perPageOptions[1];
+      }
       let queryParamString = `per_page=${perPage}&page=${page}`;
 
       Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
@@ -200,6 +207,9 @@ export default function ProcessInstanceListTable({
     parametersToAlwaysFilterBy,
     parametersToGetFromSearchParams,
     filtersEnabled,
+    paginationQueryParamPrefix,
+    processModelFullIdentifier,
+    perPageOptions,
   ]);
 
   // does the comparison, but also returns false if either argument
@@ -305,25 +315,6 @@ export default function ProcessInstanceListTable({
         />
       </DatePicker>
     );
-  };
-
-  const getSearchParamsAsQueryString = () => {
-    let queryParamString = '';
-    Object.keys(parametersToAlwaysFilterBy).forEach((paramName) => {
-      const searchParamValue = searchParams.get(paramName);
-      if (searchParamValue) {
-        queryParamString += `&${paramName}=${searchParamValue}`;
-      }
-    });
-
-    Object.keys(parametersToGetFromSearchParams).forEach(
-      (paramName: string) => {
-        if (searchParams.get(paramName)) {
-          queryParamString += `&${paramName}=${searchParams.get(paramName)}`;
-        }
-      }
-    );
-    return queryParamString;
   };
 
   const processStatusSearch = () => {
@@ -535,12 +526,17 @@ export default function ProcessInstanceListTable({
   };
 
   if (pagination) {
-    const { page, perPage } = getPageInfoFromSearchParams(
+    // eslint-disable-next-line prefer-const
+    let { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       undefined,
       undefined,
       paginationQueryParamPrefix
     );
+    if (perPageOptions && !perPageOptions.includes(perPage)) {
+      // eslint-disable-next-line prefer-destructuring
+      perPage = perPageOptions[1];
+    }
     return (
       <>
         {filterComponent()}
@@ -550,8 +546,8 @@ export default function ProcessInstanceListTable({
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          queryParamString={getSearchParamsAsQueryString()}
           paginationQueryParamPrefix={paginationQueryParamPrefix}
+          perPageOptions={perPageOptions}
         />
       </>
     );
