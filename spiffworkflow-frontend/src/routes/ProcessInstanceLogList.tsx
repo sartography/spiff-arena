@@ -99,7 +99,6 @@ export default function ProcessInstanceLogList() {
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
         />
       </main>
     );

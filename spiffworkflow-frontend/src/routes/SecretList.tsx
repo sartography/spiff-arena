@@ -83,7 +83,6 @@ export default function SecretList() {
           perPage={perPage}
           pagination={pagination as any}
           tableToDisplay={buildTable()}
-          path="/admin/secrets"
         />
       );
     } else {

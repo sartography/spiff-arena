@@ -79,11 +79,20 @@ export const objectIsEmpty = (obj: object) => {
 export const getPageInfoFromSearchParams = (
   searchParams: any,
   defaultPerPage: string | number = DEFAULT_PER_PAGE,
-  defaultPage: string | number = DEFAULT_PAGE
+  defaultPage: string | number = DEFAULT_PAGE,
+  paginationQueryParamPrefix: string | null = null
 ) => {
-  const page = parseInt(searchParams.get('page') || defaultPage.toString(), 10);
+  const paginationQueryParamPrefixToUse = paginationQueryParamPrefix
+    ? `${paginationQueryParamPrefix}_`
+    : '';
+  const page = parseInt(
+    searchParams.get(`${paginationQueryParamPrefixToUse}page`) ||
+      defaultPage.toString(),
+    10
+  );
   const perPage = parseInt(
-    searchParams.get('per_page') || defaultPerPage.toString(),
+    searchParams.get(`${paginationQueryParamPrefixToUse}per_page`) ||
+      defaultPerPage.toString(),
     10
   );
 
