@@ -41,9 +41,18 @@ import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
 import { PaginationObject, ProcessModel } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
-import ProcessBreadcrumb from './ProcessBreadcrumb';
 
-export default function ProcessInstanceList() {
+type OwnProps = {
+  filtersEnabled?: boolean;
+  processModelFullIdentifier?: string;
+  paginationQueryParamPrefix?: string;
+};
+
+export default function ProcessInstanceListTable({
+  filtersEnabled = true,
+  processModelFullIdentifier,
+  paginationQueryParamPrefix,
+}: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -99,7 +108,12 @@ export default function ProcessInstanceList() {
       setPagination(result.pagination);
     }
     function getProcessInstances() {
-      const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+      const { page, perPage } = getPageInfoFromSearchParams(
+        searchParams,
+        undefined,
+        undefined,
+        paginationQueryParamPrefix
+      );
       let queryParamString = `per_page=${perPage}&page=${page}`;
 
       Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
@@ -118,7 +132,12 @@ export default function ProcessInstanceList() {
 
       Object.keys(parametersToGetFromSearchParams).forEach(
         (paramName: string) => {
-          if (searchParams.get(paramName)) {
+          if (
+            paramName === 'process_model_identifier' &&
+            processModelFullIdentifier
+          ) {
+            queryParamString += `&process_model_identifier=${processModelFullIdentifier}`;
+          } else if (searchParams.get(paramName)) {
             // @ts-expect-error TS(7053) FIXME:
             const functionToCall = parametersToGetFromSearchParams[paramName];
             queryParamString += `&${paramName}=${searchParams.get(paramName)}`;
@@ -129,18 +148,19 @@ export default function ProcessInstanceList() {
           }
         }
       );
+
       HttpService.makeCallToBackend({
         path: `/process-instances?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
       });
     }
     function processResultForProcessModels(result: any) {
-      const processModelFullIdentifier =
+      const processModelFullIdentifierFromSearchParams =
         getProcessModelFullIdentifierFromSearchParams(searchParams);
       const selectionArray = result.results.map((item: any) => {
         const label = `${item.id}`;
         Object.assign(item, { label });
-        if (label === processModelFullIdentifier) {
+        if (label === processModelFullIdentifierFromSearchParams) {
           setProcessModelSelection(item);
         }
         return item;
@@ -163,11 +183,15 @@ export default function ProcessInstanceList() {
       getProcessInstances();
     }
 
-    // populate process model selection
-    HttpService.makeCallToBackend({
-      path: `/process-models?per_page=1000`,
-      successCallback: processResultForProcessModels,
-    });
+    if (filtersEnabled) {
+      // populate process model selection
+      HttpService.makeCallToBackend({
+        path: `/process-models?per_page=1000`,
+        successCallback: processResultForProcessModels,
+      });
+    } else {
+      getProcessInstances();
+    }
   }, [
     searchParams,
     params,
@@ -175,6 +199,7 @@ export default function ProcessInstanceList() {
     oneHourInSeconds,
     parametersToAlwaysFilterBy,
     parametersToGetFromSearchParams,
+    filtersEnabled,
   ]);
 
   // does the comparison, but also returns false if either argument
@@ -196,7 +221,12 @@ export default function ProcessInstanceList() {
 
   const applyFilter = (event: any) => {
     event.preventDefault();
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+    const { page, perPage } = getPageInfoFromSearchParams(
+      searchParams,
+      undefined,
+      undefined,
+      paginationQueryParamPrefix
+    );
     let queryParamString = `per_page=${perPage}&page=${page}`;
 
     const startFromSeconds = convertDateStringToSeconds(startFrom);
@@ -472,41 +502,16 @@ export default function ProcessInstanceList() {
     );
   };
 
-  const processInstanceBreadcrumbElement = () => {
-    const processModelFullIdentifier =
-      getProcessModelFullIdentifierFromSearchParams(searchParams);
-    if (processModelFullIdentifier === null) {
-      return null;
-    }
-
-    return (
-      <ProcessBreadcrumb
-        hotCrumbs={[
-          ['Process Groups', '/admin'],
-          [
-            `Process Model: ${processModelFullIdentifier}`,
-            `process_model:${processModelFullIdentifier}:link`,
-          ],
-          ['Process Instances'],
-        ]}
-      />
-    );
-  };
-
-  const processInstanceTitleElement = () => {
-    return <h1>Process Instances</h1>;
-  };
-
   const toggleShowFilterOptions = () => {
     setShowFilterOptions(!showFilterOptions);
   };
 
-  if (pagination) {
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+  const filterComponent = () => {
+    if (!filtersEnabled) {
+      return null;
+    }
     return (
       <>
-        {processInstanceBreadcrumbElement()}
-        {processInstanceTitleElement()}
         <Grid fullWidth>
           <Column
             sm={{ span: 1, offset: 3 }}
@@ -525,6 +530,20 @@ export default function ProcessInstanceList() {
           </Column>
         </Grid>
         {filterOptions()}
+      </>
+    );
+  };
+
+  if (pagination) {
+    const { page, perPage } = getPageInfoFromSearchParams(
+      searchParams,
+      undefined,
+      undefined,
+      paginationQueryParamPrefix
+    );
+    return (
+      <>
+        {filterComponent()}
         <br />
         <PaginationForTable
           page={page}
@@ -532,6 +551,7 @@ export default function ProcessInstanceList() {
           pagination={pagination}
           tableToDisplay={buildTable()}
           queryParamString={getSearchParamsAsQueryString()}
+          paginationQueryParamPrefix={paginationQueryParamPrefix}
         />
       </>
     );
