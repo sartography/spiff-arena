@@ -1,4 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
+import dataclasses
 import json
 import os
 import random
@@ -13,6 +14,10 @@ from typing import Union
 import connexion  # type: ignore
 import flask.wrappers
 import jinja2
+from spiffworkflow_backend.models import message_correlation_message_instance
+from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
+from spiffworkflow_backend.models.message_correlation_message_instance import MessageCorrelationMessageInstanceModel
+from spiffworkflow_backend.models.message_correlation_property import MessageCorrelationPropertyModel
 import werkzeug
 from flask import Blueprint
 from flask import current_app
@@ -581,15 +586,24 @@ def message_instance_list(
             MessageInstanceModel.created_at_in_seconds.desc(),  # type: ignore
             MessageInstanceModel.id.desc(),  # type: ignore
         )
-        .join(MessageModel)
+        .join(MessageModel, MessageModel.id == MessageInstanceModel.message_model_id)
         .join(ProcessInstanceModel)
         .add_columns(
             MessageModel.identifier.label("message_identifier"),
             ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.process_group_identifier,
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
+
+    for message_instance in message_instances:
+        message_correlations: dict = {}
+        for mcmi in message_instance.MessageInstanceModel.message_correlations_message_instances:
+            mc = MessageCorrelationModel.query.filter_by(id=mcmi.message_correlation_id).all()
+            for m in mc:
+                if m.name not in message_correlations:
+                    message_correlations[m.name] = {}
+                message_correlations[m.name][m.message_correlation_property.identifier] = m.value
+        message_instance.MessageInstanceModel.message_correlations = message_correlations
 
     response_json = {
         "results": message_instances.items,
