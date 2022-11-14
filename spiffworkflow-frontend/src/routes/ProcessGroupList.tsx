@@ -109,7 +109,6 @@ export default function ProcessGroupList() {
             perPage={perPage}
             pagination={pagination as any}
             tableToDisplay={buildTable()}
-            path="/admin/process-groups"
           />
         </>
       );

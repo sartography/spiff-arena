@@ -12,6 +12,7 @@ import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
+const paginationQueryParamPrefix = 'tasks_for_my_open_processes';
 
 export default function MyOpenProcesses() {
   const [searchParams] = useSearchParams();
@@ -21,7 +22,9 @@ export default function MyOpenProcesses() {
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      undefined,
+      paginationQueryParamPrefix
     );
     const setTasksFromResult = (result: any) => {
       setTasks(result.results);
@@ -113,7 +116,9 @@ export default function MyOpenProcesses() {
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      undefined,
+      paginationQueryParamPrefix
     );
     return (
       <>
@@ -124,7 +129,7 @@ export default function MyOpenProcesses() {
           perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path="/tasks/grouped"
+          paginationQueryParamPrefix={paginationQueryParamPrefix}
         />
       </>
     );

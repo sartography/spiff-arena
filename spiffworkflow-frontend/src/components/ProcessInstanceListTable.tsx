@@ -31,7 +31,7 @@ import {
   modifyProcessModelPath,
 } from '../helpers';
 
-import PaginationForTable from '../components/PaginationForTable';
+import PaginationForTable from './PaginationForTable';
 import 'react-datepicker/dist/react-datepicker.css';
 
 import ErrorContext from '../contexts/ErrorContext';
@@ -40,8 +40,8 @@ import HttpService from '../services/HttpService';
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
 import { PaginationObject, ProcessModel } from '../interfaces';
-import ProcessModelSearch from '../components/ProcessModelSearch';
-import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
+import ProcessModelSearch from './ProcessModelSearch';
+import ProcessBreadcrumb from './ProcessBreadcrumb';
 
 export default function ProcessInstanceList() {
   const params = useParams();
@@ -276,6 +276,26 @@ export default function ProcessInstanceList() {
       </DatePicker>
     );
   };
+
+  const getSearchParamsAsQueryString = () => {
+    let queryParamString = '';
+    Object.keys(parametersToAlwaysFilterBy).forEach((paramName) => {
+      const searchParamValue = searchParams.get(paramName);
+      if (searchParamValue) {
+        queryParamString += `&${paramName}=${searchParamValue}`;
+      }
+    });
+
+    Object.keys(parametersToGetFromSearchParams).forEach(
+      (paramName: string) => {
+        if (searchParams.get(paramName)) {
+          queryParamString += `&${paramName}=${searchParams.get(paramName)}`;
+        }
+      }
+    );
+    return queryParamString;
+  };
+
   const processStatusSearch = () => {
     return (
       <MultiSelect
@@ -295,6 +315,7 @@ export default function ProcessInstanceList() {
       />
     );
   };
+
   const clearFilters = () => {
     setProcessModelSelection(null);
     setProcessStatusSelection([]);
@@ -303,6 +324,7 @@ export default function ProcessInstanceList() {
     setEndFrom('');
     setEndTo('');
   };
+
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
@@ -360,33 +382,6 @@ export default function ProcessInstanceList() {
             </ButtonSet>
           </Column>
         </Grid>
-      </>
-    );
-  };
-  const toggleShowFilterOptions = () => {
-    setShowFilterOptions(!showFilterOptions);
-  };
-  const filterComponent = () => {
-    return (
-      <>
-        <Grid fullWidth>
-          <Column
-            sm={{ span: 1, offset: 3 }}
-            md={{ span: 1, offset: 7 }}
-            lg={{ span: 1, offset: 15 }}
-          >
-            <Button
-              data-qa="filter-section-expand-toggle"
-              kind="ghost"
-              renderIcon={Filter}
-              iconDescription="Filter Options"
-              hasIconOnly
-              size="lg"
-              onClick={toggleShowFilterOptions}
-            />
-          </Column>
-        </Grid>
-        {filterOptions()}
       </>
     );
   };
@@ -498,27 +493,12 @@ export default function ProcessInstanceList() {
     );
   };
 
-  const getSearchParamsAsQueryString = () => {
-    let queryParamString = '';
-    Object.keys(parametersToAlwaysFilterBy).forEach((paramName) => {
-      const searchParamValue = searchParams.get(paramName);
-      if (searchParamValue) {
-        queryParamString += `&${paramName}=${searchParamValue}`;
-      }
-    });
-
-    Object.keys(parametersToGetFromSearchParams).forEach(
-      (paramName: string) => {
-        if (searchParams.get(paramName)) {
-          queryParamString += `&${paramName}=${searchParams.get(paramName)}`;
-        }
-      }
-    );
-    return queryParamString;
-  };
-
   const processInstanceTitleElement = () => {
     return <h1>Process Instances</h1>;
+  };
+
+  const toggleShowFilterOptions = () => {
+    setShowFilterOptions(!showFilterOptions);
   };
 
   if (pagination) {
@@ -527,7 +507,24 @@ export default function ProcessInstanceList() {
       <>
         {processInstanceBreadcrumbElement()}
         {processInstanceTitleElement()}
-        {filterComponent()}
+        <Grid fullWidth>
+          <Column
+            sm={{ span: 1, offset: 3 }}
+            md={{ span: 1, offset: 7 }}
+            lg={{ span: 1, offset: 15 }}
+          >
+            <Button
+              data-qa="filter-section-expand-toggle"
+              kind="ghost"
+              renderIcon={Filter}
+              iconDescription="Filter Options"
+              hasIconOnly
+              size="lg"
+              onClick={toggleShowFilterOptions}
+            />
+          </Column>
+        </Grid>
+        {filterOptions()}
         <br />
         <PaginationForTable
           page={page}

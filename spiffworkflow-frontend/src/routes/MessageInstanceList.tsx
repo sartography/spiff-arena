@@ -133,7 +133,6 @@ export default function MessageInstanceList() {
           pagination={pagination}
           tableToDisplay={buildTable()}
           queryParamString={queryParamString}
-          path="/admin/messages"
         />
       </>
     );
