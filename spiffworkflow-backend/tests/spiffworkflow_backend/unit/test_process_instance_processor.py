@@ -91,10 +91,10 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, finance_user
+                processor, spiff_task, {}, finance_user, active_task
             )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user
+            processor, spiff_task, {}, initiator_user, active_task
         )
 
         assert len(process_instance.active_tasks) == 1
@@ -108,11 +108,11 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, initiator_user
+                processor, spiff_task, {}, initiator_user, active_task
             )
 
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, finance_user
+            processor, spiff_task, {}, finance_user, active_task
         )
         assert len(process_instance.active_tasks) == 1
         active_task = process_instance.active_tasks[0]
@@ -124,7 +124,7 @@ class TestProcessInstanceProcessor(BaseTest):
             active_task.task_name, processor.bpmn_process_instance
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user
+            processor, spiff_task, {}, initiator_user, active_task
         )
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
@@ -173,10 +173,10 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, finance_user_three
+                processor, spiff_task, {}, finance_user_three, active_task
             )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user
+            processor, spiff_task, {}, initiator_user, active_task
         )
 
         assert len(process_instance.active_tasks) == 1
@@ -190,12 +190,12 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, initiator_user
+                processor, spiff_task, {}, initiator_user, active_task
             )
 
         g.user = finance_user_three
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, finance_user_three
+            processor, spiff_task, {}, finance_user_three, active_task
         )
         assert len(process_instance.active_tasks) == 1
         active_task = process_instance.active_tasks[0]
@@ -208,11 +208,11 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, initiator_user
+                processor, spiff_task, {}, initiator_user, active_task
             )
 
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, finance_user_four
+            processor, spiff_task, {}, finance_user_four, active_task
         )
         assert len(process_instance.active_tasks) == 1
         active_task = process_instance.active_tasks[0]
@@ -224,7 +224,7 @@ class TestProcessInstanceProcessor(BaseTest):
             active_task.task_name, processor.bpmn_process_instance
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user
+            processor, spiff_task, {}, initiator_user, active_task
         )
 
         assert len(process_instance.active_tasks) == 1
@@ -234,8 +234,10 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, initiator_user
+                processor, spiff_task, {}, initiator_user, active_task
             )
-        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, testadmin1)
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_task, {}, testadmin1, active_task
+        )
 
         assert process_instance.status == ProcessInstanceStatus.complete.value

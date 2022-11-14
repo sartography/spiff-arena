@@ -21,7 +21,9 @@ export default function TasksWaitingForMe() {
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      undefined,
+      'tasks_waiting_for_me'
     );
     const setTasksFromResult = (result: any) => {
       setTasks(result.results);
@@ -115,7 +117,9 @@ export default function TasksWaitingForMe() {
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      undefined,
+      'tasks_waiting_for_me'
     );
     return (
       <>
@@ -126,7 +130,7 @@ export default function TasksWaitingForMe() {
           perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path="/tasks/grouped"
+          paginationQueryParamPrefix="tasks_waiting_for_me"
         />
       </>
     );

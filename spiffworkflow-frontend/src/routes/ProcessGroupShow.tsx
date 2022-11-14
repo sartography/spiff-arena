@@ -170,7 +170,6 @@ export default function ProcessGroupShow() {
               perPage={perPage}
               pagination={modelPagination}
               tableToDisplay={buildModelTable()}
-              path={`/admin/process-groups/${processGroup.id}`}
             />
           )}
           <br />
@@ -182,7 +181,6 @@ export default function ProcessGroupShow() {
               perPage={perPage}
               pagination={groupPagination}
               tableToDisplay={buildGroupTable()}
-              path={`/admin/process-groups/${processGroup.id}`}
             />
           )}
         </ul>

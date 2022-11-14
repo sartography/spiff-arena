@@ -12,6 +12,7 @@ import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
+const paginationQueryParamPrefix = 'tasks_waiting_for_my_groups';
 
 export default function TasksForWaitingForMyGroups() {
   const [searchParams] = useSearchParams();
@@ -21,7 +22,9 @@ export default function TasksForWaitingForMyGroups() {
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      undefined,
+      paginationQueryParamPrefix
     );
     const setTasksFromResult = (result: any) => {
       setTasks(result.results);
@@ -115,7 +118,9 @@ export default function TasksForWaitingForMyGroups() {
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      undefined,
+      paginationQueryParamPrefix
     );
     return (
       <>
@@ -126,7 +131,7 @@ export default function TasksForWaitingForMyGroups() {
           perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path="/tasks/grouped"
+          paginationQueryParamPrefix={paginationQueryParamPrefix}
         />
       </>
     );
