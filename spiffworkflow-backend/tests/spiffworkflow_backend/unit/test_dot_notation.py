@@ -44,10 +44,10 @@ class TestDotNotation(BaseTest):
         process_instance = ProcessInstanceService().get_process_instance(
             process_instance_id
         )
-        active_task = process_instance.active_tasks[0]
 
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
+        active_task = process_instance.active_tasks[0]
 
         user_task = processor.get_ready_user_tasks()[0]
         form_data = {
