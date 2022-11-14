@@ -87,8 +87,10 @@ class SpecFileService(FileSystemService):
         type = {str} 'process' / 'decision'
         """
         references: list[FileReference] = []
-        full_file_path = SpecFileService.file_path(process_model_info, file.name)
-        file_path = os.path.join(process_model_info.id, file.name)
+        full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
+        relative_file_path = os.path.join(
+            process_model_info.id_for_file_path(), file.name
+        )
         parser = MyCustomParser()
         parser_type = None
         sub_parser = None
@@ -120,7 +122,7 @@ class SpecFileService(FileSystemService):
                     name=sub_parser.get_name(),
                     type=parser_type,
                     file_name=file.name,
-                    file_path=file_path,
+                    file_path=relative_file_path,
                     has_lanes=has_lanes,
                     executable=executable,
                     messages=messages,
@@ -144,12 +146,9 @@ class SpecFileService(FileSystemService):
     ) -> File:
         """Update_file."""
         SpecFileService.assert_valid_file_name(file_name)
-        # file_path = SpecFileService.file_path(process_model_info, file_name)
-        file_path = os.path.join(
-            FileSystemService.root_path(), process_model_info.id, file_name
-        )
-        SpecFileService.write_file_data_to_system(file_path, binary_data)
-        file = SpecFileService.to_file_object(file_name, file_path)
+        full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
+        SpecFileService.write_file_data_to_system(full_file_path, binary_data)
+        file = SpecFileService.to_file_object(file_name, full_file_path)
 
         if file.type == FileType.bpmn.value:
             if (
@@ -183,34 +182,31 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
         """Get_data."""
-        # file_path = SpecFileService.file_path(process_model_info, file_name)
-        file_path = os.path.join(
-            FileSystemService.root_path(), process_model_info.id, file_name
-        )
-        if not os.path.exists(file_path):
+        full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
+        if not os.path.exists(full_file_path):
             raise ProcessModelFileNotFoundError(
                 f"No file found with name {file_name} in {process_model_info.display_name}"
             )
-        with open(file_path, "rb") as f_handle:
+        with open(full_file_path, "rb") as f_handle:
             spec_file_data = f_handle.read()
         return spec_file_data
 
     @staticmethod
-    def file_path(spec: ProcessModelInfo, file_name: str) -> str:
+    def full_file_path(spec: ProcessModelInfo, file_name: str) -> str:
         """File_path."""
         return os.path.join(SpecFileService.workflow_path(spec), file_name)
 
     @staticmethod
     def last_modified(spec: ProcessModelInfo, file_name: str) -> datetime:
         """Last_modified."""
-        path = SpecFileService.file_path(spec, file_name)
-        return FileSystemService._last_modified(path)
+        full_file_path = SpecFileService.full_file_path(spec, file_name)
+        return FileSystemService._last_modified(full_file_path)
 
     @staticmethod
     def timestamp(spec: ProcessModelInfo, file_name: str) -> float:
         """Timestamp."""
-        path = SpecFileService.file_path(spec, file_name)
-        return FileSystemService._timestamp(path)
+        full_file_path = SpecFileService.full_file_path(spec, file_name)
+        return FileSystemService._timestamp(full_file_path)
 
     @staticmethod
     def delete_file(spec: ProcessModelInfo, file_name: str) -> None:
@@ -220,9 +216,8 @@ class SpecFileService(FileSystemService):
         # for lf in lookup_files:
         #     session.query(LookupDataModel).filter_by(lookup_file_model_id=lf.id).delete()
         #     session.query(LookupFileModel).filter_by(id=lf.id).delete()
-        # file_path = SpecFileService.file_path(spec, file_name)
-        file_path = os.path.join(FileSystemService.root_path(), spec.id, file_name)
-        os.remove(file_path)
+        full_file_path = SpecFileService.full_file_path(spec, file_name)
+        os.remove(full_file_path)
 
     @staticmethod
     def delete_all_files(spec: ProcessModelInfo) -> None:
