@@ -1264,7 +1264,9 @@ def task_submit(
     if terminate_loop and spiff_task.is_looping():
         spiff_task.terminate_loop()
 
-    active_task = ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_id).first()
+    active_task = ActiveTaskModel.query.filter_by(
+        process_instance_id=process_instance_id, task_id=task_id
+    ).first()
     if active_task is None:
         raise (
             ApiError(
@@ -1274,7 +1276,13 @@ def task_submit(
             )
         )
 
-    ProcessInstanceService.complete_form_task(processor=processor, spiff_task=spiff_task, data=body, user=g.user, active_task=active_task)
+    ProcessInstanceService.complete_form_task(
+        processor=processor,
+        spiff_task=spiff_task,
+        data=body,
+        user=g.user,
+        active_task=active_task,
+    )
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
     # task spec, complete that form as well.

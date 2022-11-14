@@ -126,7 +126,7 @@ class TestAuthorizationService(BaseTest):
             active_task.task_name, processor.bpmn_process_instance
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user
+            processor, spiff_task, {}, initiator_user, active_task
         )
 
         active_task = process_instance.active_tasks[0]
@@ -137,5 +137,5 @@ class TestAuthorizationService(BaseTest):
             {"username": "testuser2", "sub": "open_id"}
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, finance_user
+            processor, spiff_task, {}, finance_user, active_task
         )

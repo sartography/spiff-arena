@@ -13,7 +13,6 @@ type OwnProps = {
   perPageOptions?: number[];
   pagination: PaginationObject | null;
   tableToDisplay: any;
-  queryParamString?: string;
   paginationQueryParamPrefix?: string;
 };
 

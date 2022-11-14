@@ -44,6 +44,7 @@ class TestDotNotation(BaseTest):
         process_instance = ProcessInstanceService().get_process_instance(
             process_instance_id
         )
+        active_task = process_instance.active_tasks[0]
 
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
@@ -57,7 +58,7 @@ class TestDotNotation(BaseTest):
             "invoice.dueDate": "09/30/2022",
         }
         ProcessInstanceService.complete_form_task(
-            processor, user_task, form_data, with_super_admin_user
+            processor, user_task, form_data, with_super_admin_user, active_task
         )
 
         expected = {
