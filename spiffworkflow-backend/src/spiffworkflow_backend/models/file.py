@@ -74,7 +74,13 @@ class FileReference:
     id: str
     name: str
     type: str  # can be 'process', 'decision', or just 'file'
-
+    file_name: str
+    file_path: str
+    has_lanes: bool
+    executable: bool
+    messages: dict
+    correlations: dict
+    start_messages: list
 
 @dataclass(order=True)
 class File:
