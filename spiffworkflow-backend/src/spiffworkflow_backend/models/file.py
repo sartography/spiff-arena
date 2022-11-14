@@ -82,6 +82,7 @@ class FileReference:
     correlations: dict
     start_messages: list
 
+
 @dataclass(order=True)
 class File:
     """File."""

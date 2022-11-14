@@ -38,7 +38,6 @@ from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
-from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import (
     CallActivityTaskConverter,
@@ -95,9 +94,6 @@ from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
-from spiffworkflow_backend.services.spec_file_service import (
-    ProcessModelFileNotFoundError,
-)
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -674,18 +670,19 @@ class ProcessInstanceProcessor:
         return parser
 
     @staticmethod
-    def backfill_missing_bpmn_process_id_lookup_records(bpmn_process_identifier: str) -> Optional[str]:
-
+    def backfill_missing_bpmn_process_id_lookup_records(
+        bpmn_process_identifier: str,
+    ) -> Optional[str]:
         """Backfill_missing_bpmn_process_id_lookup_records."""
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
-            refs = SpecFileService.reference_map(SpecFileService.get_references_for_process(process_model))
+            refs = SpecFileService.reference_map(
+                SpecFileService.get_references_for_process(process_model)
+            )
             bpmn_process_identifiers = refs.keys()
             if bpmn_process_identifier in bpmn_process_identifiers:
                 SpecFileService.update_process_cache(refs[bpmn_process_identifier])
-                return FileSystemService.full_path_to_process_model_file(
-                    process_model
-                )
+                return FileSystemService.full_path_to_process_model_file(process_model)
         return None
 
     @staticmethod
