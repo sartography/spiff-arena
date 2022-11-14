@@ -59,6 +59,8 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
+    message_correlations: dict | None = None
+
     @validates("message_type")
     def validate_message_type(self, key: str, value: Any) -> Any:
         """Validate_message_type."""

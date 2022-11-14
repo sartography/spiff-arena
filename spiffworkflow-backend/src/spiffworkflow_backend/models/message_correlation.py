@@ -44,6 +44,9 @@ class MessageCorrelationModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
+    message_correlation_property = relationship(
+        "MessageCorrelationPropertyModel"
+    )
     message_correlations_message_instances = relationship(
         "MessageCorrelationMessageInstanceModel", cascade="delete"
     )

@@ -65,7 +65,7 @@ export default function MessageInstanceList() {
           </td>
           <td>{rowToUse.message_identifier}</td>
           <td>{rowToUse.message_type}</td>
-          <td>{rowToUse.failure_cause}</td>
+          <td>{rowToUse.failure_cause || '-'}</td>
           <td>{rowToUse.status}</td>
           <td>
             {convertSecondsToFormattedDate(rowToUse.created_at_in_seconds)}
