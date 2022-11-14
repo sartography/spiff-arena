@@ -6,8 +6,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import ErrorContext from './contexts/ErrorContext';
 import NavigationBar from './components/NavigationBar';
 
-import HomePage from './routes/HomePage';
-import TaskShow from './routes/TaskShow';
+import HomePageRoutes from './routes/HomePageRoutes';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminRoutes from './routes/AdminRoutes';
 import { ErrorForDisplay } from './interfaces';
@@ -54,17 +53,9 @@ export default function App() {
             {errorTag}
             <ErrorBoundary>
               <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/tasks" element={<HomePage />} />
+                <Route path="/" element={<HomePageRoutes />} />
+                <Route path="/tasks/*" element={<HomePageRoutes />} />
                 <Route path="/admin/*" element={<AdminRoutes />} />
-                <Route
-                  path="/tasks/:process_instance_id/:task_id"
-                  element={<TaskShow />}
-                />
-                <Route
-                  path="/tasks/:process_instance_id/:task_id"
-                  element={<TaskShow />}
-                />
               </Routes>
             </ErrorBoundary>
           </Content>

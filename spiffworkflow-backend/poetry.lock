@@ -643,7 +643,7 @@ werkzeug = "*"
 type = "git"
 url = "https://github.com/sartography/flask-bpmn"
 reference = "main"
-resolved_reference = "5e40777f4013f71f2c1237f13f7dba1bdd5c0de3"
+resolved_reference = "886bfdc31aade43e9683439e6d29b06acb235081"
 
 [[package]]
 name = "Flask-Cors"
@@ -1875,8 +1875,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "feature/parser_info_features"
-resolved_reference = "849c223ee904f528a116818615c1fc08506ba63b"
+reference = "main"
+resolved_reference = "14d3d8c3f69af880eaf994be1689ee9fcc72e829"
 
 [[package]]
 name = "SQLAlchemy"
@@ -2259,7 +2259,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "eedbd5bc2c365d144f88dfe95fafc74f3708cde585bf6e29e78005dd51793284"
+content-hash = "a6d3882a3ab142b82201b83ee8a0552fd16112c4540e2a1dbcb5c38599b917c1"
 
 [metadata.files]
 alabaster = [

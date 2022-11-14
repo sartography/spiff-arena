@@ -5,7 +5,6 @@ from typing import Any
 import connexion  # type: ignore
 import flask.app
 import flask.json
-import spiffworkflow_backend.load_database_models  # noqa: F401
 import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
@@ -15,6 +14,9 @@ from flask_bpmn.models.db import db
 from flask_bpmn.models.db import migrate
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
+from werkzeug.exceptions import NotFound
+
+import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.config import setup_config
 from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_blueprint
 from spiffworkflow_backend.routes.process_api_blueprint import process_api_blueprint
@@ -24,7 +26,6 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.background_processing_service import (
     BackgroundProcessingService,
 )
-from werkzeug.exceptions import NotFound
 
 
 class MyJSONEncoder(DefaultJSONProvider):
@@ -38,11 +39,14 @@ class MyJSONEncoder(DefaultJSONProvider):
             return_dict = {}
             for row_key in obj.keys():
                 row_value = obj[row_key]
-                if hasattr(row_value, "__dict__"):
+                if hasattr(row_value, "serialized"):
+                    return_dict.update(row_value.serialized)
+                elif hasattr(row_value, "__dict__"):
                     return_dict.update(row_value.__dict__)
                 else:
                     return_dict.update({row_key: row_value})
-            return_dict.pop("_sa_instance_state")
+            if "_sa_instance_state" in return_dict:
+                return_dict.pop("_sa_instance_state")
             return return_dict
         return super().default(obj)
 

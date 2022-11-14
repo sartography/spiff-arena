@@ -12,15 +12,16 @@ from marshmallow import INCLUDE
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import deferred
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import validates
+
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskSchema
 from spiffworkflow_backend.models.user import UserModel
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import deferred
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import validates
 
 
 class NavigationItemSchema(Schema):
@@ -99,17 +100,17 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         local_bpmn_xml_file_contents = ""
         if self.bpmn_xml_file_contents:
             local_bpmn_xml_file_contents = self.bpmn_xml_file_contents.decode("utf-8")
-
         return {
             "id": self.id,
             "process_model_identifier": self.process_model_identifier,
             "process_group_identifier": self.process_group_identifier,
             "status": self.status,
-            "bpmn_json": self.bpmn_json,
             "start_in_seconds": self.start_in_seconds,
             "end_in_seconds": self.end_in_seconds,
             "process_initiator_id": self.process_initiator_id,
             "bpmn_xml_file_contents": local_bpmn_xml_file_contents,
+            "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
+            "bpmn_version_control_type": self.bpmn_version_control_type,
             "spiff_step": self.spiff_step,
         }
 

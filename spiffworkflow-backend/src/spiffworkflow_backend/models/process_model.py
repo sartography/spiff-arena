@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import enum
+import os
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -9,6 +10,7 @@ from typing import Any
 import marshmallow
 from marshmallow import Schema
 from marshmallow.decorators import post_load
+
 from spiffworkflow_backend.models.file import File
 
 
@@ -48,6 +50,11 @@ class ProcessModelInfo:
         if other.id == self.id:
             return True
         return False
+
+    # for use with os.path.join so it can work on windows
+    def id_for_file_path(self) -> str:
+        """Id_for_file_path."""
+        return self.id.replace("/", os.sep)
 
 
 class ProcessModelInfoSchema(Schema):

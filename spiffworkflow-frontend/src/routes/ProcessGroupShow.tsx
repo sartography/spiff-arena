@@ -10,7 +10,7 @@ import {
   modifyProcessModelPath,
   unModifyProcessModelPath,
 } from '../helpers';
-import { ProcessGroup, ProcessModel } from '../interfaces';
+import { PaginationObject, ProcessGroup, ProcessModel } from '../interfaces';
 
 export default function ProcessGroupShow() {
   const params = useParams();
@@ -19,8 +19,10 @@ export default function ProcessGroupShow() {
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [processModels, setProcessModels] = useState([]);
   const [processGroups, setProcessGroups] = useState([]);
-  const [modelPagination, setModelPagination] = useState(null);
-  const [groupPagination, setGroupPagination] = useState(null);
+  const [modelPagination, setModelPagination] =
+    useState<PaginationObject | null>(null);
+  const [groupPagination, setGroupPagination] =
+    useState<PaginationObject | null>(null);
 
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
@@ -58,7 +60,9 @@ export default function ProcessGroupShow() {
       return null;
     }
     const rows = processModels.map((row: ProcessModel) => {
-      const modifiedProcessModelId: String = modifyProcessModelPath((row as any).id);
+      const modifiedProcessModelId: String = modifyProcessModelPath(
+        (row as any).id
+      );
       return (
         <tr key={row.id}>
           <td>
@@ -136,6 +140,7 @@ export default function ProcessGroupShow() {
             ['', `process_group:${processGroup.id}`],
           ]}
         />
+        <h1>Process Group: {processGroup.display_name}</h1>
         <ul>
           <Stack orientation="horizontal" gap={3}>
             <Button
@@ -158,22 +163,28 @@ export default function ProcessGroupShow() {
           </Stack>
           <br />
           <br />
-          <PaginationForTable
-            page={page}
-            perPage={perPage}
-            pagination={modelPagination}
-            tableToDisplay={buildModelTable()}
-            path={`/admin/process-groups/${processGroup.id}`}
-          />
+          {/* eslint-disable-next-line sonarjs/no-gratuitous-expressions */}
+          {modelPagination && modelPagination.total > 0 && (
+            <PaginationForTable
+              page={page}
+              perPage={perPage}
+              pagination={modelPagination}
+              tableToDisplay={buildModelTable()}
+              path={`/admin/process-groups/${processGroup.id}`}
+            />
+          )}
           <br />
           <br />
-          <PaginationForTable
-            page={page}
-            perPage={perPage}
-            pagination={groupPagination}
-            tableToDisplay={buildGroupTable()}
-            path={`/admin/process-groups/${processGroup.id}`}
-          />
+          {/* eslint-disable-next-line sonarjs/no-gratuitous-expressions */}
+          {groupPagination && groupPagination.total > 0 && (
+            <PaginationForTable
+              page={page}
+              perPage={perPage}
+              pagination={groupPagination}
+              tableToDisplay={buildGroupTable()}
+              path={`/admin/process-groups/${processGroup.id}`}
+            />
+          )}
         </ul>
       </>
     );
