@@ -64,11 +64,11 @@ from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsMode
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_processor import MyCustomParser
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -309,9 +309,7 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
     files = sorted(SpecFileService.get_files(process_model))
     process_model.files = files
     for file in process_model.files:
-        file.references = SpecFileService.get_references_for_file(
-            file, process_model, MyCustomParser
-        )
+        file.references = SpecFileService.get_references_for_file(file, process_model)
     process_model_json = ProcessModelInfoSchema().dump(process_model)
     return process_model_json
 
@@ -1182,26 +1180,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
-
     process_model_with_form = process_model
-    all_processes = SpecFileService.get_all_bpmn_process_identifiers_for_process_model(
-        process_model
-    )
-    if task.process_name not in all_processes:
-        bpmn_file_full_path = (
-            ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
-                task.process_name
-            )
-        )
-        relative_path = os.path.relpath(
-            bpmn_file_full_path, start=FileSystemService.root_path()
-        )
-        process_model_relative_path = os.path.dirname(relative_path)
-        process_model_with_form = (
-            ProcessModelService.get_process_model_from_relative_path(
-                process_model_relative_path
-            )
-        )
 
     if task.type == "User Task":
         if not form_schema_file_name:
@@ -1338,9 +1317,7 @@ def script_unit_test_create(
 
     # TODO: move this to an xml service or something
     file_contents = SpecFileService.get_data(process_model, file.name)
-    bpmn_etree_element = SpecFileService.get_etree_element_from_binary_data(
-        file_contents, file.name
-    )
+    bpmn_etree_element = etree.fromstring(file_contents)
 
     nsmap = bpmn_etree_element.nsmap
     spiff_element_maker = ElementMaker(

@@ -91,6 +91,7 @@ from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsMode
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserModelSchema
 from spiffworkflow_backend.scripts.script import Script
+from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
@@ -237,13 +238,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         return ServiceTaskDelegate.call_connector(
             operation_name, operation_params, task_data
         )
-
-
-class MyCustomParser(BpmnDmnParser):  # type: ignore
-    """A BPMN and DMN parser that can also parse spiffworkflow-specific extensions."""
-
-    OVERRIDE_PARSER_CLASSES = BpmnDmnParser.OVERRIDE_PARSER_CLASSES
-    OVERRIDE_PARSER_CLASSES.update(SpiffBpmnParser.OVERRIDE_PARSER_CLASSES)
 
 
 IdToBpmnProcessSpecMapping = NewType(
@@ -680,41 +674,18 @@ class ProcessInstanceProcessor:
         return parser
 
     @staticmethod
-    def backfill_missing_bpmn_process_id_lookup_records(
-        bpmn_process_identifier: str,
-    ) -> Optional[str]:
+    def backfill_missing_bpmn_process_id_lookup_records(bpmn_process_identifier: str) -> Optional[str]:
+
         """Backfill_missing_bpmn_process_id_lookup_records."""
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
-            if process_model.primary_file_name:
-                try:
-                    etree_element = SpecFileService.get_etree_element_from_file_name(
-                        process_model, process_model.primary_file_name
-                    )
-                    bpmn_process_identifiers = []
-                except ProcessModelFileNotFoundError:
-                    # if primary_file_name doesn't actually exist on disk, then just go on to the next process_model
-                    continue
-
-                try:
-                    bpmn_process_identifiers = (
-                        SpecFileService.get_executable_bpmn_process_identifiers(
-                            etree_element
-                        )
-                    )
-                except ValidationException:
-                    # ignore validation errors here
-                    pass
-
-                if bpmn_process_identifier in bpmn_process_identifiers:
-                    SpecFileService.store_bpmn_process_identifiers(
-                        process_model,
-                        process_model.primary_file_name,
-                        etree_element,
-                    )
-                    return FileSystemService.full_path_to_process_model_file(
-                        process_model
-                    )
+            refs = SpecFileService.reference_map(SpecFileService.get_references_for_process(process_model))
+            bpmn_process_identifiers = refs.keys()
+            if bpmn_process_identifier in bpmn_process_identifiers:
+                SpecFileService.update_process_cache(refs[bpmn_process_identifier])
+                return FileSystemService.full_path_to_process_model_file(
+                    process_model
+                )
         return None
 
     @staticmethod
