@@ -106,8 +106,8 @@ function FindProcessButton(props) {
     onClick: () => {
       const processId = getCalledElementValue(element);
       eventBus.fire('spiff.callactivity.search', {
-        element,
         processId,
+        eventBus,
       });
       // Listen for a response, to update the script.
       eventBus.once('spiff.callactivity.update', (response) => {
