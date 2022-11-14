@@ -10,4 +10,5 @@ class BpmnProcessIdLookup(SpiffworkflowBaseDBModel):
 
     id = db.Column(db.Integer, primary_key=True)
     bpmn_process_identifier = db.Column(db.String(255), unique=True, index=True)
+    display_name = db.Column(db.String(255), unique=True, index=True)
     bpmn_file_relative_path = db.Column(db.String(255))

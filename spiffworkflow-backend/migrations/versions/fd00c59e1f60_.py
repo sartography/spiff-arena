@@ -23,6 +23,7 @@ def upgrade():
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("bpmn_process_identifier", sa.String(length=255), nullable=True),
         sa.Column("bpmn_file_relative_path", sa.String(length=255), nullable=True),
+        sa.Column("display_name", sa.String(length=255), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index(
