@@ -40,7 +40,7 @@
 }</spiffworkflow:messagePayload>
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:process id="message_receiver_process_two" name="Message Receiver Process" isExecutable="true">
+  <bpmn:process id="message_receiver_process_two" name="Message Receiver Process Two" isExecutable="true">
     <bpmn:sequenceFlow id="Flow_11r9uiw" sourceRef="send_message_response" targetRef="Event_0q5otqd" />
     <bpmn:endEvent id="Event_0q5otqd">
       <bpmn:incoming>Flow_11r9uiw</bpmn:incoming>

@@ -152,7 +152,6 @@ export default function MyTasks() {
           perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path="/tasks"
         />
       </>
     );

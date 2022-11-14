@@ -33,6 +33,7 @@ import ErrorContext from '../contexts/ErrorContext';
 import { modifyProcessModelPath, unModifyProcessModelPath } from '../helpers';
 import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
+import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: ProcessModel
@@ -538,6 +539,11 @@ export default function ProcessModelShow() {
         {processInstancesUl()}
         <br />
         {processModelButtons()}
+        <br />
+        <ProcessInstanceListTable
+          filtersEnabled={false}
+          processModelFullIdentifier={processModel.id}
+        />
       </>
     );
   }
