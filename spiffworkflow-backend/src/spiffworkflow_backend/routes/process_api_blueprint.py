@@ -1,5 +1,4 @@
 """APIs for dealing with process groups, process models, and process instances."""
-import dataclasses
 import json
 import os
 import random
@@ -14,10 +13,6 @@ from typing import Union
 import connexion  # type: ignore
 import flask.wrappers
 import jinja2
-from spiffworkflow_backend.models import message_correlation_message_instance
-from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_correlation_message_instance import MessageCorrelationMessageInstanceModel
-from spiffworkflow_backend.models.message_correlation_property import MessageCorrelationPropertyModel
 import werkzeug
 from flask import Blueprint
 from flask import current_app
@@ -44,6 +39,7 @@ from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
@@ -597,13 +593,23 @@ def message_instance_list(
 
     for message_instance in message_instances:
         message_correlations: dict = {}
-        for mcmi in message_instance.MessageInstanceModel.message_correlations_message_instances:
-            mc = MessageCorrelationModel.query.filter_by(id=mcmi.message_correlation_id).all()
+        for (
+            mcmi
+        ) in (
+            message_instance.MessageInstanceModel.message_correlations_message_instances
+        ):
+            mc = MessageCorrelationModel.query.filter_by(
+                id=mcmi.message_correlation_id
+            ).all()
             for m in mc:
                 if m.name not in message_correlations:
                     message_correlations[m.name] = {}
-                message_correlations[m.name][m.message_correlation_property.identifier] = m.value
-        message_instance.MessageInstanceModel.message_correlations = message_correlations
+                message_correlations[m.name][
+                    m.message_correlation_property.identifier
+                ] = m.value
+        message_instance.MessageInstanceModel.message_correlations = (
+            message_correlations
+        )
 
     response_json = {
         "results": message_instances.items,
