@@ -86,7 +86,7 @@ class ExampleDataLoader:
                 )
                 if is_primary:
                     references = SpecFileService.get_references_for_file(file_info, spec)
-                    spec.primary_process_id = references[0].id
+                    spec.primary_process_id = references[0].identifier
                     spec.primary_file_name = filename
                     ProcessModelService().save_process_model(spec)
             finally:
