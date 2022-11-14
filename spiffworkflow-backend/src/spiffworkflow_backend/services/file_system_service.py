@@ -60,8 +60,9 @@ class FileSystemService:
     @staticmethod
     def workflow_path(spec: ProcessModelInfo) -> str:
         """Workflow_path."""
-        process_model_path = os.path.join(FileSystemService.root_path(), spec.id)
-        # process_group_path = FileSystemService.process_group_path_for_spec(spec)
+        process_model_path = os.path.join(
+            FileSystemService.root_path(), spec.id_for_file_path()
+        )
         return process_model_path
 
     @staticmethod
