@@ -36,8 +36,9 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
     """A cache of information about all the Processes and Decisions defined in all files."""
 
     __tablename__ = "spec_reference_cache"
-    __table_args__ = (UniqueConstraint('identifier', 'type', name='_identifier_type_unique'),
-                     )
+    __table_args__ = (
+        UniqueConstraint("identifier", "type", name="_identifier_type_unique"),
+    )
     id = db.Column(db.Integer, primary_key=True)
     identifier = db.Column(db.String(255), index=True)
     display_name = db.Column(db.String(255), index=True)

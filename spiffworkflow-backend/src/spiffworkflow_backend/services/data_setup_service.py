@@ -5,6 +5,7 @@ from flask_bpmn.models.db import db
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
+
 class DataSetupService:
     """DataSetupService."""
 
@@ -15,10 +16,11 @@ class DataSetupService:
 
     @classmethod
     def save_all_process_models(cls) -> list:
-        """Build a cache of all processes, messages, correlation keys, and start events that
-         exist within processes located on the file system, so we can quickly reference them
-         from the database. """
+        """Build a cache of all processes, messages, correlation keys, and start events.
 
+        These all exist within processes located on the file system, so we can quickly reference them
+        from the database.
+        """
         # Clear out all of the cached data.
         SpecFileService.clear_caches()
 
@@ -26,9 +28,7 @@ class DataSetupService:
         failing_process_models = []
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
-            current_app.logger.debug(
-                f"Process Model: {process_model.display_name}"
-            )
+            current_app.logger.debug(f"Process Model: {process_model.display_name}")
 
             try:
                 refs = SpecFileService.get_references_for_process(process_model)
@@ -37,11 +37,11 @@ class DataSetupService:
                         SpecFileService.update_caches(ref)
                     except Exception as ex:
                         failing_process_models.append(
-                        (
-                            f"{ref.process_model_id}/{ref.file_name}",
-                            str(ex),
+                            (
+                                f"{ref.process_model_id}/{ref.file_name}",
+                                str(ex),
+                            )
                         )
-                    )
             except Exception as ex2:
                 failing_process_models.append(
                     (
@@ -50,6 +50,8 @@ class DataSetupService:
                     )
                 )
 
-                current_app.logger.debug("DataSetupService.save_all_process_models() end")
+                current_app.logger.debug(
+                    "DataSetupService.save_all_process_models() end"
+                )
         db.session.commit()
         return failing_process_models

@@ -156,7 +156,9 @@ class SpecFileService(FileSystemService):
         file = SpecFileService.to_file_object(file_name, full_file_path)
 
         references = SpecFileService.get_references_for_file(file, process_model_info)
-        primary_process_ref = next((ref for ref in references if ref.is_primary and ref.is_executable), None)
+        primary_process_ref = next(
+            (ref for ref in references if ref.is_primary and ref.is_executable), None
+        )
 
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
@@ -226,14 +228,16 @@ class SpecFileService(FileSystemService):
     # fixme: Place all the caching stuff in a different service.
 
     @staticmethod
-    def update_caches(ref):
+    def update_caches(ref: SpecReference) -> None:
+        """Update_caches."""
         SpecFileService.update_process_cache(ref)
         SpecFileService.update_message_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
         SpecFileService.update_correlation_cache(ref)
 
     @staticmethod
-    def clear_caches():
+    def clear_caches() -> None:
+        """Clear_caches."""
         db.session.query(SpecReferenceCache).delete()
         db.session.query(MessageCorrelationPropertyModel).delete()
         db.session.query(MessageTriggerableProcessModel).delete()
@@ -242,10 +246,11 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_process_cache(ref: SpecReference) -> None:
         """Update_process_cache."""
-        process_id_lookup = SpecReferenceCache.query.\
-            filter_by(identifier=ref.identifier).\
-            filter_by(type=ref.type).\
-            first()
+        process_id_lookup = (
+            SpecReferenceCache.query.filter_by(identifier=ref.identifier)
+            .filter_by(type=ref.type)
+            .first()
+        )
         if process_id_lookup is None:
             process_id_lookup = SpecReferenceCache.from_spec_reference(ref)
             db.session.add(process_id_lookup)
@@ -299,12 +304,10 @@ class SpecFileService(FileSystemService):
                 ).first()
             )
             if message_triggerable_process_model is None:
-                message_triggerable_process_model = (
-                    MessageTriggerableProcessModel(
-                        message_model_id=message_model.id,
-                        process_model_identifier=ref.process_model_id,
-                        process_group_identifier="process_group_identifier"
-                    )
+                message_triggerable_process_model = MessageTriggerableProcessModel(
+                    message_model_id=message_model.id,
+                    process_model_identifier=ref.process_model_id,
+                    process_group_identifier="process_group_identifier",
                 )
                 db.session.add(message_triggerable_process_model)
                 db.session.commit()
