@@ -13,8 +13,88 @@ from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportFilter,
 )
 from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportFilter,
     ProcessInstanceReportService,
 )
+
+
+class TestProcessInstanceReportFilter(BaseTest):
+    """TestProcessInstanceReportFilter."""
+    def test_empty_filter_to_dict(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        d = ProcessInstanceReportFilter().to_dict()
+
+        assert d == {}
+
+    def test_string_value_filter_to_dict(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        d = ProcessInstanceReportFilter(
+            process_model_identifier="bob"
+        ).to_dict()
+
+        assert d == {"process_model_identifier": "bob"}
+
+    def test_int_value_filter_to_dict(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        d = ProcessInstanceReportFilter(
+            start_from=1,
+            start_to=2,
+            end_from=3,
+            end_to=4,
+        ).to_dict()
+
+        assert d == {
+            "start_from": "1",
+            "start_to": "2",
+            "end_from": "3",
+            "end_to": "4",
+        }
+
+    def test_list_single_value_filter_to_dict(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        d = ProcessInstanceReportFilter(
+            process_status=["bob"]
+        ).to_dict()
+
+        assert d == {"process_status": "bob"}
+
+    def test_list_multiple_value_filter_to_dict(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        d = ProcessInstanceReportFilter(
+            process_status=["joe", "bob", "sue"]
+        ).to_dict()
+
+        assert d == {"process_status": "joe,bob,sue"}
 
 
 class TestProcessInstanceReportService(BaseTest):
