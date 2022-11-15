@@ -233,10 +233,16 @@ def process_group_show(
 
 
 def process_model_create(
-    body: Dict[str, Union[str, bool, int]]
+    modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Process_model_create."""
     process_model_info = ProcessModelInfoSchema().load(body)
+    if modified_process_group_id is None:
+        raise ApiError(
+            error_code="process_group_id_not_specified",
+            message="Process Model could not be created when process_group_id path param is unspecified",
+            status_code=400,
+        )
     if process_model_info is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
