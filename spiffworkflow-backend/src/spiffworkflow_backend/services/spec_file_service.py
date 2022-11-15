@@ -144,36 +144,32 @@ class SpecFileService(FileSystemService):
     ) -> File:
         """Update_file."""
         SpecFileService.assert_valid_file_name(file_name)
-        # file_path = SpecFileService.file_path(process_model_info, file_name)
         file_path = os.path.join(
             FileSystemService.root_path(), process_model_info.id, file_name
         )
         SpecFileService.write_file_data_to_system(file_path, binary_data)
         file = SpecFileService.to_file_object(file_name, file_path)
 
-        if file.type == FileType.bpmn.value:
-            set_primary_file = False
-            if (
-                process_model_info.primary_file_name is None
-                or file_name == process_model_info.primary_file_name
-            ):
-                # If no primary process exists, make this primary process.
-                set_primary_file = True
-                references = SpecFileService.get_references_for_file(file, process_model_info)
-                for ref in references:
-                    if ref.type == "process":
-                        ProcessModelService().update_spec(
-                            process_model_info, {
-                                "primary_process_id": ref.identifier,
-                                "primary_file_name": file_name,
-                                "is_review": ref.has_lanes,
-                            }
-                        )
-                        SpecFileService.update_process_cache(ref)
-                        SpecFileService.update_message_cache(ref)
-                        SpecFileService.update_message_trigger_cache(ref, process_model_info)
-                        SpecFileService.update_correlation_cache(ref)
-                        break
+        references = SpecFileService.get_references_for_file(file, process_model_info)
+        primary_process_ref = next((ref for ref in references if ref.is_primary), None)
+        for ref in references:
+            # If no valid primary process is defined, default to the first process in the
+            # updated file.
+            if not primary_process_ref and ref.type == "process":
+                ref.is_primary = True
+
+            if ref.is_primary:
+                ProcessModelService().update_spec(
+                    process_model_info, {
+                        "primary_process_id": ref.identifier,
+                        "primary_file_name": file_name,
+                        "is_review": ref.has_lanes,
+                    }
+                )
+            SpecFileService.update_process_cache(ref)
+            SpecFileService.update_message_cache(ref)
+            SpecFileService.update_message_trigger_cache(ref, process_model_info)
+            SpecFileService.update_correlation_cache(ref)
 
         return file
 
