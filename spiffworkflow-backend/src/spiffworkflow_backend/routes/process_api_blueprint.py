@@ -1597,7 +1597,7 @@ def add_secret(body: Dict) -> Response:
 
 def update_secret(key: str, body: dict) -> Response:
     """Update secret."""
-    SecretService().update_secret(key, body["value"], body["user_id"])
+    SecretService().update_secret(key, body["value"], g.user.id)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
