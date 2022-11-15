@@ -18,21 +18,21 @@ class SpecReference:
     """
 
     identifier: str  # The id of the process or decision.  "Process_1234"
-    display_name: str # The name of the process or decision. "Invoice Submission"
+    display_name: str  # The name of the process or decision. "Invoice Submission"
     process_model_id: str
     type: str  # can be 'process' or 'decision'
-    file_name: str # The name of the file where this process or decision is defined.
-    relative_path: str # The path to the file.
-    has_lanes: bool # If this is a process, whether it has lanes or not.
-    is_executable: bool # Whether this process or decision is designated as executable.
-    is_primary: bool # Whether this is the primary process of a process model
-    messages: dict # Any messages defined in the same file where this process is defined.
-    correlations: dict # Any correlations defined in the same file with this process.
-    start_messages: list # The names of any messages that would start this process.
+    file_name: str  # The name of the file where this process or decision is defined.
+    relative_path: str  # The path to the file.
+    has_lanes: bool  # If this is a process, whether it has lanes or not.
+    is_executable: bool  # Whether this process or decision is designated as executable.
+    is_primary: bool  # Whether this is the primary process of a process model
+    messages: dict  # Any messages defined in the same file where this process is defined.
+    correlations: dict  # Any correlations defined in the same file with this process.
+    start_messages: list  # The names of any messages that would start this process.
 
 
 class SpecReferenceCache(SpiffworkflowBaseDBModel):
-    """A cache of information about all the Processes and Decisions defined in all files. """
+    """A cache of information about all the Processes and Decisions defined in all files."""
 
     __tablename__ = "spec_reference_cache"
 
@@ -49,16 +49,18 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
 
     @classmethod
     def from_spec_reference(cls, ref):
+        """From_spec_reference."""
         return cls(
-                identifier=ref.identifier,
-                display_name=ref.display_name,
-                process_model_id=ref.process_model_id,
-                type=ref.type,
-                file_name=ref.file_name,
-                has_lanes=ref.has_lanes,
-                is_executable=ref.is_executable,
-                is_primary=ref.is_primary,
-                relative_path=ref.relative_path,)
+            identifier=ref.identifier,
+            display_name=ref.display_name,
+            process_model_id=ref.process_model_id,
+            type=ref.type,
+            file_name=ref.file_name,
+            has_lanes=ref.has_lanes,
+            is_executable=ref.is_executable,
+            is_primary=ref.is_primary,
+            relative_path=ref.relative_path,
+        )
 
 
 class SpecReferenceSchema(Schema):
@@ -68,8 +70,15 @@ class SpecReferenceSchema(Schema):
         """Meta."""
 
         model = SpecReference
-        fields = ["identifier", "display_name",
-                  "process_group_id", "process_model_id",
-                  "type", "file_name", "has_lanes",
-                  "is_executable", "is_primary"]
+        fields = [
+            "identifier",
+            "display_name",
+            "process_group_id",
+            "process_model_id",
+            "type",
+            "file_name",
+            "has_lanes",
+            "is_executable",
+            "is_primary",
+        ]
         unknown = INCLUDE

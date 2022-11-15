@@ -59,7 +59,8 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.secret_model import SecretModelSchema
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache, SpecReferenceSchema
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
@@ -340,8 +341,8 @@ def process_model_list(
 
 def process_list() -> any:
     """Returns a list of all known processes - this includes processes that are not the
-    primary process - helpful for finding possible call activities. """
-    references = SpecReferenceCache.query.filter_by(type = "process")
+    primary process - helpful for finding possible call activities."""
+    references = SpecReferenceCache.query.filter_by(type="process")
     return SpecReferenceSchema(many=True).dump(references)
 
 
