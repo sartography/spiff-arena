@@ -72,6 +72,9 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportService,
+)
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
@@ -725,11 +728,22 @@ def process_instance_list(
     process_status: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
+    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
+    report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
+        process_instance_report,
+        process_model_identifier,
+        start_from,
+        start_to,
+        end_from,
+        end_to,
+        process_status,
+    )
+
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
-    if process_model_identifier is not None:
+    if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
-            f"{process_model_identifier}",
+            f"{report_filter.process_model_identifier}",
         )
 
         process_instance_query = process_instance_query.filter_by(
@@ -749,36 +763,31 @@ def process_instance_list(
             )
         )
 
-    if start_from is not None:
+    if report_filter.start_from is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds >= start_from
+            ProcessInstanceModel.start_in_seconds >= report_filter.start_from
         )
-    if start_to is not None:
+    if report_filter.start_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds <= start_to
+            ProcessInstanceModel.start_in_seconds <= report_filter.start_to
         )
-    if end_from is not None:
+    if report_filter.end_from is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds >= end_from
+            ProcessInstanceModel.end_in_seconds >= report_filter.end_from
         )
-    if end_to is not None:
+    if report_filter.end_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds <= end_to
+            ProcessInstanceModel.end_in_seconds <= report_filter.end_to
         )
-    if process_status is not None:
-        process_status_array = process_status.split(",")
+    if report_filter.process_status is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(process_status_array)  # type: ignore
+            ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
         )
 
     process_instances = process_instance_query.order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
-    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
-
-    # TODO need to look into this more - how the filter here interacts with the
-    # one defined in the report.
     # TODO need to look into test failures when the results from result_dict is
     # used instead of the process instances
 
