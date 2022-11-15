@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-from flask_marshmallow import Schema
+from flask_marshmallow import Schema  # type: ignore
 from marshmallow import INCLUDE
 
 
@@ -48,7 +48,7 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
     is_primary = db.Column(db.Boolean())
 
     @classmethod
-    def from_spec_reference(cls, ref):
+    def from_spec_reference(cls, ref: SpecReference) -> "SpecReferenceCache":
         """From_spec_reference."""
         return cls(
             identifier=ref.identifier,
@@ -63,7 +63,7 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
         )
 
 
-class SpecReferenceSchema(Schema):
+class SpecReferenceSchema(Schema):  # type: ignore
     """FileSchema."""
 
     class Meta:
