@@ -113,7 +113,7 @@ class SpecFileService(FileSystemService):
         for sub_parser in sub_parsers:
             if parser_type == "process":
                 has_lanes = sub_parser.has_lanes()
-                sub_parser.process_executable
+                is_executable = sub_parser.process_executable
                 start_messages = sub_parser.start_messages()
                 is_primary = (
                     sub_parser.get_id() == process_model_info.primary_process_id
@@ -156,11 +156,14 @@ class SpecFileService(FileSystemService):
         file = SpecFileService.to_file_object(file_name, full_file_path)
 
         references = SpecFileService.get_references_for_file(file, process_model_info)
-        primary_process_ref = next((ref for ref in references if ref.is_primary), None)
+        primary_process_ref = next(
+            (ref for ref in references if ref.is_primary and ref.is_executable), None
+        )
+
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
             # updated file.
-            if not primary_process_ref and ref.type == "process":
+            if not primary_process_ref and ref.type == "process" and ref.is_executable:
                 ref.is_primary = True
 
             if ref.is_primary:
@@ -172,10 +175,7 @@ class SpecFileService(FileSystemService):
                         "is_review": ref.has_lanes,
                     },
                 )
-            SpecFileService.update_process_cache(ref)
-            SpecFileService.update_message_cache(ref)
-            SpecFileService.update_message_trigger_cache(ref, process_model_info)
-            SpecFileService.update_correlation_cache(ref)
+            SpecFileService.update_caches(ref)
         return file
 
     @staticmethod
@@ -228,11 +228,29 @@ class SpecFileService(FileSystemService):
     # fixme: Place all the caching stuff in a different service.
 
     @staticmethod
+    def update_caches(ref: SpecReference) -> None:
+        """Update_caches."""
+        SpecFileService.update_process_cache(ref)
+        SpecFileService.update_message_cache(ref)
+        SpecFileService.update_message_trigger_cache(ref)
+        SpecFileService.update_correlation_cache(ref)
+
+    @staticmethod
+    def clear_caches() -> None:
+        """Clear_caches."""
+        db.session.query(SpecReferenceCache).delete()
+        db.session.query(MessageCorrelationPropertyModel).delete()
+        db.session.query(MessageTriggerableProcessModel).delete()
+        db.session.query(MessageModel).delete()
+
+    @staticmethod
     def update_process_cache(ref: SpecReference) -> None:
         """Update_process_cache."""
-        process_id_lookup = SpecReferenceCache.query.filter_by(
-            identifier=ref.identifier
-        ).first()
+        process_id_lookup = (
+            SpecReferenceCache.query.filter_by(identifier=ref.identifier)
+            .filter_by(type=ref.type)
+            .first()
+        )
         if process_id_lookup is None:
             process_id_lookup = SpecReferenceCache.from_spec_reference(ref)
             db.session.add(process_id_lookup)
@@ -269,9 +287,7 @@ class SpecFileService(FileSystemService):
                 db.session.commit()
 
     @staticmethod
-    def update_message_trigger_cache(
-        ref: SpecReference, process_model_info: ProcessModelInfo
-    ) -> None:
+    def update_message_trigger_cache(ref: SpecReference) -> None:
         """Assure we know which messages can trigger the start of a process."""
         for message_model_identifier in ref.start_messages:
             message_model = MessageModel.query.filter_by(
@@ -287,11 +303,10 @@ class SpecFileService(FileSystemService):
                     message_model_id=message_model.id,
                 ).first()
             )
-
             if message_triggerable_process_model is None:
                 message_triggerable_process_model = MessageTriggerableProcessModel(
                     message_model_id=message_model.id,
-                    process_model_identifier=process_model_info.id,
+                    process_model_identifier=ref.process_model_id,
                     process_group_identifier="process_group_identifier",
                 )
                 db.session.add(message_triggerable_process_model)
@@ -299,12 +314,12 @@ class SpecFileService(FileSystemService):
             else:
                 if (
                     message_triggerable_process_model.process_model_identifier
-                    != process_model_info.id
+                    != ref.process_model_id
                     # or message_triggerable_process_model.process_group_identifier
                     # != process_model_info.process_group_id
                 ):
                     raise ValidationException(
-                        f"Message model is already used to start process model {process_model_info.id}"
+                        f"Message model is already used to start process model {ref.process_model_id}"
                     )
 
     @staticmethod
