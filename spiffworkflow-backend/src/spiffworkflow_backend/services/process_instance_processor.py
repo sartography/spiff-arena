@@ -703,6 +703,8 @@ class ProcessInstanceProcessor:
 
         spec_reference = SpecReferenceCache.query.filter_by(
             identifier=bpmn_process_identifier
+        ).filter_by(
+            type='process'
         ).first()
         bpmn_file_full_path = None
         if spec_reference is None:
@@ -1019,7 +1021,7 @@ class ProcessInstanceProcessor:
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
                 if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()  # type: ignore
+                    handler.bulk_insert_logs()  # type: ignoreidentifier
             db.session.commit()
 
         except WorkflowTaskExecException as we:

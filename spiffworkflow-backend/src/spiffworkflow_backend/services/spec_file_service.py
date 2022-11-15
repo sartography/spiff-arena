@@ -162,6 +162,8 @@ class SpecFileService(FileSystemService):
             (ref for ref in references if ref.is_primary and ref.is_executable), None
         )
 
+        SpecFileService.clear_caches_for_file(file_name, process_model_info)
+
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
             # updated file.
@@ -238,6 +240,14 @@ class SpecFileService(FileSystemService):
         SpecFileService.update_correlation_cache(ref)
 
     @staticmethod
+    def clear_caches_for_file(file_name: str, process_model_info: ProcessModelInfo) -> None:
+        """Clear all caches related to a file"""
+        db.session.query(SpecReferenceCache).\
+            filter(SpecReferenceCache.file_name == file_name).\
+            filter(SpecReferenceCache.process_model_id == process_model_info.id).delete()
+        # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
+
+    @staticmethod
     def clear_caches() -> None:
         """Clear_caches."""
         db.session.query(SpecReferenceCache).delete()
@@ -256,6 +266,7 @@ class SpecFileService(FileSystemService):
         if process_id_lookup is None:
             process_id_lookup = SpecReferenceCache.from_spec_reference(ref)
             db.session.add(process_id_lookup)
+            db.session.commit()
         else:
             if ref.relative_path != process_id_lookup.relative_path:
                 full_bpmn_file_path = SpecFileService.full_path_from_relative_path(
