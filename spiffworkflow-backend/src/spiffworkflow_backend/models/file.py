@@ -9,6 +9,7 @@ from marshmallow import INCLUDE
 from marshmallow import Schema
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+from spiffworkflow_backend.models.spec_reference import SpecReference
 
 
 class FileType(SpiffEnum):
@@ -62,25 +63,6 @@ CONTENT_TYPES = {
 }
 
 
-@dataclass()
-class FileReference:
-    """File Reference Information.
-
-    Includes items such as the process id and name for a BPMN,
-    or the Decision id and Decision name for a DMN file.  There may be more than
-    one reference that points to a particular file.
-    """
-
-    id: str
-    name: str
-    type: str  # can be 'process', 'decision', or just 'file'
-    file_name: str
-    file_path: str
-    has_lanes: bool
-    executable: bool
-    messages: dict
-    correlations: dict
-    start_messages: list
 
 @dataclass(order=True)
 class File:
@@ -93,7 +75,7 @@ class File:
     type: str
     last_modified: datetime
     size: int
-    references: Optional[list[FileReference]] = None
+    references: Optional[list[SpecReference]] = None
     file_contents: Optional[bytes] = None
     process_model_id: Optional[str] = None
     process_group_id: Optional[str] = None
@@ -146,16 +128,8 @@ class FileSchema(Schema):
         ]
         unknown = INCLUDE
         references = marshmallow.fields.List(
-            marshmallow.fields.Nested("FileReferenceSchema")
+            marshmallow.fields.Nested("SpecReferenceSchema")
         )
 
 
-class FileReferenceSchema(Schema):
-    """FileSchema."""
 
-    class Meta:
-        """Meta."""
-
-        model = FileReference
-        fields = ["id", "name", "type"]
-        unknown = INCLUDE

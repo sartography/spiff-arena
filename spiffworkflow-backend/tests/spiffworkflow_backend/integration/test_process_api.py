@@ -9,6 +9,8 @@ import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
+
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -438,6 +440,34 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["count"] == 2
         assert response.json["pagination"]["total"] == 5
         assert response.json["pagination"]["pages"] == 2
+
+    def test_process_list(self,
+                          app: Flask,
+                          client: FlaskClient,
+                          with_db_and_bpmn_file_cleanup: None,
+                          with_super_admin_user: UserModel,
+                          ):
+        """It should be possible to get a list of all processes known to the system."""
+
+        load_test_spec(
+            "test_group_one/simple_form",
+            process_model_source_directory='simple_form',
+            bpmn_file_name='simple_form'
+        )
+        # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
+        assert(len(SpecReferenceCache.query.all()) == 1)
+
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id='test_group_two',
+            process_model_id='call_activity_nested',
+            bpmn_file_location='call_activity_nested'
+        )
+        # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
+        assert(len(SpecReferenceCache.query.all()) == 6)
+
+
 
     def test_process_group_add(
         self,
