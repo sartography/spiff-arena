@@ -714,6 +714,8 @@ def process_instance_list(
     process_status: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
+    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
+
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
     if process_model_identifier is not None:
@@ -763,8 +765,6 @@ def process_instance_list(
     process_instances = process_instance_query.order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
-
-    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
 
     # TODO need to look into this more - how the filter here interacts with the
     # one defined in the report.
