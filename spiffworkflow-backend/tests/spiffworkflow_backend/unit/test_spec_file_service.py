@@ -97,6 +97,7 @@ class TestSpecFileService(BaseTest):
         process_id_lookup = SpecReferenceCache(
             identifier=bpmn_process_identifier,
             relative_path=self.call_activity_nested_relative_file_path,
+            type="process",
         )
         db.session.add(process_id_lookup)
         db.session.commit()

@@ -677,13 +677,18 @@ class ProcessInstanceProcessor:
         """Backfill_missing_spec_reference_records."""
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
-            refs = SpecFileService.reference_map(
-                SpecFileService.get_references_for_process(process_model)
-            )
-            bpmn_process_identifiers = refs.keys()
-            if bpmn_process_identifier in bpmn_process_identifiers:
-                SpecFileService.update_process_cache(refs[bpmn_process_identifier])
-                return FileSystemService.full_path_to_process_model_file(process_model)
+            try:
+                refs = SpecFileService.reference_map(
+                    SpecFileService.get_references_for_process(process_model)
+                )
+                bpmn_process_identifiers = refs.keys()
+                if bpmn_process_identifier in bpmn_process_identifiers:
+                    SpecFileService.update_process_cache(refs[bpmn_process_identifier])
+                    return FileSystemService.full_path_to_process_model_file(
+                        process_model
+                    )
+            except Exception:
+                current_app.logger.warning("Failed to parse process ", process_model.id)
         return None
 
     @staticmethod

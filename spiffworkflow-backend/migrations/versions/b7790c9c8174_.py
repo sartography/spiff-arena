@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 7cc9bdcc309f
+Revision ID: b7790c9c8174
 Revises: 
-Create Date: 2022-11-15 09:53:53.349712
+Create Date: 2022-11-15 14:11:47.309399
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7cc9bdcc309f'
+revision = 'b7790c9c8174'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -49,10 +49,11 @@ def upgrade():
     sa.Column('has_lanes', sa.Boolean(), nullable=True),
     sa.Column('is_executable', sa.Boolean(), nullable=True),
     sa.Column('is_primary', sa.Boolean(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('identifier', 'type', name='_identifier_type_unique')
     )
     op.create_index(op.f('ix_spec_reference_cache_display_name'), 'spec_reference_cache', ['display_name'], unique=False)
-    op.create_index(op.f('ix_spec_reference_cache_identifier'), 'spec_reference_cache', ['identifier'], unique=True)
+    op.create_index(op.f('ix_spec_reference_cache_identifier'), 'spec_reference_cache', ['identifier'], unique=False)
     op.create_index(op.f('ix_spec_reference_cache_type'), 'spec_reference_cache', ['type'], unique=False)
     op.create_table('spiff_logging',
     sa.Column('id', sa.Integer(), nullable=False),
