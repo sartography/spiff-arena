@@ -279,6 +279,8 @@ jobs:
         # if: ${{ github.event_name != 'pull_request' }}
         # so just skip everything but main
         if: github.ref_name == 'main'
+        with:
+          projectBaseDir: spiffworkflow-backend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

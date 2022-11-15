@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 7d1662ea1227
+Revision ID: 7cc9bdcc309f
 Revises: 
-Create Date: 2022-11-14 21:48:34.469311
+Create Date: 2022-11-15 09:53:53.349712
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '7d1662ea1227'
+revision = '7cc9bdcc309f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -66,15 +66,6 @@ def upgrade():
     sa.Column('message', sa.String(length=255), nullable=True),
     sa.Column('current_user_id', sa.Integer(), nullable=True),
     sa.Column('spiff_step', sa.Integer(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('spiff_step_details',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('spiff_step', sa.Integer(), nullable=False),
-    sa.Column('task_json', sa.JSON(), nullable=False),
-    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
-    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user',
@@ -175,6 +166,17 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('key')
+    )
+    op.create_table('spiff_step_details',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('spiff_step', sa.Integer(), nullable=False),
+    sa.Column('task_json', sa.JSON(), nullable=False),
+    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
+    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
+    sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('user_group_assignment',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -290,6 +292,7 @@ def downgrade():
     op.drop_table('message_correlation')
     op.drop_table('active_task')
     op.drop_table('user_group_assignment')
+    op.drop_table('spiff_step_details')
     op.drop_table('secret')
     op.drop_table('refresh_token')
     op.drop_index(op.f('ix_process_instance_report_identifier'), table_name='process_instance_report')
@@ -305,7 +308,6 @@ def downgrade():
     op.drop_index(op.f('ix_message_correlation_property_identifier'), table_name='message_correlation_property')
     op.drop_table('message_correlation_property')
     op.drop_table('user')
-    op.drop_table('spiff_step_details')
     op.drop_table('spiff_logging')
     op.drop_index(op.f('ix_spec_reference_cache_type'), table_name='spec_reference_cache')
     op.drop_index(op.f('ix_spec_reference_cache_identifier'), table_name='spec_reference_cache')

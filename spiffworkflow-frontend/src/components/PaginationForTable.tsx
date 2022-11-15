@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 // @ts-ignore
 import { Pagination } from '@carbon/react';
@@ -13,8 +13,7 @@ type OwnProps = {
   perPageOptions?: number[];
   pagination: PaginationObject | null;
   tableToDisplay: any;
-  queryParamString?: string;
-  path: string;
+  paginationQueryParamPrefix?: string;
 };
 
 export default function PaginationForTable({
@@ -23,16 +22,21 @@ export default function PaginationForTable({
   perPageOptions,
   pagination,
   tableToDisplay,
-  queryParamString = '',
-  path,
+  paginationQueryParamPrefix,
 }: OwnProps) {
   const PER_PAGE_OPTIONS = [2, 10, 50, 100];
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const paginationQueryParamPrefixToUse = paginationQueryParamPrefix
+    ? `${paginationQueryParamPrefix}_`
+    : '';
 
   const updateRows = (args: any) => {
     const newPage = args.page;
     const { pageSize } = args;
-    navigate(`${path}?page=${newPage}&per_page=${pageSize}${queryParamString}`);
+
+    searchParams.set(`${paginationQueryParamPrefixToUse}page`, newPage);
+    searchParams.set(`${paginationQueryParamPrefixToUse}per_page`, pageSize);
+    setSearchParams(searchParams);
   };
 
   if (pagination) {
