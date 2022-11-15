@@ -21,13 +21,94 @@ class TestProcessInstanceReportService(BaseTest):
     def _filter_from_metadata(
         self, report_metadata: dict
     ) -> ProcessInstanceReportFilter:
-        """_filter_from_metadata."""
+        """Docstring."""
         report = ProcessInstanceReportModel(
             identifier="test",
             created_by_id=1,
             report_metadata=report_metadata,
         )
         return ProcessInstanceReportService.filter_from_metadata(report)
+
+    def _filter_by_dict_from_metadata(
+        self, report_metadata: dict
+    ) -> ProcessInstanceReportFilter:
+        """Docstring."""
+        report = ProcessInstanceReportModel(
+            identifier="test",
+            created_by_id=1,
+            report_metadata=report_metadata,
+        )
+        return ProcessInstanceReportService.filter_by_to_dict(report)
+
+    def test_filter_by_to_dict_no_filter_by(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        filters = self._filter_by_dict_from_metadata(
+            {
+                "columns": [],
+            }
+        )
+
+        assert filters == {}
+
+    def test_filter_by_to_dict_empty_filter_by(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        filters = self._filter_by_dict_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [],
+            }
+        )
+
+        assert filters == {}
+
+    def test_filter_by_to_dict_single_filter_by(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        filters = self._filter_by_dict_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [{"field_name": "end_to", "field_value": "1234"}],
+            }
+        )
+
+        assert filters == {"end_to": "1234"}
+
+    def test_filter_by_to_dict_mulitple_filter_by(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        filters = self._filter_by_dict_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [
+                    {"field_name": "end_to", "field_value": "1234"},
+                    {"field_name": "end_from", "field_value": "4321"},
+                ],
+            }
+        )
+
+        assert filters == {"end_to": "1234", "end_from": "4321"}
 
     def test_report_with_no_filter(
         self,
