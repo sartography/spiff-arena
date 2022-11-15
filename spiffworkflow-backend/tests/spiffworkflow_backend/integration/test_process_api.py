@@ -467,6 +467,18 @@ class TestProcessApi(BaseTest):
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
         assert(len(SpecReferenceCache.query.all()) == 6)
 
+        # get the results
+        response = client.get("/v1.0/processes", headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.json is not None
+        # We should get 5 back, as one of the items in the cache is a decision.
+        assert len(response.json) == 5
+        simple_form = next(p for p in response.json if p['identifier'] == 'Proccess_WithForm')
+        assert(simple_form['display_name'] == 'Process With Form')
+        assert(simple_form['process_model_id'] == 'test_group_one/simple_form')
+        assert(simple_form['has_lanes'] == False)
+        assert(simple_form['is_executable'] == True)
+        assert(simple_form['is_primary'] == True)
 
 
     def test_process_group_add(

@@ -19,6 +19,7 @@ class SpecReference:
 
     identifier: str  # The id of the process or decision.  "Process_1234"
     display_name: str # The name of the process or decision. "Invoice Submission"
+    process_model_id: str
     type: str  # can be 'process' or 'decision'
     file_name: str # The name of the file where this process or decision is defined.
     relative_path: str # The path to the file.
@@ -38,6 +39,7 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     identifier = db.Column(db.String(255), unique=True, index=True)
     display_name = db.Column(db.String(255), index=True)
+    process_model_id = db.Column(db.String(255))
     type = db.Column(db.String(255), index=True)  # either 'process' or 'decision'
     file_name = db.Column(db.String(255))
     relative_path = db.Column(db.String(255))
@@ -52,5 +54,8 @@ class SpecReferenceSchema(Schema):
         """Meta."""
 
         model = SpecReference
-        fields = ["identifier", "display_name", "type"]
+        fields = ["identifier", "display_name",
+                  "process_group_id", "process_model_id",
+                  "type", "file_name", "has_lanes",
+                  "is_executable", "is_primary"]
         unknown = INCLUDE
