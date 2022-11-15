@@ -1,4 +1,4 @@
-"""process_instance_report_service."""
+"""Process_instance_report_service."""
 from dataclasses import dataclass
 from typing import Optional
 
@@ -21,13 +21,19 @@ class ProcessInstanceReportFilter:
 
 class ProcessInstanceReportService:
     """ProcessInstanceReportService."""
+
     @classmethod
     def filter_by_to_dict(
         cls, process_instance_report: ProcessInstanceReportModel
-    ) -> dict[str,str]:
+    ) -> dict[str, str]:
+        """Filter_by_to_dict."""
         metadata = process_instance_report.report_metadata
         filter_by = metadata.get("filter_by", [])
-        filters = {d["field_name"]: d["field_value"] for d in filter_by if "field_name" in d and "field_value" in d}
+        filters = {
+            d["field_name"]: d["field_value"]
+            for d in filter_by
+            if "field_name" in d and "field_value" in d
+        }
         return filters
 
     @classmethod
@@ -38,9 +44,11 @@ class ProcessInstanceReportService:
         filters = cls.filter_by_to_dict(process_instance_report)
 
         def int_value(key: str) -> Optional[int]:
+            """Int_value."""
             return int(filters[key]) if key in filters else None
 
         def list_value(key: str) -> Optional[list[str]]:
+            """List_value."""
             return filters[key].split(",") if key in filters else None
 
         process_model_identifier = filters.get("process_model_identifier")

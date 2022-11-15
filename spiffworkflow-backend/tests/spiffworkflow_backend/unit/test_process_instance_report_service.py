@@ -29,9 +29,7 @@ class TestProcessInstanceReportService(BaseTest):
         )
         return ProcessInstanceReportService.filter_from_metadata(report)
 
-    def _filter_by_dict_from_metadata(
-        self, report_metadata: dict
-    ) -> ProcessInstanceReportFilter:
+    def _filter_by_dict_from_metadata(self, report_metadata: dict) -> dict[str, str]:
         """Docstring."""
         report = ProcessInstanceReportModel(
             identifier="test",
