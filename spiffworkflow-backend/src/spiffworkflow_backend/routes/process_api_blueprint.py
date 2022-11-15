@@ -805,6 +805,7 @@ def process_instance_list(
     response_json = {
         "report_metadata": report_metadata,
         "results": results,
+        "filters": report_filter.to_dict(),
         "pagination": {
             "count": len(results),
             "total": process_instances.total,
