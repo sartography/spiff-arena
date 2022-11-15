@@ -535,15 +535,13 @@ export default function ProcessModelShow() {
         <br />
         {processInstanceResultTag()}
         <br />
-        <h3>Process Instances</h3>
-        {processInstancesUl()}
-        <br />
-        {processModelButtons()}
-        <br />
         <ProcessInstanceListTable
           filtersEnabled={false}
           processModelFullIdentifier={processModel.id}
+          perPageOptions={[2, 5, 25]}
         />
+        <br />
+        {processModelButtons()}
       </>
     );
   }
