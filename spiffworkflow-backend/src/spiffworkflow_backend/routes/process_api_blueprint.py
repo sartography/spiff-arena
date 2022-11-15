@@ -339,9 +339,12 @@ def process_model_list(
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
 
 
-def process_list() -> any:
-    """Returns a list of all known processes - this includes processes that are not the
-    primary process - helpful for finding possible call activities."""
+def process_list() -> Any:
+    """Returns a list of all known processes.
+
+    This includes processes that are not the
+    primary process - helpful for finding possible call activities.
+    """
     references = SpecReferenceCache.query.filter_by(type="process")
     return SpecReferenceSchema(many=True).dump(references)
 

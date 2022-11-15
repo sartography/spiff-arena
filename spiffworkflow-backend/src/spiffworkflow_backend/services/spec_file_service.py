@@ -62,13 +62,6 @@ class SpecFileService(FileSystemService):
         return ref_map
 
     @staticmethod
-    def get_references(process_models: List[ProcessModelInfo]) -> list[SpecReference]:
-        """Returns all references -- process_ids, and decision ids, across all process models provided."""
-        references = []
-        for process_model in process_models:
-            references.extend(SpecFileService.get_references_for_process(process_model))
-
-    @staticmethod
     def get_references_for_process(
         process_model_info: ProcessModelInfo,
     ) -> list[SpecReference]:

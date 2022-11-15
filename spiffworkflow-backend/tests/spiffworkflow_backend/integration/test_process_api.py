@@ -446,9 +446,8 @@ class TestProcessApi(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-    ):
+    ) -> None:
         """It should be possible to get a list of all processes known to the system."""
-
         load_test_spec(
             "test_group_one/simple_form",
             process_model_source_directory="simple_form",
@@ -480,9 +479,9 @@ class TestProcessApi(BaseTest):
         )
         assert simple_form["display_name"] == "Process With Form"
         assert simple_form["process_model_id"] == "test_group_one/simple_form"
-        assert simple_form["has_lanes"] == False
-        assert simple_form["is_executable"] == True
-        assert simple_form["is_primary"] == True
+        assert simple_form["has_lanes"] is False
+        assert simple_form["is_executable"] is True
+        assert simple_form["is_primary"] is True
 
     def test_process_group_add(
         self,
