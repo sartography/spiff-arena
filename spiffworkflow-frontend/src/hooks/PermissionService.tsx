@@ -12,19 +12,17 @@ export const usePermissionFetcher = (
   useEffect(() => {
     const processPermissionResult = (result: PermissionCheckResponseBody) => {
       const { can, cannot, rules } = new AbilityBuilder(Ability);
-      for (const [url, permissionVerbResults] of Object.entries(
-        result.results
-      )) {
-        for (const [permissionVerb, hasPermission] of Object.entries(
-          permissionVerbResults
-        )) {
+      Object.keys(result.results).forEach((url: string) => {
+        const permissionVerbResults = result.results[url];
+        Object.keys(permissionVerbResults).forEach((permissionVerb: string) => {
+          const hasPermission = permissionVerbResults[permissionVerb];
           if (hasPermission) {
             can(permissionVerb, url);
           } else {
             cannot(permissionVerb, url);
           }
-        }
-      }
+        });
+      });
       ability.update(rules);
     };
     HttpService.makeCallToBackend({

@@ -24,7 +24,7 @@ export default function App() {
     [errorMessage]
   );
 
-  const ability = defineAbility((can: any) => {});
+  const ability = defineAbility(() => {});
 
   let errorTag = null;
   if (errorMessage) {
