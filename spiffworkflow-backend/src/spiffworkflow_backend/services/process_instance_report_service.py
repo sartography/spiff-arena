@@ -19,7 +19,7 @@ class ProcessInstanceReportFilter:
     process_status: Optional[list[str]] = None
 
     def to_dict(self) -> dict[str, str]:
-        """to_dict."""
+        """To_dict."""
         d = {}
 
         if self.process_model_identifier is not None:

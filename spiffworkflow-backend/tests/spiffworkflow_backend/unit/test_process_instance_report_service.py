@@ -13,13 +13,13 @@ from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportFilter,
 )
 from spiffworkflow_backend.services.process_instance_report_service import (
-    ProcessInstanceReportFilter,
     ProcessInstanceReportService,
 )
 
 
 class TestProcessInstanceReportFilter(BaseTest):
     """TestProcessInstanceReportFilter."""
+
     def test_empty_filter_to_dict(
         self,
         app: Flask,
@@ -40,9 +40,7 @@ class TestProcessInstanceReportFilter(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        d = ProcessInstanceReportFilter(
-            process_model_identifier="bob"
-        ).to_dict()
+        d = ProcessInstanceReportFilter(process_model_identifier="bob").to_dict()
 
         assert d == {"process_model_identifier": "bob"}
 
@@ -76,9 +74,7 @@ class TestProcessInstanceReportFilter(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        d = ProcessInstanceReportFilter(
-            process_status=["bob"]
-        ).to_dict()
+        d = ProcessInstanceReportFilter(process_status=["bob"]).to_dict()
 
         assert d == {"process_status": "bob"}
 
@@ -90,9 +86,7 @@ class TestProcessInstanceReportFilter(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        d = ProcessInstanceReportFilter(
-            process_status=["joe", "bob", "sue"]
-        ).to_dict()
+        d = ProcessInstanceReportFilter(process_status=["joe", "bob", "sue"]).to_dict()
 
         assert d == {"process_status": "joe,bob,sue"}
 
