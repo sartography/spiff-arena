@@ -232,10 +232,10 @@ def process_group_show(
     return make_response(jsonify(process_group), 200)
 
 
-def process_model_add(
+def process_model_create(
     body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
-    """Add_process_model."""
+    """Process_model_create."""
     process_model_info = ProcessModelInfoSchema().load(body)
     if process_model_info is None:
         raise ApiError(
