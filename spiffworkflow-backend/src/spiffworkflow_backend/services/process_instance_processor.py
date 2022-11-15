@@ -684,9 +684,11 @@ class ProcessInstanceProcessor:
                 bpmn_process_identifiers = refs.keys()
                 if bpmn_process_identifier in bpmn_process_identifiers:
                     SpecFileService.update_process_cache(refs[bpmn_process_identifier])
-                    return FileSystemService.full_path_to_process_model_file(process_model)
-            except Exception as e:
-                current_app.logger.warning('Failed to parse process ', process_model.id)
+                    return FileSystemService.full_path_to_process_model_file(
+                        process_model
+                    )
+            except Exception:
+                current_app.logger.warning("Failed to parse process ", process_model.id)
         return None
 
     @staticmethod
