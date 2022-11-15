@@ -47,6 +47,20 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
     is_executable = db.Column(db.Boolean())  # either 'process' or 'decision'
     is_primary = db.Column(db.Boolean())
 
+    @classmethod
+    def from_spec_reference(cls, ref):
+        return cls(
+                identifier=ref.identifier,
+                display_name=ref.display_name,
+                process_model_id=ref.process_model_id,
+                type=ref.type,
+                file_name=ref.file_name,
+                has_lanes=ref.has_lanes,
+                is_executable=ref.is_executable,
+                is_primary=ref.is_primary,
+                relative_path=ref.relative_path,)
+
+
 class SpecReferenceSchema(Schema):
     """FileSchema."""
 

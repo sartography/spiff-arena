@@ -234,17 +234,7 @@ class SpecFileService(FileSystemService):
     def update_process_cache(ref: SpecReference) -> None:
         process_id_lookup = SpecReferenceCache.query.filter_by(identifier=ref.identifier).first()
         if process_id_lookup is None:
-            process_id_lookup = SpecReferenceCache(
-                identifier=ref.identifier,
-                display_name=ref.display_name,
-                process_model_id=ref.process_model_id,
-                type=ref.type,
-                file_name=ref.file_name,
-                has_lanes=ref.has_lanes,
-                is_executable=ref.is_executable,
-                is_primary=ref.is_primary,
-                relative_path=ref.relative_path,
-            )
+            process_id_lookup = SpecReferenceCache.from_spec_reference(ref)
             db.session.add(process_id_lookup)
         else:
             if ref.relative_path != process_id_lookup.relative_path:
