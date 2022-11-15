@@ -1,7 +1,8 @@
 """Test_process_instance_report_service."""
+from typing import Optional
+
 from flask import Flask
 from flask.testing import FlaskClient
-from typing import Optional
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.process_instance_report import (
@@ -31,7 +32,7 @@ class TestProcessInstanceReportService(BaseTest):
         return ProcessInstanceReportService.filter_from_metadata(report)
 
     def _filter_from_metadata_with_overrides(
-        self, 
+        self,
         report_metadata: dict,
         process_model_identifier: Optional[str] = None,
         start_from: Optional[int] = None,
@@ -46,13 +47,15 @@ class TestProcessInstanceReportService(BaseTest):
             created_by_id=1,
             report_metadata=report_metadata,
         )
-        return ProcessInstanceReportService.filter_from_metadata_with_overrides(report,
+        return ProcessInstanceReportService.filter_from_metadata_with_overrides(
+            report,
             process_model_identifier,
             start_from,
             start_to,
             end_from,
             end_to,
-            process_status)
+            process_status,
+        )
 
     def _filter_by_dict_from_metadata(self, report_metadata: dict) -> dict[str, str]:
         """Docstring."""
@@ -461,7 +464,9 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [{"field_name": "process_model_identifier", "field_value": "bob"}]
+                "filter_by": [
+                    {"field_name": "process_model_identifier", "field_value": "bob"}
+                ],
             },
             process_model_identifier="joe",
         )
@@ -484,7 +489,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [{"field_name": "start_from", "field_value": "123"}]
+                "filter_by": [{"field_name": "start_from", "field_value": "123"}],
             },
             start_from=321,
         )
@@ -507,7 +512,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [{"field_name": "start_to", "field_value": "123"}]
+                "filter_by": [{"field_name": "start_to", "field_value": "123"}],
             },
             start_to=321,
         )
@@ -530,7 +535,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [{"field_name": "end_from", "field_value": "123"}]
+                "filter_by": [{"field_name": "end_from", "field_value": "123"}],
             },
             end_from=321,
         )
@@ -553,7 +558,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [{"field_name": "end_to", "field_value": "123"}]
+                "filter_by": [{"field_name": "end_to", "field_value": "123"}],
             },
             end_to=321,
         )
@@ -576,7 +581,9 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [{"field_name": "process_status", "field_value": "joe,bob"}]
+                "filter_by": [
+                    {"field_name": "process_status", "field_value": "joe,bob"}
+                ],
             },
             process_status="sue",
         )
@@ -599,7 +606,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [{"field_name": "process_status", "field_value": "sue"}]
+                "filter_by": [{"field_name": "process_status", "field_value": "sue"}],
             },
             process_status="joe,bob",
         )
