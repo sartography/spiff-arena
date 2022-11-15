@@ -58,7 +58,7 @@ class ProcessInstanceReportService:
         end_to = int_value("end_to")
         process_status = list_value("process_status")
 
-        process_instance_report_filter = ProcessInstanceReportFilter(
+        report_filter = ProcessInstanceReportFilter(
             process_model_identifier,
             start_from,
             start_to,
@@ -67,4 +67,33 @@ class ProcessInstanceReportService:
             process_status,
         )
 
-        return process_instance_report_filter
+        return report_filter
+
+    @classmethod
+    def filter_from_metadata_with_overrides(
+        cls, 
+        process_instance_report: ProcessInstanceReportModel,
+        process_model_identifier: Optional[str] = None,
+        start_from: Optional[int] = None,
+        start_to: Optional[int] = None,
+        end_from: Optional[int] = None,
+        end_to: Optional[int] = None,
+        process_status: Optional[str] = None,
+    ) -> ProcessInstanceReportFilter:
+        """Filter_from_metadata_with_overrides."""
+        report_filter = cls.filter_from_metadata(process_instance_report)
+
+        if process_model_identifier is not None:
+            report_filter.process_model_identifier = process_model_identifier 
+        if start_from is not None:
+            report_filter.start_from = start_from 
+        if start_to is not None:
+            report_filter.start_to = start_to 
+        if end_from is not None:
+            report_filter.end_from = end_from 
+        if end_to is not None:
+            report_filter.end_to = end_to 
+        if process_status is not None:
+            report_filter.process_status = process_status.split(",") 
+
+        return report_filter
