@@ -11,6 +11,7 @@ from flask import request
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from sqlalchemy import or_
 from sqlalchemy import text
 
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
@@ -57,7 +58,14 @@ class AuthorizationService:
             )
             .filter_by(permission=permission)
             .join(PermissionTargetModel)
-            .filter(text(f"'{target_uri}' LIKE permission_target.uri"))
+            .filter(
+                or_(
+                    text(f"'{target_uri}' LIKE permission_target.uri"),
+                    # to check for exact matches as well
+                    # see test_user_can_access_base_path_when_given_wildcard_permission unit test
+                    text(f"'{target_uri}' = replace(permission_target.uri, '/%', '')"),
+                )
+            )
             .all()
         )
 
