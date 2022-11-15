@@ -45,7 +45,9 @@ class SpecFileService(FileSystemService):
     ) -> List[File]:
         """Return all files associated with a workflow specification."""
         # path = SpecFileService.workflow_path(process_model_info)
-        path = os.path.join(FileSystemService.root_path(), process_model_info.id)
+        path = os.path.join(
+            FileSystemService.root_path(), process_model_info.id_for_file_path()
+        )
         files = SpecFileService._get_files(path, file_name)
         if extension_filter != "":
             files = list(
@@ -88,7 +90,7 @@ class SpecFileService(FileSystemService):
         """
         references: list[SpecReference] = []
         full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
-        file_path = os.path.join(process_model_info.id, file.name)
+        file_path = os.path.join(process_model_info.id_for_file_path(), file.name)
         parser = MyCustomParser()
         parser_type = None
         sub_parser = None

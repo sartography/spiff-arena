@@ -40,7 +40,8 @@ import {
 } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
-import { usePermissionFetcher } from '../components/PermissionService';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: ProcessModel
@@ -103,16 +104,11 @@ export default function ProcessModelShow() {
     useState<boolean>(false);
   const navigate = useNavigate();
 
-  const targetUris = {
-    processModelPath: `/process-models/${params.process_model_id}`,
-    processInstancesPath: `/process-instances`,
-  };
+  const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [`/v1.0${targetUris.processModelPath}`]: ['GET', 'PUT'],
-    [`/v1.0${targetUris.processInstancesPath}`]: ['GET'],
-    [`/v1.0${targetUris.processModelPath}${targetUris.processInstancesPath}`]: [
-      'POST',
-    ],
+    [targetUris.processModelShowPath]: ['GET', 'PUT'],
+    [targetUris.processInstanceListPath]: ['GET'],
+    [targetUris.processInstanceActionPath]: ['POST'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
@@ -513,18 +509,14 @@ export default function ProcessModelShow() {
         <Stack orientation="horizontal" gap={3}>
           <Can
             I="POST"
-            a={`/v1.0${targetUris.processModelPath}${targetUris.processInstancesPath}`}
+            a={targetUris.processInstanceActionPath}
             ability={ability}
           >
             <Button onClick={processInstanceCreateAndRun} variant="primary">
               Run
             </Button>
           </Can>
-          <Can
-            I="PUT"
-            a={`/v1.0${targetUris.processModelPath}`}
-            ability={ability}
-          >
+          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             <Button
               href={`/admin/process-models/${modifiedProcessModelId}/edit`}
               variant="secondary"
@@ -537,11 +529,7 @@ export default function ProcessModelShow() {
         <br />
         {processInstanceRunResultTag()}
         <br />
-        <Can
-          I="GET"
-          a={`/v1.0${targetUris.processInstancesPath}`}
-          ability={ability}
-        >
+        <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
           <ProcessInstanceListTable
             filtersEnabled={false}
             processModelFullIdentifier={processModel.id}
