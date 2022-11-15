@@ -5,6 +5,7 @@ from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from flask_marshmallow import Schema  # type: ignore
 from marshmallow import INCLUDE
+from sqlalchemy import UniqueConstraint
 
 
 @dataclass()
@@ -35,9 +36,10 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
     """A cache of information about all the Processes and Decisions defined in all files."""
 
     __tablename__ = "spec_reference_cache"
-
+    __table_args__ = (UniqueConstraint('identifier', 'type', name='_identifier_type_unique'),
+                     )
     id = db.Column(db.Integer, primary_key=True)
-    identifier = db.Column(db.String(255), unique=True, index=True)
+    identifier = db.Column(db.String(255), index=True)
     display_name = db.Column(db.String(255), index=True)
     process_model_id = db.Column(db.String(255))
     type = db.Column(db.String(255), index=True)  # either 'process' or 'decision'
