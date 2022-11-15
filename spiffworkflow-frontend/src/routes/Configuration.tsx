@@ -2,11 +2,7 @@ import { useContext, useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Tabs, TabList, Tab } from '@carbon/react';
-import TaskShow from './TaskShow';
 import ErrorContext from '../contexts/ErrorContext';
-import MyTasks from './MyTasks';
-import GroupedTasks from './GroupedTasks';
-import CompletedInstances from './CompletedInstances';
 import SecretList from './SecretList';
 import SecretNew from './SecretNew';
 import SecretShow from './SecretShow';
