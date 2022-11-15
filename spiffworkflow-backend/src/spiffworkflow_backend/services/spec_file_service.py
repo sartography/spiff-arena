@@ -124,7 +124,9 @@ class SpecFileService(FileSystemService):
                 start_messages = sub_parser.start_messages()
                 is_primary = sub_parser.get_id() == process_model_info.primary_process_id
             references.append(SpecReference(
-                    identifier=sub_parser.get_id(), display_name=sub_parser.get_name(), type=parser_type,
+                    identifier=sub_parser.get_id(), display_name=sub_parser.get_name(),
+                    process_model_id=process_model_info.id,
+                    type=parser_type,
                     file_name=file.name, relative_path=file_path, has_lanes=has_lanes,
                     is_executable=is_executable, messages=messages, is_primary=is_primary,
                     correlations=correlations, start_messages=start_messages
@@ -235,9 +237,13 @@ class SpecFileService(FileSystemService):
             process_id_lookup = SpecReferenceCache(
                 identifier=ref.identifier,
                 display_name=ref.display_name,
-                relative_path=ref.relative_path,
+                process_model_id=ref.process_model_id,
                 type=ref.type,
-                is_executable=ref.is_executable
+                file_name=ref.file_name,
+                has_lanes=ref.has_lanes,
+                is_executable=ref.is_executable,
+                is_primary=ref.is_primary,
+                relative_path=ref.relative_path,
             )
             db.session.add(process_id_lookup)
         else:

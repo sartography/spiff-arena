@@ -371,6 +371,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
+    # process_model_list
+  /processes:
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_list
+      summary: Return a list of all processes (not just primary process of a process model) 
+            useful for finding processes for call activites.
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: Successfully return the requested processes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Process"
 
   /process-instances:
     parameters:
@@ -1530,7 +1547,26 @@ components:
           type: string
           x-nullable: true
           example: Some Value
-
+    Process:
+      properties:
+        identifier:
+          type: string
+        display_name:
+          type: string
+        process_group_id:
+          type: string
+        process_model_id:
+          type: string
+        type:
+          type: string
+        file_name:
+          type: string
+        has_lanes:
+          type: boolean
+        is_executable:
+          type: boolean
+        is_primary:
+          type: boolean
     ProcessModel:
       properties:
         id:
