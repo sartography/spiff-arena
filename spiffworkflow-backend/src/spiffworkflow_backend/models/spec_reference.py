@@ -47,7 +47,7 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
     file_name = db.Column(db.String(255))
     relative_path = db.Column(db.String(255))
     has_lanes = db.Column(db.Boolean())
-    is_executable = db.Column(db.Boolean())  # either 'process' or 'decision'
+    is_executable = db.Column(db.Boolean())
     is_primary = db.Column(db.Boolean())
 
     @classmethod

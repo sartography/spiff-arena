@@ -54,7 +54,8 @@ class FileSystemService:
     @staticmethod
     def process_group_path_for_spec(spec: ProcessModelInfo) -> str:
         """Category_path_for_spec."""
-        process_group_id, _ = os.path.split(spec.id)
+        # os.path.split apparently returns 2 element tulple like: (first/path, last_item)
+        process_group_id, _ = os.path.split(spec.id_for_file_path())
         return FileSystemService.process_group_path(process_group_id)
 
     @staticmethod
