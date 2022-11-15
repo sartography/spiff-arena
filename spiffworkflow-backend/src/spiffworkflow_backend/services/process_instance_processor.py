@@ -67,7 +67,6 @@ from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
-from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
@@ -86,6 +85,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserModelSchema
@@ -671,10 +671,10 @@ class ProcessInstanceProcessor:
         return parser
 
     @staticmethod
-    def backfill_missing_bpmn_process_id_lookup_records(
+    def backfill_missing_spec_reference_records(
         bpmn_process_identifier: str,
     ) -> Optional[str]:
-        """Backfill_missing_bpmn_process_id_lookup_records."""
+        """Backfill_missing_spec_reference_records."""
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
             refs = SpecFileService.reference_map(
@@ -696,18 +696,20 @@ class ProcessInstanceProcessor:
                 "bpmn_file_full_path_from_bpmn_process_identifier: bpmn_process_identifier is unexpectedly None"
             )
 
-        bpmn_process_id_lookup = BpmnProcessIdLookup.query.filter_by(
-            bpmn_process_identifier=bpmn_process_identifier
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier=bpmn_process_identifier
         ).first()
         bpmn_file_full_path = None
-        if bpmn_process_id_lookup is None:
-            bpmn_file_full_path = ProcessInstanceProcessor.backfill_missing_bpmn_process_id_lookup_records(
-                bpmn_process_identifier
+        if spec_reference is None:
+            bpmn_file_full_path = (
+                ProcessInstanceProcessor.backfill_missing_spec_reference_records(
+                    bpmn_process_identifier
+                )
             )
         else:
             bpmn_file_full_path = os.path.join(
                 FileSystemService.root_path(),
-                bpmn_process_id_lookup.bpmn_file_relative_path,
+                spec_reference.relative_path,
             )
         if bpmn_file_full_path is None:
             raise (
