@@ -12,11 +12,11 @@ export default function SecretNew() {
   const navigate = useNavigate();
 
   const navigateToSecret = (_result: any) => {
-    navigate(`/admin/secrets/${key}`);
+    navigate(`/admin/configuration/secrets/${key}`);
   };
 
   const navigateToSecrets = () => {
-    navigate(`/admin/secrets`);
+    navigate(`/admin/configuration/secrets`);
   };
 
   const changeSpacesToDash = (someString: string) => {

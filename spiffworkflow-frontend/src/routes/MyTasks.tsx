@@ -122,7 +122,7 @@ export default function MyTasks() {
     });
     return (
       <>
-        <h1>Processes I can start</h1>
+        <h1>Recently viewed process models</h1>
         <Table striped bordered>
           <thead>
             <tr>
@@ -169,6 +169,7 @@ export default function MyTasks() {
     return (
       <>
         {tasksWaitingForMe}
+        <br />
         {relevantProcessModelSection}
       </>
     );

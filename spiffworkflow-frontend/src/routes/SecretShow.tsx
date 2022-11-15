@@ -26,10 +26,6 @@ export default function SecretShow() {
     }
   };
 
-  // const reloadSecret = (_result: any) => {
-  //   window.location.reload();
-  // };
-
   const updateSecretValue = () => {
     if (secret && secretValue) {
       secret.value = secretValue;
@@ -48,7 +44,7 @@ export default function SecretShow() {
   };
 
   const navigateToSecrets = (_result: any) => {
-    navigate(`/admin/secrets`);
+    navigate(`/admin/configuration/secrets`);
   };
 
   const deleteSecret = () => {

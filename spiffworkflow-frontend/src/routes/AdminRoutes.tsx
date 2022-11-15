@@ -24,6 +24,7 @@ import SecretList from './SecretList';
 import SecretNew from './SecretNew';
 import SecretShow from './SecretShow';
 import AuthenticationList from './AuthenticationList';
+import Configuration from './Configuration';
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -110,10 +111,7 @@ export default function AdminRoutes() {
         />
         <Route path="process-instances" element={<ProcessInstanceList />} />
         <Route path="messages" element={<MessageInstanceList />} />
-        <Route path="secrets" element={<SecretList />} />
-        <Route path="secrets/new" element={<SecretNew />} />
-        <Route path="secrets/:key" element={<SecretShow />} />
-        <Route path="authentications" element={<AuthenticationList />} />
+        <Route path="/configuration/*" element={<Configuration />} />
       </Routes>
     );
   }

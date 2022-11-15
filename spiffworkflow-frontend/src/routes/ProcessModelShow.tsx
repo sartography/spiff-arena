@@ -30,7 +30,7 @@ import {
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { modifyProcessModelPath, unModifyProcessModelPath } from '../helpers';
+import { modifyProcessModelPath } from '../helpers';
 import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
@@ -350,27 +350,6 @@ export default function ProcessModelShow() {
         </TableHead>
         <TableBody>{tags}</TableBody>
       </Table>
-    );
-  };
-
-  const processInstancesUl = () => {
-    const unmodifiedProcessModelId: String = unModifyProcessModelPath(
-      `${params.process_model_id}`
-    );
-    if (!processModel) {
-      return null;
-    }
-    return (
-      <ul>
-        <li>
-          <Link
-            to={`/admin/process-instances?process_model_identifier=${unmodifiedProcessModelId}`}
-            data-qa="process-instance-list-link"
-          >
-            List
-          </Link>
-        </li>
-      </ul>
     );
   };
 

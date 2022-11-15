@@ -44,10 +44,8 @@ export default function NavigationBar() {
       newActiveKey = '/admin/process-instances/reports';
     } else if (location.pathname.match(/^\/admin\/process-instances\b/)) {
       newActiveKey = '/admin/process-instances';
-    } else if (location.pathname.match(/^\/admin\/secrets\b/)) {
-      newActiveKey = '/admin/secrets';
-    } else if (location.pathname.match(/^\/admin\/authentications\b/)) {
-      newActiveKey = '/admin/authentications';
+    } else if (location.pathname.match(/^\/admin\/configuration\b/)) {
+      newActiveKey = '/admin/configuration';
     } else if (location.pathname === '/') {
       newActiveKey = '/';
     } else if (location.pathname.match(/^\/tasks\b/)) {
@@ -112,16 +110,10 @@ export default function NavigationBar() {
           Messages
         </HeaderMenuItem>
         <HeaderMenuItem
-          href="/admin/secrets"
-          isCurrentPage={isActivePage('/admin/secrets')}
+          href="/admin/configuration"
+          isCurrentPage={isActivePage('/admin/configuration')}
         >
-          Secrets
-        </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/authentications"
-          isCurrentPage={isActivePage('/admin/authentications')}
-        >
-          Authentications
+          Configuration
         </HeaderMenuItem>
         <HeaderMenuItem
           href="/admin/process-instances/reports"
