@@ -258,7 +258,6 @@ paths:
         description: The number of models to show per page. Defaults to page 10.
         schema:
           type: integer
-    # process_model_list
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_list
       summary: Return a list of process models for a given process group
@@ -273,9 +272,10 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ProcessModel"
-    # process_model_add
+
+  /process-models/{modified_process_group_id}:
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_add
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_create
       summary: Creates a new process model with the given parameters.
       tags:
         - Process Models
@@ -371,7 +371,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
-    # process_model_list
+
   /processes:
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_list

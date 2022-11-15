@@ -35,6 +35,8 @@ export default function ProcessGroupShow() {
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.processGroupListPath]: ['POST'],
+    [targetUris.processGroupShowPath]: ['PUT'],
+    [targetUris.processModelCreatePath]: ['POST'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
@@ -159,23 +161,29 @@ export default function ProcessGroupShow() {
           <Stack orientation="horizontal" gap={3}>
             <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
               <Button
-                kind="secondary"
                 href={`/admin/process-groups/new?parentGroupId=${processGroup.id}`}
               >
                 Add a process group
               </Button>
             </Can>
-            <Button
-              href={`/admin/process-models/${modifiedProcessGroupId}/new`}
+            <Can
+              I="POST"
+              a={targetUris.processModelCreatePath}
+              ability={ability}
             >
-              Add a process model
-            </Button>
-            <Button
-              href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
-              variant="secondary"
-            >
-              Edit process group
-            </Button>
+              <Button
+                href={`/admin/process-models/${modifiedProcessGroupId}/new`}
+              >
+                Add a process model
+              </Button>
+            </Can>
+            <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
+              <Button
+                href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
+              >
+                Edit process group
+              </Button>
+            </Can>
           </Stack>
           <br />
           <br />

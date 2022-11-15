@@ -74,10 +74,7 @@ export default function ProcessModelForm({
     if (hasErrors) {
       return;
     }
-    let path = `/process-models`;
-    if (mode === 'edit') {
-      path = `/process-models/${modifiedProcessModelPath}`;
-    }
+    const path = `/process-models/${modifiedProcessModelPath}`;
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
