@@ -70,7 +70,9 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
-from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
+from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportService,
+)
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
@@ -723,7 +725,7 @@ def process_instance_list(
         start_to,
         end_from,
         end_to,
-        process_status
+        process_status,
     )
 
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
