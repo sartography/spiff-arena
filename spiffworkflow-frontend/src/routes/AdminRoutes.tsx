@@ -20,10 +20,6 @@ import ReactFormEditor from './ReactFormEditor';
 import ErrorContext from '../contexts/ErrorContext';
 import ProcessInstanceLogList from './ProcessInstanceLogList';
 import MessageInstanceList from './MessageInstanceList';
-import SecretList from './SecretList';
-import SecretNew from './SecretNew';
-import SecretShow from './SecretShow';
-import AuthenticationList from './AuthenticationList';
 import Configuration from './Configuration';
 
 export default function AdminRoutes() {
