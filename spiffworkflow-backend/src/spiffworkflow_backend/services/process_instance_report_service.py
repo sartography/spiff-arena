@@ -1,10 +1,16 @@
+"""process_instance_report_service."""
 from dataclasses import dataclass
 from typing import Optional
 
-from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
+from spiffworkflow_backend.models.process_instance_report import (
+    ProcessInstanceReportModel,
+)
+
 
 @dataclass
 class ProcessInstanceReportFilter:
+    """ProcessInstanceReportFilter."""
+
     process_model_identifier: Optional[str] = None
     start_from: Optional[int] = None
     start_to: Optional[int] = None
@@ -12,10 +18,15 @@ class ProcessInstanceReportFilter:
     end_to: Optional[int] = None
     process_status: Optional[list[str]] = None
 
+
 class ProcessInstanceReportService:
     """ProcessInstanceReportService."""
+
     @classmethod
-    def filter_from_metadata(cls, process_instance_report: ProcessInstanceReportModel) -> ProcessInstanceReportFilter:
+    def filter_from_metadata(
+        cls, process_instance_report: ProcessInstanceReportModel
+    ) -> ProcessInstanceReportFilter:
+        """Filter_from_metadata."""
         process_model_identifier: Optional[str] = None
         start_from: Optional[int] = None
         start_to: Optional[int] = None
@@ -24,8 +35,8 @@ class ProcessInstanceReportService:
         process_status: Optional[list[str]] = None
 
         metadata = process_instance_report.report_metadata
-        if "filter_by" in metadata:
-            pass
+        filter_by = metadata.get("filter_by", [])
+        filters = {k: v for filter_dict in filter_by for k, v in filter_dict.items()}
 
         process_instance_report_filter = ProcessInstanceReportFilter(
             process_model_identifier,
@@ -35,12 +46,12 @@ class ProcessInstanceReportService:
             end_to,
             process_status,
         )
-        
+
         return process_instance_report_filter
 
-    #def passes_filter(
+    # def passes_filter(
     #    self, process_instance_dict: dict, substitution_variables: dict
-    #) -> bool:
+    # ) -> bool:
     #    """Passes_filter."""
     #    if "filter_by" in self.report_metadata:
     #        for filter_by in self.report_metadata["filter_by"]:
@@ -50,7 +61,7 @@ class ProcessInstanceReportService:
     #                filter_by["field_value"], substitution_variables
     #            )
     #            if operator == "equals":
-    ##                if str(process_instance_dict.get(field_name)) != str(field_value):
+    # if str(process_instance_dict.get(field_name)) != str(field_value):
     #                    return False
     #
     #    return True

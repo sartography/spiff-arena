@@ -3,23 +3,31 @@ from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
-from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
+from spiffworkflow_backend.models.process_instance_report import (
+    ProcessInstanceReportModel,
+)
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportFilter
-from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
+from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportFilter,
+)
+from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportService,
+)
 
 
 class TestProcessInstanceReportService(BaseTest):
     """TestProcessInstanceReportService."""
 
-    def _filter_from_metadata(self, report_metadata: dict) -> ProcessInstanceReportFilter:
+    def _filter_from_metadata(
+        self, report_metadata: dict
+    ) -> ProcessInstanceReportFilter:
+        """_filter_from_metadata."""
         report = ProcessInstanceReportModel(
             identifier="test",
             created_by_id=1,
             report_metadata=report_metadata,
         )
         return ProcessInstanceReportService.filter_from_metadata(report)
-
 
     def test_report_with_no_filter(
         self,
@@ -29,9 +37,11 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -48,10 +58,12 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -68,10 +80,12 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"field_name": "bob", "field_value": "joe"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [{"field_name": "bob", "field_value": "joe"}],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -88,10 +102,12 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"_name": "bob", "_value": "joe"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [{"_name": "bob", "_value": "joe"}],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -108,10 +124,14 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"field_name": "process_model_identifier", "field_value": "bob"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [
+                    {"field_name": "process_model_identifier", "field_value": "bob"}
+                ],
+            }
+        )
 
         assert report_filter.process_model_identifier == "bob"
         assert report_filter.start_from is None
@@ -128,10 +148,12 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"field_name": "start_from", "field_value": "1234"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [{"field_name": "start_from", "field_value": "1234"}],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from == 1234
@@ -148,10 +170,12 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"field_name": "start_to", "field_value": "1234"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [{"field_name": "start_to", "field_value": "1234"}],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -168,10 +192,12 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"field_name": "end_from", "field_value": "1234"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [{"field_name": "end_from", "field_value": "1234"}],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -188,10 +214,12 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"field_name": "end_to", "field_value": "1234"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [{"field_name": "end_to", "field_value": "1234"}],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -208,10 +236,12 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"field_name": "process_status", "field_value": "ready"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [{"field_name": "process_status", "field_value": "ready"}],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -228,10 +258,17 @@ class TestProcessInstanceReportService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Docstring."""
-        report_filter = self._filter_from_metadata({
-            "columns": [],
-            "filter_by": [{"field_name": "process_status", "field_value": "ready,completed,other"}],
-        })
+        report_filter = self._filter_from_metadata(
+            {
+                "columns": [],
+                "filter_by": [
+                    {
+                        "field_name": "process_status",
+                        "field_value": "ready,completed,other",
+                    }
+                ],
+            }
+        )
 
         assert report_filter.process_model_identifier is None
         assert report_filter.start_from is None
@@ -239,4 +276,3 @@ class TestProcessInstanceReportService(BaseTest):
         assert report_filter.end_from is None
         assert report_filter.end_to is None
         assert report_filter.process_status == ["ready", "completed", "other"]
-
