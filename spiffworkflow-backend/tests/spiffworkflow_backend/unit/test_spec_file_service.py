@@ -126,8 +126,7 @@ class TestSpecFileService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """When a BPMN processes identifier is changed in a file, the old id
-        is removed from the cache."""
+        """When a BPMN processes identifier is changed in a file, the old id is removed from the cache."""
         old_identifier = "ye_old_identifier"
         process_id_lookup = SpecReferenceCache(
             identifier=old_identifier,
