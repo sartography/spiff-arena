@@ -181,6 +181,16 @@ bpmnModeler.on('spiff.dmn_files.requested', (event) => {
   });
 });
 
+// As call activites might refernce processes across the system
+// it should be possible to search for a paticular call activity.
+bpmnModeler.on('spiff.callactivity.search', (event) => {
+  console.log("Firing call activity update")
+  event.eventBus.fire('spiff.callactivity.update', {
+    value: 'searched_bpmn_id',
+  });
+});
+
+
 // This handles the download and upload buttons - it isn't specific to
 // the BPMN modeler or these extensions, just a quick way to allow you to
 // create and save files, so keeping it outside the example.

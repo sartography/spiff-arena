@@ -98,20 +98,28 @@ function CalledElementTextField(props) {
 }
 
 function FindProcessButton(props) {
-  const { element } = props;
+  const { element, commandStack } = props;
   const eventBus = useService('eventBus');
   return HeaderButton({
     id: 'spiffworkflow-search-call-activity-button',
     class: 'spiffworkflow-properties-panel-button',
     onClick: () => {
       const processId = getCalledElementValue(element);
-      eventBus.fire('spiff.callactivity.search', {
-        element,
-        processId,
-      });
-      // Listen for a response, to update the script.
+
+      // First, set up the listen, then fire the event, just
+      // in case we are testing and things are happening super fast.
       eventBus.once('spiff.callactivity.update', (response) => {
-        element.businessObject.calledElement = response.value;
+        commandStack.execute('element.updateModdleProperties', {
+          element,
+          moddleElement: element.businessObject,
+          properties: {
+            calledElement: response.value,
+          },
+        });
+      });
+      eventBus.fire('spiff.callactivity.search', {
+        processId,
+        eventBus,
       });
     },
     children: 'Search',
