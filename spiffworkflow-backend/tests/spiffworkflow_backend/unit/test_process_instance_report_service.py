@@ -28,7 +28,7 @@ class TestProcessInstanceReportService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_report_with_no_filter."""
+        """Docstring."""
         report_filter = self._filter_from_metadata({
             "columns": [],
         })
@@ -47,7 +47,7 @@ class TestProcessInstanceReportService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_report_with_no_filter."""
+        """Docstring."""
         report_filter = self._filter_from_metadata({
             "columns": [],
             "filter_by": [],
@@ -59,4 +59,184 @@ class TestProcessInstanceReportService(BaseTest):
         assert report_filter.end_from is None
         assert report_filter.end_to is None
         assert report_filter.process_status is None
+
+    def test_report_with_unknown_filter_field_name(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"field_name": "bob", "field_value": "joe"}],
+        })
+
+        assert report_filter.process_model_identifier is None
+        assert report_filter.start_from is None
+        assert report_filter.start_to is None
+        assert report_filter.end_from is None
+        assert report_filter.end_to is None
+        assert report_filter.process_status is None
+
+    def test_report_with_unknown_filter_keys(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"_name": "bob", "_value": "joe"}],
+        })
+
+        assert report_filter.process_model_identifier is None
+        assert report_filter.start_from is None
+        assert report_filter.start_to is None
+        assert report_filter.end_from is None
+        assert report_filter.end_to is None
+        assert report_filter.process_status is None
+
+    def test_report_with_process_model_identifier_filter(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"field_name": "process_model_identifier", "field_value": "bob"}],
+        })
+
+        assert report_filter.process_model_identifier == "bob"
+        assert report_filter.start_from is None
+        assert report_filter.start_to is None
+        assert report_filter.end_from is None
+        assert report_filter.end_to is None
+        assert report_filter.process_status is None
+
+    def test_report_with_start_from_filter(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"field_name": "start_from", "field_value": "1234"}],
+        })
+
+        assert report_filter.process_model_identifier is None
+        assert report_filter.start_from == 1234
+        assert report_filter.start_to is None
+        assert report_filter.end_from is None
+        assert report_filter.end_to is None
+        assert report_filter.process_status is None
+
+    def test_report_with_start_to_filter(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"field_name": "start_to", "field_value": "1234"}],
+        })
+
+        assert report_filter.process_model_identifier is None
+        assert report_filter.start_from is None
+        assert report_filter.start_to == 1234
+        assert report_filter.end_from is None
+        assert report_filter.end_to is None
+        assert report_filter.process_status is None
+
+    def test_report_with_end_from_filter(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"field_name": "end_from", "field_value": "1234"}],
+        })
+
+        assert report_filter.process_model_identifier is None
+        assert report_filter.start_from is None
+        assert report_filter.start_to is None
+        assert report_filter.end_from == 1234
+        assert report_filter.end_to is None
+        assert report_filter.process_status is None
+
+    def test_report_with_end_to_filter(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"field_name": "end_to", "field_value": "1234"}],
+        })
+
+        assert report_filter.process_model_identifier is None
+        assert report_filter.start_from is None
+        assert report_filter.start_to is None
+        assert report_filter.end_from is None
+        assert report_filter.end_to == 1234
+        assert report_filter.process_status is None
+
+    def test_report_with_single_startus_filter(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"field_name": "process_status", "field_value": "ready"}],
+        })
+
+        assert report_filter.process_model_identifier is None
+        assert report_filter.start_from is None
+        assert report_filter.start_to is None
+        assert report_filter.end_from is None
+        assert report_filter.end_to is None
+        assert report_filter.process_status == ["ready"]
+
+    def test_report_with_multiple_startus_filters(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Docstring."""
+        report_filter = self._filter_from_metadata({
+            "columns": [],
+            "filter_by": [{"field_name": "process_status", "field_value": "ready,completed,other"}],
+        })
+
+        assert report_filter.process_model_identifier is None
+        assert report_filter.start_from is None
+        assert report_filter.start_to is None
+        assert report_filter.end_from is None
+        assert report_filter.end_to is None
+        assert report_filter.process_status == ["ready", "completed", "other"]
 
