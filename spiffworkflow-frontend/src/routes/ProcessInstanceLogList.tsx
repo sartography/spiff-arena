@@ -74,7 +74,6 @@ export default function ProcessInstanceLogList() {
   };
 
   if (pagination) {
-    console.log('params.process_model_id', params.process_model_id);
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     return (
       <main>

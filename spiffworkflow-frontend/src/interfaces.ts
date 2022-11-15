@@ -70,3 +70,16 @@ export interface PaginationObject {
 export interface CarbonComboBoxSelection {
   selectedItem: ProcessModel;
 }
+
+export interface PermissionsToCheck {
+  [key: string]: string[];
+}
+export interface PermissionCheckResponseBody {
+  results: PermissionCheckResult;
+}
+export interface PermissionCheckResult {
+  [key: string]: PermissionVerbResults;
+}
+export interface PermissionVerbResults {
+  [key: string]: boolean;
+}

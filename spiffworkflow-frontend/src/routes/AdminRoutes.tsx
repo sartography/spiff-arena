@@ -107,7 +107,7 @@ export default function AdminRoutes() {
         />
         <Route path="process-instances" element={<ProcessInstanceList />} />
         <Route path="messages" element={<MessageInstanceList />} />
-        <Route path="/configuration/*" element={<Configuration />} />
+        <Route path="configuration/*" element={<Configuration />} />
       </Routes>
     );
   }

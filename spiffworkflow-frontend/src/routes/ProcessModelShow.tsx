@@ -27,13 +27,20 @@ import {
   TableBody,
   // @ts-ignore
 } from '@carbon/react';
+import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { modifyProcessModelPath } from '../helpers';
-import { ProcessFile, ProcessModel, RecentProcessModel } from '../interfaces';
+import {
+  PermissionsToCheck,
+  ProcessFile,
+  ProcessModel,
+  RecentProcessModel,
+} from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
+import { usePermissionFetcher } from '../components/PermissionService';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: ProcessModel
@@ -96,6 +103,19 @@ export default function ProcessModelShow() {
     useState<boolean>(false);
   const navigate = useNavigate();
 
+  const targetUris = {
+    processModelPath: `/process-models/${params.process_model_id}`,
+    processInstancesPath: `/process-instances`,
+  };
+  const permissionRequestData: PermissionsToCheck = {
+    [`/v1.0${targetUris.processModelPath}`]: ['GET', 'PUT'],
+    [`/v1.0${targetUris.processInstancesPath}`]: ['GET'],
+    [`/v1.0${targetUris.processModelPath}${targetUris.processInstancesPath}`]: [
+      'POST',
+    ],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
+
   const modifiedProcessModelId = modifyProcessModelPath(
     `${params.process_model_id}`
   );
@@ -130,7 +150,7 @@ export default function ProcessModelShow() {
     });
   };
 
-  const processInstanceResultTag = () => {
+  const processInstanceRunResultTag = () => {
     if (processModel && processInstanceResult) {
       // FIXME: ensure that the task is actually for the current user as well
       const processInstanceId = (processInstanceResult as any).id;
@@ -491,26 +511,44 @@ export default function ProcessModelShow() {
         <h1>Process Model: {processModel.display_name}</h1>
         <p className="process-description">{processModel.description}</p>
         <Stack orientation="horizontal" gap={3}>
-          <Button onClick={processInstanceCreateAndRun} variant="primary">
-            Run
-          </Button>
-          <Button
-            href={`/admin/process-models/${modifiedProcessModelId}/edit`}
-            variant="secondary"
+          <Can
+            I="POST"
+            a={`/v1.0${targetUris.processModelPath}${targetUris.processInstancesPath}`}
+            ability={ability}
           >
-            Edit process model
-          </Button>
+            <Button onClick={processInstanceCreateAndRun} variant="primary">
+              Run
+            </Button>
+          </Can>
+          <Can
+            I="PUT"
+            a={`/v1.0${targetUris.processModelPath}`}
+            ability={ability}
+          >
+            <Button
+              href={`/admin/process-models/${modifiedProcessModelId}/edit`}
+              variant="secondary"
+            >
+              Edit process model
+            </Button>
+          </Can>
         </Stack>
         <br />
         <br />
-        {processInstanceResultTag()}
+        {processInstanceRunResultTag()}
         <br />
-        <ProcessInstanceListTable
-          filtersEnabled={false}
-          processModelFullIdentifier={processModel.id}
-          perPageOptions={[2, 5, 25]}
-        />
-        <br />
+        <Can
+          I="GET"
+          a={`/v1.0${targetUris.processInstancesPath}`}
+          ability={ability}
+        >
+          <ProcessInstanceListTable
+            filtersEnabled={false}
+            processModelFullIdentifier={processModel.id}
+            perPageOptions={[2, 5, 25]}
+          />
+          <br />
+        </Can>
         {processModelButtons()}
       </>
     );
