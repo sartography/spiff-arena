@@ -8,10 +8,9 @@ from typing import Optional
 from flask_bpmn.models.db import db
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.file import File
-from spiffworkflow_backend.models.file import SpecReference
 from spiffworkflow_backend.models.file import FileType
+from spiffworkflow_backend.models.file import SpecReference
 from spiffworkflow_backend.models.message_correlation_property import (
     MessageCorrelationPropertyModel,
 )
@@ -20,6 +19,7 @@ from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -55,7 +55,7 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def reference_map(references: list[SpecReference]) -> dict[str, SpecReference]:
-        """ Creates a dict with provided references organized by id. """
+        """Creates a dict with provided references organized by id."""
         ref_map = {}
         for ref in references:
             ref_map[ref.identifier] = ref
@@ -63,13 +63,15 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def get_references(process_models: List[ProcessModelInfo]) -> list[SpecReference]:
-        """Returns all references -- process_ids, and decision ids, across all process models provided"""
+        """Returns all references -- process_ids, and decision ids, across all process models provided."""
         references = []
         for process_model in process_models:
             references.extend(SpecFileService.get_references_for_process(process_model))
 
     @staticmethod
-    def get_references_for_process(process_model_info: ProcessModelInfo) -> list[SpecReference]:
+    def get_references_for_process(
+        process_model_info: ProcessModelInfo,
+    ) -> list[SpecReference]:
         """Get_references_for_process."""
         files = SpecFileService.get_files(process_model_info)
         references = []
@@ -80,7 +82,9 @@ class SpecFileService(FileSystemService):
         return references
 
     @staticmethod
-    def get_references_for_file(file: File, process_model_info: ProcessModelInfo) -> list[SpecReference]:
+    def get_references_for_file(
+        file: File, process_model_info: ProcessModelInfo
+    ) -> list[SpecReference]:
         """Uses spiffworkflow to parse BPMN and DMN files to determine how they can be externally referenced.
 
         Returns a list of Reference objects that contain the type of reference, the id, the name.
@@ -116,9 +120,11 @@ class SpecFileService(FileSystemService):
         for sub_parser in sub_parsers:
             if parser_type == "process":
                 has_lanes = sub_parser.has_lanes()
-                executable = sub_parser.process_executable
+                sub_parser.process_executable
                 start_messages = sub_parser.start_messages()
-                is_primary = sub_parser.get_id() == process_model_info.primary_process_id
+                is_primary = (
+                    sub_parser.get_id() == process_model_info.primary_process_id
+                )
 
             references.append(
                 SpecReference(
@@ -133,7 +139,7 @@ class SpecFileService(FileSystemService):
                     messages=messages,
                     is_primary=is_primary,
                     correlations=correlations,
-                    start_messages=start_messages
+                    start_messages=start_messages,
                 )
             )
         return references
@@ -166,11 +172,12 @@ class SpecFileService(FileSystemService):
 
             if ref.is_primary:
                 ProcessModelService().update_spec(
-                    process_model_info, {
+                    process_model_info,
+                    {
                         "primary_process_id": ref.identifier,
                         "primary_file_name": file_name,
                         "is_review": ref.has_lanes,
-                    }
+                    },
                 )
             SpecFileService.update_process_cache(ref)
             SpecFileService.update_message_cache(ref)
@@ -229,7 +236,10 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_process_cache(ref: SpecReference) -> None:
-        process_id_lookup = SpecReferenceCache.query.filter_by(identifier=ref.identifier).first()
+        """Update_process_cache."""
+        process_id_lookup = SpecReferenceCache.query.filter_by(
+            identifier=ref.identifier
+        ).first()
         if process_id_lookup is None:
             process_id_lookup = SpecReferenceCache.from_spec_reference(ref)
             db.session.add(process_id_lookup)
@@ -246,9 +256,7 @@ class SpecFileService(FileSystemService):
                         f"{process_id_lookup.relative_path}. It cannot be reused."
                     )
                 else:
-                    process_id_lookup.relative_path = (
-                        ref.relative_path
-                    )
+                    process_id_lookup.relative_path = ref.relative_path
                     db.session.add(process_id_lookup)
                     db.session.commit()
 
@@ -269,7 +277,7 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_message_trigger_cache(
-            ref: SpecReference, process_model_info: ProcessModelInfo
+        ref: SpecReference, process_model_info: ProcessModelInfo
     ) -> None:
         """Assure we know which messages can trigger the start of a process."""
         for message_model_identifier in ref.start_messages:

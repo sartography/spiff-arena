@@ -63,8 +63,6 @@ CONTENT_TYPES = {
 }
 
 
-
-
 @dataclass(order=True)
 class File:
     """File."""
@@ -131,6 +129,3 @@ class FileSchema(Schema):
         references = marshmallow.fields.List(
             marshmallow.fields.Nested("SpecReferenceSchema")
         )
-
-
-

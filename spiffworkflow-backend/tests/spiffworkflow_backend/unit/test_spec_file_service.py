@@ -69,10 +69,7 @@ class TestSpecFileService(BaseTest):
         )
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
         assert len(bpmn_process_id_lookups) == 1
-        assert (
-            bpmn_process_id_lookups[0].identifier
-            == bpmn_process_identifier
-        )
+        assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
         assert (
             bpmn_process_id_lookups[0].relative_path
             == self.call_activity_nested_relative_file_path
@@ -115,10 +112,7 @@ class TestSpecFileService(BaseTest):
 
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
         assert len(bpmn_process_id_lookups) == 1
-        assert (
-            bpmn_process_id_lookups[0].identifier
-            == bpmn_process_identifier
-        )
+        assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
         assert (
             bpmn_process_id_lookups[0].relative_path
             == self.call_activity_nested_relative_file_path

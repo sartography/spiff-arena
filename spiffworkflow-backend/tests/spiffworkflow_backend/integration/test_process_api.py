@@ -9,8 +9,6 @@ import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
-
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -27,6 +25,7 @@ from spiffworkflow_backend.models.process_instance_report import (
 )
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -441,45 +440,49 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["total"] == 5
         assert response.json["pagination"]["pages"] == 2
 
-    def test_process_list(self,
-                          app: Flask,
-                          client: FlaskClient,
-                          with_db_and_bpmn_file_cleanup: None,
-                          with_super_admin_user: UserModel,
-                          ):
+    def test_process_list(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ):
         """It should be possible to get a list of all processes known to the system."""
 
         load_test_spec(
             "test_group_one/simple_form",
-            process_model_source_directory='simple_form',
-            bpmn_file_name='simple_form'
+            process_model_source_directory="simple_form",
+            bpmn_file_name="simple_form",
         )
         # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
-        assert(len(SpecReferenceCache.query.all()) == 1)
+        assert len(SpecReferenceCache.query.all()) == 1
 
         self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
-            process_group_id='test_group_two',
-            process_model_id='call_activity_nested',
-            bpmn_file_location='call_activity_nested'
+            process_group_id="test_group_two",
+            process_model_id="call_activity_nested",
+            bpmn_file_location="call_activity_nested",
         )
         # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
-        assert(len(SpecReferenceCache.query.all()) == 6)
+        assert len(SpecReferenceCache.query.all()) == 6
 
         # get the results
-        response = client.get("/v1.0/processes", headers=self.logged_in_headers(with_super_admin_user),
+        response = client.get(
+            "/v1.0/processes",
+            headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
         # We should get 5 back, as one of the items in the cache is a decision.
         assert len(response.json) == 5
-        simple_form = next(p for p in response.json if p['identifier'] == 'Proccess_WithForm')
-        assert(simple_form['display_name'] == 'Process With Form')
-        assert(simple_form['process_model_id'] == 'test_group_one/simple_form')
-        assert(simple_form['has_lanes'] == False)
-        assert(simple_form['is_executable'] == True)
-        assert(simple_form['is_primary'] == True)
-
+        simple_form = next(
+            p for p in response.json if p["identifier"] == "Proccess_WithForm"
+        )
+        assert simple_form["display_name"] == "Process With Form"
+        assert simple_form["process_model_id"] == "test_group_one/simple_form"
+        assert simple_form["has_lanes"] == False
+        assert simple_form["is_executable"] == True
+        assert simple_form["is_primary"] == True
 
     def test_process_group_add(
         self,
