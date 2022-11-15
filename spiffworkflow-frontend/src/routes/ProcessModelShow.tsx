@@ -132,20 +132,11 @@ export default function ProcessModelShow() {
 
   const processInstanceResultTag = () => {
     if (processModel && processInstanceResult) {
-      let takeMeToMyTaskBlurb = null;
       // FIXME: ensure that the task is actually for the current user as well
       const processInstanceId = (processInstanceResult as any).id;
       const nextTask = (processInstanceResult as any).next_task;
       if (nextTask && nextTask.state === 'READY') {
-        takeMeToMyTaskBlurb = (
-          <span>
-            You have a task to complete. Go to{' '}
-            <Link to={`/tasks/${processInstanceId}/${nextTask.id}`}>
-              my task
-            </Link>
-            .
-          </span>
-        );
+        navigate(`/tasks/${processInstanceId}/${nextTask.id}`);
       }
       return (
         <div className="alert alert-success" role="alert">
@@ -157,7 +148,7 @@ export default function ProcessModelShow() {
             >
               view
             </Link>
-            ). {takeMeToMyTaskBlurb}
+            ).
           </p>
         </div>
       );
