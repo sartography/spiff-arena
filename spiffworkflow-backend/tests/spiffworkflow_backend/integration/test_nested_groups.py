@@ -143,7 +143,6 @@ class TestNestedGroups(BaseTest):
         response = client.get(  # noqa: F841
             target_uri, headers=self.logged_in_headers(user)
         )
-        print("test_nested_groups")
 
     def test_add_nested_group(
         self,
@@ -153,10 +152,6 @@ class TestNestedGroups(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_add_nested_group."""
-        # user = self.find_or_create_user()
-        # self.add_permissions_to_user(
-        #     user, target_uri=target_uri, permission_names=["read", "create"]
-        # )
         process_group_a = ProcessGroup(
             id="group_a",
             display_name="Group A",
@@ -194,16 +189,14 @@ class TestNestedGroups(BaseTest):
             data=json.dumps(ProcessGroupSchema().dump(process_group_c)),
         )
 
-        print("test_add_nested_group")
-
-    def test_process_model_add(
+    def test_process_model_create(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_add."""
+        """Test_process_model_create."""
         process_group_a = ProcessGroup(
             id="group_a",
             display_name="Group A",
@@ -242,7 +235,6 @@ class TestNestedGroups(BaseTest):
             content_type="application/json",
             data=json.dumps(ProcessModelInfoSchema().dump(process_model)),
         )
-        print("test_process_model_add")
 
     def test_process_group_show(
         self,

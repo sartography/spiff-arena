@@ -119,22 +119,22 @@ class TestSpecFileService(BaseTest):
             == self.call_activity_nested_relative_file_path
         )
 
-    def test_change_the_identifier_cleans_up_cache (
+    def test_change_the_identifier_cleans_up_cache(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """ When a BPMN processes identifier is changed in a file, the old id
-        is removed from the cache"""
+        """When a BPMN processes identifier is changed in a file, the old id
+        is removed from the cache."""
         old_identifier = "ye_old_identifier"
         process_id_lookup = SpecReferenceCache(
             identifier=old_identifier,
             relative_path=self.call_activity_nested_relative_file_path,
             file_name=self.bpmn_file_name,
             process_model_id=f"{self.process_group_id}/{self.process_model_id}",
-            type='process'
+            type="process",
         )
         db.session.add(process_id_lookup)
         db.session.commit()
@@ -156,7 +156,6 @@ class TestSpecFileService(BaseTest):
             bpmn_process_id_lookups[0].relative_path
             == self.call_activity_nested_relative_file_path
         )
-
 
     def test_load_reference_information(
         self,

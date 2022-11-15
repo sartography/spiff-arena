@@ -240,11 +240,13 @@ class SpecFileService(FileSystemService):
         SpecFileService.update_correlation_cache(ref)
 
     @staticmethod
-    def clear_caches_for_file(file_name: str, process_model_info: ProcessModelInfo) -> None:
-        """Clear all caches related to a file"""
-        db.session.query(SpecReferenceCache).\
-            filter(SpecReferenceCache.file_name == file_name).\
-            filter(SpecReferenceCache.process_model_id == process_model_info.id).delete()
+    def clear_caches_for_file(
+        file_name: str, process_model_info: ProcessModelInfo
+    ) -> None:
+        """Clear all caches related to a file."""
+        db.session.query(SpecReferenceCache).filter(
+            SpecReferenceCache.file_name == file_name
+        ).filter(SpecReferenceCache.process_model_id == process_model_info.id).delete()
         # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
 
     @staticmethod
