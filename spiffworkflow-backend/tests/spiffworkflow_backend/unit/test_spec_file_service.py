@@ -4,9 +4,8 @@ import os
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
-from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
+from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -14,9 +13,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException
+
 
 class TestSpecFileService(BaseTest):
     """TestSpecFileService."""
@@ -86,8 +83,9 @@ class TestSpecFileService(BaseTest):
                 process_model_source_directory="call_activity_duplicate",
                 bpmn_file_name="call_activity_nested_duplicate",
             )
-            assert f"Process id ({bpmn_process_identifier}) has already been used" in str(
-                exception.value
+            assert (
+                f"Process id ({bpmn_process_identifier}) has already been used"
+                in str(exception.value)
             )
 
     def test_updates_relative_file_path_when_appropriate(

@@ -1,5 +1,6 @@
-from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser
-from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser
+"""Custom_parser."""
+from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
+from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 
 
 class MyCustomParser(BpmnDmnParser):  # type: ignore

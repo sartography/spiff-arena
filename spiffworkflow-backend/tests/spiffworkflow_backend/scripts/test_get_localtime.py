@@ -74,7 +74,11 @@ class TestGetLocaltime(BaseTest):
         )
 
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {"timezone": "US/Pacific"}, initiator_user
+            processor,
+            spiff_task,
+            {"timezone": "US/Pacific"},
+            initiator_user,
+            active_task,
         )
 
         active_task = process_instance.active_tasks[0]
