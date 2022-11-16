@@ -3,6 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 // FIXME: npm install @rjsf/validator-ajv8 and use it as soon as
 // rawErrors is fixed.
+// https://github.com/rjsf-team/react-jsonschema-form/issues/2309 links to a codesandbox that might be useful to fork
+// if we wanted to file a defect against rjsf to show the difference between validator-ajv6 and validator-ajv8.
+// https://github.com/rjsf-team/react-jsonschema-form/blob/main/docs/api-reference/uiSchema.md talks about rawErrors
 import validator from '@rjsf/validator-ajv6';
 
 // @ts-ignore
