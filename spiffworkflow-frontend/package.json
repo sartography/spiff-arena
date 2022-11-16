@@ -78,9 +78,9 @@
     "test": "react-scripts test --coverage",
     "t": "npm test -- --watchAll=false",
     "eject": "craco eject",
-    "format": "prettier --write src/**/*.js{,x}",
-    "lint": "./node_modules/.bin/eslint src *.js",
-    "lint:fix": "./node_modules/.bin/eslint --fix src *.js"
+    "format": "prettier --write src/**/*.[tj]s{,x}",
+    "lint": "./node_modules/.bin/eslint src *.[tj]s{,x}",
+    "lint:fix": "./node_modules/.bin/eslint --fix src *.[tj]s{,x}"
   },
   "eslintConfig": {
     "extends": [
