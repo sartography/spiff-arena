@@ -17,14 +17,17 @@ export default function ProcessSearch({
   processes,
   selectedItem,
   onChange,
-  titleText = 'Process model',
+  titleText = 'Process Search',
   height = '50px',
 }: OwnProps) {
   const shouldFilter = (options: any) => {
     const process: ProcessReference = options.item;
     const { inputValue } = options;
-    return `${process.identifier} (${process.display_name})`.includes(
-      inputValue
+    return (
+      inputValue === null ||
+      `${process.display_name} (${process.identifier})`
+        .toLowerCase()
+        .includes(inputValue.toLowerCase())
     );
   };
   return (
@@ -36,8 +39,8 @@ export default function ProcessSearch({
         items={processes}
         itemToString={(process: ProcessReference) => {
           if (process) {
-            return `${process.identifier} (${truncateString(
-              process.display_name,
+            return `${process.display_name} (${truncateString(
+              process.identifier,
               20
             )})`;
           }

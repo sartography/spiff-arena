@@ -354,7 +354,7 @@ def process_list() -> Any:
     This includes processes that are not the
     primary process - helpful for finding possible call activities.
     """
-    references = SpecReferenceCache.query.filter_by(type="process")
+    references = SpecReferenceCache.query.filter_by(type="process").all()
     return SpecReferenceSchema(many=True).dump(references)
 
 
