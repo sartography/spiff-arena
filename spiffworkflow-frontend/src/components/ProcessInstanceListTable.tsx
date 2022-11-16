@@ -233,32 +233,24 @@ export default function ProcessInstanceListTable({
       }
     });
 
-    Object.keys(parametersToGetFromSearchParams).forEach(
-      (paramName: string) => {
-        if (paramName === 'process_model_identifier') {
-          setProcessModelSelection(null);
-          processModelAvailableItems.forEach((item: any) => {
-            if (item.id === filters.process_model_identifier) {
-              setProcessModelSelection(item);
-            }
-          });
-        } else if (paramName === 'process_status') {
-          const processStatusSelectedArray: string[] = [];
-          setProcessStatusSelection(processStatusSelectedArray);
-          if (!filters.process_status) {
-            return;
-          }
-          PROCESS_STATUSES.forEach((processStatusOption: any) => {
-            const regex = new RegExp(`\\b${processStatusOption}\\b`);
-            if (filters.process_status.match(regex)) {
-              processStatusSelectedArray.push(processStatusOption);
-            }
-          });
-          setProcessStatusSelection(processStatusSelectedArray);
-          setShowFilterOptions(true);
-        }
+    setProcessModelSelection(null);
+    processModelAvailableItems.forEach((item: any) => {
+      if (item.id === filters.process_model_identifier) {
+        setProcessModelSelection(item);
       }
-    );
+    });
+
+    const processStatusSelectedArray: string[] = [];
+    if (filters.process_status) {
+      PROCESS_STATUSES.forEach((processStatusOption: any) => {
+        const regex = new RegExp(`\\b${processStatusOption}\\b`);
+        if (filters.process_status.match(regex)) {
+          processStatusSelectedArray.push(processStatusOption);
+        }
+      });
+      setShowFilterOptions(true);
+    }
+    setProcessStatusSelection(processStatusSelectedArray);
   }, [
     processInstanceFilters,
     parametersToAlwaysFilterBy,
