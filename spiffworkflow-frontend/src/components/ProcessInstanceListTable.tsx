@@ -235,12 +235,18 @@ export default function ProcessInstanceListTable({
           processModelFullIdentifier
         ) {
           // queryParamString += `&process_model_identifier=${processModelFullIdentifier}`;
-        } else if (filters[paramName]) {
-          // @ts-expect-error TS(7053) FIXME:
-          const functionToCall = parametersToGetFromSearchParams[paramName];
-          if (functionToCall !== null) {
-            functionToCall(searchParams.get(paramName) || '');
-          }
+        } else if (
+          paramName === 'process_status' &&
+          typeof filters.process_status === 'string'
+        ) {
+          const processStatusSelectedArray: string[] = [];
+          PROCESS_STATUSES.forEach((processStatusOption: any) => {
+            const regex = new RegExp(`\\b${processStatusOption}\\b`);
+            if (filters.process_status.match(regex)) {
+              processStatusSelectedArray.push(processStatusOption);
+            }
+          });
+          setProcessStatusSelection(processStatusSelectedArray);
           setShowFilterOptions(true);
         }
       }
