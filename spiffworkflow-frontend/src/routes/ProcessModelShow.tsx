@@ -40,7 +40,8 @@ import {
 } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
-import { usePermissionFetcher } from '../components/PermissionService';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: ProcessModel
@@ -103,16 +104,12 @@ export default function ProcessModelShow() {
     useState<boolean>(false);
   const navigate = useNavigate();
 
-  const targetUris = {
-    processModelPath: `/process-models/${params.process_model_id}`,
-    processInstancesPath: `/process-instances`,
-  };
+  const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [`/v1.0${targetUris.processModelPath}`]: ['GET', 'PUT'],
-    [`/v1.0${targetUris.processInstancesPath}`]: ['GET'],
-    [`/v1.0${targetUris.processModelPath}${targetUris.processInstancesPath}`]: [
-      'POST',
-    ],
+    [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processInstanceListPath]: ['GET'],
+    [targetUris.processInstanceActionPath]: ['POST'],
+    [targetUris.processModelFileCreatePath]: ['POST', 'GET', 'DELETE'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
@@ -267,50 +264,62 @@ export default function ProcessModelShow() {
   ) => {
     const elements = [];
     elements.push(
-      <Button
-        kind="ghost"
-        renderIcon={Edit}
-        iconDescription="Edit File"
-        hasIconOnly
-        size="lg"
-        data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
-        onClick={() => navigateToFileEdit(processModelFile)}
-      />
+      <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
+        <Button
+          kind="ghost"
+          renderIcon={Edit}
+          iconDescription="Edit File"
+          hasIconOnly
+          size="lg"
+          data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
+          onClick={() => navigateToFileEdit(processModelFile)}
+        />
+      </Can>
     );
     elements.push(
-      <Button
-        kind="ghost"
-        renderIcon={Download}
-        iconDescription="Download File"
-        hasIconOnly
-        size="lg"
-        onClick={() => downloadFile(processModelFile.name)}
-      />
+      <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
+        <Button
+          kind="ghost"
+          renderIcon={Download}
+          iconDescription="Download File"
+          hasIconOnly
+          size="lg"
+          onClick={() => downloadFile(processModelFile.name)}
+        />
+      </Can>
     );
 
     elements.push(
-      <ButtonWithConfirmation
-        kind="ghost"
-        renderIcon={TrashCan}
-        iconDescription="Delete File"
-        hasIconOnly
-        description={`Delete file: ${processModelFile.name}`}
-        onConfirmation={() => {
-          onDeleteFile(processModelFile.name);
-        }}
-        confirmButtonLabel="Delete"
-      />
+      <Can
+        I="DELETE"
+        a={targetUris.processModelFileCreatePath}
+        ability={ability}
+      >
+        <ButtonWithConfirmation
+          kind="ghost"
+          renderIcon={TrashCan}
+          iconDescription="Delete File"
+          hasIconOnly
+          description={`Delete file: ${processModelFile.name}`}
+          onConfirmation={() => {
+            onDeleteFile(processModelFile.name);
+          }}
+          confirmButtonLabel="Delete"
+        />
+      </Can>
     );
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
       elements.push(
-        <Button
-          kind="ghost"
-          renderIcon={Favorite}
-          iconDescription="Set As Primary File"
-          hasIconOnly
-          size="lg"
-          onClick={() => onSetPrimaryFile(processModelFile.name)}
-        />
+        <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
+          <Button
+            kind="ghost"
+            renderIcon={Favorite}
+            iconDescription="Set As Primary File"
+            hasIconOnly
+            size="lg"
+            onClick={() => onSetPrimaryFile(processModelFile.name)}
+          />
+        </Can>
       );
     }
     return elements;
@@ -341,7 +350,11 @@ export default function ProcessModelShow() {
       let fileLink = null;
       const fileUrl = profileModelFileEditUrl(processModelFile);
       if (fileUrl) {
-        fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
+        if (ability.can('GET', targetUris.processModelFileCreatePath)) {
+          fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
+        } else {
+          fileLink = <span>{processModelFile.name}</span>;
+        }
       }
       constructedTag = (
         <TableRow key={processModelFile.name}>
@@ -446,47 +459,53 @@ export default function ProcessModelShow() {
                 </Stack>
               }
             >
-              <ButtonSet>
-                <Button
-                  renderIcon={Upload}
-                  data-qa="upload-file-button"
-                  onClick={() => setShowFileUploadModal(true)}
-                  size="sm"
-                  kind=""
-                  className="button-white-background"
-                >
-                  Upload File
-                </Button>
-                <Button
-                  renderIcon={Add}
-                  href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
-                  size="sm"
-                >
-                  New BPMN File
-                </Button>
-                <Button
-                  renderIcon={Add}
-                  href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
-                  size="sm"
-                >
-                  New DMN File
-                </Button>
-                <Button
-                  renderIcon={Add}
-                  href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
-                  size="sm"
-                >
-                  New JSON File
-                </Button>
-                <Button
-                  renderIcon={Add}
-                  href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
-                  size="sm"
-                >
-                  New Markdown File
-                </Button>
-              </ButtonSet>
-              <br />
+              <Can
+                I="POST"
+                a={targetUris.processModelFileCreatePath}
+                ability={ability}
+              >
+                <ButtonSet>
+                  <Button
+                    renderIcon={Upload}
+                    data-qa="upload-file-button"
+                    onClick={() => setShowFileUploadModal(true)}
+                    size="sm"
+                    kind=""
+                    className="button-white-background"
+                  >
+                    Upload File
+                  </Button>
+                  <Button
+                    renderIcon={Add}
+                    href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=bpmn`}
+                    size="sm"
+                  >
+                    New BPMN File
+                  </Button>
+                  <Button
+                    renderIcon={Add}
+                    href={`/admin/process-models/${modifiedProcessModelId}/files?file_type=dmn`}
+                    size="sm"
+                  >
+                    New DMN File
+                  </Button>
+                  <Button
+                    renderIcon={Add}
+                    href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=json`}
+                    size="sm"
+                  >
+                    New JSON File
+                  </Button>
+                  <Button
+                    renderIcon={Add}
+                    href={`/admin/process-models/${modifiedProcessModelId}/form?file_ext=md`}
+                    size="sm"
+                  >
+                    New Markdown File
+                  </Button>
+                </ButtonSet>
+                <br />
+              </Can>
               {processModelFileList()}
             </AccordionItem>
           </Accordion>
@@ -513,18 +532,14 @@ export default function ProcessModelShow() {
         <Stack orientation="horizontal" gap={3}>
           <Can
             I="POST"
-            a={`/v1.0${targetUris.processModelPath}${targetUris.processInstancesPath}`}
+            a={targetUris.processInstanceActionPath}
             ability={ability}
           >
             <Button onClick={processInstanceCreateAndRun} variant="primary">
               Run
             </Button>
           </Can>
-          <Can
-            I="PUT"
-            a={`/v1.0${targetUris.processModelPath}`}
-            ability={ability}
-          >
+          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             <Button
               href={`/admin/process-models/${modifiedProcessModelId}/edit`}
               variant="secondary"
@@ -537,11 +552,7 @@ export default function ProcessModelShow() {
         <br />
         {processInstanceRunResultTag()}
         <br />
-        <Can
-          I="GET"
-          a={`/v1.0${targetUris.processInstancesPath}`}
-          ability={ability}
-        >
+        <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
           <ProcessInstanceListTable
             filtersEnabled={false}
             processModelFullIdentifier={processModel.id}

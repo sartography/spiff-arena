@@ -74,12 +74,12 @@ export interface CarbonComboBoxSelection {
 export interface PermissionsToCheck {
   [key: string]: string[];
 }
-export interface PermissionCheckResponseBody {
-  results: PermissionCheckResult;
+export interface PermissionVerbResults {
+  [key: string]: boolean;
 }
 export interface PermissionCheckResult {
   [key: string]: PermissionVerbResults;
 }
-export interface PermissionVerbResults {
-  [key: string]: boolean;
+export interface PermissionCheckResponseBody {
+  results: PermissionCheckResult;
 }

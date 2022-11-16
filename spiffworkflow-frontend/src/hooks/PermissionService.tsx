@@ -1,3 +1,5 @@
+// We may need to update usage of Ability when we update.
+// They say they are going to rename PureAbility to Ability and remove the old class.
 import { AbilityBuilder, Ability } from '@casl/ability';
 import { useContext, useEffect } from 'react';
 import { AbilityContext } from '../contexts/Can';
@@ -11,28 +13,34 @@ export const usePermissionFetcher = (
 
   useEffect(() => {
     const processPermissionResult = (result: PermissionCheckResponseBody) => {
+      const oldRules = ability.rules;
       const { can, cannot, rules } = new AbilityBuilder(Ability);
-      for (const [url, permissionVerbResults] of Object.entries(
-        result.results
-      )) {
-        for (const [permissionVerb, hasPermission] of Object.entries(
-          permissionVerbResults
-        )) {
+      Object.keys(result.results).forEach((url: string) => {
+        const permissionVerbResults = result.results[url];
+        Object.keys(permissionVerbResults).forEach((permissionVerb: string) => {
+          const hasPermission = permissionVerbResults[permissionVerb];
           if (hasPermission) {
             can(permissionVerb, url);
           } else {
             cannot(permissionVerb, url);
           }
+        });
+      });
+      oldRules.forEach((oldRule: any) => {
+        if (oldRule.inverted) {
+          cannot(oldRule.action, oldRule.subject);
+        } else {
+          can(oldRule.action, oldRule.subject);
         }
-      }
+      });
       ability.update(rules);
     };
+
     HttpService.makeCallToBackend({
       path: `/permissions-check`,
       httpMethod: 'POST',
       successCallback: processPermissionResult,
       postBody: { requests_to_check: permissionsToCheck },
-      // failureCallback: setErrorMessage,
     });
   });
 

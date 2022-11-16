@@ -45,7 +45,9 @@ class SpecFileService(FileSystemService):
     ) -> List[File]:
         """Return all files associated with a workflow specification."""
         # path = SpecFileService.workflow_path(process_model_info)
-        path = os.path.join(FileSystemService.root_path(), process_model_info.id)
+        path = os.path.join(
+            FileSystemService.root_path(), process_model_info.id_for_file_path()
+        )
         files = SpecFileService._get_files(path, file_name)
         if extension_filter != "":
             files = list(
@@ -88,7 +90,7 @@ class SpecFileService(FileSystemService):
         """
         references: list[SpecReference] = []
         full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
-        file_path = os.path.join(process_model_info.id, file.name)
+        file_path = os.path.join(process_model_info.id_for_file_path(), file.name)
         parser = MyCustomParser()
         parser_type = None
         sub_parser = None
@@ -159,6 +161,8 @@ class SpecFileService(FileSystemService):
         primary_process_ref = next(
             (ref for ref in references if ref.is_primary and ref.is_executable), None
         )
+
+        SpecFileService.clear_caches_for_file(file_name, process_model_info)
 
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
@@ -236,6 +240,16 @@ class SpecFileService(FileSystemService):
         SpecFileService.update_correlation_cache(ref)
 
     @staticmethod
+    def clear_caches_for_file(
+        file_name: str, process_model_info: ProcessModelInfo
+    ) -> None:
+        """Clear all caches related to a file."""
+        db.session.query(SpecReferenceCache).filter(
+            SpecReferenceCache.file_name == file_name
+        ).filter(SpecReferenceCache.process_model_id == process_model_info.id).delete()
+        # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
+
+    @staticmethod
     def clear_caches() -> None:
         """Clear_caches."""
         db.session.query(SpecReferenceCache).delete()
@@ -254,6 +268,7 @@ class SpecFileService(FileSystemService):
         if process_id_lookup is None:
             process_id_lookup = SpecReferenceCache.from_spec_reference(ref)
             db.session.add(process_id_lookup)
+            db.session.commit()
         else:
             if ref.relative_path != process_id_lookup.relative_path:
                 full_bpmn_file_path = SpecFileService.full_path_from_relative_path(
