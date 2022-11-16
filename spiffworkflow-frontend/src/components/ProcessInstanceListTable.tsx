@@ -62,6 +62,7 @@ export default function ProcessInstanceListTable({
   const [processInstances, setProcessInstances] = useState([]);
   const [reportMetadata, setReportMetadata] = useState({});
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
+  const [processInstanceFilters, setProcessInstanceFilters] = useState({});
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
@@ -108,6 +109,7 @@ export default function ProcessInstanceListTable({
       setProcessInstances(processInstancesFromApi);
       setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
+      setProcessInstanceFilters(result.filters);
     }
     function getProcessInstances() {
       // eslint-disable-next-line prefer-const
@@ -122,6 +124,11 @@ export default function ProcessInstanceListTable({
         perPage = perPageOptions[1];
       }
       let queryParamString = `per_page=${perPage}&page=${page}`;
+
+      const userAppliedFilter = searchParams.get('user_filter');
+      if (userAppliedFilter) {
+        queryParamString += `&user_filter=${userAppliedFilter}`;
+      }
 
       Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
         // @ts-expect-error TS(7053) FIXME:
@@ -212,6 +219,45 @@ export default function ProcessInstanceListTable({
     perPageOptions,
   ]);
 
+  useEffect(() => {
+    const filters = processInstanceFilters as any;
+    Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
+      // @ts-expect-error TS(7053) FIXME:
+      const functionToCall = parametersToAlwaysFilterBy[paramName];
+      const paramValue = filters[paramName];
+      functionToCall('');
+      if (paramValue) {
+        const dateString = convertSecondsToFormattedDate(paramValue as any);
+        functionToCall(dateString);
+        setShowFilterOptions(true);
+      }
+    });
+
+    setProcessModelSelection(null);
+    processModelAvailableItems.forEach((item: any) => {
+      if (item.id === filters.process_model_identifier) {
+        setProcessModelSelection(item);
+      }
+    });
+
+    const processStatusSelectedArray: string[] = [];
+    if (filters.process_status) {
+      PROCESS_STATUSES.forEach((processStatusOption: any) => {
+        const regex = new RegExp(`\\b${processStatusOption}\\b`);
+        if (filters.process_status.match(regex)) {
+          processStatusSelectedArray.push(processStatusOption);
+        }
+      });
+      setShowFilterOptions(true);
+    }
+    setProcessStatusSelection(processStatusSelectedArray);
+  }, [
+    processInstanceFilters,
+    parametersToAlwaysFilterBy,
+    parametersToGetFromSearchParams,
+    processModelAvailableItems,
+  ]);
+
   // does the comparison, but also returns false if either argument
   // is not truthy and therefore not comparable.
   const isTrueComparison = (param1: any, operation: any, param2: any) => {
@@ -237,7 +283,7 @@ export default function ProcessInstanceListTable({
       undefined,
       paginationQueryParamPrefix
     );
-    let queryParamString = `per_page=${perPage}&page=${page}`;
+    let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
 
     const startFromSeconds = convertDateStringToSeconds(startFrom);
     const endFromSeconds = convertDateStringToSeconds(endFrom);
