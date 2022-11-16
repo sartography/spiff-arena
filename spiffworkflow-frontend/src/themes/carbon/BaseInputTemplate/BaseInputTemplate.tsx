@@ -21,8 +21,8 @@ function BaseInputTemplate({
   uiSchema,
   rawErrors = [],
   registry,
-}: // ...textFieldProps
-WidgetProps) {
+  ...textFieldProps
+}: WidgetProps) {
   const inputProps = getInputProps(schema, type, options);
   // Now we need to pull out the step, min, max into an inner `inputProps` for material-ui
   const { step, min, max, ...rest } = inputProps;
@@ -52,6 +52,12 @@ WidgetProps) {
 
   const { schemaUtils } = registry;
   const displayLabel = schemaUtils.getDisplayLabel(schema, uiSchema);
+  let labelToUse = label;
+  if (uiSchema && uiSchema['ui:title']) {
+    labelToUse = uiSchema['ui:title'];
+  } else if (schema && schema.title) {
+    labelToUse = schema.title;
+  }
 
   return (
     <>
@@ -59,7 +65,7 @@ WidgetProps) {
         id={id}
         name={id}
         placeholder={placeholder}
-        label={displayLabel ? label || schema.title : false}
+        labelText={displayLabel ? labelToUse : false}
         autoFocus={autofocus}
         required={required}
         disabled={disabled || readonly}

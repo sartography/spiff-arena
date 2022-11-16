@@ -1,8 +1,6 @@
 import React from 'react';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormLabel from '@mui/material/FormLabel';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
+// @ts-ignore
+import { RadioButtonGroup, RadioButton } from '@carbon/react';
 import { WidgetProps } from '@rjsf/utils';
 
 function RadioWidget({
@@ -20,7 +18,7 @@ function RadioWidget({
 }: WidgetProps) {
   const { enumOptions, enumDisabled } = options;
 
-  const _onChange = (_: any, value: any) =>
+  const localOnChange = (_: any, value: any) =>
     onChange(schema.type == 'boolean' ? value !== 'false' : value);
   const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
     onBlur(id, value);
@@ -31,42 +29,33 @@ function RadioWidget({
   const row = options ? options.inline : false;
 
   return (
-    <>
-      <FormLabel required={required} htmlFor={id}>
-        {label || schema.title}
-      </FormLabel>
-      <RadioGroup
-        id={id}
-        name={id}
-        value={`${value}`}
-        row={row as boolean}
-        onChange={_onChange}
-        onBlur={_onBlur}
-        onFocus={_onFocus}
-      >
-        {Array.isArray(enumOptions) &&
-          enumOptions.map((option) => {
-            const itemDisabled =
-              Array.isArray(enumDisabled) &&
-              enumDisabled.indexOf(option.value) !== -1;
-            return (
-              <FormControlLabel
-                control={
-                  <Radio
-                    name={id}
-                    id={`${id}-${option.value}`}
-                    color="primary"
-                  />
-                }
-                label={`${option.label}`}
-                value={`${option.value}`}
-                key={option.value}
-                disabled={disabled || itemDisabled || readonly}
-              />
-            );
-          })}
-      </RadioGroup>
-    </>
+    <RadioButtonGroup
+      orientation="vertical"
+      id={id}
+      name={id}
+      value={`${value}`}
+      row={row as boolean}
+      legendText={label || schema.title}
+      onChange={localOnChange}
+      onBlur={_onBlur}
+      onFocus={_onFocus}
+    >
+      {Array.isArray(enumOptions) &&
+        enumOptions.map((option) => {
+          const itemDisabled =
+            Array.isArray(enumDisabled) &&
+            enumDisabled.indexOf(option.value) !== -1;
+          return (
+            <RadioButton
+              labelText={`${option.label}`}
+              value={`${option.value}`}
+              id={`${id}-${option.value}`}
+              key={option.value}
+              disabled={disabled || itemDisabled || readonly}
+            />
+          );
+        })}
+    </RadioButtonGroup>
   );
 }
 
