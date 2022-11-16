@@ -1141,7 +1141,7 @@ def get_tasks(
 
 
 def process_instance_task_list(
-    process_instance_id: int, all_tasks: bool = False, spiff_step: int = 0
+        modified_process_model_id: str, process_instance_id: int, all_tasks: bool = False, spiff_step: int = 0
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
@@ -1204,6 +1204,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
+    task.process_model_identifier = process_model.id
     process_model_with_form = process_model
 
     if task.type == "User Task":

@@ -63,6 +63,12 @@ permissions:
     allowed_permissions: [read]
     uri: /v1.0/process-groups/*
 
+  process-instance-list:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-instances
+
   # TODO: all uris should really have the same structure
   finance-admin-group:
     groups: ["Finance Team"]
@@ -81,3 +87,9 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /*
+
+  invoice-approval-tasks-read:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-instances/category_number_one:lanes/*
