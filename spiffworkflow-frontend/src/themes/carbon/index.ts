@@ -1,4 +1,5 @@
 import MuiForm from './MuiForm/MuiForm';
+import './index.css';
 
 export { default as Form } from './MuiForm';
 export { default as Templates } from './Templates';

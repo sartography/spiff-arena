@@ -1,5 +1,6 @@
 import React from 'react';
-import TextField, { TextFieldProps } from '@mui/material/TextField';
+// @ts-ignore
+import { TextInput } from '@carbon/react';
 import { getInputProps, WidgetProps } from '@rjsf/utils';
 
 function BaseInputTemplate({
@@ -19,10 +20,9 @@ function BaseInputTemplate({
   schema,
   uiSchema,
   rawErrors = [],
-  formContext,
   registry,
-  ...textFieldProps
-}: WidgetProps) {
+}: // ...textFieldProps
+WidgetProps) {
   const inputProps = getInputProps(schema, type, options);
   // Now we need to pull out the step, min, max into an inner `inputProps` for material-ui
   const { step, min, max, ...rest } = inputProps;
@@ -35,13 +35,18 @@ function BaseInputTemplate({
     },
     ...rest,
   };
-  const _onChange = ({
+  const localOnChange = ({
+    // eslint-disable-next-line no-shadow
     target: { value },
-  }: React.ChangeEvent<HTMLInputElement>) =>
+  }: React.ChangeEvent<HTMLInputElement>) => {
     onChange(value === '' ? options.emptyValue : value);
-  const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
-    onBlur(id, value);
-  const _onFocus = ({
+  };
+  const localOnBlur = ({
+    // eslint-disable-next-line no-shadow
+    target: { value },
+  }: React.FocusEvent<HTMLInputElement>) => onBlur(id, value);
+  const localOnFocus = ({
+    // eslint-disable-next-line no-shadow
     target: { value },
   }: React.FocusEvent<HTMLInputElement>) => onFocus(id, value);
 
@@ -50,7 +55,7 @@ function BaseInputTemplate({
 
   return (
     <>
-      <TextField
+      <TextInput
         id={id}
         name={id}
         placeholder={placeholder}
@@ -58,19 +63,20 @@ function BaseInputTemplate({
         autoFocus={autofocus}
         required={required}
         disabled={disabled || readonly}
-        {...otherProps}
         value={value || value === 0 ? value : ''}
         error={rawErrors.length > 0}
-        onChange={_onChange}
-        onBlur={_onBlur}
-        onFocus={_onFocus}
-        {...(textFieldProps as TextFieldProps)}
+        onChange={localOnChange}
+        onBlur={localOnBlur}
+        onFocus={localOnFocus}
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        {...otherProps}
       />
       {schema.examples && (
         <datalist id={`examples_${id}`}>
           {(schema.examples as string[])
             .concat(schema.default ? ([schema.default] as string[]) : [])
             .map((example: any) => {
+              // eslint-disable-next-line jsx-a11y/control-has-associated-label
               return <option key={example} value={example} />;
             })}
         </datalist>
