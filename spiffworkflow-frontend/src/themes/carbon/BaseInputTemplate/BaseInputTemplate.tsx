@@ -52,11 +52,15 @@ function BaseInputTemplate({
 
   const { schemaUtils } = registry;
   const displayLabel = schemaUtils.getDisplayLabel(schema, uiSchema);
+
   let labelToUse = label;
   if (uiSchema && uiSchema['ui:title']) {
     labelToUse = uiSchema['ui:title'];
   } else if (schema && schema.title) {
     labelToUse = schema.title;
+  }
+  if (required) {
+    labelToUse = `${labelToUse}*`;
   }
 
   return (
@@ -67,7 +71,6 @@ function BaseInputTemplate({
         placeholder={placeholder}
         labelText={displayLabel ? labelToUse : false}
         autoFocus={autofocus}
-        required={required}
         disabled={disabled || readonly}
         value={value || value === 0 ? value : ''}
         error={rawErrors.length > 0}
