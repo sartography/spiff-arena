@@ -215,6 +215,7 @@ export default function ProcessModelEditDiagram() {
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleFileNameCancel}
         onRequestSubmit={handleFileNameSave}
+        onRequestClose={handleFileNameCancel}
       >
         <label>File Name:</label>
         <span>
@@ -607,6 +608,7 @@ export default function ProcessModelEditDiagram() {
         primaryButtonText="Close"
         onRequestSubmit={handleScriptEditorClose}
         size="lg"
+        onRequestClose={handleScriptEditorClose}
       >
         <Editor
           height={500}
@@ -644,6 +646,7 @@ export default function ProcessModelEditDiagram() {
         modalHeading="Edit Markdown"
         primaryButtonText="Close"
         onRequestSubmit={handleMarkdownEditorClose}
+        onRequestClose={handleMarkdownEditorClose}
         size="lg"
       >
         <MDEditor
