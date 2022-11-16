@@ -215,7 +215,6 @@ export default function ProcessInstanceListTable({
   ]);
 
   useEffect(() => {
-    console.log(processInstanceFilters);
     const filters = processInstanceFilters as any;
     Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
       // @ts-expect-error TS(7053) FIXME:
@@ -232,9 +231,13 @@ export default function ProcessInstanceListTable({
       (paramName: string) => {
         if (
           paramName === 'process_model_identifier' &&
-          processModelFullIdentifier
+          typeof filters.process_model_identifier === 'string'
         ) {
-          // queryParamString += `&process_model_identifier=${processModelFullIdentifier}`;
+          processModelAvailableItems.forEach((item: any) => {
+            if (item.id === filters.process_model_identifier) {
+              setProcessModelSelection(item);
+            }
+          });
         } else if (
           paramName === 'process_status' &&
           typeof filters.process_status === 'string'
@@ -251,7 +254,12 @@ export default function ProcessInstanceListTable({
         }
       }
     );
-  }, [processInstanceFilters]);
+  }, [
+    processInstanceFilters,
+    parametersToAlwaysFilterBy,
+    parametersToGetFromSearchParams,
+    processModelAvailableItems,
+  ]);
 
   // does the comparison, but also returns false if either argument
   // is not truthy and therefore not comparable.
