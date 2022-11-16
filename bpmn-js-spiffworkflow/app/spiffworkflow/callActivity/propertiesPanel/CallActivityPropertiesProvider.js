@@ -107,11 +107,11 @@ function FindProcessButton(props) {
       const processId = getCalledElementValue(element);
 
       // First, set up the listen, then fire the event, just
-      // in case we are testing and things are happening super fast.
+      // in case we are testing and things are happening superfast.
       eventBus.once('spiff.callactivity.update', (response) => {
         commandStack.execute('element.updateProperties', {
-          element,
-          moddleElement: element.businessObject,
+          element: response.element,
+          moddleElement: response.element.businessObject,
           properties: {
             calledElement: response.value,
           },
@@ -120,6 +120,7 @@ function FindProcessButton(props) {
       eventBus.fire('spiff.callactivity.search', {
         processId,
         eventBus,
+        element
       });
     },
     children: 'Search',

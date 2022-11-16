@@ -184,9 +184,10 @@ bpmnModeler.on('spiff.dmn_files.requested', (event) => {
 // As call activites might refernce processes across the system
 // it should be possible to search for a paticular call activity.
 bpmnModeler.on('spiff.callactivity.search', (event) => {
-  console.log("Firing call activity update")
+  console.log("Firing call activity update", event.element)
   event.eventBus.fire('spiff.callactivity.update', {
     value: 'searched_bpmn_id',
+    element: event.element,
   });
 });
 

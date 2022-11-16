@@ -102,8 +102,9 @@ describe('Call Activities should work', function () {
     });
     await pressButton(button);
     expect(launchEvent.processId).to.exist;
+    expect(launchEvent.element).to.exist;
 
-    eventBus.fire('spiff.callactivity.update', {value: 'searchedProcessId'});
+    eventBus.fire('spiff.callactivity.update', {value: 'searchedProcessId', element: launchEvent.element});
     const textInput = domQuery('input', entry);
     expect(businessObject.get('calledElement')).to.equal('searchedProcessId');
 
