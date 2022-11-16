@@ -125,6 +125,11 @@ export default function ProcessInstanceListTable({
       }
       let queryParamString = `per_page=${perPage}&page=${page}`;
 
+      const userAppliedFilter = searchParams.get('user_filter');
+      if (userAppliedFilter) {
+        queryParamString += `&user_filter=${userAppliedFilter}`;
+      }
+
       Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
         // @ts-expect-error TS(7053) FIXME:
         const functionToCall = parametersToAlwaysFilterBy[paramName];
@@ -286,7 +291,7 @@ export default function ProcessInstanceListTable({
       undefined,
       paginationQueryParamPrefix
     );
-    let queryParamString = `per_page=${perPage}&page=${page}`;
+    let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
 
     const startFromSeconds = convertDateStringToSeconds(startFrom);
     const endFromSeconds = convertDateStringToSeconds(endFrom);
@@ -338,6 +343,7 @@ export default function ProcessInstanceListTable({
     }
 
     setErrorMessage(null);
+    console.log(queryParamString);
     navigate(`/admin/process-instances?${queryParamString}`);
   };
 
