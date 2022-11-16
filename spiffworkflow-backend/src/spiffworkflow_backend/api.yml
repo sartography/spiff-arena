@@ -976,7 +976,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /process-instance/{process_instance_id}/tasks:
+  /process-instances/{modified_process_model_id}/{process_instance_id}/tasks:
     parameters:
       - name: process_instance_id
         in: path
