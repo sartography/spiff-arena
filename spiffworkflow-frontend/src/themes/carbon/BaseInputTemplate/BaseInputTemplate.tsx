@@ -1,57 +1,80 @@
-import React from 'react';
 // @ts-ignore
 import { TextInput } from '@carbon/react';
-import { getInputProps, WidgetProps } from '@rjsf/utils';
+import {
+  getInputProps,
+  FormContextType,
+  RJSFSchema,
+  StrictRJSFSchema,
+  WidgetProps,
+} from '@rjsf/utils';
 
-function BaseInputTemplate({
-  id,
-  placeholder,
-  required,
-  readonly,
-  disabled,
-  type,
-  label,
-  value,
-  onChange,
-  onBlur,
-  onFocus,
-  autofocus,
-  options,
-  schema,
-  uiSchema,
-  rawErrors = [],
-  registry,
-  ...textFieldProps
-}: WidgetProps) {
-  const inputProps = getInputProps(schema, type, options);
-  // Now we need to pull out the step, min, max into an inner `inputProps` for material-ui
-  const { step, min, max, ...rest } = inputProps;
-  const otherProps = {
-    inputProps: {
-      step,
-      min,
-      max,
-      ...(schema.examples ? { list: `examples_${id}` } : undefined),
-    },
+import { useCallback } from 'react';
+
+/** The `BaseInputTemplate` is the template to use to render the basic `<input>` component for the `core` theme.
+ * It is used as the template for rendering many of the <input> based widgets that differ by `type` and callbacks only.
+ * It can be customized/overridden for other themes or individual implementations as needed.
+ *
+ * @param props - The `WidgetProps` for this template
+ */
+export default function BaseInputTemplate<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any
+>(props: WidgetProps<T, S, F>) {
+  const {
+    id,
+    value,
+    readonly,
+    disabled,
+    autofocus,
+    label,
+    onBlur,
+    onFocus,
+    onChange,
+    required,
+    options,
+    schema,
+    uiSchema,
+    formContext,
+    registry,
+    rawErrors,
+    type,
+    ...rest
+  } = props;
+
+  // Note: since React 15.2.0 we can't forward unknown element attributes, so we
+  // exclude the "options" and "schema" ones here.
+  if (!id) {
+    console.log('No id for', props);
+    throw new Error(`no id for props ${JSON.stringify(props)}`);
+  }
+  const inputProps = {
     ...rest,
+    ...getInputProps<T, S, F>(schema, type, options),
   };
-  const localOnChange = ({
-    // eslint-disable-next-line no-shadow
-    target: { value },
-  }: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(value === '' ? options.emptyValue : value);
-  };
-  const localOnBlur = ({
-    // eslint-disable-next-line no-shadow
-    target: { value },
-  }: React.FocusEvent<HTMLInputElement>) => onBlur(id, value);
-  const localOnFocus = ({
-    // eslint-disable-next-line no-shadow
-    target: { value },
-  }: React.FocusEvent<HTMLInputElement>) => onFocus(id, value);
 
-  const { schemaUtils } = registry;
-  const displayLabel = schemaUtils.getDisplayLabel(schema, uiSchema);
+  let inputValue;
+  if (inputProps.type === 'number' || inputProps.type === 'integer') {
+    inputValue = value || value === 0 ? value : '';
+  } else {
+    inputValue = value == null ? '' : value;
+  }
+
+  const _onChange = useCallback(
+    ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
+      onChange(value === '' ? options.emptyValue : value),
+    [onChange, options]
+  );
+  const _onBlur = useCallback(
+    ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
+      onBlur(id, value),
+    [onBlur, id]
+  );
+  const _onFocus = useCallback(
+    ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
+      onFocus(id, value),
+    [onFocus, id]
+  );
 
   let labelToUse = label;
   if (uiSchema && uiSchema['ui:title']) {
@@ -59,39 +82,33 @@ function BaseInputTemplate({
   } else if (schema && schema.title) {
     labelToUse = schema.title;
   }
-  if (required) {
-    labelToUse = `${labelToUse}*`;
-  }
 
   return (
     <>
       <TextInput
         id={id}
         name={id}
-        placeholder={placeholder}
-        labelText={displayLabel ? labelToUse : false}
+        labelText={labelToUse}
         autoFocus={autofocus}
         disabled={disabled || readonly}
         value={value || value === 0 ? value : ''}
-        error={rawErrors.length > 0}
-        onChange={localOnChange}
-        onBlur={localOnBlur}
-        onFocus={localOnFocus}
+        onChange={_onChange}
+        onBlur={_onBlur}
+        onFocus={_onFocus}
         // eslint-disable-next-line react/jsx-props-no-spreading
-        {...otherProps}
+        {...inputProps}
       />
-      {schema.examples && (
-        <datalist id={`examples_${id}`}>
-          {(schema.examples as string[])
-            .concat(schema.default ? ([schema.default] as string[]) : [])
-            .map((example: any) => {
-              // eslint-disable-next-line jsx-a11y/control-has-associated-label
-              return <option key={example} value={example} />;
-            })}
+      {Array.isArray(schema.examples) && (
+        <datalist key={`datalist_${id}`} id={`examples_${id}`}>
+          {[
+            ...new Set(
+              schema.examples.concat(schema.default ? [schema.default] : [])
+            ),
+          ].map((example: any) => (
+            <option key={example} value={example} />
+          ))}
         </datalist>
       )}
     </>
   );
 }
-
-export default BaseInputTemplate;
