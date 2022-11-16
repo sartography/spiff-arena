@@ -165,11 +165,7 @@ export default function ProcessGroupForm({
   };
 
   const formButtons = () => {
-    const buttons = [
-      <Button kind="secondary" type="submit">
-        Submit
-      </Button>,
-    ];
+    const buttons = [<Button type="submit">Submit</Button>];
     if (mode === 'edit') {
       buttons.push(
         <ButtonWithConfirmation

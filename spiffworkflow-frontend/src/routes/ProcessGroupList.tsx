@@ -3,11 +3,6 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Button,
   Table,
-  // ExpandableTile,
-  // TileAboveTheFoldContent,
-  // TileBelowTheFoldContent,
-  // TextInput,
-  // ClickableTile,
   // @ts-ignore
 } from '@carbon/react';
 import { Can } from '@casl/react';

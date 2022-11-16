@@ -53,6 +53,7 @@ export default function ButtonWithConfirmation({
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleConfirmationPromptCancel}
         onRequestSubmit={handleConfirmation}
+        onRequestClose={handleConfirmationPromptCancel}
       />
     );
   };
