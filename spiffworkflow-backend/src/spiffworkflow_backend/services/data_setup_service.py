@@ -29,7 +29,7 @@ class DataSetupService:
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
             current_app.logger.debug(f"Process Model: {process_model.display_name}")
-
+            SpecFileService.clear_caches()
             try:
                 refs = SpecFileService.get_references_for_process(process_model)
                 for ref in refs:

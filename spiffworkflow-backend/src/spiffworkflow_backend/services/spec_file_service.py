@@ -253,9 +253,7 @@ class SpecFileService(FileSystemService):
     def clear_caches() -> None:
         """Clear_caches."""
         db.session.query(SpecReferenceCache).delete()
-        db.session.query(MessageCorrelationPropertyModel).delete()
-        db.session.query(MessageTriggerableProcessModel).delete()
-        db.session.query(MessageModel).delete()
+        # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
 
     @staticmethod
     def update_process_cache(ref: SpecReference) -> None:
