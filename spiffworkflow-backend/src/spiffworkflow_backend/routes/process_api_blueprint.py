@@ -1141,7 +1141,10 @@ def get_tasks(
 
 
 def process_instance_task_list(
-        modified_process_model_id: str, process_instance_id: int, all_tasks: bool = False, spiff_step: int = 0
+    modified_process_model_id: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
