@@ -24,7 +24,7 @@ export default function App() {
     [errorMessage]
   );
 
-  const ability = defineAbility((can: any) => {});
+  const ability = defineAbility(() => {});
 
   let errorTag = null;
   if (errorMessage) {
@@ -60,7 +60,7 @@ export default function App() {
               {errorTag}
               <ErrorBoundary>
                 <Routes>
-                  <Route path="/" element={<HomePageRoutes />} />
+                  <Route path="/*" element={<HomePageRoutes />} />
                   <Route path="/tasks/*" element={<HomePageRoutes />} />
                   <Route path="/admin/*" element={<AdminRoutes />} />
                 </Routes>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams, useParams } from 'react-router-dom';
 // @ts-ignore
 import { Button, Table, Stack } from '@carbon/react';
+import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
@@ -10,7 +11,14 @@ import {
   modifyProcessModelPath,
   unModifyProcessModelPath,
 } from '../helpers';
-import { PaginationObject, ProcessGroup, ProcessModel } from '../interfaces';
+import {
+  PaginationObject,
+  PermissionsToCheck,
+  ProcessGroup,
+  ProcessModel,
+} from '../interfaces';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessGroupShow() {
   const params = useParams();
@@ -23,6 +31,14 @@ export default function ProcessGroupShow() {
     useState<PaginationObject | null>(null);
   const [groupPagination, setGroupPagination] =
     useState<PaginationObject | null>(null);
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processGroupListPath]: ['POST'],
+    [targetUris.processGroupShowPath]: ['PUT'],
+    [targetUris.processModelCreatePath]: ['POST'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
@@ -143,23 +159,31 @@ export default function ProcessGroupShow() {
         <h1>Process Group: {processGroup.display_name}</h1>
         <ul>
           <Stack orientation="horizontal" gap={3}>
-            <Button
-              kind="secondary"
-              href={`/admin/process-groups/new?parentGroupId=${processGroup.id}`}
+            <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
+              <Button
+                href={`/admin/process-groups/new?parentGroupId=${processGroup.id}`}
+              >
+                Add a process group
+              </Button>
+            </Can>
+            <Can
+              I="POST"
+              a={targetUris.processModelCreatePath}
+              ability={ability}
             >
-              Add a process group
-            </Button>
-            <Button
-              href={`/admin/process-models/${modifiedProcessGroupId}/new`}
-            >
-              Add a process model
-            </Button>
-            <Button
-              href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
-              variant="secondary"
-            >
-              Edit process group
-            </Button>
+              <Button
+                href={`/admin/process-models/${modifiedProcessGroupId}/new`}
+              >
+                Add a process model
+              </Button>
+            </Can>
+            <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
+              <Button
+                href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
+              >
+                Edit process group
+              </Button>
+            </Can>
           </Stack>
           <br />
           <br />

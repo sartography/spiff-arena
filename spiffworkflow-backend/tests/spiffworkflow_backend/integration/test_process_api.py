@@ -105,14 +105,14 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json == expected_response_body
 
-    def test_process_model_add(
+    def test_process_model_create(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_add_new_process_model."""
+        """Test_process_model_create."""
         process_group_id = "test_process_group"
         process_group_display_name = "Test Process Group"
         # creates the group directory, and the json file

@@ -232,11 +232,17 @@ def process_group_show(
     return make_response(jsonify(process_group), 200)
 
 
-def process_model_add(
-    body: Dict[str, Union[str, bool, int]]
+def process_model_create(
+    modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
-    """Add_process_model."""
+    """Process_model_create."""
     process_model_info = ProcessModelInfoSchema().load(body)
+    if modified_process_group_id is None:
+        raise ApiError(
+            error_code="process_group_id_not_specified",
+            message="Process Model could not be created when process_group_id path param is unspecified",
+            status_code=400,
+        )
     if process_model_info is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
@@ -1136,7 +1142,10 @@ def get_tasks(
 
 
 def process_instance_task_list(
-    process_instance_id: int, all_tasks: bool = False, spiff_step: int = 0
+    modified_process_model_id: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
@@ -1199,6 +1208,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
+    task.process_model_identifier = process_model.id
     process_model_with_form = process_model
 
     if task.type == "User Task":

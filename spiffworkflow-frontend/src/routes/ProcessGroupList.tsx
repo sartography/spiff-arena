@@ -10,6 +10,7 @@ import {
   // ClickableTile,
   // @ts-ignore
 } from '@carbon/react';
+import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
@@ -17,8 +18,14 @@ import {
   getPageInfoFromSearchParams,
   modifyProcessModelPath,
 } from '../helpers';
-import { CarbonComboBoxSelection, ProcessGroup } from '../interfaces';
+import {
+  CarbonComboBoxSelection,
+  PermissionsToCheck,
+  ProcessGroup,
+} from '../interfaces';
 import ProcessModelSearch from '../components/ProcessModelSearch';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 // Example process group json
 // {'process_group_id': 'sure', 'display_name': 'Test Workflows', 'id': 'test_process_group'}
@@ -31,6 +38,12 @@ export default function ProcessGroupList() {
   const [processModelAvailableItems, setProcessModelAvailableItems] = useState(
     []
   );
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processGroupListPath]: ['POST'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
     const setProcessGroupsFromResult = (result: any) => {
@@ -84,17 +97,6 @@ export default function ProcessGroupList() {
         <tbody>{rows}</tbody>
       </Table>
     );
-    // const rows = processGroups.map((row: ProcessGroup) => {
-    //   return (
-    //     <span>
-    //       <ClickableTile href={`/admin/process-groups/${row.id}`}>
-    //         {row.display_name}
-    //       </ClickableTile>
-    //     </span>
-    //   );
-    // });
-    //
-    // return <div style={{ width: '400px' }}>{rows}</div>;
   };
 
   const processGroupsDisplayArea = () => {
@@ -138,11 +140,13 @@ export default function ProcessGroupList() {
     return (
       <>
         <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
-        <Button kind="secondary" href="/admin/process-groups/new">
-          Add a process group
-        </Button>
-        <br />
-        <br />
+        <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
+          <Button kind="secondary" href="/admin/process-groups/new">
+            Add a process group
+          </Button>
+          <br />
+          <br />
+        </Can>
         {processModelSearchArea()}
         <br />
         {processGroupsDisplayArea()}
