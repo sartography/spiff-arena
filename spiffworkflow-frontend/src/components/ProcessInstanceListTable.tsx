@@ -62,6 +62,7 @@ export default function ProcessInstanceListTable({
   const [processInstances, setProcessInstances] = useState([]);
   const [reportMetadata, setReportMetadata] = useState({});
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
+  const [processInstanceFilters, setProcessInstanceFilters] = useState({});
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
@@ -108,6 +109,7 @@ export default function ProcessInstanceListTable({
       setProcessInstances(processInstancesFromApi);
       setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
+      setProcessInstanceFilters(result.filters);
     }
     function getProcessInstances() {
       // eslint-disable-next-line prefer-const
@@ -211,6 +213,39 @@ export default function ProcessInstanceListTable({
     processModelFullIdentifier,
     perPageOptions,
   ]);
+
+  useEffect(() => {
+    console.log(processInstanceFilters);
+    const filters = processInstanceFilters as any;
+    Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
+      // @ts-expect-error TS(7053) FIXME:
+      const functionToCall = parametersToAlwaysFilterBy[paramName];
+      const paramValue = filters[paramName];
+      if (paramValue) {
+        const dateString = convertSecondsToFormattedDate(paramValue as any);
+        functionToCall(dateString);
+        setShowFilterOptions(true);
+      }
+    });
+
+    Object.keys(parametersToGetFromSearchParams).forEach(
+      (paramName: string) => {
+        if (
+          paramName === 'process_model_identifier' &&
+          processModelFullIdentifier
+        ) {
+          // queryParamString += `&process_model_identifier=${processModelFullIdentifier}`;
+        } else if (filters[paramName]) {
+          // @ts-expect-error TS(7053) FIXME:
+          const functionToCall = parametersToGetFromSearchParams[paramName];
+          if (functionToCall !== null) {
+            functionToCall(searchParams.get(paramName) || '');
+          }
+          setShowFilterOptions(true);
+        }
+      }
+    );
+  }, [processInstanceFilters]);
 
   // does the comparison, but also returns false if either argument
   // is not truthy and therefore not comparable.
