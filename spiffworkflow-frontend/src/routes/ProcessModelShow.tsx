@@ -388,6 +388,7 @@ export default function ProcessModelShow() {
 
   const handleFileUploadCancel = () => {
     setShowFileUploadModal(false);
+    setFilesToUpload(null);
   };
 
   const handleFileUpload = (event: any) => {
@@ -405,6 +406,7 @@ export default function ProcessModelShow() {
       });
     }
     setShowFileUploadModal(false);
+    setFilesToUpload(null);
   };
 
   const fileUploadModal = () => {
@@ -432,6 +434,7 @@ export default function ProcessModelShow() {
           iconDescription="Delete file"
           name=""
           multiple={false}
+          onDelete={() => setFilesToUpload(null)}
           onChange={(event: any) => setFilesToUpload(event.target.files)}
         />
       </Modal>

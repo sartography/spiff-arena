@@ -132,6 +132,7 @@ export default function ReactFormEditor() {
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleFileNameCancel}
         onRequestSubmit={handleFileNameSave}
+        onRequestClose={handleFileNameCancel}
       >
         <label>File Name:</label>
         <span>
