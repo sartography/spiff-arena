@@ -17,10 +17,18 @@ export interface ProcessGroup {
   description?: string | null;
 }
 
-export interface ProcessFileReference {
+export interface ProcessReference {
   id: string; // The unique id of the process or decision table.
-  name: string; // The process or decision table name.
+  name: string; // The process or decision Display name.
+  identifier: string;
+  display_name: string;
+  process_group_id: string;
+  process_model_id: string;
   type: string; // either "decision" or "process"
+  file_name: string;
+  has_lanes: boolean;
+  is_executable: boolean;
+  is_primary: boolean;
 }
 
 export interface ProcessFile {
@@ -28,7 +36,7 @@ export interface ProcessFile {
   last_modified: string;
   name: string;
   process_model_id: string;
-  references: ProcessFileReference[];
+  references: ProcessReference[];
   size: number;
   type: string;
   file_contents?: string;
@@ -69,6 +77,10 @@ export interface PaginationObject {
 
 export interface CarbonComboBoxSelection {
   selectedItem: ProcessModel;
+}
+
+export interface CarbonComboBoxProcessSelection {
+  selectedItem: ProcessReference;
 }
 
 export interface PermissionsToCheck {

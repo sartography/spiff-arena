@@ -18,7 +18,13 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { makeid, modifyProcessModelPath } from '../helpers';
-import { ProcessFile, ProcessModel } from '../interfaces';
+import {
+  CarbonComboBoxProcessSelection,
+  ProcessFile,
+  ProcessModel,
+  ProcessReference,
+} from '../interfaces';
+import ProcessSearch from '../components/ProcessSearch';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -36,6 +42,10 @@ export default function ProcessModelEditDiagram() {
   const [markdownText, setMarkdownText] = useState<string | undefined>('');
   const [markdownEventBus, setMarkdownEventBus] = useState<any>(null);
   const [showMarkdownEditor, setShowMarkdownEditor] = useState(false);
+  const [showProcessSearch, setShowProcessSearch] = useState(false);
+  const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
+  const [processSearchElement, setProcessSearchElement] = useState<any>(null);
+  const [processes, setProcesses] = useState<ProcessReference[]>([]);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -89,6 +99,23 @@ export default function ProcessModelEditDiagram() {
   );
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
+
+  useEffect(() => {
+    // Grab all available process models in case we need to search for them.
+    // Taken from the Process Group List
+    const processResults = (result: any) => {
+      const selectionArray = result.map((item: any) => {
+        const label = `${item.display_name} (${item.identifier})`;
+        Object.assign(item, { label });
+        return item;
+      });
+      setProcesses(selectionArray);
+    };
+    HttpService.makeCallToBackend({
+      path: `/processes`,
+      successCallback: processResults,
+    });
+  }, [processModel]);
 
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
@@ -278,7 +305,7 @@ export default function ProcessModelEditDiagram() {
       const options: any[] = [];
       dmnFiles.forEach((file) => {
         file.references.forEach((ref) => {
-          options.push({ label: ref.name, value: ref.id });
+          options.push({ label: ref.display_name, value: ref.identifier });
         });
       });
       event.eventBus.fire('spiff.dmn_files.returned', { options });
@@ -656,6 +683,45 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
+  const onSearchProcessModels = (
+    processId: string,
+    eventBus: any,
+    element: any
+  ) => {
+    setProcessSearchEventBus(eventBus);
+    setProcessSearchElement(element);
+    setShowProcessSearch(true);
+  };
+  const processSearchOnClose = (selection: CarbonComboBoxProcessSelection) => {
+    const selectedProcessModel = selection.selectedItem;
+    if (selectedProcessModel) {
+      processSearchEventBus.fire('spiff.callactivity.update', {
+        element: processSearchElement,
+        value: selectedProcessModel.identifier,
+      });
+    }
+    setShowProcessSearch(false);
+  };
+
+  const processModelSelector = () => {
+    return (
+      <Modal
+        open={showProcessSearch}
+        modalHeading="Select Process Model"
+        primaryButtonText="Close"
+        onRequestSubmit={processSearchOnClose}
+        size="lg"
+      >
+        <ProcessSearch
+          height="500px"
+          onChange={processSearchOnClose}
+          processes={processes}
+          titleText="Process model search"
+        />
+      </Modal>
+    );
+  };
+
   const findFileNameForReferenceId = (
     id: string,
     type: string
@@ -676,19 +742,18 @@ export default function ProcessModelEditDiagram() {
     return matchFile;
   };
 
-  /**
-   * fixme:  Not currently in use.  This would only work for bpmn files within the process model.  Which is right for DMN and json, but not right here.  Need to merge in work on the nested process groups before tackling this.
-   * @param processId
-   */
-
   const onLaunchBpmnEditor = (processId: string) => {
-    const file = findFileNameForReferenceId(processId, 'bpmn');
-    if (file) {
+    const processRef = processes.find((p) => {
+      return p.identifier === processId;
+    });
+    if (processRef) {
       const path = generatePath(
-        '/admin/process-models/:process_model_id/files/:file_name',
+        '/admin/process-models/:process_model_path/files/:file_name',
         {
-          process_model_id: params.process_model_id,
-          file_name: file.name,
+          process_model_path: modifyProcessModelPath(
+            processRef.process_model_id
+          ),
+          file_name: processRef.file_name,
         }
       );
       window.open(path);
@@ -763,12 +828,17 @@ export default function ProcessModelEditDiagram() {
         onJsonFilesRequested={onJsonFilesRequested}
         onLaunchDmnEditor={onLaunchDmnEditor}
         onDmnFilesRequested={onDmnFilesRequested}
+        onSearchProcessModels={onSearchProcessModels}
       />
     );
   };
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
-  if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
+  if (
+    (bpmnXmlForDiagramRendering || !params.file_name) &&
+    processModel &&
+    processes.length > 0
+  ) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <>
@@ -790,7 +860,7 @@ export default function ProcessModelEditDiagram() {
         {newFileNameBox()}
         {scriptEditor()}
         {markdownEditor()}
-
+        {processModelSelector()}
         <div id="diagram-container" />
       </>
     );

@@ -80,6 +80,7 @@ type OwnProps = {
   onServiceTasksRequested?: (..._args: any[]) => any;
   onJsonFilesRequested?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
+  onSearchProcessModels?: (..._args: any[]) => any;
   url?: string;
 };
 
@@ -103,6 +104,7 @@ export default function ReactDiagramEditor({
   onServiceTasksRequested,
   onJsonFilesRequested,
   onDmnFilesRequested,
+  onSearchProcessModels,
   url,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
@@ -303,6 +305,12 @@ export default function ReactDiagramEditor({
     diagramModeler.on('spiff.json_files.requested', (event: any) => {
       handleServiceTasksRequested(event);
     });
+
+    diagramModeler.on('spiff.callactivity.search', (event: any) => {
+      if (onSearchProcessModels) {
+        onSearchProcessModels(event.value, event.eventBus, event.element);
+      }
+    });
   }, [
     diagramModelerState,
     diagramType,
@@ -315,6 +323,7 @@ export default function ReactDiagramEditor({
     onServiceTasksRequested,
     onJsonFilesRequested,
     onDmnFilesRequested,
+    onSearchProcessModels,
   ]);
 
   useEffect(() => {
