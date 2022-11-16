@@ -1,12 +1,16 @@
 import { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import validator from '@rjsf/validator-ajv8';
+
+// FIXME: npm install @rjsf/validator-ajv8 and use it as soon as
+// rawErrors is fixed.
+import validator from '@rjsf/validator-ajv6';
 
 // @ts-ignore
 import { Button, Stack } from '@carbon/react';
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+// eslint-disable-next-line import/no-named-as-default
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';

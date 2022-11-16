@@ -83,12 +83,21 @@ export default function BaseInputTemplate<
     labelToUse = schema.title;
   }
 
+  let invalid = false;
+  let errorMessageForField = null;
+  if (rawErrors && rawErrors.length > 0) {
+    invalid = true;
+    errorMessageForField = `${labelToUse} ${rawErrors[0]}`;
+  }
+
   return (
     <>
       <TextInput
         id={id}
         name={id}
         labelText={labelToUse}
+        invalid={invalid}
+        invalidText={errorMessageForField}
         autoFocus={autofocus}
         disabled={disabled || readonly}
         value={value || value === 0 ? value : ''}
