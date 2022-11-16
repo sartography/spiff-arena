@@ -1,11 +1,12 @@
 import { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import Form from '@rjsf/core';
+// import Form from '@rjsf/core';
 // @ts-ignore
 import { Button, Stack } from '@carbon/react';
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import Form from '../themes';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { modifyProcessModelPath } from '../helpers';
