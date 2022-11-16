@@ -31,7 +31,7 @@ h1{
   border: 1px solid #393939;
 }
 .cds--btn.button-white-background:hover {
-  background: #525252;
+  background: lightgrey;
 }
 
 .cds--breadcrumb-item a.cds--link:hover {
