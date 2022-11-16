@@ -335,7 +335,6 @@ export default function ProcessInstanceListTable({
     }
 
     setErrorMessage(null);
-    console.log(queryParamString);
     navigate(`/admin/process-instances?${queryParamString}`);
   };
 

@@ -740,8 +740,6 @@ def process_instance_list(
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportModel.default_report(g.user)
 
-    print(f"user_filter: {user_filter}")
-
     if user_filter:
         report_filter = ProcessInstanceReportFilter(
             process_model_identifier,
