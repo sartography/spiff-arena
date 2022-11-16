@@ -439,6 +439,12 @@ paths:
         description: For filtering - not_started, user_input_required, waiting, complete, error, or suspended
         schema:
           type: string
+      - name: user_filter
+        in: query
+        required: false
+        description: For filtering - indicates the user has manually entered a query
+        schema:
+          type: boolean
     # process_instance_list
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list
