@@ -109,7 +109,7 @@ function FindProcessButton(props) {
       // First, set up the listen, then fire the event, just
       // in case we are testing and things are happening super fast.
       eventBus.once('spiff.callactivity.update', (response) => {
-        commandStack.execute('element.updateModdleProperties', {
+        commandStack.execute('element.updateProperties', {
           element,
           moddleElement: element.businessObject,
           properties: {
