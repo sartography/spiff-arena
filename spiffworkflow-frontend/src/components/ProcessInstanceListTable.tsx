@@ -225,6 +225,7 @@ export default function ProcessInstanceListTable({
       // @ts-expect-error TS(7053) FIXME:
       const functionToCall = parametersToAlwaysFilterBy[paramName];
       const paramValue = filters[paramName];
+      functionToCall('');
       if (paramValue) {
         const dateString = convertSecondsToFormattedDate(paramValue as any);
         functionToCall(dateString);
@@ -234,20 +235,19 @@ export default function ProcessInstanceListTable({
 
     Object.keys(parametersToGetFromSearchParams).forEach(
       (paramName: string) => {
-        if (
-          paramName === 'process_model_identifier' &&
-          typeof filters.process_model_identifier === 'string'
-        ) {
+        if (paramName === 'process_model_identifier') {
+          setProcessModelSelection(null);
           processModelAvailableItems.forEach((item: any) => {
             if (item.id === filters.process_model_identifier) {
               setProcessModelSelection(item);
             }
           });
-        } else if (
-          paramName === 'process_status' &&
-          typeof filters.process_status === 'string'
-        ) {
+        } else if (paramName === 'process_status') {
           const processStatusSelectedArray: string[] = [];
+          setProcessStatusSelection(processStatusSelectedArray);
+          if (!filters.process_status) {
+            return;
+          }
           PROCESS_STATUSES.forEach((processStatusOption: any) => {
             const regex = new RegExp(`\\b${processStatusOption}\\b`);
             if (filters.process_status.match(regex)) {
