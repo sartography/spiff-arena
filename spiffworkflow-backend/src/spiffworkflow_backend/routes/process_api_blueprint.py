@@ -747,7 +747,7 @@ def process_instance_list(
             start_to,
             end_from,
             end_to,
-            process_status,
+            process_status.split(",") if process_status else None,
         )
     else:
         report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
