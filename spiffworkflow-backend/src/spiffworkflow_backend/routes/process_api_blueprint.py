@@ -73,6 +73,9 @@ from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportFilter,
+)
+from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportService,
 )
 from spiffworkflow_backend.services.process_instance_service import (
@@ -732,18 +735,32 @@ def process_instance_list(
     end_from: Optional[int] = None,
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
+    user_filter: Optional[bool] = False,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportModel.default_report(g.user)
-    report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
-        process_instance_report,
-        process_model_identifier,
-        start_from,
-        start_to,
-        end_from,
-        end_to,
-        process_status,
-    )
+
+    if user_filter:
+        report_filter = ProcessInstanceReportFilter(
+            process_model_identifier,
+            start_from,
+            start_to,
+            end_from,
+            end_to,
+            process_status.split(",") if process_status else None,
+        )
+    else:
+        report_filter = (
+            ProcessInstanceReportService.filter_from_metadata_with_overrides(
+                process_instance_report,
+                process_model_identifier,
+                start_from,
+                start_to,
+                end_from,
+                end_to,
+                process_status,
+            )
+        )
 
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
@@ -811,6 +828,7 @@ def process_instance_list(
     response_json = {
         "report_metadata": report_metadata,
         "results": results,
+        "filters": report_filter.to_dict(),
         "pagination": {
             "count": len(results),
             "total": process_instances.total,

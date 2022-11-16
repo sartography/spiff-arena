@@ -18,6 +18,25 @@ class ProcessInstanceReportFilter:
     end_to: Optional[int] = None
     process_status: Optional[list[str]] = None
 
+    def to_dict(self) -> dict[str, str]:
+        """To_dict."""
+        d = {}
+
+        if self.process_model_identifier is not None:
+            d["process_model_identifier"] = self.process_model_identifier
+        if self.start_from is not None:
+            d["start_from"] = str(self.start_from)
+        if self.start_to is not None:
+            d["start_to"] = str(self.start_to)
+        if self.end_from is not None:
+            d["end_from"] = str(self.end_from)
+        if self.end_to is not None:
+            d["end_to"] = str(self.end_to)
+        if self.process_status is not None:
+            d["process_status"] = ",".join(self.process_status)
+
+        return d
+
 
 class ProcessInstanceReportService:
     """ProcessInstanceReportService."""
