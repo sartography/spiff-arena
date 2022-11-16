@@ -60,7 +60,7 @@ export default function App() {
               {errorTag}
               <ErrorBoundary>
                 <Routes>
-                  <Route path="/" element={<HomePageRoutes />} />
+                  <Route path="/*" element={<HomePageRoutes />} />
                   <Route path="/tasks/*" element={<HomePageRoutes />} />
                   <Route path="/admin/*" element={<AdminRoutes />} />
                 </Routes>
