@@ -6,8 +6,9 @@ module.exports = defineConfig({
   chromeWebSecurity: false,
   e2e: {
     baseUrl: 'http://localhost:7001',
-    setupNodeEvents(_on, _config) {
-      // implement node event listeners here
+    setupNodeEvents(_on, config) {
+      require('@cypress/grep/src/plugin')(config);
+      return config;
     },
   },
 
