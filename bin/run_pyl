@@ -12,6 +12,10 @@ python_projects=(
   spiffworkflow-backend
 )
 
+react_projects=(
+  spiffworkflow-frontend
+)
+
 function get_python_dirs() {
   (git ls-tree -r HEAD --name-only | grep -E '\.py$' | awk -F '/' '{print $1}' | sort | uniq | grep -v '\.' | grep -Ev '^(bin|migrations)$') || echo ''
 }
@@ -38,6 +42,12 @@ function run_autoflake() {
 function run_pre_commmit() {
   poetry run pre-commit run --verbose --all-files
 }
+
+for react_project in "${react_projects[@]}" ; do
+  pushd "$react_project"
+  npm run lint:fix
+  popd
+done
 
 for python_project in "${python_projects[@]}" ; do
   pushd "$python_project"
