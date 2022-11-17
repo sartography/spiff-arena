@@ -2,6 +2,8 @@ name: run_ci
 
 on:
   workflow_dispatch:
+  push:
+    branches: ['feature/releases'] # just for testing for a bit.
   release:
     types: [published]
 
