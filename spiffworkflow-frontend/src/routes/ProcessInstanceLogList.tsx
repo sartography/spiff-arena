@@ -6,9 +6,9 @@ import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
-  convertSecondsToFormattedDateString,
   modifyProcessModelPath,
   unModifyProcessModelPath,
+  convertSecondsToFormattedDateTime,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -49,7 +49,7 @@ export default function ProcessInstanceLogList() {
               data-qa="process-instance-show-link"
               to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
             >
-              {convertSecondsToFormattedDateString(rowToUse.timestamp)}
+              {convertSecondsToFormattedDateTime(rowToUse.timestamp)}
             </Link>
           </td>
         </tr>

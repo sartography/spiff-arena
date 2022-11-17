@@ -330,19 +330,19 @@ export default function ProcessInstanceListTable({
 
     const startFromSeconds = convertDateAndTimeStringsToSeconds(
       startFromDate,
-      startFromTime
+      startFromTime || '00:00:00'
     );
     const startToSeconds = convertDateAndTimeStringsToSeconds(
       startToDate,
-      startToTime
+      startToTime || '00:00:00'
     );
     const endFromSeconds = convertDateAndTimeStringsToSeconds(
       endFromDate,
-      endFromTime
+      endFromTime || '00:00:00'
     );
     const endToSeconds = convertDateAndTimeStringsToSeconds(
       endToDate,
-      endToTime
+      endToTime || '00:00:00'
     );
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
       setErrorMessage({
