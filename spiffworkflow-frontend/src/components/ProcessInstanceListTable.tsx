@@ -586,7 +586,6 @@ export default function ProcessInstanceListTable({
     return (
       <>
         {filterComponent()}
-        <br />
         <PaginationForTable
           page={page}
           perPage={perPage}
