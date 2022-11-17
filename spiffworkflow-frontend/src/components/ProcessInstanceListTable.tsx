@@ -27,8 +27,11 @@ import {
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
+  convertDateObjectToFormattedString,
   convertDateStringToSeconds,
-  convertSecondsToFormattedDate,
+  convertDateToSeconds,
+  convertSecondsToDateObject,
+  convertSecondsToFormattedDateString,
   convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
@@ -70,10 +73,13 @@ export default function ProcessInstanceListTable({
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
-  const [startFrom, setStartFrom] = useState<string>('');
-  const [startTo, setStartTo] = useState<string>('');
-  const [endFrom, setEndFrom] = useState<string>('');
-  const [endTo, setEndTo] = useState<string>('');
+  const [startFrom, setStartFrom] = useState<Date | null | undefined | string>(
+    null
+  );
+  const [startTo, setStartTo] = useState<Date | null>(null);
+  const [startFromString, setStartFromString] = useState<string>('');
+  const [endFrom, setEndFrom] = useState<Date | null>(null);
+  const [endTo, setEndTo] = useState<Date | null>(null);
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
@@ -140,10 +146,11 @@ export default function ProcessInstanceListTable({
         const searchParamValue = searchParams.get(paramName);
         if (searchParamValue) {
           queryParamString += `&${paramName}=${searchParamValue}`;
-          const dateString = convertSecondsToFormattedDate(
+          const dateObject = convertSecondsToDateObject(
             searchParamValue as any
           );
-          functionToCall(dateString);
+          console.log('dateObject1', dateObject);
+          functionToCall(dateObject);
           setShowFilterOptions(true);
         }
       });
@@ -160,6 +167,10 @@ export default function ProcessInstanceListTable({
             const functionToCall = parametersToGetFromSearchParams[paramName];
             queryParamString += `&${paramName}=${searchParams.get(paramName)}`;
             if (functionToCall !== null) {
+              console.log(
+                'searchParams.get(paramName)',
+                searchParams.get(paramName)
+              );
               functionToCall(searchParams.get(paramName) || '');
             }
             setShowFilterOptions(true);
@@ -223,45 +234,6 @@ export default function ProcessInstanceListTable({
     perPageOptions,
   ]);
 
-  useEffect(() => {
-    const filters = processInstanceFilters as any;
-    Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
-      // @ts-expect-error TS(7053) FIXME:
-      const functionToCall = parametersToAlwaysFilterBy[paramName];
-      const paramValue = filters[paramName];
-      functionToCall('');
-      if (paramValue) {
-        const dateString = convertSecondsToFormattedDate(paramValue as any);
-        functionToCall(dateString);
-        setShowFilterOptions(true);
-      }
-    });
-
-    setProcessModelSelection(null);
-    processModelAvailableItems.forEach((item: any) => {
-      if (item.id === filters.process_model_identifier) {
-        setProcessModelSelection(item);
-      }
-    });
-
-    const processStatusSelectedArray: string[] = [];
-    if (filters.process_status) {
-      PROCESS_STATUSES.forEach((processStatusOption: any) => {
-        const regex = new RegExp(`\\b${processStatusOption}\\b`);
-        if (filters.process_status.match(regex)) {
-          processStatusSelectedArray.push(processStatusOption);
-        }
-      });
-      setShowFilterOptions(true);
-    }
-    setProcessStatusSelection(processStatusSelectedArray);
-  }, [
-    processInstanceFilters,
-    parametersToAlwaysFilterBy,
-    parametersToGetFromSearchParams,
-    processModelAvailableItems,
-  ]);
-
   // does the comparison, but also returns false if either argument
   // is not truthy and therefore not comparable.
   const isTrueComparison = (param1: any, operation: any, param2: any) => {
@@ -289,10 +261,10 @@ export default function ProcessInstanceListTable({
     );
     let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
 
-    const startFromSeconds = convertDateStringToSeconds(startFrom);
-    const endFromSeconds = convertDateStringToSeconds(endFrom);
-    const startToSeconds = convertDateStringToSeconds(startTo);
-    const endToSeconds = convertDateStringToSeconds(endTo);
+    const startFromSeconds = convertDateToSeconds(startFrom);
+    const endFromSeconds = convertDateToSeconds(endFrom);
+    const startToSeconds = convertDateToSeconds(startTo);
+    const endToSeconds = convertDateToSeconds(endTo);
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
       setErrorMessage({
         message: '"Start date from" cannot be after "start date to"',
@@ -346,8 +318,10 @@ export default function ProcessInstanceListTable({
     labelString: any,
     name: any,
     initialDate: any,
+    initialDateString: string,
     onChangeFunction: any
   ) => {
+    // value={convertDateObjectToFormattedString(initialDate)}
     return (
       <>
         <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
@@ -360,9 +334,20 @@ export default function ProcessInstanceListTable({
             autocomplete="off"
             allowInput={false}
             onChange={(dateChangeEvent: any) => {
-              onChangeFunction(dateChangeEvent.srcElement.value);
+              let dateTime = new Date();
+              if (initialDate) {
+                dateTime = new Date(initialDate.getTime());
+              }
+
+              const [year, month, day] =
+                dateChangeEvent.srcElement.value.split('-');
+              dateTime.setDate(day);
+              dateTime.setMonth(month - 1);
+              // @ts-ignore setYear does exist on Date
+              dateTime.setYear(year);
+              onChangeFunction(dateTime);
             }}
-            value={initialDate}
+            value={initialDateString}
           />
         </DatePicker>
         <TimePicker
@@ -401,16 +386,17 @@ export default function ProcessInstanceListTable({
   const clearFilters = () => {
     setProcessModelSelection(null);
     setProcessStatusSelection([]);
-    setStartFrom('');
-    setStartTo('');
-    setEndFrom('');
-    setEndTo('');
+    setStartFrom(null);
+    setStartTo(null);
+    setEndFrom(null);
+    setEndTo(null);
   };
 
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
     }
+    console.log('startFrom', startFrom);
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
@@ -431,17 +417,36 @@ export default function ProcessInstanceListTable({
               'Start date from',
               'start-from',
               startFrom,
+              startFromString,
               setStartFrom
             )}
           </Column>
           <Column md={4}>
-            {dateComponent('Start date to', 'start-to', startTo, setStartTo)}
+            {dateComponent(
+              'Start date to',
+              'start-to',
+              startTo,
+              startFromString,
+              setStartTo
+            )}
           </Column>
           <Column md={4}>
-            {dateComponent('End date from', 'end-from', endFrom, setEndFrom)}
+            {dateComponent(
+              'End date from',
+              'end-from',
+              endFrom,
+              startFromString,
+              setEndFrom
+            )}
           </Column>
           <Column md={4}>
-            {dateComponent('End date to', 'end-to', endTo, setEndTo)}
+            {dateComponent(
+              'End date to',
+              'end-to',
+              endTo,
+              startFromString,
+              setEndTo
+            )}
           </Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
@@ -587,6 +592,9 @@ export default function ProcessInstanceListTable({
   };
 
   if (pagination) {
+    setStartFromString(
+      convertDateObjectToFormattedString(startFrom as any) || ''
+    );
     // eslint-disable-next-line prefer-const
     let { page, perPage } = getPageInfoFromSearchParams(
       searchParams,

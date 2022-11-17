@@ -42,6 +42,13 @@ export const convertDateToSeconds = (
   return null;
 };
 
+export const convertDateObjectToFormattedString = (dateObject: Date) => {
+  if (dateObject) {
+    return format(dateObject, DATE_FORMAT);
+  }
+  return null;
+};
+
 export const convertStringToDate = (dateString: string) => {
   if (dateString) {
     // add midnight time to the date so it c uses the correct date
@@ -51,18 +58,25 @@ export const convertStringToDate = (dateString: string) => {
   return null;
 };
 
-export const convertSecondsToFormattedDateTime = (seconds: number) => {
+export const convertSecondsToDateObject = (seconds: number) => {
   if (seconds) {
-    const dateObject = new Date(seconds * 1000);
+    return new Date(seconds * 1000);
+  }
+  return null;
+};
+
+export const convertSecondsToFormattedDateTime = (seconds: number) => {
+  const dateObject = convertSecondsToDateObject(seconds);
+  if (dateObject) {
     return format(dateObject, DATE_TIME_FORMAT);
   }
   return null;
 };
 
-export const convertSecondsToFormattedDate = (seconds: number) => {
-  if (seconds) {
-    const dateObject = new Date(seconds * 1000);
-    return format(dateObject, DATE_FORMAT);
+export const convertSecondsToFormattedDateString = (seconds: number) => {
+  const dateObject = convertSecondsToDateObject(seconds);
+  if (dateObject) {
+    return convertDateObjectToFormattedString(dateObject);
   }
   return null;
 };
