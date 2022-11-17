@@ -5,7 +5,7 @@ import {
 } from '@bpmn-io/properties-panel';
 import { without } from 'min-dash';
 import { is } from 'bpmn-js/lib/util/ModelUtil';
-import { findDataObjects, findDataReferenceShapes } from '../DataObjectHelpers';
+import {findDataObjects, findDataReferenceShapes, idToHumanReadableName} from '../DataObjectHelpers';
 
 /**
  * Provides a list of data objects, and allows you to add / remove data objects, and change their ids.
@@ -129,7 +129,7 @@ function DataObjectTextField(props) {
         element: ref,
         moddleElement: ref.businessObject,
         properties: {
-          name: value,
+          name: idToHumanReadableName(value),
         },
         changed: [ref], // everything is already marked as changed, don't recalculate.
       });
