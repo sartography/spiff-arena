@@ -32,7 +32,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: some/random/thing
+          images: |
+            sartography/spiffworkflow-backend
+
 
       - name: Login to DockerHub
         if: github.event_name != 'pull_request'
@@ -52,6 +54,6 @@ jobs:
         with:
           context: "{{defaultContext}}:spiffworkflow-backend"
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: sartography/spiffworkflow-backend:latest
           labels: ${{ steps.meta.outputs.labels }}
 
