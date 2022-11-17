@@ -270,7 +270,7 @@ def process_model_create(
             status_code=400,
         )
 
-    process_model_service.add_spec(process_model_info)
+    process_model_service.add_process_model(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,
@@ -307,7 +307,7 @@ def process_model_update(
 
     # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
-    ProcessModelService().update_spec(process_model, body_filtered)
+    ProcessModelService().update_process_model(process_model, body_filtered)
     return ProcessModelInfoSchema().dump(process_model)
 
 
