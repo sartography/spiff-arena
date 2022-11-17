@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - feature/create_containers
+
 defaults:
   run:
     working-directory: spiffworkflow-frontend
 
 jobs:
   build-and-push-image:
-    if: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
     env:
       REGISTRY: ghcr.io
       IMAGE_NAME: sartography/spiffworkflow-frontend
