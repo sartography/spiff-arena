@@ -811,7 +811,12 @@ def process_instance_list(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
-    results = list(map(ProcessInstanceService.serialize_flat_with_task_data, process_instances.items))
+    results = list(
+        map(
+            ProcessInstanceService.serialize_flat_with_task_data,
+            process_instances.items,
+        )
+    )
     report_metadata = process_instance_report.report_metadata
 
     response_json = {
