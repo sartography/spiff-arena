@@ -530,7 +530,10 @@ export default function ProcessInstanceListTable({
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (
-              <TableHeader key={header} title="Process Instance Id">
+              <TableHeader
+                key={header}
+                title={header === 'Id' ? 'Process Instance Id' : null}
+              >
                 {header}
               </TableHeader>
             ))}
