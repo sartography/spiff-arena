@@ -253,6 +253,54 @@ export default function ProcessInstanceListTable({
     perPageOptions,
   ]);
 
+  // This sets the filter data using the saved reports returned from the initial instance_list query.
+  // This could probably be merged into the main useEffect but it works here now.
+  useEffect(() => {
+    const filters = processInstanceFilters as any;
+    Object.keys(dateParametersToAlwaysFilterBy).forEach((paramName: string) => {
+      const dateFunctionToCall = dateParametersToAlwaysFilterBy[paramName][0];
+      const timeFunctionToCall = dateParametersToAlwaysFilterBy[paramName][1];
+      const paramValue = filters[paramName];
+      dateFunctionToCall('');
+      timeFunctionToCall('');
+      if (paramValue) {
+        const dateString = convertSecondsToFormattedDateString(
+          paramValue as any
+        );
+        dateFunctionToCall(dateString);
+        const timeString = convertSecondsToFormattedTimeHoursMinutes(
+          paramValue as any
+        );
+        timeFunctionToCall(timeString);
+        setShowFilterOptions(true);
+      }
+    });
+
+    setProcessModelSelection(null);
+    processModelAvailableItems.forEach((item: any) => {
+      if (item.id === filters.process_model_identifier) {
+        setProcessModelSelection(item);
+      }
+    });
+
+    const processStatusSelectedArray: string[] = [];
+    if (filters.process_status) {
+      PROCESS_STATUSES.forEach((processStatusOption: any) => {
+        const regex = new RegExp(`\\b${processStatusOption}\\b`);
+        if (filters.process_status.match(regex)) {
+          processStatusSelectedArray.push(processStatusOption);
+        }
+      });
+      setShowFilterOptions(true);
+    }
+    setProcessStatusSelection(processStatusSelectedArray);
+  }, [
+    processInstanceFilters,
+    dateParametersToAlwaysFilterBy,
+    parametersToGetFromSearchParams,
+    processModelAvailableItems,
+  ]);
+
   // does the comparison, but also returns false if either argument
   // is not truthy and therefore not comparable.
   const isTrueComparison = (param1: any, operation: any, param2: any) => {
