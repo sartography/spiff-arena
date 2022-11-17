@@ -1830,7 +1830,7 @@ class TestProcessApi(BaseTest):
         process_model = ProcessModelService().get_process_model(
             process_model_identifier
         )
-        ProcessModelService().update_spec(
+        ProcessModelService().update_process_model(
             process_model,
             {"fault_or_suspend_on_exception": NotificationType.suspend.value},
         )
@@ -1885,7 +1885,7 @@ class TestProcessApi(BaseTest):
         process_model = ProcessModelService().get_process_model(
             process_model_identifier
         )
-        ProcessModelService().update_spec(
+        ProcessModelService().update_process_model(
             process_model,
             {"exception_notification_addresses": ["with_super_admin_user@example.com"]},
         )

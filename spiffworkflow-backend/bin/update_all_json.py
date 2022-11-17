@@ -15,7 +15,7 @@ def main() -> None:
                     "process_group_id": "",
                     "id": f"{group.id}/{process_model.id}",
                 }
-                ProcessModelService().update_spec(process_model, update_items)
+                ProcessModelService().update_process_model(process_model, update_items)
 
 
 if __name__ == "__main__":

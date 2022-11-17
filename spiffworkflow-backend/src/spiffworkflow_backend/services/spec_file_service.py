@@ -171,7 +171,7 @@ class SpecFileService(FileSystemService):
                 ref.is_primary = True
 
             if ref.is_primary:
-                ProcessModelService().update_spec(
+                ProcessModelService().update_process_model(
                     process_model_info,
                     {
                         "primary_process_id": ref.identifier,
