@@ -52,6 +52,6 @@ jobs:
         with:
           context: "{{defaultContext}}:spiffworkflow-backend"
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: "sartography/spiffworkflow-backend:${{ steps.meta.outputs.tags }}"
           labels: ${{ steps.meta.outputs.labels }}
 
