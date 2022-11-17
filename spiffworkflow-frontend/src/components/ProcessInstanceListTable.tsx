@@ -21,18 +21,15 @@ import {
   TableHead,
   TableRow,
   TimePicker,
-  TimePickerSelect,
-  SelectItem,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
-  convertDateObjectToFormattedString,
-  convertDateStringToSeconds,
-  convertDateToSeconds,
-  convertSecondsToDateObject,
+  convertDateAndTimeStringsToSeconds,
+  convertDateObjectToFormattedHoursMinutes,
   convertSecondsToFormattedDateString,
   convertSecondsToFormattedDateTime,
+  convertSecondsToFormattedTimeHoursMinutes,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessModelPath,
@@ -56,6 +53,10 @@ type OwnProps = {
   perPageOptions?: number[];
 };
 
+interface dateParameters {
+  [key: string]: ((..._args: any[]) => any)[];
+}
+
 export default function ProcessInstanceListTable({
   filtersEnabled = true,
   processModelFullIdentifier,
@@ -73,14 +74,20 @@ export default function ProcessInstanceListTable({
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
-  const [startFrom, setStartFrom] = useState<Date | null | undefined | string>(
-    null
-  );
-  const [startTo, setStartTo] = useState<Date | null>(null);
-  const [startFromString, setStartFromString] = useState<string>('');
-  const [endFrom, setEndFrom] = useState<Date | null>(null);
-  const [endTo, setEndTo] = useState<Date | null>(null);
+  const [startFromDate, setStartFromDate] = useState<string>('');
+  const [startToDate, setStartToDate] = useState<string>('');
+  const [endFromDate, setEndFromDate] = useState<string>('');
+  const [endToDate, setEndToDate] = useState<string>('');
+  const [startFromTime, setStartFromTime] = useState<string>('');
+  const [startToTime, setStartToTime] = useState<string>('');
+  const [endFromTime, setEndFromTime] = useState<string>('');
+  const [endToTime, setEndToTime] = useState<string>('');
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
+  const [startFromTimeInvalid, setStartFromTimeInvalid] =
+    useState<boolean>(false);
+  const [startToTimeInvalid, setStartToTimeInvalid] = useState<boolean>(false);
+  const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
+  const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
@@ -96,14 +103,23 @@ export default function ProcessInstanceListTable({
   const [processModelSelection, setProcessModelSelection] =
     useState<ProcessModel | null>(null);
 
-  const parametersToAlwaysFilterBy = useMemo(() => {
+  const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
     return {
-      start_from: setStartFrom,
-      start_to: setStartTo,
-      end_from: setEndFrom,
-      end_to: setEndTo,
+      start_from: [setStartFromDate, setStartFromTime],
+      start_to: [setStartToDate, setStartToTime],
+      end_from: [setEndFromDate, setEndFromTime],
+      end_to: [setEndToDate, setEndToTime],
     };
-  }, [setStartFrom, setStartTo, setEndFrom, setEndTo]);
+  }, [
+    setStartFromDate,
+    setStartFromTime,
+    setStartToDate,
+    setStartToTime,
+    setEndFromDate,
+    setEndFromTime,
+    setEndToDate,
+    setEndToTime,
+  ]);
 
   const parametersToGetFromSearchParams = useMemo(() => {
     return {
@@ -140,20 +156,27 @@ export default function ProcessInstanceListTable({
         queryParamString += `&user_filter=${userAppliedFilter}`;
       }
 
-      Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
-        // @ts-expect-error TS(7053) FIXME:
-        const functionToCall = parametersToAlwaysFilterBy[paramName];
-        const searchParamValue = searchParams.get(paramName);
-        if (searchParamValue) {
-          queryParamString += `&${paramName}=${searchParamValue}`;
-          const dateObject = convertSecondsToDateObject(
-            searchParamValue as any
-          );
-          console.log('dateObject1', dateObject);
-          functionToCall(dateObject);
-          setShowFilterOptions(true);
+      Object.keys(dateParametersToAlwaysFilterBy).forEach(
+        (paramName: string) => {
+          const dateFunctionToCall =
+            dateParametersToAlwaysFilterBy[paramName][0];
+          const timeFunctionToCall =
+            dateParametersToAlwaysFilterBy[paramName][1];
+          const searchParamValue = searchParams.get(paramName);
+          if (searchParamValue) {
+            queryParamString += `&${paramName}=${searchParamValue}`;
+            const dateString = convertSecondsToFormattedDateString(
+              searchParamValue as any
+            );
+            dateFunctionToCall(dateString);
+            const timeString = convertSecondsToFormattedTimeHoursMinutes(
+              searchParamValue as any
+            );
+            timeFunctionToCall(timeString);
+            setShowFilterOptions(true);
+          }
         }
-      });
+      );
 
       Object.keys(parametersToGetFromSearchParams).forEach(
         (paramName: string) => {
@@ -167,10 +190,6 @@ export default function ProcessInstanceListTable({
             const functionToCall = parametersToGetFromSearchParams[paramName];
             queryParamString += `&${paramName}=${searchParams.get(paramName)}`;
             if (functionToCall !== null) {
-              console.log(
-                'searchParams.get(paramName)',
-                searchParams.get(paramName)
-              );
               functionToCall(searchParams.get(paramName) || '');
             }
             setShowFilterOptions(true);
@@ -226,7 +245,7 @@ export default function ProcessInstanceListTable({
     params,
     oneMonthInSeconds,
     oneHourInSeconds,
-    parametersToAlwaysFilterBy,
+    dateParametersToAlwaysFilterBy,
     parametersToGetFromSearchParams,
     filtersEnabled,
     paginationQueryParamPrefix,
@@ -261,10 +280,22 @@ export default function ProcessInstanceListTable({
     );
     let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
 
-    const startFromSeconds = convertDateToSeconds(startFrom);
-    const endFromSeconds = convertDateToSeconds(endFrom);
-    const startToSeconds = convertDateToSeconds(startTo);
-    const endToSeconds = convertDateToSeconds(endTo);
+    const startFromSeconds = convertDateAndTimeStringsToSeconds(
+      startFromDate,
+      startFromTime
+    );
+    const startToSeconds = convertDateAndTimeStringsToSeconds(
+      startToDate,
+      startToTime
+    );
+    const endFromSeconds = convertDateAndTimeStringsToSeconds(
+      endFromDate,
+      endFromTime
+    );
+    const endToSeconds = convertDateAndTimeStringsToSeconds(
+      endToDate,
+      endToTime
+    );
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
       setErrorMessage({
         message: '"Start date from" cannot be after "start date to"',
@@ -318,10 +349,12 @@ export default function ProcessInstanceListTable({
     labelString: any,
     name: any,
     initialDate: any,
-    initialDateString: string,
-    onChangeFunction: any
+    initialTime: string,
+    onChangeDateFunction: any,
+    onChangeTimeFunction: any,
+    timeInvalid: boolean,
+    setTimeInvalid: any
   ) => {
-    // value={convertDateObjectToFormattedString(initialDate)}
     return (
       <>
         <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
@@ -334,29 +367,29 @@ export default function ProcessInstanceListTable({
             autocomplete="off"
             allowInput={false}
             onChange={(dateChangeEvent: any) => {
-              let dateTime = new Date();
-              if (initialDate) {
-                dateTime = new Date(initialDate.getTime());
+              if (!initialDate && !initialTime) {
+                onChangeTimeFunction(
+                  convertDateObjectToFormattedHoursMinutes(new Date())
+                );
               }
-
-              const [year, month, day] =
-                dateChangeEvent.srcElement.value.split('-');
-              dateTime.setDate(day);
-              dateTime.setMonth(month - 1);
-              // @ts-ignore setYear does exist on Date
-              dateTime.setYear(year);
-              onChangeFunction(dateTime);
+              onChangeDateFunction(dateChangeEvent.srcElement.value);
             }}
-            value={initialDateString}
+            value={initialDate}
           />
         </DatePicker>
         <TimePicker
-          invalid
+          invalid={timeInvalid}
           id="time-picker"
           labelText="Select a time"
           pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
+          value={initialTime}
           onChange={(event: any) => {
-            console.log('event', event);
+            if (event.srcElement.validity.valid) {
+              setTimeInvalid(false);
+            } else {
+              setTimeInvalid(true);
+            }
+            onChangeTimeFunction(event.srcElement.value);
           }}
         />
       </>
@@ -386,17 +419,20 @@ export default function ProcessInstanceListTable({
   const clearFilters = () => {
     setProcessModelSelection(null);
     setProcessStatusSelection([]);
-    setStartFrom(null);
-    setStartTo(null);
-    setEndFrom(null);
-    setEndTo(null);
+    setStartFromDate('');
+    setStartFromTime('');
+    setStartToDate('');
+    setStartToTime('');
+    setEndFromDate('');
+    setEndFromTime('');
+    setEndToDate('');
+    setEndToTime('');
   };
 
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
     }
-    console.log('startFrom', startFrom);
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
@@ -416,36 +452,48 @@ export default function ProcessInstanceListTable({
             {dateComponent(
               'Start date from',
               'start-from',
-              startFrom,
-              startFromString,
-              setStartFrom
+              startFromDate,
+              startFromTime,
+              setStartFromDate,
+              setStartFromTime,
+              startFromTimeInvalid,
+              setStartFromTimeInvalid
             )}
           </Column>
           <Column md={4}>
             {dateComponent(
               'Start date to',
               'start-to',
-              startTo,
-              startFromString,
-              setStartTo
+              startToDate,
+              startToTime,
+              setStartToDate,
+              setStartToTime,
+              startToTimeInvalid,
+              setStartToTimeInvalid
             )}
           </Column>
           <Column md={4}>
             {dateComponent(
               'End date from',
               'end-from',
-              endFrom,
-              startFromString,
-              setEndFrom
+              endFromDate,
+              endFromTime,
+              setEndFromDate,
+              setEndFromTime,
+              endFromTimeInvalid,
+              setEndFromTimeInvalid
             )}
           </Column>
           <Column md={4}>
             {dateComponent(
               'End date to',
               'end-to',
-              endTo,
-              startFromString,
-              setEndTo
+              endToDate,
+              endToTime,
+              setEndToDate,
+              setEndToTime,
+              endToTimeInvalid,
+              setEndToTimeInvalid
             )}
           </Column>
         </Grid>
@@ -592,9 +640,6 @@ export default function ProcessInstanceListTable({
   };
 
   if (pagination) {
-    setStartFromString(
-      convertDateObjectToFormattedString(startFrom as any) || ''
-    );
     // eslint-disable-next-line prefer-const
     let { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
