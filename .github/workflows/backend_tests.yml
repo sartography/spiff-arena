@@ -1,8 +1,7 @@
 name: Tests
 
 on:
-  - push:
-    branches: [ 'main' ] # just for testing for a bit.
+  - push
   - pull_request
 
 defaults:
