@@ -32,8 +32,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images:
-            name=sartography/spiffworkflow-backend
+          images: some/random/thing
 
       - name: Login to DockerHub
         if: github.event_name != 'pull_request'
