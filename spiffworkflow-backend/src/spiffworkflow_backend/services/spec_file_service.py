@@ -197,7 +197,9 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def full_file_path(spec: ProcessModelInfo, file_name: str) -> str:
         """File_path."""
-        return os.path.join(SpecFileService.workflow_path(spec), file_name)
+        return os.path.abspath(
+            os.path.join(SpecFileService.workflow_path(spec), file_name)
+        )
 
     @staticmethod
     def last_modified(spec: ProcessModelInfo, file_name: str) -> datetime:
