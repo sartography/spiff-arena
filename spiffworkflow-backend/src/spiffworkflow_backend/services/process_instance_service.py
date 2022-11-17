@@ -315,3 +315,17 @@ class ProcessInstanceService:
         )
 
         return task
+
+    @staticmethod
+    def serialize_flat_with_task_data(
+        process_instance: ProcessInstanceModel
+    ) -> dict[str, any]:
+        """serialize_flat_with_task_data."""
+        results = {}
+        try:
+            processor = ProcessInstanceProcessor(process_instance)
+            process_instance.data = processor.get_current_data()
+            results = process_instance.serialized_flat
+        except ApiError:
+            results = process_instance.serialized
+        return results
