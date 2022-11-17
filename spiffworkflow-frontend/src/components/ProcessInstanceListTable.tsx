@@ -20,12 +20,16 @@ import {
   TableHeader,
   TableHead,
   TableRow,
+  TimePicker,
+  TimePickerSelect,
+  SelectItem,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
   convertDateStringToSeconds,
   convertSecondsToFormattedDate,
+  convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessModelPath,
@@ -345,21 +349,32 @@ export default function ProcessInstanceListTable({
     onChangeFunction: any
   ) => {
     return (
-      <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
-        <DatePickerInput
-          id={`date-picker-${name}`}
-          placeholder={DATE_FORMAT}
-          labelText={labelString}
-          type="text"
-          size="md"
-          autocomplete="off"
-          allowInput={false}
-          onChange={(dateChangeEvent: any) => {
-            onChangeFunction(dateChangeEvent.srcElement.value);
+      <>
+        <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
+          <DatePickerInput
+            id={`date-picker-${name}`}
+            placeholder={DATE_FORMAT}
+            labelText={labelString}
+            type="text"
+            size="md"
+            autocomplete="off"
+            allowInput={false}
+            onChange={(dateChangeEvent: any) => {
+              onChangeFunction(dateChangeEvent.srcElement.value);
+            }}
+            value={initialDate}
+          />
+        </DatePicker>
+        <TimePicker
+          invalid
+          id="time-picker"
+          labelText="Select a time"
+          pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
+          onChange={(event: any) => {
+            console.log('event', event);
           }}
-          value={initialDate}
         />
-      </DatePicker>
+      </>
     );
   };
 
@@ -493,7 +508,7 @@ export default function ProcessInstanceListTable({
       );
     };
     const formatSecondsForDisplay = (_row: any, seconds: any) => {
-      return convertSecondsToFormattedDate(seconds) || '-';
+      return convertSecondsToFormattedDateTime(seconds) || '-';
     };
     const defaultFormatter = (_row: any, value: any) => {
       return value;
