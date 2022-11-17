@@ -455,7 +455,7 @@ export default function ProcessInstanceListTable({
 
   const buildTable = () => {
     const headerLabels: Record<string, string> = {
-      id: 'Process Instance Id',
+      id: 'Id',
       process_model_identifier: 'Process Model',
       start_in_seconds: 'Start Time',
       end_in_seconds: 'End Time',
@@ -530,7 +530,9 @@ export default function ProcessInstanceListTable({
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (
-              <TableHeader key={header}>{header}</TableHeader>
+              <TableHeader key={header} title="Process Instance Id">
+                {header}
+              </TableHeader>
             ))}
           </TableRow>
         </TableHead>
