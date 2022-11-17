@@ -31,8 +31,6 @@ jobs:
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
-        with:
-          images: name/app
 
       - name: Login to DockerHub
         if: github.event_name != 'pull_request'
