@@ -17,7 +17,7 @@ env:
   BACKEND_IMAGE: spiffworkflow-backend
 
 jobs:
-  build-and-push-backend-container:
+  build-and-push-backend-docker:
     runs-on: ubuntu-latest
 
     permissions:
@@ -42,10 +42,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
+        # Setting up Docker Buildx with docker-container driver is required
+        # at the moment to be able to use a subdirectory with Git context
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build and push Backend Docker Image
         uses: docker/build-push-action@v3
         with:
-          context: spiffworkflow-backend/.
+          context: "{{defaultContext}}:spiffworkflow-backend"
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
