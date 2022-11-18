@@ -17,6 +17,7 @@ function SelectWidget({
   onBlur,
   onFocus,
   uiSchema,
+  placeholder,
   rawErrors = [],
 }: WidgetProps) {
   const { enumOptions, enumDisabled } = options;
@@ -44,12 +45,20 @@ function SelectWidget({
     labelToUse = `${labelToUse}*`;
   }
 
+  let invalid = false;
+  let errorMessageForField = null;
+  if (rawErrors && rawErrors.length > 0) {
+    invalid = true;
+    errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+  }
+
   return (
     <Select
       id={id}
       name={id}
       labelText={labelToUse}
       select
+      helperText={placeholder}
       value={typeof value === 'undefined' ? emptyValue : value}
       disabled={disabled || readonly}
       autoFocus={autofocus}
@@ -57,6 +66,8 @@ function SelectWidget({
       onChange={_onChange}
       onBlur={_onBlur}
       onFocus={_onFocus}
+      invalid={invalid}
+      invalidText={errorMessageForField}
       InputLabelProps={{
         shrink: true,
       }}
