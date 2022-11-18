@@ -5,6 +5,7 @@ from typing import Optional
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
+from spiffworkflow_backend.models.user import UserModel
 
 
 @dataclass
@@ -40,6 +41,63 @@ class ProcessInstanceReportFilter:
 
 class ProcessInstanceReportService:
     """ProcessInstanceReportService."""
+
+    @classmethod
+    def report_with_identifier(
+        cls,
+        user: UserModel,
+        report_identifier: Optional[str] = None
+    ) -> ProcessInstanceReportModel:
+        if report_identifier is None:
+            return ProcessInstanceReportModel.default_report(user)
+
+        # TODO replace with system reports that are loaded on launch (or similar)
+        temp_system_metdata_map = {
+            "system_report_instances_initiated_by_me": {
+                "columns": [
+                    {"Header": "id", "accessor": "id"},
+                    {
+                        "Header": "process_model_identifier",
+                        "accessor": "process_model_identifier",
+                    },
+                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
+                    {"Header": "status", "accessor": "status"},
+                ],
+            },
+            "system_report_instances_with_tasks_completed_by_me": {
+                "columns": [
+                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
+                    {"Header": "status", "accessor": "status"},
+                    {"Header": "id", "accessor": "id"},
+                    {
+                        "Header": "process_model_identifier",
+                        "accessor": "process_model_identifier",
+                    },
+                ],
+            },
+            "system_report_instances_with_tasks_completed_by_my_groups": {
+                "columns": [
+                    {
+                        "Header": "process_model_identifier",
+                        "accessor": "process_model_identifier",
+                    },
+                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
+                    {"Header": "status", "accessor": "status"},
+                    {"Header": "id", "accessor": "id"},
+                ],
+            },
+        }
+
+        process_instance_report = cls(
+            identifier=identifier,
+            created_by_id=user.id,
+            report_metadata=temp_system_metadata_map[report_identifier],
+        )
+
+        return process_instance_report
 
     @classmethod
     def filter_by_to_dict(
