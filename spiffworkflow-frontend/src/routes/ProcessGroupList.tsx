@@ -7,7 +7,7 @@ import {
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import { modifyProcessModelPath, truncateString } from '../helpers';
+import { modifyProcessModelPath } from '../helpers';
 import { CarbonComboBoxSelection, PermissionsToCheck } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';

@@ -27,10 +27,7 @@ export default function ProcessGroupShow() {
 
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [processModels, setProcessModels] = useState([]);
-  const [processGroups, setProcessGroups] = useState([]);
   const [modelPagination, setModelPagination] =
-    useState<PaginationObject | null>(null);
-  const [groupPagination, setGroupPagination] =
     useState<PaginationObject | null>(null);
 
   const { targetUris } = useUriListForPermissions();
@@ -48,10 +45,6 @@ export default function ProcessGroupShow() {
       setProcessModels(result.results);
       setModelPagination(result.pagination);
     };
-    const setProcessGroupFromResult = (result: any) => {
-      setProcessGroups(result.results);
-      setGroupPagination(result.pagination);
-    };
     const processResult = (result: any) => {
       setProcessGroup(result);
       const unmodifiedProcessGroupId = unModifyProcessModelPath(
@@ -60,10 +53,6 @@ export default function ProcessGroupShow() {
       HttpService.makeCallToBackend({
         path: `/process-models?process_group_identifier=${unmodifiedProcessGroupId}&per_page=${perPage}&page=${page}`,
         successCallback: setProcessModelFromResult,
-      });
-      HttpService.makeCallToBackend({
-        path: `/process-groups?process_group_identifier=${unmodifiedProcessGroupId}&per_page=${perPage}&page=${page}`,
-        successCallback: setProcessGroupFromResult,
       });
     };
     HttpService.makeCallToBackend({
@@ -110,43 +99,7 @@ export default function ProcessGroupShow() {
     );
   };
 
-  const buildGroupTable = () => {
-    if (processGroup === null) {
-      return null;
-    }
-    const rows = processGroups.map((row: ProcessGroup) => {
-      const modifiedProcessGroupId: String = modifyProcessModelPath(row.id);
-      return (
-        <tr key={row.id}>
-          <td>
-            <Link
-              to={`/admin/process-groups/${modifiedProcessGroupId}`}
-              data-qa="process-model-show-link"
-            >
-              {row.id}
-            </Link>
-          </td>
-          <td>{row.display_name}</td>
-        </tr>
-      );
-    });
-    return (
-      <div>
-        <h3>Process Groups</h3>
-        <Table striped bordered>
-          <thead>
-            <tr>
-              <th>Process Group Id</th>
-              <th>Display Name</th>
-            </tr>
-          </thead>
-          <tbody>{rows}</tbody>
-        </Table>
-      </div>
-    );
-  };
-
-  if (processGroup && groupPagination && modelPagination) {
+  if (processGroup && modelPagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     const modifiedProcessGroupId = modifyProcessModelPath(processGroup.id);
     return (
