@@ -445,6 +445,12 @@ paths:
         description: For filtering - indicates the user has manually entered a query
         schema:
           type: boolean
+      - name: report_identifier
+        in: query
+        required: false
+        description: Specifies the identifier of a report to use, if any
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list
       summary: Returns a list of process instances for a given process model
