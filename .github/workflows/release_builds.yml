@@ -5,7 +5,7 @@ on:
     tags: [ v* ]
 
 jobs:
-  builds:
+  create_docker_containers:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
