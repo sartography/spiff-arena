@@ -79,6 +79,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
             identifier=identifier, created_by_id=user.id
         ).first()
 
+        # TODO replace with system report that is loaded on launch (or similar)
         if process_instance_report is None:
             report_metadata = {
                 "columns": [
