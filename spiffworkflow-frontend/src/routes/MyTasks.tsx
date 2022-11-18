@@ -6,11 +6,14 @@ import PaginationForTable from '../components/PaginationForTable';
 import {
   getPageInfoFromSearchParams,
   modifyProcessModelPath,
+  refreshAtInterval,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject, RecentProcessModel } from '../interfaces';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
+const REFRESH_INTERVAL = 10;
+const REFRESH_TIMEOUT = 600;
 
 export default function MyTasks() {
   const [searchParams] = useSearchParams();
@@ -18,18 +21,23 @@ export default function MyTasks() {
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   useEffect(() => {
-    const { page, perPage } = getPageInfoFromSearchParams(
-      searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
-    );
-    const setTasksFromResult = (result: any) => {
-      setTasks(result.results);
-      setPagination(result.pagination);
+    const getTasks = () => {
+      const { page, perPage } = getPageInfoFromSearchParams(
+        searchParams,
+        PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      );
+      const setTasksFromResult = (result: any) => {
+        setTasks(result.results);
+        setPagination(result.pagination);
+      };
+      HttpService.makeCallToBackend({
+        path: `/tasks?per_page=${perPage}&page=${page}`,
+        successCallback: setTasksFromResult,
+      });
     };
-    HttpService.makeCallToBackend({
-      path: `/tasks?per_page=${perPage}&page=${page}`,
-      successCallback: setTasksFromResult,
-    });
+
+    getTasks();
+    refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
   }, [searchParams]);
 
   let recentProcessModels: RecentProcessModel[] = [];
