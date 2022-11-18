@@ -2,14 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import {
-  getGroupFromModifiedModelId,
-  modifyProcessModelPath,
-  slugifyString,
-} from '../helpers';
+import { modifyProcessModelPath, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessModel } from '../interfaces';
-import ButtonWithConfirmation from './ButtonWithConfirmation';
 
 type OwnProps = {
   mode: string;
@@ -38,14 +33,6 @@ export default function ProcessModelForm({
       );
       navigate(`/admin/process-models/${modifiedProcessModelPathFromResult}`);
     }
-  };
-
-  const navigateToProcessModels = (_result: any) => {
-    navigate(
-      `/admin/process-groups/${getGroupFromModifiedModelId(
-        modifiedProcessModelPath
-      )}`
-    );
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {

@@ -1,5 +1,5 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   ArrowRight,
   // @ts-ignore
@@ -39,7 +39,7 @@ export default function ProcessGroupListTiles({
       path: `/process-groups${queryParams}`,
       successCallback: setProcessGroupsFromResult,
     });
-  }, [searchParams]);
+  }, [searchParams, processGroup]);
 
   const processGroupDirectChildrenCount = (pg: ProcessGroup) => {
     return (pg.process_models || []).length + (pg.process_groups || []).length;
@@ -77,16 +77,15 @@ export default function ProcessGroupListTiles({
   };
 
   const processGroupArea = () => {
-    if (processGroups) {
-      if (!processGroup || processGroups.length > 0) {
-        return (
-          <>
-            {headerElement}
-            {processGroupsDisplayArea()}
-          </>
-        );
-      }
+    if (processGroups && (!processGroup || processGroups.length > 0)) {
+      return (
+        <>
+          {headerElement}
+          {processGroupsDisplayArea()}
+        </>
+      );
     }
+    return null;
   };
 
   if (processGroups) {
