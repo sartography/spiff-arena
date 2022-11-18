@@ -60,10 +60,10 @@ export default function ProcessGroupListTiles({
               <div className="tile-process-group-display-name">
                 {row.display_name}
               </div>
-              <p className="tile-process-group-description">
+              <p className="tile-description">
                 {truncateString(row.description || '', 25)}
               </p>
-              <p className="tile-process-group-children-count">
+              <p className="tile-process-group-children-count tile-pin-bottom">
                 Total Sub Items: {processGroupDirectChildrenCount(row)}
               </p>
             </div>

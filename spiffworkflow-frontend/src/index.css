@@ -215,7 +215,15 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   order: 0;
 }
 
-.tile-process-group-description {
+.tile-title-top {
+  margin-bottom: 2em;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
+  order: 0;
+}
+
+.tile-description {
   font-size: 14px;
   line-height: 20px;
   letter-spacing: 0.16px;
@@ -229,6 +237,9 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   letter-spacing: 0.16px;
   color: #161616;
   order: 1;
+}
+
+.tile-pin-bottom {
   position: absolute;
   bottom: 1em;
 }

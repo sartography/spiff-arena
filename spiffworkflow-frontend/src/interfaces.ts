@@ -36,6 +36,11 @@ export interface ProcessFile {
   file_contents?: string;
 }
 
+export interface ProcessInstance {
+  id: number;
+  process_model_identifier: string;
+}
+
 export interface ProcessModel {
   id: string;
   description: string;

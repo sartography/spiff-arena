@@ -7,6 +7,7 @@ import ErrorContext from '../contexts/ErrorContext';
 import MyTasks from './MyTasks';
 import GroupedTasks from './GroupedTasks';
 import CompletedInstances from './CompletedInstances';
+import CreateNewInstance from './CreateNewInstance';
 
 export default function HomePageRoutes() {
   const location = useLocation();
@@ -21,6 +22,8 @@ export default function HomePageRoutes() {
       newSelectedTabIndex = 1;
     } else if (location.pathname.match(/^\/tasks\/completed-instances\b/)) {
       newSelectedTabIndex = 2;
+    } else if (location.pathname.match(/^\/tasks\/create-new-instance\b/)) {
+      newSelectedTabIndex = 3;
     }
     setSelectedTabIndex(newSelectedTabIndex);
   }, [location, setErrorMessage]);
@@ -34,6 +37,9 @@ export default function HomePageRoutes() {
           <Tab onClick={() => navigate('/tasks/completed-instances')}>
             Completed Instances
           </Tab>
+          <Tab onClick={() => navigate('/tasks/create-new-instance')}>
+            Create New Instance +
+          </Tab>
         </TabList>
       </Tabs>
       <br />
@@ -43,6 +49,7 @@ export default function HomePageRoutes() {
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
         <Route path="grouped" element={<GroupedTasks />} />
         <Route path="completed-instances" element={<CompletedInstances />} />
+        <Route path="create-new-instance" element={<CreateNewInstance />} />
       </Routes>
     </>
   );
