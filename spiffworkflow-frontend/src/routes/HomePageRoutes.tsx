@@ -28,21 +28,32 @@ export default function HomePageRoutes() {
     setSelectedTabIndex(newSelectedTabIndex);
   }, [location, setErrorMessage]);
 
+  const renderTabs = () => {
+    if (location.pathname.match(/^\/tasks\/\d+\/\b/)) {
+      return null;
+    }
+    return (
+      <>
+        <Tabs selectedIndex={selectedTabIndex}>
+          <TabList aria-label="List of tabs">
+            <Tab onClick={() => navigate('/tasks/my-tasks')}>My Tasks</Tab>
+            <Tab onClick={() => navigate('/tasks/grouped')}>Grouped Tasks</Tab>
+            <Tab onClick={() => navigate('/tasks/completed-instances')}>
+              Completed Instances
+            </Tab>
+            <Tab onClick={() => navigate('/tasks/create-new-instance')}>
+              Create New Instance +
+            </Tab>
+          </TabList>
+        </Tabs>
+        <br />
+      </>
+    );
+  };
+
   return (
     <>
-      <Tabs selectedIndex={selectedTabIndex}>
-        <TabList aria-label="List of tabs">
-          <Tab onClick={() => navigate('/tasks/my-tasks')}>My Tasks</Tab>
-          <Tab onClick={() => navigate('/tasks/grouped')}>Grouped Tasks</Tab>
-          <Tab onClick={() => navigate('/tasks/completed-instances')}>
-            Completed Instances
-          </Tab>
-          <Tab onClick={() => navigate('/tasks/create-new-instance')}>
-            Create New Instance +
-          </Tab>
-        </TabList>
-      </Tabs>
-      <br />
+      {renderTabs()}
       <Routes>
         <Route path="/" element={<MyTasks />} />
         <Route path="my-tasks" element={<MyTasks />} />
