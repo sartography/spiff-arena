@@ -27,6 +27,10 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
+from sqlalchemy import and_
+from sqlalchemy import asc
+from sqlalchemy import desc
+
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -82,9 +86,6 @@ from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
-from sqlalchemy import and_
-from sqlalchemy import asc
-from sqlalchemy import desc
 
 
 class TaskDataSelectOption(TypedDict):

@@ -7,6 +7,7 @@ from typing import Optional
 import marshmallow
 from marshmallow import INCLUDE
 from marshmallow import Schema
+
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.spec_reference import SpecReference
 

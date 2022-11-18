@@ -4,9 +4,10 @@ from typing import Optional
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.group import GroupModel
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import deferred
+
+from spiffworkflow_backend.models.group import GroupModel
 
 
 @dataclass
