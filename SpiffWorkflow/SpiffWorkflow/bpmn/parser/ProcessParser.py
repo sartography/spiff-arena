@@ -44,13 +44,42 @@ class ProcessParser(NodeParser):
         self.parsed_nodes = {}
         self.lane = lane
         self.spec = None
-        self.process_executable = True
+        self.process_executable = self.is_executable()
 
     def get_name(self):
         """
         Returns the process name (or ID, if no name is included in the file)
         """
         return self.node.get('name', default=self.get_id())
+
+    def has_lanes(self) -> bool:
+        """Returns true if this process has one or more named lanes """
+        elements = self.xpath("//bpmn:lane")
+        for el in elements:
+            if el.get("name"):
+                return True
+        return False
+
+    def is_executable(self) -> bool:
+        return self.node.get('isExecutable', 'true') == 'true'
+
+    def start_messages(self):
+        """ This returns a list of messages that would cause this
+            process to start. """
+        messages = []
+        message_event_definitions = self.xpath(
+            "//bpmn:startEvent/bpmn:messageEventDefinition")
+        for message_event_definition in message_event_definitions:
+            message_model_identifier = message_event_definition.attrib.get(
+                "messageRef"
+            )
+            if message_model_identifier is None:
+                raise ValidationException(
+                    "Could not find messageRef from message event definition: {message_event_definition}"
+                )
+            messages.append(message_model_identifier)
+
+        return messages
 
     def parse_node(self, node):
         """
@@ -72,7 +101,6 @@ class ProcessParser(NodeParser):
     def _parse(self):
         # here we only look in the top level, We will have another
         # bpmn:startEvent if we have a subworkflow task
-        self.process_executable = self.node.get('isExecutable', 'true') == 'true'
         start_node_list = self.xpath('./bpmn:startEvent')
         if not start_node_list and self.process_executable:
             raise ValidationException("No start event found", node=self.node, filename=self.filename)
