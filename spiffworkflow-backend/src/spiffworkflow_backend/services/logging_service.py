@@ -236,5 +236,5 @@ class DBHandler(logging.Handler):
                     "spiff_step": spiff_step,
                 }
             )
-            if len(self.logs) % 1000 == 0:
+            if len(self.logs) % 1 == 0:
                 self.bulk_insert_logs()
