@@ -7,7 +7,6 @@ from typing import Optional
 
 from flask_bpmn.models.db import db
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
-
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.file import SpecReference
@@ -171,7 +170,7 @@ class SpecFileService(FileSystemService):
                 ref.is_primary = True
 
             if ref.is_primary:
-                ProcessModelService().update_spec(
+                ProcessModelService().update_process_model(
                     process_model_info,
                     {
                         "primary_process_id": ref.identifier,
@@ -197,7 +196,9 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def full_file_path(spec: ProcessModelInfo, file_name: str) -> str:
         """File_path."""
-        return os.path.join(SpecFileService.workflow_path(spec), file_name)
+        return os.path.abspath(
+            os.path.join(SpecFileService.workflow_path(spec), file_name)
+        )
 
     @staticmethod
     def last_modified(spec: ProcessModelInfo, file_name: str) -> datetime:

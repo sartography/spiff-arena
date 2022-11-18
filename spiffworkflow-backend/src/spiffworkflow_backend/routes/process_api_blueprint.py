@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-import os
 import random
 import string
 import uuid
@@ -28,10 +27,6 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
-from sqlalchemy import and_
-from sqlalchemy import asc
-from sqlalchemy import desc
-
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -87,6 +82,9 @@ from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy import and_
+from sqlalchemy import asc
+from sqlalchemy import desc
 
 
 class TaskDataSelectOption(TypedDict):
@@ -253,16 +251,11 @@ def process_model_create(
             status_code=400,
         )
 
-    modified_process_model_id = process_model_info.id
-    unmodified_process_model_id = un_modify_modified_process_model_id(
-        modified_process_model_id
+    unmodified_process_group_id = un_modify_modified_process_model_id(
+        modified_process_group_id
     )
-    process_model_info.id = unmodified_process_model_id
-    process_group_id, _ = os.path.split(process_model_info.id)
     process_model_service = ProcessModelService()
-    process_group = process_model_service.get_process_group(
-        un_modify_modified_process_model_id(process_group_id)
-    )
+    process_group = process_model_service.get_process_group(unmodified_process_group_id)
     if process_group is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
@@ -270,7 +263,7 @@ def process_model_create(
             status_code=400,
         )
 
-    process_model_service.add_spec(process_model_info)
+    process_model_service.add_process_model(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,
@@ -307,7 +300,7 @@ def process_model_update(
 
     # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
-    ProcessModelService().update_spec(process_model, body_filtered)
+    ProcessModelService().update_process_model(process_model, body_filtered)
     return ProcessModelInfoSchema().dump(process_model)
 
 

@@ -837,11 +837,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
-  if (
-    (bpmnXmlForDiagramRendering || !params.file_name) &&
-    processModel &&
-    processes.length > 0
-  ) {
+  if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
       <>

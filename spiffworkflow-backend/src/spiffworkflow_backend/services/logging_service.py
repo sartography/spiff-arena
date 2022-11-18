@@ -8,7 +8,6 @@ from typing import Optional
 from flask import g
 from flask.app import Flask
 from flask_bpmn.models.db import db
-
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 
 
@@ -236,5 +235,5 @@ class DBHandler(logging.Handler):
                     "spiff_step": spiff_step,
                 }
             )
-            if len(self.logs) % 1000 == 0:
+            if len(self.logs) % 1 == 0:
                 self.bulk_insert_logs()

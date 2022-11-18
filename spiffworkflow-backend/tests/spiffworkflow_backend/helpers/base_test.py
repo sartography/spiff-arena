@@ -11,9 +11,6 @@ from flask import current_app
 from flask.testing import FlaskClient
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-from werkzeug.test import TestResponse  # type: ignore
-
 from spiffworkflow_backend.models.permission_assignment import Permission
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -27,6 +24,8 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+from werkzeug.test import TestResponse  # type: ignore
 
 # from tests.spiffworkflow_backend.helpers.test_data import logged_in_headers
 
@@ -137,7 +136,9 @@ class BaseTest:
             # make sure we have a group
             process_group_id, _ = os.path.split(process_model_id)
             modified_process_group_id = process_group_id.replace("/", ":")
-            process_group_path = f"{FileSystemService.root_path()}/{process_group_id}"
+            process_group_path = os.path.abspath(
+                os.path.join(FileSystemService.root_path(), process_group_id)
+            )
             if ProcessModelService().is_group(process_group_path):
 
                 if exception_notification_addresses is None:

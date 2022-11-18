@@ -375,8 +375,9 @@ paths:
   /processes:
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_list
-      summary: Return a list of all processes (not just primary process of a process model)
-            useful for finding processes for call activites.
+      summary:
+        Return a list of all processes (not just primary process of a process model)
+        useful for finding processes for call activites.
       tags:
         - Process Models
       responses:
