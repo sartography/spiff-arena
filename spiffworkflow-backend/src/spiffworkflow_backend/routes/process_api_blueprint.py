@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-import os
 import random
 import string
 import uuid
@@ -253,11 +252,11 @@ def process_model_create(
             status_code=400,
         )
 
-    unmodified_process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
-    process_model_service = ProcessModelService()
-    process_group = process_model_service.get_process_group(
-        unmodified_process_group_id
+    unmodified_process_group_id = un_modify_modified_process_model_id(
+        modified_process_group_id
     )
+    process_model_service = ProcessModelService()
+    process_group = process_model_service.get_process_group(unmodified_process_group_id)
     if process_group is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
