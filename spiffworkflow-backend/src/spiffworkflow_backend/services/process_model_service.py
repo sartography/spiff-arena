@@ -49,6 +49,11 @@ class ProcessModelService(FileSystemService):
         return False
 
     @staticmethod
+    def write_json_file(file_path, json_data, indent=4, sort_keys=True):
+        with open(file_path, "w") as h_open:
+            json.dump(json_data, h_open, indent=indent, sort_keys=sort_keys)
+
+    @staticmethod
     def get_batch(
         items: list[T],
         page: int = 1,
@@ -84,10 +89,8 @@ class ProcessModelService(FileSystemService):
         # this allows us to move models around on the filesystem
         # the id is determined by its location on the filesystem
         delattr(process_model, 'id')
-        with open(json_path, "w") as wf_json:
-            json.dump(
-                self.PROCESS_MODEL_SCHEMA.dump(process_model), wf_json, indent=4, sort_keys=True
-            )
+        json_data = self.PROCESS_MODEL_SCHEMA.dump(process_model)
+        self.write_json_file(json_path, json_data)
         process_model.id = process_model_id
 
     def process_model_delete(self, process_model_id: str) -> None:
@@ -216,13 +219,11 @@ class ProcessModelService(FileSystemService):
         cat_path = self.process_group_path(process_group.id)
         os.makedirs(cat_path, exist_ok=True)
         json_path = os.path.join(cat_path, self.PROCESS_GROUP_JSON_FILE)
-        with open(json_path, "w") as cat_json:
-            json.dump(
-                process_group.serialized,
-                cat_json,
-                indent=4,
-                sort_keys=True,
-            )
+        serialized_process_group = process_group.serialized
+        # we don't store `id` in the json files
+        # this allows us to move groups around on the filesystem
+        del serialized_process_group['id']
+        self.write_json_file(json_path, serialized_process_group)
         return process_group
 
     def __get_all_nested_models(self, group_path: str) -> list:
@@ -293,6 +294,9 @@ class ProcessModelService(FileSystemService):
         if os.path.exists(cat_path):
             with open(cat_path) as cat_json:
                 data = json.load(cat_json)
+                # we don't store `id` in the json files, so we add it back in here
+                relative_path = os.path.relpath(dir_path, FileSystemService.root_path())
+                data['id'] = relative_path
                 process_group = ProcessGroup(**data)
                 if process_group is None:
                     raise ApiError(
@@ -302,13 +306,13 @@ class ProcessModelService(FileSystemService):
         else:
             process_group_id = dir_path.replace(FileSystemService.root_path(), "")
             process_group = ProcessGroup(
-                id=process_group_id,
                 display_name=process_group_id,
                 display_order=10000,
                 admin=False,
             )
-            with open(cat_path, "w") as wf_json:
-                json.dump(self.GROUP_SCHEMA.dump(process_group), wf_json, indent=4)
+            self.write_json_file(cat_path, self.GROUP_SCHEMA.dump(process_group))
+            # we don't store `id` in the json files, so we add it in here
+            process_group.id = process_group_id
         with os.scandir(dir_path) as nested_items:
             process_group.process_models = []
             process_group.process_groups = []
@@ -363,14 +367,14 @@ class ProcessModelService(FileSystemService):
                 )
 
             process_model_info = ProcessModelInfo(
-                id=name,
                 display_name=name,
                 description="",
                 display_order=0,
                 is_review=False,
             )
-            with open(json_file_path, "w") as wf_json:
-                json.dump(self.PROCESS_MODEL_SCHEMA.dump(process_model_info), wf_json, indent=4)
+            self.write_json_file(json_file_path, self.PROCESS_MODEL_SCHEMA.dump(process_model_info))
+            # we don't store `id` in the json files, so we add it in here
+            process_model_info.id = name
         if process_group:
             process_model_info.process_group = process_group.id
         return process_model_info
