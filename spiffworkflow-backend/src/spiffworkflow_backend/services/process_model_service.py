@@ -49,7 +49,7 @@ class ProcessModelService(FileSystemService):
         return False
 
     @staticmethod
-    def write_json_file(file_path, json_data, indent=4, sort_keys=True):
+    def write_json_file(file_path: str, json_data: dict, indent: int = 4, sort_keys: bool = True) -> None:
         with open(file_path, "w") as h_open:
             json.dump(json_data, h_open, indent=indent, sort_keys=sort_keys)
 
@@ -306,6 +306,7 @@ class ProcessModelService(FileSystemService):
         else:
             process_group_id = dir_path.replace(FileSystemService.root_path(), "")
             process_group = ProcessGroup(
+                id='',
                 display_name=process_group_id,
                 display_order=10000,
                 admin=False,
@@ -367,6 +368,7 @@ class ProcessModelService(FileSystemService):
                 )
 
             process_model_info = ProcessModelInfo(
+                id='',
                 display_name=name,
                 description="",
                 display_order=0,
