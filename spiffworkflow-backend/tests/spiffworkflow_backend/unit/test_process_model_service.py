@@ -1,11 +1,10 @@
 """Test_process_model_service."""
 from flask import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestProcessModelService(BaseTest):
@@ -32,7 +31,9 @@ class TestProcessModelService(BaseTest):
         primary_process_id = process_model.primary_process_id
         assert primary_process_id == "Process_HelloWorld"
 
-        ProcessModelService().update_spec(process_model, {"display_name": "new_name"})
+        ProcessModelService().update_process_model(
+            process_model, {"display_name": "new_name"}
+        )
 
         assert process_model.display_name == "new_name"
         assert process_model.primary_process_id == primary_process_id

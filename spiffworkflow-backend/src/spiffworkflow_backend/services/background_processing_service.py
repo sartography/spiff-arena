@@ -1,6 +1,5 @@
 """Background_processing_service."""
 import flask
-
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,

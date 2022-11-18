@@ -7,7 +7,6 @@ from typing import Optional
 import pytz
 from flask import current_app
 from flask_bpmn.api.api_error import ApiError
-
 from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -20,8 +19,8 @@ class FileSystemService:
     """ Simple Service meant for extension that provides some useful
     methods for dealing with the File system.
     """
-    CAT_JSON_FILE = "process_group.json"
-    WF_JSON_FILE = "workflow.json"
+    PROCESS_GROUP_JSON_FILE = "process_group.json"
+    PROCESS_MODEL_JSON_FILE = "process_model.json"
 
     @staticmethod
     def root_path() -> str:
@@ -135,7 +134,7 @@ class FileSystemService:
             if item.is_file():
                 if item.name.startswith("."):
                     continue  # Ignore hidden files
-                if item.name == FileSystemService.WF_JSON_FILE:
+                if item.name == FileSystemService.PROCESS_MODEL_JSON_FILE:
                     continue  # Ignore the json files.
                 if file_name is not None and item.name != file_name:
                     continue

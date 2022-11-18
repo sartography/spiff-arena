@@ -3,8 +3,6 @@ from typing import Optional
 
 from flask import Flask
 from flask.testing import FlaskClient
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -15,6 +13,7 @@ from spiffworkflow_backend.services.process_instance_report_service import (
 from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportService,
 )
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestProcessInstanceReportFilter(BaseTest):

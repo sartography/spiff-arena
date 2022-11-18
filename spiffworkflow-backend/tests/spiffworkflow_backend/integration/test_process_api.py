@@ -9,9 +9,6 @@ import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -36,6 +33,8 @@ from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 # from spiffworkflow_backend.services.git_service import GitService
 
@@ -1830,7 +1829,7 @@ class TestProcessApi(BaseTest):
         process_model = ProcessModelService().get_process_model(
             process_model_identifier
         )
-        ProcessModelService().update_spec(
+        ProcessModelService().update_process_model(
             process_model,
             {"fault_or_suspend_on_exception": NotificationType.suspend.value},
         )
@@ -1885,7 +1884,7 @@ class TestProcessApi(BaseTest):
         process_model = ProcessModelService().get_process_model(
             process_model_identifier
         )
-        ProcessModelService().update_spec(
+        ProcessModelService().update_process_model(
             process_model,
             {"exception_notification_addresses": ["with_super_admin_user@example.com"]},
         )

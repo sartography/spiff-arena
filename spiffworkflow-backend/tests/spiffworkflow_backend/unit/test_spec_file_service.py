@@ -6,13 +6,12 @@ from flask import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 
 class TestSpecFileService(BaseTest):

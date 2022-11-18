@@ -4,7 +4,6 @@ import os
 from typing import Optional
 
 from flask import current_app
-
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -39,7 +38,7 @@ class ExampleDataLoader:
             is_review=False,
         )
         workflow_spec_service = ProcessModelService()
-        workflow_spec_service.add_spec(spec)
+        workflow_spec_service.add_process_model(spec)
 
         bpmn_file_name_with_extension = bpmn_file_name
         if not bpmn_file_name_with_extension:
