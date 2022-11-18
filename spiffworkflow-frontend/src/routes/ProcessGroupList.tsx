@@ -1,35 +1,36 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  ArrowRight,
+  // @ts-ignore
+} from '@carbon/icons-react';
 import {
   Button,
-  Table,
+  ClickableTile,
   // @ts-ignore
 } from '@carbon/react';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
-import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
-import {
-  getPageInfoFromSearchParams,
-  modifyProcessModelPath,
-} from '../helpers';
+import { modifyProcessModelPath, truncateString } from '../helpers';
 import {
   CarbonComboBoxSelection,
   PermissionsToCheck,
   ProcessGroup,
 } from '../interfaces';
-import ProcessModelSearch from '../components/ProcessModelSearch';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import ProcessModelSearch from '../components/ProcessModelSearch';
 
 // Example process group json
 // {'process_group_id': 'sure', 'display_name': 'Test Workflows', 'id': 'test_process_group'}
 export default function ProcessGroupList() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  const [processGroups, setProcessGroups] = useState([]);
-  const [pagination, setPagination] = useState(null);
+  const [processGroups, setProcessGroups] = useState<ProcessGroup[] | null>(
+    null
+  );
   const [processModelAvailableItems, setProcessModelAvailableItems] = useState(
     []
   );
@@ -43,7 +44,6 @@ export default function ProcessGroupList() {
   useEffect(() => {
     const setProcessGroupsFromResult = (result: any) => {
       setProcessGroups(result.results);
-      setPagination(result.pagination);
     };
     const processResultForProcessModels = (result: any) => {
       const selectionArray = result.results.map((item: any) => {
@@ -54,10 +54,9 @@ export default function ProcessGroupList() {
       setProcessModelAvailableItems(selectionArray);
     };
 
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     // for browsing
     HttpService.makeCallToBackend({
-      path: `/process-groups?per_page=${perPage}&page=${page}`,
+      path: `/process-groups?per_page=1000`,
       successCallback: setProcessGroupsFromResult,
     });
     // for search box
@@ -67,48 +66,38 @@ export default function ProcessGroupList() {
     });
   }, [searchParams]);
 
-  const buildTable = () => {
-    const rows = processGroups.map((row: ProcessGroup) => {
-      return (
-        <tr key={(row as any).id}>
-          <td>
-            <Link
-              to={`/admin/process-groups/${(row as any).id}`}
-              title={(row as any).id}
-            >
-              {(row as any).display_name}
-            </Link>
-          </td>
-        </tr>
-      );
-    });
+  const processGroupDirectChildrenCount = (processGroup: ProcessGroup) => {
     return (
-      <Table striped bordered>
-        <thead>
-          <tr>
-            <th>Process Group</th>
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
+      (processGroup.process_models || []).length +
+      (processGroup.process_groups || []).length
     );
   };
 
   const processGroupsDisplayArea = () => {
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     let displayText = null;
-    if (processGroups?.length > 0) {
-      displayText = (
-        <>
-          <h3>Browse</h3>
-          <PaginationForTable
-            page={page}
-            perPage={perPage}
-            pagination={pagination as any}
-            tableToDisplay={buildTable()}
-          />
-        </>
-      );
+    if (processGroups && processGroups.length > 0) {
+      displayText = (processGroups || []).map((row: ProcessGroup) => {
+        return (
+          <ClickableTile
+            id="tile-1"
+            className="tile-process-group"
+            href={`/admin/process-groups/${row.id}`}
+          >
+            <div className="tile-process-group-content-container">
+              <ArrowRight />
+              <div className="tile-process-group-display-name">
+                {row.display_name}
+              </div>
+              <p className="tile-process-group-description">
+                {truncateString(row.description || '', 25)}
+              </p>
+              <p className="tile-process-group-children-count">
+                Total Sub Items: {processGroupDirectChildrenCount(row)}
+              </p>
+            </div>
+          </ClickableTile>
+        );
+      });
     } else {
       displayText = <p>No Groups To Display</p>;
     }
@@ -131,7 +120,7 @@ export default function ProcessGroupList() {
     );
   };
 
-  if (pagination) {
+  if (processGroups) {
     return (
       <>
         <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
@@ -142,6 +131,7 @@ export default function ProcessGroupList() {
           <br />
           <br />
         </Can>
+        <br />
         {processModelSearchArea()}
         <br />
         {processGroupsDisplayArea()}

@@ -11,12 +11,6 @@ export interface RecentProcessModel {
   processModelDisplayName: string;
 }
 
-export interface ProcessGroup {
-  id: string;
-  display_name: string;
-  description?: string | null;
-}
-
 export interface ProcessReference {
   id: string; // The unique id of the process or decision table.
   name: string; // The process or decision Display name.
@@ -48,6 +42,14 @@ export interface ProcessModel {
   display_name: string;
   primary_file_name: string;
   files: ProcessFile[];
+}
+
+export interface ProcessGroup {
+  id: string;
+  display_name: string;
+  description?: string | null;
+  process_models?: ProcessModel[];
+  process_groups?: ProcessGroup[];
 }
 
 // tuple of display value and URL

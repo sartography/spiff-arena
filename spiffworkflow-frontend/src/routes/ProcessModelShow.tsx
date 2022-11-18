@@ -368,7 +368,6 @@ export default function ProcessModelShow() {
       return constructedTag;
     });
 
-    // return <ul>{tags}</ul>;
     const headers = ['Name', 'Actions'];
     return (
       <Table size="lg" useZebraStyles={false}>
