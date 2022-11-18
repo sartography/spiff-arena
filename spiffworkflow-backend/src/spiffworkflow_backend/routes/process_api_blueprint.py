@@ -253,15 +253,10 @@ def process_model_create(
             status_code=400,
         )
 
-    modified_process_model_id = process_model_info.id
-    unmodified_process_model_id = un_modify_modified_process_model_id(
-        modified_process_model_id
-    )
-    process_model_info.id = unmodified_process_model_id
-    process_group_id, _ = os.path.split(process_model_info.id)
+    unmodified_process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     process_model_service = ProcessModelService()
     process_group = process_model_service.get_process_group(
-        un_modify_modified_process_model_id(process_group_id)
+        unmodified_process_group_id
     )
     if process_group is None:
         raise ApiError(
