@@ -5,7 +5,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
-  convertSecondsToFormattedDate,
+  convertSecondsToFormattedDateString,
   getPageInfoFromSearchParams,
   modifyProcessModelPath,
   unModifyProcessModelPath,
@@ -68,7 +68,9 @@ export default function MessageInstanceList() {
           <td>{rowToUse.failure_cause || '-'}</td>
           <td>{rowToUse.status}</td>
           <td>
-            {convertSecondsToFormattedDate(rowToUse.created_at_in_seconds)}
+            {convertSecondsToFormattedDateString(
+              rowToUse.created_at_in_seconds
+            )}
           </td>
         </tr>
       );

@@ -806,18 +806,12 @@ def process_instance_list(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
-    # TODO need to look into test failures when the results from result_dict is
-    # used instead of the process instances
-
-    # substitution_variables = request.args.to_dict()
-    # result_dict = process_instance_report.generate_report(
-    #    process_instances.items, substitution_variables
-    # )
-
-    # results = result_dict["results"]
-    # report_metadata = result_dict["report_metadata"]
-
-    results = process_instances.items
+    results = list(
+        map(
+            ProcessInstanceService.serialize_flat_with_task_data,
+            process_instances.items,
+        )
+    )
     report_metadata = process_instance_report.report_metadata
 
     response_json = {

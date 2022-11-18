@@ -20,12 +20,16 @@ import {
   TableHeader,
   TableHead,
   TableRow,
+  TimePicker,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
-  convertDateStringToSeconds,
-  convertSecondsToFormattedDate,
+  convertDateAndTimeStringsToSeconds,
+  convertDateObjectToFormattedHoursMinutes,
+  convertSecondsToFormattedDateString,
+  convertSecondsToFormattedDateTime,
+  convertSecondsToFormattedTimeHoursMinutes,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessModelPath,
@@ -49,6 +53,10 @@ type OwnProps = {
   perPageOptions?: number[];
 };
 
+interface dateParameters {
+  [key: string]: ((..._args: any[]) => any)[];
+}
+
 export default function ProcessInstanceListTable({
   filtersEnabled = true,
   processModelFullIdentifier,
@@ -66,11 +74,20 @@ export default function ProcessInstanceListTable({
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
-  const [startFrom, setStartFrom] = useState<string>('');
-  const [startTo, setStartTo] = useState<string>('');
-  const [endFrom, setEndFrom] = useState<string>('');
-  const [endTo, setEndTo] = useState<string>('');
+  const [startFromDate, setStartFromDate] = useState<string>('');
+  const [startToDate, setStartToDate] = useState<string>('');
+  const [endFromDate, setEndFromDate] = useState<string>('');
+  const [endToDate, setEndToDate] = useState<string>('');
+  const [startFromTime, setStartFromTime] = useState<string>('');
+  const [startToTime, setStartToTime] = useState<string>('');
+  const [endFromTime, setEndFromTime] = useState<string>('');
+  const [endToTime, setEndToTime] = useState<string>('');
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
+  const [startFromTimeInvalid, setStartFromTimeInvalid] =
+    useState<boolean>(false);
+  const [startToTimeInvalid, setStartToTimeInvalid] = useState<boolean>(false);
+  const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
+  const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
@@ -86,14 +103,23 @@ export default function ProcessInstanceListTable({
   const [processModelSelection, setProcessModelSelection] =
     useState<ProcessModel | null>(null);
 
-  const parametersToAlwaysFilterBy = useMemo(() => {
+  const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
     return {
-      start_from: setStartFrom,
-      start_to: setStartTo,
-      end_from: setEndFrom,
-      end_to: setEndTo,
+      start_from: [setStartFromDate, setStartFromTime],
+      start_to: [setStartToDate, setStartToTime],
+      end_from: [setEndFromDate, setEndFromTime],
+      end_to: [setEndToDate, setEndToTime],
     };
-  }, [setStartFrom, setStartTo, setEndFrom, setEndTo]);
+  }, [
+    setStartFromDate,
+    setStartFromTime,
+    setStartToDate,
+    setStartToTime,
+    setEndFromDate,
+    setEndFromTime,
+    setEndToDate,
+    setEndToTime,
+  ]);
 
   const parametersToGetFromSearchParams = useMemo(() => {
     return {
@@ -130,19 +156,27 @@ export default function ProcessInstanceListTable({
         queryParamString += `&user_filter=${userAppliedFilter}`;
       }
 
-      Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
-        // @ts-expect-error TS(7053) FIXME:
-        const functionToCall = parametersToAlwaysFilterBy[paramName];
-        const searchParamValue = searchParams.get(paramName);
-        if (searchParamValue) {
-          queryParamString += `&${paramName}=${searchParamValue}`;
-          const dateString = convertSecondsToFormattedDate(
-            searchParamValue as any
-          );
-          functionToCall(dateString);
-          setShowFilterOptions(true);
+      Object.keys(dateParametersToAlwaysFilterBy).forEach(
+        (paramName: string) => {
+          const dateFunctionToCall =
+            dateParametersToAlwaysFilterBy[paramName][0];
+          const timeFunctionToCall =
+            dateParametersToAlwaysFilterBy[paramName][1];
+          const searchParamValue = searchParams.get(paramName);
+          if (searchParamValue) {
+            queryParamString += `&${paramName}=${searchParamValue}`;
+            const dateString = convertSecondsToFormattedDateString(
+              searchParamValue as any
+            );
+            dateFunctionToCall(dateString);
+            const timeString = convertSecondsToFormattedTimeHoursMinutes(
+              searchParamValue as any
+            );
+            timeFunctionToCall(timeString);
+            setShowFilterOptions(true);
+          }
         }
-      });
+      );
 
       Object.keys(parametersToGetFromSearchParams).forEach(
         (paramName: string) => {
@@ -211,7 +245,7 @@ export default function ProcessInstanceListTable({
     params,
     oneMonthInSeconds,
     oneHourInSeconds,
-    parametersToAlwaysFilterBy,
+    dateParametersToAlwaysFilterBy,
     parametersToGetFromSearchParams,
     filtersEnabled,
     paginationQueryParamPrefix,
@@ -219,16 +253,25 @@ export default function ProcessInstanceListTable({
     perPageOptions,
   ]);
 
+  // This sets the filter data using the saved reports returned from the initial instance_list query.
+  // This could probably be merged into the main useEffect but it works here now.
   useEffect(() => {
     const filters = processInstanceFilters as any;
-    Object.keys(parametersToAlwaysFilterBy).forEach((paramName: string) => {
-      // @ts-expect-error TS(7053) FIXME:
-      const functionToCall = parametersToAlwaysFilterBy[paramName];
+    Object.keys(dateParametersToAlwaysFilterBy).forEach((paramName: string) => {
+      const dateFunctionToCall = dateParametersToAlwaysFilterBy[paramName][0];
+      const timeFunctionToCall = dateParametersToAlwaysFilterBy[paramName][1];
       const paramValue = filters[paramName];
-      functionToCall('');
+      dateFunctionToCall('');
+      timeFunctionToCall('');
       if (paramValue) {
-        const dateString = convertSecondsToFormattedDate(paramValue as any);
-        functionToCall(dateString);
+        const dateString = convertSecondsToFormattedDateString(
+          paramValue as any
+        );
+        dateFunctionToCall(dateString);
+        const timeString = convertSecondsToFormattedTimeHoursMinutes(
+          paramValue as any
+        );
+        timeFunctionToCall(timeString);
         setShowFilterOptions(true);
       }
     });
@@ -253,7 +296,7 @@ export default function ProcessInstanceListTable({
     setProcessStatusSelection(processStatusSelectedArray);
   }, [
     processInstanceFilters,
-    parametersToAlwaysFilterBy,
+    dateParametersToAlwaysFilterBy,
     parametersToGetFromSearchParams,
     processModelAvailableItems,
   ]);
@@ -285,10 +328,22 @@ export default function ProcessInstanceListTable({
     );
     let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
 
-    const startFromSeconds = convertDateStringToSeconds(startFrom);
-    const endFromSeconds = convertDateStringToSeconds(endFrom);
-    const startToSeconds = convertDateStringToSeconds(startTo);
-    const endToSeconds = convertDateStringToSeconds(endTo);
+    const startFromSeconds = convertDateAndTimeStringsToSeconds(
+      startFromDate,
+      startFromTime || '00:00:00'
+    );
+    const startToSeconds = convertDateAndTimeStringsToSeconds(
+      startToDate,
+      startToTime || '00:00:00'
+    );
+    const endFromSeconds = convertDateAndTimeStringsToSeconds(
+      endFromDate,
+      endFromTime || '00:00:00'
+    );
+    const endToSeconds = convertDateAndTimeStringsToSeconds(
+      endToDate,
+      endToTime || '00:00:00'
+    );
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
       setErrorMessage({
         message: '"Start date from" cannot be after "start date to"',
@@ -342,24 +397,50 @@ export default function ProcessInstanceListTable({
     labelString: any,
     name: any,
     initialDate: any,
-    onChangeFunction: any
+    initialTime: string,
+    onChangeDateFunction: any,
+    onChangeTimeFunction: any,
+    timeInvalid: boolean,
+    setTimeInvalid: any
   ) => {
     return (
-      <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
-        <DatePickerInput
-          id={`date-picker-${name}`}
-          placeholder={DATE_FORMAT}
-          labelText={labelString}
-          type="text"
-          size="md"
-          autocomplete="off"
-          allowInput={false}
-          onChange={(dateChangeEvent: any) => {
-            onChangeFunction(dateChangeEvent.srcElement.value);
+      <>
+        <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
+          <DatePickerInput
+            id={`date-picker-${name}`}
+            placeholder={DATE_FORMAT}
+            labelText={labelString}
+            type="text"
+            size="md"
+            autocomplete="off"
+            allowInput={false}
+            onChange={(dateChangeEvent: any) => {
+              if (!initialDate && !initialTime) {
+                onChangeTimeFunction(
+                  convertDateObjectToFormattedHoursMinutes(new Date())
+                );
+              }
+              onChangeDateFunction(dateChangeEvent.srcElement.value);
+            }}
+            value={initialDate}
+          />
+        </DatePicker>
+        <TimePicker
+          invalid={timeInvalid}
+          id="time-picker"
+          labelText="Select a time"
+          pattern="^([01]\d|2[0-3]):?([0-5]\d)$"
+          value={initialTime}
+          onChange={(event: any) => {
+            if (event.srcElement.validity.valid) {
+              setTimeInvalid(false);
+            } else {
+              setTimeInvalid(true);
+            }
+            onChangeTimeFunction(event.srcElement.value);
           }}
-          value={initialDate}
         />
-      </DatePicker>
+      </>
     );
   };
 
@@ -386,10 +467,14 @@ export default function ProcessInstanceListTable({
   const clearFilters = () => {
     setProcessModelSelection(null);
     setProcessStatusSelection([]);
-    setStartFrom('');
-    setStartTo('');
-    setEndFrom('');
-    setEndTo('');
+    setStartFromDate('');
+    setStartFromTime('');
+    setStartToDate('');
+    setStartToTime('');
+    setEndFromDate('');
+    setEndFromTime('');
+    setEndToDate('');
+    setEndToTime('');
   };
 
   const filterOptions = () => {
@@ -415,18 +500,49 @@ export default function ProcessInstanceListTable({
             {dateComponent(
               'Start date from',
               'start-from',
-              startFrom,
-              setStartFrom
+              startFromDate,
+              startFromTime,
+              setStartFromDate,
+              setStartFromTime,
+              startFromTimeInvalid,
+              setStartFromTimeInvalid
             )}
           </Column>
           <Column md={4}>
-            {dateComponent('Start date to', 'start-to', startTo, setStartTo)}
+            {dateComponent(
+              'Start date to',
+              'start-to',
+              startToDate,
+              startToTime,
+              setStartToDate,
+              setStartToTime,
+              startToTimeInvalid,
+              setStartToTimeInvalid
+            )}
           </Column>
           <Column md={4}>
-            {dateComponent('End date from', 'end-from', endFrom, setEndFrom)}
+            {dateComponent(
+              'End date from',
+              'end-from',
+              endFromDate,
+              endFromTime,
+              setEndFromDate,
+              setEndFromTime,
+              endFromTimeInvalid,
+              setEndFromTimeInvalid
+            )}
           </Column>
           <Column md={4}>
-            {dateComponent('End date to', 'end-to', endTo, setEndTo)}
+            {dateComponent(
+              'End date to',
+              'end-to',
+              endToDate,
+              endToTime,
+              setEndToDate,
+              setEndToTime,
+              endToTimeInvalid,
+              setEndToTimeInvalid
+            )}
           </Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
@@ -455,7 +571,7 @@ export default function ProcessInstanceListTable({
 
   const buildTable = () => {
     const headerLabels: Record<string, string> = {
-      id: 'Process Instance Id',
+      id: 'Id',
       process_model_identifier: 'Process Model',
       start_in_seconds: 'Start Time',
       end_in_seconds: 'End Time',
@@ -493,7 +609,7 @@ export default function ProcessInstanceListTable({
       );
     };
     const formatSecondsForDisplay = (_row: any, seconds: any) => {
-      return convertSecondsToFormattedDate(seconds) || '-';
+      return convertSecondsToFormattedDateTime(seconds) || '-';
     };
     const defaultFormatter = (_row: any, value: any) => {
       return value;
@@ -530,7 +646,12 @@ export default function ProcessInstanceListTable({
         <TableHead>
           <TableRow>
             {headers.map((header: any) => (
-              <TableHeader key={header}>{header}</TableHeader>
+              <TableHeader
+                key={header}
+                title={header === 'Id' ? 'Process Instance Id' : null}
+              >
+                {header}
+              </TableHeader>
             ))}
           </TableRow>
         </TableHead>
