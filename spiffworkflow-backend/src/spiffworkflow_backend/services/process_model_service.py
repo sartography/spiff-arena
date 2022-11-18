@@ -50,6 +50,7 @@ class ProcessModelService(FileSystemService):
 
     @staticmethod
     def write_json_file(file_path: str, json_data: dict, indent: int = 4, sort_keys: bool = True) -> None:
+        """Write json file."""
         with open(file_path, "w") as h_open:
             json.dump(json_data, h_open, indent=indent, sort_keys=sort_keys)
 
@@ -81,14 +82,18 @@ class ProcessModelService(FileSystemService):
 
     def save_process_model(self, process_model: ProcessModelInfo) -> None:
         """Save_process_model."""
-        process_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model.id))
+        process_model_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), process_model.id)
+        )
         os.makedirs(process_model_path, exist_ok=True)
-        json_path = os.path.abspath(os.path.join(process_model_path, self.PROCESS_MODEL_JSON_FILE))
+        json_path = os.path.abspath(
+            os.path.join(process_model_path, self.PROCESS_MODEL_JSON_FILE)
+        )
         process_model_id = process_model.id
         # we don't save id in the json file
         # this allows us to move models around on the filesystem
         # the id is determined by its location on the filesystem
-        delattr(process_model, 'id')
+        delattr(process_model, "id")
         json_data = self.PROCESS_MODEL_SCHEMA.dump(process_model)
         self.write_json_file(json_path, json_data)
         process_model.id = process_model_id
@@ -184,9 +189,7 @@ class ProcessModelService(FileSystemService):
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = os.path.abspath(
-                os.path.join(
-                    FileSystemService.root_path(), process_group_id
-                )
+                os.path.join(FileSystemService.root_path(), process_group_id)
             )
             if self.is_group(process_group_path):
                 return self.__scan_process_group(process_group_path)
@@ -222,7 +225,7 @@ class ProcessModelService(FileSystemService):
         serialized_process_group = process_group.serialized
         # we don't store `id` in the json files
         # this allows us to move groups around on the filesystem
-        del serialized_process_group['id']
+        del serialized_process_group["id"]
         self.write_json_file(json_path, serialized_process_group)
         return process_group
 
@@ -296,7 +299,7 @@ class ProcessModelService(FileSystemService):
                 data = json.load(cat_json)
                 # we don't store `id` in the json files, so we add it back in here
                 relative_path = os.path.relpath(dir_path, FileSystemService.root_path())
-                data['id'] = relative_path
+                data["id"] = relative_path
                 process_group = ProcessGroup(**data)
                 if process_group is None:
                     raise ApiError(
@@ -353,7 +356,7 @@ class ProcessModelService(FileSystemService):
                     data.pop("process_group_id")
                 # we don't save `id` in the json file, so we add it back in here.
                 relative_path = os.path.relpath(path, FileSystemService.root_path())
-                data['id'] = relative_path
+                data["id"] = relative_path
                 process_model_info = ProcessModelInfo(**data)
                 if process_model_info is None:
                     raise ApiError(
@@ -374,7 +377,9 @@ class ProcessModelService(FileSystemService):
                 display_order=0,
                 is_review=False,
             )
-            self.write_json_file(json_file_path, self.PROCESS_MODEL_SCHEMA.dump(process_model_info))
+            self.write_json_file(
+                json_file_path, self.PROCESS_MODEL_SCHEMA.dump(process_model_info)
+            )
             # we don't store `id` in the json files, so we add it in here
             process_model_info.id = name
         if process_group:
