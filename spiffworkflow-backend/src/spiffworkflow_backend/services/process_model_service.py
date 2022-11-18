@@ -79,10 +79,16 @@ class ProcessModelService(FileSystemService):
         process_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model.id))
         os.makedirs(process_model_path, exist_ok=True)
         json_path = os.path.abspath(os.path.join(process_model_path, self.PROCESS_MODEL_JSON_FILE))
+        process_model_id = process_model.id
+        # we don't save id in the json file
+        # this allows us to move models around on the filesystem
+        # the id is determined by its location on the filesystem
+        delattr(process_model, 'id')
         with open(json_path, "w") as wf_json:
             json.dump(
                 self.PROCESS_MODEL_SCHEMA.dump(process_model), wf_json, indent=4, sort_keys=True
             )
+        process_model.id = process_model_id
 
     def process_model_delete(self, process_model_id: str) -> None:
         """Delete Procecss Model."""
@@ -340,6 +346,9 @@ class ProcessModelService(FileSystemService):
                 data = json.load(wf_json)
                 if "process_group_id" in data:
                     data.pop("process_group_id")
+                # we don't save `id` in the json file, so we add it back in here.
+                relative_path = os.path.relpath(path, FileSystemService.root_path())
+                data['id'] = relative_path
                 process_model_info = ProcessModelInfo(**data)
                 if process_model_info is None:
                     raise ApiError(
