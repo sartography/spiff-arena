@@ -7,7 +7,6 @@ from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -320,7 +319,7 @@ class ProcessInstanceService:
     def serialize_flat_with_task_data(
         process_instance: ProcessInstanceModel,
     ) -> dict[str, Any]:
-        """serialize_flat_with_task_data."""
+        """Serialize_flat_with_task_data."""
         results = {}
         try:
             original_status = process_instance.status
