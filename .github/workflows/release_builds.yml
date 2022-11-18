@@ -3,12 +3,12 @@ on:
   push:
     tags: [ v* ]
 
+env:
+  REGISTRY: ghcr.io
+
 jobs:
   build-and-push-frontend:
 #    if: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
-    env:
-      REGISTRY: ghcr.io
-      IMAGE_NAME: sartography/spiffworkflow-frontend
     runs-on: ubuntu-latest
     permissions:
       contents: read
