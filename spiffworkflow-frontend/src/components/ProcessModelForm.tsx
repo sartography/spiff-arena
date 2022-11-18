@@ -52,14 +52,6 @@ export default function ProcessModelForm({
     return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
   };
 
-  const deleteProcessModel = () => {
-    HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelPath}`,
-      successCallback: navigateToProcessModels,
-      httpMethod: 'DELETE',
-    });
-  };
-
   const handleFormSubmission = (event: any) => {
     event.preventDefault();
     let hasErrors = false;
@@ -172,16 +164,6 @@ export default function ProcessModelForm({
         Submit
       </Button>,
     ];
-    if (mode === 'edit') {
-      buttons.push(
-        <ButtonWithConfirmation
-          description={`Delete Process Model ${processModel.id}?`}
-          onConfirmation={deleteProcessModel}
-          buttonLabel="Delete"
-          confirmButtonLabel="Delete"
-        />
-      );
-    }
     return <ButtonSet>{buttons}</ButtonSet>;
   };
   return (

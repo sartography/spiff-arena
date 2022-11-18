@@ -31,7 +31,10 @@ import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { modifyProcessModelPath } from '../helpers';
+import {
+  getGroupFromModifiedModelId,
+  modifyProcessModelPath,
+} from '../helpers';
 import {
   PermissionsToCheck,
   ProcessFile,
@@ -106,7 +109,7 @@ export default function ProcessModelShow() {
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'GET', 'DELETE'],
@@ -249,6 +252,22 @@ export default function ProcessModelShow() {
       }
     }
     return null;
+  };
+
+  const navigateToProcessModels = (_result: any) => {
+    navigate(
+      `/admin/process-groups/${getGroupFromModifiedModelId(
+        modifiedProcessModelId
+      )}`
+    );
+  };
+
+  const deleteProcessModel = () => {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedProcessModelId}`,
+      successCallback: navigateToProcessModels,
+      httpMethod: 'DELETE',
+    });
   };
 
   const navigateToFileEdit = (processModelFile: ProcessFile) => {
@@ -529,7 +548,23 @@ export default function ProcessModelShow() {
             ],
           ]}
         />
-        <h1>Process Model: {processModel.display_name}</h1>
+        <Stack orientation="horizontal" gap={1}>
+          <h1 className="with-icons">
+            Process Model: {processModel.display_name}
+          </h1>
+
+          <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
+            <ButtonWithConfirmation
+              kind="ghost"
+              renderIcon={TrashCan}
+              iconDescription="Delete Process Model"
+              hasIconOnly
+              description={`Delete process model: ${processModel.display_name}`}
+              onConfirmation={deleteProcessModel}
+              confirmButtonLabel="Delete"
+            />
+          </Can>
+        </Stack>
         <p className="process-description">{processModel.description}</p>
         <Stack orientation="horizontal" gap={3}>
           <Can
