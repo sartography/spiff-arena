@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "connector-proxy-demo"
+version = "0.1.0"
+description = "An example showing how to use the Spiffworkflow-proxy's Flask Blueprint to make services available to Service Tasks."
+authors = ["Dan <dan@sartography.com>"]
+license = "LGPL"
+readme = "README.md"
+packages = [{include = "connector_proxy_demo", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Flask = "^2.2.2"
+spiffworkflow-proxy = {git = "https://github.com/sartography/spiffworkflow-proxy"}
+connector-aws = { git = "https://github.com/sartography/connector-aws.git"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "src",
+]
