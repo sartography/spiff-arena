@@ -3,12 +3,11 @@ on:
   push:
     tags: [ v* ]
 
-env:
-  REGISTRY: ghcr.io
-
 jobs:
   build-and-push-frontend:
     runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
     permissions:
       contents: read
       packages: write
