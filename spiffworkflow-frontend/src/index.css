@@ -5,19 +5,19 @@
   color: white;
 }
 
-h1{
-  height: 36px;
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
+h1 {
   font-weight: 400;
   font-size: 28px;
   line-height: 36px;
   color: #161616;
-  flex: none;
-  order: 0;
-  align-self: stretch;
-  flex-grow: 0;
   margin-bottom: 1em
+}
+
+h2 {
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
 }
 
 .span-tag {

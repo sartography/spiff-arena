@@ -19,6 +19,7 @@ import {
 } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
 
 export default function ProcessGroupShow() {
   const params = useParams();
@@ -95,7 +96,7 @@ export default function ProcessGroupShow() {
     });
     return (
       <div>
-        <h3>Process Models</h3>
+        <h2>Process Models</h2>
         <Table striped bordered>
           <thead>
             <tr>
@@ -198,15 +199,10 @@ export default function ProcessGroupShow() {
           )}
           <br />
           <br />
-          {/* eslint-disable-next-line sonarjs/no-gratuitous-expressions */}
-          {groupPagination && groupPagination.total > 0 && (
-            <PaginationForTable
-              page={page}
-              perPage={perPage}
-              pagination={groupPagination}
-              tableToDisplay={buildGroupTable()}
-            />
-          )}
+          <ProcessGroupListTiles
+            processGroup={processGroup}
+            headerElement={<h2>Process Groups</h2>}
+          />
         </ul>
       </>
     );
