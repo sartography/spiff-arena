@@ -53,7 +53,10 @@ export function SpiffExtensionSelect(props) {
   }
   const getOptions = () => {
     const optionList = [];
-    if (optionType in spiffExtensionOptions) {
+    if (
+      optionType in spiffExtensionOptions &&
+      spiffExtensionOptions[optionType] !== null
+    ) {
       spiffExtensionOptions[optionType].forEach((opt) => {
         optionList.push({
           label: opt.label,
