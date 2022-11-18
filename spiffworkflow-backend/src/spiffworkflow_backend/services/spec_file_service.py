@@ -7,6 +7,7 @@ from typing import Optional
 
 from flask_bpmn.models.db import db
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
+
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.file import SpecReference
