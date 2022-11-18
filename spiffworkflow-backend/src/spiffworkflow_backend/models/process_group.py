@@ -55,12 +55,23 @@ class ProcessGroupSchema(Schema):
         """Meta."""
 
         model = ProcessGroup
-        fields = ["id", "display_name", "display_order", "admin", "process_models"]
+        fields = [
+            "id",
+            "display_name",
+            "display_order",
+            "admin",
+            "process_models",
+            "description",
+            "process_groups",
+        ]
 
     process_models = marshmallow.fields.List(
         marshmallow.fields.Nested(
             "ProcessModelInfoSchema", dump_only=True, required=False
         )
+    )
+    process_groups = marshmallow.fields.List(
+        marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False)
     )
 
     @post_load

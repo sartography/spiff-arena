@@ -71,7 +71,7 @@ h1{
 }
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  monospace;
 }
 
 .app-logo {
@@ -182,9 +182,53 @@ h1.with-icons {
 }
 
 /* Json Web Form CSS Fix - Bootstrap now requries that each li have a "list-inline-item." Also have a PR
- in on this with the react-jsonschema-form repo. This is just a patch fix to allow date inputs to layout a little more cleanly */
+in on this with the react-jsonschema-form repo. This is just a patch fix to allow date inputs to layout a little more cleanly */
 .list-inline>li {
   display: inline-block;
   padding-right: 5px;
   padding-left: 5px;
+}
+
+.cds--tile.tile-process-group {
+  padding: 0px;
+  margin: 16px;
+  width: 354px;
+  height: 264px;
+  background: #F4F4F4;
+  order: 1;
+  float: left;
+}
+
+.tile-process-group-content-container {
+  width: 354px;
+  height: 264px;
+  padding: 1em;
+  position: relative;
+}
+
+.tile-process-group-display-name {
+  margin-top: 2em;
+  margin-bottom: 1em;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
+  order: 0;
+}
+
+.tile-process-group-description {
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.16px;
+  color: #161616;
+  order: 1;
+}
+
+.tile-process-group-children-count {
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.16px;
+  color: #161616;
+  order: 1;
+  position: absolute;
+  bottom: 1em;
 }
