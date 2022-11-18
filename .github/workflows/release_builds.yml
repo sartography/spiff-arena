@@ -1,10 +1,11 @@
 name: Build docker containers on version release
+
 on:
   push:
     tags: [ v* ]
 
 jobs:
-  build-and-push-frontend:
+  builds:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
