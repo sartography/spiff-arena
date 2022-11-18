@@ -44,15 +44,14 @@ class ProcessInstanceReportService:
 
     @classmethod
     def report_with_identifier(
-        cls,
-        user: UserModel,
-        report_identifier: Optional[str] = None
+        cls, user: UserModel, report_identifier: Optional[str] = None
     ) -> ProcessInstanceReportModel:
+        """Report_with_filter."""
         if report_identifier is None:
             return ProcessInstanceReportModel.default_report(user)
 
         # TODO replace with system reports that are loaded on launch (or similar)
-        temp_system_metdata_map = {
+        temp_system_metadata_map = {
             "system_report_instances_initiated_by_me": {
                 "columns": [
                     {"Header": "id", "accessor": "id"},
@@ -91,8 +90,8 @@ class ProcessInstanceReportService:
             },
         }
 
-        process_instance_report = cls(
-            identifier=identifier,
+        process_instance_report = ProcessInstanceReportModel(
+            identifier=report_identifier,
             created_by_id=user.id,
             report_metadata=temp_system_metadata_map[report_identifier],
         )

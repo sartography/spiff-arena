@@ -736,10 +736,12 @@ def process_instance_list(
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
     user_filter: Optional[bool] = False,
-    report_identifier: Optional[str] = None
+    report_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-    process_instance_report = ProcessInstanceReportService.report_with_identifier(g.user, report_identifier)
+    process_instance_report = ProcessInstanceReportService.report_with_identifier(
+        g.user, report_identifier
+    )
 
     if user_filter:
         report_filter = ProcessInstanceReportFilter(
