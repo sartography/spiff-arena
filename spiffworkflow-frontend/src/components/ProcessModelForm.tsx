@@ -42,7 +42,7 @@ export default function ProcessModelForm({
   const handleFormSubmission = (event: any) => {
     event.preventDefault();
     let hasErrors = false;
-    if (!hasValidIdentifier(processModel.id)) {
+    if (mode === 'new' && !hasValidIdentifier(processModel.id)) {
       setIdentifierInvalid(true);
       hasErrors = true;
     }

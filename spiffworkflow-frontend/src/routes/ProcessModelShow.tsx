@@ -38,6 +38,7 @@ import {
 import {
   PermissionsToCheck,
   ProcessFile,
+  ProcessInstance,
   ProcessModel,
   RecentProcessModel,
 } from '../interfaces';
@@ -45,6 +46,7 @@ import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import ProcessInstanceRun from '../components/ProcessInstanceRun';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: ProcessModel
@@ -100,7 +102,8 @@ export default function ProcessModelShow() {
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
-  const [processInstanceResult, setProcessInstanceResult] = useState(null);
+  const [processInstance, setProcessInstance] =
+    useState<ProcessInstance | null>(null);
   const [reloadModel, setReloadModel] = useState<boolean>(false);
   const [filesToUpload, setFilesToUpload] = useState<any>(null);
   const [showFileUploadModal, setShowFileUploadModal] =
@@ -132,38 +135,14 @@ export default function ProcessModelShow() {
     });
   }, [reloadModel, modifiedProcessModelId]);
 
-  const processModelRun = (processInstance: any) => {
-    setErrorMessage(null);
-    HttpService.makeCallToBackend({
-      path: `/process-instances/${processInstance.id}/run`,
-      successCallback: setProcessInstanceResult,
-      failureCallback: setErrorMessage,
-      httpMethod: 'POST',
-    });
-  };
-
-  const processInstanceCreateAndRun = () => {
-    HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances`,
-      successCallback: processModelRun,
-      httpMethod: 'POST',
-    });
-  };
-
   const processInstanceRunResultTag = () => {
-    if (processModel && processInstanceResult) {
-      // FIXME: ensure that the task is actually for the current user as well
-      const processInstanceId = (processInstanceResult as any).id;
-      const nextTask = (processInstanceResult as any).next_task;
-      if (nextTask && nextTask.state === 'READY') {
-        navigate(`/tasks/${processInstanceId}/${nextTask.id}`);
-      }
+    if (processInstance) {
       return (
         <div className="alert alert-success" role="alert">
           <p>
-            Process Instance {processInstanceId} kicked off (
+            Process Instance {processInstance.id} kicked off (
             <Link
-              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${processInstanceId}`}
+              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${processInstance.id}`}
               data-qa="process-instance-show-link"
             >
               view
@@ -572,9 +551,10 @@ export default function ProcessModelShow() {
             a={targetUris.processInstanceActionPath}
             ability={ability}
           >
-            <Button onClick={processInstanceCreateAndRun} variant="primary">
-              Run
-            </Button>
+            <ProcessInstanceRun
+              processModel={processModel}
+              onSuccessCallback={setProcessInstance}
+            />
           </Can>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             <Button
