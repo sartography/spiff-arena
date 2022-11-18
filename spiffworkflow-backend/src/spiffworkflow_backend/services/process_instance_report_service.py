@@ -54,12 +54,12 @@ class ProcessInstanceReportService:
         temp_system_metadata_map = {
             "system_report_instances_initiated_by_me": {
                 "columns": [
-                    {"Header": "id", "accessor": "id"},
                     {
                         "Header": "process_model_identifier",
                         "accessor": "process_model_identifier",
                     },
                     {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+                    {"Header": "id", "accessor": "id"},
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "status", "accessor": "status"},
                 ],
