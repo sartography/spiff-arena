@@ -21,7 +21,7 @@ class FileSystemService:
     methods for dealing with the File system.
     """
     PROCESS_GROUP_JSON_FILE = "process_group.json"
-    PROCESS_MODEL_JSON_FILE = "workflow.json"
+    PROCESS_MODEL_JSON_FILE = "process_model.json"
 
     @staticmethod
     def root_path() -> str:
