@@ -5,7 +5,6 @@ from typing import Any
 import requests
 from flask import current_app
 from flask import g
-
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
 

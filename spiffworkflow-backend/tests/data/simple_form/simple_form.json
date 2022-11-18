@@ -2,9 +2,7 @@
   "title": "Simple form",
   "description": "A simple form example.",
   "type": "object",
-  "required": [
-    "name"
-  ],
+  "required": ["name"],
   "properties": {
     "name": {
       "type": "string",
@@ -14,11 +12,7 @@
     "department": {
       "type": "string",
       "title": "Department",
-      "enum": [
-        "Finance",
-        "HR",
-        "IT"
-      ]
+      "enum": ["Finance", "HR", "IT"]
     }
   }
 }
