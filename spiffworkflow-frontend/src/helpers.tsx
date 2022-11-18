@@ -197,3 +197,16 @@ export const getGroupFromModifiedModelId = (modifiedId: string) => {
 export const splitProcessModelId = (processModelId: string) => {
   return processModelId.split('/');
 };
+
+export const refreshAtInterval = (
+  interval: number,
+  timeout: number,
+  func: Function
+) => {
+  const intervalRef = setInterval(() => func(), interval * 1000);
+  const timeoutRef = setTimeout(
+    () => clearInterval(intervalRef),
+    timeout * 1000
+  );
+  return [intervalRef, timeoutRef];
+};
