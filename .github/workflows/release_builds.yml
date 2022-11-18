@@ -27,7 +27,7 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         working-directory: spiffworkflow-frontend
-        id: meta
+        id: meta_frontend
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -38,12 +38,12 @@ jobs:
           # this action doesn't seem to respect working-directory so set context
           context: spiffworkflow-backend
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_frontend.outputs.tags }}
+          labels: ${{ steps.meta_frontend.outputs.labels }}
 
       - name: Extract metadata (tags, labels) for Docker
         working-directory: spiffworkflow-backend
-        id: meta
+        id: meta_backend
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -54,5 +54,5 @@ jobs:
           # this action doesn't seem to respect working-directory so set context
           context: spiffworkflow-frontend
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.meta_backend.outputs.tags }}
+          labels: ${{ steps.meta_backend.outputs.labels }}
