@@ -242,7 +242,7 @@ class ProcessModelService(FileSystemService):
         self.write_json_file(json_path, serialized_process_group)
         return process_group
 
-    def process_group_move(self, original_process_group_id, new_location) -> ProcessGroup:
+    def process_group_move(self, original_process_group_id: str, new_location: str) -> ProcessGroup:
         original_group_path = self.process_group_path(original_process_group_id)
         original_root, original_group_id = os.path.split(original_group_path)
         new_root = f"{FileSystemService.root_path()}/{new_location}"

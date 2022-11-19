@@ -2396,7 +2396,7 @@ class TestProcessApi(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
-    ):
+    ) -> None:
         """test_move_model."""
         self.setup_initial_groups_for_move_tests(client, with_super_admin_user)
 
