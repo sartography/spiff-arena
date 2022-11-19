@@ -238,6 +238,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModelCategory"
 
+  /process-groups/{modified_process_group_id}/move:
+    parameters:
+      - name: modified_process_group_id
+        in: path
+        required: true
+        description: The unique id of an existing process group.
+        schema:
+          type: string
+      - name: new_location
+        in: query
+        required: true
+        description: the new location, as an existing process group id
+        schema:
+          type: string
+    put:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_move
+      summary: returns the new group
+      tags:
+        - Process Groups
+      responses:
+        "200":
+          description: Process Group
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModelCategory"
+
   /process-models:
     parameters:
       - name: process_group_identifier
