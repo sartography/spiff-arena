@@ -115,13 +115,18 @@ class ProcessModelService(FileSystemService):
         path = f"{FileSystemService.root_path()}/{process_model_id}"
         shutil.rmtree(path)
 
-    def process_model_move(self, original_process_model_id: str, new_location: str) -> ProcessModelInfo:
-        original_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), original_process_model_id))
+    def process_model_move(
+        self, original_process_model_id: str, new_location: str
+    ) -> ProcessModelInfo:
+        """process_model_move."""
+        original_model_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), original_process_model_id)
+        )
         _, model_id = os.path.split(original_model_path)
         new_relative_path = f"{new_location}/{model_id}"
-        new_model_path = os.path.abspath(os.path.join(
-            FileSystemService.root_path(), new_relative_path
-        ))
+        new_model_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), new_relative_path)
+        )
         shutil.move(original_model_path, new_model_path)
         new_process_model = self.get_process_model(new_relative_path)
         return new_process_model
@@ -242,7 +247,10 @@ class ProcessModelService(FileSystemService):
         self.write_json_file(json_path, serialized_process_group)
         return process_group
 
-    def process_group_move(self, original_process_group_id: str, new_location: str) -> ProcessGroup:
+    def process_group_move(
+        self, original_process_group_id: str, new_location: str
+    ) -> ProcessGroup:
+        """process_group_move."""
         original_group_path = self.process_group_path(original_process_group_id)
         original_root, original_group_id = os.path.split(original_group_path)
         new_root = f"{FileSystemService.root_path()}/{new_location}"
