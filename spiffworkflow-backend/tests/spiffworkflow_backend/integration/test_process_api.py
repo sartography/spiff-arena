@@ -2369,3 +2369,67 @@ class TestProcessApi(BaseTest):
         )
 
         print("test_script_unit_test_run")
+
+    def test_move_model(self):
+        ...
+
+    def test_move_group(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        groups = [
+            'group_a', 'group_b', 'group_b/group_bb'
+        ]
+        # setup initial groups
+        for group in groups:
+            self.create_process_group(
+                client,
+                with_super_admin_user,
+                group,
+                display_name=group
+            )
+        # make sure initial groups exist
+        for group in groups:
+            persisted = ProcessModelService().get_process_group(group)
+            assert persisted is not None
+            assert persisted.id == group
+
+        # add sub group to `group_a`
+        sub_group_id = 'sub_group'
+        original_location = 'group_a'
+        original_sub_path = f"{original_location}/{sub_group_id}"
+        self.create_process_group(
+            client,
+            with_super_admin_user,
+            original_sub_path,
+            display_name=sub_group_id
+        )
+        # make sure original subgroup exists
+        persisted = ProcessModelService().get_process_group(original_sub_path)
+        assert persisted is not None
+        assert persisted.id == original_sub_path
+
+        # move sub_group to `group_b/group_bb`
+        new_location = 'group_b/group_bb'
+        new_sub_path = f"{new_location}/{sub_group_id}"
+        modified_original_process_group_id = original_sub_path.replace("/", ":")
+        response = client.put(
+            f"/v1.0/process-groups/{modified_original_process_group_id}/move?new_location={new_location}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 201
+        assert response.json['id'] == new_sub_path
+
+        # make sure the original subgroup does not exist
+        with pytest.raises(ProcessEntityNotFoundError) as e:
+            ProcessModelService().get_process_group(original_sub_path)
+
+        assert e.value.args[0] == 'process_group_not_found'
+        assert e.value.args[1] == f"Process Group Id: {original_sub_path}"
+
+        # make sure the new subgroup does exist
+        new_process_group = ProcessModelService().get_process_group(new_sub_path)
+        assert new_process_group.id == new_sub_path

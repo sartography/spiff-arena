@@ -231,6 +231,19 @@ class ProcessModelService(FileSystemService):
         self.write_json_file(json_path, serialized_process_group)
         return process_group
 
+    def process_group_move(self, original_process_group_id, new_location) -> ProcessGroup:
+        original_group_path = self.process_group_path(original_process_group_id)
+        original_root, original_group_id = os.path.split(original_group_path)
+        new_root = f"{FileSystemService.root_path()}/{new_location}"
+        new_relative_path = f"{new_location}/{original_group_id}"
+        new_group_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), new_root, original_group_id)
+        )
+        destination = shutil.move(original_group_path, new_group_path)
+        new_process_group = self.get_process_group(destination)
+        print("process_group_move")
+        return new_process_group
+
     def __get_all_nested_models(self, group_path: str) -> list:
         """__get_all_nested_models."""
         all_nested_models = []
