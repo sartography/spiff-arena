@@ -237,8 +237,13 @@ def process_group_show(
 def process_group_move(
     modified_process_group_id: str, new_location: str
 ) -> flask.wrappers.Response:
-    original_process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
-    new_process_group = ProcessModelService().process_group_move(original_process_group_id, new_location)
+    """process_group_move."""
+    original_process_group_id = un_modify_modified_process_model_id(
+        modified_process_group_id
+    )
+    new_process_group = ProcessModelService().process_group_move(
+        original_process_group_id, new_location
+    )
     return make_response(jsonify(new_process_group), 201)
 
 
@@ -331,8 +336,13 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
 def process_model_move(
     modified_process_model_identifier: str, new_location: str
 ) -> flask.wrappers.Response:
-    original_process_model_id = un_modify_modified_process_model_id(modified_process_model_identifier)
-    new_process_model = ProcessModelService().process_model_move(original_process_model_id, new_location)
+    """process_model_move."""
+    original_process_model_id = un_modify_modified_process_model_id(
+        modified_process_model_identifier
+    )
+    new_process_model = ProcessModelService().process_model_move(
+        original_process_model_id, new_location
+    )
     return make_response(jsonify(new_process_model), 201)
 
 
