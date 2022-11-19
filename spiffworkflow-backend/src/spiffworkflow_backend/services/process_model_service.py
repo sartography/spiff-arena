@@ -115,6 +115,17 @@ class ProcessModelService(FileSystemService):
         path = f"{FileSystemService.root_path()}/{process_model_id}"
         shutil.rmtree(path)
 
+    def process_model_move(self, original_process_model_id: str, new_location: str) -> ProcessModelInfo:
+        original_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), original_process_model_id))
+        _, model_id = os.path.split(original_model_path)
+        new_relative_path = f"{new_location}/{model_id}"
+        new_model_path = os.path.abspath(os.path.join(
+            FileSystemService.root_path(), new_relative_path
+        ))
+        shutil.move(original_model_path, new_model_path)
+        new_process_model = self.get_process_model(new_relative_path)
+        return new_process_model
+
     @classmethod
     def get_process_model_from_relative_path(
         cls, relative_path: str
