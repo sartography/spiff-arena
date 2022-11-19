@@ -328,6 +328,14 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
     return process_model_json
 
 
+def process_model_move(
+    modified_process_model_identifier: str, new_location: str
+) -> flask.wrappers.Response:
+    original_process_model_id = un_modify_modified_process_model_id(modified_process_model_identifier)
+    new_process_model = ProcessModelService().process_model_move(original_process_model_id, new_location)
+    return make_response(jsonify(new_process_model), 201)
+
+
 def process_model_list(
     process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
