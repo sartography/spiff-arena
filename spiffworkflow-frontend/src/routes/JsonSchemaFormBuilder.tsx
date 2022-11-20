@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
-import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
+import { Button, Select, SelectItem, TextInput } from '@carbon/react';
 import { useParams } from 'react-router-dom';
 import { FormField } from '../interfaces';
 import { modifyProcessModelPath, slugifyString } from '../helpers';
@@ -8,18 +8,25 @@ import HttpService from '../services/HttpService';
 
 export default function JsonSchemaFormBuilder() {
   const params = useParams();
+  const formFieldTypes = ['textbox', 'checkbox', 'select'];
+
   const [formTitle, setFormTitle] = useState<string>('');
   const [formDescription, setFormDescription] = useState<string>('');
   const [formId, setFormId] = useState<string>('');
   const [formFields, setFormFields] = useState<FormField[]>([]);
   const [showNewFormField, setShowNewFormField] = useState<boolean>(false);
+  const [formFieldSelectOptions, setFormFieldSelectOptions] =
+    useState<string>('');
   const [formIdHasBeenUpdatedByUser, setFormIdHasBeenUpdatedByUser] =
     useState<boolean>(false);
   const [formFieldIdHasBeenUpdatedByUser, setFormFieldIdHasBeenUpdatedByUser] =
     useState<boolean>(false);
+  const [showFormFieldSelectTextField, setShowFormFieldSelectTextField] =
+    useState<boolean>(false);
 
   const [formFieldId, setFormFieldId] = useState<string>('');
   const [formFieldTitle, setFormFieldTitle] = useState<string>('');
+  const [formFieldType, setFormFieldType] = useState<string>('');
 
   const modifiedProcessModelId = modifyProcessModelPath(
     `${params.process_model_id}`
@@ -34,11 +41,21 @@ export default function JsonSchemaFormBuilder() {
       properties: {},
       required: [],
     };
+
     formFields.forEach((formField: FormField) => {
-      (formJson.properties as any)[formField.id] = {
-        type: 'string',
+      let jsonSchemaFieldType = 'string';
+      if (formField.type === 'checkbox') {
+        jsonSchemaFieldType = 'boolean';
+      }
+      const formJsonObject: any = {
+        type: jsonSchemaFieldType,
         title: formField.title,
       };
+
+      if (formField.type === 'select') {
+        formJsonObject.enum = formField.enum;
+      }
+      (formJson.properties as any)[formField.id] = formJsonObject;
     });
 
     return JSON.stringify(formJson, null, 2);
@@ -70,16 +87,28 @@ export default function JsonSchemaFormBuilder() {
     setFormTitle(newFormTitle);
   };
 
-  const createNewFormField = () => {
+  const addFormField = () => {
     const newFormField: FormField = {
       id: formFieldId,
       title: formFieldTitle,
       required: false,
+      type: formFieldType,
+      enum: formFieldSelectOptions.split(','),
     };
 
     setFormFieldIdHasBeenUpdatedByUser(false);
     setShowNewFormField(false);
     setFormFields([...formFields, newFormField]);
+  };
+
+  const handleFormFieldTypeChange = (event: any) => {
+    setFormFieldType(event.srcElement.value);
+
+    if (event.srcElement.value === 'select') {
+      setShowFormFieldSelectTextField(true);
+    } else {
+      setShowFormFieldSelectTextField(false);
+    }
   };
 
   const newFormFieldComponent = () => {
@@ -105,7 +134,26 @@ export default function JsonSchemaFormBuilder() {
               setFormFieldId(event.srcElement.value);
             }}
           />
-          <Button onClick={createNewFormField}>Add Field</Button>
+          <Select
+            id="form-field-type"
+            labelText="Type"
+            onChange={handleFormFieldTypeChange}
+          >
+            {formFieldTypes.map((fft: string) => {
+              return <SelectItem text={fft} value={fft} />;
+            })}
+          </Select>
+          {showFormFieldSelectTextField ? (
+            <TextInput
+              id="json-form-field-select-options"
+              name="select-options"
+              labelText="Select Options"
+              onChange={(event: any) => {
+                setFormFieldSelectOptions(event.srcElement.value);
+              }}
+            />
+          ) : null}
+          <Button onClick={addFormField}>Add Field</Button>
         </>
       );
     }
@@ -184,6 +232,9 @@ export default function JsonSchemaFormBuilder() {
           onClick={() => {
             setFormFieldId('');
             setFormFieldTitle('');
+            setFormFieldType('');
+            setFormFieldSelectOptions('');
+            setShowFormFieldSelectTextField(false);
             setShowNewFormField(true);
           }}
         >
