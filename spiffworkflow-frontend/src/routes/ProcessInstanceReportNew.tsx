@@ -56,7 +56,7 @@ export default function ProcessInstanceReportNew() {
   return (
     <>
       <ProcessBreadcrumb />
-      <h1>Add Process Model</h1>
+      <h1>Add Process Instance Perspective</h1>
       <form onSubmit={addProcessInstanceReport}>
         <label htmlFor="identifier">
           identifier:
