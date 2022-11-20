@@ -107,4 +107,6 @@ export interface FormField {
   id: string;
   title: string;
   required: boolean;
+  type: string;
+  enum: string[];
 }
