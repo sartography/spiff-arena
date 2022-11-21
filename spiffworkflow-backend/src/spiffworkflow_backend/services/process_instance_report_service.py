@@ -55,7 +55,7 @@ class ProcessInstanceReportService:
         ).first()
 
         if process_instance_report is not None:
-            return process_instance_report
+            return process_instance_report  # type: ignore
 
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
@@ -115,7 +115,7 @@ class ProcessInstanceReportService:
             report_metadata=temp_system_metadata_map[report_identifier],
         )
 
-        return process_instance_report
+        return process_instance_report  # type: ignore
 
     @classmethod
     def filter_by_to_dict(
