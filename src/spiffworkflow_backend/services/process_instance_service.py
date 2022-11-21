@@ -320,7 +320,7 @@ class ProcessInstanceService:
     def serialize_flat_with_task_data(
         process_instance: ProcessInstanceModel,
     ) -> dict[str, Any]:
-        """serialize_flat_with_task_data."""
+        """Serialize_flat_with_task_data."""
         results = {}
         try:
             original_status = process_instance.status

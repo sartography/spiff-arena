@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-import os
 import random
 import string
 import uuid
@@ -253,16 +252,11 @@ def process_model_create(
             status_code=400,
         )
 
-    modified_process_model_id = process_model_info.id
-    unmodified_process_model_id = un_modify_modified_process_model_id(
-        modified_process_model_id
+    unmodified_process_group_id = un_modify_modified_process_model_id(
+        modified_process_group_id
     )
-    process_model_info.id = unmodified_process_model_id
-    process_group_id, _ = os.path.split(process_model_info.id)
     process_model_service = ProcessModelService()
-    process_group = process_model_service.get_process_group(
-        un_modify_modified_process_model_id(process_group_id)
-    )
+    process_group = process_model_service.get_process_group(unmodified_process_group_id)
     if process_group is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
@@ -270,7 +264,7 @@ def process_model_create(
             status_code=400,
         )
 
-    process_model_service.add_spec(process_model_info)
+    process_model_service.add_process_model(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,
@@ -307,7 +301,7 @@ def process_model_update(
 
     # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
-    ProcessModelService().update_spec(process_model, body_filtered)
+    ProcessModelService().update_process_model(process_model, body_filtered)
     return ProcessModelInfoSchema().dump(process_model)
 
 
@@ -736,9 +730,12 @@ def process_instance_list(
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
     user_filter: Optional[bool] = False,
+    report_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
+    process_instance_report = ProcessInstanceReportService.report_with_identifier(
+        g.user, report_identifier
+    )
 
     if user_filter:
         report_filter = ProcessInstanceReportFilter(

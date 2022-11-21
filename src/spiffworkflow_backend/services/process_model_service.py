@@ -32,21 +32,29 @@ class ProcessModelService(FileSystemService):
     the workflow process_models at once, or manage those file in a git repository. """
 
     GROUP_SCHEMA = ProcessGroupSchema()
-    WF_SCHEMA = ProcessModelInfoSchema()
+    PROCESS_MODEL_SCHEMA = ProcessModelInfoSchema()
 
     def is_group(self, path: str) -> bool:
         """Is_group."""
-        group_json_path = os.path.join(path, self.CAT_JSON_FILE)
+        group_json_path = os.path.join(path, self.PROCESS_GROUP_JSON_FILE)
         if os.path.exists(group_json_path):
             return True
         return False
 
     def is_model(self, path: str) -> bool:
         """Is_model."""
-        model_json_path = os.path.join(path, self.WF_JSON_FILE)
+        model_json_path = os.path.join(path, self.PROCESS_MODEL_JSON_FILE)
         if os.path.exists(model_json_path):
             return True
         return False
+
+    @staticmethod
+    def write_json_file(
+        file_path: str, json_data: dict, indent: int = 4, sort_keys: bool = True
+    ) -> None:
+        """Write json file."""
+        with open(file_path, "w") as h_open:
+            json.dump(json_data, h_open, indent=indent, sort_keys=sort_keys)
 
     @staticmethod
     def get_batch(
@@ -59,13 +67,13 @@ class ProcessModelService(FileSystemService):
         end = start + per_page
         return items[start:end]
 
-    def add_spec(self, process_model: ProcessModelInfo) -> None:
+    def add_process_model(self, process_model: ProcessModelInfo) -> None:
         """Add_spec."""
         display_order = self.next_display_order(process_model)
         process_model.display_order = display_order
         self.save_process_model(process_model)
 
-    def update_spec(
+    def update_process_model(
         self, process_model: ProcessModelInfo, attributes_to_update: dict
     ) -> None:
         """Update_spec."""
@@ -76,13 +84,21 @@ class ProcessModelService(FileSystemService):
 
     def save_process_model(self, process_model: ProcessModelInfo) -> None:
         """Save_process_model."""
-        spec_path = os.path.join(FileSystemService.root_path(), process_model.id)
-        os.makedirs(spec_path, exist_ok=True)
-        json_path = os.path.join(spec_path, self.WF_JSON_FILE)
-        with open(json_path, "w") as wf_json:
-            json.dump(
-                self.WF_SCHEMA.dump(process_model), wf_json, indent=4, sort_keys=True
-            )
+        process_model_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), process_model.id)
+        )
+        os.makedirs(process_model_path, exist_ok=True)
+        json_path = os.path.abspath(
+            os.path.join(process_model_path, self.PROCESS_MODEL_JSON_FILE)
+        )
+        process_model_id = process_model.id
+        # we don't save id in the json file
+        # this allows us to move models around on the filesystem
+        # the id is determined by its location on the filesystem
+        delattr(process_model, "id")
+        json_data = self.PROCESS_MODEL_SCHEMA.dump(process_model)
+        self.write_json_file(json_path, json_data)
+        process_model.id = process_model_id
 
     def process_model_delete(self, process_model_id: str) -> None:
         """Delete Procecss Model."""
@@ -107,7 +123,7 @@ class ProcessModelService(FileSystemService):
         process_group_identifier, _ = os.path.split(relative_path)
         process_group = cls().get_process_group(process_group_identifier)
         path = os.path.join(FileSystemService.root_path(), relative_path)
-        return cls().__scan_spec(path, process_group=process_group)
+        return cls().__scan_process_model(path, process_group=process_group)
 
     def get_process_model(self, process_model_id: str) -> ProcessModelInfo:
         """Get a process model from a model and group id.
@@ -117,7 +133,9 @@ class ProcessModelService(FileSystemService):
         if not os.path.exists(FileSystemService.root_path()):
             raise ProcessEntityNotFoundError("process_model_root_not_found")
 
-        model_path = os.path.join(FileSystemService.root_path(), process_model_id)
+        model_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), process_model_id)
+        )
         if self.is_model(model_path):
             process_model = self.get_process_model_from_relative_path(process_model_id)
             return process_model
@@ -140,7 +158,7 @@ class ProcessModelService(FileSystemService):
         #                         process_group = self.__scan_process_group(
         #                             process_group_dir
         #                         )
-        #                         return self.__scan_spec(sd.path, sd.name, process_group)
+        #                         return self.__scan_process_model(sd.path, sd.name, process_group)
         raise ProcessEntityNotFoundError("process_model_not_found")
 
     def get_process_models(
@@ -172,8 +190,8 @@ class ProcessModelService(FileSystemService):
     def get_process_group(self, process_group_id: str) -> ProcessGroup:
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
-            process_group_path = os.path.join(
-                FileSystemService.root_path(), process_group_id
+            process_group_path = os.path.abspath(
+                os.path.join(FileSystemService.root_path(), process_group_id)
             )
             if self.is_group(process_group_path):
                 return self.__scan_process_group(process_group_path)
@@ -205,14 +223,12 @@ class ProcessModelService(FileSystemService):
         """Update_process_group."""
         cat_path = self.process_group_path(process_group.id)
         os.makedirs(cat_path, exist_ok=True)
-        json_path = os.path.join(cat_path, self.CAT_JSON_FILE)
-        with open(json_path, "w") as cat_json:
-            json.dump(
-                process_group.serialized,
-                cat_json,
-                indent=4,
-                sort_keys=True,
-            )
+        json_path = os.path.join(cat_path, self.PROCESS_GROUP_JSON_FILE)
+        serialized_process_group = process_group.serialized
+        # we don't store `id` in the json files
+        # this allows us to move groups around on the filesystem
+        del serialized_process_group["id"]
+        self.write_json_file(json_path, serialized_process_group)
         return process_group
 
     def __get_all_nested_models(self, group_path: str) -> list:
@@ -279,10 +295,13 @@ class ProcessModelService(FileSystemService):
 
     def __scan_process_group(self, dir_path: str) -> ProcessGroup:
         """Reads the process_group.json file, and any nested directories."""
-        cat_path = os.path.join(dir_path, self.CAT_JSON_FILE)
+        cat_path = os.path.join(dir_path, self.PROCESS_GROUP_JSON_FILE)
         if os.path.exists(cat_path):
             with open(cat_path) as cat_json:
                 data = json.load(cat_json)
+                # we don't store `id` in the json files, so we add it back in here
+                relative_path = os.path.relpath(dir_path, FileSystemService.root_path())
+                data["id"] = relative_path
                 process_group = ProcessGroup(**data)
                 if process_group is None:
                     raise ApiError(
@@ -292,13 +311,14 @@ class ProcessModelService(FileSystemService):
         else:
             process_group_id = dir_path.replace(FileSystemService.root_path(), "")
             process_group = ProcessGroup(
-                id=process_group_id,
+                id="",
                 display_name=process_group_id,
                 display_order=10000,
                 admin=False,
             )
-            with open(cat_path, "w") as wf_json:
-                json.dump(self.GROUP_SCHEMA.dump(process_group), wf_json, indent=4)
+            self.write_json_file(cat_path, self.GROUP_SCHEMA.dump(process_group))
+            # we don't store `id` in the json files, so we add it in here
+            process_group.id = process_group_id
         with os.scandir(dir_path) as nested_items:
             process_group.process_models = []
             process_group.process_groups = []
@@ -312,7 +332,7 @@ class ProcessModelService(FileSystemService):
                         )
                     elif self.is_model(nested_item.path):
                         process_group.process_models.append(
-                            self.__scan_spec(
+                            self.__scan_process_model(
                                 nested_item.path,
                                 nested_item.name,
                                 process_group=process_group,
@@ -322,22 +342,25 @@ class ProcessModelService(FileSystemService):
             # process_group.process_groups.sort()
         return process_group
 
-    def __scan_spec(
+    def __scan_process_model(
         self,
         path: str,
         name: Optional[str] = None,
         process_group: Optional[ProcessGroup] = None,
     ) -> ProcessModelInfo:
-        """__scan_spec."""
-        spec_path = os.path.join(path, self.WF_JSON_FILE)
+        """__scan_process_model."""
+        json_file_path = os.path.join(path, self.PROCESS_MODEL_JSON_FILE)
 
-        if os.path.exists(spec_path):
-            with open(spec_path) as wf_json:
+        if os.path.exists(json_file_path):
+            with open(json_file_path) as wf_json:
                 data = json.load(wf_json)
                 if "process_group_id" in data:
                     data.pop("process_group_id")
-                spec = ProcessModelInfo(**data)
-                if spec is None:
+                # we don't save `id` in the json file, so we add it back in here.
+                relative_path = os.path.relpath(path, FileSystemService.root_path())
+                data["id"] = relative_path
+                process_model_info = ProcessModelInfo(**data)
+                if process_model_info is None:
                     raise ApiError(
                         error_code="process_model_could_not_be_loaded_from_disk",
                         message=f"We could not load the process_model from disk with data: {data}",
@@ -349,15 +372,18 @@ class ProcessModelService(FileSystemService):
                     message="Missing name of process model. It should be given",
                 )
 
-            spec = ProcessModelInfo(
-                id=name,
+            process_model_info = ProcessModelInfo(
+                id="",
                 display_name=name,
                 description="",
                 display_order=0,
                 is_review=False,
             )
-            with open(spec_path, "w") as wf_json:
-                json.dump(self.WF_SCHEMA.dump(spec), wf_json, indent=4)
+            self.write_json_file(
+                json_file_path, self.PROCESS_MODEL_SCHEMA.dump(process_model_info)
+            )
+            # we don't store `id` in the json files, so we add it in here
+            process_model_info.id = name
         if process_group:
-            spec.process_group = process_group.id
-        return spec
+            process_model_info.process_group = process_group.id
+        return process_model_info
