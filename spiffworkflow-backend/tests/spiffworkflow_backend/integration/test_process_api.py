@@ -355,6 +355,41 @@ class TestProcessApi(BaseTest):
         assert response.json["primary_process_id"] == "superduper"
         assert response.json["is_review"] is False
 
+    def test_process_model_list_all(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_process_model_list_all."""
+        group_id = "test_group/test_sub_group"
+        self.create_process_group(client, with_super_admin_user, group_id)
+
+        # add 5 models to the group
+        for i in range(5):
+            process_model_identifier = f"{group_id}/test_model_{i}"
+            model_display_name = f"Test Model {i}"
+            model_description = f"Test Model {i} Description"
+            self.create_process_model_with_api(
+                client,
+                process_model_id=process_model_identifier,
+                process_model_display_name=model_display_name,
+                process_model_description=model_description,
+                user=with_super_admin_user,
+            )
+
+        # get all models
+        response = client.get(
+            "/v1.0/process-models?per_page=1000",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.json is not None
+        assert len(response.json["results"]) == 5
+        assert response.json["pagination"]["count"] == 5
+        assert response.json["pagination"]["total"] == 5
+        assert response.json["pagination"]["pages"] == 1
+
     def test_process_model_list(
         self,
         app: Flask,

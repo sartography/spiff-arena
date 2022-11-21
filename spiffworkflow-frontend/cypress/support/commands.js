@@ -76,7 +76,10 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.get('input[name=id]').should('have.value', modelId);
   cy.contains('Submit').click();
 
-  cy.url().should('include', `process-models/${groupId}:${modelId}`);
+  cy.url().should(
+    'include',
+    `process-models/${cy.modifyProcessModelPath(groupId)}:${modelId}`
+  );
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
 
@@ -93,6 +96,8 @@ Cypress.Commands.add(
   'navigateToProcessModel',
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
+    cy.contains('Misc').click();
+    cy.contains(`Process Group: Misc`);
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
