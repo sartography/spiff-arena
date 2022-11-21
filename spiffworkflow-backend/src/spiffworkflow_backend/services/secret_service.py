@@ -19,15 +19,15 @@ from spiffworkflow_backend.models.secret_model import SecretModel
 class SecretService:
     """SecretService."""
 
-    def encrypt_key(self, plain_key: str) -> str:
-        """Encrypt_key."""
-        # flask_secret = current_app.secret_key
-        # print("encrypt_key")
-        ...
+    # def encrypt_key(self, plain_key: str) -> str:
+    #     """Encrypt_key."""
+    #     # flask_secret = current_app.secret_key
+    #     # print("encrypt_key")
+    #     ...
 
-    def decrypt_key(self, encrypted_key: str) -> str:
-        """Decrypt key."""
-        ...
+    # def decrypt_key(self, encrypted_key: str) -> str:
+    #     """Decrypt key."""
+    #     ...
 
     @staticmethod
     def add_secret(

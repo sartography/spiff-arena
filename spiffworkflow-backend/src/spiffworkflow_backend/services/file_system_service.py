@@ -32,7 +32,7 @@ class FileSystemService:
         return os.path.join(app_root, "..", dir_name)
 
     @staticmethod
-    def id_string_to_relative_path(id_string):
+    def id_string_to_relative_path(id_string: str) -> str:
         return id_string.replace("/", os.sep)
 
     @staticmethod
