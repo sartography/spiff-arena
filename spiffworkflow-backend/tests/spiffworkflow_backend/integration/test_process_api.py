@@ -2384,7 +2384,7 @@ class TestProcessApi(BaseTest):
         for group in groups:
             persisted = ProcessModelService().get_process_group(group)
             assert persisted is not None
-            assert persisted.id_for_file_path() == group
+            assert persisted.id == group
 
     def test_move_model(
         self,

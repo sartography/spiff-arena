@@ -207,7 +207,10 @@ class ProcessModelService(FileSystemService):
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = os.path.abspath(
-                os.path.join(FileSystemService.root_path(), process_group_id)
+                os.path.join(
+                    FileSystemService.root_path(),
+                    FileSystemService.id_string_to_relative_path(process_group_id)
+                )
             )
             if self.is_group(process_group_path):
                 return self.__scan_process_group(process_group_path)
