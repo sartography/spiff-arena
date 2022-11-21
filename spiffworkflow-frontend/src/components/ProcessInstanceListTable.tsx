@@ -331,7 +331,7 @@ export default function ProcessInstanceListTable({
   };
 
   const applyFilter = (event: any) => {
-    event?.preventDefault();
+    event.preventDefault();
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       undefined,
@@ -401,7 +401,6 @@ export default function ProcessInstanceListTable({
       queryParamString += `&process_model_identifier=${processModelSelection.id}`;
     }
 
-    console.log(processInstanceReportSelection);
     if (processInstanceReportSelection) {
       queryParamString += `&report_identifier=${processInstanceReportSelection.id}`;
     }
