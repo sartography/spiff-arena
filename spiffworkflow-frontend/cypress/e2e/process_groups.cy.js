@@ -37,7 +37,8 @@ describe('process-groups', () => {
     cy.contains(groupId).should('not.exist');
   });
 
-  it('can paginate items', () => {
-    cy.basicPaginationTest();
-  });
+  // process groups no longer has pagination post-tiles
+  // it('can paginate items', () => {
+  //   cy.basicPaginationTest();
+  // });
 });
