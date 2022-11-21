@@ -9,9 +9,16 @@
     "@carbon/icons-react": "^11.10.0",
     "@carbon/react": "^1.16.0",
     "@carbon/styles": "^1.16.0",
+    "@casl/ability": "^6.3.2",
+    "@casl/react": "^3.1.0",
     "@ginkgo-bioworks/react-json-schema-form-builder": "^2.9.0",
     "@monaco-editor/react": "^4.4.5",
-    "@rjsf/core": "^4.2.0",
+    "@mui/material": "^5.10.14",
+    "@react-icons/all-files": "^4.1.0",
+    "@rjsf/core": "*",
+    "@rjsf/mui": "^5.0.0-beta.13",
+    "@rjsf/utils": "^5.0.0-beta.13",
+    "@rjsf/validator-ajv6": "^5.0.0-beta.13",
     "@tanstack/react-table": "^8.2.2",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
@@ -71,9 +78,9 @@
     "test": "react-scripts test --coverage",
     "t": "npm test -- --watchAll=false",
     "eject": "craco eject",
-    "format": "prettier --write src/**/*.js{,x}",
-    "lint": "./node_modules/.bin/eslint src *.js",
-    "lint:fix": "./node_modules/.bin/eslint --fix src *.js"
+    "format": "prettier --write src/**/*.[tj]s{,x}",
+    "lint": "./node_modules/.bin/eslint src",
+    "lint:fix": "./node_modules/.bin/eslint --fix src"
   },
   "eslintConfig": {
     "extends": [
@@ -94,6 +101,7 @@
     ]
   },
   "devDependencies": {
+    "@cypress/grep": "^3.1.0",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.30.6",
     "cypress": "^10.8.0",

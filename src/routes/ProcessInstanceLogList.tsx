@@ -6,9 +6,9 @@ import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
-  convertSecondsToFormattedDate,
   modifyProcessModelPath,
   unModifyProcessModelPath,
+  convertSecondsToFormattedDateTime,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -49,7 +49,7 @@ export default function ProcessInstanceLogList() {
               data-qa="process-instance-show-link"
               to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
             >
-              {convertSecondsToFormattedDate(rowToUse.timestamp)}
+              {convertSecondsToFormattedDateTime(rowToUse.timestamp)}
             </Link>
           </td>
         </tr>
@@ -74,7 +74,6 @@ export default function ProcessInstanceLogList() {
   };
 
   if (pagination) {
-    console.log('params.process_model_id', params.process_model_id);
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     return (
       <main>
@@ -99,7 +98,6 @@ export default function ProcessInstanceLogList() {
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
         />
       </main>
     );

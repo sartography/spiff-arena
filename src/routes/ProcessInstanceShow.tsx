@@ -23,6 +23,7 @@ import {
   Stack,
   // @ts-ignore
 } from '@carbon/react';
+import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -32,6 +33,9 @@ import {
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ErrorContext from '../contexts/ErrorContext';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessInstanceShow() {
   const navigate = useNavigate();
@@ -50,6 +54,12 @@ export default function ProcessInstanceShow() {
   );
   const modifiedProcessModelId = params.process_model_id;
 
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.messageInstanceListPath]: ['GET'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
+
   const navigateToProcessInstances = (_result: any) => {
     navigate(
       `/admin/process-instances?process_model_identifier=${unModifiedProcessModelId}`
@@ -63,12 +73,12 @@ export default function ProcessInstanceShow() {
     });
     if (typeof params.spiff_step === 'undefined')
       HttpService.makeCallToBackend({
-        path: `/process-instance/${params.process_instance_id}/tasks?all_tasks=true`,
+        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/tasks?all_tasks=true`,
         successCallback: setTasks,
       });
     else
       HttpService.makeCallToBackend({
-        path: `/process-instance/${params.process_instance_id}/tasks?all_tasks=true&spiff_step=${params.spiff_step}`,
+        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/tasks?all_tasks=true&spiff_step=${params.spiff_step}`,
         successCallback: setTasks,
       });
   }, [params, modifiedProcessModelId]);
@@ -245,14 +255,20 @@ export default function ProcessInstanceShow() {
               >
                 Logs
               </Button>
-              <Button
-                size="sm"
-                className="button-white-background"
-                data-qa="process-instance-message-instance-list-link"
-                href={`/admin/messages?process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
+              <Can
+                I="GET"
+                a={targetUris.messageInstanceListPath}
+                ability={ability}
               >
-                Messages
-              </Button>
+                <Button
+                  size="sm"
+                  className="button-white-background"
+                  data-qa="process-instance-message-instance-list-link"
+                  href={`/admin/messages?process_model_id=${params.process_model_id}&process_instance_id=${params.process_instance_id}`}
+                >
+                  Messages
+                </Button>
+              </Can>
             </ButtonSet>
           </Column>
         </Grid>
@@ -521,6 +537,7 @@ export default function ProcessInstanceShow() {
     elements.push(resumeButton(processInstanceToUse));
     elements.push(
       <ButtonWithConfirmation
+        data-qa="process-instance-delete"
         kind="ghost"
         renderIcon={TrashCan}
         iconDescription="Delete"

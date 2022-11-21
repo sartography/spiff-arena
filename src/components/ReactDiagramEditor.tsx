@@ -52,10 +52,14 @@ import TouchModule from 'diagram-js/lib/navigation/touch';
 // @ts-expect-error TS(7016) FIXME
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
+import { Can } from '@casl/react';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import { makeid } from '../helpers';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 type OwnProps = {
   processModelId: string;
@@ -76,6 +80,7 @@ type OwnProps = {
   onServiceTasksRequested?: (..._args: any[]) => any;
   onJsonFilesRequested?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
+  onSearchProcessModels?: (..._args: any[]) => any;
   url?: string;
 };
 
@@ -99,6 +104,7 @@ export default function ReactDiagramEditor({
   onServiceTasksRequested,
   onJsonFilesRequested,
   onDmnFilesRequested,
+  onSearchProcessModels,
   url,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
@@ -106,6 +112,13 @@ export default function ReactDiagramEditor({
   const [performingXmlUpdates, setPerformingXmlUpdates] = useState(false);
 
   const alreadyImportedXmlRef = useRef(false);
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processModelFileShowPath]: ['POST', 'GET', 'PUT', 'DELETE'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
     if (diagramModelerState) {
@@ -292,6 +305,12 @@ export default function ReactDiagramEditor({
     diagramModeler.on('spiff.json_files.requested', (event: any) => {
       handleServiceTasksRequested(event);
     });
+
+    diagramModeler.on('spiff.callactivity.search', (event: any) => {
+      if (onSearchProcessModels) {
+        onSearchProcessModels(event.value, event.eventBus, event.element);
+      }
+    });
   }, [
     diagramModelerState,
     diagramType,
@@ -304,6 +323,7 @@ export default function ReactDiagramEditor({
     onServiceTasksRequested,
     onJsonFilesRequested,
     onDmnFilesRequested,
+    onSearchProcessModels,
   ]);
 
   useEffect(() => {
@@ -517,20 +537,40 @@ export default function ReactDiagramEditor({
     if (diagramType !== 'readonly') {
       return (
         <>
-          <Button onClick={handleSave} variant="danger">
-            Save
-          </Button>
-          {fileName && (
-            <ButtonWithConfirmation
-              description={`Delete file ${fileName}?`}
-              onConfirmation={handleDelete}
-              buttonLabel="Delete"
-            />
-          )}
-          {onSetPrimaryFile && (
-            <Button onClick={handleSetPrimaryFile}>Set as primary file</Button>
-          )}
-          <Button onClick={downloadXmlFile}>Download xml</Button>
+          <Can
+            I="PUT"
+            a={targetUris.processModelFileShowPath}
+            ability={ability}
+          >
+            <Button onClick={handleSave}>Save</Button>
+          </Can>
+          <Can
+            I="DELETE"
+            a={targetUris.processModelFileShowPath}
+            ability={ability}
+          >
+            {fileName && (
+              <ButtonWithConfirmation
+                description={`Delete file ${fileName}?`}
+                onConfirmation={handleDelete}
+                buttonLabel="Delete"
+              />
+            )}
+          </Can>
+          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
+            {onSetPrimaryFile && (
+              <Button onClick={handleSetPrimaryFile}>
+                Set as primary file
+              </Button>
+            )}
+          </Can>
+          <Can
+            I="GET"
+            a={targetUris.processModelFileShowPath}
+            ability={ability}
+          >
+            <Button onClick={downloadXmlFile}>Download xml</Button>
+          </Can>
         </>
       );
     }

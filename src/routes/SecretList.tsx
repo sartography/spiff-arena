@@ -42,12 +42,12 @@ export default function SecretList() {
       return (
         <tr key={(row as any).key}>
           <td>
-            <Link to={`/admin/secrets/${(row as any).key}`}>
+            <Link to={`/admin/configuration/secrets/${(row as any).key}`}>
               {(row as any).id}
             </Link>
           </td>
           <td>
-            <Link to={`/admin/secrets/${(row as any).key}`}>
+            <Link to={`/admin/configuration/secrets/${(row as any).key}`}>
               {(row as any).key}
             </Link>
           </td>
@@ -83,7 +83,6 @@ export default function SecretList() {
           perPage={perPage}
           pagination={pagination as any}
           tableToDisplay={buildTable()}
-          path="/admin/secrets"
         />
       );
     } else {
@@ -97,7 +96,7 @@ export default function SecretList() {
       <div>
         <h1>Secrets</h1>
         {SecretsDisplayArea()}
-        <Button href="/admin/secrets/new">Add a secret</Button>
+        <Button href="/admin/configuration/secrets/new">Add a secret</Button>
       </div>
     );
   }

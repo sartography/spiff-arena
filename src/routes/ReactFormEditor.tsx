@@ -132,6 +132,7 @@ export default function ReactFormEditor() {
         secondaryButtonText="Cancel"
         onSecondarySubmit={handleFileNameCancel}
         onRequestSubmit={handleFileNameSave}
+        onRequestClose={handleFileNameCancel}
       >
         <label>File Name:</label>
         <span>
@@ -174,6 +175,19 @@ export default function ReactFormEditor() {
         <Button onClick={saveFile} variant="danger" data-qa="file-save-button">
           Save
         </Button>
+        {params.file_name ? null : (
+          <Button
+            onClick={() =>
+              navigate(
+                `/admin/process-models/${params.process_model_id}/form-builder`
+              )
+            }
+            variant="danger"
+            data-qa="form-builder-button"
+          >
+            Form Builder
+          </Button>
+        )}
         {params.file_name ? (
           <ButtonWithConfirmation
             description={`Delete file ${params.file_name}?`}

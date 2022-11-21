@@ -3,14 +3,16 @@ import { useMemo, useState } from 'react';
 import { Content } from '@carbon/react';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { defineAbility } from '@casl/ability';
 import ErrorContext from './contexts/ErrorContext';
 import NavigationBar from './components/NavigationBar';
 
-import HomePage from './routes/HomePage';
-import TaskShow from './routes/TaskShow';
+import HomePageRoutes from './routes/HomePageRoutes';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminRoutes from './routes/AdminRoutes';
 import { ErrorForDisplay } from './interfaces';
+
+import { AbilityContext } from './contexts/Can';
 
 export default function App() {
   const [errorMessage, setErrorMessage] = useState<ErrorForDisplay | null>(
@@ -21,6 +23,8 @@ export default function App() {
     () => [errorMessage, setErrorMessage],
     [errorMessage]
   );
+
+  const ability = defineAbility(() => {});
 
   let errorTag = null;
   if (errorMessage) {
@@ -47,29 +51,24 @@ export default function App() {
 
   return (
     <div className="cds--white">
-      <ErrorContext.Provider value={errorContextValueArray}>
-        <BrowserRouter>
-          <NavigationBar />
-          <Content>
-            {errorTag}
-            <ErrorBoundary>
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/tasks" element={<HomePage />} />
-                <Route path="/admin/*" element={<AdminRoutes />} />
-                <Route
-                  path="/tasks/:process_instance_id/:task_id"
-                  element={<TaskShow />}
-                />
-                <Route
-                  path="/tasks/:process_instance_id/:task_id"
-                  element={<TaskShow />}
-                />
-              </Routes>
-            </ErrorBoundary>
-          </Content>
-        </BrowserRouter>
-      </ErrorContext.Provider>
+      {/* @ts-ignore */}
+      <AbilityContext.Provider value={ability}>
+        <ErrorContext.Provider value={errorContextValueArray}>
+          <BrowserRouter>
+            <NavigationBar />
+            <Content>
+              {errorTag}
+              <ErrorBoundary>
+                <Routes>
+                  <Route path="/*" element={<HomePageRoutes />} />
+                  <Route path="/tasks/*" element={<HomePageRoutes />} />
+                  <Route path="/admin/*" element={<AdminRoutes />} />
+                </Routes>
+              </ErrorBoundary>
+            </Content>
+          </BrowserRouter>
+        </ErrorContext.Provider>
+      </AbilityContext.Provider>
     </div>
   );
 }

@@ -1,5 +1,9 @@
 import { format } from 'date-fns';
-import { DATE_TIME_FORMAT, DATE_FORMAT } from './config';
+import {
+  DATE_TIME_FORMAT,
+  DATE_FORMAT,
+  TIME_FORMAT_HOURS_MINUTES,
+} from './config';
 import {
   DEFAULT_PER_PAGE,
   DEFAULT_PAGE,
@@ -42,27 +46,72 @@ export const convertDateToSeconds = (
   return null;
 };
 
+export const convertDateObjectToFormattedString = (dateObject: Date) => {
+  if (dateObject) {
+    return format(dateObject, DATE_FORMAT);
+  }
+  return null;
+};
+
+export const convertDateAndTimeStringsToDate = (
+  dateString: string,
+  timeString: string
+) => {
+  if (dateString && timeString) {
+    return new Date(`${dateString}T${timeString}`);
+  }
+  return null;
+};
+
+export const convertDateAndTimeStringsToSeconds = (
+  dateString: string,
+  timeString: string
+) => {
+  const dateObject = convertDateAndTimeStringsToDate(dateString, timeString);
+  if (dateObject) {
+    return convertDateToSeconds(dateObject);
+  }
+  return null;
+};
+
 export const convertStringToDate = (dateString: string) => {
-  if (dateString) {
-    // add midnight time to the date so it c uses the correct date
-    // after converting to timezone
-    return new Date(`${dateString}T00:10:00`);
+  return convertDateAndTimeStringsToSeconds(dateString, '00:10:00');
+};
+
+export const convertSecondsToDateObject = (seconds: number) => {
+  if (seconds) {
+    return new Date(seconds * 1000);
   }
   return null;
 };
 
 export const convertSecondsToFormattedDateTime = (seconds: number) => {
-  if (seconds) {
-    const dateObject = new Date(seconds * 1000);
+  const dateObject = convertSecondsToDateObject(seconds);
+  if (dateObject) {
     return format(dateObject, DATE_TIME_FORMAT);
   }
   return null;
 };
 
-export const convertSecondsToFormattedDate = (seconds: number) => {
-  if (seconds) {
-    const dateObject = new Date(seconds * 1000);
-    return format(dateObject, DATE_FORMAT);
+export const convertDateObjectToFormattedHoursMinutes = (dateObject: Date) => {
+  if (dateObject) {
+    return format(dateObject, TIME_FORMAT_HOURS_MINUTES);
+  }
+  return null;
+};
+
+export const convertSecondsToFormattedTimeHoursMinutes = (seconds: number) => {
+  const dateObject = convertSecondsToDateObject(seconds);
+  if (dateObject) {
+    return convertDateObjectToFormattedHoursMinutes(dateObject);
+  }
+  return null;
+};
+
+export const convertSecondsToFormattedDateString = (seconds: number) => {
+  const dateObject = convertSecondsToDateObject(seconds);
+  if (dateObject) {
+    return convertDateObjectToFormattedString(dateObject);
   }
   return null;
 };
@@ -79,11 +128,20 @@ export const objectIsEmpty = (obj: object) => {
 export const getPageInfoFromSearchParams = (
   searchParams: any,
   defaultPerPage: string | number = DEFAULT_PER_PAGE,
-  defaultPage: string | number = DEFAULT_PAGE
+  defaultPage: string | number = DEFAULT_PAGE,
+  paginationQueryParamPrefix: string | null = null
 ) => {
-  const page = parseInt(searchParams.get('page') || defaultPage.toString(), 10);
+  const paginationQueryParamPrefixToUse = paginationQueryParamPrefix
+    ? `${paginationQueryParamPrefix}_`
+    : '';
+  const page = parseInt(
+    searchParams.get(`${paginationQueryParamPrefixToUse}page`) ||
+      defaultPage.toString(),
+    10
+  );
   const perPage = parseInt(
-    searchParams.get('per_page') || defaultPerPage.toString(),
+    searchParams.get(`${paginationQueryParamPrefixToUse}per_page`) ||
+      defaultPerPage.toString(),
     10
   );
 
@@ -138,4 +196,17 @@ export const getGroupFromModifiedModelId = (modifiedId: string) => {
 
 export const splitProcessModelId = (processModelId: string) => {
   return processModelId.split('/');
+};
+
+export const refreshAtInterval = (
+  interval: number,
+  timeout: number,
+  func: Function
+) => {
+  const intervalRef = setInterval(() => func(), interval * 1000);
+  const timeoutRef = setTimeout(
+    () => clearInterval(intervalRef),
+    timeout * 1000
+  );
+  return [intervalRef, timeoutRef];
 };

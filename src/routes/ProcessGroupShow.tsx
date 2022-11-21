@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams, useParams } from 'react-router-dom';
 // @ts-ignore
 import { Button, Table, Stack } from '@carbon/react';
+import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
@@ -10,7 +11,15 @@ import {
   modifyProcessModelPath,
   unModifyProcessModelPath,
 } from '../helpers';
-import { ProcessGroup, ProcessModel } from '../interfaces';
+import {
+  PaginationObject,
+  PermissionsToCheck,
+  ProcessGroup,
+  ProcessModel,
+} from '../interfaces';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
 
 export default function ProcessGroupShow() {
   const params = useParams();
@@ -18,9 +27,16 @@ export default function ProcessGroupShow() {
 
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [processModels, setProcessModels] = useState([]);
-  const [processGroups, setProcessGroups] = useState([]);
-  const [modelPagination, setModelPagination] = useState(null);
-  const [groupPagination, setGroupPagination] = useState(null);
+  const [modelPagination, setModelPagination] =
+    useState<PaginationObject | null>(null);
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processGroupListPath]: ['POST'],
+    [targetUris.processGroupShowPath]: ['PUT'],
+    [targetUris.processModelCreatePath]: ['POST'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
@@ -28,10 +44,6 @@ export default function ProcessGroupShow() {
     const setProcessModelFromResult = (result: any) => {
       setProcessModels(result.results);
       setModelPagination(result.pagination);
-    };
-    const setProcessGroupFromResult = (result: any) => {
-      setProcessGroups(result.results);
-      setGroupPagination(result.pagination);
     };
     const processResult = (result: any) => {
       setProcessGroup(result);
@@ -41,10 +53,6 @@ export default function ProcessGroupShow() {
       HttpService.makeCallToBackend({
         path: `/process-models?process_group_identifier=${unmodifiedProcessGroupId}&per_page=${perPage}&page=${page}`,
         successCallback: setProcessModelFromResult,
-      });
-      HttpService.makeCallToBackend({
-        path: `/process-groups?process_group_identifier=${unmodifiedProcessGroupId}&per_page=${perPage}&page=${page}`,
-        successCallback: setProcessGroupFromResult,
       });
     };
     HttpService.makeCallToBackend({
@@ -58,7 +66,9 @@ export default function ProcessGroupShow() {
       return null;
     }
     const rows = processModels.map((row: ProcessModel) => {
-      const modifiedProcessModelId: String = modifyProcessModelPath((row as any).id);
+      const modifiedProcessModelId: String = modifyProcessModelPath(
+        (row as any).id
+      );
       return (
         <tr key={row.id}>
           <td>
@@ -75,7 +85,7 @@ export default function ProcessGroupShow() {
     });
     return (
       <div>
-        <h3>Process Models</h3>
+        <h2>Process Models</h2>
         <Table striped bordered>
           <thead>
             <tr>
@@ -89,43 +99,7 @@ export default function ProcessGroupShow() {
     );
   };
 
-  const buildGroupTable = () => {
-    if (processGroup === null) {
-      return null;
-    }
-    const rows = processGroups.map((row: ProcessGroup) => {
-      const modifiedProcessGroupId: String = modifyProcessModelPath(row.id);
-      return (
-        <tr key={row.id}>
-          <td>
-            <Link
-              to={`/admin/process-groups/${modifiedProcessGroupId}`}
-              data-qa="process-model-show-link"
-            >
-              {row.id}
-            </Link>
-          </td>
-          <td>{row.display_name}</td>
-        </tr>
-      );
-    });
-    return (
-      <div>
-        <h3>Process Groups</h3>
-        <Table striped bordered>
-          <thead>
-            <tr>
-              <th>Process Group Id</th>
-              <th>Display Name</th>
-            </tr>
-          </thead>
-          <tbody>{rows}</tbody>
-        </Table>
-      </div>
-    );
-  };
-
-  if (processGroup && groupPagination && modelPagination) {
+  if (processGroup && modelPagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     const modifiedProcessGroupId = modifyProcessModelPath(processGroup.id);
     return (
@@ -136,43 +110,51 @@ export default function ProcessGroupShow() {
             ['', `process_group:${processGroup.id}`],
           ]}
         />
+        <h1>Process Group: {processGroup.display_name}</h1>
         <ul>
           <Stack orientation="horizontal" gap={3}>
-            <Button
-              kind="secondary"
-              href={`/admin/process-groups/new?parentGroupId=${processGroup.id}`}
+            <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
+              <Button
+                href={`/admin/process-groups/new?parentGroupId=${processGroup.id}`}
+              >
+                Add a process group
+              </Button>
+            </Can>
+            <Can
+              I="POST"
+              a={targetUris.processModelCreatePath}
+              ability={ability}
             >
-              Add a process group
-            </Button>
-            <Button
-              href={`/admin/process-models/${modifiedProcessGroupId}/new`}
-            >
-              Add a process model
-            </Button>
-            <Button
-              href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
-              variant="secondary"
-            >
-              Edit process group
-            </Button>
+              <Button
+                href={`/admin/process-models/${modifiedProcessGroupId}/new`}
+              >
+                Add a process model
+              </Button>
+            </Can>
+            <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
+              <Button
+                href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
+              >
+                Edit process group
+              </Button>
+            </Can>
           </Stack>
           <br />
           <br />
-          <PaginationForTable
-            page={page}
-            perPage={perPage}
-            pagination={modelPagination}
-            tableToDisplay={buildModelTable()}
-            path={`/admin/process-groups/${processGroup.id}`}
-          />
+          {/* eslint-disable-next-line sonarjs/no-gratuitous-expressions */}
+          {modelPagination && modelPagination.total > 0 && (
+            <PaginationForTable
+              page={page}
+              perPage={perPage}
+              pagination={modelPagination}
+              tableToDisplay={buildModelTable()}
+            />
+          )}
           <br />
           <br />
-          <PaginationForTable
-            page={page}
-            perPage={perPage}
-            pagination={groupPagination}
-            tableToDisplay={buildGroupTable()}
-            path={`/admin/process-groups/${processGroup.id}`}
+          <ProcessGroupListTiles
+            processGroup={processGroup}
+            headerElement={<h2>Process Groups</h2>}
           />
         </ul>
       </>

@@ -5,19 +5,19 @@
   color: white;
 }
 
-h1{
-  height: 36px;
-  font-family: 'IBM Plex Sans';
-  font-style: normal;
+h1 {
   font-weight: 400;
   font-size: 28px;
   line-height: 36px;
   color: #161616;
-  flex: none;
-  order: 0;
-  align-self: stretch;
-  flex-grow: 0;
   margin-bottom: 1em
+}
+
+h2 {
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
 }
 
 .span-tag {
@@ -31,7 +31,7 @@ h1{
   border: 1px solid #393939;
 }
 .cds--btn.button-white-background:hover {
-  background: #525252;
+  background: lightgrey;
 }
 
 .cds--breadcrumb-item a.cds--link:hover {
@@ -71,7 +71,7 @@ h1{
 }
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  monospace;
 }
 
 .app-logo {
@@ -182,9 +182,64 @@ h1.with-icons {
 }
 
 /* Json Web Form CSS Fix - Bootstrap now requries that each li have a "list-inline-item." Also have a PR
- in on this with the react-jsonschema-form repo. This is just a patch fix to allow date inputs to layout a little more cleanly */
+in on this with the react-jsonschema-form repo. This is just a patch fix to allow date inputs to layout a little more cleanly */
 .list-inline>li {
   display: inline-block;
   padding-right: 5px;
   padding-left: 5px;
+}
+
+.cds--tile.tile-process-group {
+  padding: 0px;
+  margin: 16px;
+  width: 354px;
+  height: 264px;
+  background: #F4F4F4;
+  order: 1;
+  float: left;
+}
+
+.tile-process-group-content-container {
+  width: 354px;
+  height: 264px;
+  padding: 1em;
+  position: relative;
+}
+
+.tile-process-group-display-name {
+  margin-top: 2em;
+  margin-bottom: 1em;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
+  order: 0;
+}
+
+.tile-title-top {
+  margin-bottom: 2em;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
+  order: 0;
+}
+
+.tile-description {
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.16px;
+  color: #161616;
+  order: 1;
+}
+
+.tile-process-group-children-count {
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.16px;
+  color: #161616;
+  order: 1;
+}
+
+.tile-pin-bottom {
+  position: absolute;
+  bottom: 1em;
 }

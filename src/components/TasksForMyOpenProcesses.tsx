@@ -2,17 +2,19 @@ import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
-import PaginationForTable from '../components/PaginationForTable';
+import PaginationForTable from './PaginationForTable';
 import {
+  convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
   modifyProcessModelPath,
 } from '../helpers';
 import HttpService from '../services/HttpService';
-import { PaginationObject, RecentProcessModel } from '../interfaces';
+import { PaginationObject } from '../interfaces';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
+const paginationQueryParamPrefix = 'tasks_for_my_open_processes';
 
-export default function HomePage() {
+export default function MyOpenProcesses() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
@@ -20,28 +22,24 @@ export default function HomePage() {
   useEffect(() => {
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      undefined,
+      paginationQueryParamPrefix
     );
     const setTasksFromResult = (result: any) => {
       setTasks(result.results);
       setPagination(result.pagination);
     };
     HttpService.makeCallToBackend({
-      path: `/tasks?per_page=${perPage}&page=${page}`,
+      path: `/tasks/for-my-open-processes?per_page=${perPage}&page=${page}`,
       successCallback: setTasksFromResult,
     });
   }, [searchParams]);
 
-  let recentProcessModels: RecentProcessModel[] = [];
-  const recentProcessModelsString = localStorage.getItem('recentProcessModels');
-  if (recentProcessModelsString !== null) {
-    recentProcessModels = JSON.parse(recentProcessModelsString);
-  }
-
   const buildTable = () => {
     const rows = tasks.map((row) => {
       const rowToUse = row as any;
-      const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.id}`;
+      const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.task_id}`;
       const modifiedProcessModelIdentifier = modifyProcessModelPath(
         rowToUse.process_model_identifier
       );
@@ -66,17 +64,28 @@ export default function HomePage() {
           <td
             title={`task id: ${rowToUse.name}, spiffworkflow task guid: ${rowToUse.id}`}
           >
-            {rowToUse.title}
+            {rowToUse.task_title}
           </td>
-          <td>{rowToUse.state}</td>
           <td>{rowToUse.process_instance_status}</td>
+          <td>{rowToUse.group_identifier || '-'}</td>
+          <td>
+            {convertSecondsToFormattedDateTime(
+              rowToUse.created_at_in_seconds
+            ) || '-'}
+          </td>
+          <td>
+            {convertSecondsToFormattedDateTime(
+              rowToUse.updated_at_in_seconds
+            ) || '-'}
+          </td>
           <td>
             <Button
               variant="primary"
               href={taskUrl}
               hidden={rowToUse.process_instance_status === 'suspended'}
+              disabled={!rowToUse.current_user_is_potential_owner}
             >
-              Complete Task
+              Go
             </Button>
           </td>
         </tr>
@@ -89,8 +98,10 @@ export default function HomePage() {
             <th>Process Model</th>
             <th>Process Instance</th>
             <th>Task Name</th>
-            <th>Status</th>
             <th>Process Instance Status</th>
+            <th>Assigned Group</th>
+            <th>Process Started</th>
+            <th>Process Updated</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -99,80 +110,33 @@ export default function HomePage() {
     );
   };
 
-  const buildRecentProcessModelSection = () => {
-    const rows = recentProcessModels.map((row) => {
-      const rowToUse = row as any;
-      const modifiedProcessModelId = modifyProcessModelPath(
-        rowToUse.processModelIdentifier
-      );
-      return (
-        <tr
-          key={`${rowToUse.processGroupIdentifier}/${rowToUse.processModelIdentifier}`}
-        >
-          <td>
-            <Link
-              data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifiedProcessModelId}`}
-            >
-              {rowToUse.processModelDisplayName}
-            </Link>
-          </td>
-        </tr>
-      );
-    });
-    return (
-      <>
-        <h1>Processes I can start</h1>
-        <Table striped bordered>
-          <thead>
-            <tr>
-              <th>Process Model</th>
-            </tr>
-          </thead>
-          <tbody>{rows}</tbody>
-        </Table>
-      </>
-    );
-  };
-
-  const tasksWaitingForMeComponent = () => {
+  const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
       return null;
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE
+      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+      undefined,
+      paginationQueryParamPrefix
     );
     return (
       <>
-        <h1>Tasks waiting for me</h1>
+        <h1>Tasks for my open processes</h1>
         <PaginationForTable
           page={page}
           perPage={perPage}
           perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          path="/tasks"
+          paginationQueryParamPrefix={paginationQueryParamPrefix}
         />
       </>
     );
   };
 
-  const tasksWaitingForMe = tasksWaitingForMeComponent();
-  const relevantProcessModelSection =
-    (recentProcessModels.length > 0 && buildRecentProcessModelSection()) ||
-    null;
-
   if (pagination) {
-    if (tasksWaitingForMe === null && relevantProcessModelSection === null) {
-      return <p>No tasks are waiting for you.</p>;
-    }
-    return (
-      <>
-        {tasksWaitingForMe}
-        {relevantProcessModelSection}
-      </>
-    );
+    return tasksComponent();
   }
   return null;
 }

@@ -17,9 +17,13 @@ import {
 import { Logout, Login } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Can } from '@casl/react';
 // @ts-expect-error TS(2307) FIXME: Cannot find module '../logo.svg' or its correspond... Remove this comment to see the full error message
 import logo from '../logo.svg';
 import UserService from '../services/UserService';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 // for ref: https://react-bootstrap.github.io/components/navbar/
 export default function NavigationBar() {
@@ -34,6 +38,14 @@ export default function NavigationBar() {
   const location = useLocation();
   const [activeKey, setActiveKey] = useState<string>('');
 
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.authenticationListPath]: ['GET'],
+    [targetUris.messageInstanceListPath]: ['GET'],
+    [targetUris.secretListPath]: ['GET'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
+
   useEffect(() => {
     let newActiveKey = '/admin/process-groups';
     if (location.pathname.match(/^\/admin\/messages\b/)) {
@@ -44,10 +56,8 @@ export default function NavigationBar() {
       newActiveKey = '/admin/process-instances/reports';
     } else if (location.pathname.match(/^\/admin\/process-instances\b/)) {
       newActiveKey = '/admin/process-instances';
-    } else if (location.pathname.match(/^\/admin\/secrets\b/)) {
-      newActiveKey = '/admin/secrets';
-    } else if (location.pathname.match(/^\/admin\/authentications\b/)) {
-      newActiveKey = '/admin/authentications';
+    } else if (location.pathname.match(/^\/admin\/configuration\b/)) {
+      newActiveKey = '/admin/configuration';
     } else if (location.pathname === '/') {
       newActiveKey = '/';
     } else if (location.pathname.match(/^\/tasks\b/)) {
@@ -86,6 +96,42 @@ export default function NavigationBar() {
     );
   };
 
+  const configurationElement = () => {
+    return (
+      <Can
+        I="GET"
+        a={targetUris.authenticationListPath}
+        ability={ability}
+        passThrough
+      >
+        {(authenticationAllowed: boolean) => {
+          return (
+            <Can
+              I="GET"
+              a={targetUris.secretListPath}
+              ability={ability}
+              passThrough
+            >
+              {(secretAllowed: boolean) => {
+                if (secretAllowed || authenticationAllowed) {
+                  return (
+                    <HeaderMenuItem
+                      href="/admin/configuration"
+                      isCurrentPage={isActivePage('/admin/configuration')}
+                    >
+                      Configuration
+                    </HeaderMenuItem>
+                  );
+                }
+                return null;
+              }}
+            </Can>
+          );
+        }}
+      </Can>
+    );
+  };
+
   const headerMenuItems = () => {
     return (
       <>
@@ -105,35 +151,26 @@ export default function NavigationBar() {
         >
           Process Instances
         </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/messages"
-          isCurrentPage={isActivePage('/admin/messages')}
-        >
-          Messages
-        </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/secrets"
-          isCurrentPage={isActivePage('/admin/secrets')}
-        >
-          Secrets
-        </HeaderMenuItem>
-        <HeaderMenuItem
-          href="/admin/authentications"
-          isCurrentPage={isActivePage('/admin/authentications')}
-        >
-          Authentications
-        </HeaderMenuItem>
+        <Can I="GET" a={targetUris.messageInstanceListPath} ability={ability}>
+          <HeaderMenuItem
+            href="/admin/messages"
+            isCurrentPage={isActivePage('/admin/messages')}
+          >
+            Messages
+          </HeaderMenuItem>
+        </Can>
+        {configurationElement()}
         <HeaderMenuItem
           href="/admin/process-instances/reports"
           isCurrentPage={isActivePage('/admin/process-instances/reports')}
         >
-          Reports
+          Perspectives
         </HeaderMenuItem>
       </>
     );
   };
 
-  if (activeKey) {
+  if (activeKey && ability) {
     return (
       <HeaderContainer
         render={({ isSideNavExpanded, onClickSideNavExpand }: any) => (

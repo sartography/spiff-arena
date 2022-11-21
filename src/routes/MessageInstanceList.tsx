@@ -5,7 +5,7 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
-  convertSecondsToFormattedDate,
+  convertSecondsToFormattedDateString,
   getPageInfoFromSearchParams,
   modifyProcessModelPath,
   unModifyProcessModelPath,
@@ -65,10 +65,12 @@ export default function MessageInstanceList() {
           </td>
           <td>{rowToUse.message_identifier}</td>
           <td>{rowToUse.message_type}</td>
-          <td>{rowToUse.failure_cause}</td>
+          <td>{rowToUse.failure_cause || '-'}</td>
           <td>{rowToUse.status}</td>
           <td>
-            {convertSecondsToFormattedDate(rowToUse.created_at_in_seconds)}
+            {convertSecondsToFormattedDateString(
+              rowToUse.created_at_in_seconds
+            )}
           </td>
         </tr>
       );
@@ -94,14 +96,8 @@ export default function MessageInstanceList() {
 
   if (pagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    let queryParamString = '';
     let breadcrumbElement = null;
     if (searchParams.get('process_instance_id')) {
-      queryParamString += `&process_group_id=${searchParams.get(
-        'process_group_id'
-      )}&process_model_id=${searchParams.get(
-        'process_model_id'
-      )}&process_instance_id=${searchParams.get('process_instance_id')}`;
       breadcrumbElement = (
         <ProcessBreadcrumb
           hotCrumbs={[
@@ -132,8 +128,6 @@ export default function MessageInstanceList() {
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
-          queryParamString={queryParamString}
-          path="/admin/messages"
         />
       </>
     );
