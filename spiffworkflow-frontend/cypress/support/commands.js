@@ -87,8 +87,8 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 
 Cypress.Commands.add('runPrimaryBpmnFile', (reload = true) => {
   cy.contains('Run').click();
-  cy.contains(/Process Instance.*kicked off/);
   if (reload) {
+    cy.contains(/Process Instance.*kicked off/);
     cy.reload(true);
     cy.contains(/Process Instance.*kicked off/).should('not.exist');
   }
@@ -99,7 +99,7 @@ Cypress.Commands.add(
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
     cy.contains('Misc').click();
-    cy.contains(`Process Group: Misc`);
+    cy.contains(`Process Group: Misc`, { timeout: 10000 });
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
