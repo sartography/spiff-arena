@@ -212,14 +212,16 @@ class DBHandler(logging.Handler):
             bpmn_process_identifier = record.workflow  # type: ignore
             spiff_task_guid = str(record.task_id)  # type: ignore
             bpmn_task_identifier = str(record.task_spec)  # type: ignore
-            bpmn_task_name = record.task_name if hasattr(record, "task_name") else None
-            bpmn_task_type = record.task_type if hasattr(record, "task_type") else None
+            bpmn_task_name = record.task_name if hasattr(record, "task_name") else None  # type: ignore
+            bpmn_task_type = record.task_type if hasattr(record, "task_type") else None  # type: ignore
             timestamp = record.created
             message = record.msg if hasattr(record, "msg") else None
-            current_user_id = record.current_user_id if hasattr(record, "current_user_id") else None
+            current_user_id = (
+                record.current_user_id if hasattr(record, "current_user_id") else None  # type: ignore
+            )
             spiff_step = (
-                record.spiff_step
-                if hasattr(record, "spiff_step") and record.spiff_step is not None
+                record.spiff_step  # type: ignore
+                if hasattr(record, "spiff_step") and record.spiff_step is not None  # type: ignore
                 else 1
             )
             self.logs.append(

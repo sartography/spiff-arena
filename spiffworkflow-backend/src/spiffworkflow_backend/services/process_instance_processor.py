@@ -1008,7 +1008,7 @@ class ProcessInstanceProcessor:
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
                 if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()
+                    handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
 
         except WorkflowTaskExecException as we:
