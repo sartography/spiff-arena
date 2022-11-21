@@ -19,8 +19,8 @@ export default function ProcessInstanceReportSearch({
   titleText = 'Process instance reports',
 }: OwnProps) {
   const [processInstanceReports, setProcessInstanceReports] = useState<
-    ProcessInstanceReport[]
-  >([]);
+    ProcessInstanceReport[] | null
+  >(null);
 
   function setProcessInstanceReportsFromResult(result: any) {
     const processInstanceReportsFromApi = result.map((item: any) => {
@@ -28,10 +28,14 @@ export default function ProcessInstanceReportSearch({
     });
     setProcessInstanceReports(processInstanceReportsFromApi);
   }
-  HttpService.makeCallToBackend({
-    path: `/process-instances/reports`,
-    successCallback: setProcessInstanceReportsFromResult,
-  });
+
+  if (processInstanceReports === null) {
+    setProcessInstanceReports([]);
+    HttpService.makeCallToBackend({
+      path: `/process-instances/reports`,
+      successCallback: setProcessInstanceReportsFromResult,
+    });
+  }
 
   const shouldFilterProcessInstanceReport = (options: any) => {
     const processInstanceReport: ProcessInstanceReport = options.item;

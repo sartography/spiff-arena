@@ -163,6 +163,11 @@ export default function ProcessInstanceListTable({
         queryParamString += `&user_filter=${userAppliedFilter}`;
       }
 
+      const reportIdentifier = searchParams.get('report_identifier');
+      if (reportIdentifier) {
+        queryParamString += `&report_identifier=${reportIdentifier}`;
+      }
+
       Object.keys(dateParametersToAlwaysFilterBy).forEach(
         (paramName: string) => {
           const dateFunctionToCall =
@@ -326,7 +331,7 @@ export default function ProcessInstanceListTable({
   };
 
   const applyFilter = (event: any) => {
-    event.preventDefault();
+    event?.preventDefault();
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       undefined,
@@ -394,6 +399,11 @@ export default function ProcessInstanceListTable({
 
     if (processModelSelection) {
       queryParamString += `&process_model_identifier=${processModelSelection.id}`;
+    }
+
+    console.log(processInstanceReportSelection);
+    if (processInstanceReportSelection) {
+      queryParamString += `&report_identifier=${processInstanceReportSelection.id}`;
     }
 
     setErrorMessage(null);
@@ -671,6 +681,29 @@ export default function ProcessInstanceListTable({
     setShowFilterOptions(!showFilterOptions);
   };
 
+  const processInstanceReportDidChange = (selection: any) => {
+    clearFilters();
+
+    const selectedReport = selection.selectedItem;
+    setProcessInstanceReportSelection(selectedReport);
+
+    const queryParamString = selectedReport
+      ? `&report_identifier=${selectedReport.id}`
+      : '';
+
+    setErrorMessage(null);
+    navigate(`/admin/process-instances?${queryParamString}`);
+  };
+
+  const reportSearchComponent = () => {
+    return (
+      <ProcessInstanceReportSearch
+        onChange={processInstanceReportDidChange}
+        selectedItem={processInstanceReportSelection}
+      />
+    );
+  };
+
   const filterComponent = () => {
     if (!filtersEnabled) {
       return null;
@@ -696,17 +729,6 @@ export default function ProcessInstanceListTable({
         </Grid>
         {filterOptions()}
       </>
-    );
-  };
-
-  const reportSearchComponent = () => {
-    return (
-      <ProcessInstanceReportSearch
-        onChange={(selection: any) =>
-          setProcessInstanceReportSelection(selection.selectedItem)
-        }
-        selectedItem={processInstanceReportSelection}
-      />
     );
   };
 
