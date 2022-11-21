@@ -7,6 +7,7 @@ import {
   TrashCan,
   Favorite,
   Edit,
+  ArrowRight,
   // @ts-ignore
 } from '@carbon/icons-react';
 import {
@@ -514,6 +515,35 @@ export default function ProcessModelShow() {
     );
   };
 
+  const processInstanceListTableButton = () => {
+    if (processModel) {
+      return (
+        <Grid fullWidth>
+          <Column
+            sm={{ span: 1, offset: 3 }}
+            md={{ span: 1, offset: 7 }}
+            lg={{ span: 1, offset: 15 }}
+          >
+            <Button
+              data-qa="process-instance-list-link"
+              kind="ghost"
+              renderIcon={ArrowRight}
+              iconDescription="Go to Filterable List"
+              hasIconOnly
+              size="lg"
+              onClick={() =>
+                navigate(
+                  `/admin/process-instances?process_model_identifier=${processModel.id}`
+                )
+              }
+            />
+          </Column>
+        </Grid>
+      );
+    }
+    return null;
+  };
+
   if (processModel) {
     return (
       <>
@@ -571,6 +601,7 @@ export default function ProcessModelShow() {
         {processInstanceRunResultTag()}
         <br />
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
+          {processInstanceListTableButton()}
           <ProcessInstanceListTable
             filtersEnabled={false}
             processModelFullIdentifier={processModel.id}

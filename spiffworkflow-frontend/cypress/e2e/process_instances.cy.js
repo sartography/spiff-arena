@@ -53,9 +53,9 @@ const updateBpmnPythonScriptWithMonaco = (
   cy.get('.monaco-editor textarea:first')
     .click()
     .focused() // change subject to currently focused element
-    // .type('{ctrl}a') // had been doing it this way, but it turns out to be flaky relative to clear()
     .clear()
-    .type(pythonScript, { delay: 30 });
+    // long delay to ensure cypress isn't competing with monaco auto complete stuff
+    .type(pythonScript, { delay: 120 });
 
   cy.contains('Close').click();
   // wait for a little bit for the xml to get set before saving

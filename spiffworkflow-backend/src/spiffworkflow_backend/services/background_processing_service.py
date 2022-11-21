@@ -14,7 +14,7 @@ class BackgroundProcessingService:
         """__init__."""
         self.app = app
 
-    def run(self) -> None:
+    def process_waiting_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
         with self.app.app_context():
             ProcessInstanceService.do_waiting()

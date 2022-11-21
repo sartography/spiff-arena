@@ -93,6 +93,8 @@ Cypress.Commands.add(
   'navigateToProcessModel',
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
+    cy.contains('Misc').click();
+    cy.contains(`Process Group: Misc`);
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
