@@ -111,6 +111,7 @@ export default function ProcessGroupShow() {
           ]}
         />
         <h1>Process Group: {processGroup.display_name}</h1>
+        <p className="process-description">{processGroup.description}</p>
         <ul>
           <Stack orientation="horizontal" gap={3}>
             <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>

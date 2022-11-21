@@ -323,14 +323,9 @@ class ProcessInstanceService:
         """Serialize_flat_with_task_data."""
         results = {}
         try:
-            original_status = process_instance.status
             processor = ProcessInstanceProcessor(process_instance)
             process_instance.data = processor.get_current_data()
             results = process_instance.serialized_flat
-            # this process seems to mutate the status of the process_instance which
-            # can result in different results than expected from process_instance_list,
-            # so set the status back to the expected value
-            results["status"] = original_status
         except ApiError:
             results = process_instance.serialized
         return results

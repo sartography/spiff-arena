@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+from glob import glob
 from typing import Any
 from typing import List
 from typing import Optional
@@ -165,17 +166,20 @@ class ProcessModelService(FileSystemService):
         self, process_group_id: Optional[str] = None
     ) -> List[ProcessModelInfo]:
         """Get process models."""
-        process_groups = []
-        if process_group_id is None:
-            process_groups = self.get_process_groups()
-        else:
-            process_group = self.get_process_group(process_group_id)
-            if process_group is not None:
-                process_groups.append(process_group)
-
         process_models = []
-        for process_group in process_groups:
-            process_models.extend(process_group.process_models)
+        root_path = FileSystemService.root_path()
+        if process_group_id:
+            awesome_id = process_group_id.replace("/", os.sep)
+            root_path = os.path.join(root_path, awesome_id)
+        process_model_glob = os.path.join(root_path, "**", "process_model.json")
+        for file in glob(process_model_glob, recursive=True):
+            process_model_relative_path = os.path.relpath(
+                file, start=FileSystemService.root_path()
+            )
+            process_model = self.get_process_model_from_relative_path(
+                os.path.dirname(process_model_relative_path)
+            )
+            process_models.append(process_model)
         process_models.sort()
         return process_models
 
