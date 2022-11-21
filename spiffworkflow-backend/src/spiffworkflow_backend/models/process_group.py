@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -9,8 +10,6 @@ from typing import Any
 import marshmallow
 from marshmallow import post_load
 from marshmallow import Schema
-
-import os
 
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 

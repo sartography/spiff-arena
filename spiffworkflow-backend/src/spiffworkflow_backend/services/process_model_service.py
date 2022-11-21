@@ -213,7 +213,7 @@ class ProcessModelService(FileSystemService):
             process_group_path = os.path.abspath(
                 os.path.join(
                     FileSystemService.root_path(),
-                    FileSystemService.id_string_to_relative_path(process_group_id)
+                    FileSystemService.id_string_to_relative_path(process_group_id),
                 )
             )
             if self.is_group(process_group_path):

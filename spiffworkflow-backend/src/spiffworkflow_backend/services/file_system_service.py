@@ -33,15 +33,18 @@ class FileSystemService:
 
     @staticmethod
     def id_string_to_relative_path(id_string: str) -> str:
+        """Id_string_to_relative_path."""
         return id_string.replace("/", os.sep)
 
     @staticmethod
     def process_group_path(name: str) -> str:
         """Category_path."""
-        return os.path.abspath(os.path.join(
-            FileSystemService.root_path(),
-            FileSystemService.id_string_to_relative_path(name)
-        ))
+        return os.path.abspath(
+            os.path.join(
+                FileSystemService.root_path(),
+                FileSystemService.id_string_to_relative_path(name),
+            )
+        )
 
     @staticmethod
     def full_path_from_relative_path(relative_path: str) -> str:
