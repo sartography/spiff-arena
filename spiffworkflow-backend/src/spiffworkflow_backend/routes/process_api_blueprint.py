@@ -729,6 +729,9 @@ def process_instance_list(
     end_from: Optional[int] = None,
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
+    initiated_by_me: Optional[bool] = None,
+    with_tasks_completed_by_me: Optional[bool] = None,
+    with_tasks_completed_by_my_group: Optional[bool] = None,
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
@@ -745,6 +748,9 @@ def process_instance_list(
             end_from,
             end_to,
             process_status.split(",") if process_status else None,
+            initiated_by_me,
+            with_tasks_completed_by_me.
+            with_tasks_completed_by_my_group,
         )
     else:
         report_filter = (
@@ -756,6 +762,9 @@ def process_instance_list(
                 end_from,
                 end_to,
                 process_status,
+                initiated_by_me,
+                with_tasks_completed_by_me,
+                with_tasks_completed_by_my_group,
             )
         )
 

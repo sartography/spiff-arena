@@ -18,6 +18,9 @@ class ProcessInstanceReportFilter:
     end_from: Optional[int] = None
     end_to: Optional[int] = None
     process_status: Optional[list[str]] = None
+    initiated_by_me: Optional[bool] = None
+    with_tasks_completed_by_me: Optional[bool] = None
+    with_tasks_completed_by_my_group: Optional[bool] = None
 
     def to_dict(self) -> dict[str, str]:
         """To_dict."""
@@ -35,6 +38,12 @@ class ProcessInstanceReportFilter:
             d["end_to"] = str(self.end_to)
         if self.process_status is not None:
             d["process_status"] = ",".join(self.process_status)
+        if self.initiated_by_me is not None:
+            d["initiated_by_me"] = self.initiated_by_me
+        if self.with_tasks_completed_by_me is not None:
+            d["with_tasks_completed_by_me"] = self.with_tasks_completed_by_me
+        if self.with_tasks_completed_by_my_group is not None:
+            d["with_tasks_completed_by_my_group"] = self.with_tasks_completed_by_my_group
 
         return d
 
@@ -63,6 +72,7 @@ class ProcessInstanceReportService:
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "status", "accessor": "status"},
                 ],
+                "filter_by": [{"field_name": "initiated_by_me", "field_value": True}],
             },
             "system_report_instances_with_tasks_completed_by_me": {
                 "columns": [
@@ -75,6 +85,7 @@ class ProcessInstanceReportService:
                         "accessor": "process_model_identifier",
                     },
                 ],
+                "filter_by": [{"field_name": "with_tasks_completed_by_me", "field_value": True}],
             },
             "system_report_instances_with_tasks_completed_by_my_groups": {
                 "columns": [
@@ -87,6 +98,7 @@ class ProcessInstanceReportService:
                     {"Header": "status", "accessor": "status"},
                     {"Header": "id", "accessor": "id"},
                 ],
+                "filter_by": [{"field_name": "with_tasks_completed_by_my_group", "field_value": True}],
             },
         }
 
@@ -119,6 +131,10 @@ class ProcessInstanceReportService:
         """Filter_from_metadata."""
         filters = cls.filter_by_to_dict(process_instance_report)
 
+        def bool_value(key: str) -> Optional[bool]:
+            """Bool_value."""
+            return bool(filters[key]) if key in filters else None
+
         def int_value(key: str) -> Optional[int]:
             """Int_value."""
             return int(filters[key]) if key in filters else None
@@ -133,6 +149,9 @@ class ProcessInstanceReportService:
         end_from = int_value("end_from")
         end_to = int_value("end_to")
         process_status = list_value("process_status")
+        initiated_by_me = bool_value("initiated_by_me")
+        with_tasks_completed_by_me = bool_value("with_tasks_completed_by_me")
+        with_tasks_completed_by_my_group = bool_value("with_tasks_completed_by_my_group")
 
         report_filter = ProcessInstanceReportFilter(
             process_model_identifier,
@@ -141,6 +160,9 @@ class ProcessInstanceReportService:
             end_from,
             end_to,
             process_status,
+            initiated_by_me,
+            with_tasks_completed_by_me,
+            with_tasks_completed_by_my_group,
         )
 
         return report_filter
@@ -155,6 +177,9 @@ class ProcessInstanceReportService:
         end_from: Optional[int] = None,
         end_to: Optional[int] = None,
         process_status: Optional[str] = None,
+        initiated_by_me: Optional[bool] = None,
+        with_tasks_completed_by_me: Optional[bool] = None,
+        with_tasks_completed_by_my_group: Optional[bool] = None,
     ) -> ProcessInstanceReportFilter:
         """Filter_from_metadata_with_overrides."""
         report_filter = cls.filter_from_metadata(process_instance_report)
@@ -171,5 +196,11 @@ class ProcessInstanceReportService:
             report_filter.end_to = end_to
         if process_status is not None:
             report_filter.process_status = process_status.split(",")
+        if initiated_by_me is not None:
+            report_filter.initiated_by_me = initiated_by_me
+        if with_tasks_completed_by_me is not None:
+            report_filter.with_tasks_completed_by_me = with_tasks_completed_by_me
+        if with_tasks_completed_by_my_group is not None:
+            report_filter.with_tasks_completed_my_my_group = with_tasks_completed_by_my_group
 
         return report_filter
