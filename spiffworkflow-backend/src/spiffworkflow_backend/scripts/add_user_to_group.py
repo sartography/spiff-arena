@@ -6,7 +6,8 @@ from spiffworkflow_backend.models.group import GroupNotFoundError
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
-from spiffworkflow_backend.models.user import UserModel, UserNotFoundError
+from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -29,7 +30,9 @@ class AddUserToGroup(Script):
         group_identifier = args[1]
         user = UserModel.query.filter_by(username=username).first()
         if user is None:
-            raise UserNotFoundError(f"Script 'add_user_to_group' could not find a user with username: {username}")
+            raise UserNotFoundError(
+                f"Script 'add_user_to_group' could not find a user with username: {username}"
+            )
 
         group = GroupModel.query.filter_by(identifier=group_identifier).first()
         if group is None:
