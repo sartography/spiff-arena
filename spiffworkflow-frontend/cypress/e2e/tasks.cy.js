@@ -1,12 +1,12 @@
 const submitInputIntoFormField = (taskName, fieldKey, fieldValue) => {
-  cy.contains(`Task: ${taskName}`);
+  cy.contains(`Task: ${taskName}`, { timeout: 10000 });
   cy.get(fieldKey).clear().type(fieldValue);
   cy.contains('Submit').click();
 };
 
 const checkFormFieldIsReadOnly = (formName, fieldKey) => {
   cy.contains(`Task: ${formName}`);
-  cy.get(fieldKey).invoke('attr', 'readonly').should('exist');
+  cy.get(fieldKey).invoke('attr', 'disabled').should('exist');
 };
 
 const checkTaskHasClass = (taskName, className) => {
@@ -34,8 +34,6 @@ describe('tasks', () => {
     // avoid reloading so we can click on the task link that appears on running the process instance
     cy.runPrimaryBpmnFile(false);
 
-    cy.contains('my task').click();
-
     submitInputIntoFormField(
       'get_user_generated_number_one',
       '#root_user_generated_number_1',
@@ -59,7 +57,6 @@ describe('tasks', () => {
       '#root_user_generated_number_1'
     );
 
-    cy.getBySel('form-nav-form3').should('have.text', 'form3 - Current');
     cy.getBySel('form-nav-form3').click();
     submitInputIntoFormField(
       'get_user_generated_number_three',
@@ -110,21 +107,21 @@ describe('tasks', () => {
     cy.contains('Status: complete');
   });
 
-  it('can paginate items', () => {
-    cy.navigateToProcessModel(
-      'Acceptance Tests Group One',
-      'Acceptance Tests Model 2',
-      'acceptance-tests-model-2'
-    );
-
-    // make sure we have some tasks
-    cy.runPrimaryBpmnFile();
-    cy.runPrimaryBpmnFile();
-    cy.runPrimaryBpmnFile();
-    cy.runPrimaryBpmnFile();
-    cy.runPrimaryBpmnFile();
-
-    cy.navigateToHome();
-    cy.basicPaginationTest();
-  });
+  // it('can paginate items', () => {
+  //   cy.navigateToProcessModel(
+  //     'Acceptance Tests Group One',
+  //     'Acceptance Tests Model 1',
+  //     'acceptance-tests-model-1'
+  //   );
+  //
+  //   // make sure we have some tasks
+  //   cy.runPrimaryBpmnFile();
+  //   cy.runPrimaryBpmnFile();
+  //   cy.runPrimaryBpmnFile();
+  //   cy.runPrimaryBpmnFile();
+  //   cy.runPrimaryBpmnFile();
+  //
+  //   cy.navigateToHome();
+  //   cy.basicPaginationTest();
+  // });
 });
