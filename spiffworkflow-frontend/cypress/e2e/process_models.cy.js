@@ -42,7 +42,7 @@ describe('process-models', () => {
   it.only('can create new bpmn, dmn, and json files', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
-    const groupId = 'acceptance-tests-group-one';
+    const groupId = 'misc/acceptance-tests-group-one';
     const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
@@ -51,6 +51,7 @@ describe('process-models', () => {
     const dmnFileName = `dmn_test_file_${id}`;
     const jsonFileName = `json_test_file_${id}`;
 
+    cy.contains('Misc').click();
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.contains(groupId).click();

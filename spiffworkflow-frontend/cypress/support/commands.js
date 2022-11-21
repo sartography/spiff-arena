@@ -76,7 +76,10 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.get('input[name=id]').should('have.value', modelId);
   cy.contains('Submit').click();
 
-  cy.url().should('include', `process-models/${groupId}:${modelId}`);
+  cy.url().should(
+    'include',
+    `process-models/${cy.modifyProcessModelPath(groupId)}:${modelId}`
+  );
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
 
