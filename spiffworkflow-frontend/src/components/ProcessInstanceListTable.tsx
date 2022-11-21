@@ -143,6 +143,14 @@ export default function ProcessInstanceListTable({
       setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
       setProcessInstanceFilters(result.filters);
+
+      // TODO: need to iron out this interaction some more
+      if (result.report_identifier !== 'default') {
+        setProcessInstanceReportSelection({
+          id: result.report_identifier,
+          display_name: result.report_identifier,
+        });
+      }
     }
     function getProcessInstances() {
       // eslint-disable-next-line prefer-const
