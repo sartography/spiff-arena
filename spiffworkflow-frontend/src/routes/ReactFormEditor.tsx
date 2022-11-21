@@ -190,6 +190,7 @@ export default function ReactFormEditor() {
         )}
         {params.file_name ? (
           <ButtonWithConfirmation
+            data-qa="delete-process-model-file"
             description={`Delete file ${params.file_name}?`}
             onConfirmation={deleteFile}
             buttonLabel="Delete"
