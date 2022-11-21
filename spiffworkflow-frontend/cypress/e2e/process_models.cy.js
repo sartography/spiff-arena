@@ -39,7 +39,7 @@ describe('process-models', () => {
     cy.contains(modelId).should('not.exist');
   });
 
-  it('can create new bpmn, dmn, and json files', () => {
+  it.only('can create new bpmn, dmn, and json files', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const groupId = 'acceptance-tests-group-one';
@@ -82,6 +82,10 @@ describe('process-models', () => {
     cy.contains('New DMN File').click();
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=decision_1]').click().should('exist');
+    cy.contains('General').click();
+    cy.get('#bio-properties-panel-id')
+      .clear()
+      .type('decision_acceptance_test_1');
     cy.contains('General').click();
     cy.contains('Save').click();
     cy.get('input[name=file_name]').type(dmnFileName);
