@@ -67,9 +67,9 @@ def start_scheduler(
         seconds=10,
     )
     scheduler.add_job(
-        BackgroundProcessingService(app).run,
+        BackgroundProcessingService(app).process_waiting_process_instances,
         "interval",
-        seconds=30,
+        seconds=10,
     )
     scheduler.start()
 
