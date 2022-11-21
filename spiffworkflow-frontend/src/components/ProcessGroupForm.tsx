@@ -169,6 +169,7 @@ export default function ProcessGroupForm({
     if (mode === 'edit') {
       buttons.push(
         <ButtonWithConfirmation
+          data-qa="delete-process-group-button"
           description={`Delete Process Group ${processGroup.id}?`}
           onConfirmation={deleteProcessGroup}
           buttonLabel="Delete"

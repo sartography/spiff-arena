@@ -1,3 +1,5 @@
+import { modifyProcessModelPath } from '../../src/helpers';
+
 describe('process-models', () => {
   beforeEach(() => {
     cy.login();
@@ -9,14 +11,19 @@ describe('process-models', () => {
   it('can perform crud operations', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
-    const groupId = 'acceptance-tests-group-one';
+    const groupId = 'misc/acceptance-tests-group-one';
     const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
-    const newModelDisplayName = `${modelDisplayName} edited`;
     const modelId = `test-model-2-${id}`;
+    const newModelDisplayName = `${modelDisplayName} edited`;
+    cy.contains('Misc').click();
+    cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
-    cy.url().should('include', `process-models/${groupId}:${modelId}`);
+    cy.url().should(
+      'include',
+      `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+    );
     cy.contains(`Process Model: ${modelDisplayName}`);
 
     cy.contains('Edit process model').click();
@@ -34,15 +41,21 @@ describe('process-models', () => {
 
     cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
-    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
-    cy.url().should('include', `process-groups/${groupId}`);
+    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
+      .find('.cds--btn--danger')
+      .click();
+    cy.url().should(
+      'include',
+      `process-groups/${modifyProcessModelPath(groupId)}`
+    );
     cy.contains(modelId).should('not.exist');
   });
 
-  it.only('can create new bpmn, dmn, and json files', () => {
+  it('can create new bpmn, dmn, and json files', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
-    const groupId = 'misc/acceptance-tests-group-one';
+    const directParentGroupId = 'acceptance-tests-group-one';
+    const groupId = `misc/${directParentGroupId}`;
     const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
@@ -52,11 +65,15 @@ describe('process-models', () => {
     const jsonFileName = `json_test_file_${id}`;
 
     cy.contains('Misc').click();
+    cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
-    cy.contains(groupId).click();
+    cy.contains(directParentGroupId).click();
     cy.contains(modelId).click();
-    cy.url().should('include', `process-models/${groupId}:${modelId}`);
+    cy.url().should(
+      'include',
+      `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+    );
     cy.contains(`Process Model: ${modelDisplayName}`);
     cy.contains(`${bpmnFileName}.bpmn`).should('not.exist');
     cy.contains(`${dmnFileName}.dmn`).should('not.exist');
@@ -115,26 +132,34 @@ describe('process-models', () => {
 
     cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
-    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
-    cy.url().should('include', `process-groups/${groupId}`);
+    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
+      .find('.cds--btn--danger')
+      .click();
+    cy.url().should('include', `process-groups/${modifyProcessModelPath(groupId)}`);
     cy.contains(modelId).should('not.exist');
   });
 
   it('can upload and run a bpmn file', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
-    const groupId = 'acceptance-tests-group-one';
+    const directParentGroupId = 'acceptance-tests-group-one';
+    const groupId = `misc/${directParentGroupId}`;
     const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     cy.contains('Add a process group');
+    cy.contains('Misc').click();
+    cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
 
-    cy.contains(`${groupId}`).click();
+    cy.contains(`${directParentGroupId}`).click();
     cy.contains('Add a process model');
     cy.contains(modelId).click();
-    cy.url().should('include', `process-models/${groupId}:${modelId}`);
+    cy.url().should(
+      'include',
+      `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+    );
     cy.contains(`Process Model: ${modelDisplayName}`);
 
     cy.getBySel('upload-file-button').click();
@@ -151,19 +176,28 @@ describe('process-models', () => {
     cy.getBySel('process-instance-show-link').click();
     cy.getBySel('process-instance-delete').click();
     cy.contains('Are you sure');
-    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
+    cy.getBySel('process-instance-delete-modal-confirmation-dialog')
+      .find('.cds--btn--danger')
+      .click();
 
     // in breadcrumb
     cy.contains(modelId).click();
 
     cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
-    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
-    cy.url().should('include', `process-groups/${groupId}`);
+    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
+      .find('.cds--btn--danger')
+      .click();
+    cy.url().should(
+      'include',
+      `process-groups/${modifyProcessModelPath(groupId)}`
+    );
     cy.contains(modelId).should('not.exist');
   });
 
   it('can paginate items', () => {
+    cy.contains('Misc').click();
+    cy.wait(500);
     cy.contains('Acceptance Tests Group One').click();
     cy.basicPaginationTest();
   });
@@ -171,6 +205,6 @@ describe('process-models', () => {
   it('can allow searching for model', () => {
     cy.getBySel('process-model-selection').click().type('model-3');
     cy.contains('acceptance-tests-group-one/acceptance-tests-model-3').click();
-    cy.contains('List').click();
+    cy.contains('Acceptance Tests Model 3');
   });
 });

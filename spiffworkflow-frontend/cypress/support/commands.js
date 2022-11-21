@@ -1,4 +1,5 @@
 import { string } from 'prop-types';
+import { modifyProcessModelPath } from '../../src/helpers';
 
 // ***********************************************
 // This example commands.js shows you how to
@@ -78,15 +79,16 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 
   cy.url().should(
     'include',
-    `process-models/${cy.modifyProcessModelPath(groupId)}:${modelId}`
+    `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+    // `process-models/${groupId}:${modelId}`
   );
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
 
 Cypress.Commands.add('runPrimaryBpmnFile', (reload = true) => {
   cy.contains('Run').click();
-  cy.contains(/Process Instance.*kicked off/);
   if (reload) {
+    cy.contains(/Process Instance.*kicked off/);
     cy.reload(true);
     cy.contains(/Process Instance.*kicked off/).should('not.exist');
   }
@@ -97,7 +99,7 @@ Cypress.Commands.add(
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
     cy.contains('Misc').click();
-    cy.contains(`Process Group: Misc`);
+    cy.contains(`Process Group: Misc`, { timeout: 10000 });
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
@@ -124,11 +126,6 @@ Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
 
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
   cy.contains(/\b0–0 of 0 items/);
-});
-
-Cypress.Commands.add('modifyProcessModelPath', (path) => {
-  path.replace('/', ':');
-  return path;
 });
 
 Cypress.Commands.add('modifyProcessModelPath', (path) => {
