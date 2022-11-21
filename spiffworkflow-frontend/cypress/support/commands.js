@@ -1,4 +1,5 @@
 import { string } from 'prop-types';
+import { modifyProcessModelPath } from '../../src/helpers';
 
 // ***********************************************
 // This example commands.js shows you how to
@@ -78,7 +79,8 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 
   cy.url().should(
     'include',
-    `process-models/${cy.modifyProcessModelPath(groupId)}:${modelId}`
+    `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+    // `process-models/${groupId}:${modelId}`
   );
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
@@ -124,11 +126,6 @@ Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
 
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
   cy.contains(/\b0–0 of 0 items/);
-});
-
-Cypress.Commands.add('modifyProcessModelPath', (path) => {
-  path.replace('/', ':');
-  return path;
 });
 
 Cypress.Commands.add('modifyProcessModelPath', (path) => {
