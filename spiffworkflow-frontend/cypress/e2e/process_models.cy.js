@@ -29,14 +29,17 @@ describe('process-models', () => {
       newModelDisplayName
     );
 
-    cy.contains('Delete').click();
+    // go back to process model show by clicking on the breadcrumb
+    cy.contains(modelId).click();
+
+    cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
     cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.url().should('include', `process-groups/${groupId}`);
     cy.contains(modelId).should('not.exist');
   });
 
-  it('can create new bpmn, dmn, and json files', () => {
+  it.only('can create new bpmn, dmn, and json files', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const groupId = 'acceptance-tests-group-one';
@@ -54,7 +57,6 @@ describe('process-models', () => {
     cy.contains(modelId).click();
     cy.url().should('include', `process-models/${groupId}:${modelId}`);
     cy.contains(`Process Model: ${modelDisplayName}`);
-    cy.getBySel('files-accordion').click();
     cy.contains(`${bpmnFileName}.bpmn`).should('not.exist');
     cy.contains(`${dmnFileName}.dmn`).should('not.exist');
     cy.contains(`${jsonFileName}.json`).should('not.exist');
@@ -73,7 +75,7 @@ describe('process-models', () => {
     cy.contains(`Process Model File: ${bpmnFileName}`);
     cy.contains(modelId).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
-    cy.getBySel('files-accordion').click();
+    // cy.getBySel('files-accordion').click();
     cy.contains(`${bpmnFileName}.bpmn`).should('exist');
 
     // add new dmn file
@@ -81,13 +83,17 @@ describe('process-models', () => {
     cy.contains(/^Process Model File$/);
     cy.get('g[data-element-id=decision_1]').click().should('exist');
     cy.contains('General').click();
+    cy.get('#bio-properties-panel-id')
+      .clear()
+      .type('decision_acceptance_test_1');
+    cy.contains('General').click();
     cy.contains('Save').click();
     cy.get('input[name=file_name]').type(dmnFileName);
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${dmnFileName}`);
     cy.contains(modelId).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
-    cy.getBySel('files-accordion').click();
+    // cy.getBySel('files-accordion').click();
     cy.contains(`${dmnFileName}.dmn`).should('exist');
 
     // add new json file
@@ -103,11 +109,10 @@ describe('process-models', () => {
     cy.wait(500);
     cy.contains(modelId).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
-    cy.getBySel('files-accordion').click();
+    // cy.getBySel('files-accordion').click();
     cy.contains(`${jsonFileName}.json`).should('exist');
 
-    cy.contains('Edit process model').click();
-    cy.contains('Delete').click();
+    cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
     cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.url().should('include', `process-groups/${groupId}`);
@@ -131,7 +136,6 @@ describe('process-models', () => {
     cy.url().should('include', `process-models/${groupId}:${modelId}`);
     cy.contains(`Process Model: ${modelDisplayName}`);
 
-    cy.getBySel('files-accordion').click();
     cy.getBySel('upload-file-button').click();
     cy.contains('Add file').selectFile(
       'cypress/fixtures/test_bpmn_file_upload.bpmn'
@@ -142,7 +146,7 @@ describe('process-models', () => {
       .click();
     cy.runPrimaryBpmnFile();
 
-    cy.getBySel('process-instance-list-link').click();
+    // cy.getBySel('process-instance-list-link').click();
     cy.getBySel('process-instance-show-link').click();
     cy.getBySel('process-instance-delete').click();
     cy.contains('Are you sure');
@@ -151,8 +155,7 @@ describe('process-models', () => {
     // in breadcrumb
     cy.contains(modelId).click();
 
-    cy.contains('Edit process model').click();
-    cy.contains('Delete').click();
+    cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
     cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
     cy.url().should('include', `process-groups/${groupId}`);

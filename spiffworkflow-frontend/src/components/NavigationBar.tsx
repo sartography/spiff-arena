@@ -164,7 +164,7 @@ export default function NavigationBar() {
           href="/admin/process-instances/reports"
           isCurrentPage={isActivePage('/admin/process-instances/reports')}
         >
-          Reports
+          Perspectives
         </HeaderMenuItem>
       </>
     );

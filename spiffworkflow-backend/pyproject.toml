@@ -33,7 +33,7 @@ sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
 flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
 # flask-bpmn = {develop = true, path = "../flask-bpmn"}
-mysql-connector-python = "^8.0.29"
+mysql-connector-python = "*"
 pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
 psycopg2 = "^2.9.3"
@@ -75,7 +75,7 @@ types-dateparser = "^1.1.4.1"
 
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.1.2"
+pytest = "*"
 coverage = {extras = ["toml"], version = "^6.1"}
 safety = "^2.3.1"
 mypy = ">=0.961"
