@@ -52,7 +52,9 @@ export default function ProcessModelForm({
     if (hasErrors) {
       return;
     }
-    const path = `/process-models/${processGroupId}`;
+    const path = `/process-models/${modifyProcessModelPath(
+      processGroupId || ''
+    )}`;
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
