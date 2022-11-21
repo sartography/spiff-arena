@@ -8,6 +8,7 @@ from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -188,6 +189,7 @@ class ProcessInstanceService:
         spiff_task: SpiffTask,
         data: dict[str, Any],
         user: UserModel,
+        active_task: ActiveTaskModel,
     ) -> None:
         """All the things that need to happen when we complete a form.
 
@@ -201,7 +203,7 @@ class ProcessInstanceService:
         dot_dct = ProcessInstanceService.create_dot_dict(data)
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
-        processor.complete_task(spiff_task)
+        processor.complete_task(spiff_task, active_task)
         processor.do_engine_steps(save=True)
 
     @staticmethod
@@ -313,3 +315,22 @@ class ProcessInstanceService:
         )
 
         return task
+
+    @staticmethod
+    def serialize_flat_with_task_data(
+        process_instance: ProcessInstanceModel,
+    ) -> dict[str, Any]:
+        """serialize_flat_with_task_data."""
+        results = {}
+        try:
+            original_status = process_instance.status
+            processor = ProcessInstanceProcessor(process_instance)
+            process_instance.data = processor.get_current_data()
+            results = process_instance.serialized_flat
+            # this process seems to mutate the status of the process_instance which
+            # can result in different results than expected from process_instance_list,
+            # so set the status back to the expected value
+            results["status"] = original_status
+        except ApiError:
+            results = process_instance.serialized
+        return results

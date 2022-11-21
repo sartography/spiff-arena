@@ -38,7 +38,6 @@ from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
-from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import (
     CallActivityTaskConverter,
@@ -68,7 +67,6 @@ from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
-from spiffworkflow_backend.models.bpmn_process_id_lookup import BpmnProcessIdLookup
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
@@ -87,16 +85,15 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserModelSchema
 from spiffworkflow_backend.scripts.script import Script
+from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
-from spiffworkflow_backend.services.spec_file_service import (
-    ProcessModelFileNotFoundError,
-)
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -237,13 +234,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         return ServiceTaskDelegate.call_connector(
             operation_name, operation_params, task_data
         )
-
-
-class MyCustomParser(BpmnDmnParser):  # type: ignore
-    """A BPMN and DMN parser that can also parse spiffworkflow-specific extensions."""
-
-    OVERRIDE_PARSER_CLASSES = BpmnDmnParser.OVERRIDE_PARSER_CLASSES
-    OVERRIDE_PARSER_CLASSES.update(SpiffBpmnParser.OVERRIDE_PARSER_CLASSES)
 
 
 IdToBpmnProcessSpecMapping = NewType(
@@ -590,9 +580,10 @@ class ProcessInstanceProcessor:
         )
         return details_model
 
-    def save_spiff_step_details(self) -> None:
+    def save_spiff_step_details(self, active_task: ActiveTaskModel) -> None:
         """SaveSpiffStepDetails."""
         details_model = self.spiff_step_details()
+        details_model.lane_assignment_id = active_task.lane_assignment_id
         db.session.add(details_model)
         db.session.commit()
 
@@ -680,41 +671,24 @@ class ProcessInstanceProcessor:
         return parser
 
     @staticmethod
-    def backfill_missing_bpmn_process_id_lookup_records(
+    def backfill_missing_spec_reference_records(
         bpmn_process_identifier: str,
     ) -> Optional[str]:
-        """Backfill_missing_bpmn_process_id_lookup_records."""
+        """Backfill_missing_spec_reference_records."""
         process_models = ProcessModelService().get_process_models()
         for process_model in process_models:
-            if process_model.primary_file_name:
-                try:
-                    etree_element = SpecFileService.get_etree_element_from_file_name(
-                        process_model, process_model.primary_file_name
-                    )
-                    bpmn_process_identifiers = []
-                except ProcessModelFileNotFoundError:
-                    # if primary_file_name doesn't actually exist on disk, then just go on to the next process_model
-                    continue
-
-                try:
-                    bpmn_process_identifiers = (
-                        SpecFileService.get_executable_bpmn_process_identifiers(
-                            etree_element
-                        )
-                    )
-                except ValidationException:
-                    # ignore validation errors here
-                    pass
-
+            try:
+                refs = SpecFileService.reference_map(
+                    SpecFileService.get_references_for_process(process_model)
+                )
+                bpmn_process_identifiers = refs.keys()
                 if bpmn_process_identifier in bpmn_process_identifiers:
-                    SpecFileService.store_bpmn_process_identifiers(
-                        process_model,
-                        process_model.primary_file_name,
-                        etree_element,
-                    )
+                    SpecFileService.update_process_cache(refs[bpmn_process_identifier])
                     return FileSystemService.full_path_to_process_model_file(
                         process_model
                     )
+            except Exception:
+                current_app.logger.warning("Failed to parse process ", process_model.id)
         return None
 
     @staticmethod
@@ -727,18 +701,22 @@ class ProcessInstanceProcessor:
                 "bpmn_file_full_path_from_bpmn_process_identifier: bpmn_process_identifier is unexpectedly None"
             )
 
-        bpmn_process_id_lookup = BpmnProcessIdLookup.query.filter_by(
-            bpmn_process_identifier=bpmn_process_identifier
-        ).first()
+        spec_reference = (
+            SpecReferenceCache.query.filter_by(identifier=bpmn_process_identifier)
+            .filter_by(type="process")
+            .first()
+        )
         bpmn_file_full_path = None
-        if bpmn_process_id_lookup is None:
-            bpmn_file_full_path = ProcessInstanceProcessor.backfill_missing_bpmn_process_id_lookup_records(
-                bpmn_process_identifier
+        if spec_reference is None:
+            bpmn_file_full_path = (
+                ProcessInstanceProcessor.backfill_missing_spec_reference_records(
+                    bpmn_process_identifier
+                )
             )
         else:
             bpmn_file_full_path = os.path.join(
                 FileSystemService.root_path(),
-                bpmn_process_id_lookup.bpmn_file_relative_path,
+                spec_reference.relative_path,
             )
         if bpmn_file_full_path is None:
             raise (
@@ -1161,11 +1139,11 @@ class ProcessInstanceProcessor:
         )
         return user_tasks  # type: ignore
 
-    def complete_task(self, task: SpiffTask) -> None:
+    def complete_task(self, task: SpiffTask, active_task: ActiveTaskModel) -> None:
         """Complete_task."""
         self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
-        self.save_spiff_step_details()
+        self.save_spiff_step_details(active_task)
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""

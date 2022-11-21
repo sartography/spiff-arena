@@ -163,3 +163,29 @@ class TestPermissions(BaseTest):
         self.assert_user_has_permission(
             group_a_admin, "update", f"/{process_group_b_id}"
         )
+
+    def test_user_can_access_base_path_when_given_wildcard_permission(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        """Test_user_can_access_base_path_when_given_wildcard_permission."""
+        group_a_admin = self.find_or_create_user()
+
+        permission_target = PermissionTargetModel(uri="/process-models/%")
+        db.session.add(permission_target)
+        db.session.commit()
+
+        permission_assignment = PermissionAssignmentModel(
+            permission_target_id=permission_target.id,
+            principal_id=group_a_admin.principal.id,
+            permission="update",
+            grant_type="permit",
+        )
+        db.session.add(permission_assignment)
+        db.session.commit()
+
+        self.assert_user_has_permission(group_a_admin, "update", "/process-models/hey")
+        self.assert_user_has_permission(group_a_admin, "update", "/process-models/")
+        self.assert_user_has_permission(group_a_admin, "update", "/process-models")
+        self.assert_user_has_permission(
+            group_a_admin, "update", "/process-modelshey", expected_result=False
+        )

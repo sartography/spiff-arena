@@ -136,6 +136,7 @@ class BaseTest:
 
             # make sure we have a group
             process_group_id, _ = os.path.split(process_model_id)
+            modified_process_group_id = process_group_id.replace("/", ":")
             process_group_path = f"{FileSystemService.root_path()}/{process_group_id}"
             if ProcessModelService().is_group(process_group_path):
 
@@ -156,11 +157,12 @@ class BaseTest:
                     user = self.find_or_create_user()
 
                 response = client.post(
-                    "/v1.0/process-models",
+                    f"/v1.0/process-models/{modified_process_group_id}",
                     content_type="application/json",
                     data=json.dumps(ProcessModelInfoSchema().dump(model)),
                     headers=self.logged_in_headers(user),
                 )
+
                 assert response.status_code == 201
                 return response
 

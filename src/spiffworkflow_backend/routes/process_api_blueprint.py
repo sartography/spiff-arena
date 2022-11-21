@@ -39,6 +39,7 @@ from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
@@ -58,18 +59,24 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.secret_model import SecretModelSchema
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_processor import MyCustomParser
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
+)
+from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportFilter,
+)
+from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportService,
 )
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
@@ -228,11 +235,17 @@ def process_group_show(
     return make_response(jsonify(process_group), 200)
 
 
-def process_model_add(
-    body: Dict[str, Union[str, bool, int]]
+def process_model_create(
+    modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
-    """Add_process_model."""
+    """Process_model_create."""
     process_model_info = ProcessModelInfoSchema().load(body)
+    if modified_process_group_id is None:
+        raise ApiError(
+            error_code="process_group_id_not_specified",
+            message="Process Model could not be created when process_group_id path param is unspecified",
+            status_code=400,
+        )
     if process_model_info is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
@@ -308,9 +321,7 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
     files = sorted(SpecFileService.get_files(process_model))
     process_model.files = files
     for file in process_model.files:
-        file.references = SpecFileService.get_references_for_file(
-            file, process_model, MyCustomParser
-        )
+        file.references = SpecFileService.get_references_for_file(file, process_model)
     process_model_json = ProcessModelInfoSchema().dump(process_model)
     return process_model_json
 
@@ -337,8 +348,17 @@ def process_model_list(
             "pages": pages,
         },
     }
-
     return Response(json.dumps(response_json), status=200, mimetype="application/json")
+
+
+def process_list() -> Any:
+    """Returns a list of all known processes.
+
+    This includes processes that are not the
+    primary process - helpful for finding possible call activities.
+    """
+    references = SpecReferenceCache.query.filter_by(type="process").all()
+    return SpecReferenceSchema(many=True).dump(references)
 
 
 def get_file(modified_process_model_id: str, file_name: str) -> Any:
@@ -581,15 +601,34 @@ def message_instance_list(
             MessageInstanceModel.created_at_in_seconds.desc(),  # type: ignore
             MessageInstanceModel.id.desc(),  # type: ignore
         )
-        .join(MessageModel)
+        .join(MessageModel, MessageModel.id == MessageInstanceModel.message_model_id)
         .join(ProcessInstanceModel)
         .add_columns(
             MessageModel.identifier.label("message_identifier"),
             ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.process_group_identifier,
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
+
+    for message_instance in message_instances:
+        message_correlations: dict = {}
+        for (
+            mcmi
+        ) in (
+            message_instance.MessageInstanceModel.message_correlations_message_instances
+        ):
+            mc = MessageCorrelationModel.query.filter_by(
+                id=mcmi.message_correlation_id
+            ).all()
+            for m in mc:
+                if m.name not in message_correlations:
+                    message_correlations[m.name] = {}
+                message_correlations[m.name][
+                    m.message_correlation_property.identifier
+                ] = m.value
+        message_instance.MessageInstanceModel.message_correlations = (
+            message_correlations
+        )
 
     response_json = {
         "results": message_instances.items,
@@ -696,13 +735,38 @@ def process_instance_list(
     end_from: Optional[int] = None,
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
+    user_filter: Optional[bool] = False,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
+    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
+
+    if user_filter:
+        report_filter = ProcessInstanceReportFilter(
+            process_model_identifier,
+            start_from,
+            start_to,
+            end_from,
+            end_to,
+            process_status.split(",") if process_status else None,
+        )
+    else:
+        report_filter = (
+            ProcessInstanceReportService.filter_from_metadata_with_overrides(
+                process_instance_report,
+                process_model_identifier,
+                start_from,
+                start_to,
+                end_from,
+                end_to,
+                process_status,
+            )
+        )
+
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
-    if process_model_identifier is not None:
+    if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
-            f"{process_model_identifier}",
+            f"{report_filter.process_model_identifier}",
         )
 
         process_instance_query = process_instance_query.filter_by(
@@ -722,53 +786,43 @@ def process_instance_list(
             )
         )
 
-    if start_from is not None:
+    if report_filter.start_from is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds >= start_from
+            ProcessInstanceModel.start_in_seconds >= report_filter.start_from
         )
-    if start_to is not None:
+    if report_filter.start_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds <= start_to
+            ProcessInstanceModel.start_in_seconds <= report_filter.start_to
         )
-    if end_from is not None:
+    if report_filter.end_from is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds >= end_from
+            ProcessInstanceModel.end_in_seconds >= report_filter.end_from
         )
-    if end_to is not None:
+    if report_filter.end_to is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds <= end_to
+            ProcessInstanceModel.end_in_seconds <= report_filter.end_to
         )
-    if process_status is not None:
-        process_status_array = process_status.split(",")
+    if report_filter.process_status is not None:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(process_status_array)  # type: ignore
+            ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
         )
 
     process_instances = process_instance_query.order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
-    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
-
-    # TODO need to look into this more - how the filter here interacts with the
-    # one defined in the report.
-    # TODO need to look into test failures when the results from result_dict is
-    # used instead of the process instances
-
-    # substitution_variables = request.args.to_dict()
-    # result_dict = process_instance_report.generate_report(
-    #    process_instances.items, substitution_variables
-    # )
-
-    # results = result_dict["results"]
-    # report_metadata = result_dict["report_metadata"]
-
-    results = process_instances.items
+    results = list(
+        map(
+            ProcessInstanceService.serialize_flat_with_task_data,
+            process_instances.items,
+        )
+    )
     report_metadata = process_instance_report.report_metadata
 
     response_json = {
         "report_metadata": report_metadata,
         "results": results,
+        "filters": report_filter.to_dict(),
         "pagination": {
             "count": len(results),
             "total": process_instances.total,
@@ -1009,7 +1063,17 @@ def task_list_for_my_open_processes(
     return get_tasks(page=page, per_page=per_page)
 
 
-def task_list_for_processes_started_by_others(
+def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    """Task_list_for_processes_started_by_others."""
+    return get_tasks(
+        processes_started_by_user=False,
+        has_lane_assignment_id=False,
+        page=page,
+        per_page=per_page,
+    )
+
+
+def task_list_for_my_groups(
     page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Task_list_for_processes_started_by_others."""
@@ -1017,14 +1081,21 @@ def task_list_for_processes_started_by_others(
 
 
 def get_tasks(
-    processes_started_by_user: bool = True, page: int = 1, per_page: int = 100
+    processes_started_by_user: bool = True,
+    has_lane_assignment_id: bool = True,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Get_tasks."""
     user_id = g.user.id
+
+    # use distinct to ensure we only get one row per active task otherwise
+    # we can get back multiple for the same active task row which throws off
+    # pagination later on
+    # https://stackoverflow.com/q/34582014/6090676
     active_tasks_query = (
-        ActiveTaskModel.query.outerjoin(
-            GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id
-        )
+        ActiveTaskModel.query.distinct()
+        .outerjoin(GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
     )
@@ -1032,11 +1103,29 @@ def get_tasks(
     if processes_started_by_user:
         active_tasks_query = active_tasks_query.filter(
             ProcessInstanceModel.process_initiator_id == user_id
-        ).outerjoin(ActiveTaskUserModel, and_(ActiveTaskUserModel.user_id == user_id))
+        ).outerjoin(
+            ActiveTaskUserModel,
+            and_(
+                ActiveTaskUserModel.user_id == user_id,
+                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+            ),
+        )
     else:
         active_tasks_query = active_tasks_query.filter(
             ProcessInstanceModel.process_initiator_id != user_id
-        ).join(ActiveTaskUserModel, and_(ActiveTaskUserModel.user_id == user_id))
+        ).join(
+            ActiveTaskUserModel,
+            and_(
+                ActiveTaskUserModel.user_id == user_id,
+                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+            ),
+        )
+        if has_lane_assignment_id:
+            active_tasks_query = active_tasks_query.filter(
+                ActiveTaskModel.lane_assignment_id.is_not(None)  # type: ignore
+            )
+        else:
+            active_tasks_query = active_tasks_query.filter(ActiveTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
     active_tasks = active_tasks_query.add_columns(
         ProcessInstanceModel.process_model_identifier,
@@ -1064,7 +1153,10 @@ def get_tasks(
 
 
 def process_instance_task_list(
-    process_instance_id: int, all_tasks: bool = False, spiff_step: int = 0
+    modified_process_model_id: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
@@ -1127,26 +1219,8 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
-
+    task.process_model_identifier = process_model.id
     process_model_with_form = process_model
-    all_processes = SpecFileService.get_all_bpmn_process_identifiers_for_process_model(
-        process_model
-    )
-    if task.process_name not in all_processes:
-        bpmn_file_full_path = (
-            ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
-                task.process_name
-            )
-        )
-        relative_path = os.path.relpath(
-            bpmn_file_full_path, start=FileSystemService.root_path()
-        )
-        process_model_relative_path = os.path.dirname(relative_path)
-        process_model_with_form = (
-            ProcessModelService.get_process_model_from_relative_path(
-                process_model_relative_path
-            )
-        )
 
     if task.type == "User Task":
         if not form_schema_file_name:
@@ -1232,7 +1306,25 @@ def task_submit(
     if terminate_loop and spiff_task.is_looping():
         spiff_task.terminate_loop()
 
-    ProcessInstanceService.complete_form_task(processor, spiff_task, body, g.user)
+    active_task = ActiveTaskModel.query.filter_by(
+        process_instance_id=process_instance_id, task_id=task_id
+    ).first()
+    if active_task is None:
+        raise (
+            ApiError(
+                error_code="no_active_task",
+                message="Cannot find an active task with task id '{task_id}' for process instance {process_instance_id}.",
+                status_code=500,
+            )
+        )
+
+    ProcessInstanceService.complete_form_task(
+        processor=processor,
+        spiff_task=spiff_task,
+        data=body,
+        user=g.user,
+        active_task=active_task,
+    )
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
     # task spec, complete that form as well.
@@ -1283,9 +1375,7 @@ def script_unit_test_create(
 
     # TODO: move this to an xml service or something
     file_contents = SpecFileService.get_data(process_model, file.name)
-    bpmn_etree_element = SpecFileService.get_etree_element_from_binary_data(
-        file_contents, file.name
-    )
+    bpmn_etree_element = etree.fromstring(file_contents)
 
     nsmap = bpmn_etree_element.nsmap
     spiff_element_maker = ElementMaker(
@@ -1538,7 +1628,7 @@ def add_secret(body: Dict) -> Response:
 
 def update_secret(key: str, body: dict) -> Response:
     """Update secret."""
-    SecretService().update_secret(key, body["value"], body["user_id"])
+    SecretService().update_secret(key, body["value"], g.user.id)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
