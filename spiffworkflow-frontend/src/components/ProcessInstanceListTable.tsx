@@ -43,8 +43,13 @@ import HttpService from '../services/HttpService';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
-import { PaginationObject, ProcessModel } from '../interfaces';
+import {
+  PaginationObject,
+  ProcessModel,
+  ProcessInstanceReport,
+} from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
+import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -102,6 +107,8 @@ export default function ProcessInstanceListTable({
   >([]);
   const [processModelSelection, setProcessModelSelection] =
     useState<ProcessModel | null>(null);
+  const [processInstanceReportSelection, setProcessInstanceReportSelection] =
+    useState<ProcessInstanceReport | null>(null);
 
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
     return {
@@ -692,6 +699,17 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const reportSearchComponent = () => {
+    return (
+      <ProcessInstanceReportSearch
+        onChange={(selection: any) =>
+          setProcessInstanceReportSelection(selection.selectedItem)
+        }
+        selectedItem={processInstanceReportSelection}
+      />
+    );
+  };
+
   if (pagination) {
     // eslint-disable-next-line prefer-const
     let { page, perPage } = getPageInfoFromSearchParams(
@@ -707,6 +725,7 @@ export default function ProcessInstanceListTable({
     return (
       <>
         {filterComponent()}
+        {reportSearchComponent()}
         <PaginationForTable
           page={page}
           perPage={perPage}
