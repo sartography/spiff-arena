@@ -102,3 +102,11 @@ export interface PermissionCheckResult {
 export interface PermissionCheckResponseBody {
   results: PermissionCheckResult;
 }
+
+export interface FormField {
+  id: string;
+  title: string;
+  required: boolean;
+  type: string;
+  enum: string[];
+}

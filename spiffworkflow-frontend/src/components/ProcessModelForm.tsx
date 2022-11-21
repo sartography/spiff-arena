@@ -24,7 +24,6 @@ export default function ProcessModelForm({
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
   const navigate = useNavigate();
-  const modifiedProcessModelPath = modifyProcessModelPath(processModel.id);
 
   const navigateToProcessModel = (result: ProcessModel) => {
     if ('id' in result) {
@@ -53,7 +52,7 @@ export default function ProcessModelForm({
     if (hasErrors) {
       return;
     }
-    const path = `/process-models/${modifiedProcessModelPath}`;
+    const path = `/process-models/${processGroupId}`;
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
@@ -64,7 +63,7 @@ export default function ProcessModelForm({
     };
     if (mode === 'new') {
       Object.assign(postBody, {
-        id: `${processGroupId}:${processModel.id}`,
+        id: `${processGroupId}/${processModel.id}`,
       });
     }
 

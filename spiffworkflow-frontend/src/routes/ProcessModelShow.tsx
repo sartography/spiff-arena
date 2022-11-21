@@ -535,6 +535,7 @@ export default function ProcessModelShow() {
           <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
             <ButtonWithConfirmation
               kind="ghost"
+              data-qa="delete-process-model-button"
               renderIcon={TrashCan}
               iconDescription="Delete Process Model"
               hasIconOnly
