@@ -44,7 +44,12 @@ export default function ProcessInstanceReportSearch({
       inputValue
     );
   };
-  return (
+
+  const reportsAvailable = () => {
+    return processInstanceReports && processInstanceReports.length > 0;
+  }
+
+  return reportsAvailable() ? (
     <ComboBox
       onChange={onChange}
       id="process-instance-report-select"
@@ -64,5 +69,5 @@ export default function ProcessInstanceReportSearch({
       titleText={titleText}
       selectedItem={selectedItem}
     />
-  );
+  ) : null;
 }
