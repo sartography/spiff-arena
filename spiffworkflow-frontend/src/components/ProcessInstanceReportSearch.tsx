@@ -47,7 +47,7 @@ export default function ProcessInstanceReportSearch({
 
   const reportsAvailable = () => {
     return processInstanceReports && processInstanceReports.length > 0;
-  }
+  };
 
   return reportsAvailable() ? (
     <ComboBox
