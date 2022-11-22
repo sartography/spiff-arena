@@ -79,7 +79,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
- create_demo-proxy:
+  create_demo-proxy:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
