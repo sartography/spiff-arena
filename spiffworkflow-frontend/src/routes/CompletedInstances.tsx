@@ -11,7 +11,7 @@ export default function CompletedInstances() {
         reportIdentifier="system_report_instances_initiated_by_me"
         showReports={false}
       />
-      <h1 style={{marginTop: "1em"}}>With Tasks Completed By Me</h1>
+      <h1 style={{ marginTop: '1em' }}>With Tasks Completed By Me</h1>
       <ProcessInstanceListTable
         filtersEnabled={false}
         paginationQueryParamPrefix="my_completed_tasks"
@@ -19,7 +19,7 @@ export default function CompletedInstances() {
         reportIdentifier="system_report_instances_with_tasks_completed_by_me"
         showReports={false}
       />
-      <h1 style={{marginTop: "1em"}}>With Tasks Completed By My Group</h1>
+      <h1 style={{ marginTop: '1em' }}>With Tasks Completed By My Group</h1>
       <ProcessInstanceListTable
         filtersEnabled={false}
         paginationQueryParamPrefix="group_completed_tasks"
