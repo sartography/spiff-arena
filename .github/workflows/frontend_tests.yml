@@ -6,7 +6,7 @@ on:
 
 defaults:
   run:
-    working-directory: spiffworkflow-backend
+    working-directory: spiffworkflow-frontend
 
 # https://docs.github.com/en/actions/using-workflows/reusing-workflows
 
