@@ -911,9 +911,13 @@ def process_instance_list(
             SpiffStepDetailsModel.completed_by_user_id.in_(users_in_my_groups)  # type: ignore
         )
 
-    process_instances = process_instance_query.distinct().order_by(
-        ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    process_instances = (
+        process_instance_query.distinct()
+        .order_by(
+            ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
+        )
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
 
     results = list(
         map(
