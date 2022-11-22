@@ -82,12 +82,15 @@ export default function BaseInputTemplate<
   } else if (schema && schema.title) {
     labelToUse = schema.title;
   }
+  if (required) {
+    labelToUse = `${labelToUse}*`;
+  }
 
   let invalid = false;
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
-    errorMessageForField = `${labelToUse} ${rawErrors[0]}`;
+    errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
   }
 
   return (

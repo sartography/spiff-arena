@@ -2,17 +2,28 @@ import { useContext, useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Tabs, TabList, Tab } from '@carbon/react';
+import { Can } from '@casl/react';
 import ErrorContext from '../contexts/ErrorContext';
 import SecretList from './SecretList';
 import SecretNew from './SecretNew';
 import SecretShow from './SecretShow';
 import AuthenticationList from './AuthenticationList';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function Configuration() {
   const location = useLocation();
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.authenticationListPath]: ['GET'],
+    [targetUris.secretListPath]: ['GET'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
     setErrorMessage(null);
@@ -27,12 +38,18 @@ export default function Configuration() {
     <>
       <Tabs selectedIndex={selectedTabIndex}>
         <TabList aria-label="List of tabs">
-          <Tab onClick={() => navigate('/admin/configuration/secrets')}>
-            Secrets
-          </Tab>
-          <Tab onClick={() => navigate('/admin/configuration/authentications')}>
-            Authentications
-          </Tab>
+          <Can I="GET" a={targetUris.secretListPath} ability={ability}>
+            <Tab onClick={() => navigate('/admin/configuration/secrets')}>
+              Secrets
+            </Tab>
+          </Can>
+          <Can I="GET" a={targetUris.authenticationListPath} ability={ability}>
+            <Tab
+              onClick={() => navigate('/admin/configuration/authentications')}
+            >
+              Authentications
+            </Tab>
+          </Can>
         </TabList>
       </Tabs>
       <br />

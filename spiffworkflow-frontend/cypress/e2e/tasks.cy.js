@@ -1,16 +1,25 @@
 const submitInputIntoFormField = (taskName, fieldKey, fieldValue) => {
-  cy.contains(`Task: ${taskName}`);
+  cy.contains(`Task: ${taskName}`, { timeout: 10000 });
   cy.get(fieldKey).clear().type(fieldValue);
   cy.contains('Submit').click();
 };
 
 const checkFormFieldIsReadOnly = (formName, fieldKey) => {
   cy.contains(`Task: ${formName}`);
-  cy.get(fieldKey).invoke('attr', 'readonly').should('exist');
+  cy.get(fieldKey).invoke('attr', 'disabled').should('exist');
 };
 
 const checkTaskHasClass = (taskName, className) => {
   cy.get(`g[data-element-id=${taskName}]`).should('have.class', className);
+};
+
+const kickOffModelWithForm = (modelId, formName) => {
+  cy.navigateToProcessModel(
+    'Acceptance Tests Group One',
+    'Acceptance Tests Model 2',
+    'acceptance-tests-model-2'
+  );
+  cy.runPrimaryBpmnFile(true);
 };
 
 describe('tasks', () => {
@@ -21,7 +30,6 @@ describe('tasks', () => {
     cy.logout();
   });
 
-  // TODO: need to fix the next_task thing to make this pass
   it('can complete and navigate a form', () => {
     const groupDisplayName = 'Acceptance Tests Group One';
     const modelId = `acceptance-tests-model-2`;
@@ -30,11 +38,7 @@ describe('tasks', () => {
     const activeTaskClassName = 'active-task-highlight';
 
     cy.navigateToProcessModel(groupDisplayName, modelDisplayName, modelId);
-
-    // avoid reloading so we can click on the task link that appears on running the process instance
-    cy.runPrimaryBpmnFile(false);
-
-    cy.contains('my task').click();
+    cy.runPrimaryBpmnFile(true);
 
     submitInputIntoFormField(
       'get_user_generated_number_one',
@@ -59,7 +63,6 @@ describe('tasks', () => {
       '#root_user_generated_number_1'
     );
 
-    cy.getBySel('form-nav-form3').should('have.text', 'form3 - Current');
     cy.getBySel('form-nav-form3').click();
     submitInputIntoFormField(
       'get_user_generated_number_three',
@@ -111,18 +114,12 @@ describe('tasks', () => {
   });
 
   it('can paginate items', () => {
-    cy.navigateToProcessModel(
-      'Acceptance Tests Group One',
-      'Acceptance Tests Model 2',
-      'acceptance-tests-model-2'
-    );
-
     // make sure we have some tasks
-    cy.runPrimaryBpmnFile();
-    cy.runPrimaryBpmnFile();
-    cy.runPrimaryBpmnFile();
-    cy.runPrimaryBpmnFile();
-    cy.runPrimaryBpmnFile();
+    kickOffModelWithForm();
+    kickOffModelWithForm();
+    kickOffModelWithForm();
+    kickOffModelWithForm();
+    kickOffModelWithForm();
 
     cy.navigateToHome();
     cy.basicPaginationTest();

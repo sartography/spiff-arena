@@ -1,5 +1,4 @@
 """Acceptance_test_fixtures."""
-import json
 import time
 
 from flask import current_app
@@ -8,13 +7,15 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.services.process_instance_service import (
+    ProcessInstanceService,
+)
 
 
 def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
     """Load_fixtures."""
     current_app.logger.debug("load_acceptance_test_fixtures() start")
-    test_process_group_id = ""
-    test_process_model_id = "acceptance-tests-group-one/acceptance-tests-model-1"
+    test_process_model_id = "misc/acceptance-tests-group-one/acceptance-tests-model-1"
     user = BaseTest.find_or_create_user()
     statuses = ProcessInstanceStatus.list()
     current_time = round(time.time())
@@ -28,16 +29,13 @@ def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
     # suspended - 6 hours ago
     process_instances = []
     for i in range(len(statuses)):
-        process_instance = ProcessInstanceModel(
-            status=statuses[i],
-            process_initiator=user,
-            process_model_identifier=test_process_model_id,
-            process_group_identifier=test_process_group_id,
-            updated_at_in_seconds=round(time.time()),
-            start_in_seconds=current_time - (3600 * i),
-            end_in_seconds=current_time - (3600 * i - 20),
-            bpmn_json=json.dumps({"i": i}),
+
+        process_instance = ProcessInstanceService.create_process_instance(
+            test_process_model_id, user
         )
+        process_instance.status = statuses[i]
+        process_instance.start_in_seconds = current_time - (3600 * i)
+        process_instance.end_in_seconds = current_time - (3600 * i - 20)
         db.session.add(process_instance)
         process_instances.append(process_instance)
 

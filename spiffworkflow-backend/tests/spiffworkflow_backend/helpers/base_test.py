@@ -137,7 +137,9 @@ class BaseTest:
             # make sure we have a group
             process_group_id, _ = os.path.split(process_model_id)
             modified_process_group_id = process_group_id.replace("/", ":")
-            process_group_path = f"{FileSystemService.root_path()}/{process_group_id}"
+            process_group_path = os.path.abspath(
+                os.path.join(FileSystemService.root_path(), process_group_id)
+            )
             if ProcessModelService().is_group(process_group_path):
 
                 if exception_notification_addresses is None:

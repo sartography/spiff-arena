@@ -11,12 +11,6 @@ export interface RecentProcessModel {
   processModelDisplayName: string;
 }
 
-export interface ProcessGroup {
-  id: string;
-  display_name: string;
-  description?: string | null;
-}
-
 export interface ProcessReference {
   id: string; // The unique id of the process or decision table.
   name: string; // The process or decision Display name.
@@ -42,12 +36,30 @@ export interface ProcessFile {
   file_contents?: string;
 }
 
+export interface ProcessInstance {
+  id: number;
+  process_model_identifier: string;
+}
+
+export interface ProcessInstanceReport {
+  id: string;
+  display_name: string;
+}
+
 export interface ProcessModel {
   id: string;
   description: string;
   display_name: string;
   primary_file_name: string;
   files: ProcessFile[];
+}
+
+export interface ProcessGroup {
+  id: string;
+  display_name: string;
+  description?: string | null;
+  process_models?: ProcessModel[];
+  process_groups?: ProcessGroup[];
 }
 
 // tuple of display value and URL
@@ -94,4 +106,12 @@ export interface PermissionCheckResult {
 }
 export interface PermissionCheckResponseBody {
   results: PermissionCheckResult;
+}
+
+export interface FormField {
+  id: string;
+  title: string;
+  required: boolean;
+  type: string;
+  enum: string[];
 }

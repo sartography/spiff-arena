@@ -359,20 +359,7 @@ class ProcessInstanceProcessor:
                 subprocesses=subprocesses,
             )
             self.bpmn_process_instance.script_engine = self._script_engine
-
             self.add_user_info_to_process_instance(self.bpmn_process_instance)
-
-            if self.PROCESS_INSTANCE_ID_KEY not in self.bpmn_process_instance.data:
-                if not process_instance_model.id:
-                    db.session.add(process_instance_model)
-                    # If the model is new, and has no id, save it, write it into the process_instance model
-                    # and save it again.  In this way, the workflow process is always aware of the
-                    # database model to which it is associated, and scripts running within the model
-                    # can then load data as needed.
-                self.bpmn_process_instance.data[
-                    ProcessInstanceProcessor.PROCESS_INSTANCE_ID_KEY
-                ] = process_instance_model.id
-                self.save()
 
         except MissingSpecError as ke:
             raise ApiError(
@@ -675,7 +662,7 @@ class ProcessInstanceProcessor:
         bpmn_process_identifier: str,
     ) -> Optional[str]:
         """Backfill_missing_spec_reference_records."""
-        process_models = ProcessModelService().get_process_models()
+        process_models = ProcessModelService().get_process_models(recursive=True)
         for process_model in process_models:
             try:
                 refs = SpecFileService.reference_map(

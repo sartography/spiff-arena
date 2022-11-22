@@ -1,9 +1,9 @@
 {
-    "name": {
+  "name": {
     "ui:title": "Name",
     "ui:description": "(Your name)"
   },
-    "department": {
+  "department": {
     "ui:title": "Department",
     "ui:description": "(Your department)"
   },
