@@ -86,12 +86,12 @@ class ProcessInstanceReportService:
             },
             "system_report_instances_initiated_by_me": {
                 "columns": [
+                    {"Header": "id", "accessor": "id"},
                     {
                         "Header": "process_model_identifier",
                         "accessor": "process_model_identifier",
                     },
                     {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "id", "accessor": "id"},
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "status", "accessor": "status"},
                 ],
@@ -99,14 +99,14 @@ class ProcessInstanceReportService:
             },
             "system_report_instances_with_tasks_completed_by_me": {
                 "columns": [
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "status", "accessor": "status"},
                     {"Header": "id", "accessor": "id"},
                     {
                         "Header": "process_model_identifier",
                         "accessor": "process_model_identifier",
                     },
+                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
+                    {"Header": "status", "accessor": "status"},
                 ],
                 "filter_by": [
                     {"field_name": "with_tasks_completed_by_me", "field_value": True}
@@ -114,6 +114,7 @@ class ProcessInstanceReportService:
             },
             "system_report_instances_with_tasks_completed_by_my_groups": {
                 "columns": [
+                    {"Header": "id", "accessor": "id"},
                     {
                         "Header": "process_model_identifier",
                         "accessor": "process_model_identifier",
@@ -121,7 +122,6 @@ class ProcessInstanceReportService:
                     {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "status", "accessor": "status"},
-                    {"Header": "id", "accessor": "id"},
                 ],
                 "filter_by": [
                     {
