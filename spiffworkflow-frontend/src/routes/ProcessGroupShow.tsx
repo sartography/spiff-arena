@@ -1,5 +1,15 @@
 import { useEffect, useState } from 'react';
-import { Link, useSearchParams, useParams } from 'react-router-dom';
+import {
+  Link,
+  useSearchParams,
+  useParams,
+  useNavigate,
+} from 'react-router-dom';
+import {
+  TrashCan,
+  Edit,
+  // @ts-ignore
+} from '@carbon/icons-react';
 // @ts-ignore
 import { Button, Table, Stack } from '@carbon/react';
 import { Can } from '@casl/react';
@@ -20,11 +30,13 @@ import {
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
+import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 // import ProcessModelListTiles from '../components/ProcessModelListTiles';
 
 export default function ProcessGroupShow() {
   const params = useParams();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
   const [processModels, setProcessModels] = useState([]);
@@ -34,7 +46,7 @@ export default function ProcessGroupShow() {
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.processGroupListPath]: ['POST'],
-    [targetUris.processGroupShowPath]: ['PUT'],
+    [targetUris.processGroupShowPath]: ['PUT', 'DELETE'],
     [targetUris.processModelCreatePath]: ['POST'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
@@ -99,6 +111,22 @@ export default function ProcessGroupShow() {
     );
   };
 
+  const navigateToProcessGroups = (_result: any) => {
+    navigate(`/admin/process-groups`);
+  };
+
+  const deleteProcessGroup = () => {
+    if (processGroup) {
+      HttpService.makeCallToBackend({
+        path: `/process-groups/${modifyProcessIdentifierForPathParam(
+          processGroup.id
+        )}`,
+        successCallback: navigateToProcessGroups,
+        httpMethod: 'DELETE',
+      });
+    }
+  };
+
   if (processGroup && modelPagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
@@ -112,7 +140,35 @@ export default function ProcessGroupShow() {
             ['', `process_group:${processGroup.id}`],
           ]}
         />
-        <h1>Process Group: {processGroup.display_name}</h1>
+        <Stack orientation="horizontal" gap={1}>
+          <h1 className="with-icons">
+            Process Group: {processGroup.display_name}
+          </h1>
+          <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
+            <Button
+              kind="ghost"
+              data-qa="edit-process-group-button"
+              renderIcon={Edit}
+              iconDescription="Edit Process Group"
+              hasIconOnly
+              href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
+            >
+              Edit process group
+            </Button>
+          </Can>
+          <Can I="DELETE" a={targetUris.processGroupShowPath} ability={ability}>
+            <ButtonWithConfirmation
+              kind="ghost"
+              data-qa="delete-process-group-button"
+              renderIcon={TrashCan}
+              iconDescription="Delete Process Group"
+              hasIconOnly
+              description={`Delete process group: ${processGroup.display_name}`}
+              onConfirmation={deleteProcessGroup}
+              confirmButtonLabel="Delete"
+            />
+          </Can>
+        </Stack>
         <p className="process-description">{processGroup.description}</p>
         <ul>
           <Stack orientation="horizontal" gap={3}>
@@ -132,13 +188,6 @@ export default function ProcessGroupShow() {
                 href={`/admin/process-models/${modifiedProcessGroupId}/new`}
               >
                 Add a process model
-              </Button>
-            </Can>
-            <Can I="PUT" a={targetUris.processGroupShowPath} ability={ability}>
-              <Button
-                href={`/admin/process-groups/${modifiedProcessGroupId}/edit`}
-              >
-                Edit process group
               </Button>
             </Can>
           </Stack>
