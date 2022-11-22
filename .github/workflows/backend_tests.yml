@@ -1,9 +1,8 @@
 name: Backend Tests
 
 on:
-  - workflow_dispatch
-#  - push
-#  - pull_request
+  - push
+  - pull_request
 
 defaults:
   run:
