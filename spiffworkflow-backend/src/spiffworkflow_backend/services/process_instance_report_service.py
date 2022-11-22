@@ -135,7 +135,7 @@ class ProcessInstanceReportService:
         process_instance_report = ProcessInstanceReportModel(
             identifier=report_identifier,
             created_by_id=user.id,
-            report_metadata=temp_system_metadata_map[report_identifier],
+            report_metadata=temp_system_metadata_map[report_identifier],  # type: ignore
         )
 
         return process_instance_report  # type: ignore
