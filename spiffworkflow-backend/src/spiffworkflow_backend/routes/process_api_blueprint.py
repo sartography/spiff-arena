@@ -347,11 +347,14 @@ def process_model_move(
 
 
 def process_model_list(
-    process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+    process_group_identifier: Optional[str] = None,
+    recursive: Optional[bool] = False,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process model list!"""
     process_models = ProcessModelService().get_process_models(
-        process_group_id=process_group_identifier
+        process_group_id=process_group_identifier, recursive=recursive
     )
     batch = ProcessModelService().get_batch(
         process_models, page=page, per_page=per_page

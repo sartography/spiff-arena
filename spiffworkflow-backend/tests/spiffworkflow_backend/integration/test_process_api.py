@@ -381,7 +381,7 @@ class TestProcessApi(BaseTest):
 
         # get all models
         response = client.get(
-            "/v1.0/process-models?per_page=1000",
+            "/v1.0/process-models?per_page=1000&recursive=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None

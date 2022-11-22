@@ -179,7 +179,7 @@ class ProcessModelService(FileSystemService):
         raise ProcessEntityNotFoundError("process_model_not_found")
 
     def get_process_models(
-        self, process_group_id: Optional[str] = None
+        self, process_group_id: Optional[str] = None, recursive: Optional[bool] = False
     ) -> List[ProcessModelInfo]:
         """Get process models."""
         process_models = []
@@ -187,7 +187,11 @@ class ProcessModelService(FileSystemService):
         if process_group_id:
             awesome_id = process_group_id.replace("/", os.sep)
             root_path = os.path.join(root_path, awesome_id)
-        process_model_glob = os.path.join(root_path, "**", "process_model.json")
+
+        process_model_glob = os.path.join(root_path, "*", "process_model.json")
+        if recursive:
+            process_model_glob = os.path.join(root_path, "**", "process_model.json")
+
         for file in glob(process_model_glob, recursive=True):
             process_model_relative_path = os.path.relpath(
                 file, start=FileSystemService.root_path()
