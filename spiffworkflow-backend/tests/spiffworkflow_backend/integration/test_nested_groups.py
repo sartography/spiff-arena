@@ -46,7 +46,7 @@ class TestNestedGroups(BaseTest):
         process_instance_id = response.json["id"]
 
         client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         process_instance = ProcessInstanceService().get_process_instance(

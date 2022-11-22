@@ -494,6 +494,7 @@ def process_instance_create(modified_process_model_id: str) -> flask.wrappers.Re
 
 
 def process_instance_run(
+    modified_process_model_identifier: str,
     process_instance_id: int,
     do_engine_steps: bool = True,
 ) -> flask.wrappers.Response:

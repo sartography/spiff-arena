@@ -1,7 +1,7 @@
 // We may need to update usage of Ability when we update.
 // They say they are going to rename PureAbility to Ability and remove the old class.
 import { AbilityBuilder, Ability } from '@casl/ability';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { AbilityContext } from '../contexts/Can';
 import { PermissionCheckResponseBody, PermissionsToCheck } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -10,6 +10,7 @@ export const usePermissionFetcher = (
   permissionsToCheck: PermissionsToCheck
 ) => {
   const ability = useContext(AbilityContext);
+  const [permissionsLoaded, setPermissionsLoaded] = useState<boolean>(false);
 
   useEffect(() => {
     const processPermissionResult = (result: PermissionCheckResponseBody) => {
@@ -34,6 +35,7 @@ export const usePermissionFetcher = (
         }
       });
       ability.update(rules);
+      setPermissionsLoaded(true);
     };
 
     HttpService.makeCallToBackend({
@@ -44,5 +46,5 @@ export const usePermissionFetcher = (
     });
   });
 
-  return { ability };
+  return { ability, permissionsLoaded };
 };

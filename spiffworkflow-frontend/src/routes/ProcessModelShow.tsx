@@ -118,7 +118,9 @@ export default function ProcessModelShow() {
     [targetUris.processInstanceActionPath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'GET', 'DELETE'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -325,7 +327,7 @@ export default function ProcessModelShow() {
   };
 
   const processModelFileList = () => {
-    if (!processModel) {
+    if (!processModel || !permissionsLoaded) {
       return null;
     }
     let constructedTag;

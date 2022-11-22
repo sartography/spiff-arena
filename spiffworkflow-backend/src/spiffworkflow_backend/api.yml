@@ -686,7 +686,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-instances/{process_instance_id}/run:
+  /process-instances/{modified_process_model_identifier}/{process_instance_id}/run:
     parameters:
       - name: process_instance_id
         in: path
@@ -700,7 +700,6 @@ paths:
         description: Defaults to true, can be set to false if you are just looking at the workflow not completeing it.
         schema:
           type: boolean
-    # process_instance_run
     post:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_run
       summary: Run a process instance
