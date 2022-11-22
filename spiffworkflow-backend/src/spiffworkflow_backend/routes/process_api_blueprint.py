@@ -818,7 +818,7 @@ def process_instance_list(
             process_initiator=g.user
         )
 
-    # TODO: not sure if this is exactly what is wanted or if it works properly
+    # TODO: not sure if this is exactly what is wanted
     if report_filter.with_tasks_completed_by_me is True:
         process_instance_query = process_instance_query.join(
             SpiffStepDetailsModel,
@@ -838,7 +838,7 @@ def process_instance_list(
             SpiffStepDetailsModel.completed_by_user_id == g.user.id
         )
 
-    # TODO: not sure if this is exactly what is wanted or if it works properly
+    # TODO: not sure if this is exactly what is wanted
     if report_filter.with_tasks_completed_by_my_group is True:
         process_instance_query = process_instance_query.join(
             SpiffStepDetailsModel,
