@@ -514,6 +514,24 @@ paths:
         description: For filtering - not_started, user_input_required, waiting, complete, error, or suspended
         schema:
           type: string
+      - name: initiated_by_me
+        in: query
+        required: false
+        description: For filtering - show instances initiated by me
+        schema:
+          type: boolean
+      - name: with_tasks_completed_by_me
+        in: query
+        required: false
+        description: For filtering - show instances with tasks completed by me
+        schema:
+          type: boolean
+      - name: with_tasks_completed_by_my_group
+        in: query
+        required: false
+        description: For filtering - show instances with tasks completed by my group
+        schema:
+          type: boolean
       - name: user_filter
         in: query
         required: false
