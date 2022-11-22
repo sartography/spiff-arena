@@ -8,7 +8,7 @@ project:
 
 # run all lint checks and tests
 
-`./bin/run_pyl`
+    ./bin/run_pyl
 
 Requires at root:
 - .darglint
