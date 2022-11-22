@@ -1,6 +1,6 @@
 import CommandInterceptor from 'diagram-js/lib/command/CommandInterceptor';
 import {getDi, is} from 'bpmn-js/lib/util/ModelUtil';
-import {findDataObjects, findDataReferenceShapes} from './DataObjectHelpers';
+import {findDataObjects, findDataReferenceShapes, idToHumanReadableName} from './DataObjectHelpers';
 var HIGH_PRIORITY = 1500;
 import {
   remove as collectionRemove,
@@ -49,7 +49,7 @@ export default class DataObjectInterceptor extends CommandInterceptor {
         }
 
         // Update the name of the reference to match the data object's id.
-        shape.businessObject.name = dataObject.id;
+        shape.businessObject.name = idToHumanReadableName(dataObject.id);
 
         // set the reference to the DataObject
         shape.businessObject.dataObjectRef = dataObject;
