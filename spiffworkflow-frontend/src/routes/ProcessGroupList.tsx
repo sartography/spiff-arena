@@ -39,7 +39,7 @@ export default function ProcessGroupList() {
     };
     // for search box
     HttpService.makeCallToBackend({
-      path: `/process-models?per_page=1000`,
+      path: `/process-models?per_page=1000&recursive=true`,
       successCallback: processResultForProcessModels,
     });
   }, [searchParams]);

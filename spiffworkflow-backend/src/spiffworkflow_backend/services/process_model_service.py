@@ -116,6 +116,22 @@ class ProcessModelService(FileSystemService):
         path = f"{FileSystemService.root_path()}/{process_model_id}"
         shutil.rmtree(path)
 
+    def process_model_move(
+        self, original_process_model_id: str, new_location: str
+    ) -> ProcessModelInfo:
+        """process_model_move."""
+        original_model_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), original_process_model_id)
+        )
+        _, model_id = os.path.split(original_model_path)
+        new_relative_path = f"{new_location}/{model_id}"
+        new_model_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), new_relative_path)
+        )
+        shutil.move(original_model_path, new_model_path)
+        new_process_model = self.get_process_model(new_relative_path)
+        return new_process_model
+
     @classmethod
     def get_process_model_from_relative_path(
         cls, relative_path: str
@@ -163,7 +179,7 @@ class ProcessModelService(FileSystemService):
         raise ProcessEntityNotFoundError("process_model_not_found")
 
     def get_process_models(
-        self, process_group_id: Optional[str] = None
+        self, process_group_id: Optional[str] = None, recursive: Optional[bool] = False
     ) -> List[ProcessModelInfo]:
         """Get process models."""
         process_models = []
@@ -171,7 +187,11 @@ class ProcessModelService(FileSystemService):
         if process_group_id:
             awesome_id = process_group_id.replace("/", os.sep)
             root_path = os.path.join(root_path, awesome_id)
-        process_model_glob = os.path.join(root_path, "**", "process_model.json")
+
+        process_model_glob = os.path.join(root_path, "*", "process_model.json")
+        if recursive:
+            process_model_glob = os.path.join(root_path, "**", "process_model.json")
+
         for file in glob(process_model_glob, recursive=True):
             process_model_relative_path = os.path.relpath(
                 file, start=FileSystemService.root_path()
@@ -195,7 +215,10 @@ class ProcessModelService(FileSystemService):
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = os.path.abspath(
-                os.path.join(FileSystemService.root_path(), process_group_id)
+                os.path.join(
+                    FileSystemService.root_path(),
+                    FileSystemService.id_string_to_relative_path(process_group_id),
+                )
             )
             if self.is_group(process_group_path):
                 return self.__scan_process_group(process_group_path)
@@ -234,6 +257,20 @@ class ProcessModelService(FileSystemService):
         del serialized_process_group["id"]
         self.write_json_file(json_path, serialized_process_group)
         return process_group
+
+    def process_group_move(
+        self, original_process_group_id: str, new_location: str
+    ) -> ProcessGroup:
+        """process_group_move."""
+        original_group_path = self.process_group_path(original_process_group_id)
+        original_root, original_group_id = os.path.split(original_group_path)
+        new_root = f"{FileSystemService.root_path()}/{new_location}"
+        new_group_path = os.path.abspath(
+            os.path.join(FileSystemService.root_path(), new_root, original_group_id)
+        )
+        destination = shutil.move(original_group_path, new_group_path)
+        new_process_group = self.get_process_group(destination)
+        return new_process_group
 
     def __get_all_nested_models(self, group_path: str) -> list:
         """__get_all_nested_models."""

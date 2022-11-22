@@ -662,7 +662,7 @@ class ProcessInstanceProcessor:
         bpmn_process_identifier: str,
     ) -> Optional[str]:
         """Backfill_missing_spec_reference_records."""
-        process_models = ProcessModelService().get_process_models()
+        process_models = ProcessModelService().get_process_models(recursive=True)
         for process_model in process_models:
             try:
                 refs = SpecFileService.reference_map(

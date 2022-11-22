@@ -43,8 +43,13 @@ import HttpService from '../services/HttpService';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
-import { PaginationObject, ProcessModel } from '../interfaces';
+import {
+  PaginationObject,
+  ProcessModel,
+  ProcessInstanceReport,
+} from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
+import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -102,6 +107,8 @@ export default function ProcessInstanceListTable({
   >([]);
   const [processModelSelection, setProcessModelSelection] =
     useState<ProcessModel | null>(null);
+  const [processInstanceReportSelection, setProcessInstanceReportSelection] =
+    useState<ProcessInstanceReport | null>(null);
 
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
     return {
@@ -136,6 +143,14 @@ export default function ProcessInstanceListTable({
       setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
       setProcessInstanceFilters(result.filters);
+
+      // TODO: need to iron out this interaction some more
+      if (result.report_identifier !== 'default') {
+        setProcessInstanceReportSelection({
+          id: result.report_identifier,
+          display_name: result.report_identifier,
+        });
+      }
     }
     function getProcessInstances() {
       // eslint-disable-next-line prefer-const
@@ -154,6 +169,11 @@ export default function ProcessInstanceListTable({
       const userAppliedFilter = searchParams.get('user_filter');
       if (userAppliedFilter) {
         queryParamString += `&user_filter=${userAppliedFilter}`;
+      }
+
+      const reportIdentifier = searchParams.get('report_identifier');
+      if (reportIdentifier) {
+        queryParamString += `&report_identifier=${reportIdentifier}`;
       }
 
       Object.keys(dateParametersToAlwaysFilterBy).forEach(
@@ -234,7 +254,7 @@ export default function ProcessInstanceListTable({
     if (filtersEnabled) {
       // populate process model selection
       HttpService.makeCallToBackend({
-        path: `/process-models?per_page=1000`,
+        path: `/process-models?per_page=1000&recursive=true`,
         successCallback: processResultForProcessModels,
       });
     } else {
@@ -387,6 +407,10 @@ export default function ProcessInstanceListTable({
 
     if (processModelSelection) {
       queryParamString += `&process_model_identifier=${processModelSelection.id}`;
+    }
+
+    if (processInstanceReportSelection) {
+      queryParamString += `&report_identifier=${processInstanceReportSelection.id}`;
     }
 
     setErrorMessage(null);
@@ -664,6 +688,29 @@ export default function ProcessInstanceListTable({
     setShowFilterOptions(!showFilterOptions);
   };
 
+  const processInstanceReportDidChange = (selection: any) => {
+    clearFilters();
+
+    const selectedReport = selection.selectedItem;
+    setProcessInstanceReportSelection(selectedReport);
+
+    const queryParamString = selectedReport
+      ? `&report_identifier=${selectedReport.id}`
+      : '';
+
+    setErrorMessage(null);
+    navigate(`/admin/process-instances?${queryParamString}`);
+  };
+
+  const reportSearchComponent = () => {
+    return (
+      <ProcessInstanceReportSearch
+        onChange={processInstanceReportDidChange}
+        selectedItem={processInstanceReportSelection}
+      />
+    );
+  };
+
   const filterComponent = () => {
     if (!filtersEnabled) {
       return null;
@@ -707,6 +754,7 @@ export default function ProcessInstanceListTable({
     return (
       <>
         {filterComponent()}
+        {reportSearchComponent()}
         <PaginationForTable
           page={page}
           perPage={perPage}

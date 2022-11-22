@@ -234,6 +234,19 @@ def process_group_show(
     return make_response(jsonify(process_group), 200)
 
 
+def process_group_move(
+    modified_process_group_identifier: str, new_location: str
+) -> flask.wrappers.Response:
+    """process_group_move."""
+    original_process_group_id = un_modify_modified_process_model_id(
+        modified_process_group_identifier
+    )
+    new_process_group = ProcessModelService().process_group_move(
+        original_process_group_id, new_location
+    )
+    return make_response(jsonify(new_process_group), 201)
+
+
 def process_model_create(
     modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
@@ -320,12 +333,28 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
     return process_model_json
 
 
+def process_model_move(
+    modified_process_model_identifier: str, new_location: str
+) -> flask.wrappers.Response:
+    """process_model_move."""
+    original_process_model_id = un_modify_modified_process_model_id(
+        modified_process_model_identifier
+    )
+    new_process_model = ProcessModelService().process_model_move(
+        original_process_model_id, new_location
+    )
+    return make_response(jsonify(new_process_model), 201)
+
+
 def process_model_list(
-    process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+    process_group_identifier: Optional[str] = None,
+    recursive: Optional[bool] = False,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process model list!"""
     process_models = ProcessModelService().get_process_models(
-        process_group_id=process_group_identifier
+        process_group_id=process_group_identifier, recursive=recursive
     )
     batch = ProcessModelService().get_batch(
         process_models, page=page, per_page=per_page
@@ -874,6 +903,7 @@ def process_instance_list(
     report_metadata = process_instance_report.report_metadata
 
     response_json = {
+        "report_identifier": process_instance_report.identifier,
         "report_metadata": report_metadata,
         "results": results,
         "filters": report_filter.to_dict(),
