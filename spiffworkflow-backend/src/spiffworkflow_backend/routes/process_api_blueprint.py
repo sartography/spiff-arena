@@ -821,23 +821,31 @@ def process_instance_list(
     # TODO: not sure if this is exactly what is wanted - also join on spiff_logging and check if
     #   message.contains("COMPLETED")?
     if report_filter.with_tasks_completed_by_me is True:
-        steps_query = db.session.query(SpiffStepDetailsModel.process_instance_id).filter(
-            SpiffStepDetailsModel.process_instance_id==ProcessInstanceModel.id,
-            SpiffStepDetailsModel.completed_by_user_id==g.user.id,
-        ).subquery()
+        steps_query = (
+            db.session.query(SpiffStepDetailsModel.process_instance_id)
+            .filter(
+                SpiffStepDetailsModel.process_instance_id == ProcessInstanceModel.id,
+                SpiffStepDetailsModel.completed_by_user_id == g.user.id,
+            )
+            .subquery()
+        )
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.id.in_(steps_query)
+            ProcessInstanceModel.id.in_(steps_query)  # type: ignore
         )
 
     # TODO: not sure if this is exactly what is wanted - also join on spiff_logging and check if
     #   message.contains("COMPLETED") - check if completed_by_user_id is in a group with g.user?
     if report_filter.with_tasks_completed_by_my_group is True:
-        steps_query = db.session.query(SpiffStepDetailsModel.process_instance_id).filter(
-            SpiffStepDetailsModel.process_instance_id==ProcessInstanceModel.id,
-            SpiffStepDetailsModel.completed_by_user_id==g.user.id,
-        ).subquery()
+        steps_query = (
+            db.session.query(SpiffStepDetailsModel.process_instance_id)
+            .filter(
+                SpiffStepDetailsModel.process_instance_id == ProcessInstanceModel.id,
+                SpiffStepDetailsModel.completed_by_user_id == g.user.id,
+            )
+            .subquery()
+        )
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.id.in_(steps_query)
+            ProcessInstanceModel.id.in_(steps_query)  # type: ignore
         )
 
     process_instances = process_instance_query.order_by(
