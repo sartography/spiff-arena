@@ -749,7 +749,7 @@ def process_instance_list(
             end_to,
             process_status.split(",") if process_status else None,
             initiated_by_me,
-            with_tasks_completed_by_me.
+            with_tasks_completed_by_me,
             with_tasks_completed_by_my_group,
         )
     else:
