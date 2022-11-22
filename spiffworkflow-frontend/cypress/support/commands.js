@@ -105,7 +105,7 @@ Cypress.Commands.add(
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
     cy.contains('Misc').click();
-    cy.contains(`Process Group: Misc`, { timeout: 10000 });
+    cy.contains(`Process Group: 99-Misc`, { timeout: 10000 });
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
