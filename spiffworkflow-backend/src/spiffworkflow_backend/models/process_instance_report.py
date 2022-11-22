@@ -72,37 +72,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds = db.Column(db.Integer)
 
     @classmethod
-    def default_report(cls, user: UserModel) -> ProcessInstanceReportModel:
-        """Default_report."""
-        identifier = "default"
-        process_instance_report = ProcessInstanceReportModel.query.filter_by(
-            identifier=identifier, created_by_id=user.id
-        ).first()
-
-        # TODO replace with system report that is loaded on launch (or similar)
-        if process_instance_report is None:
-            report_metadata = {
-                "columns": [
-                    {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_model_identifier",
-                        "accessor": "process_model_identifier",
-                    },
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "status", "accessor": "status"},
-                ],
-            }
-
-            process_instance_report = cls(
-                identifier=identifier,
-                created_by_id=user.id,
-                report_metadata=report_metadata,
-            )
-
-        return process_instance_report  # type: ignore
-
-    @classmethod
     def add_fixtures(cls) -> None:
         """Add_fixtures."""
         try:

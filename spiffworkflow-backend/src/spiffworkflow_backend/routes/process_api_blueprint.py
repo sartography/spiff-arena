@@ -846,6 +846,7 @@ def process_instance_list(
     report_metadata = process_instance_report.report_metadata
 
     response_json = {
+        "report_identifier": process_instance_report.identifier,
         "report_metadata": report_metadata,
         "results": results,
         "filters": report_filter.to_dict(),

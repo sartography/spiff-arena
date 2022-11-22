@@ -41,6 +41,11 @@ export interface ProcessInstance {
   process_model_identifier: string;
 }
 
+export interface ProcessInstanceReport {
+  id: string;
+  display_name: string;
+}
+
 export interface ProcessModel {
   id: string;
   description: string;
