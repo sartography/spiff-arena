@@ -829,11 +829,10 @@ def process_instance_list(
             ProcessInstanceModel.id==SpiffLoggingModel.process_instance_id,
         )
         process_instance_query = process_instance_query.filter(SpiffLoggingModel.message.contains("COMPLETED"))
-        process_instance_query = process_instance_query.filter(SpiffStepDetailsModel.completed_by_user_id==g.user.id)
         process_instance_query = process_instance_query.filter(SpiffLoggingModel.spiff_step==SpiffStepDetailsModel.spiff_step)
+        process_instance_query = process_instance_query.filter(SpiffStepDetailsModel.completed_by_user_id==g.user.id)
 
-    # TODO: not sure if this is exactly what is wanted or if it works properly - check if 
-    #   completed_by_user_id is in a group with g.user?
+    # TODO: not sure if this is exactly what is wanted or if it works properly
     if report_filter.with_tasks_completed_by_my_group is True:
         process_instance_query = process_instance_query.join(
             SpiffStepDetailsModel,
@@ -844,8 +843,13 @@ def process_instance_list(
             ProcessInstanceModel.id==SpiffLoggingModel.process_instance_id,
         )
         process_instance_query = process_instance_query.filter(SpiffLoggingModel.message.contains("COMPLETED"))
-        process_instance_query = process_instance_query.filter(SpiffStepDetailsModel.completed_by_user_id==g.user.id)
         process_instance_query = process_instance_query.filter(SpiffLoggingModel.spiff_step==SpiffStepDetailsModel.spiff_step)
+
+        # TODO with_tasks_completed_by_me and with_tasks_completed_by_my_group may end up sharing 
+        #   the query until this point
+        
+        # check if completed_by_user_id is in a group with g.user
+        #process_instance_query = process_instance_query.filter(SpiffStepDetailsModel.completed_by_user_id==g.user.id)
 
     process_instances = process_instance_query.order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
