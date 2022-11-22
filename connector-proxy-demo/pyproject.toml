@@ -5,14 +5,14 @@ description = "An example showing how to use the Spiffworkflow-proxy's Flask Blu
 authors = ["Dan <dan@sartography.com>"]
 license = "LGPL"
 readme = "README.md"
-packages = [{include = "connector_proxy_demo", from = "src"}]
+#packages = [{include = "connector_proxy_demo", from = "."}]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 Flask = "^2.2.2"
 spiffworkflow-proxy = {git = "https://github.com/sartography/spiffworkflow-proxy"}
 connector-aws = { git = "https://github.com/sartography/connector-aws.git"}
-
+gunicorn = "^20.1.0"
 
 [build-system]
 requires = ["poetry-core"]
