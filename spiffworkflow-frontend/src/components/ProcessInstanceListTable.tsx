@@ -198,7 +198,7 @@ export default function ProcessInstanceListTable({
       );
 
       // queryParamString += '&report_identifier=system_report_instances_initiated_by_me';
-      queryParamString += '&report_identifier=system_report_instances_with_tasks_completed_by_me';
+      // queryParamString += '&report_identifier=system_report_instances_with_tasks_completed_by_me';
       // queryParamString += '&report_identifier=system_report_instances_with_tasks_completed_by_my_groups';
 
       HttpService.makeCallToBackend({
