@@ -94,7 +94,8 @@ jobs:
           browser: chrome
           # only record on push, not pull_request, since we do not have secrets for PRs,
           # so the required CYPRESS_RECORD_KEY will not be available.
-          record: ${{ github.event_name == 'push' }}
+          # we have limited runs in cypress cloud, so only record main builds
+          record: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
         env:
           # pass the Dashboard record key as an environment variable
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
