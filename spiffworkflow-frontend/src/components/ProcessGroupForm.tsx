@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import { modifyProcessModelPath, slugifyString } from '../helpers';
+import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
@@ -28,7 +28,9 @@ export default function ProcessGroupForm({
   const navigateToProcessGroup = (_result: any) => {
     if (newProcessGroupId) {
       navigate(
-        `/admin/process-groups/${modifyProcessModelPath(newProcessGroupId)}`
+        `/admin/process-groups/${modifyProcessIdentifierForPathParam(
+          newProcessGroupId
+        )}`
       );
     }
   };
@@ -43,7 +45,9 @@ export default function ProcessGroupForm({
 
   const deleteProcessGroup = () => {
     HttpService.makeCallToBackend({
-      path: `/process-groups/${modifyProcessModelPath(processGroup.id)}`,
+      path: `/process-groups/${modifyProcessIdentifierForPathParam(
+        processGroup.id
+      )}`,
       successCallback: navigateToProcessGroups,
       httpMethod: 'DELETE',
     });
@@ -68,7 +72,9 @@ export default function ProcessGroupForm({
     }
     let path = '/process-groups';
     if (mode === 'edit') {
-      path = `/process-groups/${modifyProcessModelPath(processGroup.id)}`;
+      path = `/process-groups/${modifyProcessIdentifierForPathParam(
+        processGroup.id
+      )}`;
     }
     let httpMethod = 'POST';
     if (mode === 'edit') {

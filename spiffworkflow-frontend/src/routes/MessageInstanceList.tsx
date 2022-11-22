@@ -7,8 +7,8 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   convertSecondsToFormattedDateString,
   getPageInfoFromSearchParams,
-  modifyProcessModelPath,
-  unModifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -46,7 +46,7 @@ export default function MessageInstanceList() {
           <td>
             <Link
               data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifyProcessModelPath(
+              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
                 rowToUse.process_model_identifier
               )}`}
             >
@@ -56,7 +56,7 @@ export default function MessageInstanceList() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifyProcessModelPath(
+              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
                 rowToUse.process_model_identifier
               )}/process-instances/${rowToUse.process_instance_id}`}
             >
@@ -104,7 +104,7 @@ export default function MessageInstanceList() {
             ['Process Groups', '/admin'],
             [
               `Process Model: ${params.process_model_id}`,
-              `process_model:${unModifyProcessModelPath(
+              `process_model:${unModifyProcessIdentifierForPathParam(
                 searchParams.get('process_model_id') || ''
               )}:link`,
             ],

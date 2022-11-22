@@ -10,7 +10,10 @@ import {
 } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
-import { modifyProcessModelPath, truncateString } from '../helpers';
+import {
+  modifyProcessIdentifierForPathParam,
+  truncateString,
+} from '../helpers';
 
 type OwnProps = {
   processGroup?: ProcessGroup;
@@ -53,7 +56,9 @@ export default function ProcessGroupListTiles({
           <ClickableTile
             id={`process-group-tile-${row.id}`}
             className="tile-process-group"
-            href={`/admin/process-groups/${modifyProcessModelPath(row.id)}`}
+            href={`/admin/process-groups/${modifyProcessIdentifierForPathParam(
+              row.id
+            )}`}
           >
             <div className="tile-process-group-content-container">
               <ArrowRight />

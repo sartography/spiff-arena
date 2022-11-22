@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import { modifyProcessModelPath, slugifyString } from '../helpers';
+import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessModel } from '../interfaces';
 
@@ -27,9 +27,8 @@ export default function ProcessModelForm({
 
   const navigateToProcessModel = (result: ProcessModel) => {
     if ('id' in result) {
-      const modifiedProcessModelPathFromResult = modifyProcessModelPath(
-        result.id
-      );
+      const modifiedProcessModelPathFromResult =
+        modifyProcessIdentifierForPathParam(result.id);
       navigate(`/admin/process-models/${modifiedProcessModelPathFromResult}`);
     }
   };
@@ -52,7 +51,7 @@ export default function ProcessModelForm({
     if (hasErrors) {
       return;
     }
-    const path = `/process-models/${modifyProcessModelPath(
+    const path = `/process-models/${modifyProcessIdentifierForPathParam(
       processGroupId || ''
     )}`;
     let httpMethod = 'POST';

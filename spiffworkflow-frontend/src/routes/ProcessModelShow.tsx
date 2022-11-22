@@ -34,7 +34,7 @@ import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import {
   getGroupFromModifiedModelId,
-  modifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import {
   PermissionsToCheck,
@@ -120,7 +120,7 @@ export default function ProcessModelShow() {
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
 

@@ -6,7 +6,10 @@ import { Button, Modal } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-import { modifyProcessModelPath, unModifyProcessModelPath } from '../helpers';
+import {
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
+} from '../helpers';
 import { ProcessFile } from '../interfaces';
 
 // NOTE: This is mostly the same as ProcessModelEditDiagram and if we go this route could
@@ -38,7 +41,7 @@ export default function ReactFormEditor() {
 
   const editorDefaultLanguage = fileExtension === 'md' ? 'markdown' : 'json';
 
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
 
@@ -157,10 +160,10 @@ export default function ReactFormEditor() {
           hotCrumbs={[
             ['Process Groups', '/admin'],
             [
-              `Process Model: ${unModifyProcessModelPath(
+              `Process Model: ${unModifyProcessIdentifierForPathParam(
                 params.process_model_id || ''
               )}`,
-              `process_model:${unModifyProcessModelPath(
+              `process_model:${unModifyProcessIdentifierForPathParam(
                 params.process_model_id || ''
               )}:link`,
             ],
