@@ -62,6 +62,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -894,11 +895,9 @@ def process_instance_list(
             SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
         )
 
-        # TODO with_tasks_completed_by_me and with_tasks_completed_by_my_group may end up sharing
-        #   the query until this point
-
-        # check if completed_by_user_id is in a group with g.user
-        # process_instance_query = process_instance_query.filter(SpiffStepDetailsModel.completed_by_user_id==g.user.id)
+        my_groups = db.session.query(UserGroupAssignmentModel.group_id).filter(UserGroupAssignmentModel.user_id==g.user.id).subquery()
+        users_in_my_groups = db.session.query(UserGroupAssignmentModel.user_id).filter(UserGroupAssignmentModel.group_id.in_(my_groups)).subquery()  # type: ignore
+        process_instance_query = process_instance_query.filter(SpiffStepDetailsModel.completed_by_user_id.in_(users_in_my_groups))  # type: ignore
 
     process_instances = process_instance_query.order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
