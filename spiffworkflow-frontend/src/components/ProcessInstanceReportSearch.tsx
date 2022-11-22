@@ -16,7 +16,7 @@ type OwnProps = {
 export default function ProcessInstanceReportSearch({
   selectedItem,
   onChange,
-  titleText = 'Process instance reports',
+  titleText = 'Process instance perspectives',
 }: OwnProps) {
   const [processInstanceReports, setProcessInstanceReports] = useState<
     ProcessInstanceReport[] | null
@@ -65,7 +65,7 @@ export default function ProcessInstanceReportSearch({
         return null;
       }}
       shouldFilterItem={shouldFilterProcessInstanceReport}
-      placeholder="Choose a process instance report"
+      placeholder="Choose a process instance perspective"
       titleText={titleText}
       selectedItem={selectedItem}
     />
