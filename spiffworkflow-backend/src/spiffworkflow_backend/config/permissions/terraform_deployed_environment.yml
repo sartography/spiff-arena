@@ -85,6 +85,11 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-models
+  read-process-instance-list:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-instances
 
   manage-procurement-admin:
     groups: ["Project Lead"]
