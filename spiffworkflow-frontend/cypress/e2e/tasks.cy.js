@@ -30,7 +30,6 @@ describe('tasks', () => {
     cy.logout();
   });
 
-  // TODO: need to fix the next_task thing to make this pass
   it('can complete and navigate a form', () => {
     const groupDisplayName = 'Acceptance Tests Group One';
     const modelId = `acceptance-tests-model-2`;
@@ -39,9 +38,7 @@ describe('tasks', () => {
     const activeTaskClassName = 'active-task-highlight';
 
     cy.navigateToProcessModel(groupDisplayName, modelDisplayName, modelId);
-
-    // avoid reloading so we can click on the task link that appears on running the process instance
-    cy.runPrimaryBpmnFile(false);
+    cy.runPrimaryBpmnFile(true);
 
     submitInputIntoFormField(
       'get_user_generated_number_one',
