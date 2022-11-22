@@ -1,6 +1,6 @@
 """Process_instance_report_service."""
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
@@ -22,7 +22,7 @@ class ProcessInstanceReportFilter:
     with_tasks_completed_by_me: Optional[bool] = None
     with_tasks_completed_by_my_group: Optional[bool] = None
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         """To_dict."""
         d = {}
 
@@ -39,13 +39,11 @@ class ProcessInstanceReportFilter:
         if self.process_status is not None:
             d["process_status"] = ",".join(self.process_status)
         if self.initiated_by_me is not None:
-            d["initiated_by_me"] = str(self.initiated_by_me)
+            d["initiated_by_me"] = self.initiated_by_me
         if self.with_tasks_completed_by_me is not None:
-            d["with_tasks_completed_by_me"] = str(self.with_tasks_completed_by_me)
+            d["with_tasks_completed_by_me"] = self.with_tasks_completed_by_me
         if self.with_tasks_completed_by_my_group is not None:
-            d["with_tasks_completed_by_my_group"] = str(
-                self.with_tasks_completed_by_my_group
-            )
+            d["with_tasks_completed_by_my_group"] = self.with_tasks_completed_by_my_group
 
         return d
 

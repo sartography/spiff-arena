@@ -813,9 +813,10 @@ def process_instance_list(
             ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
         )
 
-    # TODO: wire up query
     if report_filter.initiated_by_me is True:
-        pass
+        process_instance_query = process_instance_query.filter_by(
+            process_initiator=g.user
+        )
 
     # TODO: wire up query
     if report_filter.with_tasks_completed_by_me is True:
