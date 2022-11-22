@@ -9,7 +9,13 @@ import {
   refreshAtInterval,
 } from '../helpers';
 import HttpService from '../services/HttpService';
-import { PaginationObject, RecentProcessModel } from '../interfaces';
+import {
+  PaginationObject,
+  ProcessInstance,
+  ProcessModel,
+  RecentProcessModel,
+} from '../interfaces';
+import ProcessInstanceRun from '../components/ProcessInstanceRun';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 const REFRESH_INTERVAL = 10;
@@ -19,6 +25,8 @@ export default function MyTasks() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
+  const [processInstance, setProcessInstance] =
+    useState<ProcessInstance | null>(null);
 
   useEffect(() => {
     const getTasks = () => {
@@ -39,6 +47,28 @@ export default function MyTasks() {
     getTasks();
     refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
   }, [searchParams]);
+
+  const processInstanceRunResultTag = () => {
+    if (processInstance) {
+      return (
+        <div className="alert alert-success" role="alert">
+          <p>
+            Process Instance {processInstance.id} kicked off (
+            <Link
+              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                processInstance.process_model_identifier
+              )}/process-instances/${processInstance.id}`}
+              data-qa="process-instance-show-link"
+            >
+              view
+            </Link>
+            ).
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   let recentProcessModels: RecentProcessModel[] = [];
   const recentProcessModelsString = localStorage.getItem('recentProcessModels');
@@ -107,33 +137,44 @@ export default function MyTasks() {
   };
 
   const buildRecentProcessModelSection = () => {
-    const rows = recentProcessModels.map((row) => {
-      const rowToUse = row as any;
+    const rows = recentProcessModels.map((row: RecentProcessModel) => {
+      const processModel: ProcessModel = {
+        id: row.processModelIdentifier,
+        description: '',
+        display_name: '',
+        primary_file_name: '',
+        files: [],
+      };
       const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-        rowToUse.processModelIdentifier
+        row.processModelIdentifier
       );
       return (
-        <tr
-          key={`${rowToUse.processGroupIdentifier}/${rowToUse.processModelIdentifier}`}
-        >
+        <tr key={`${row.processGroupIdentifier}/${row.processModelIdentifier}`}>
           <td>
             <Link
               data-qa="process-model-show-link"
               to={`/admin/process-models/${modifiedProcessModelId}`}
             >
-              {rowToUse.processModelDisplayName}
+              {row.processModelDisplayName}
             </Link>
+          </td>
+          <td>
+            <ProcessInstanceRun
+              processModel={processModel}
+              onSuccessCallback={setProcessInstance}
+            />
           </td>
         </tr>
       );
     });
     return (
       <>
-        <h1>Recently viewed process models</h1>
+        <h1>Recently instantiated process models</h1>
         <Table striped bordered>
           <thead>
             <tr>
               <th>Process Model</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>{rows}</tbody>
@@ -175,6 +216,7 @@ export default function MyTasks() {
     }
     return (
       <>
+        {processInstanceRunResultTag()}
         {tasksWaitingForMe}
         <br />
         {relevantProcessModelSection}

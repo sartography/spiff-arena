@@ -4,10 +4,59 @@ import {
   Button,
   // @ts-ignore
 } from '@carbon/react';
-import { ProcessModel } from '../interfaces';
+import { ProcessModel, RecentProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
+
+const storeRecentProcessModelInLocalStorage = (
+  processModelForStorage: ProcessModel
+) => {
+  // All values stored in localStorage are strings.
+  // Grab our recentProcessModels string from localStorage.
+  const stringFromLocalStorage = window.localStorage.getItem(
+    'recentProcessModels'
+  );
+
+  // adapted from https://stackoverflow.com/a/59424458/6090676
+  // If that value is null (meaning that we've never saved anything to that spot in localStorage before), use an empty array as our array. Otherwise, use the value we parse out.
+  let array: RecentProcessModel[] = [];
+  if (stringFromLocalStorage !== null) {
+    // Then parse that string into an actual value.
+    array = JSON.parse(stringFromLocalStorage);
+  }
+
+  // Here's the value we want to add
+  const value = {
+    processModelIdentifier: processModelForStorage.id,
+    processModelDisplayName: processModelForStorage.display_name,
+  };
+
+  // anything with a processGroupIdentifier is old and busted. leave it behind.
+  array = array.filter((item) => item.processGroupIdentifier === undefined);
+
+  // If our parsed/empty array doesn't already have this value in it...
+  const matchingItem = array.find(
+    (item) => item.processModelIdentifier === value.processModelIdentifier
+  );
+  if (matchingItem === undefined) {
+    // add the value to the beginning of the array
+    array.unshift(value);
+
+    // Keep the array to 3 items
+    if (array.length > 3) {
+      array.pop();
+    }
+  }
+
+  // once the old and busted serializations are gone, we can put these two statements inside the above if statement
+
+  // turn the array WITH THE NEW VALUE IN IT into a string to prepare it to be stored in localStorage
+  const stringRepresentingArray = JSON.stringify(array);
+
+  // and store it in localStorage as "recentProcessModels"
+  window.localStorage.setItem('recentProcessModels', stringRepresentingArray);
+};
 
 type OwnProps = {
   processModel: ProcessModel;
@@ -38,6 +87,7 @@ export default function ProcessInstanceRun({
 
   const processModelRun = (processInstance: any) => {
     setErrorMessage(null);
+    storeRecentProcessModelInLocalStorage(processModel);
     HttpService.makeCallToBackend({
       path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
       successCallback: onProcessInstanceRun,
@@ -55,11 +105,7 @@ export default function ProcessInstanceRun({
   };
 
   return (
-    <Button
-      onClick={processInstanceCreateAndRun}
-      variant="primary"
-      className={className}
-    >
+    <Button onClick={processInstanceCreateAndRun} className={className}>
       Run
     </Button>
   );
