@@ -1,5 +1,6 @@
 import {useService } from 'bpmn-js-properties-panel';
 import { SelectEntry } from '@bpmn-io/properties-panel';
+import {idToHumanReadableName} from '../DataObjectHelpers';
 
 /**
  * Finds the value of the given type within the extensionElements
@@ -43,7 +44,7 @@ export function DataObjectSelect(props) {
           element,
           moddleElement: businessObject,
           properties: {
-            'name': flowElem.id
+            'name': idToHumanReadableName(flowElem.id)
           }
         });
       }

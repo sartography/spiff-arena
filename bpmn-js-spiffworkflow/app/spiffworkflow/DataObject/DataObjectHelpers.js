@@ -46,3 +46,12 @@ export function findDataReferenceShapes(processShape, id) {
   }
   return refs;
 }
+
+export function idToHumanReadableName(id) {
+  const words = id.match(/[A-Za-z][a-z]*/g) || [];
+  return words.map(capitalize).join(' ');
+
+  function capitalize(word) {
+    return word.charAt(0).toUpperCase() + word.substring(1);
+  }
+}
