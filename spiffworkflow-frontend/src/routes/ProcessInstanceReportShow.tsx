@@ -80,11 +80,11 @@ export default function ProcessInstanceReport() {
           processGroupId={params.process_group_id}
           linkProcessModel
         />
-        <h1>Process Instance Report: {params.report_identifier}</h1>
+        <h1>Process Instance Perspective: {params.report_identifier}</h1>
         <Button
           href={`/admin/process-instances/reports/${params.report_identifier}/edit`}
         >
-          Edit process instance report
+          Edit process instance perspective
         </Button>
         <PaginationForTable
           page={page}

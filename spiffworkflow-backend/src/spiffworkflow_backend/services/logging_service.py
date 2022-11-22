@@ -216,7 +216,9 @@ class DBHandler(logging.Handler):
             bpmn_task_type = record.task_type if hasattr(record, "task_type") else None  # type: ignore
             timestamp = record.created
             message = record.msg if hasattr(record, "msg") else None
-            current_user_id = record.current_user_id if hasattr(record, "current_user_id") else None  # type: ignore
+            current_user_id = (
+                record.current_user_id if hasattr(record, "current_user_id") else None  # type: ignore
+            )
             spiff_step = (
                 record.spiff_step  # type: ignore
                 if hasattr(record, "spiff_step") and record.spiff_step is not None  # type: ignore
@@ -236,5 +238,5 @@ class DBHandler(logging.Handler):
                     "spiff_step": spiff_step,
                 }
             )
-            if len(self.logs) % 1000 == 0:
+            if len(self.logs) % 1 == 0:
                 self.bulk_insert_logs()

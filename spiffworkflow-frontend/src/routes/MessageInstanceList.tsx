@@ -5,10 +5,10 @@ import { Link, useParams, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
-  convertSecondsToFormattedDate,
+  convertSecondsToFormattedDateString,
   getPageInfoFromSearchParams,
-  modifyProcessModelPath,
-  unModifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -46,7 +46,7 @@ export default function MessageInstanceList() {
           <td>
             <Link
               data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifyProcessModelPath(
+              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
                 rowToUse.process_model_identifier
               )}`}
             >
@@ -56,7 +56,7 @@ export default function MessageInstanceList() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifyProcessModelPath(
+              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
                 rowToUse.process_model_identifier
               )}/process-instances/${rowToUse.process_instance_id}`}
             >
@@ -68,7 +68,9 @@ export default function MessageInstanceList() {
           <td>{rowToUse.failure_cause || '-'}</td>
           <td>{rowToUse.status}</td>
           <td>
-            {convertSecondsToFormattedDate(rowToUse.created_at_in_seconds)}
+            {convertSecondsToFormattedDateString(
+              rowToUse.created_at_in_seconds
+            )}
           </td>
         </tr>
       );
@@ -102,7 +104,7 @@ export default function MessageInstanceList() {
             ['Process Groups', '/admin'],
             [
               `Process Model: ${params.process_model_id}`,
-              `process_model:${unModifyProcessModelPath(
+              `process_model:${unModifyProcessIdentifierForPathParam(
                 searchParams.get('process_model_id') || ''
               )}:link`,
             ],

@@ -35,7 +35,7 @@ export default function ProcessModelSearch({
         if (processModel) {
           return `${processModel.id} (${truncateString(
             processModel.display_name,
-            20
+            75
           )})`;
         }
         return null;

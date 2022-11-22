@@ -6,9 +6,9 @@ import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
-  convertSecondsToFormattedDate,
-  modifyProcessModelPath,
-  unModifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
+  convertSecondsToFormattedDateTime,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -17,7 +17,7 @@ export default function ProcessInstanceLogList() {
   const [searchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
 
@@ -49,7 +49,7 @@ export default function ProcessInstanceLogList() {
               data-qa="process-instance-show-link"
               to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
             >
-              {convertSecondsToFormattedDate(rowToUse.timestamp)}
+              {convertSecondsToFormattedDateTime(rowToUse.timestamp)}
             </Link>
           </td>
         </tr>
@@ -82,7 +82,7 @@ export default function ProcessInstanceLogList() {
             ['Process Groups', '/admin'],
             [
               `Process Model: ${params.process_model_id}`,
-              `process_model:${unModifyProcessModelPath(
+              `process_model:${unModifyProcessIdentifierForPathParam(
                 params.process_model_id || ''
               )}:link`,
             ],

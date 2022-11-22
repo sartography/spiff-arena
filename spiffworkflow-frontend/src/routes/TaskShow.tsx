@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 // FIXME: npm install @rjsf/validator-ajv8 and use it as soon as
 // rawErrors is fixed.
@@ -9,8 +9,14 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 // https://github.com/rjsf-team/react-jsonschema-form/blob/main/docs/api-reference/uiSchema.md talks about rawErrors
 import validator from '@rjsf/validator-ajv6';
 
-// @ts-ignore
-import { Button, Stack } from '@carbon/react';
+import {
+  TabList,
+  Tab,
+  Tabs,
+  Grid,
+  Column,
+  // @ts-ignore
+} from '@carbon/react';
 
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -18,7 +24,7 @@ import remarkGfm from 'remark-gfm';
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { modifyProcessModelPath } from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 
 export default function TaskShow() {
   const [task, setTask] = useState(null);
@@ -32,7 +38,7 @@ export default function TaskShow() {
     const processResult = (result: any) => {
       setTask(result);
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifyProcessModelPath(
+        path: `/process-instances/${modifyProcessIdentifierForPathParam(
           result.process_model_identifier
         )}/${params.process_instance_id}/tasks`,
         successCallback: setUserTasks,
@@ -73,39 +79,52 @@ export default function TaskShow() {
 
   const buildTaskNavigation = () => {
     let userTasksElement;
+    let selectedTabIndex = 0;
     if (userTasks) {
       userTasksElement = (userTasks as any).map(function getUserTasksElement(
-        userTask: any
+        userTask: any,
+        index: number
       ) {
         const taskUrl = `/tasks/${params.process_instance_id}/${userTask.id}`;
         if (userTask.id === params.task_id) {
-          return <span>{userTask.name}</span>;
+          selectedTabIndex = index;
+          return <Tab selected>{userTask.title}</Tab>;
         }
         if (userTask.state === 'COMPLETED') {
           return (
-            <Link to={taskUrl} data-qa={`form-nav-${userTask.name}`}>
-              {userTask.name}
-            </Link>
+            <Tab
+              onClick={() => navigate(taskUrl)}
+              data-qa={`form-nav-${userTask.name}`}
+            >
+              {userTask.title}
+            </Tab>
           );
         }
         if (userTask.state === 'FUTURE') {
-          return <span style={{ color: 'red' }}>{userTask.name}</span>;
+          return <Tab disabled>{userTask.title}</Tab>;
         }
         if (userTask.state === 'READY') {
           return (
-            <Link to={taskUrl} data-qa={`form-nav-${userTask.name}`}>
-              {userTask.name} - Current
-            </Link>
+            <Tab
+              onClick={() => navigate(taskUrl)}
+              data-qa={`form-nav-${userTask.name}`}
+            >
+              {userTask.title}
+            </Tab>
           );
         }
         return null;
       });
     }
     return (
-      <Stack orientation="horizontal" gap={3}>
-        <Button href="/tasks">Go Back To List</Button>
-        {userTasksElement}
-      </Stack>
+      <Tabs
+        title="Steps in this process instance involving people"
+        selectedIndex={selectedTabIndex}
+      >
+        <TabList aria-label="List of tabs" contained>
+          {userTasksElement}
+        </TabList>
+      </Tabs>
     );
   };
 
@@ -149,15 +168,19 @@ export default function TaskShow() {
     }
 
     return (
-      <Form
-        formData={taskData}
-        onSubmit={handleFormSubmit}
-        schema={jsonSchema}
-        uiSchema={formUiSchema}
-        validator={validator}
-      >
-        {reactFragmentToHideSubmitButton}
-      </Form>
+      <Grid fullWidth condensed>
+        <Column md={5} lg={8} sm={4}>
+          <Form
+            formData={taskData}
+            onSubmit={handleFormSubmit}
+            schema={jsonSchema}
+            uiSchema={formUiSchema}
+            validator={validator}
+          >
+            {reactFragmentToHideSubmitButton}
+          </Form>
+        </Column>
+      </Grid>
     );
   };
 
@@ -175,7 +198,7 @@ export default function TaskShow() {
     );
   };
 
-  if (task) {
+  if (task && userTasks) {
     const taskToUse = task as any;
     let statusString = '';
     if (taskToUse.state !== 'READY') {

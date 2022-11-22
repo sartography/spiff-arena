@@ -7,6 +7,7 @@ import {
   TrashCan,
   Favorite,
   Edit,
+  ArrowRight,
   // @ts-ignore
 } from '@carbon/icons-react';
 import {
@@ -31,10 +32,14 @@ import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { modifyProcessModelPath } from '../helpers';
+import {
+  getGroupFromModifiedModelId,
+  modifyProcessIdentifierForPathParam,
+} from '../helpers';
 import {
   PermissionsToCheck,
   ProcessFile,
+  ProcessInstance,
   ProcessModel,
   RecentProcessModel,
 } from '../interfaces';
@@ -42,6 +47,7 @@ import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import ProcessInstanceRun from '../components/ProcessInstanceRun';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: ProcessModel
@@ -97,7 +103,8 @@ export default function ProcessModelShow() {
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
-  const [processInstanceResult, setProcessInstanceResult] = useState(null);
+  const [processInstance, setProcessInstance] =
+    useState<ProcessInstance | null>(null);
   const [reloadModel, setReloadModel] = useState<boolean>(false);
   const [filesToUpload, setFilesToUpload] = useState<any>(null);
   const [showFileUploadModal, setShowFileUploadModal] =
@@ -106,14 +113,14 @@ export default function ProcessModelShow() {
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'GET', 'DELETE'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
 
@@ -129,38 +136,14 @@ export default function ProcessModelShow() {
     });
   }, [reloadModel, modifiedProcessModelId]);
 
-  const processModelRun = (processInstance: any) => {
-    setErrorMessage(null);
-    HttpService.makeCallToBackend({
-      path: `/process-instances/${processInstance.id}/run`,
-      successCallback: setProcessInstanceResult,
-      failureCallback: setErrorMessage,
-      httpMethod: 'POST',
-    });
-  };
-
-  const processInstanceCreateAndRun = () => {
-    HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances`,
-      successCallback: processModelRun,
-      httpMethod: 'POST',
-    });
-  };
-
   const processInstanceRunResultTag = () => {
-    if (processModel && processInstanceResult) {
-      // FIXME: ensure that the task is actually for the current user as well
-      const processInstanceId = (processInstanceResult as any).id;
-      const nextTask = (processInstanceResult as any).next_task;
-      if (nextTask && nextTask.state === 'READY') {
-        navigate(`/tasks/${processInstanceId}/${nextTask.id}`);
-      }
+    if (processInstance) {
       return (
         <div className="alert alert-success" role="alert">
           <p>
-            Process Instance {processInstanceId} kicked off (
+            Process Instance {processInstance.id} kicked off (
             <Link
-              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${processInstanceId}`}
+              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${processInstance.id}`}
               data-qa="process-instance-show-link"
             >
               view
@@ -249,6 +232,22 @@ export default function ProcessModelShow() {
       }
     }
     return null;
+  };
+
+  const navigateToProcessModels = (_result: any) => {
+    navigate(
+      `/admin/process-groups/${getGroupFromModifiedModelId(
+        modifiedProcessModelId
+      )}`
+    );
+  };
+
+  const deleteProcessModel = () => {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedProcessModelId}`,
+      successCallback: navigateToProcessModels,
+      httpMethod: 'DELETE',
+    });
   };
 
   const navigateToFileEdit = (processModelFile: ProcessFile) => {
@@ -368,7 +367,6 @@ export default function ProcessModelShow() {
       return constructedTag;
     });
 
-    // return <ul>{tags}</ul>;
     const headers = ['Name', 'Actions'];
     return (
       <Table size="lg" useZebraStyles={false}>
@@ -517,6 +515,35 @@ export default function ProcessModelShow() {
     );
   };
 
+  const processInstanceListTableButton = () => {
+    if (processModel) {
+      return (
+        <Grid fullWidth>
+          <Column
+            sm={{ span: 1, offset: 3 }}
+            md={{ span: 1, offset: 7 }}
+            lg={{ span: 1, offset: 15 }}
+          >
+            <Button
+              data-qa="process-instance-list-link"
+              kind="ghost"
+              renderIcon={ArrowRight}
+              iconDescription="Go to Filterable List"
+              hasIconOnly
+              size="lg"
+              onClick={() =>
+                navigate(
+                  `/admin/process-instances?process_model_identifier=${processModel.id}`
+                )
+              }
+            />
+          </Column>
+        </Grid>
+      );
+    }
+    return null;
+  };
+
   if (processModel) {
     return (
       <>
@@ -530,7 +557,24 @@ export default function ProcessModelShow() {
             ],
           ]}
         />
-        <h1>Process Model: {processModel.display_name}</h1>
+        <Stack orientation="horizontal" gap={1}>
+          <h1 className="with-icons">
+            Process Model: {processModel.display_name}
+          </h1>
+
+          <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
+            <ButtonWithConfirmation
+              kind="ghost"
+              data-qa="delete-process-model-button"
+              renderIcon={TrashCan}
+              iconDescription="Delete Process Model"
+              hasIconOnly
+              description={`Delete process model: ${processModel.display_name}`}
+              onConfirmation={deleteProcessModel}
+              confirmButtonLabel="Delete"
+            />
+          </Can>
+        </Stack>
         <p className="process-description">{processModel.description}</p>
         <Stack orientation="horizontal" gap={3}>
           <Can
@@ -538,9 +582,10 @@ export default function ProcessModelShow() {
             a={targetUris.processInstanceActionPath}
             ability={ability}
           >
-            <Button onClick={processInstanceCreateAndRun} variant="primary">
-              Run
-            </Button>
+            <ProcessInstanceRun
+              processModel={processModel}
+              onSuccessCallback={setProcessInstance}
+            />
           </Can>
           <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
             <Button
@@ -556,6 +601,7 @@ export default function ProcessModelShow() {
         {processInstanceRunResultTag()}
         <br />
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
+          {processInstanceListTableButton()}
           <ProcessInstanceListTable
             filtersEnabled={false}
             processModelFullIdentifier={processModel.id}

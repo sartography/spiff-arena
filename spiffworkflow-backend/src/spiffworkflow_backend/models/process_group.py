@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -31,7 +32,7 @@ class ProcessGroup:
 
     def __post_init__(self) -> None:
         """__post_init__."""
-        self.sort_index = self.id
+        self.sort_index = self.display_name
 
     def __eq__(self, other: Any) -> bool:
         """__eq__."""
@@ -47,6 +48,11 @@ class ProcessGroup:
         original_dict = dataclasses.asdict(self)
         return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}
 
+    # for use with os.path.join, so it can work on windows
+    def id_for_file_path(self) -> str:
+        """Id_for_file_path."""
+        return self.id.replace("/", os.sep)
+
 
 class ProcessGroupSchema(Schema):
     """ProcessGroupSchema."""
@@ -55,12 +61,23 @@ class ProcessGroupSchema(Schema):
         """Meta."""
 
         model = ProcessGroup
-        fields = ["id", "display_name", "display_order", "admin", "process_models"]
+        fields = [
+            "id",
+            "display_name",
+            "display_order",
+            "admin",
+            "process_models",
+            "description",
+            "process_groups",
+        ]
 
     process_models = marshmallow.fields.List(
         marshmallow.fields.Nested(
             "ProcessModelInfoSchema", dump_only=True, required=False
         )
+    )
+    process_groups = marshmallow.fields.List(
+        marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False)
     )
 
     @post_load

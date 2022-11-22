@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-import os
 import random
 import string
 import uuid
@@ -235,6 +234,19 @@ def process_group_show(
     return make_response(jsonify(process_group), 200)
 
 
+def process_group_move(
+    modified_process_group_identifier: str, new_location: str
+) -> flask.wrappers.Response:
+    """process_group_move."""
+    original_process_group_id = un_modify_modified_process_model_id(
+        modified_process_group_identifier
+    )
+    new_process_group = ProcessModelService().process_group_move(
+        original_process_group_id, new_location
+    )
+    return make_response(jsonify(new_process_group), 201)
+
+
 def process_model_create(
     modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
@@ -253,16 +265,11 @@ def process_model_create(
             status_code=400,
         )
 
-    modified_process_model_id = process_model_info.id
-    unmodified_process_model_id = un_modify_modified_process_model_id(
-        modified_process_model_id
+    unmodified_process_group_id = un_modify_modified_process_model_id(
+        modified_process_group_id
     )
-    process_model_info.id = unmodified_process_model_id
-    process_group_id, _ = os.path.split(process_model_info.id)
     process_model_service = ProcessModelService()
-    process_group = process_model_service.get_process_group(
-        un_modify_modified_process_model_id(process_group_id)
-    )
+    process_group = process_model_service.get_process_group(unmodified_process_group_id)
     if process_group is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
@@ -270,7 +277,7 @@ def process_model_create(
             status_code=400,
         )
 
-    process_model_service.add_spec(process_model_info)
+    process_model_service.add_process_model(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,
@@ -307,7 +314,7 @@ def process_model_update(
 
     # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
-    ProcessModelService().update_spec(process_model, body_filtered)
+    ProcessModelService().update_process_model(process_model, body_filtered)
     return ProcessModelInfoSchema().dump(process_model)
 
 
@@ -326,12 +333,28 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
     return process_model_json
 
 
+def process_model_move(
+    modified_process_model_identifier: str, new_location: str
+) -> flask.wrappers.Response:
+    """process_model_move."""
+    original_process_model_id = un_modify_modified_process_model_id(
+        modified_process_model_identifier
+    )
+    new_process_model = ProcessModelService().process_model_move(
+        original_process_model_id, new_location
+    )
+    return make_response(jsonify(new_process_model), 201)
+
+
 def process_model_list(
-    process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+    process_group_identifier: Optional[str] = None,
+    recursive: Optional[bool] = False,
+    page: int = 1,
+    per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process model list!"""
     process_models = ProcessModelService().get_process_models(
-        process_group_id=process_group_identifier
+        process_group_id=process_group_identifier, recursive=recursive
     )
     batch = ProcessModelService().get_batch(
         process_models, page=page, per_page=per_page
@@ -736,9 +759,12 @@ def process_instance_list(
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
     user_filter: Optional[bool] = False,
+    report_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-    process_instance_report = ProcessInstanceReportModel.default_report(g.user)
+    process_instance_report = ProcessInstanceReportService.report_with_identifier(
+        g.user, report_identifier
+    )
 
     if user_filter:
         report_filter = ProcessInstanceReportFilter(
@@ -811,21 +837,16 @@ def process_instance_list(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
-    # TODO need to look into test failures when the results from result_dict is
-    # used instead of the process instances
-
-    # substitution_variables = request.args.to_dict()
-    # result_dict = process_instance_report.generate_report(
-    #    process_instances.items, substitution_variables
-    # )
-
-    # results = result_dict["results"]
-    # report_metadata = result_dict["report_metadata"]
-
-    results = process_instances.items
+    results = list(
+        map(
+            ProcessInstanceService.serialize_flat_with_task_data,
+            process_instances.items,
+        )
+    )
     report_metadata = process_instance_report.report_metadata
 
     response_json = {
+        "report_identifier": process_instance_report.identifier,
         "report_metadata": report_metadata,
         "results": results,
         "filters": report_filter.to_dict(),

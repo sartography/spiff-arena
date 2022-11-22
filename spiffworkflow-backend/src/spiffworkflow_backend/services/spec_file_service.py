@@ -171,7 +171,7 @@ class SpecFileService(FileSystemService):
                 ref.is_primary = True
 
             if ref.is_primary:
-                ProcessModelService().update_spec(
+                ProcessModelService().update_process_model(
                     process_model_info,
                     {
                         "primary_process_id": ref.identifier,
@@ -197,7 +197,9 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def full_file_path(spec: ProcessModelInfo, file_name: str) -> str:
         """File_path."""
-        return os.path.join(SpecFileService.workflow_path(spec), file_name)
+        return os.path.abspath(
+            os.path.join(SpecFileService.workflow_path(spec), file_name)
+        )
 
     @staticmethod
     def last_modified(spec: ProcessModelInfo, file_name: str) -> datetime:

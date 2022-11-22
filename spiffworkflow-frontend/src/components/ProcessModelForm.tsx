@@ -2,14 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import {
-  getGroupFromModifiedModelId,
-  modifyProcessModelPath,
-  slugifyString,
-} from '../helpers';
+import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessModel } from '../interfaces';
-import ButtonWithConfirmation from './ButtonWithConfirmation';
 
 type OwnProps = {
   mode: string;
@@ -29,41 +24,23 @@ export default function ProcessModelForm({
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
   const navigate = useNavigate();
-  const modifiedProcessModelPath = modifyProcessModelPath(processModel.id);
 
   const navigateToProcessModel = (result: ProcessModel) => {
     if ('id' in result) {
-      const modifiedProcessModelPathFromResult = modifyProcessModelPath(
-        result.id
-      );
+      const modifiedProcessModelPathFromResult =
+        modifyProcessIdentifierForPathParam(result.id);
       navigate(`/admin/process-models/${modifiedProcessModelPathFromResult}`);
     }
-  };
-
-  const navigateToProcessModels = (_result: any) => {
-    navigate(
-      `/admin/process-groups/${getGroupFromModifiedModelId(
-        modifiedProcessModelPath
-      )}`
-    );
   };
 
   const hasValidIdentifier = (identifierToCheck: string) => {
     return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
   };
 
-  const deleteProcessModel = () => {
-    HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelPath}`,
-      successCallback: navigateToProcessModels,
-      httpMethod: 'DELETE',
-    });
-  };
-
   const handleFormSubmission = (event: any) => {
     event.preventDefault();
     let hasErrors = false;
-    if (!hasValidIdentifier(processModel.id)) {
+    if (mode === 'new' && !hasValidIdentifier(processModel.id)) {
       setIdentifierInvalid(true);
       hasErrors = true;
     }
@@ -74,7 +51,9 @@ export default function ProcessModelForm({
     if (hasErrors) {
       return;
     }
-    const path = `/process-models/${modifiedProcessModelPath}`;
+    const path = `/process-models/${modifyProcessIdentifierForPathParam(
+      processGroupId || ''
+    )}`;
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
@@ -85,7 +64,7 @@ export default function ProcessModelForm({
     };
     if (mode === 'new') {
       Object.assign(postBody, {
-        id: `${processGroupId}:${processModel.id}`,
+        id: `${processGroupId}/${processModel.id}`,
       });
     }
 
@@ -172,16 +151,6 @@ export default function ProcessModelForm({
         Submit
       </Button>,
     ];
-    if (mode === 'edit') {
-      buttons.push(
-        <ButtonWithConfirmation
-          description={`Delete Process Model ${processModel.id}?`}
-          onConfirmation={deleteProcessModel}
-          buttonLabel="Delete"
-          confirmButtonLabel="Delete"
-        />
-      );
-    }
     return <ButtonSet>{buttons}</ButtonSet>;
   };
   return (

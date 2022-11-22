@@ -21,6 +21,7 @@ import ErrorContext from '../contexts/ErrorContext';
 import ProcessInstanceLogList from './ProcessInstanceLogList';
 import MessageInstanceList from './MessageInstanceList';
 import Configuration from './Configuration';
+import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -108,6 +109,10 @@ export default function AdminRoutes() {
         <Route path="process-instances" element={<ProcessInstanceList />} />
         <Route path="messages" element={<MessageInstanceList />} />
         <Route path="configuration/*" element={<Configuration />} />
+        <Route
+          path="process-models/:process_model_id/form-builder"
+          element={<JsonSchemaFormBuilder />}
+        />
       </Routes>
     );
   }

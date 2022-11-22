@@ -1,4 +1,5 @@
 import { string } from 'prop-types';
+import { modifyProcessModelPath } from '../../src/helpers';
 
 // ***********************************************
 // This example commands.js shows you how to
@@ -31,9 +32,8 @@ Cypress.Commands.add('getBySel', (selector, ...args) => {
 });
 
 Cypress.Commands.add('navigateToHome', () => {
-  cy.get('button[aria-label="Open menu"]').click();
+  cy.getBySel('header-menu-expand-button').click();
   cy.getBySel('side-nav-items').contains('Home').click();
-  // cy.getBySel('nav-home').click();
 });
 
 Cypress.Commands.add('navigateToAdmin', () => {
@@ -76,23 +76,36 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.get('input[name=id]').should('have.value', modelId);
   cy.contains('Submit').click();
 
-  cy.url().should('include', `process-models/${groupId}:${modelId}`);
+  cy.url().should(
+    'include',
+    `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+    // `process-models/${groupId}:${modelId}`
+  );
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
 
-Cypress.Commands.add('runPrimaryBpmnFile', (reload = true) => {
-  cy.contains('Run').click();
-  cy.contains(/Process Instance.*kicked off/);
-  if (reload) {
-    cy.reload(true);
-    cy.contains(/Process Instance.*kicked off/).should('not.exist');
+Cypress.Commands.add(
+  'runPrimaryBpmnFile',
+  (expectAutoRedirectToHumanTask = false) => {
+    cy.contains('Run').click();
+    if (expectAutoRedirectToHumanTask) {
+      // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
+      cy.url().should('include', `/tasks/`);
+      cy.contains('Task: ');
+    } else {
+      cy.contains(/Process Instance.*kicked off/);
+      cy.reload(true);
+      cy.contains(/Process Instance.*kicked off/).should('not.exist');
+    }
   }
-});
+);
 
 Cypress.Commands.add(
   'navigateToProcessModel',
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
+    cy.contains('Misc').click();
+    cy.contains(`Process Group: 99-Misc`, { timeout: 10000 });
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
@@ -119,11 +132,6 @@ Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
 
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
   cy.contains(/\b0–0 of 0 items/);
-});
-
-Cypress.Commands.add('modifyProcessModelPath', (path) => {
-  path.replace('/', ':');
-  return path;
 });
 
 Cypress.Commands.add('modifyProcessModelPath', (path) => {
