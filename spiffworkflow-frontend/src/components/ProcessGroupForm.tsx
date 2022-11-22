@@ -55,7 +55,7 @@ export default function ProcessGroupForm({
 
     event.preventDefault();
     let hasErrors = false;
-    if (!hasValidIdentifier(processGroup.id)) {
+    if (mode === 'new' && !hasValidIdentifier(processGroup.id)) {
       setIdentifierInvalid(true);
       hasErrors = true;
     }
@@ -68,7 +68,7 @@ export default function ProcessGroupForm({
     }
     let path = '/process-groups';
     if (mode === 'edit') {
-      path = `/process-groups/${processGroup.id}`;
+      path = `/process-groups/${modifyProcessModelPath(processGroup.id)}`;
     }
     let httpMethod = 'POST';
     if (mode === 'edit') {
