@@ -74,7 +74,9 @@ export default function NavigationBar() {
     if (UserService.isLoggedIn()) {
       return (
         <>
-          <HeaderGlobalAction>{UserService.getUsername()}</HeaderGlobalAction>
+          <HeaderGlobalAction className="username-header-text">
+            {UserService.getUsername()}
+          </HeaderGlobalAction>
           <HeaderGlobalAction
             aria-label="Logout"
             onClick={handleLogout}
