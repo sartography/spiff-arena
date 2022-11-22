@@ -896,24 +896,31 @@ def process_instance_list(
             SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
         )
 
-        my_groups = select(UserGroupAssignmentModel).where(UserGroupAssignmentModel.user_id==g.user.id).with_only_columns(UserGroupAssignmentModel.group_id)
-        users_in_my_groups = select(UserGroupAssignmentModel).where(UserGroupAssignmentModel.group_id.in_(my_groups)).with_only_columns(UserGroupAssignmentModel.user_id)
+        my_groups = (
+            select(UserGroupAssignmentModel)  # type: ignore
+            .where(UserGroupAssignmentModel.user_id == g.user.id)
+            .with_only_columns(UserGroupAssignmentModel.group_id)
+        )
+        users_in_my_groups = (
+            select(UserGroupAssignmentModel)  # type: ignore
+            .where(UserGroupAssignmentModel.group_id.in_(my_groups))
+            .with_only_columns(UserGroupAssignmentModel.user_id)
+        )
 
         process_instance_query = process_instance_query.filter(
             SpiffStepDetailsModel.completed_by_user_id.in_(users_in_my_groups)  # type: ignore
         )
 
-    process_instances = process_instance_query.order_by(
+    process_instances = process_instance_query.distinct().order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
-    #results = list(
-    #    map(
-    #        ProcessInstanceService.serialize_flat_with_task_data,
-    #        process_instances.items,
-    #    )
-    #)
-    results = process_instances.items
+    results = list(
+        map(
+            ProcessInstanceService.serialize_flat_with_task_data,
+            process_instances.items,
+        )
+    )
     report_metadata = process_instance_report.report_metadata
 
     response_json = {
