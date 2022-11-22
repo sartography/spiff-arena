@@ -39,7 +39,7 @@ export default function ProcessInstanceRun({
   const processModelRun = (processInstance: any) => {
     setErrorMessage(null);
     HttpService.makeCallToBackend({
-      path: `/process-instances/${processInstance.id}/run`,
+      path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
       successCallback: onProcessInstanceRun,
       failureCallback: setErrorMessage,
       httpMethod: 'POST',

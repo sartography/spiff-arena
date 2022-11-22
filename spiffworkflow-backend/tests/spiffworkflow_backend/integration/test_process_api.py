@@ -1069,7 +1069,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         process_instance_id = response.json["id"]
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -1101,7 +1101,9 @@ class TestProcessApi(BaseTest):
             process_group_id=process_group_id,
             process_model_id=process_model_id,
         )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        modified_process_model_identifier = (
+            self.modify_process_identifier_for_path_param(process_model_identifier)
+        )
         headers = self.logged_in_headers(with_super_admin_user)
         create_response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
@@ -1109,7 +1111,7 @@ class TestProcessApi(BaseTest):
         assert create_response.json is not None
         process_instance_id = create_response.json["id"]
         client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         show_response = client.get(
@@ -1212,7 +1214,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -1272,7 +1274,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1320,7 +1322,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1359,7 +1361,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -1818,7 +1820,7 @@ class TestProcessApi(BaseTest):
         assert process.status == "not_started"
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
@@ -1879,7 +1881,7 @@ class TestProcessApi(BaseTest):
         assert process.status == "not_started"
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
@@ -1929,7 +1931,7 @@ class TestProcessApi(BaseTest):
         with mail.record_messages() as outbox:
 
             response = client.post(
-                f"/v1.0/process-instances/{process_instance_id}/run",
+                f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 400
@@ -2114,7 +2116,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         process_instance_id = response.json["id"]
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(initiator_user),
         )
         assert response.status_code == 200
@@ -2319,7 +2321,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -2339,7 +2341,7 @@ class TestProcessApi(BaseTest):
 
         # TODO: Why can I run a suspended process instance?
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 

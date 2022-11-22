@@ -34,6 +34,7 @@ groups:
         jon,
         natalia,
         sasha,
+        fin,
       ]
 
   Project Lead:
@@ -49,6 +50,7 @@ groups:
         jon,
         natalia,
         manuchehr,
+        lead,
       ]
 
   hr:
@@ -67,21 +69,70 @@ permissions:
     allowed_permissions: [create, read, update, delete, list, instantiate]
     uri: /*
 
-  # TODO: all uris should really have the same structure
-  finance-admin-group:
-    groups: ["Finance Team"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/finance/*
-
-  finance-admin:
-    groups: ["Finance Team"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/finance/*
-
   read-all:
     groups: ["Finance Team", "Project Lead", hr, admin]
     users: []
     allowed_permissions: [read]
     uri: /*
+
+  manage-procurement-admin:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-groups/manage-procurement:*
+  manage-procurement-admin-slash:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-groups/manage-procurement/*
+  manage-procurement-admin-models:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/manage-procurement:*
+  manage-procurement-admin-models-slash:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/manage-procurement/*
+  manage-procurement-admin-instances:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/manage-procurement:*
+  manage-procurement-admin-instances-slash:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/manage-procurement/*
+
+  finance-admin:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management:*
+  finance-admin-slash:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management/*
+  finance-admin-models:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management:*
+  finance-admin-models-slash:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management/*
+  finance-admin-instances:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management:*
+  finance-admin-instances-slash:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management/*
