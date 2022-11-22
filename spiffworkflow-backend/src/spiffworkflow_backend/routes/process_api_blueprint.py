@@ -30,6 +30,7 @@ from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
+from sqlalchemy import select
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
@@ -895,16 +896,9 @@ def process_instance_list(
             SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
         )
 
-        my_groups = (
-            db.session.query(UserGroupAssignmentModel.group_id)
-            .filter(UserGroupAssignmentModel.user_id == g.user.id)
-            .subquery()
-        )
-        users_in_my_groups = (
-            db.session.query(UserGroupAssignmentModel.user_id)
-            .filter(UserGroupAssignmentModel.group_id.in_(my_groups))
-            .subquery()
-        )
+        my_groups = select(UserGroupAssignmentModel).where(UserGroupAssignmentModel.user_id==g.user.id).with_only_columns(UserGroupAssignmentModel.group_id)
+        users_in_my_groups = select(UserGroupAssignmentModel).where(UserGroupAssignmentModel.group_id.in_(my_groups)).with_only_columns(UserGroupAssignmentModel.user_id)
+
         process_instance_query = process_instance_query.filter(
             SpiffStepDetailsModel.completed_by_user_id.in_(users_in_my_groups)  # type: ignore
         )
@@ -913,12 +907,13 @@ def process_instance_list(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
 
-    results = list(
-        map(
-            ProcessInstanceService.serialize_flat_with_task_data,
-            process_instances.items,
-        )
-    )
+    #results = list(
+    #    map(
+    #        ProcessInstanceService.serialize_flat_with_task_data,
+    #        process_instances.items,
+    #    )
+    #)
+    results = process_instances.items
     report_metadata = process_instance_report.report_metadata
 
     response_json = {
