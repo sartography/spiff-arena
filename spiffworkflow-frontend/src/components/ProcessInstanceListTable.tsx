@@ -56,6 +56,7 @@ type OwnProps = {
   processModelFullIdentifier?: string;
   paginationQueryParamPrefix?: string;
   perPageOptions?: number[];
+  showReports?: boolean;
 };
 
 interface dateParameters {
@@ -67,6 +68,7 @@ export default function ProcessInstanceListTable({
   processModelFullIdentifier,
   paginationQueryParamPrefix,
   perPageOptions,
+  showReports = true,
 }: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -704,12 +706,15 @@ export default function ProcessInstanceListTable({
   };
 
   const reportSearchComponent = () => {
-    return (
-      <ProcessInstanceReportSearch
-        onChange={processInstanceReportDidChange}
-        selectedItem={processInstanceReportSelection}
-      />
-    );
+    if (showReports) {
+      return (
+        <ProcessInstanceReportSearch
+          onChange={processInstanceReportDidChange}
+          selectedItem={processInstanceReportSelection}
+        />
+      );
+    }
+    return null;
   };
 
   const filterComponent = () => {

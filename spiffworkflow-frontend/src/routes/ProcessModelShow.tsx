@@ -563,7 +563,18 @@ export default function ProcessModelShow() {
           <h1 className="with-icons">
             Process Model: {processModel.display_name}
           </h1>
-
+          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
+            <Button
+              kind="ghost"
+              data-qa="edit-process-model-button"
+              renderIcon={Edit}
+              iconDescription="Edit Process Model"
+              hasIconOnly
+              href={`/admin/process-models/${modifiedProcessModelId}/edit`}
+            >
+              Edit process model
+            </Button>
+          </Can>
           <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
             <ButtonWithConfirmation
               kind="ghost"
@@ -589,14 +600,6 @@ export default function ProcessModelShow() {
               onSuccessCallback={setProcessInstance}
             />
           </Can>
-          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-            <Button
-              href={`/admin/process-models/${modifiedProcessModelId}/edit`}
-              variant="secondary"
-            >
-              Edit process model
-            </Button>
-          </Can>
         </Stack>
         <br />
         <br />
@@ -608,6 +611,7 @@ export default function ProcessModelShow() {
             filtersEnabled={false}
             processModelFullIdentifier={processModel.id}
             perPageOptions={[2, 5, 25]}
+            showReports={false}
           />
           <br />
         </Can>

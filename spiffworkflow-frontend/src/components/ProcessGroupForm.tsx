@@ -5,7 +5,6 @@ import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
-import ButtonWithConfirmation from './ButtonWithConfirmation';
 
 type OwnProps = {
   mode: string;
@@ -35,22 +34,8 @@ export default function ProcessGroupForm({
     }
   };
 
-  const navigateToProcessGroups = (_result: any) => {
-    navigate(`/admin/process-groups`);
-  };
-
   const hasValidIdentifier = (identifierToCheck: string) => {
     return identifierToCheck.match(/^[a-z0-9][0-9a-z-]+[a-z0-9]$/);
-  };
-
-  const deleteProcessGroup = () => {
-    HttpService.makeCallToBackend({
-      path: `/process-groups/${modifyProcessIdentifierForPathParam(
-        processGroup.id
-      )}`,
-      successCallback: navigateToProcessGroups,
-      httpMethod: 'DELETE',
-    });
   };
 
   const handleFormSubmission = (event: any) => {
@@ -172,17 +157,6 @@ export default function ProcessGroupForm({
 
   const formButtons = () => {
     const buttons = [<Button type="submit">Submit</Button>];
-    if (mode === 'edit') {
-      buttons.push(
-        <ButtonWithConfirmation
-          data-qa="delete-process-group-button"
-          description={`Delete Process Group ${processGroup.id}?`}
-          onConfirmation={deleteProcessGroup}
-          buttonLabel="Delete"
-          confirmButtonLabel="Delete"
-        />
-      );
-    }
     return <ButtonSet>{buttons}</ButtonSet>;
   };
 
