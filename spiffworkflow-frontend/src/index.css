@@ -248,3 +248,7 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
   position: absolute;
   bottom: 1em;
 }
+
+.cds--tabs .cds--tabs__nav-link {
+  max-width: 20rem;
+}
