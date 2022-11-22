@@ -280,6 +280,7 @@ export default function ProcessInstanceListTable({
     paginationQueryParamPrefix,
     processModelFullIdentifier,
     perPageOptions,
+    reportIdentifier,
   ]);
 
   // This sets the filter data using the saved reports returned from the initial instance_list query.
