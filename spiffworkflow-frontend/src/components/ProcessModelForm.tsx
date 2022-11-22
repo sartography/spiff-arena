@@ -51,12 +51,15 @@ export default function ProcessModelForm({
     if (hasErrors) {
       return;
     }
-    const path = `/process-models/${modifyProcessIdentifierForPathParam(
+    let path = `/process-models/${modifyProcessIdentifierForPathParam(
       processGroupId || ''
     )}`;
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
+      path = `/process-models/${modifyProcessIdentifierForPathParam(
+        processModel.id
+      )}`;
     }
     const postBody = {
       display_name: processModel.display_name,
