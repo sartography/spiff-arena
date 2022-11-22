@@ -813,6 +813,18 @@ def process_instance_list(
             ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
         )
 
+    # TODO: wire up query
+    if report_filter.initiated_by_me is True:
+        pass
+
+    # TODO: wire up query
+    if report_filter.with_tasks_completed_by_me is True:
+        pass
+
+    # TODO: wire up query
+    if report_filter.with_tasks_completed_by_my_group is True:
+        pass
+
     process_instances = process_instance_query.order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(page=page, per_page=per_page, error_out=False)
