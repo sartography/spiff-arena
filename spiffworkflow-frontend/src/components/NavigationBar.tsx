@@ -177,6 +177,7 @@ export default function NavigationBar() {
           <Header aria-label="IBM Platform Name" className="cds--g100">
             <SkipToContent />
             <HeaderMenuButton
+              data-qa="header-menu-expand-button"
               aria-label="Open menu"
               onClick={onClickSideNavExpand}
               isActive={isSideNavExpanded}
