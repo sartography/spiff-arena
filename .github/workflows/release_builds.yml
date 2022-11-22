@@ -1,6 +1,7 @@
 name: Build docker containers on version release
 
 on:
+  workflow_dispatch
   push:
     tags: [ v* ]
 
