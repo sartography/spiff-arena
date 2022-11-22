@@ -75,7 +75,7 @@ describe('Properties Panel for Data Objects', function() {
 
     // THEN - both the data object itself, and the label of any references are updated.
     expect(my_data_ref_1.businessObject.dataObjectRef.id).to.equal('my_nifty_new_name');
-    expect(my_data_ref_1.businessObject.name).to.equal('my_nifty_new_name');
+    expect(my_data_ref_1.businessObject.name).to.equal('My Nifty New Name');
   });
 
 });

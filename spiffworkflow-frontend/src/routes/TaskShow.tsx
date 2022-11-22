@@ -24,7 +24,7 @@ import remarkGfm from 'remark-gfm';
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { modifyProcessModelPath } from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 
 export default function TaskShow() {
   const [task, setTask] = useState(null);
@@ -38,7 +38,7 @@ export default function TaskShow() {
     const processResult = (result: any) => {
       setTask(result);
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifyProcessModelPath(
+        path: `/process-instances/${modifyProcessIdentifierForPathParam(
           result.process_model_identifier
         )}/${params.process_instance_id}/tasks`,
         successCallback: setUserTasks,

@@ -29,7 +29,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
-  unModifyProcessModelPath,
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ErrorContext from '../contexts/ErrorContext';
@@ -43,13 +43,14 @@ export default function ProcessInstanceShow() {
 
   const [processInstance, setProcessInstance] = useState(null);
   const [tasks, setTasks] = useState<Array<object> | null>(null);
+  const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const unModifiedProcessModelId = unModifyProcessModelPath(
+  const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
   const modifiedProcessModelId = params.process_model_id;
@@ -57,8 +58,11 @@ export default function ProcessInstanceShow() {
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.messageInstanceListPath]: ['GET'],
+    [targetUris.processInstanceTaskListPath]: ['GET'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -67,21 +71,29 @@ export default function ProcessInstanceShow() {
   };
 
   useEffect(() => {
-    HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}`,
-      successCallback: setProcessInstance,
-    });
-    if (typeof params.spiff_step === 'undefined')
+    if (permissionsLoaded) {
+      const processTaskFailure = () => {
+        setTasksCallHadError(true);
+      };
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/tasks?all_tasks=true`,
-        successCallback: setTasks,
+        path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}`,
+        successCallback: setProcessInstance,
       });
-    else
-      HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/tasks?all_tasks=true&spiff_step=${params.spiff_step}`,
-        successCallback: setTasks,
-      });
-  }, [params, modifiedProcessModelId]);
+      let taskParams = '?all_tasks=true';
+      if (typeof params.spiff_step !== 'undefined') {
+        taskParams = `${taskParams}&spiff_step=${params.spiff_step}`;
+      }
+      if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+        HttpService.makeCallToBackend({
+          path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/tasks${taskParams}`,
+          successCallback: setTasks,
+          failureCallback: processTaskFailure,
+        });
+      } else {
+        setTasksCallHadError(true);
+      }
+    }
+  }, [params, modifiedProcessModelId, permissionsLoaded, ability, targetUris]);
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({
@@ -550,10 +562,10 @@ export default function ProcessInstanceShow() {
     return elements;
   };
 
-  if (processInstance && tasks) {
+  if (processInstance && (tasks || tasksCallHadError)) {
     const processInstanceToUse = processInstance as any;
     const taskIds = getTaskIds();
-    const processModelId = unModifyProcessModelPath(
+    const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
     );
 

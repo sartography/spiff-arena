@@ -181,11 +181,11 @@ export const truncateString = (text: string, len: number) => {
 
 // Because of limitations in the way openapi defines parameters, we have to modify process models ids
 // which are basically paths to the models
-export const modifyProcessModelPath = (path: string) => {
+export const modifyProcessIdentifierForPathParam = (path: string) => {
   return path.replace(/\//g, ':') || '';
 };
 
-export const unModifyProcessModelPath = (path: string) => {
+export const unModifyProcessIdentifierForPathParam = (path: string) => {
   return path.replace(/:/g, '/') || '';
 };
 

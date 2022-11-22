@@ -347,3 +347,16 @@ class BaseTest:
             target_uri=target_uri,
         )
         assert has_permission is expected_result
+
+    def modify_process_identifier_for_path_param(self, identifier: str) -> str:
+        """Identifier."""
+        if "\\" in identifier:
+            raise Exception(f"Found backslash in identifier: {identifier}")
+
+        return identifier.replace("/", ":")
+
+    def un_modify_modified_process_identifier_for_path_param(
+        self, modified_identifier: str
+    ) -> str:
+        """Un_modify_modified_process_model_id."""
+        return modified_identifier.replace(":", "/")

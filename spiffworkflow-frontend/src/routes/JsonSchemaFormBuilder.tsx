@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Button, Select, SelectItem, TextInput } from '@carbon/react';
 import { useParams } from 'react-router-dom';
 import { FormField } from '../interfaces';
-import { modifyProcessModelPath, slugifyString } from '../helpers';
+import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
 
 export default function JsonSchemaFormBuilder() {
@@ -28,7 +28,7 @@ export default function JsonSchemaFormBuilder() {
   const [formFieldTitle, setFormFieldTitle] = useState<string>('');
   const [formFieldType, setFormFieldType] = useState<string>('');
 
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
 

@@ -7,7 +7,7 @@ import {
 import { ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { modifyProcessModelPath } from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 
 type OwnProps = {
   processModel: ProcessModel;
@@ -22,7 +22,9 @@ export default function ProcessInstanceRun({
 }: OwnProps) {
   const navigate = useNavigate();
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
-  const modifiedProcessModelId = modifyProcessModelPath(processModel.id);
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
+    processModel.id
+  );
 
   const onProcessInstanceRun = (processInstance: any) => {
     // FIXME: ensure that the task is actually for the current user as well
@@ -37,7 +39,7 @@ export default function ProcessInstanceRun({
   const processModelRun = (processInstance: any) => {
     setErrorMessage(null);
     HttpService.makeCallToBackend({
-      path: `/process-instances/${processInstance.id}/run`,
+      path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
       successCallback: onProcessInstanceRun,
       failureCallback: setErrorMessage,
       httpMethod: 'POST',
