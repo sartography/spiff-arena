@@ -1,10 +1,8 @@
 name: Release Builds
 
 on:
-  - workflow_dispatch
-  - push
-#  push:
-#    tags: [ v* ]
+  push:
+    tags: [ v* ]
 
 jobs:
   create_frontend_docker_container:
