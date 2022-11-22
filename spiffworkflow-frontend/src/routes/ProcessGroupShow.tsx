@@ -20,6 +20,7 @@ import {
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessGroupListTiles from '../components/ProcessGroupListTiles';
+// import ProcessModelListTiles from '../components/ProcessModelListTiles';
 
 export default function ProcessGroupShow() {
   const params = useParams();
@@ -142,6 +143,10 @@ export default function ProcessGroupShow() {
           </Stack>
           <br />
           <br />
+          {/* <ProcessModelListTiles
+            headerElement={<h2>Process Models</h2>}
+            processGroup={processGroup}
+          /> */}
           {/* eslint-disable-next-line sonarjs/no-gratuitous-expressions */}
           {modelPagination && modelPagination.total > 0 && (
             <PaginationForTable

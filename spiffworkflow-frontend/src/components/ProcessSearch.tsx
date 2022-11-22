@@ -41,7 +41,7 @@ export default function ProcessSearch({
           if (process) {
             return `${process.display_name} (${truncateString(
               process.identifier,
-              20
+              75
             )})`;
           }
           return null;

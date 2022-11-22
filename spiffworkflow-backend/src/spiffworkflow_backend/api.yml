@@ -273,6 +273,12 @@ paths:
         description: The group containing the models we want to return
         schema:
           type: string
+      - name: recursive
+        in: query
+        required: false
+        description: Get all sub process models recursively if true
+        schema:
+          type: string
       - name: page
         in: query
         required: false

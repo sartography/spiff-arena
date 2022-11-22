@@ -51,7 +51,7 @@ export default function ProcessGroupListTiles({
       displayText = (processGroups || []).map((row: ProcessGroup) => {
         return (
           <ClickableTile
-            id="tile-1"
+            id={`process-group-tile-${row.id}`}
             className="tile-process-group"
             href={`/admin/process-groups/${modifyProcessModelPath(row.id)}`}
           >
@@ -61,7 +61,7 @@ export default function ProcessGroupListTiles({
                 {row.display_name}
               </div>
               <p className="tile-description">
-                {truncateString(row.description || '', 25)}
+                {truncateString(row.description || '', 100)}
               </p>
               <p className="tile-process-group-children-count tile-pin-bottom">
                 Total Sub Items: {processGroupDirectChildrenCount(row)}
