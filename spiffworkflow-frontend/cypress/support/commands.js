@@ -32,9 +32,8 @@ Cypress.Commands.add('getBySel', (selector, ...args) => {
 });
 
 Cypress.Commands.add('navigateToHome', () => {
-  cy.get('button[aria-label="Open menu"]').click();
+  cy.getBySel('header-menu-expand-button').click();
   cy.getBySel('side-nav-items').contains('Home').click();
-  // cy.getBySel('nav-home').click();
 });
 
 Cypress.Commands.add('navigateToAdmin', () => {
@@ -85,14 +84,21 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
 
-Cypress.Commands.add('runPrimaryBpmnFile', (reload = true) => {
-  cy.contains('Run').click();
-  if (reload) {
-    cy.contains(/Process Instance.*kicked off/);
-    cy.reload(true);
-    cy.contains(/Process Instance.*kicked off/).should('not.exist');
+Cypress.Commands.add(
+  'runPrimaryBpmnFile',
+  (expectAutoRedirectToHumanTask = false) => {
+    cy.contains('Run').click();
+    if (expectAutoRedirectToHumanTask) {
+      // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
+      cy.url().should('include', `/tasks/`);
+      cy.contains('Task: ');
+    } else {
+      cy.contains(/Process Instance.*kicked off/);
+      cy.reload(true);
+      cy.contains(/Process Instance.*kicked off/).should('not.exist');
+    }
   }
-});
+);
 
 Cypress.Commands.add(
   'navigateToProcessModel',

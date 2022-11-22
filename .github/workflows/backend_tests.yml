@@ -1,4 +1,4 @@
-name: Tests
+name: Backend Tests
 
 on:
   - push
@@ -283,7 +283,7 @@ jobs:
         # so just skip everything but main
         if: github.ref_name == 'main'
         with:
-          projectBaseDir: spiffworkflow-backend
+          projectBaseDir: spiffworkflow-frontend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

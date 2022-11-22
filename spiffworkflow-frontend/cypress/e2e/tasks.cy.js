@@ -13,6 +13,15 @@ const checkTaskHasClass = (taskName, className) => {
   cy.get(`g[data-element-id=${taskName}]`).should('have.class', className);
 };
 
+const kickOffModelWithForm = (modelId, formName) => {
+  cy.navigateToProcessModel(
+    'Acceptance Tests Group One',
+    'Acceptance Tests Model 2',
+    'acceptance-tests-model-2'
+  );
+  cy.runPrimaryBpmnFile(true);
+};
+
 describe('tasks', () => {
   beforeEach(() => {
     cy.login();
@@ -107,21 +116,15 @@ describe('tasks', () => {
     cy.contains('Status: complete');
   });
 
-  // it('can paginate items', () => {
-  //   cy.navigateToProcessModel(
-  //     'Acceptance Tests Group One',
-  //     'Acceptance Tests Model 1',
-  //     'acceptance-tests-model-1'
-  //   );
-  //
-  //   // make sure we have some tasks
-  //   cy.runPrimaryBpmnFile();
-  //   cy.runPrimaryBpmnFile();
-  //   cy.runPrimaryBpmnFile();
-  //   cy.runPrimaryBpmnFile();
-  //   cy.runPrimaryBpmnFile();
-  //
-  //   cy.navigateToHome();
-  //   cy.basicPaginationTest();
-  // });
+  it('can paginate items', () => {
+    // make sure we have some tasks
+    kickOffModelWithForm();
+    kickOffModelWithForm();
+    kickOffModelWithForm();
+    kickOffModelWithForm();
+    kickOffModelWithForm();
+
+    cy.navigateToHome();
+    cy.basicPaginationTest();
+  });
 });
