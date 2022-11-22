@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       REGISTRY: ghcr.io
-      IMAGE_NAME: sartography/
+      IMAGE_NAME: sartography/spiffworkflow-frontend
     permissions:
       contents: read
       packages: write
