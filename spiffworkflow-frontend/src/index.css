@@ -252,3 +252,7 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 .cds--tabs .cds--tabs__nav-link {
   max-width: 20rem;
 }
+
+.clear-left {
+  clear: left;
+}
