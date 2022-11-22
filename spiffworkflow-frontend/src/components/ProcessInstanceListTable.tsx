@@ -32,7 +32,7 @@ import {
   convertSecondsToFormattedTimeHoursMinutes,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
-  modifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
 } from '../helpers';
 
 import PaginationForTable from './PaginationForTable';
@@ -611,9 +611,8 @@ export default function ProcessInstanceListTable({
     });
 
     const formatProcessInstanceId = (row: any, id: any) => {
-      const modifiedProcessModelId: String = modifyProcessModelPath(
-        row.process_model_identifier
-      );
+      const modifiedProcessModelId: String =
+        modifyProcessIdentifierForPathParam(row.process_model_identifier);
       return (
         <Link
           data-qa="process-instance-show-link"
@@ -626,7 +625,9 @@ export default function ProcessInstanceListTable({
     const formatProcessModelIdentifier = (_row: any, identifier: any) => {
       return (
         <Link
-          to={`/admin/process-models/${modifyProcessModelPath(identifier)}`}
+          to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+            identifier
+          )}`}
         >
           {identifier}
         </Link>

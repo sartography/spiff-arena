@@ -6,7 +6,7 @@ import PaginationForTable from './PaginationForTable';
 import {
   convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
-  modifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
@@ -40,9 +40,8 @@ export default function MyOpenProcesses() {
     const rows = tasks.map((row) => {
       const rowToUse = row as any;
       const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.task_id}`;
-      const modifiedProcessModelIdentifier = modifyProcessModelPath(
-        rowToUse.process_model_identifier
-      );
+      const modifiedProcessModelIdentifier =
+        modifyProcessIdentifierForPathParam(rowToUse.process_model_identifier);
       return (
         <tr key={rowToUse.id}>
           <td>

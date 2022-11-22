@@ -6,7 +6,10 @@ import {
 } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { ProcessModel, ProcessInstance, ProcessGroup } from '../interfaces';
-import { modifyProcessModelPath, truncateString } from '../helpers';
+import {
+  modifyProcessIdentifierForPathParam,
+  truncateString,
+} from '../helpers';
 import ProcessInstanceRun from './ProcessInstanceRun';
 
 type OwnProps = {
@@ -47,7 +50,7 @@ export default function ProcessModelListTiles({
           <p>
             Process Instance {processInstance.id} kicked off (
             <Link
-              to={`/admin/process-models/${modifyProcessModelPath(
+              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
                 processInstance.process_model_identifier
               )}/process-instances/${processInstance.id}`}
               data-qa="process-instance-show-link"
@@ -70,7 +73,9 @@ export default function ProcessModelListTiles({
           <Tile
             id={`process-model-tile-${row.id}`}
             className="tile-process-group"
-            href={`/admin/process-models/${modifyProcessModelPath(row.id)}`}
+            href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+              row.id
+            )}`}
           >
             <div className="tile-process-group-content-container">
               <div className="tile-title-top">{row.display_name}</div>

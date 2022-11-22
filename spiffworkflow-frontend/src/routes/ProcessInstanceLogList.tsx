@@ -6,8 +6,8 @@ import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
-  modifyProcessModelPath,
-  unModifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
   convertSecondsToFormattedDateTime,
 } from '../helpers';
 import HttpService from '../services/HttpService';
@@ -17,7 +17,7 @@ export default function ProcessInstanceLogList() {
   const [searchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
 
@@ -82,7 +82,7 @@ export default function ProcessInstanceLogList() {
             ['Process Groups', '/admin'],
             [
               `Process Model: ${params.process_model_id}`,
-              `process_model:${unModifyProcessModelPath(
+              `process_model:${unModifyProcessIdentifierForPathParam(
                 params.process_model_id || ''
               )}:link`,
             ],

@@ -29,7 +29,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
-  unModifyProcessModelPath,
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ErrorContext from '../contexts/ErrorContext';
@@ -49,7 +49,7 @@ export default function ProcessInstanceShow() {
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const unModifiedProcessModelId = unModifyProcessModelPath(
+  const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
   const modifiedProcessModelId = params.process_model_id;
@@ -553,7 +553,7 @@ export default function ProcessInstanceShow() {
   if (processInstance && tasks) {
     const processInstanceToUse = processInstance as any;
     const taskIds = getTaskIds();
-    const processModelId = unModifyProcessModelPath(
+    const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
     );
 

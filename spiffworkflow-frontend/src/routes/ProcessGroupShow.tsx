@@ -8,8 +8,8 @@ import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
 import {
   getPageInfoFromSearchParams,
-  modifyProcessModelPath,
-  unModifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import {
   PaginationObject,
@@ -48,7 +48,7 @@ export default function ProcessGroupShow() {
     };
     const processResult = (result: any) => {
       setProcessGroup(result);
-      const unmodifiedProcessGroupId = unModifyProcessModelPath(
+      const unmodifiedProcessGroupId = unModifyProcessIdentifierForPathParam(
         (params as any).process_group_id
       );
       HttpService.makeCallToBackend({
@@ -67,9 +67,8 @@ export default function ProcessGroupShow() {
       return null;
     }
     const rows = processModels.map((row: ProcessModel) => {
-      const modifiedProcessModelId: String = modifyProcessModelPath(
-        (row as any).id
-      );
+      const modifiedProcessModelId: String =
+        modifyProcessIdentifierForPathParam((row as any).id);
       return (
         <tr key={row.id}>
           <td>
@@ -102,7 +101,9 @@ export default function ProcessGroupShow() {
 
   if (processGroup && modelPagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    const modifiedProcessGroupId = modifyProcessModelPath(processGroup.id);
+    const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
+      processGroup.id
+    );
     return (
       <>
         <ProcessBreadcrumb

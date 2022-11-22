@@ -5,7 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import {
   getPageInfoFromSearchParams,
-  modifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
   refreshAtInterval,
 } from '../helpers';
 import HttpService from '../services/HttpService';
@@ -50,9 +50,8 @@ export default function MyTasks() {
     const rows = tasks.map((row) => {
       const rowToUse = row as any;
       const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.id}`;
-      const modifiedProcessModelIdentifier = modifyProcessModelPath(
-        rowToUse.process_model_identifier
-      );
+      const modifiedProcessModelIdentifier =
+        modifyProcessIdentifierForPathParam(rowToUse.process_model_identifier);
       return (
         <tr key={rowToUse.id}>
           <td>
@@ -110,7 +109,7 @@ export default function MyTasks() {
   const buildRecentProcessModelSection = () => {
     const rows = recentProcessModels.map((row) => {
       const rowToUse = row as any;
-      const modifiedProcessModelId = modifyProcessModelPath(
+      const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
         rowToUse.processModelIdentifier
       );
       return (
