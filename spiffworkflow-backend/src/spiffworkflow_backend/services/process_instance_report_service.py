@@ -48,10 +48,29 @@ class ProcessInstanceReportService:
     ) -> ProcessInstanceReportModel:
         """Report_with_filter."""
         if report_identifier is None:
-            return ProcessInstanceReportModel.default_report(user)
+            report_identifier = "default"
+
+        process_instance_report = ProcessInstanceReportModel.query.filter_by(
+            identifier=report_identifier, created_by_id=user.id
+        ).first()
+
+        if process_instance_report is not None:
+            return process_instance_report  # type: ignore
 
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
+            "default": {
+                "columns": [
+                    {"Header": "id", "accessor": "id"},
+                    {
+                        "Header": "process_model_identifier",
+                        "accessor": "process_model_identifier",
+                    },
+                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
+                    {"Header": "status", "accessor": "status"},
+                ],
+            },
             "system_report_instances_initiated_by_me": {
                 "columns": [
                     {
@@ -96,7 +115,7 @@ class ProcessInstanceReportService:
             report_metadata=temp_system_metadata_map[report_identifier],
         )
 
-        return process_instance_report
+        return process_instance_report  # type: ignore
 
     @classmethod
     def filter_by_to_dict(
