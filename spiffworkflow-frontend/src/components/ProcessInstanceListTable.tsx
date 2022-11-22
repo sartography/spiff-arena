@@ -57,6 +57,7 @@ type OwnProps = {
   paginationQueryParamPrefix?: string;
   perPageOptions?: number[];
   showReports?: boolean;
+  reportIdentifier?: string;
 };
 
 interface dateParameters {
@@ -69,6 +70,7 @@ export default function ProcessInstanceListTable({
   paginationQueryParamPrefix,
   perPageOptions,
   showReports = true,
+  reportIdentifier,
 }: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -173,9 +175,14 @@ export default function ProcessInstanceListTable({
         queryParamString += `&user_filter=${userAppliedFilter}`;
       }
 
-      const reportIdentifier = searchParams.get('report_identifier');
-      if (reportIdentifier) {
-        queryParamString += `&report_identifier=${reportIdentifier}`;
+      let reportIdentifierToUse: any = reportIdentifier;
+
+      if (!reportIdentifierToUse) {
+        reportIdentifierToUse = searchParams.get('report_identifier');
+      }
+
+      if (reportIdentifierToUse) {
+        queryParamString += `&report_identifier=${reportIdentifierToUse}`;
       }
 
       Object.keys(dateParametersToAlwaysFilterBy).forEach(
