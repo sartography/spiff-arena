@@ -18,7 +18,9 @@ from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.user_service import UserService
 
 T = TypeVar("T")
 
@@ -179,7 +181,10 @@ class ProcessModelService(FileSystemService):
         raise ProcessEntityNotFoundError("process_model_not_found")
 
     def get_process_models(
-        self, process_group_id: Optional[str] = None, recursive: Optional[bool] = False
+        self,
+        process_group_id: Optional[str] = None,
+        recursive: Optional[bool] = False,
+        filter_runnable_by_user: Optional[bool] = False,
     ) -> List[ProcessModelInfo]:
         """Get process models."""
         process_models = []
@@ -201,6 +206,19 @@ class ProcessModelService(FileSystemService):
             )
             process_models.append(process_model)
         process_models.sort()
+
+        if filter_runnable_by_user:
+            user = UserService.current_user()
+            new_process_model_list = []
+            for process_model in process_models:
+                uri = f"/v1.0/process-models/{process_model.id.replace('/', ':')}/process-instances"
+                result = AuthorizationService.user_has_permission(
+                    user=user, permission="create", target_uri=uri
+                )
+                if result:
+                    new_process_model_list.append(process_model)
+            return new_process_model_list
+
         return process_models
 
     def get_process_groups(

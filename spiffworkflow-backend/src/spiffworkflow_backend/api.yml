@@ -278,7 +278,13 @@ paths:
         required: false
         description: Get all sub process models recursively if true
         schema:
-          type: string
+          type: boolean
+      - name: filter_runnable_by_user
+        in: query
+        required: false
+        description: Get only the process models that the user can run
+        schema:
+          type: boolean
       - name: page
         in: query
         required: false

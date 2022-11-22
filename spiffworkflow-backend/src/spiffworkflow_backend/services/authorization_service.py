@@ -24,9 +24,6 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.services.group_service import GroupService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -393,25 +390,25 @@ class AuthorizationService:
 
     @staticmethod
     def assert_user_can_complete_spiff_task(
-        processor: ProcessInstanceProcessor,
+        process_instance_id: int,
         spiff_task: SpiffTask,
         user: UserModel,
     ) -> bool:
         """Assert_user_can_complete_spiff_task."""
         active_task = ActiveTaskModel.query.filter_by(
             task_name=spiff_task.task_spec.name,
-            process_instance_id=processor.process_instance_model.id,
+            process_instance_id=process_instance_id,
         ).first()
         if active_task is None:
             raise ActiveTaskNotFoundError(
                 f"Could find an active task with task name '{spiff_task.task_spec.name}'"
-                f" for process instance '{processor.process_instance_model.id}'"
+                f" for process instance '{process_instance_id}'"
             )
 
         if user not in active_task.potential_owners:
             raise UserDoesNotHaveAccessToTaskError(
                 f"User {user.username} does not have access to update task'{spiff_task.task_spec.name}'"
-                f" for process instance '{processor.process_instance_model.id}'"
+                f" for process instance '{process_instance_id}'"
             )
         return True
 

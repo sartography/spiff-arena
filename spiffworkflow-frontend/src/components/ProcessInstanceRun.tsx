@@ -4,10 +4,16 @@ import {
   Button,
   // @ts-ignore
 } from '@carbon/react';
-import { ProcessModel, RecentProcessModel } from '../interfaces';
+import { Can } from '@casl/react';
+import {
+  PermissionsToCheck,
+  ProcessModel,
+  RecentProcessModel,
+} from '../interfaces';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: ProcessModel
@@ -75,6 +81,12 @@ export default function ProcessInstanceRun({
     processModel.id
   );
 
+  const processInstanceActionPath = `/v1.0/process-models/${modifiedProcessModelId}/process-instances`;
+  const permissionRequestData: PermissionsToCheck = {
+    [processInstanceActionPath]: ['POST'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
+
   const onProcessInstanceRun = (processInstance: any) => {
     // FIXME: ensure that the task is actually for the current user as well
     const processInstanceId = (processInstance as any).id;
@@ -98,15 +110,17 @@ export default function ProcessInstanceRun({
 
   const processInstanceCreateAndRun = () => {
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances`,
+      path: processInstanceActionPath,
       successCallback: processModelRun,
       httpMethod: 'POST',
     });
   };
 
   return (
-    <Button onClick={processInstanceCreateAndRun} className={className}>
-      Run
-    </Button>
+    <Can I="POST" a={processInstanceActionPath} ability={ability}>
+      <Button onClick={processInstanceCreateAndRun} className={className}>
+        Run
+      </Button>
+    </Can>
   );
 }

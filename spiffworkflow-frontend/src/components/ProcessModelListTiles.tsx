@@ -33,11 +33,11 @@ export default function ProcessModelListTiles({
       setProcessModels(result.results);
     };
     // only allow 10 for now until we get the backend only returning certain models for user execution
-    let queryParams = '?per_page=1000';
+    let queryParams = '?per_page=20';
     if (processGroup) {
       queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
     } else {
-      queryParams = `${queryParams}&recursive=true`;
+      queryParams = `${queryParams}&recursive=true&filter_runnable_by_user=true`;
     }
     HttpService.makeCallToBackend({
       path: `/process-models${queryParams}`,
