@@ -1,4 +1,4 @@
-name: Build docker containers on version release
+name: Release Builds
 
 on:
   workflow_dispatch:
