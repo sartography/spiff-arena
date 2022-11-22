@@ -18,7 +18,7 @@ import {
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
-const REFRESH_INTERVAL = 10;
+const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
 
 export default function MyTasks() {
@@ -158,7 +158,7 @@ export default function MyTasks() {
               {row.processModelDisplayName}
             </Link>
           </td>
-          <td>
+          <td className="actions-cell">
             <ProcessInstanceRun
               processModel={processModel}
               onSuccessCallback={setProcessInstance}

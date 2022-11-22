@@ -197,7 +197,7 @@ class ProcessInstanceService:
         a multi-instance task.
         """
         AuthorizationService.assert_user_can_complete_spiff_task(
-            processor, spiff_task, user
+            processor.process_instance_model.id, spiff_task, user
         )
 
         dot_dct = ProcessInstanceService.create_dot_dict(data)

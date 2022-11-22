@@ -349,12 +349,15 @@ def process_model_move(
 def process_model_list(
     process_group_identifier: Optional[str] = None,
     recursive: Optional[bool] = False,
+    filter_runnable_by_user: Optional[bool] = False,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process model list!"""
     process_models = ProcessModelService().get_process_models(
-        process_group_id=process_group_identifier, recursive=recursive
+        process_group_id=process_group_identifier,
+        recursive=recursive,
+        filter_runnable_by_user=filter_runnable_by_user,
     )
     batch = ProcessModelService().get_batch(
         process_models, page=page, per_page=per_page
@@ -1319,7 +1322,7 @@ def task_submit(
         task_id, process_instance, processor=processor
     )
     AuthorizationService.assert_user_can_complete_spiff_task(
-        processor, spiff_task, principal.user
+        process_instance.id, spiff_task, principal.user
     )
 
     if spiff_task.state != TaskState.READY:

@@ -256,3 +256,7 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 .clear-left {
   clear: left;
 }
+
+td.actions-cell {
+  width: 1em;
+}

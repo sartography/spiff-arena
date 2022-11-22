@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Link,
+  // Link,
   useSearchParams,
   useParams,
   useNavigate,
@@ -11,10 +11,9 @@ import {
   // @ts-ignore
 } from '@carbon/icons-react';
 // @ts-ignore
-import { Button, Table, Stack } from '@carbon/react';
+import { Button, Stack } from '@carbon/react';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
-import PaginationForTable from '../components/PaginationForTable';
 import HttpService from '../services/HttpService';
 import {
   getPageInfoFromSearchParams,
@@ -25,7 +24,7 @@ import {
   PaginationObject,
   PermissionsToCheck,
   ProcessGroup,
-  ProcessModel,
+  // ProcessModel,
 } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -39,7 +38,7 @@ export default function ProcessGroupShow() {
   const navigate = useNavigate();
 
   const [processGroup, setProcessGroup] = useState<ProcessGroup | null>(null);
-  const [processModels, setProcessModels] = useState([]);
+  // const [processModels, setProcessModels] = useState([]);
   const [modelPagination, setModelPagination] =
     useState<PaginationObject | null>(null);
 
@@ -55,7 +54,7 @@ export default function ProcessGroupShow() {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
 
     const setProcessModelFromResult = (result: any) => {
-      setProcessModels(result.results);
+      // setProcessModels(result.results);
       setModelPagination(result.pagination);
     };
     const processResult = (result: any) => {
@@ -74,42 +73,42 @@ export default function ProcessGroupShow() {
     });
   }, [params, searchParams]);
 
-  const buildModelTable = () => {
-    if (processGroup === null) {
-      return null;
-    }
-    const rows = processModels.map((row: ProcessModel) => {
-      const modifiedProcessModelId: String =
-        modifyProcessIdentifierForPathParam((row as any).id);
-      return (
-        <tr key={row.id}>
-          <td>
-            <Link
-              to={`/admin/process-models/${modifiedProcessModelId}`}
-              data-qa="process-model-show-link"
-            >
-              {row.id}
-            </Link>
-          </td>
-          <td>{row.display_name}</td>
-        </tr>
-      );
-    });
-    return (
-      <div>
-        <h2>Process Models</h2>
-        <Table striped bordered>
-          <thead>
-            <tr>
-              <th>Process Model Id</th>
-              <th>Display Name</th>
-            </tr>
-          </thead>
-          <tbody>{rows}</tbody>
-        </Table>
-      </div>
-    );
-  };
+  // const buildModelTable = () => {
+  //   if (processGroup === null) {
+  //     return null;
+  //   }
+  //   const rows = processModels.map((row: ProcessModel) => {
+  //     const modifiedProcessModelId: String =
+  //       modifyProcessIdentifierForPathParam((row as any).id);
+  //     return (
+  //       <tr key={row.id}>
+  //         <td>
+  //           <Link
+  //             to={`/admin/process-models/${modifiedProcessModelId}`}
+  //             data-qa="process-model-show-link"
+  //           >
+  //             {row.id}
+  //           </Link>
+  //         </td>
+  //         <td>{row.display_name}</td>
+  //       </tr>
+  //     );
+  //   });
+  //   return (
+  //     <div>
+  //       <h2>Process Models</h2>
+  //       <Table striped bordered>
+  //         <thead>
+  //           <tr>
+  //             <th>Process Model Id</th>
+  //             <th>Display Name</th>
+  //           </tr>
+  //         </thead>
+  //         <tbody>{rows}</tbody>
+  //       </Table>
+  //     </div>
+  //   );
+  // };
 
   const navigateToProcessGroups = (_result: any) => {
     navigate(`/admin/process-groups`);
@@ -128,7 +127,7 @@ export default function ProcessGroupShow() {
   };
 
   if (processGroup && modelPagination) {
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+    // const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     const modifiedProcessGroupId = modifyProcessIdentifierForPathParam(
       processGroup.id
     );
