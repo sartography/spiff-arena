@@ -1005,7 +1005,7 @@ def authentication_callback(
         f"{service}/{auth_method}", response, g.user.id, create_if_not_exists=True
     )
     return redirect(
-        f"{current_app.config['SPIFFWORKFLOW_FRONTEND_URL']}/admin/authentications"
+        f"{current_app.config['SPIFFWORKFLOW_FRONTEND_URL']}/admin/configuration"
     )
 
 
