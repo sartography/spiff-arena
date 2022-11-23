@@ -14,7 +14,7 @@ import { PaginationObject } from '../interfaces';
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 const paginationQueryParamPrefix = 'tasks_waiting_for_my_groups';
 
-export default function TasksForWaitingForMyGroups() {
+export default function TasksWaitingForMyGroups() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
