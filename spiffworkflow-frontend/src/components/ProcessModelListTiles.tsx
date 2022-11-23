@@ -79,6 +79,7 @@ export default function ProcessModelListTiles({
             <div className="tile-process-group-content-container">
               <div className="tile-title-top">
                 <a
+                  data-qa="process-model-show-link"
                   href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
                     row.id
                   )}`}

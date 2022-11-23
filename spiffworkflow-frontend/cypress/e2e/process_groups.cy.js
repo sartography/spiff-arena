@@ -19,18 +19,12 @@ describe('process-groups', () => {
     cy.url().should('include', `process-groups/${groupId}`);
     cy.contains(`Process Group: ${groupDisplayName}`);
 
-    cy.contains('Edit process group').click();
+    cy.getBySel('edit-process-group-button').click();
     cy.get('input[name=display_name]').clear().type(newGroupDisplayName);
     cy.contains('Submit').click();
     cy.contains(`Process Group: ${newGroupDisplayName}`);
 
-    cy.contains('Edit process group').click();
-    cy.get('input[name=display_name]').should(
-      'have.value',
-      newGroupDisplayName
-    );
-
-    cy.contains('Delete').click();
+    cy.getBySel('delete-process-group-button').click();
     cy.contains('Are you sure');
     cy.getBySel('delete-process-group-button-modal-confirmation-dialog')
       .find('.cds--btn--danger')

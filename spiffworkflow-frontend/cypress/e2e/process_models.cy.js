@@ -1,4 +1,4 @@
-import { modifyProcessModelPath } from '../../src/helpers';
+import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
 
 describe('process-models', () => {
   beforeEach(() => {
@@ -16,25 +16,22 @@ describe('process-models', () => {
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     const newModelDisplayName = `${modelDisplayName} edited`;
-    cy.contains('Misc').click();
+    cy.contains('99-Shared Resources').click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.url().should(
       'include',
-      `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+      `process-models/${modifyProcessIdentifierForPathParam(
+        groupId
+      )}:${modelId}`
     );
     cy.contains(`Process Model: ${modelDisplayName}`);
 
-    cy.contains('Edit process model').click();
+    cy.getBySel('edit-process-model-button').click();
     cy.get('input[name=display_name]').clear().type(newModelDisplayName);
     cy.contains('Submit').click();
-    cy.contains(`Process Model: ${groupId}/${modelId}`);
-    cy.contains('Submit').click();
-    cy.get('input[name=display_name]').should(
-      'have.value',
-      newModelDisplayName
-    );
+    cy.contains(`Process Model: ${newModelDisplayName}`);
 
     // go back to process model show by clicking on the breadcrumb
     cy.contains(modelId).click();
@@ -46,7 +43,7 @@ describe('process-models', () => {
       .click();
     cy.url().should(
       'include',
-      `process-groups/${modifyProcessModelPath(groupId)}`
+      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
     );
     cy.contains(modelId).should('not.exist');
   });
@@ -64,15 +61,17 @@ describe('process-models', () => {
     const dmnFileName = `dmn_test_file_${id}`;
     const jsonFileName = `json_test_file_${id}`;
 
-    cy.contains('Misc').click();
+    cy.contains('99-Shared Resources').click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.contains(directParentGroupId).click();
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.url().should(
       'include',
-      `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+      `process-models/${modifyProcessIdentifierForPathParam(
+        groupId
+      )}:${modelId}`
     );
     cy.contains(`Process Model: ${modelDisplayName}`);
     cy.contains(`${bpmnFileName}.bpmn`).should('not.exist');
@@ -135,8 +134,12 @@ describe('process-models', () => {
     cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
       .find('.cds--btn--danger')
       .click();
-    cy.url().should('include', `process-groups/${modifyProcessModelPath(groupId)}`);
+    cy.url().should(
+      'include',
+      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
+    );
     cy.contains(modelId).should('not.exist');
+    cy.contains(modelDisplayName).should('not.exist');
   });
 
   it('can upload and run a bpmn file', () => {
@@ -148,17 +151,19 @@ describe('process-models', () => {
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     cy.contains('Add a process group');
-    cy.contains('Misc').click();
+    cy.contains('99-Shared Resources').click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
 
     cy.contains(`${directParentGroupId}`).click();
     cy.contains('Add a process model');
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.url().should(
       'include',
-      `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
+      `process-models/${modifyProcessIdentifierForPathParam(
+        groupId
+      )}:${modelId}`
     );
     cy.contains(`Process Model: ${modelDisplayName}`);
 
@@ -190,17 +195,19 @@ describe('process-models', () => {
       .click();
     cy.url().should(
       'include',
-      `process-groups/${modifyProcessModelPath(groupId)}`
+      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
     );
     cy.contains(modelId).should('not.exist');
+    cy.contains(modelDisplayName).should('not.exist');
   });
 
-  it('can paginate items', () => {
-    cy.contains('Misc').click();
-    cy.wait(500);
-    cy.contains('Acceptance Tests Group One').click();
-    cy.basicPaginationTest();
-  });
+  // process models no longer has pagination post-tiles
+  // it.only('can paginate items', () => {
+  //   cy.contains('99-Shared Resources').click();
+  //   cy.wait(500);
+  //   cy.contains('Acceptance Tests Group One').click();
+  //   cy.basicPaginationTest();
+  // });
 
   it('can allow searching for model', () => {
     cy.getBySel('process-model-selection').click().type('model-3');
