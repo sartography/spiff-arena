@@ -502,10 +502,10 @@ export default function ProcessModelShow() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${processModel.id}`,
-              `process_model:${processModel.id}`,
-            ],
+            {
+              entityToExplode: processModel,
+              entityType: 'process-model',
+            },
           ]}
         />
         <Stack orientation="horizontal" gap={1}>

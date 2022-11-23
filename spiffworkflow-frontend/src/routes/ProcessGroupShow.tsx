@@ -136,7 +136,10 @@ export default function ProcessGroupShow() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            ['', `process_group:${processGroup.id}`],
+            {
+              entityToExplode: processGroup,
+              entityType: 'process-group',
+            },
           ]}
         />
         <Stack orientation="horizontal" gap={1}>

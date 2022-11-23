@@ -158,26 +158,6 @@ class ProcessModelService(FileSystemService):
         if self.is_model(model_path):
             process_model = self.get_process_model_from_relative_path(process_model_id)
             return process_model
-
-        # group_path, model_id = os.path.split(process_model_id)
-        # if group_path is not None:
-        #     process_group = self.get_process_group(group_path)
-        #     if process_group is not None:
-        #         for process_model in process_group.process_models:
-        #             if process_model_id == process_model.id:
-        #                 return process_model
-        # with os.scandir(FileSystemService.root_path()) as process_group_dirs:
-        #     for item in process_group_dirs:
-        #         process_group_dir = item
-        #         if item.is_dir():
-        #             with os.scandir(item.path) as spec_dirs:
-        #                 for sd in spec_dirs:
-        #                     if sd.name == process_model_id:
-        #                         # Now we have the process_group directory, and spec directory
-        #                         process_group = self.__scan_process_group(
-        #                             process_group_dir
-        #                         )
-        #                         return self.__scan_process_model(sd.path, sd.name, process_group)
         raise ProcessEntityNotFoundError("process_model_not_found")
 
     def get_process_models(
@@ -221,6 +201,23 @@ class ProcessModelService(FileSystemService):
 
         return process_models
 
+    @classmethod
+    def get_parent_group_array(cls, process_identifier: str) -> list[dict]:
+        """Get_parent_group_array."""
+        full_group_id_path = None
+        parent_group_array = []
+        for process_group_id_segment in process_identifier.split("/")[0:-1]:
+            if full_group_id_path is None:
+                full_group_id_path = process_group_id_segment
+            else:
+                full_group_id_path = f"{full_group_id_path}/{process_group_id_segment}"  # type: ignore
+            parent_group = ProcessModelService().get_process_group(full_group_id_path)
+            if parent_group:
+                parent_group_array.append(
+                    {"id": parent_group.id, "display_name": parent_group.display_name}
+                )
+        return parent_group_array
+
     def get_process_groups(
         self, process_group_id: Optional[str] = None
     ) -> list[ProcessGroup]:
@@ -229,7 +226,9 @@ class ProcessModelService(FileSystemService):
         process_groups.sort()
         return process_groups
 
-    def get_process_group(self, process_group_id: str) -> ProcessGroup:
+    def get_process_group(
+        self, process_group_id: str, find_direct_nested_items: bool = True
+    ) -> ProcessGroup:
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = os.path.abspath(
@@ -239,20 +238,10 @@ class ProcessModelService(FileSystemService):
                 )
             )
             if self.is_group(process_group_path):
-                return self.__scan_process_group(process_group_path)
-                # nested_groups = []
-                # process_group_dir = os.scandir(process_group_path)
-                # for item in process_group_dir:
-                #     if self.is_group(item.path):
-                #         nested_group = self.get_process_group(os.path.join(process_group_path, item.path))
-                #         nested_groups.append(nested_group)
-                #     elif self.is_model(item.path):
-                #         print("get_process_group: ")
-                #         return self.__scan_process_group(process_group_path)
-            # with os.scandir(FileSystemService.root_path()) as directory_items:
-            #     for item in directory_items:
-            #         if item.is_dir() and item.name == process_group_id:
-            #             return self.__scan_process_group(item)
+                return self.find_or_create_process_group(
+                    process_group_path,
+                    find_direct_nested_items=find_direct_nested_items,
+                )
 
         raise ProcessEntityNotFoundError(
             "process_group_not_found", f"Process Group Id: {process_group_id}"
@@ -348,11 +337,13 @@ class ProcessModelService(FileSystemService):
             for item in directory_items:
                 # if item.is_dir() and not item.name[0] == ".":
                 if item.is_dir() and self.is_group(item):  # type: ignore
-                    scanned_process_group = self.__scan_process_group(item.path)
+                    scanned_process_group = self.find_or_create_process_group(item.path)
                     process_groups.append(scanned_process_group)
             return process_groups
 
-    def __scan_process_group(self, dir_path: str) -> ProcessGroup:
+    def find_or_create_process_group(
+        self, dir_path: str, find_direct_nested_items: bool = True
+    ) -> ProcessGroup:
         """Reads the process_group.json file, and any nested directories."""
         cat_path = os.path.join(dir_path, self.PROCESS_GROUP_JSON_FILE)
         if os.path.exists(cat_path):
@@ -378,27 +369,29 @@ class ProcessModelService(FileSystemService):
             self.write_json_file(cat_path, self.GROUP_SCHEMA.dump(process_group))
             # we don't store `id` in the json files, so we add it in here
             process_group.id = process_group_id
-        with os.scandir(dir_path) as nested_items:
-            process_group.process_models = []
-            process_group.process_groups = []
-            for nested_item in nested_items:
-                if nested_item.is_dir():
-                    # TODO: check whether this is a group or model
-                    if self.is_group(nested_item.path):
-                        # This is a nested group
-                        process_group.process_groups.append(
-                            self.__scan_process_group(nested_item.path)
-                        )
-                    elif self.is_model(nested_item.path):
-                        process_group.process_models.append(
-                            self.__scan_process_model(
-                                nested_item.path,
-                                nested_item.name,
-                                process_group=process_group,
+
+        if find_direct_nested_items:
+            with os.scandir(dir_path) as nested_items:
+                process_group.process_models = []
+                process_group.process_groups = []
+                for nested_item in nested_items:
+                    if nested_item.is_dir():
+                        # TODO: check whether this is a group or model
+                        if self.is_group(nested_item.path):
+                            # This is a nested group
+                            process_group.process_groups.append(
+                                self.find_or_create_process_group(nested_item.path)
                             )
-                        )
-            process_group.process_models.sort()
-            # process_group.process_groups.sort()
+                        elif self.is_model(nested_item.path):
+                            process_group.process_models.append(
+                                self.__scan_process_model(
+                                    nested_item.path,
+                                    nested_item.name,
+                                    process_group=process_group,
+                                )
+                            )
+                process_group.process_models.sort()
+                # process_group.process_groups.sort()
         return process_group
 
     def __scan_process_model(

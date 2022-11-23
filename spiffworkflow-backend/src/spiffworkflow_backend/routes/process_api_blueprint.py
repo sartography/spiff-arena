@@ -233,6 +233,10 @@ def process_group_show(
                 status_code=400,
             )
         ) from exception
+
+    process_group.parent_groups = ProcessModelService.get_parent_group_array(
+        process_group.id
+    )
     return make_response(jsonify(process_group), 200)
 
 
@@ -331,8 +335,11 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
     process_model.files = files
     for file in process_model.files:
         file.references = SpecFileService.get_references_for_file(file, process_model)
-    process_model_json = ProcessModelInfoSchema().dump(process_model)
-    return process_model_json
+
+    process_model.parent_groups = ProcessModelService.get_parent_group_array(
+        process_model.id
+    )
+    return make_response(jsonify(process_model), 200)
 
 
 def process_model_move(

@@ -979,6 +979,43 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["id"] == process_group_id
         assert response.json["process_models"][0]["id"] == process_model_identifier
+        assert response.json["parent_groups"] == []
+
+    def test_get_process_group_show_when_nested(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_get_process_group_show_when_nested."""
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_one",
+            process_model_id="simple_form",
+            bpmn_file_location="simple_form",
+        )
+
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_one/test_group_two",
+            process_model_id="call_activity_nested",
+            bpmn_file_location="call_activity_nested",
+        )
+
+        response = client.get(
+            "/v1.0/process-groups/test_group_one:test_group_two",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["id"] == "test_group_one/test_group_two"
+        assert response.json["parent_groups"] == [
+            {"display_name": "test_group_one", "id": "test_group_one"}
+        ]
 
     def test_get_process_model_when_found(
         self,
@@ -997,11 +1034,15 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["id"] == process_model_identifier
         assert len(response.json["files"]) == 1
         assert response.json["files"][0]["name"] == "random_fact.bpmn"
+        assert response.json["parent_groups"] == [
+            {"display_name": "test_group", "id": "test_group"}
+        ]
 
     def test_get_process_model_when_not_found(
         self,

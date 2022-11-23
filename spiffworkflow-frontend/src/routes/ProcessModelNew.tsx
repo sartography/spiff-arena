@@ -20,10 +20,11 @@ export default function ProcessModelNew() {
       <ProcessBreadcrumb
         hotCrumbs={[
           ['Process Groups', '/admin'],
-          [
-            `Process Group: ${params.process_group_id}`,
-            `process_group:${params.process_group_id}:link`,
-          ],
+          {
+            entityToExplode: params.process_group_id || '',
+            entityType: 'process-group-id',
+            linkLastItem: true,
+          },
         ]}
       />
       <h1>Add Process Model</h1>
