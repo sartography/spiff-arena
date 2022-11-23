@@ -922,7 +922,7 @@ def process_instance_list(
         )
 
     process_instances = (
-        process_instance_query.distinct()
+        process_instance_query.group_by(ProcessInstanceModel.id)
         .order_by(
             ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
         )
