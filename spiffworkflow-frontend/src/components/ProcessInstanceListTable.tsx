@@ -783,7 +783,7 @@ export default function ProcessInstanceListTable({
     );
   }
   if (textToShowIfEmpty) {
-    return <>{textToShowIfEmpty}</>;
+    return <span>{textToShowIfEmpty}</span>;
   }
 
   return null;

@@ -160,7 +160,7 @@ paths:
         schema:
           type: integer
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_groups_list
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_list
       summary: get list
       tags:
         - Process Groups
