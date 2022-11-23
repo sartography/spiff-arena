@@ -111,7 +111,11 @@ export default function MyOpenProcesses() {
 
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
-      return <p>No tasks waiting for you</p>;
+      return (
+        <p className="no-results-message">
+          There are no tasks for processes you started at this time.
+        </p>
+      );
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -120,23 +124,25 @@ export default function MyOpenProcesses() {
       paginationQueryParamPrefix
     );
     return (
-      <>
-        <h1>Tasks for my open processes</h1>
-        <PaginationForTable
-          page={page}
-          perPage={perPage}
-          perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
-          pagination={pagination}
-          tableToDisplay={buildTable()}
-          paginationQueryParamPrefix={paginationQueryParamPrefix}
-        />
-      </>
+      <PaginationForTable
+        page={page}
+        perPage={perPage}
+        perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
+        pagination={pagination}
+        tableToDisplay={buildTable()}
+        paginationQueryParamPrefix={paginationQueryParamPrefix}
+      />
     );
   };
 
   return (
     <>
-      <h1>Tasks for my open processes</h1>
+      <h2>Tasks for my open processes</h2>
+      <p className="data-table-description">
+        These tasks are for processes you started which are not complete. You
+        may not have an action to take at this time. See below for tasks waiting
+        on you.
+      </p>
       {tasksComponent()}
     </>
   );

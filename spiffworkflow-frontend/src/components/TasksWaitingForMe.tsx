@@ -112,7 +112,11 @@ export default function TasksWaitingForMe() {
 
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
-      return <p>No tasks waiting for you</p>;
+      return (
+        <p className="no-results-message">
+          You have no task assignments at this time.
+        </p>
+      );
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -134,7 +138,11 @@ export default function TasksWaitingForMe() {
 
   return (
     <>
-      <h1>Tasks waiting for me</h1>
+      <h2>Tasks waiting for me</h2>
+      <p className="data-table-description">
+        These processes are waiting on you to complete the next task. All are
+        processes created by others that are now actionable by you.
+      </p>
       {tasksComponent()}
     </>
   );

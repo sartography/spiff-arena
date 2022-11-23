@@ -113,7 +113,11 @@ export default function TasksWaitingForMyGroups() {
 
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
-      return <p>No tasks waiting for you</p>;
+      return (
+        <p className="no-results-message">
+          Your groups have no task assignments at this time.
+        </p>
+      );
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -135,7 +139,11 @@ export default function TasksWaitingForMyGroups() {
 
   return (
     <>
-      <h1>Tasks waiting for my groups</h1>
+      <h2>Tasks waiting for my groups</h2>
+      <p className="data-table-description">
+        This is a list of tasks for groups you belong to that can be completed
+        by any member of the group.
+      </p>
       {tasksComponent()}
     </>
   );

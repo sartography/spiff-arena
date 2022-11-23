@@ -260,3 +260,17 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 td.actions-cell {
   width: 1em;
 }
+
+.no-results-message {
+  font-style: italic;
+  margin-left: 2em;
+  margin-top: 1em;
+  font-size: 14px;
+}
+
+.data-table-description {
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  color: #525252;
+}
