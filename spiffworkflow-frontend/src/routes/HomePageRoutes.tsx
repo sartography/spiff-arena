@@ -35,12 +35,12 @@ export default function HomePageRoutes() {
         <Tabs selectedIndex={selectedTabIndex}>
           <TabList aria-label="List of tabs">
             {/* <Tab onClick={() => navigate('/tasks/my-tasks')}>My Tasks</Tab> */}
-            <Tab onClick={() => navigate('/tasks/grouped')}>Tasks</Tab>
+            <Tab onClick={() => navigate('/tasks/grouped')}>In Progress</Tab>
             <Tab onClick={() => navigate('/tasks/completed-instances')}>
-              Completed Instances
+              Completed
             </Tab>
             <Tab onClick={() => navigate('/tasks/create-new-instance')}>
-              Create New Instance +
+              Start New +
             </Tab>
           </TabList>
         </Tabs>

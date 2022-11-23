@@ -119,7 +119,7 @@ export default function ProcessInstanceRun({
   return (
     <Can I="POST" a={processInstanceActionPath} ability={ability}>
       <Button onClick={processInstanceCreateAndRun} className={className}>
-        Run
+        Start
       </Button>
     </Can>
   );

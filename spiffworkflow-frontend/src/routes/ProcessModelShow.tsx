@@ -101,6 +101,7 @@ export default function ProcessModelShow() {
             </Link>
             ).
           </p>
+          <br />
         </div>
       );
     }
@@ -544,16 +545,17 @@ export default function ProcessModelShow() {
             a={targetUris.processInstanceActionPath}
             ability={ability}
           >
-            <ProcessInstanceRun
-              processModel={processModel}
-              onSuccessCallback={setProcessInstance}
-            />
+            <>
+              <ProcessInstanceRun
+                processModel={processModel}
+                onSuccessCallback={setProcessInstance}
+              />
+              <br />
+              <br />
+            </>
           </Can>
         </Stack>
-        <br />
-        <br />
         {processInstanceRunResultTag()}
-        <br />
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
           {processInstanceListTableButton()}
           <ProcessInstanceListTable
@@ -562,6 +564,7 @@ export default function ProcessModelShow() {
             perPageOptions={[2, 5, 25]}
             showReports={false}
           />
+          <br />
           <br />
         </Can>
         {processModelButtons()}
