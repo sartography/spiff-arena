@@ -574,10 +574,11 @@ export default function ProcessInstanceShow() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${processModelId}`,
-              `process_model:${processModelId}:link`,
-            ],
+            {
+              entityToExplode: processModelId,
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
             [`Process Instance Id: ${processInstanceToUse.id}`],
           ]}
         />

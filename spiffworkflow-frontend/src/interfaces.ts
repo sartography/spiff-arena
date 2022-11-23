@@ -46,12 +46,18 @@ export interface ProcessInstanceReport {
   display_name: string;
 }
 
+export interface ProcessGroupLite {
+  id: string;
+  display_name: string;
+}
+
 export interface ProcessModel {
   id: string;
   description: string;
   display_name: string;
   primary_file_name: string;
   files: ProcessFile[];
+  parent_groups?: ProcessGroupLite[];
 }
 
 export interface ProcessGroup {
@@ -60,10 +66,19 @@ export interface ProcessGroup {
   description?: string | null;
   process_models?: ProcessModel[];
   process_groups?: ProcessGroup[];
+  parent_groups?: ProcessGroupLite[];
 }
 
+export interface HotCrumbItemObject {
+  entityToExplode: ProcessModel | ProcessGroup | string;
+  entityType: string;
+  linkLastItem?: boolean;
+}
+
+export type HotCrumbItemArray = [displayValue: string, url?: string];
+
 // tuple of display value and URL
-export type HotCrumbItem = [displayValue: string, url?: string];
+export type HotCrumbItem = HotCrumbItemArray | HotCrumbItemObject;
 
 export interface ErrorForDisplay {
   message: string;

@@ -14,7 +14,11 @@ export default function ProcessGroupNew() {
 
   const hotCrumbs: HotCrumbItem[] = [['Process Groups', '/admin']];
   if (parentGroupId) {
-    hotCrumbs.push(['', `process_group:${parentGroupId}:link`]);
+    hotCrumbs.push({
+      entityToExplode: parentGroupId,
+      entityType: 'process-group-id',
+      linkLastItem: true,
+    });
   }
 
   return (

@@ -844,10 +844,11 @@ export default function ProcessModelEditDiagram() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${processModel.id}`,
-              `process_model:${processModel.id}:link`,
-            ],
+            {
+              entityToExplode: processModel,
+              entityType: 'process-model',
+              linkLastItem: true,
+            },
             [processModelFileName],
           ]}
         />
