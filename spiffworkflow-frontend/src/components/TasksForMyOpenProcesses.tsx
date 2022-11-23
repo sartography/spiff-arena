@@ -65,7 +65,6 @@ export default function MyOpenProcesses() {
           >
             {rowToUse.task_title}
           </td>
-          <td>{rowToUse.process_instance_status}</td>
           <td>{rowToUse.group_identifier || '-'}</td>
           <td>
             {convertSecondsToFormattedDateTime(
@@ -94,13 +93,12 @@ export default function MyOpenProcesses() {
       <Table striped bordered>
         <thead>
           <tr>
-            <th>Process Model</th>
-            <th>Process Instance</th>
-            <th>Task Name</th>
-            <th>Process Instance Status</th>
-            <th>Assigned Group</th>
-            <th>Process Started</th>
-            <th>Process Updated</th>
+            <th>Process</th>
+            <th>Id</th>
+            <th>Task</th>
+            <th>Waiting For</th>
+            <th>Date Started</th>
+            <th>Last Updated</th>
             <th>Actions</th>
           </tr>
         </thead>
