@@ -111,7 +111,7 @@ export default function MyOpenProcesses() {
 
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
-      return null;
+      return <p>No tasks waiting for you</p>;
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -134,8 +134,10 @@ export default function MyOpenProcesses() {
     );
   };
 
-  if (pagination) {
-    return tasksComponent();
-  }
-  return null;
+  return (
+    <>
+      <h1>Tasks for my open processes</h1>
+      {tasksComponent()}
+    </>
+  );
 }

@@ -10,6 +10,7 @@ export default function CompletedInstances() {
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_instances_initiated_by_me"
         showReports={false}
+        textToShowIfEmpty="No completed instances"
       />
       <h1 style={{ marginTop: '1em' }}>With Tasks Completed By Me</h1>
       <ProcessInstanceListTable
@@ -18,6 +19,7 @@ export default function CompletedInstances() {
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_instances_with_tasks_completed_by_me"
         showReports={false}
+        textToShowIfEmpty="No completed instances"
       />
       <h1 style={{ marginTop: '1em' }}>With Tasks Completed By My Group</h1>
       <ProcessInstanceListTable
@@ -26,6 +28,7 @@ export default function CompletedInstances() {
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_instances_with_tasks_completed_by_my_groups"
         showReports={false}
+        textToShowIfEmpty="No completed instances"
       />
     </>
   );

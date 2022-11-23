@@ -18,12 +18,10 @@ export default function HomePageRoutes() {
   useEffect(() => {
     setErrorMessage(null);
     let newSelectedTabIndex = 0;
-    if (location.pathname.match(/^\/tasks\/grouped\b/)) {
+    if (location.pathname.match(/^\/tasks\/completed-instances\b/)) {
       newSelectedTabIndex = 1;
-    } else if (location.pathname.match(/^\/tasks\/completed-instances\b/)) {
-      newSelectedTabIndex = 2;
     } else if (location.pathname.match(/^\/tasks\/create-new-instance\b/)) {
-      newSelectedTabIndex = 3;
+      newSelectedTabIndex = 2;
     }
     setSelectedTabIndex(newSelectedTabIndex);
   }, [location, setErrorMessage]);
@@ -36,8 +34,8 @@ export default function HomePageRoutes() {
       <>
         <Tabs selectedIndex={selectedTabIndex}>
           <TabList aria-label="List of tabs">
-            <Tab onClick={() => navigate('/tasks/my-tasks')}>My Tasks</Tab>
-            <Tab onClick={() => navigate('/tasks/grouped')}>Grouped Tasks</Tab>
+            {/* <Tab onClick={() => navigate('/tasks/my-tasks')}>My Tasks</Tab> */}
+            <Tab onClick={() => navigate('/tasks/grouped')}>Tasks</Tab>
             <Tab onClick={() => navigate('/tasks/completed-instances')}>
               Completed Instances
             </Tab>
@@ -55,7 +53,7 @@ export default function HomePageRoutes() {
     <>
       {renderTabs()}
       <Routes>
-        <Route path="/" element={<MyTasks />} />
+        <Route path="/" element={<GroupedTasks />} />
         <Route path="my-tasks" element={<MyTasks />} />
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
         <Route path="grouped" element={<GroupedTasks />} />
