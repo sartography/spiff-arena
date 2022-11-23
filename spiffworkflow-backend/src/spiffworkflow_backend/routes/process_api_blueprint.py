@@ -189,10 +189,10 @@ def process_group_update(
     return make_response(jsonify(process_group), 200)
 
 
-def process_groups_list(
+def process_group_list(
     process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    """Process_groups_list."""
+    """Process_group_list."""
     if process_group_identifier is not None:
         process_groups = ProcessModelService().get_process_groups(
             process_group_identifier

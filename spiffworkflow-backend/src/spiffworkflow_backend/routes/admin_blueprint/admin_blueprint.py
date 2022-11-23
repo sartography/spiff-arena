@@ -27,10 +27,10 @@ ALLOWED_BPMN_EXTENSIONS = {"bpmn", "dmn"}
 
 
 @admin_blueprint.route("/process-groups", methods=["GET"])
-def process_groups_list() -> str:
-    """Process_groups_list."""
+def process_group_list() -> str:
+    """Process_group_list."""
     process_groups = ProcessModelService().get_process_groups()
-    return render_template("process_groups_list.html", process_groups=process_groups)
+    return render_template("process_group_list.html", process_groups=process_groups)
 
 
 @admin_blueprint.route("/process-groups/<process_group_id>", methods=["GET"])
@@ -48,7 +48,7 @@ def process_model_show(process_model_id: str) -> Union[str, Response]:
     current_file_name = process_model.primary_file_name
     if current_file_name is None:
         flash("No primary_file_name", "error")
-        return redirect(url_for("admin.process_groups_list"))
+        return redirect(url_for("admin.process_group_list"))
     bpmn_xml = SpecFileService.get_data(process_model, current_file_name)
     return render_template(
         "process_model_show.html",
@@ -129,7 +129,7 @@ def process_model_save(process_model_id: str, file_name: str) -> Union[str, Resp
     SpecFileService.update_file(process_model, file_name, request.get_data())
     if process_model.primary_file_name is None:
         flash("No primary_file_name", "error")
-        return redirect(url_for("admin.process_groups_list"))
+        return redirect(url_for("admin.process_group_list"))
     bpmn_xml = SpecFileService.get_data(process_model, process_model.primary_file_name)
     return render_template(
         "process_model_edit.html",
@@ -155,7 +155,7 @@ def process_model_run(process_model_id: str) -> Union[str, Response]:
     current_file_name = process_model.primary_file_name
     if current_file_name is None:
         flash("No primary_file_name", "error")
-        return redirect(url_for("admin.process_groups_list"))
+        return redirect(url_for("admin.process_group_list"))
     bpmn_xml = SpecFileService.get_data(process_model, current_file_name)
 
     return render_template(
