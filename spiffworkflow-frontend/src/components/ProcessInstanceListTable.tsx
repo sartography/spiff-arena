@@ -23,7 +23,6 @@ import {
   TimePicker,
   // @ts-ignore
 } from '@carbon/react';
-import { ReactElement } from 'react-markdown/lib/react-markdown';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
 import {
   convertDateAndTimeStringsToSeconds,
@@ -59,7 +58,7 @@ type OwnProps = {
   perPageOptions?: number[];
   showReports?: boolean;
   reportIdentifier?: string;
-  textToShowIfEmpty?: ReactElement;
+  textToShowIfEmpty?: string;
 };
 
 interface dateParameters {
@@ -784,7 +783,7 @@ export default function ProcessInstanceListTable({
     );
   }
   if (textToShowIfEmpty) {
-    return textToShowIfEmpty;
+    return <p className="no-results-message">{textToShowIfEmpty}</p>;
   }
 
   return null;
