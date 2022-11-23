@@ -804,7 +804,9 @@ def process_instance_list(
         )
 
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
-    process_instance_query = ProcessInstanceModel.query.distinct()
+    process_instance_query = ProcessInstanceModel.query.distinct(
+        ProcessInstanceModel.id
+    )
     if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
             f"{report_filter.process_model_identifier}",
