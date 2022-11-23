@@ -805,10 +805,6 @@ def process_instance_list(
 
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
-    # .distinct()
-    # .distinct(
-    #    ProcessInstanceModel.id
-    # )
     if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
             f"{report_filter.process_model_identifier}",
@@ -925,16 +921,6 @@ def process_instance_list(
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
-
-    # try:
-    #    process_instances = process_instance_query.order_by(
-    #        ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-    #    ).paginate(page=page, per_page=per_page, error_out=False)
-    # except Exception as e:
-    #    print("----------------")
-    #    print(e)
-    #    print("----------------")
-    #    raise e
 
     results = list(
         map(
