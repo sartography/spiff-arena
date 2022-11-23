@@ -1,6 +1,6 @@
 import TasksForMyOpenProcesses from '../components/TasksForMyOpenProcesses';
 import TasksWaitingForMe from '../components/TasksWaitingForMe';
-import TasksForWaitingForMyGroups from '../components/TasksWaitingForMyGroups';
+import TasksWaitingForMyGroups from '../components/TasksWaitingForMyGroups';
 
 export default function GroupedTasks() {
   return (
@@ -9,7 +9,7 @@ export default function GroupedTasks() {
       <br />
       <TasksWaitingForMe />
       <br />
-      <TasksForWaitingForMyGroups />
+      <TasksWaitingForMyGroups />
     </>
   );
 }
