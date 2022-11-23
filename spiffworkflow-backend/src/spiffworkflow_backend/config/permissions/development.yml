@@ -75,26 +75,26 @@ permissions:
     allowed_permissions: [read]
     uri: /*
 
-  read-process-group-list:
+  read-all-process-groups:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-groups
-  read-process-model-list:
+    uri: /v1.0/process-groups/*
+  read-all-process-models:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-models
+    uri: /v1.0/process-models/*
   read-process-instance-list:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-instances
-  read-process-instance-report-list:
+  read-process-instance-reports:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-instances/reports
+    uri: /v1.0/process-instances/reports/*
 
   manage-procurement-admin:
     groups: ["Project Lead"]
