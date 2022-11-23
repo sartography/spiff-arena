@@ -861,58 +861,58 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.status == "complete"
         )
-        process_instance_query = process_instance_query.join(
-            SpiffStepDetailsModel,
-            ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffLoggingModel,
-            ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffStepDetailsModel.completed_by_user_id == g.user.id
-        )
+        #process_instance_query = process_instance_query.join(
+        #    SpiffStepDetailsModel,
+        #    ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
+        #)
+        #process_instance_query = process_instance_query.join(
+        #    SpiffLoggingModel,
+        #    ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
+        #)
+        #process_instance_query = process_instance_query.filter(
+        #    SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
+        #)
+        #process_instance_query = process_instance_query.filter(
+        #    SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
+        #)
+        #process_instance_query = process_instance_query.filter(
+        #    SpiffStepDetailsModel.completed_by_user_id == g.user.id
+        #)
 
     # TODO: not sure if this is exactly what is wanted
     if report_filter.with_tasks_completed_by_my_group is True:
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.status == "complete"
         )
-        process_instance_query = process_instance_query.join(
-            SpiffStepDetailsModel,
-            ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffLoggingModel,
-            ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
-        )
+        #process_instance_query = process_instance_query.join(
+        #    SpiffStepDetailsModel,
+        #    ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
+        #)
+        #process_instance_query = process_instance_query.join(
+        #    SpiffLoggingModel,
+        #    ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
+        #)
+        #process_instance_query = process_instance_query.filter(
+        #    SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
+        #)
+        #process_instance_query = process_instance_query.filter(
+        #    SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
+        #)
 
-        my_groups = (
-            select(UserGroupAssignmentModel)  # type: ignore
-            .where(UserGroupAssignmentModel.user_id == g.user.id)
-            .with_only_columns(UserGroupAssignmentModel.group_id)
-        )
-        users_in_my_groups = (
-            select(UserGroupAssignmentModel)  # type: ignore
-            .where(UserGroupAssignmentModel.group_id.in_(my_groups))
-            .with_only_columns(UserGroupAssignmentModel.user_id)
-        )
+        #my_groups = (
+        #    select(UserGroupAssignmentModel)  # type: ignore
+        #    .where(UserGroupAssignmentModel.user_id == g.user.id)
+        #    .with_only_columns(UserGroupAssignmentModel.group_id)
+        #)
+        #users_in_my_groups = (
+        #    select(UserGroupAssignmentModel)  # type: ignore
+        #    .where(UserGroupAssignmentModel.group_id.in_(my_groups))
+        #    .with_only_columns(UserGroupAssignmentModel.user_id)
+        #)
 
-        process_instance_query = process_instance_query.filter(
-            SpiffStepDetailsModel.completed_by_user_id.in_(users_in_my_groups)  # type: ignore
-        )
+        #process_instance_query = process_instance_query.filter(
+        #    SpiffStepDetailsModel.completed_by_user_id.in_(users_in_my_groups)  # type: ignore
+        #)
 
     process_instances = (
         process_instance_query.distinct()
