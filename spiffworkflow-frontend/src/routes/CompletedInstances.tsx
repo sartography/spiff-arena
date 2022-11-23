@@ -13,7 +13,7 @@ export default function CompletedInstances() {
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_instances_initiated_by_me"
         showReports={false}
-        textToShowIfEmpty="There are no completed instances at this time."
+        textToShowIfEmpty="You have no completed instances at this time."
       />
       <h2 style={{ marginTop: '1em' }}>Tasks actioned by me</h2>
       <p className="data-table-description">
@@ -25,7 +25,7 @@ export default function CompletedInstances() {
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_instances_with_tasks_completed_by_me"
         showReports={false}
-        textToShowIfEmpty="There are no instances with tasks that you completed."
+        textToShowIfEmpty="You have no completed tasks at this time."
       />
       <h2 style={{ marginTop: '1em' }}>With Tasks Completed By My Group</h2>
       <p className="data-table-description">
@@ -37,7 +37,7 @@ export default function CompletedInstances() {
         perPageOptions={[2, 5, 25]}
         reportIdentifier="system_report_instances_with_tasks_completed_by_my_groups"
         showReports={false}
-        textToShowIfEmpty="There are no instances with tasks that were completed by your groups."
+        textToShowIfEmpty="Your group has no completed tasks at this time."
       />
     </>
   );
