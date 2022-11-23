@@ -58,6 +58,7 @@ type OwnProps = {
   perPageOptions?: number[];
   showReports?: boolean;
   reportIdentifier?: string;
+  textToShowIfEmpty?: string;
 };
 
 interface dateParameters {
@@ -71,6 +72,7 @@ export default function ProcessInstanceListTable({
   perPageOptions,
   showReports = true,
   reportIdentifier,
+  textToShowIfEmpty,
 }: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -753,7 +755,7 @@ export default function ProcessInstanceListTable({
     );
   };
 
-  if (pagination) {
+  if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
     // eslint-disable-next-line prefer-const
     let { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -779,6 +781,9 @@ export default function ProcessInstanceListTable({
         />
       </>
     );
+  }
+  if (textToShowIfEmpty) {
+    return <>{textToShowIfEmpty}</>;
   }
 
   return null;

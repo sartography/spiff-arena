@@ -112,7 +112,7 @@ export default function TasksWaitingForMe() {
 
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
-      return null;
+      return <p>No tasks waiting for you</p>;
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -121,22 +121,21 @@ export default function TasksWaitingForMe() {
       'tasks_waiting_for_me'
     );
     return (
-      <>
-        <h1>Tasks waiting for me</h1>
-        <PaginationForTable
-          page={page}
-          perPage={perPage}
-          perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
-          pagination={pagination}
-          tableToDisplay={buildTable()}
-          paginationQueryParamPrefix="tasks_waiting_for_me"
-        />
-      </>
+      <PaginationForTable
+        page={page}
+        perPage={perPage}
+        perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
+        pagination={pagination}
+        tableToDisplay={buildTable()}
+        paginationQueryParamPrefix="tasks_waiting_for_me"
+      />
     );
   };
 
-  if (pagination) {
-    return tasksComponent();
-  }
-  return null;
+  return (
+    <>
+      <h1>Tasks waiting for me</h1>
+      {tasksComponent()}
+    </>
+  );
 }
