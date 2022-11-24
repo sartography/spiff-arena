@@ -253,7 +253,10 @@ class BaseTest:
         There must be an existing process model to instantiate.
         """
         if not ProcessModelService.is_model(test_process_model_id):
-            import pdb; pdb.set_trace()
+            dirname = os.path.dirname(test_process_model_id)
+            if not ProcessModelService.is_group(dirname):
+                process_group = ProcessGroup(id=dirname, display_name=dirname)
+                ProcessModelService.add_process_group(process_group)
             basename = os.path.basename(test_process_model_id)
             load_test_spec(
                 process_model_id=test_process_model_id,
