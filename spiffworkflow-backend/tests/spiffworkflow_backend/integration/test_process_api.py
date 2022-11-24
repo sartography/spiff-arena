@@ -332,14 +332,12 @@ class TestProcessApi(BaseTest):
         )
         assert process_model.id == process_model_identifier
         assert process_model.display_name == "Cooooookies"
-        assert process_model.is_review is False
         assert process_model.primary_file_name is None
         assert process_model.primary_process_id is None
 
         process_model.display_name = "Updated Display Name"
         process_model.primary_file_name = "superduper.bpmn"
         process_model.primary_process_id = "superduper"
-        process_model.is_review = True  # not in the include list, so get ignored
 
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
         response = client.put(
@@ -353,7 +351,6 @@ class TestProcessApi(BaseTest):
         assert response.json["display_name"] == "Updated Display Name"
         assert response.json["primary_file_name"] == "superduper.bpmn"
         assert response.json["primary_process_id"] == "superduper"
-        assert response.json["is_review"] is False
 
     def test_process_model_list_all(
         self,

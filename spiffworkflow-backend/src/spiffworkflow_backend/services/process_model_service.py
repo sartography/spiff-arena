@@ -429,7 +429,6 @@ class ProcessModelService(FileSystemService):
                 display_name=name,
                 description="",
                 display_order=0,
-                is_review=False,
             )
             self.write_json_file(
                 json_file_path, self.PROCESS_MODEL_SCHEMA.dump(process_model_info)

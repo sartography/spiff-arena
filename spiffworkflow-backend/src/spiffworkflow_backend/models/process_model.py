@@ -34,7 +34,6 @@ class ProcessModelInfo:
     primary_file_name: str | None = None
     primary_process_id: str | None = None
     display_order: int | None = 0
-    is_review: bool = False
     files: list[File] | None = field(default_factory=list[File])
     fault_or_suspend_on_exception: str = NotificationType.fault.value
     exception_notification_addresses: list[str] = field(default_factory=list)
@@ -72,7 +71,6 @@ class ProcessModelInfoSchema(Schema):
     display_order = marshmallow.fields.Integer(allow_none=True)
     primary_file_name = marshmallow.fields.String(allow_none=True)
     primary_process_id = marshmallow.fields.String(allow_none=True)
-    is_review = marshmallow.fields.Boolean(allow_none=True)
     files = marshmallow.fields.List(marshmallow.fields.Nested("FileSchema"))
     fault_or_suspend_on_exception = marshmallow.fields.String()
     exception_notification_addresses = marshmallow.fields.List(

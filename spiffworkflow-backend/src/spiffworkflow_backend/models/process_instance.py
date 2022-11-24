@@ -74,6 +74,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_model_identifier: str = db.Column(
         db.String(255), nullable=False, index=True
     )
+    process_model_display_name: str = db.Column(
+        db.String(255), nullable=False, index=True
+    )
     process_group_identifier: str = db.Column(db.String(50), nullable=False, index=True)
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
     process_initiator = relationship("UserModel")
@@ -166,23 +169,18 @@ class ProcessInstanceApi:
         status: ProcessInstanceStatus,
         next_task: Task | None,
         process_model_identifier: str,
-        process_group_identifier: str,
+        process_model_display_name: str,
         completed_tasks: int,
         updated_at_in_seconds: int,
-        is_review: bool,
-        title: str,
     ) -> None:
         """__init__."""
         self.id = id
         self.status = status
         self.next_task = next_task  # The next task that requires user input.
-        #        self.navigation = navigation  fixme:  would be a hotness.
         self.process_model_identifier = process_model_identifier
-        self.process_group_identifier = process_group_identifier
+        self.process_model_display_name = process_model_display_name
         self.completed_tasks = completed_tasks
         self.updated_at_in_seconds = updated_at_in_seconds
-        self.title = title
-        self.is_review = is_review
 
 
 class ProcessInstanceApiSchema(Schema):
@@ -196,24 +194,14 @@ class ProcessInstanceApiSchema(Schema):
             "id",
             "status",
             "next_task",
-            "navigation",
             "process_model_identifier",
-            "process_group_identifier",
             "completed_tasks",
             "updated_at_in_seconds",
-            "is_review",
-            "title",
-            "study_id",
-            "state",
         ]
         unknown = INCLUDE
 
     status = EnumField(ProcessInstanceStatus)
     next_task = marshmallow.fields.Nested(TaskSchema, dump_only=True, required=False)
-    navigation = marshmallow.fields.List(
-        marshmallow.fields.Nested(NavigationItemSchema, dump_only=True)
-    )
-    state = marshmallow.fields.String(allow_none=True)
 
     @marshmallow.post_load
     def make_process_instance(
@@ -224,73 +212,10 @@ class ProcessInstanceApiSchema(Schema):
             "id",
             "status",
             "next_task",
-            "navigation",
             "process_model_identifier",
-            "process_group_identifier",
             "completed_tasks",
             "updated_at_in_seconds",
-            "is_review",
-            "title",
-            "study_id",
-            "state",
         ]
         filtered_fields = {key: data[key] for key in keys}
         filtered_fields["next_task"] = TaskSchema().make_task(data["next_task"])
         return ProcessInstanceApi(**filtered_fields)
-
-
-@dataclass
-class ProcessInstanceMetadata:
-    """ProcessInstanceMetadata."""
-
-    id: int
-    display_name: str | None = None
-    description: str | None = None
-    spec_version: str | None = None
-    state: str | None = None
-    status: str | None = None
-    completed_tasks: int | None = None
-    is_review: bool | None = None
-    state_message: str | None = None
-    process_model_identifier: str | None = None
-    process_group_id: str | None = None
-
-    @classmethod
-    def from_process_instance(
-        cls, process_instance: ProcessInstanceModel, process_model: ProcessModelInfo
-    ) -> ProcessInstanceMetadata:
-        """From_process_instance."""
-        instance = cls(
-            id=process_instance.id,
-            display_name=process_model.display_name,
-            description=process_model.description,
-            process_group_id=process_model.process_group,
-            state_message=process_instance.state_message,
-            status=process_instance.status,
-            completed_tasks=process_instance.completed_tasks,
-            is_review=process_model.is_review,
-            process_model_identifier=process_instance.process_model_identifier,
-        )
-        return instance
-
-
-class ProcessInstanceMetadataSchema(Schema):
-    """ProcessInstanceMetadataSchema."""
-
-    status = EnumField(ProcessInstanceStatus)
-
-    class Meta:
-        """Meta."""
-
-        model = ProcessInstanceMetadata
-        additional = [
-            "id",
-            "display_name",
-            "description",
-            "state",
-            "completed_tasks",
-            "process_group_id",
-            "is_review",
-            "state_message",
-        ]
-        unknown = INCLUDE

@@ -149,7 +149,6 @@ class BaseTest:
                     id=process_model_id,
                     display_name=process_model_display_name,
                     description=process_model_description,
-                    is_review=False,
                     primary_process_id=primary_process_id,
                     primary_file_name=primary_file_name,
                     fault_or_suspend_on_exception=fault_or_suspend_on_exception,

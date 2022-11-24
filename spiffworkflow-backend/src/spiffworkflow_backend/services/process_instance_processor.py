@@ -349,7 +349,7 @@ class ProcessInstanceProcessor:
                     check_sub_specs(test_spec, 5)
 
         self.process_model_identifier = process_instance_model.process_model_identifier
-        # self.process_group_identifier = process_instance_model.process_group_identifier
+        self.process_model_display_name = process_instance_model.process_model_display_name
 
         try:
             self.bpmn_process_instance = self.__get_bpmn_process_instance(

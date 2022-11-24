@@ -36,7 +36,6 @@ class ExampleDataLoader:
             display_name=display_name,
             description=description,
             display_order=display_order,
-            is_review=False,
         )
         workflow_spec_service = ProcessModelService()
         workflow_spec_service.add_process_model(spec)

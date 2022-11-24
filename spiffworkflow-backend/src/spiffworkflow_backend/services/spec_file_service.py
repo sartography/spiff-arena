@@ -176,7 +176,6 @@ class SpecFileService(FileSystemService):
                     {
                         "primary_process_id": ref.identifier,
                         "primary_file_name": file_name,
-                        "is_review": ref.has_lanes,
                     },
                 )
             SpecFileService.update_caches(ref)
