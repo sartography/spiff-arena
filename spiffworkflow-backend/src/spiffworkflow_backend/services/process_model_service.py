@@ -72,35 +72,38 @@ class ProcessModelService(FileSystemService):
         end = start + per_page
         return items[start:end]
 
-    def add_process_model(self, process_model: ProcessModelInfo) -> None:
+    @classmethod
+    def add_process_model(cls, process_model: ProcessModelInfo) -> None:
         """Add_spec."""
-        self.save_process_model(process_model)
+        cls.save_process_model(process_model)
 
+    @classmethod
     def update_process_model(
-        self, process_model: ProcessModelInfo, attributes_to_update: dict
+        cls, process_model: ProcessModelInfo, attributes_to_update: dict
     ) -> None:
         """Update_spec."""
         for atu_key, atu_value in attributes_to_update.items():
             if hasattr(process_model, atu_key):
                 setattr(process_model, atu_key, atu_value)
-        self.save_process_model(process_model)
+        cls.save_process_model(process_model)
 
-    def save_process_model(self, process_model: ProcessModelInfo) -> None:
+    @classmethod
+    def save_process_model(cls, process_model: ProcessModelInfo) -> None:
         """Save_process_model."""
         process_model_path = os.path.abspath(
             os.path.join(FileSystemService.root_path(), process_model.id)
         )
         os.makedirs(process_model_path, exist_ok=True)
         json_path = os.path.abspath(
-            os.path.join(process_model_path, self.PROCESS_MODEL_JSON_FILE)
+            os.path.join(process_model_path, cls.PROCESS_MODEL_JSON_FILE)
         )
         process_model_id = process_model.id
         # we don't save id in the json file
         # this allows us to move models around on the filesystem
         # the id is determined by its location on the filesystem
         delattr(process_model, "id")
-        json_data = self.PROCESS_MODEL_SCHEMA.dump(process_model)
-        self.write_json_file(json_path, json_data)
+        json_data = cls.PROCESS_MODEL_SCHEMA.dump(process_model)
+        cls.write_json_file(json_path, json_data)
         process_model.id = process_model_id
 
     def process_model_delete(self, process_model_id: str) -> None:

@@ -159,9 +159,8 @@ def un_modify_modified_process_model_id(modified_process_model_id: str) -> str:
 
 def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
-    process_model_service = ProcessModelService()
     process_group = ProcessGroup(**body)
-    process_model_service.add_process_group(process_group)
+    ProcessModelService.add_process_group(process_group)
     return make_response(jsonify(process_group), 201)
 
 
@@ -185,7 +184,7 @@ def process_group_update(
 
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
-    ProcessModelService().update_process_group(process_group)
+    ProcessModelService.update_process_group(process_group)
     return make_response(jsonify(process_group), 200)
 
 
@@ -274,8 +273,7 @@ def process_model_create(
     unmodified_process_group_id = un_modify_modified_process_model_id(
         modified_process_group_id
     )
-    process_model_service = ProcessModelService()
-    process_group = process_model_service.get_process_group(unmodified_process_group_id)
+    process_group = ProcessModelService.get_process_group(unmodified_process_group_id)
     if process_group is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
@@ -283,7 +281,7 @@ def process_model_create(
             status_code=400,
         )
 
-    process_model_service.add_process_model(process_model_info)
+    ProcessModelService.add_process_model(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,
@@ -320,7 +318,7 @@ def process_model_update(
 
     # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
-    ProcessModelService().update_process_model(process_model, body_filtered)
+    ProcessModelService.update_process_model(process_model, body_filtered)
     return ProcessModelInfoSchema().dump(process_model)
 
 
