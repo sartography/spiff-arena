@@ -29,14 +29,14 @@ ALLOWED_BPMN_EXTENSIONS = {"bpmn", "dmn"}
 @admin_blueprint.route("/process-groups", methods=["GET"])
 def process_group_list() -> str:
     """Process_group_list."""
-    process_groups = ProcessModelService().get_process_groups()
+    process_groups = ProcessModelService.get_process_groups()
     return render_template("process_group_list.html", process_groups=process_groups)
 
 
 @admin_blueprint.route("/process-groups/<process_group_id>", methods=["GET"])
 def process_group_show(process_group_id: str) -> str:
     """Show_process_group."""
-    process_group = ProcessModelService().get_process_group(process_group_id)
+    process_group = ProcessModelService.get_process_group(process_group_id)
     return render_template("process_group_show.html", process_group=process_group)
 
 
