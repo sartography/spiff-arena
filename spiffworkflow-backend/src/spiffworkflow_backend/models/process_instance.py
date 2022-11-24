@@ -75,7 +75,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_model_display_name: str = db.Column(
         db.String(255), nullable=False, index=True
     )
-    process_group_identifier: str = db.Column(db.String(50), nullable=False, index=True)
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
     process_initiator = relationship("UserModel")
 
@@ -104,7 +103,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         return {
             "id": self.id,
             "process_model_identifier": self.process_model_identifier,
-            "process_group_identifier": self.process_group_identifier,
+            "process_model_display_name": self.process_model_display_name,
             "status": self.status,
             "start_in_seconds": self.start_in_seconds,
             "end_in_seconds": self.end_in_seconds,
@@ -141,7 +140,7 @@ class ProcessInstanceModelSchema(Schema):
         fields = [
             "id",
             "process_model_identifier",
-            "process_group_identifier",
+            "process_model_display_name",
             "process_initiator_id",
             "start_in_seconds",
             "end_in_seconds",
@@ -193,6 +192,7 @@ class ProcessInstanceApiSchema(Schema):
             "status",
             "next_task",
             "process_model_identifier",
+            "process_model_display_name",
             "completed_tasks",
             "updated_at_in_seconds",
         ]
@@ -211,6 +211,7 @@ class ProcessInstanceApiSchema(Schema):
             "status",
             "next_task",
             "process_model_identifier",
+            "process_model_display_name",
             "completed_tasks",
             "updated_at_in_seconds",
         ]

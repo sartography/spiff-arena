@@ -252,6 +252,14 @@ class BaseTest:
 
         There must be an existing process model to instantiate.
         """
+        if not ProcessModelService.is_model(test_process_model_id):
+            import pdb; pdb.set_trace()
+            basename = os.path.basename(test_process_model_id)
+            load_test_spec(
+                process_model_id=test_process_model_id,
+                process_model_source_directory=basename,
+                bpmn_file_name=basename
+            )
         modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
             f"/v1.0/process-models/{modified_process_model_id}/process-instances",
@@ -283,7 +291,7 @@ class BaseTest:
             status=status,
             process_initiator=user,
             process_model_identifier=process_model.id,
-            process_group_identifier="",
+            process_model_display_name=process_model.display_name,
             updated_at_in_seconds=round(time.time()),
             start_in_seconds=current_time - (3600 * 1),
             end_in_seconds=current_time - (3600 * 1 - 20),
