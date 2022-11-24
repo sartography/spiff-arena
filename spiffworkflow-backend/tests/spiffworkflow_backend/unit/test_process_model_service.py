@@ -32,7 +32,7 @@ class TestProcessModelService(BaseTest):
         primary_process_id = process_model.primary_process_id
         assert primary_process_id == "Process_HelloWorld"
 
-        ProcessModelService().update_process_model(
+        ProcessModelService.update_process_model(
             process_model, {"display_name": "new_name"}
         )
 

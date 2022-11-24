@@ -140,7 +140,7 @@ class BaseTest:
             process_group_path = os.path.abspath(
                 os.path.join(FileSystemService.root_path(), process_group_id)
             )
-            if ProcessModelService().is_group(process_group_path):
+            if ProcessModelService.is_group(process_group_path):
 
                 if exception_notification_addresses is None:
                     exception_notification_addresses = []

@@ -81,8 +81,7 @@ def process_model_show_file(process_model_id: str, file_name: str) -> str:
 )
 def process_model_upload_file(process_model_id: str) -> Response:
     """Process_model_upload_file."""
-    process_model_service = ProcessModelService()
-    process_model = process_model_service.get_process_model(process_model_id)
+    process_model = ProcessModelService.get_process_model(process_model_id)
 
     if "file" not in request.files:
         flash("No file part", "error")
@@ -97,7 +96,7 @@ def process_model_upload_file(process_model_id: str) -> Response:
                 SpecFileService.add_file(
                     process_model, request_file.filename, request_file.stream.read()
                 )
-                process_model_service.save_process_model(process_model)
+                ProcessModelService.save_process_model(process_model)
 
     return redirect(
         url_for("admin.process_model_show", process_model_id=process_model.id)

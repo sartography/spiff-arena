@@ -2,6 +2,7 @@
 from flask.app import Flask
 import os
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 from spiffworkflow_backend.services.acceptance_test_fixtures import (
     load_acceptance_test_fixtures,
@@ -20,6 +21,9 @@ def test_start_dates_are_one_hour_apart(app: Flask) -> None:
     if not ProcessModelService.is_group(group_identifier):
         process_group = ProcessGroup(id=group_identifier, display_name=group_identifier)
         ProcessModelService.add_process_group(process_group)
+    if not ProcessModelService.is_model(process_model_identifier):
+        process_model = ProcessModelInfo(id=process_model_identifier, display_name=process_model_identifier, description='hey')
+        ProcessModelService.add_process_model(process_model)
     process_instances = load_acceptance_test_fixtures()
 
     assert len(process_instances) > 2
