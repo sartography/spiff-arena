@@ -29,7 +29,8 @@ export default function CompletedInstances() {
       />
       <h2 style={{ marginTop: '1em' }}>Tasks Completed By My Groups</h2>
       <p className="data-table-description">
-        This is a list of instances that were completed by groups you belong to.
+        This is a list of instances with tasks that were completed by groups you
+        belong to.
       </p>
       <ProcessInstanceListTable
         filtersEnabled={false}
