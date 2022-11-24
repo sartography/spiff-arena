@@ -5,6 +5,10 @@
   color: white;
 }
 
+.megacondensed {
+  padding-left: 0px;
+}
+
 /* defaults to 3rem, which isn't long sufficient for "elizabeth" */
 .cds--header__action.username-header-text {
   width: 5rem;
