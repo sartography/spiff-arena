@@ -12,6 +12,7 @@ from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import MultiInstanceType
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
@@ -30,7 +31,7 @@ class ProcessInstanceService:
 
     @staticmethod
     def create_process_instance(
-        process_model_identifier: str,
+        process_model: ProcessModelInfo,
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
@@ -38,8 +39,8 @@ class ProcessInstanceService:
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
             process_initiator=user,
-            process_model_identifier=process_model_identifier,
-            process_group_identifier="",
+            process_model_identifier=process_model.id,
+            process_model_display_name=process_model.display_name,
             start_in_seconds=round(time.time()),
             bpmn_version_control_type="git",
             bpmn_version_control_identifier=current_git_revision,
@@ -88,20 +89,15 @@ class ProcessInstanceService:
         process_model = process_model_service.get_process_model(
             processor.process_model_identifier
         )
-        is_review_value = process_model.is_review if process_model else False
         title_value = process_model.display_name if process_model else ""
         process_instance_api = ProcessInstanceApi(
             id=processor.get_process_instance_id(),
             status=processor.get_status(),
             next_task=None,
-            # navigation=navigation,
             process_model_identifier=processor.process_model_identifier,
-            process_group_identifier="",
-            # total_tasks=len(navigation),
+            process_model_display_name=processor.process_model_display_name,
             completed_tasks=processor.process_instance_model.completed_tasks,
             updated_at_in_seconds=processor.process_instance_model.updated_at_in_seconds,
-            is_review=is_review_value,
-            title=title_value,
         )
 
         next_task_trying_again = next_task

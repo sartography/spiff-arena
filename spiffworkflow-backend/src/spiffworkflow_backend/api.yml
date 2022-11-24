@@ -1665,10 +1665,6 @@ components:
           type: integer
           x-nullable: true
           example: 12
-        study_id:
-          type: integer
-          x-nullable: true
-          example: 42
         user_id:
           type: string
           x-nullable: true
@@ -1792,8 +1788,6 @@ components:
         num_tasks_complete:
           type: integer
         num_tasks_incomplete:
-          type: integer
-        study_id:
           type: integer
 
       example:
@@ -1928,9 +1922,6 @@ components:
           type: string
         workflow_id:
           example: 42
-          type: integer
-        study_id:
-          example: 187
           type: integer
         user_uid:
           example: "dhf8r"

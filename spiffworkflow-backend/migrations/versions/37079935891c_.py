@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 70223f5c7b98
+Revision ID: 37079935891c
 Revises: 
-Create Date: 2022-11-20 19:54:45.061376
+Create Date: 2022-11-24 11:44:47.149204
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '70223f5c7b98'
+revision = '37079935891c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -97,14 +97,12 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message_model_id', sa.Integer(), nullable=False),
     sa.Column('process_model_identifier', sa.String(length=50), nullable=False),
-    sa.Column('process_group_identifier', sa.String(length=50), nullable=False),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['message_model_id'], ['message_model.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('message_model_id')
     )
-    op.create_index(op.f('ix_message_triggerable_process_model_process_group_identifier'), 'message_triggerable_process_model', ['process_group_identifier'], unique=False)
     op.create_index(op.f('ix_message_triggerable_process_model_process_model_identifier'), 'message_triggerable_process_model', ['process_model_identifier'], unique=False)
     op.create_table('principal',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -120,6 +118,7 @@ def upgrade():
     op.create_table('process_instance',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_model_identifier', sa.String(length=255), nullable=False),
+    sa.Column('process_model_display_name', sa.String(length=255), nullable=False),
     sa.Column('process_group_identifier', sa.String(length=50), nullable=False),
     sa.Column('process_initiator_id', sa.Integer(), nullable=False),
     sa.Column('bpmn_json', sa.JSON(), nullable=True),
@@ -135,6 +134,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_process_instance_process_group_identifier'), 'process_instance', ['process_group_identifier'], unique=False)
+    op.create_index(op.f('ix_process_instance_process_model_display_name'), 'process_instance', ['process_model_display_name'], unique=False)
     op.create_index(op.f('ix_process_instance_process_model_identifier'), 'process_instance', ['process_model_identifier'], unique=False)
     op.create_table('process_instance_report',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -300,11 +300,11 @@ def downgrade():
     op.drop_index(op.f('ix_process_instance_report_created_by_id'), table_name='process_instance_report')
     op.drop_table('process_instance_report')
     op.drop_index(op.f('ix_process_instance_process_model_identifier'), table_name='process_instance')
+    op.drop_index(op.f('ix_process_instance_process_model_display_name'), table_name='process_instance')
     op.drop_index(op.f('ix_process_instance_process_group_identifier'), table_name='process_instance')
     op.drop_table('process_instance')
     op.drop_table('principal')
     op.drop_index(op.f('ix_message_triggerable_process_model_process_model_identifier'), table_name='message_triggerable_process_model')
-    op.drop_index(op.f('ix_message_triggerable_process_model_process_group_identifier'), table_name='message_triggerable_process_model')
     op.drop_table('message_triggerable_process_model')
     op.drop_index(op.f('ix_message_correlation_property_identifier'), table_name='message_correlation_property')
     op.drop_table('message_correlation_property')
