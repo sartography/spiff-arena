@@ -20,7 +20,10 @@ export function findDataObjects(parent) {
     return [];
   }
   for (const element of process.flowElements) {
-    if (element.$type === 'bpmn:DataObject') {
+    if (
+      element.$type === 'bpmn:DataObject' &&
+      dataObjects.indexOf(element) < 0
+    ) {
       dataObjects.push(element);
     }
   }
@@ -48,7 +51,7 @@ export function findDataReferenceShapes(processShape, id) {
 }
 
 export function idToHumanReadableName(id) {
-  const words = id.match(/[A-Za-z][a-z]*/g) || [];
+  const words = id.match(/[A-Za-z][a-z]*/g) || [id];
   return words.map(capitalize).join(' ');
 
   function capitalize(word) {

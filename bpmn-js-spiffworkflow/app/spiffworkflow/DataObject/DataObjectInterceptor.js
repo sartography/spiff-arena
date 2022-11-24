@@ -1,10 +1,13 @@
 import CommandInterceptor from 'diagram-js/lib/command/CommandInterceptor';
-import {getDi, is} from 'bpmn-js/lib/util/ModelUtil';
-import {findDataObjects, findDataReferenceShapes, idToHumanReadableName} from './DataObjectHelpers';
-var HIGH_PRIORITY = 1500;
+import { getDi, is } from 'bpmn-js/lib/util/ModelUtil';
+import { remove as collectionRemove } from 'diagram-js/lib/util/Collections';
 import {
-  remove as collectionRemove,
-} from 'diagram-js/lib/util/Collections';
+  findDataObjects,
+  findDataReferenceShapes,
+  idToHumanReadableName,
+} from './DataObjectHelpers';
+
+const HIGH_PRIORITY = 1500;
 /**
  * This Command Interceptor functions like the BpmnUpdator in BPMN.js - It hooks into events
  * from Diagram.js and updates the underlying BPMN model accordingly.
@@ -17,7 +20,7 @@ import {
  * 4) Don't allow someone to move a DataObjectReference from one process to another process.
  */
 export default class DataObjectInterceptor extends CommandInterceptor {
-  constructor(eventBus, bpmnFactory, bpmnUpdater) {
+  constructor(eventBus, bpmnFactory, commandStack) {
     super(eventBus);
 
     /**
@@ -26,8 +29,9 @@ export default class DataObjectInterceptor extends CommandInterceptor {
      * attempt to crete a dataObject immediately.  We can't create the dataObject until
      * we know where it is placed - as we want to reuse data objects of the parent when
      * possible */
-    this.preExecute([ 'shape.create' ], HIGH_PRIORITY, function(event) {
-      const context = event.context, shape = context.shape;
+    this.preExecute(['shape.create'], HIGH_PRIORITY, function (event) {
+      const { context } = event;
+      const { shape } = context;
       if (is(shape, 'bpmn:DataObjectReference') && shape.type !== 'label') {
         event.stopPropagation();
       }
@@ -36,11 +40,12 @@ export default class DataObjectInterceptor extends CommandInterceptor {
     /**
      * Don't just create a new data object, use the first existing one if it already exists
      */
-    this.executed([ 'shape.create' ], HIGH_PRIORITY, function(event) {
-      const context = event.context, shape = context.shape;
+    this.executed(['shape.create'], HIGH_PRIORITY, function (event) {
+      const { context } = event;
+      const { shape } = context;
       if (is(shape, 'bpmn:DataObjectReference') && shape.type !== 'label') {
-        let process = shape.parent.businessObject;
-        let existingDataObjects = findDataObjects(process);
+        const process = shape.parent.businessObject;
+        const existingDataObjects = findDataObjects(process);
         let dataObject;
         if (existingDataObjects.length > 0) {
           dataObject = existingDataObjects[0];
@@ -48,11 +53,27 @@ export default class DataObjectInterceptor extends CommandInterceptor {
           dataObject = bpmnFactory.create('bpmn:DataObject');
         }
 
-        // Update the name of the reference to match the data object's id.
-        shape.businessObject.name = idToHumanReadableName(dataObject.id);
-
         // set the reference to the DataObject
         shape.businessObject.dataObjectRef = dataObject;
+      }
+    });
+
+    /**
+     * In order for the label to display correctly, we need to update it in POST step.
+     */
+    this.postExecuted(['shape.create'], HIGH_PRIORITY, function (event) {
+      const { context } = event;
+      const { shape } = context;
+      // set the reference to the DataObject
+      // Update the name of the reference to match the data object's id.
+      if (is(shape, 'bpmn:DataObjectReference') && shape.type !== 'label') {
+        commandStack.execute('element.updateProperties', {
+          element: shape,
+          moddleElement: shape.businessObject,
+          properties: {
+            name: idToHumanReadableName(shape.businessObject.dataObjectRef.id),
+          },
+        });
       }
     });
 
@@ -61,7 +82,7 @@ export default class DataObjectInterceptor extends CommandInterceptor {
      * Difficult to do given placement of this logic in the BPMN Updater, so we have
      * to manually handle the removal.
      */
-    this.executed([ 'shape.delete' ], HIGH_PRIORITY, function(event) {
+    this.executed(['shape.delete'], HIGH_PRIORITY, function (event) {
       const { context } = event;
       const { shape, oldParent } = context;
       if (is(shape, 'bpmn:DataObjectReference') && shape.type !== 'label') {
@@ -97,4 +118,4 @@ export default class DataObjectInterceptor extends CommandInterceptor {
   }
 }
 
-DataObjectInterceptor.$inject = [ 'eventBus', 'bpmnFactory', 'bpmnUpdater' ];
+DataObjectInterceptor.$inject = ['eventBus', 'bpmnFactory', 'commandStack'];
