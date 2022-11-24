@@ -43,7 +43,7 @@ def process_group_show(process_group_id: str) -> str:
 @admin_blueprint.route("/process-models/<process_model_id>", methods=["GET"])
 def process_model_show(process_model_id: str) -> Union[str, Response]:
     """Show_process_model."""
-    process_model = ProcessModelService().get_process_model(process_model_id)
+    process_model = ProcessModelService.get_process_model(process_model_id)
     files = SpecFileService.get_files(process_model, extension_filter="bpmn")
     current_file_name = process_model.primary_file_name
     if current_file_name is None:
@@ -64,7 +64,7 @@ def process_model_show(process_model_id: str) -> Union[str, Response]:
 )
 def process_model_show_file(process_model_id: str, file_name: str) -> str:
     """Process_model_show_file."""
-    process_model = ProcessModelService().get_process_model(process_model_id)
+    process_model = ProcessModelService.get_process_model(process_model_id)
     bpmn_xml = SpecFileService.get_data(process_model, file_name)
     files = SpecFileService.get_files(process_model, extension_filter="bpmn")
     return render_template(
@@ -109,7 +109,7 @@ def process_model_upload_file(process_model_id: str) -> Response:
 )
 def process_model_edit(process_model_id: str, file_name: str) -> str:
     """Edit_bpmn."""
-    process_model = ProcessModelService().get_process_model(process_model_id)
+    process_model = ProcessModelService.get_process_model(process_model_id)
     bpmn_xml = SpecFileService.get_data(process_model, file_name)
 
     return render_template(
@@ -125,7 +125,7 @@ def process_model_edit(process_model_id: str, file_name: str) -> str:
 )
 def process_model_save(process_model_id: str, file_name: str) -> Union[str, Response]:
     """Process_model_save."""
-    process_model = ProcessModelService().get_process_model(process_model_id)
+    process_model = ProcessModelService.get_process_model(process_model_id)
     SpecFileService.update_file(process_model, file_name, request.get_data())
     if process_model.primary_file_name is None:
         flash("No primary_file_name", "error")
@@ -143,14 +143,16 @@ def process_model_save(process_model_id: str, file_name: str) -> Union[str, Resp
 def process_model_run(process_model_id: str) -> Union[str, Response]:
     """Process_model_run."""
     user = UserService.create_user("internal", "Mr. Test", username="Mr. Test")
-    process_instance = ProcessInstanceService.create_process_instance(
-        process_model_id, user
+    process_instance = (
+        ProcessInstanceService.create_process_instance_from_process_model_identifier(
+            process_model_id, user
+        )
     )
     processor = ProcessInstanceProcessor(process_instance)
     processor.do_engine_steps()
     result = processor.get_data()
 
-    process_model = ProcessModelService().get_process_model(process_model_id)
+    process_model = ProcessModelService.get_process_model(process_model_id)
     files = SpecFileService.get_files(process_model, extension_filter="bpmn")
     current_file_name = process_model.primary_file_name
     if current_file_name is None:

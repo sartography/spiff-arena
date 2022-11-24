@@ -133,7 +133,7 @@ class TestProcessApi(BaseTest):
             process_model_description=model_description,
             user=with_super_admin_user,
         )
-        process_model = ProcessModelService().get_process_model(
+        process_model = ProcessModelService.get_process_model(
             process_model_identifier,
         )
         assert model_display_name == process_model.display_name
@@ -155,9 +155,7 @@ class TestProcessApi(BaseTest):
             user=with_super_admin_user,
         )
         # get the model, assert that primary is set
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model.primary_file_name == bpmn_file_name
         assert process_model.primary_process_id == "sample"
 
@@ -208,9 +206,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model.primary_file_name == bpmn_file_name
         assert process_model.primary_process_id == terminal_primary_process_id
 
@@ -236,9 +232,7 @@ class TestProcessApi(BaseTest):
         )
 
         # assert we have a model
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model is not None
         assert process_model.id == process_model_identifier
 
@@ -254,7 +248,7 @@ class TestProcessApi(BaseTest):
 
         # assert we no longer have a model
         with pytest.raises(ProcessEntityNotFoundError):
-            ProcessModelService().get_process_model(process_model_identifier)
+            ProcessModelService.get_process_model(process_model_identifier)
 
     def test_process_model_delete_with_instances(
         self,
@@ -327,9 +321,7 @@ class TestProcessApi(BaseTest):
             process_model_id=process_model_identifier,
             user=with_super_admin_user,
         )
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model.id == process_model_identifier
         assert process_model.display_name == "Cooooookies"
         assert process_model.primary_file_name is None
@@ -1902,9 +1894,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = self.setup_testing_instance(
             client, process_model_identifier, with_super_admin_user
         )
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         ProcessModelService().update_process_model(
             process_model,
             {"fault_or_suspend_on_exception": NotificationType.suspend.value},
@@ -1957,9 +1947,7 @@ class TestProcessApi(BaseTest):
             client, process_model_identifier, with_super_admin_user
         )
 
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         ProcessModelService().update_process_model(
             process_model,
             {"exception_notification_addresses": ["with_super_admin_user@example.com"]},
@@ -2483,7 +2471,7 @@ class TestProcessApi(BaseTest):
             process_model_display_name=process_model_id,
             process_model_description=process_model_id,
         )
-        persisted = ProcessModelService().get_process_model(original_process_model_path)
+        persisted = ProcessModelService.get_process_model(original_process_model_path)
         assert persisted is not None
         assert persisted.id == original_process_model_path
 
@@ -2503,11 +2491,11 @@ class TestProcessApi(BaseTest):
 
         # make sure the original model does not exist
         with pytest.raises(ProcessEntityNotFoundError) as e:
-            ProcessModelService().get_process_model(original_process_model_path)
+            ProcessModelService.get_process_model(original_process_model_path)
         assert e.value.args[0] == "process_model_not_found"
 
         # make sure the new model does exist
-        new_process_model = ProcessModelService().get_process_model(
+        new_process_model = ProcessModelService.get_process_model(
             new_process_model_path
         )
         assert new_process_model is not None

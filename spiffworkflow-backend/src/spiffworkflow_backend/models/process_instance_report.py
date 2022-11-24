@@ -75,7 +75,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     def add_fixtures(cls) -> None:
         """Add_fixtures."""
         try:
-            # process_model = ProcessModelService().get_process_model(
+            # process_model = ProcessModelService.get_process_model(
             #     process_model_id="sartography-admin/ticket"
             # )
             user = UserModel.query.first()
@@ -205,7 +205,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     ) -> ProcessInstanceReportModel:
         """Create_with_attributes."""
         # <<<<<<< HEAD
-        #         process_model = ProcessModelService().get_process_model(
+        #         process_model = ProcessModelService.get_process_model(
         #             process_model_id=f"{process_model_identifier}"
         #         )
         #         process_instance_report = cls(

@@ -44,9 +44,10 @@ class ProcessModelService(FileSystemService):
             return True
         return False
 
-    def is_model(self, path: str) -> bool:
+    @classmethod
+    def is_model(cls, path: str) -> bool:
         """Is_model."""
-        model_json_path = os.path.join(path, self.PROCESS_MODEL_JSON_FILE)
+        model_json_path = os.path.join(path, cls.PROCESS_MODEL_JSON_FILE)
         if os.path.exists(model_json_path):
             return True
         return False
@@ -144,7 +145,8 @@ class ProcessModelService(FileSystemService):
         path = os.path.join(FileSystemService.root_path(), relative_path)
         return cls().__scan_process_model(path, process_group=process_group)
 
-    def get_process_model(self, process_model_id: str) -> ProcessModelInfo:
+    @classmethod
+    def get_process_model(cls, process_model_id: str) -> ProcessModelInfo:
         """Get a process model from a model and group id.
 
         process_model_id is the full path to the model--including groups.
@@ -155,7 +157,7 @@ class ProcessModelService(FileSystemService):
         model_path = os.path.abspath(
             os.path.join(FileSystemService.root_path(), process_model_id)
         )
-        if self.is_model(model_path):
+        if cls.is_model(model_path):
             process_model = self.get_process_model_from_relative_path(process_model_id)
             return process_model
         raise ProcessEntityNotFoundError("process_model_not_found")
@@ -285,7 +287,7 @@ class ProcessModelService(FileSystemService):
         for _root, dirs, _files in os.walk(group_path):
             for dir in dirs:
                 model_dir = os.path.join(group_path, dir)
-                if ProcessModelService().is_model(model_dir):
+                if ProcessModelService.is_model(model_dir):
                     process_model = self.get_process_model(model_dir)
                     all_nested_models.append(process_model)
         return all_nested_models
@@ -382,7 +384,7 @@ class ProcessModelService(FileSystemService):
                             process_group.process_groups.append(
                                 self.find_or_create_process_group(nested_item.path)
                             )
-                        elif self.is_model(nested_item.path):
+                        elif ProcessModelService.is_model(nested_item.path):
                             process_group.process_models.append(
                                 self.__scan_process_model(
                                     nested_item.path,

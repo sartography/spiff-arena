@@ -1,7 +1,6 @@
 """Process_instance."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 from typing import cast
 
@@ -18,7 +17,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskSchema
 from spiffworkflow_backend.models.user import UserModel

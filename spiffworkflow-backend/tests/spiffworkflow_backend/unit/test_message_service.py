@@ -47,7 +47,7 @@ class TestMessageService(BaseTest):
             bpmn_file_name="message_sender.bpmn",
         )
 
-        process_instance_sender = ProcessInstanceService.create_process_instance(
+        process_instance_sender = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model_sender.id,
             with_super_admin_user,
         )
@@ -154,7 +154,7 @@ class TestMessageService(BaseTest):
 
         user = self.find_or_create_user()
 
-        process_instance_sender = ProcessInstanceService.create_process_instance(
+        process_instance_sender = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model_sender.id,
             user,
             # process_group_identifier=process_model_sender.process_group_id,
