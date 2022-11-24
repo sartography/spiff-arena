@@ -15,7 +15,7 @@ export default function CompletedInstances() {
         showReports={false}
         textToShowIfEmpty="You have no completed instances at this time."
       />
-      <h2 style={{ marginTop: '1em' }}>Tasks actioned by me</h2>
+      <h2 style={{ marginTop: '1em' }}>Tasks completed by me</h2>
       <p className="data-table-description">
         This is a list of instances where you have completed tasks.
       </p>
@@ -27,7 +27,7 @@ export default function CompletedInstances() {
         showReports={false}
         textToShowIfEmpty="You have no completed tasks at this time."
       />
-      <h2 style={{ marginTop: '1em' }}>Tasks Completed By My Groups</h2>
+      <h2 style={{ marginTop: '1em' }}>Tasks completed by my groups</h2>
       <p className="data-table-description">
         This is a list of instances with tasks that were completed by groups you
         belong to.

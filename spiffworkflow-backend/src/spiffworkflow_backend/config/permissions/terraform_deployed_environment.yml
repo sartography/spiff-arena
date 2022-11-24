@@ -10,6 +10,7 @@ groups:
         dan,
         mike,
         jason,
+        j,
         amir,
         jarrad,
         elizabeth,
@@ -28,6 +29,7 @@ groups:
         dan,
         mike,
         jason,
+        j,
         amir,
         jarrad,
         elizabeth,
@@ -35,6 +37,7 @@ groups:
         natalia,
         sasha,
         fin,
+        fin1,
       ]
 
   Project Lead:
@@ -45,12 +48,14 @@ groups:
         dan,
         mike,
         jason,
+        j,
         jarrad,
         elizabeth,
         jon,
         natalia,
         manuchehr,
         lead,
+        lead1,
       ]
 
   core-contributor:
