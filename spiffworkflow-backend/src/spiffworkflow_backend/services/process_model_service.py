@@ -158,12 +158,12 @@ class ProcessModelService(FileSystemService):
             os.path.join(FileSystemService.root_path(), process_model_id)
         )
         if cls.is_model(model_path):
-            process_model = self.get_process_model_from_relative_path(process_model_id)
-            return process_model
+            return cls.get_process_model_from_relative_path(process_model_id)
         raise ProcessEntityNotFoundError("process_model_not_found")
 
+    @classmethod
     def get_process_models(
-        self,
+        cls,
         process_group_id: Optional[str] = None,
         recursive: Optional[bool] = False,
         filter_runnable_by_user: Optional[bool] = False,
@@ -183,7 +183,7 @@ class ProcessModelService(FileSystemService):
             process_model_relative_path = os.path.relpath(
                 file, start=FileSystemService.root_path()
             )
-            process_model = self.get_process_model_from_relative_path(
+            process_model = cls.get_process_model_from_relative_path(
                 os.path.dirname(process_model_relative_path)
             )
             process_models.append(process_model)

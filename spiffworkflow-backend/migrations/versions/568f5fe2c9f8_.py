@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 37079935891c
+Revision ID: 568f5fe2c9f8
 Revises: 
-Create Date: 2022-11-24 11:44:47.149204
+Create Date: 2022-11-24 12:11:46.669020
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '37079935891c'
+revision = '568f5fe2c9f8'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -119,7 +119,6 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_model_identifier', sa.String(length=255), nullable=False),
     sa.Column('process_model_display_name', sa.String(length=255), nullable=False),
-    sa.Column('process_group_identifier', sa.String(length=50), nullable=False),
     sa.Column('process_initiator_id', sa.Integer(), nullable=False),
     sa.Column('bpmn_json', sa.JSON(), nullable=True),
     sa.Column('start_in_seconds', sa.Integer(), nullable=True),
@@ -133,7 +132,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['process_initiator_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_process_instance_process_group_identifier'), 'process_instance', ['process_group_identifier'], unique=False)
     op.create_index(op.f('ix_process_instance_process_model_display_name'), 'process_instance', ['process_model_display_name'], unique=False)
     op.create_index(op.f('ix_process_instance_process_model_identifier'), 'process_instance', ['process_model_identifier'], unique=False)
     op.create_table('process_instance_report',
@@ -301,7 +299,6 @@ def downgrade():
     op.drop_table('process_instance_report')
     op.drop_index(op.f('ix_process_instance_process_model_identifier'), table_name='process_instance')
     op.drop_index(op.f('ix_process_instance_process_model_display_name'), table_name='process_instance')
-    op.drop_index(op.f('ix_process_instance_process_group_identifier'), table_name='process_instance')
     op.drop_table('process_instance')
     op.drop_table('principal')
     op.drop_index(op.f('ix_message_triggerable_process_model_process_model_identifier'), table_name='message_triggerable_process_model')
