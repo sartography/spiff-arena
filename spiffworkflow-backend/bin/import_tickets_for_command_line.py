@@ -74,7 +74,7 @@ def main():
                 print(f"ticket_identifier: {ticket_identifier}")
                 print(f"priority: {priority}")
 
-                process_instance = ProcessInstanceService.create_process_instance(
+                process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
                     process_model_identifier_ticket,
                     user,
                     process_group_identifier="sartography-admin",

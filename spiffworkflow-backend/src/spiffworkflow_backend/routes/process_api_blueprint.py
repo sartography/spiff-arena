@@ -363,7 +363,7 @@ def process_model_list(
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process model list!"""
-    process_models = ProcessModelService().get_process_models(
+    process_models = ProcessModelService.get_process_models(
         process_group_id=process_group_identifier,
         recursive=recursive,
         filter_runnable_by_user=filter_runnable_by_user,
@@ -495,8 +495,10 @@ def process_instance_create(modified_process_model_id: str) -> flask.wrappers.Re
     process_model_identifier = un_modify_modified_process_model_id(
         modified_process_model_id
     )
-    process_instance = ProcessInstanceService.create_process_instance(
-        process_model_identifier, g.user
+    process_instance = (
+        ProcessInstanceService.create_process_instance_from_process_model_identifier(
+            process_model_identifier, g.user
+        )
     )
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
@@ -1595,7 +1597,7 @@ def get_process_model(process_model_id: str) -> ProcessModelInfo:
     """Get_process_model."""
     process_model = None
     try:
-        process_model = ProcessModelService().get_process_model(process_model_id)
+        process_model = ProcessModelService.get_process_model(process_model_id)
     except ProcessEntityNotFoundError as exception:
         raise (
             ApiError(

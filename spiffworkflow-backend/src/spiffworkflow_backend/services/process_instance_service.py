@@ -29,8 +29,9 @@ class ProcessInstanceService:
 
     TASK_STATE_LOCKED = "locked"
 
-    @staticmethod
+    @classmethod
     def create_process_instance(
+        cls,
         process_model: ProcessModelInfo,
         user: UserModel,
     ) -> ProcessInstanceModel:
@@ -48,6 +49,16 @@ class ProcessInstanceService:
         db.session.add(process_instance_model)
         db.session.commit()
         return process_instance_model
+
+    @classmethod
+    def create_process_instance_from_process_model_identifier(
+        cls,
+        process_model_identifier: str,
+        user: UserModel,
+    ) -> ProcessInstanceModel:
+        """Create_process_instance_from_process_model_identifier."""
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
+        return cls.create_process_instance(process_model, user)
 
     @staticmethod
     def do_waiting() -> None:
@@ -89,7 +100,7 @@ class ProcessInstanceService:
         process_model = process_model_service.get_process_model(
             processor.process_model_identifier
         )
-        title_value = process_model.display_name if process_model else ""
+        process_model.display_name if process_model else ""
         process_instance_api = ProcessInstanceApi(
             id=processor.get_process_instance_id(),
             status=processor.get_status(),

@@ -349,7 +349,9 @@ class ProcessInstanceProcessor:
                     check_sub_specs(test_spec, 5)
 
         self.process_model_identifier = process_instance_model.process_model_identifier
-        self.process_model_display_name = process_instance_model.process_model_display_name
+        self.process_model_display_name = (
+            process_instance_model.process_model_display_name
+        )
 
         try:
             self.bpmn_process_instance = self.__get_bpmn_process_instance(
@@ -374,7 +376,7 @@ class ProcessInstanceProcessor:
         cls, process_model_identifier: str
     ) -> Tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         """Get_process_model_and_subprocesses."""
-        process_model_info = ProcessModelService().get_process_model(
+        process_model_info = ProcessModelService.get_process_model(
             process_model_identifier
         )
         if process_model_info is None:
@@ -662,7 +664,7 @@ class ProcessInstanceProcessor:
         bpmn_process_identifier: str,
     ) -> Optional[str]:
         """Backfill_missing_spec_reference_records."""
-        process_models = ProcessModelService().get_process_models(recursive=True)
+        process_models = ProcessModelService.get_process_models(recursive=True)
         for process_model in process_models:
             try:
                 refs = SpecFileService.reference_map(

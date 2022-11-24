@@ -30,7 +30,7 @@ def load_acceptance_test_fixtures() -> list[ProcessInstanceModel]:
     process_instances = []
     for i in range(len(statuses)):
 
-        process_instance = ProcessInstanceService.create_process_instance(
+        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             test_process_model_id, user
         )
         process_instance.status = statuses[i]

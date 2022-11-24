@@ -28,7 +28,7 @@ class TestVariousBpmnConstructs(BaseTest):
             "timer_intermediate_catch_event",
         )
 
-        process_model = ProcessModelService().get_process_model(
+        process_model = ProcessModelService.get_process_model(
             process_model_id=process_model_identifier
         )
 
