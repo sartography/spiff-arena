@@ -396,7 +396,7 @@ export default function ProcessModelShow() {
       return null;
     }
     return (
-      <Grid condensed fullWidth>
+      <Grid condensed fullWidth className="megacondensed">
         <Column md={5} lg={9} sm={3}>
           <Accordion align="end" open>
             <AccordionItem
