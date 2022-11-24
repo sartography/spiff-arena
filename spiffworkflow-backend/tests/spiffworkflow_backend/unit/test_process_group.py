@@ -12,5 +12,5 @@ def test_there_is_at_least_one_group_after_we_create_one(
     process_model_service = ProcessModelService()
     process_group = ProcessGroup(id="hey", display_name="sure")
     process_model_service.add_process_group(process_group)
-    process_groups = ProcessModelService().get_process_groups()
+    process_groups = ProcessModelService.get_process_groups()
     assert len(process_groups) > 0

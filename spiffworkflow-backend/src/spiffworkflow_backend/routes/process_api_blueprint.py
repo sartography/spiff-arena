@@ -194,11 +194,11 @@ def process_group_list(
 ) -> flask.wrappers.Response:
     """Process_group_list."""
     if process_group_identifier is not None:
-        process_groups = ProcessModelService().get_process_groups(
+        process_groups = ProcessModelService.get_process_groups(
             process_group_identifier
         )
     else:
-        process_groups = ProcessModelService().get_process_groups()
+        process_groups = ProcessModelService.get_process_groups()
     batch = ProcessModelService().get_batch(
         items=process_groups, page=page, per_page=per_page
     )
@@ -224,7 +224,7 @@ def process_group_show(
     """Process_group_show."""
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     try:
-        process_group = ProcessModelService().get_process_group(process_group_id)
+        process_group = ProcessModelService.get_process_group(process_group_id)
     except ProcessEntityNotFoundError as exception:
         raise (
             ApiError(

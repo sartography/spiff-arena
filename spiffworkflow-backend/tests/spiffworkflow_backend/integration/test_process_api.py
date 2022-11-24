@@ -138,7 +138,7 @@ class TestProcessApi(BaseTest):
         )
         assert model_display_name == process_model.display_name
         assert 0 == process_model.display_order
-        assert 1 == len(ProcessModelService().get_process_groups())
+        assert 1 == len(ProcessModelService.get_process_groups())
 
         # add bpmn file to the model
         bpmn_file_name = "sample.bpmn"
@@ -539,7 +539,7 @@ class TestProcessApi(BaseTest):
         assert result.description == "Test Description"
 
         # Check what is persisted
-        persisted = ProcessModelService().get_process_group("test")
+        persisted = ProcessModelService.get_process_group("test")
         assert persisted.display_name == "Another Test Category"
         assert persisted.id == "test"
         assert persisted.description == "Test Description"
@@ -561,7 +561,7 @@ class TestProcessApi(BaseTest):
             process_group_id,
             display_name=process_group_display_name,
         )
-        persisted = ProcessModelService().get_process_group(process_group_id)
+        persisted = ProcessModelService.get_process_group(process_group_id)
         assert persisted is not None
         assert persisted.id == process_group_id
 
@@ -571,7 +571,7 @@ class TestProcessApi(BaseTest):
         )
 
         with pytest.raises(ProcessEntityNotFoundError):
-            ProcessModelService().get_process_group(process_group_id)
+            ProcessModelService.get_process_group(process_group_id)
 
     def test_process_group_update(
         self,
@@ -587,7 +587,7 @@ class TestProcessApi(BaseTest):
         self.create_process_group(
             client, with_super_admin_user, group_id, display_name=group_display_name
         )
-        process_group = ProcessModelService().get_process_group(group_id)
+        process_group = ProcessModelService.get_process_group(group_id)
 
         assert process_group.display_name == group_display_name
 
@@ -601,7 +601,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
 
-        process_group = ProcessModelService().get_process_group(group_id)
+        process_group = ProcessModelService.get_process_group(group_id)
         assert process_group.display_name == "Modified Display Name"
 
     def test_process_group_list(
@@ -2445,7 +2445,7 @@ class TestProcessApi(BaseTest):
             )
         # make sure initial groups exist
         for group in groups:
-            persisted = ProcessModelService().get_process_group(group)
+            persisted = ProcessModelService.get_process_group(group)
             assert persisted is not None
             assert persisted.id == group
 
@@ -2519,7 +2519,7 @@ class TestProcessApi(BaseTest):
             client, with_super_admin_user, original_sub_path, display_name=sub_group_id
         )
         # make sure original subgroup exists
-        persisted = ProcessModelService().get_process_group(original_sub_path)
+        persisted = ProcessModelService.get_process_group(original_sub_path)
         assert persisted is not None
         assert persisted.id == original_sub_path
 
@@ -2536,11 +2536,11 @@ class TestProcessApi(BaseTest):
 
         # make sure the original subgroup does not exist
         with pytest.raises(ProcessEntityNotFoundError) as e:
-            ProcessModelService().get_process_group(original_sub_path)
+            ProcessModelService.get_process_group(original_sub_path)
 
         assert e.value.args[0] == "process_group_not_found"
         assert e.value.args[1] == f"Process Group Id: {original_sub_path}"
 
         # make sure the new subgroup does exist
-        new_process_group = ProcessModelService().get_process_group(new_sub_path)
+        new_process_group = ProcessModelService.get_process_group(new_sub_path)
         assert new_process_group.id == new_sub_path
