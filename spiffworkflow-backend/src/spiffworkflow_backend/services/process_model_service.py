@@ -74,8 +74,6 @@ class ProcessModelService(FileSystemService):
 
     def add_process_model(self, process_model: ProcessModelInfo) -> None:
         """Add_spec."""
-        display_order = self.next_display_order(process_model)
-        process_model.display_order = display_order
         self.save_process_model(process_model)
 
     def update_process_model(
@@ -225,7 +223,7 @@ class ProcessModelService(FileSystemService):
     def get_process_groups(
         cls, process_group_id: Optional[str] = None
     ) -> list[ProcessGroup]:
-        """Returns the process_groups as a list in display order."""
+        """Returns the process_groups."""
         process_groups = cls.__scan_process_groups(process_group_id)
         process_groups.sort()
         return process_groups
@@ -243,7 +241,7 @@ class ProcessModelService(FileSystemService):
                 )
             )
             if cls.is_group(process_group_path):
-                return self.find_or_create_process_group(
+                return cls.find_or_create_process_group(
                     process_group_path,
                     find_direct_nested_items=find_direct_nested_items,
                 )
@@ -252,22 +250,22 @@ class ProcessModelService(FileSystemService):
             "process_group_not_found", f"Process Group Id: {process_group_id}"
         )
 
-    def add_process_group(self, process_group: ProcessGroup) -> ProcessGroup:
+    @classmethod
+    def add_process_group(cls, process_group: ProcessGroup) -> ProcessGroup:
         """Add_process_group."""
-        display_order = len(self.get_process_groups())
-        process_group.display_order = display_order
-        return self.update_process_group(process_group)
+        return cls.update_process_group(process_group)
 
-    def update_process_group(self, process_group: ProcessGroup) -> ProcessGroup:
+    @classmethod
+    def update_process_group(cls, process_group: ProcessGroup) -> ProcessGroup:
         """Update_process_group."""
-        cat_path = self.process_group_path(process_group.id)
+        cat_path = cls.process_group_path(process_group.id)
         os.makedirs(cat_path, exist_ok=True)
-        json_path = os.path.join(cat_path, self.PROCESS_GROUP_JSON_FILE)
+        json_path = os.path.join(cat_path, cls.PROCESS_GROUP_JSON_FILE)
         serialized_process_group = process_group.serialized
         # we don't store `id` in the json files
         # this allows us to move groups around on the filesystem
         del serialized_process_group["id"]
-        self.write_json_file(json_path, serialized_process_group)
+        cls.write_json_file(json_path, serialized_process_group)
         return process_group
 
     def process_group_move(
