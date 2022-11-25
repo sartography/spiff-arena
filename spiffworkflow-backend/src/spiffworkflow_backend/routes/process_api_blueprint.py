@@ -857,7 +857,7 @@ def process_instance_list(
 
     if report_filter.initiated_by_me is True:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status == "complete"
+            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
         )
         process_instance_query = process_instance_query.filter_by(
             process_initiator=g.user
@@ -866,7 +866,7 @@ def process_instance_list(
     # TODO: not sure if this is exactly what is wanted
     if report_filter.with_tasks_completed_by_me is True:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status == "complete"
+            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
         )
         process_instance_query = process_instance_query.join(
             SpiffStepDetailsModel,
@@ -889,7 +889,7 @@ def process_instance_list(
     # TODO: not sure if this is exactly what is wanted
     if report_filter.with_tasks_completed_by_my_group is True:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status == "complete"
+            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
         )
         process_instance_query = process_instance_query.join(
             SpiffStepDetailsModel,
