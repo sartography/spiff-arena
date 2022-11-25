@@ -261,7 +261,7 @@ class BaseTest:
             load_test_spec(
                 process_model_id=test_process_model_id,
                 process_model_source_directory=basename,
-                bpmn_file_name=basename
+                bpmn_file_name=basename,
             )
         modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
