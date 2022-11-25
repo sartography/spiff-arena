@@ -136,65 +136,65 @@ permissions:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management:*
+    uri: /v1.0/process-groups/manage-procurement:procurement:core-contributor-invoice-management:*
   finance-admin-slash:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management/*
+    uri: /v1.0/process-groups/manage-procurement:procurement:core-contributor-invoice-management/*
   finance-admin-models:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management:*
+    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:*
   finance-admin-models-slash:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management/*
+    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management/*
   finance-admin-instances:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management:*
+    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
   finance-admin-instances-slash:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management/*
+    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management/*
 
   core-admin:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management:*
+    uri: /v1.0/process-groups/manage-procurement:procurement:core-contributor-invoice-management:*
   core-admin-slash:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management/*
+    uri: /v1.0/process-groups/manage-procurement:procurement:core-contributor-invoice-management/*
   core-admin-models:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management:*
+    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:*
   core-admin-models-slash:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management/*
+    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management/*
   core-admin-models-instantiate:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management:invoice-approval/process-instances
+    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:invoice-approval/process-instances
   core-admin-instances:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management:*
+    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
   core-admin-instances-slash:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management/*
+    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management/*
