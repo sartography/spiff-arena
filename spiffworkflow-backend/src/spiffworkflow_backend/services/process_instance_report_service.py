@@ -88,8 +88,8 @@ class ProcessInstanceReportService:
                 "columns": [
                     {"Header": "id", "accessor": "id"},
                     {
-                        "Header": "process_model_identifier",
-                        "accessor": "process_model_identifier",
+                        "Header": "process_model_display_name",
+                        "accessor": "process_model_display_name",
                     },
                     {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
@@ -101,8 +101,8 @@ class ProcessInstanceReportService:
                 "columns": [
                     {"Header": "id", "accessor": "id"},
                     {
-                        "Header": "process_model_identifier",
-                        "accessor": "process_model_identifier",
+                        "Header": "process_model_display_name",
+                        "accessor": "process_model_display_name",
                     },
                     {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
@@ -116,8 +116,8 @@ class ProcessInstanceReportService:
                 "columns": [
                     {"Header": "id", "accessor": "id"},
                     {
-                        "Header": "process_model_identifier",
-                        "accessor": "process_model_identifier",
+                        "Header": "process_model_display_name",
+                        "accessor": "process_model_display_name",
                     },
                     {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
