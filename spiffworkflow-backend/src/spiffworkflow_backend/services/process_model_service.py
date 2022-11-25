@@ -175,9 +175,8 @@ class ProcessModelService(FileSystemService):
     ) -> ProcessModelInfo:
         """Get_process_model_from_relative_path."""
         process_group_identifier, _ = os.path.split(relative_path)
-        process_group = cls().get_process_group(process_group_identifier)
         path = os.path.join(FileSystemService.root_path(), relative_path)
-        return cls.__scan_process_model(path, process_group=process_group)
+        return cls.__scan_process_model(path)
 
     @classmethod
     def get_process_model(cls, process_model_id: str) -> ProcessModelInfo:
@@ -427,7 +426,6 @@ class ProcessModelService(FileSystemService):
                                 cls.__scan_process_model(
                                     nested_item.path,
                                     nested_item.name,
-                                    process_group=process_group,
                                 )
                             )
                 process_group.process_models.sort()
@@ -439,7 +437,6 @@ class ProcessModelService(FileSystemService):
         cls,
         path: str,
         name: Optional[str] = None,
-        process_group: Optional[ProcessGroup] = None,
     ) -> ProcessModelInfo:
         """__scan_process_model."""
         json_file_path = os.path.join(path, cls.PROCESS_MODEL_JSON_FILE)
@@ -476,6 +473,4 @@ class ProcessModelService(FileSystemService):
             )
             # we don't store `id` in the json files, so we add it in here
             process_model_info.id = name
-        if process_group:
-            process_model_info.process_group = process_group.id
         return process_model_info
