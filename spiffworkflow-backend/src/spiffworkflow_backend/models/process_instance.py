@@ -112,6 +112,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "spiff_step": self.spiff_step,
+            "username": self.process_initiator.username
         }
 
     @property

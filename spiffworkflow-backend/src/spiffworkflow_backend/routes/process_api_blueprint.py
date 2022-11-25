@@ -31,6 +31,7 @@ from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
@@ -812,6 +813,9 @@ def process_instance_list(
 
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
+    # Always join that hot user table for good performance at serialization time.
+    process_instance_query = process_instance_query.options(joinedload(ProcessInstanceModel.process_initiator))
+
     if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
             f"{report_filter.process_model_identifier}",
@@ -871,6 +875,7 @@ def process_instance_list(
         # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
         # process_instance_query = process_instance_query.add_columns(UserModel.username)
         # search for process_instance.UserModel.username in this file for more details about why adding columns is annoying.
+
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.process_initiator_id != g.user.id
         )
