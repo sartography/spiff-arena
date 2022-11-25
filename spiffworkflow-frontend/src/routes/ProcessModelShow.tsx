@@ -91,7 +91,7 @@ export default function ProcessModelShow() {
   const processInstanceRunResultTag = () => {
     if (processInstance) {
       return (
-        <div className="alert alert-success" role="alert">
+        <div className="alert alert-success with-top-margin" role="alert">
           <p>
             Process Instance {processInstance.id} kicked off (
             <Link
@@ -398,12 +398,16 @@ export default function ProcessModelShow() {
     );
   };
 
-  const processModelButtons = () => {
+  const processModelFilesSection = () => {
     if (!processModel) {
       return null;
     }
     return (
-      <Grid condensed fullWidth className="megacondensed">
+      <Grid
+        condensed
+        fullWidth
+        className="megacondensed process-model-files-section"
+      >
         <Column md={5} lg={9} sm={3}>
           <Accordion align="end" open>
             <AccordionItem
@@ -477,7 +481,10 @@ export default function ProcessModelShow() {
   const processInstanceListTableButton = () => {
     if (processModel) {
       return (
-        <Grid fullWidth>
+        <Grid fullWidth condensed>
+          <Column sm={{ span: 3 }} md={{ span: 4 }} lg={{ span: 3 }}>
+            <h2>Process Instances</h2>
+          </Column>
           <Column
             sm={{ span: 1, offset: 3 }}
             md={{ span: 1, offset: 7 }}
@@ -563,6 +570,7 @@ export default function ProcessModelShow() {
           </Can>
         </Stack>
         {processInstanceRunResultTag()}
+        {processModelFilesSection()}
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
           {processInstanceListTableButton()}
           <ProcessInstanceListTable
@@ -571,10 +579,7 @@ export default function ProcessModelShow() {
             perPageOptions={[2, 5, 25]}
             showReports={false}
           />
-          <br />
-          <br />
         </Can>
-        {processModelButtons()}
       </>
     );
   }
