@@ -7,6 +7,7 @@ import {
   convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
+  refreshAtInterval,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
@@ -14,6 +15,8 @@ import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 const paginationQueryParamPrefix = 'tasks_waiting_for_my_groups';
+const REFRESH_INTERVAL = 5;
+const REFRESH_TIMEOUT = 600;
 
 export default function TasksWaitingForMyGroups() {
   const [searchParams] = useSearchParams();
@@ -21,20 +24,24 @@ export default function TasksWaitingForMyGroups() {
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   useEffect(() => {
-    const { page, perPage } = getPageInfoFromSearchParams(
-      searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
-      undefined,
-      paginationQueryParamPrefix
-    );
-    const setTasksFromResult = (result: any) => {
-      setTasks(result.results);
-      setPagination(result.pagination);
+    const getTasks = () => {
+      const { page, perPage } = getPageInfoFromSearchParams(
+        searchParams,
+        PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+        undefined,
+        paginationQueryParamPrefix
+      );
+      const setTasksFromResult = (result: any) => {
+        setTasks(result.results);
+        setPagination(result.pagination);
+      };
+      HttpService.makeCallToBackend({
+        path: `/tasks/for-my-groups?per_page=${perPage}&page=${page}`,
+        successCallback: setTasksFromResult,
+      });
     };
-    HttpService.makeCallToBackend({
-      path: `/tasks/for-my-groups?per_page=${perPage}&page=${page}`,
-      successCallback: setTasksFromResult,
-    });
+    getTasks();
+    refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
   }, [searchParams]);
 
   const buildTable = () => {
