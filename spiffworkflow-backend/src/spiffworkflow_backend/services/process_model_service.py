@@ -46,11 +46,37 @@ class ProcessModelService(FileSystemService):
         return False
 
     @classmethod
+    def is_group_identifier(cls, process_group_identifier: str) -> bool:
+        if os.path.exists(FileSystemService.root_path()):
+            process_group_path = os.path.abspath(
+                os.path.join(
+                    FileSystemService.root_path(),
+                    FileSystemService.id_string_to_relative_path(process_group_identifier),
+                )
+            )
+            return cls.is_group(process_group_path)
+
+        return False
+
+    @classmethod
     def is_model(cls, path: str) -> bool:
         """Is_model."""
         model_json_path = os.path.join(path, cls.PROCESS_MODEL_JSON_FILE)
         if os.path.exists(model_json_path):
             return True
+        return False
+
+    @classmethod
+    def is_model_identifier(cls, process_model_identifier: str) -> bool:
+        if os.path.exists(FileSystemService.root_path()):
+            process_model_path = os.path.abspath(
+                os.path.join(
+                    FileSystemService.root_path(),
+                    FileSystemService.id_string_to_relative_path(process_model_identifier),
+                )
+            )
+            return cls.is_model(process_model_path)
+
         return False
 
     @staticmethod
