@@ -10,6 +10,7 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
+import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 
@@ -73,11 +74,9 @@ export default function TasksWaitingForMe() {
               rowToUse.created_at_in_seconds
             ) || '-'}
           </td>
-          <td>
-            {convertSecondsToFormattedDateTime(
-              rowToUse.updated_at_in_seconds
-            ) || '-'}
-          </td>
+          <TableCellWithTimeAgoInWords
+            time_in_seconds={rowToUse.updated_at_in_seconds}
+          />
           <td>
             <Button
               variant="primary"
