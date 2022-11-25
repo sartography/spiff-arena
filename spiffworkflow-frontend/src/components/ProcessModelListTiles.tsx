@@ -15,11 +15,13 @@ import ProcessInstanceRun from './ProcessInstanceRun';
 type OwnProps = {
   headerElement?: ReactElement;
   processGroup?: ProcessGroup;
+  checkPermissions?: boolean;
 };
 
 export default function ProcessModelListTiles({
   headerElement,
   processGroup,
+  checkPermissions = true,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [processModels, setProcessModels] = useState<ProcessModel[] | null>(
@@ -94,6 +96,7 @@ export default function ProcessModelListTiles({
                 processModel={row}
                 onSuccessCallback={setProcessInstance}
                 className="tile-pin-bottom"
+                checkPermissions={checkPermissions}
               />
             </div>
           </Tile>
