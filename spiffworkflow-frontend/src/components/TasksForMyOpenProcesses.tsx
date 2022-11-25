@@ -137,7 +137,7 @@ export default function MyOpenProcesses() {
 
   return (
     <>
-      <h2>Tasks for my open processes</h2>
+      <h2>My open instances</h2>
       <p className="data-table-description">
         These tasks are for processes you started which are not complete. You
         may not have an action to take at this time. See below for tasks waiting
