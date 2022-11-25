@@ -1295,8 +1295,10 @@ def process_instance_task_list(
             )
             .first()
         )
-        if step_detail is not None:
-            process_instance.bpmn_json = json.dumps(step_detail.task_json)
+        if step_detail is not None and process_instance.bpmn_json is not None:
+            bpmn_json = json.loads(process_instance.bpmn_json)
+            bpmn_json["tasks"] = step_detail.task_json
+            process_instance.bpmn_json = json.dumps(bpmn_json)
 
     processor = ProcessInstanceProcessor(process_instance)
 
