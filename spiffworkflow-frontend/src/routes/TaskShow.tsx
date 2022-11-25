@@ -15,6 +15,7 @@ import {
   Tabs,
   Grid,
   Column,
+  Button,
   // @ts-ignore
 } from '@carbon/react';
 
@@ -165,6 +166,14 @@ export default function TaskShow() {
       //
       // from: https://github.com/rjsf-team/react-jsonschema-form/issues/1602
       reactFragmentToHideSubmitButton = <div />;
+    }
+
+    if (taskToUse.type === 'Manual Task') {
+      reactFragmentToHideSubmitButton = (
+        <div>
+          <Button type="submit">Continue</Button>
+        </div>
+      );
     }
 
     return (
