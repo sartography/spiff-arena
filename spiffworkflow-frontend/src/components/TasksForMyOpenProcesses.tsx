@@ -6,7 +6,7 @@ import PaginationForTable from './PaginationForTable';
 import {
   convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
-  modifyProcessIdentifierForPathParam,
+  modifyProcessIdentifierForPathParam, refreshAtInterval,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
@@ -14,6 +14,8 @@ import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 const paginationQueryParamPrefix = 'tasks_for_my_open_processes';
+const REFRESH_INTERVAL = 5;
+const REFRESH_TIMEOUT = 600;
 
 export default function MyOpenProcesses() {
   const [searchParams] = useSearchParams();
@@ -21,20 +23,24 @@ export default function MyOpenProcesses() {
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   useEffect(() => {
-    const { page, perPage } = getPageInfoFromSearchParams(
-      searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
-      undefined,
-      paginationQueryParamPrefix
-    );
-    const setTasksFromResult = (result: any) => {
-      setTasks(result.results);
-      setPagination(result.pagination);
+    const getTasks = () => {
+      const { page, perPage } = getPageInfoFromSearchParams(
+        searchParams,
+        PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+        undefined,
+        paginationQueryParamPrefix
+      );
+      const setTasksFromResult = (result: any) => {
+        setTasks(result.results);
+        setPagination(result.pagination);
+      };
+      HttpService.makeCallToBackend({
+        path: `/tasks/for-my-open-processes?per_page=${perPage}&page=${page}`,
+        successCallback: setTasksFromResult,
+      });
     };
-    HttpService.makeCallToBackend({
-      path: `/tasks/for-my-open-processes?per_page=${perPage}&page=${page}`,
-      successCallback: setTasksFromResult,
-    });
+    getTasks();
+    refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
   }, [searchParams]);
 
   const buildTable = () => {

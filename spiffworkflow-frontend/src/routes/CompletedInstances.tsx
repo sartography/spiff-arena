@@ -15,6 +15,7 @@ export default function CompletedInstances() {
         showReports={false}
         textToShowIfEmpty="You have no completed instances at this time."
         paginationClassName="with-large-bottom-margin"
+        autoReload
       />
       <h2>Tasks completed by me</h2>
       <p className="data-table-description">

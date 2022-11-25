@@ -32,7 +32,7 @@ import {
   convertSecondsToFormattedTimeHoursMinutes,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
-  modifyProcessIdentifierForPathParam,
+  modifyProcessIdentifierForPathParam, refreshAtInterval,
 } from '../helpers';
 
 import PaginationForTable from './PaginationForTable';
@@ -52,6 +52,9 @@ import {
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 
+const REFRESH_INTERVAL = 5;
+const REFRESH_TIMEOUT = 600;
+
 type OwnProps = {
   filtersEnabled?: boolean;
   processModelFullIdentifier?: string;
@@ -61,6 +64,7 @@ type OwnProps = {
   reportIdentifier?: string;
   textToShowIfEmpty?: string;
   paginationClassName?: string;
+  autoReload?: boolean;
 };
 
 interface dateParameters {
@@ -76,6 +80,7 @@ export default function ProcessInstanceListTable({
   reportIdentifier,
   textToShowIfEmpty,
   paginationClassName,
+  autoReload = false,
 }: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -264,16 +269,25 @@ export default function ProcessInstanceListTable({
 
       getProcessInstances();
     }
+    const checkFiltersAndRun = () => {
+      console.log("Checking again!", filtersEnabled)
+      if (filtersEnabled) {
+        // populate process model selection
+        HttpService.makeCallToBackend({
+          path: `/process-models?per_page=1000&recursive=true`,
+          successCallback: processResultForProcessModels,
+        });
+      } else {
+        getProcessInstances();
+      }
+    };
 
-    if (filtersEnabled) {
-      // populate process model selection
-      HttpService.makeCallToBackend({
-        path: `/process-models?per_page=1000&recursive=true`,
-        successCallback: processResultForProcessModels,
-      });
+    checkFiltersAndRun();
+    if (autoReload) {
+      refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, checkFiltersAndRun);
     } else {
-      getProcessInstances();
     }
+
   }, [
     searchParams,
     params,
@@ -758,13 +772,13 @@ export default function ProcessInstanceListTable({
       <>
         <Grid fullWidth>
           <Column
+            className="filterIcon"
             sm={{ span: 1, offset: 3 }}
             md={{ span: 1, offset: 7 }}
             lg={{ span: 1, offset: 15 }}
           >
             <Button
               data-qa="filter-section-expand-toggle"
-              kind="ghost"
               renderIcon={Filter}
               iconDescription="Filter Options"
               hasIconOnly
