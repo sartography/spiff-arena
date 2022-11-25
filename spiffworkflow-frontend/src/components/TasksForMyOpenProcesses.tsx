@@ -6,7 +6,8 @@ import PaginationForTable from './PaginationForTable';
 import {
   convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
-  modifyProcessIdentifierForPathParam, refreshAtInterval,
+  modifyProcessIdentifierForPathParam,
+  refreshAtInterval,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
