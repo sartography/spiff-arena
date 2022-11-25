@@ -542,13 +542,8 @@ class ProcessInstanceProcessor:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
-        task_json = "{}"
-        if "tasks" in wf_json:
-            task_json = json.dumps(wf_json["tasks"])
+        task_json = wf_json["tasks"]
 
-        # TODO want to just save the tasks, something wasn't immediately working
-        # so after the flow works with the full wf_json revisit this
-        task_json = wf_json
         return {
             "process_instance_id": self.process_instance_model.id,
             "spiff_step": self.process_instance_model.spiff_step or 1,
