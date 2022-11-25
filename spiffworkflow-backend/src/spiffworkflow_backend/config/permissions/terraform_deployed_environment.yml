@@ -58,28 +58,33 @@ groups:
         lead1,
       ]
 
+  demo:
+    users:
+      [
+        core,
+        fin,
+        fin1,
+        lead,
+        lead1
+      ]
+
   core-contributor:
     users: [core]
 
 permissions:
+  admin:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /*
+
   tasks-crud:
     groups: [everybody]
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/tasks/*
 
-  admin:
-    groups: [admin]
-    users: []
-    allowed_permissions: [create, read, update, delete, list, instantiate]
-    uri: /*
-
-  read-all:
-    groups: ["Finance Team", "Project Lead", admin]
-    users: []
-    allowed_permissions: [read]
-    uri: /*
-
+  # read all for everybody
   read-all-process-groups:
     groups: [everybody]
     users: []
@@ -90,16 +95,17 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-models/*
-  read-process-instance-list:
+  read-all-process-instance:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-instances
+    uri: /v1.0/process-instances/*
   read-process-instance-reports:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-instances/reports/*
+
 
   manage-procurement-admin:
     groups: ["Project Lead"]
@@ -136,65 +142,41 @@ permissions:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management:*
-  finance-admin-slash:
-    groups: ["Finance Team"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management/*
-  finance-admin-models:
-    groups: ["Finance Team"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management:*
-  finance-admin-models-slash:
-    groups: ["Finance Team"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management/*
-  finance-admin-instances:
-    groups: ["Finance Team"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management:*
-  finance-admin-instances-slash:
-    groups: ["Finance Team"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management/*
+    uri: /v1.0/process-groups/manage-procurement:procurement:*
 
-  core-admin:
-    groups: ["core-contributor"]
+  demo-models-instantiate-vendor-block:
+    groups: ["demo"]
     users: []
-    allowed_permissions: [read]
-    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management:*
-  core-admin-slash:
-    groups: ["core-contributor"]
+    allowed_permissions: [create]
+    uri: /v1.0/process-models/manage-procurement:vendor-lifecycle-management:vendor-md-maintenance:vendor-md-block/process-instances
+  demo-models-instantiate-vendor-change:
+    groups: ["demo"]
     users: []
-    allowed_permissions: [read]
-    uri: /v1.0/process-groups/manage-procurement:procurement:vendor-invoice-management/*
-  core-admin-models:
-    groups: ["core-contributor"]
+    allowed_permissions: [create]
+    uri: /v1.0/process-models/manage-procurement:vendor-lifecycle-management:vendor-md-maintenance:vendor-md-change/process-instances
+  demo-models-instantiate-vendor-creation:
+    groups: ["demo"]
     users: []
-    allowed_permissions: [read]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management:*
-  core-admin-models-slash:
-    groups: ["core-contributor"]
+    allowed_permissions: [create]
+    uri: /v1.0/process-models/manage-procurement:vendor-lifecycle-management:vendor-md-maintenance:vendor-md-creation/process-instances
+  demo-models-instantiate-vendor-core-invoice_appoval:
+    groups: ["demo"]
     users: []
-    allowed_permissions: [read]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management/*
+    allowed_permissions: [create]
+    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:cc-invoice-approval/process-instances
+
   core-admin-models-instantiate:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management:invoice-approval/process-instances
+    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:cc-invoice-approval/process-instances
   core-admin-instances:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management:*
+    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
   core-admin-instances-slash:
     groups: ["core-contributor"]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-procurement:procurement:vendor-invoice-management/*
+    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management/*
