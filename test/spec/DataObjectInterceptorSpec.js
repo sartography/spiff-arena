@@ -4,7 +4,7 @@ import { BpmnPropertiesPanelModule, BpmnPropertiesProviderModule } from 'bpmn-js
 import {
   inject,
 } from 'bpmn-js/test/helper';
-import { findDataObjects } from '../../app/spiffworkflow/DataObject/DataObjectHelpers';
+import {findDataObjects, idToHumanReadableName} from '../../app/spiffworkflow/DataObject/DataObjectHelpers';
 
 describe('DataObject Interceptor', function() {
 
@@ -93,7 +93,8 @@ describe('DataObject Interceptor', function() {
       { x: 220, y: 220 }, rootShape);
 
     const dataObjects = findDataObjects(rootShape.businessObject);
-    expect(dataObjectRefShape1.businessObject.name).to.equal(dataObjects[0].id);
+    const human_readable_name = idToHumanReadableName(dataObjects[0].id)
+    expect(dataObjectRefShape1.businessObject.name).to.equal(human_readable_name);
   }));
 
   it('should allow you to add a data object to a subprocess', inject(function(canvas, modeling, elementRegistry) {

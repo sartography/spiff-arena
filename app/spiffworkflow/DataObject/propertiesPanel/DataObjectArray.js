@@ -5,7 +5,7 @@ import {
 } from '@bpmn-io/properties-panel';
 import { without } from 'min-dash';
 import { is } from 'bpmn-js/lib/util/ModelUtil';
-import { findDataObjects, findDataReferenceShapes } from '../DataObjectHelpers';
+import {findDataObjects, findDataReferenceShapes, idToHumanReadableName} from '../DataObjectHelpers';
 
 /**
  * Provides a list of data objects, and allows you to add / remove data objects, and change their ids.
@@ -78,17 +78,10 @@ function removeFactory(props) {
         flowElements: without(process.get('flowElements'), dataObject),
       },
     });
-    // Also update the label of all the references
+    // When a data object is removed, remove all references as well.
     const references = findDataReferenceShapes(element, dataObject.id);
     for (const ref of references) {
-      commandStack.execute('element.updateProperties', {
-        element: ref,
-        moddleElement: ref.businessObject,
-        properties: {
-          name: '???',
-        },
-        changed: [ref], // everything is already marked as changed, don't recalculate.
-      });
+      commandStack.execute('shape.delete', { shape: ref });
     }
   };
 }
@@ -129,7 +122,7 @@ function DataObjectTextField(props) {
         element: ref,
         moddleElement: ref.businessObject,
         properties: {
-          name: value,
+          name: idToHumanReadableName(value),
         },
         changed: [ref], // everything is already marked as changed, don't recalculate.
       });
