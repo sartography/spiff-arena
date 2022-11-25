@@ -32,7 +32,8 @@ import {
   convertSecondsToFormattedTimeHoursMinutes,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
-  modifyProcessIdentifierForPathParam, refreshAtInterval,
+  modifyProcessIdentifierForPathParam,
+  refreshAtInterval,
 } from '../helpers';
 
 import PaginationForTable from './PaginationForTable';
@@ -270,7 +271,6 @@ export default function ProcessInstanceListTable({
       getProcessInstances();
     }
     const checkFiltersAndRun = () => {
-      console.log("Checking again!", filtersEnabled)
       if (filtersEnabled) {
         // populate process model selection
         HttpService.makeCallToBackend({
@@ -285,10 +285,9 @@ export default function ProcessInstanceListTable({
     checkFiltersAndRun();
     if (autoReload) {
       refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, checkFiltersAndRun);
-    } else {
     }
-
   }, [
+    autoReload,
     searchParams,
     params,
     oneMonthInSeconds,
