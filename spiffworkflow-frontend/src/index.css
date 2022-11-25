@@ -147,6 +147,10 @@ h1.with-icons {
   margin-bottom: 1em;
 }
 
+.with-top-margin {
+  margin-top: 1em;
+}
+
 .with-large-bottom-margin {
   margin-bottom: 3em;
 }
@@ -282,4 +286,9 @@ td.actions-cell {
   letter-spacing: 0.16px;
   color: #525252;
   margin-bottom: 1em;
+}
+
+/* top and bottom margin since this is sort of the middle of three sections on the process model show page */
+.process-model-files-section {
+  margin: 2em 0;
 }
