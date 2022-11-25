@@ -164,6 +164,11 @@ permissions:
     users: []
     allowed_permissions: [create]
     uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:cc-invoice-approval/process-instances
+  demo-models-customer-contracts:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/process-models/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/process-instances
 
   core-admin-models-instantiate:
     groups: ["core-contributor"]
