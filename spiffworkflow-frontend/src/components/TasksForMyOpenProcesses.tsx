@@ -46,18 +46,20 @@ export default function MyOpenProcesses() {
         <tr key={rowToUse.id}>
           <td>
             <Link
-              data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+              data-qa="process-instance-show-link"
+              to={`/admin/process-models/${modifiedProcessModelIdentifier}/process-instances/${rowToUse.process_instance_id}`}
+              title={`View process instance ${rowToUse.process_instance_id}`}
             >
-              {rowToUse.process_model_display_name}
+              {rowToUse.process_instance_id}
             </Link>
           </td>
           <td>
             <Link
-              data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}/process-instances/${rowToUse.process_instance_id}`}
+              data-qa="process-model-show-link"
+              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+              title={rowToUse.process_model_identifier}
             >
-              {rowToUse.process_instance_id}
+              {rowToUse.process_model_display_name}
             </Link>
           </td>
           <td
@@ -93,8 +95,8 @@ export default function MyOpenProcesses() {
       <Table striped bordered>
         <thead>
           <tr>
-            <th>Process</th>
             <th>Id</th>
+            <th>Process</th>
             <th>Task</th>
             <th>Waiting For</th>
             <th>Date Started</th>
