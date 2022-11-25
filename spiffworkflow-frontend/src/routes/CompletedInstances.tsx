@@ -14,8 +14,9 @@ export default function CompletedInstances() {
         reportIdentifier="system_report_instances_initiated_by_me"
         showReports={false}
         textToShowIfEmpty="You have no completed instances at this time."
+        paginationClassName="with-large-bottom-margin"
       />
-      <h2 style={{ marginTop: '1em' }}>Tasks completed by me</h2>
+      <h2>Tasks completed by me</h2>
       <p className="data-table-description">
         This is a list of instances where you have completed tasks.
       </p>
@@ -26,8 +27,9 @@ export default function CompletedInstances() {
         reportIdentifier="system_report_instances_with_tasks_completed_by_me"
         showReports={false}
         textToShowIfEmpty="You have no completed tasks at this time."
+        paginationClassName="with-large-bottom-margin"
       />
-      <h2 style={{ marginTop: '1em' }}>Tasks completed by my groups</h2>
+      <h2>Tasks completed by my groups</h2>
       <p className="data-table-description">
         This is a list of instances with tasks that were completed by groups you
         belong to.

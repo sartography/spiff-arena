@@ -569,7 +569,7 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button onClick={downloadXmlFile}>Download xml</Button>
+            <Button onClick={downloadXmlFile}>Download</Button>
           </Can>
         </>
       );
