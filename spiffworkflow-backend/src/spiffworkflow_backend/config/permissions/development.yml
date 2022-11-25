@@ -163,11 +163,6 @@ permissions:
     users: []
     allowed_permissions: [create]
     uri: /v1.0/process-models/manage-procurement:vendor-lifecycle-management:vendor-md-maintenance:vendor-md-creation/process-instances
-  demo-models-instantiate-invoice-approval:
-    groups: ["demo"]
-    users: []
-    allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-procurement:procurement:vendor-invoice-management:invoice-approval/process-instances
   demo-models-instantiate-vendor-core-invoice_appoval:
     groups: ["demo"]
     users: []
