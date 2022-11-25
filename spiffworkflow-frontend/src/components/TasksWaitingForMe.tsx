@@ -75,7 +75,7 @@ export default function TasksWaitingForMe() {
             ) || '-'}
           </td>
           <TableCellWithTimeAgoInWords
-            time_in_seconds={rowToUse.updated_at_in_seconds}
+            timeInSeconds={rowToUse.updated_at_in_seconds}
           />
           <td>
             <Button
