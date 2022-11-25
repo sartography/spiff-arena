@@ -868,7 +868,8 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
         )
-        # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id).add_columns(UserModel.username)
+        # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
+        # process_instance_query = process_instance_query.add_columns(UserModel.username)
         # search for process_instance.UserModel.username in this file for more details about why adding columns is annoying.
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.process_initiator_id != g.user.id
