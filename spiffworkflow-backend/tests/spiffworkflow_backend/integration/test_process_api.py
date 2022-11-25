@@ -1548,7 +1548,7 @@ class TestProcessApi(BaseTest):
                 status=ProcessInstanceStatus[statuses[i]].value,
                 process_initiator=with_super_admin_user,
                 process_model_identifier=process_model_identifier,
-                process_group_identifier="test_process_group_id",
+                process_model_display_name=process_model_identifier,
                 updated_at_in_seconds=round(time.time()),
                 start_in_seconds=(1000 * i) + 1000,
                 end_in_seconds=(1000 * i) + 2000,
