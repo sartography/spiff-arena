@@ -292,3 +292,8 @@ td.actions-cell {
 .process-model-files-section {
   margin: 2em 0;
 }
+
+.filterIcon {
+  text-align: right;
+  padding-bottom: 10px;
+}
