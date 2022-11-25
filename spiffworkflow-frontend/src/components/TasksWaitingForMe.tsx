@@ -112,7 +112,7 @@ export default function TasksWaitingForMe() {
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
       return (
-        <p className="no-results-message">
+        <p className="no-results-message with-large-bottom-margin">
           You have no task assignments at this time.
         </p>
       );
@@ -131,6 +131,7 @@ export default function TasksWaitingForMe() {
         pagination={pagination}
         tableToDisplay={buildTable()}
         paginationQueryParamPrefix="tasks_waiting_for_me"
+        paginationClassName="with-large-bottom-margin"
       />
     );
   };

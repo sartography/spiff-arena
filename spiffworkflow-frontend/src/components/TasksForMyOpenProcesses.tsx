@@ -111,7 +111,7 @@ export default function MyOpenProcesses() {
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
       return (
-        <p className="no-results-message">
+        <p className="no-results-message with-large-bottom-margin">
           There are no tasks for processes you started at this time.
         </p>
       );
@@ -130,6 +130,7 @@ export default function MyOpenProcesses() {
         pagination={pagination}
         tableToDisplay={buildTable()}
         paginationQueryParamPrefix={paginationQueryParamPrefix}
+        paginationClassName="with-large-bottom-margin"
       />
     );
   };

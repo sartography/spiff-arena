@@ -60,6 +60,7 @@ type OwnProps = {
   showReports?: boolean;
   reportIdentifier?: string;
   textToShowIfEmpty?: string;
+  paginationClassName?: string;
 };
 
 interface dateParameters {
@@ -74,6 +75,7 @@ export default function ProcessInstanceListTable({
   showReports = true,
   reportIdentifier,
   textToShowIfEmpty,
+  paginationClassName,
 }: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -799,12 +801,17 @@ export default function ProcessInstanceListTable({
           tableToDisplay={buildTable()}
           paginationQueryParamPrefix={paginationQueryParamPrefix}
           perPageOptions={perPageOptions}
+          paginationClassName={paginationClassName}
         />
       </>
     );
   }
   if (textToShowIfEmpty) {
-    return <p className="no-results-message">{textToShowIfEmpty}</p>;
+    return (
+      <p className="no-results-message with-large-bottom-margin">
+        {textToShowIfEmpty}
+      </p>
+    );
   }
 
   return null;
