@@ -68,12 +68,14 @@ type OwnProps = {
   processModel: ProcessModel;
   onSuccessCallback: Function;
   className?: string;
+  checkPermissions?: boolean;
 };
 
 export default function ProcessInstanceRun({
   processModel,
   onSuccessCallback,
   className,
+  checkPermissions = true,
 }: OwnProps) {
   const navigate = useNavigate();
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
@@ -82,9 +84,14 @@ export default function ProcessInstanceRun({
   );
 
   const processInstanceActionPath = `/v1.0/process-models/${modifiedProcessModelId}/process-instances`;
-  const permissionRequestData: PermissionsToCheck = {
+  let permissionRequestData: PermissionsToCheck = {
     [processInstanceActionPath]: ['POST'],
   };
+
+  if (!checkPermissions) {
+    permissionRequestData = {};
+  }
+
   const { ability } = usePermissionFetcher(permissionRequestData);
 
   const onProcessInstanceRun = (processInstance: any) => {
@@ -115,12 +122,18 @@ export default function ProcessInstanceRun({
       httpMethod: 'POST',
     });
   };
-
+  if (checkPermissions) {
+    return (
+      <Can I="POST" a={processInstanceActionPath} ability={ability}>
+        <Button onClick={processInstanceCreateAndRun} className={className}>
+          Start
+        </Button>
+      </Can>
+    );
+  }
   return (
-    <Can I="POST" a={processInstanceActionPath} ability={ability}>
-      <Button onClick={processInstanceCreateAndRun} className={className}>
-        Start
-      </Button>
-    </Can>
+    <Button onClick={processInstanceCreateAndRun} className={className}>
+      Start
+    </Button>
   );
 }
