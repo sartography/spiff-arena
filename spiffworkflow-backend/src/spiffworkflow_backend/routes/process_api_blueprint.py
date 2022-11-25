@@ -242,7 +242,7 @@ def process_group_show(
 def process_group_move(
     modified_process_group_identifier: str, new_location: str
 ) -> flask.wrappers.Response:
-    """process_group_move."""
+    """Process_group_move."""
     original_process_group_id = un_modify_modified_process_model_id(
         modified_process_group_identifier
     )
@@ -343,7 +343,7 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
 def process_model_move(
     modified_process_model_identifier: str, new_location: str
 ) -> flask.wrappers.Response:
-    """process_model_move."""
+    """Process_model_move."""
     original_process_model_id = un_modify_modified_process_model_id(
         modified_process_model_identifier
     )

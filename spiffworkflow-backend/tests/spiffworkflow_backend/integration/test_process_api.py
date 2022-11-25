@@ -2436,7 +2436,7 @@ class TestProcessApi(BaseTest):
     def setup_initial_groups_for_move_tests(
         self, client: FlaskClient, with_super_admin_user: UserModel
     ) -> None:
-        """setup_initial_groups_for_move_tests."""
+        """Setup_initial_groups_for_move_tests."""
         groups = ["group_a", "group_b", "group_b/group_bb"]
         # setup initial groups
         for group in groups:
@@ -2456,7 +2456,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """test_move_model."""
+        """Test_move_model."""
         self.setup_initial_groups_for_move_tests(client, with_super_admin_user)
 
         process_model_id = "test_model"
@@ -2508,7 +2508,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """test_move_group."""
+        """Test_move_group."""
         self.setup_initial_groups_for_move_tests(client, with_super_admin_user)
 
         # add sub group to `group_a`

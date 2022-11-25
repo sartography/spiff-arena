@@ -47,11 +47,14 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def is_group_identifier(cls, process_group_identifier: str) -> bool:
+        """Is_group_identifier."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = os.path.abspath(
                 os.path.join(
                     FileSystemService.root_path(),
-                    FileSystemService.id_string_to_relative_path(process_group_identifier),
+                    FileSystemService.id_string_to_relative_path(
+                        process_group_identifier
+                    ),
                 )
             )
             return cls.is_group(process_group_path)
@@ -68,11 +71,14 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def is_model_identifier(cls, process_model_identifier: str) -> bool:
+        """Is_model_identifier."""
         if os.path.exists(FileSystemService.root_path()):
             process_model_path = os.path.abspath(
                 os.path.join(
                     FileSystemService.root_path(),
-                    FileSystemService.id_string_to_relative_path(process_model_identifier),
+                    FileSystemService.id_string_to_relative_path(
+                        process_model_identifier
+                    ),
                 )
             )
             return cls.is_model(process_model_path)
@@ -150,7 +156,7 @@ class ProcessModelService(FileSystemService):
     def process_model_move(
         self, original_process_model_id: str, new_location: str
     ) -> ProcessModelInfo:
-        """process_model_move."""
+        """Process_model_move."""
         original_model_path = os.path.abspath(
             os.path.join(FileSystemService.root_path(), original_process_model_id)
         )
@@ -300,7 +306,7 @@ class ProcessModelService(FileSystemService):
     def process_group_move(
         self, original_process_group_id: str, new_location: str
     ) -> ProcessGroup:
-        """process_group_move."""
+        """Process_group_move."""
         original_group_path = self.process_group_path(original_process_group_id)
         original_root, original_group_id = os.path.split(original_group_path)
         new_root = f"{FileSystemService.root_path()}/{new_location}"
