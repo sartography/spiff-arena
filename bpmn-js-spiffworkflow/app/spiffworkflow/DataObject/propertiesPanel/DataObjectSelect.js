@@ -1,6 +1,6 @@
 import {useService } from 'bpmn-js-properties-panel';
 import { SelectEntry } from '@bpmn-io/properties-panel';
-import {idToHumanReadableName} from '../DataObjectHelpers';
+import {findDataObjects, idToHumanReadableName} from '../DataObjectHelpers';
 
 /**
  * Finds the value of the given type within the extensionElements
@@ -54,13 +54,12 @@ export function DataObjectSelect(props) {
   const getOptions = value => {
     const businessObject = element.businessObject;
     const parent = businessObject.$parent;
-    let options = []
-    for (const element of parent.flowElements) {
-      if (element.$type === 'bpmn:DataObject') {
-        options.push({label: element.id, value: element.id})
-      }
-    }
-    return options
+    let dataObjects = findDataObjects(parent);
+    let options = [];
+    dataObjects.forEach(dataObj => {
+      options.push({label: dataObj.id, value: dataObj.id})
+    });
+    return options;
   }
 
   return <SelectEntry
