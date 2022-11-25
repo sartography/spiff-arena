@@ -47,6 +47,7 @@ import {
   PaginationObject,
   ProcessModel,
   ProcessInstanceReport,
+  ProcessInstance,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -609,6 +610,7 @@ export default function ProcessInstanceListTable({
     const headerLabels: Record<string, string> = {
       id: 'Id',
       process_model_identifier: 'Process',
+      process_model_display_name: 'Process',
       start_in_seconds: 'Start Time',
       end_in_seconds: 'End Time',
       status: 'Status',
@@ -622,13 +624,14 @@ export default function ProcessInstanceListTable({
       return getHeaderLabel((column as any).Header);
     });
 
-    const formatProcessInstanceId = (row: any, id: any) => {
+    const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
       const modifiedProcessModelId: String =
         modifyProcessIdentifierForPathParam(row.process_model_identifier);
       return (
         <Link
           data-qa="process-instance-show-link"
-          to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${row.id}`}
+          to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${id}`}
+          title={`View process instance ${id}`}
         >
           {id}
         </Link>
@@ -645,6 +648,23 @@ export default function ProcessInstanceListTable({
         </Link>
       );
     };
+
+    const formatProcessModelDisplayName = (
+      row: ProcessInstance,
+      displayName: string
+    ) => {
+      return (
+        <Link
+          to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+            row.process_model_identifier
+          )}`}
+          title={row.process_model_identifier}
+        >
+          {displayName}
+        </Link>
+      );
+    };
+
     const formatSecondsForDisplay = (_row: any, seconds: any) => {
       return convertSecondsToFormattedDateTime(seconds) || '-';
     };
@@ -655,6 +675,7 @@ export default function ProcessInstanceListTable({
     const columnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
+      process_model_display_name: formatProcessModelDisplayName,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
     };
