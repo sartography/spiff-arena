@@ -7,6 +7,7 @@ import {
   TrashCan,
   Favorite,
   Edit,
+  View,
   ArrowRight,
   // @ts-ignore
 } from '@carbon/icons-react';
@@ -66,7 +67,7 @@ export default function ProcessModelShow() {
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['POST'],
-    [targetUris.processModelFileCreatePath]: ['POST', 'GET', 'DELETE'],
+    [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -214,12 +215,18 @@ export default function ProcessModelShow() {
     isPrimaryBpmnFile: boolean
   ) => {
     const elements = [];
+    let icon = View;
+    let actionWord = 'View';
+    if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
+      icon = Edit;
+      actionWord = 'Edit';
+    }
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
         <Button
           kind="ghost"
-          renderIcon={Edit}
-          iconDescription="Edit File"
+          renderIcon={icon}
+          iconDescription={`${actionWord} File`}
           hasIconOnly
           size="lg"
           data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
