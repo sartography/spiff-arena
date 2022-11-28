@@ -814,7 +814,9 @@ def process_instance_list(
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
     # Always join that hot user table for good performance at serialization time.
-    process_instance_query = process_instance_query.options(joinedload(ProcessInstanceModel.process_initiator))
+    process_instance_query = process_instance_query.options(
+        joinedload(ProcessInstanceModel.process_initiator)
+    )
 
     if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
