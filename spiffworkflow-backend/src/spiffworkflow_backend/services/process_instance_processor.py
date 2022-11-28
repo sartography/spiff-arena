@@ -590,16 +590,12 @@ class ProcessInstanceProcessor:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_model.end_in_seconds = round(time.time())
 
-        active_tasks = ActiveTaskModel.query.filter_by(
-            process_instance_id=self.process_instance_model.id
-        ).all()
-        if len(active_tasks) > 0:
-            for at in active_tasks:
-                db.session.delete(at)
-
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+        active_tasks = ActiveTaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id
+        ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks
@@ -626,20 +622,27 @@ class ProcessInstanceProcessor:
                 if process_model_info is not None:
                     process_model_display_name = process_model_info.display_name
 
-                active_task = ActiveTaskModel(
-                    process_instance_id=self.process_instance_model.id,
-                    process_model_display_name=process_model_display_name,
-                    form_file_name=form_file_name,
-                    ui_form_file_name=ui_form_file_name,
-                    task_id=str(ready_or_waiting_task.id),
-                    task_name=ready_or_waiting_task.task_spec.name,
-                    task_title=ready_or_waiting_task.task_spec.description,
-                    task_type=ready_or_waiting_task.task_spec.__class__.__name__,
-                    task_status=ready_or_waiting_task.get_state_name(),
-                    lane_assignment_id=potential_owner_hash["lane_assignment_id"],
-                )
-                db.session.add(active_task)
-                db.session.commit()
+                active_task = None
+                for at in active_tasks:
+                    if at.task_id == str(ready_or_waiting_task.id):
+                        active_task = at
+                        active_tasks.pop(at)
+
+                if active_task is None:
+                    active_task = ActiveTaskModel(
+                        process_instance_id=self.process_instance_model.id,
+                        process_model_display_name=process_model_display_name,
+                        form_file_name=form_file_name,
+                        ui_form_file_name=ui_form_file_name,
+                        task_id=str(ready_or_waiting_task.id),
+                        task_name=ready_or_waiting_task.task_spec.name,
+                        task_title=ready_or_waiting_task.task_spec.description,
+                        task_type=ready_or_waiting_task.task_spec.__class__.__name__,
+                        task_status=ready_or_waiting_task.get_state_name(),
+                        lane_assignment_id=potential_owner_hash["lane_assignment_id"],
+                    )
+                    db.session.add(active_task)
+                    db.session.commit()
 
                 for potential_owner_id in potential_owner_hash["potential_owner_ids"]:
                     active_task_user = ActiveTaskUserModel(
@@ -647,6 +650,11 @@ class ProcessInstanceProcessor:
                     )
                     db.session.add(active_task_user)
                 db.session.commit()
+
+        if len(active_tasks) > 0:
+            for at in active_tasks:
+                db.session.delete(at)
+            db.session.commit()
 
     @staticmethod
     def get_parser() -> MyCustomParser:
