@@ -7,13 +7,14 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 */
+import { ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 type OwnProps = {
   onSuccess: (..._args: any[]) => any;
   columnArray: { Header: string; accessor: string };
   orderBy: string;
-  filterBy: string;
+  processModelSelection: ProcessModel | null;
   buttonText?: string;
 };
 
@@ -21,7 +22,7 @@ export default function ProcessInstanceListSaveAsReport({
   onSuccess,
   columnArray,
   orderBy,
-  filterBy,
+  processModelSelection,
   buttonText = 'Save as Perspective',
 }: OwnProps) {
   const [identifier, setIdentifier] = useState('');
@@ -33,24 +34,16 @@ export default function ProcessInstanceListSaveAsReport({
   const addProcessInstanceReport = (event: any) => {
     event.preventDefault();
 
-    console.log(columnArray);
-
     const orderByArray = orderBy.split(',').filter((n) => n);
 
-    const filterByArray = filterBy
-      .split(',')
-      .map((filterByItem) => {
-        const [fieldName, fieldValue] = filterByItem.split('=');
-        if (fieldValue) {
-          return {
-            field_name: fieldName,
-            operator: 'equals',
-            field_value: fieldValue,
-          };
-        }
-        return null;
-      })
-      .filter((n) => n);
+    const filterByArray: any = [];
+
+    if (processModelSelection) {
+      filterByArray.push({
+        field_name: 'process_model_identifier',
+        field_value: processModelSelection.id,
+      });
+    }
 
     HttpService.makeCallToBackend({
       path: `/process-instances/reports`,
