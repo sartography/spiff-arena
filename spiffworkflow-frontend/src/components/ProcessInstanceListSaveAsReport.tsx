@@ -15,6 +15,7 @@ type OwnProps = {
   columnArray: { Header: string; accessor: string };
   orderBy: string;
   processModelSelection: ProcessModel | null;
+  processStatusSelection: string[];
   buttonText?: string;
 };
 
@@ -23,6 +24,7 @@ export default function ProcessInstanceListSaveAsReport({
   columnArray,
   orderBy,
   processModelSelection,
+  processStatusSelection,
   buttonText = 'Save as Perspective',
 }: OwnProps) {
   const [identifier, setIdentifier] = useState('');
@@ -42,6 +44,13 @@ export default function ProcessInstanceListSaveAsReport({
       filterByArray.push({
         field_name: 'process_model_identifier',
         field_value: processModelSelection.id,
+      });
+    }
+
+    if (processStatusSelection.length > 0) {
+      filterByArray.push({
+        field_name: 'process_status',
+        field_value: processStatusSelection[0], // TODO: support more than one status
       });
     }
 
