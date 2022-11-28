@@ -110,6 +110,11 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-instances/reports/*
+  processes-read:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/processes
 
 
   manage-procurement-admin:
