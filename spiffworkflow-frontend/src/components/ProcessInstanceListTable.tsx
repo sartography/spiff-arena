@@ -367,6 +367,7 @@ export default function ProcessInstanceListTable({
     }
   };
 
+  // TODO: after factoring this out page hangs when invalid date ranges and applying the filter
   const calculateStartAndEndSeconds = () => {
     const startFromSeconds = convertDateAndTimeStringsToSeconds(
       startFromDate,
@@ -793,7 +794,11 @@ export default function ProcessInstanceListTable({
 
   const saveAsReportComponent = () => {
     // TODO onSuccess reload/select the new report in the report search
-    const callback = (_: any) => {};
+    const callback = (identifier: string) => {
+      processInstanceReportDidChange({
+        selectedItem: { id: identifier, display_name: identifier },
+      });
+    };
     const {
       valid,
       startFromSeconds,

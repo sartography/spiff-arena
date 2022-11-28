@@ -41,6 +41,12 @@ export default function ProcessInstanceListSaveAsReport({
     return identifier?.length > 0;
   };
 
+  const responseHandler = (result: any) => {
+    if (result.ok === true) {
+      onSuccess(identifier);
+    }
+  };
+
   const addProcessInstanceReport = (event: any) => {
     event.preventDefault();
 
@@ -92,7 +98,7 @@ export default function ProcessInstanceListSaveAsReport({
 
     HttpService.makeCallToBackend({
       path: `/process-instances/reports`,
-      successCallback: onSuccess,
+      successCallback: responseHandler,
       httpMethod: 'POST',
       postBody: {
         identifier,
