@@ -626,7 +626,7 @@ class ProcessInstanceProcessor:
                 for at in active_tasks:
                     if at.task_id == str(ready_or_waiting_task.id):
                         active_task = at
-                        active_tasks.pop(at)
+                        active_tasks.remove(at)
 
                 if active_task is None:
                     active_task = ActiveTaskModel(
@@ -644,12 +644,14 @@ class ProcessInstanceProcessor:
                     db.session.add(active_task)
                     db.session.commit()
 
-                for potential_owner_id in potential_owner_hash["potential_owner_ids"]:
-                    active_task_user = ActiveTaskUserModel(
-                        user_id=potential_owner_id, active_task_id=active_task.id
-                    )
-                    db.session.add(active_task_user)
-                db.session.commit()
+                    for potential_owner_id in potential_owner_hash[
+                        "potential_owner_ids"
+                    ]:
+                        active_task_user = ActiveTaskUserModel(
+                            user_id=potential_owner_id, active_task_id=active_task.id
+                        )
+                        db.session.add(active_task_user)
+                    db.session.commit()
 
         if len(active_tasks) > 0:
             for at in active_tasks:

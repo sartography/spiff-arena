@@ -4,7 +4,9 @@ from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -38,5 +40,6 @@ class TestSaveProcessInstanceMetadata(BaseTest):
         processor.do_engine_steps(save=True)
 
         process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
-            process_instance_id=process_instance.id).all()
+            process_instance_id=process_instance.id
+        ).all()
         assert len(process_instance_metadata) == 3

@@ -1,8 +1,11 @@
 """Get_env."""
 from typing import Any
+
 from flask_bpmn.models.db import db
 
-from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
@@ -26,10 +29,14 @@ class SaveProcessInstanceMetadata(Script):
         metadata_dict = args[0]
         for key, value in metadata_dict.items():
             pim = ProcessInstanceMetadataModel.query.filter_by(
-                process_instance_id=script_attributes_context.process_instance_id, key=key).first()
+                process_instance_id=script_attributes_context.process_instance_id,
+                key=key,
+            ).first()
             if pim is None:
                 pim = ProcessInstanceMetadataModel(
-                    process_instance_id=script_attributes_context.process_instance_id, key=key)
+                    process_instance_id=script_attributes_context.process_instance_id,
+                    key=key,
+                )
             pim.value = value
             db.session.add(pim)
             db.session.commit()
