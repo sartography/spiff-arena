@@ -51,5 +51,8 @@ from spiffworkflow_backend.models.spiff_step_details import (
 )  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel  # noqa: F401
 from spiffworkflow_backend.models.group import GroupModel  # noqa: F401
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)  # noqa: F401
 
 add_listeners()
