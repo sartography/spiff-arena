@@ -11,7 +11,7 @@ import HttpService from '../services/HttpService';
 
 type OwnProps = {
   onSuccess: (..._args: any[]) => any;
-  columnArray: { Header: string; accessor: string};
+  columnArray: { Header: string; accessor: string };
   orderBy: string;
   filterBy: string;
   buttonText?: string;
@@ -79,7 +79,9 @@ export default function ProcessInstanceListSaveAsReport({
           onChange={(e) => setIdentifier(e.target.value)}
         />
       </label>
-      <button disabled={!hasIdentifier()} type="submit">{buttonText}</button>
+      <button disabled={!hasIdentifier()} type="submit">
+        {buttonText}
+      </button>
     </form>
   );
 }
