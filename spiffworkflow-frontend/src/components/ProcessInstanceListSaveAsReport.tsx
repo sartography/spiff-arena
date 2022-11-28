@@ -11,7 +11,7 @@ import HttpService from '../services/HttpService';
 
 type OwnProps = {
   onSuccess: (..._args: any[]) => any;
-  columns: string;
+  columnArray: { Header: string; accessor: string};
   orderBy: string;
   filterBy: string;
   buttonText?: string;
@@ -19,10 +19,10 @@ type OwnProps = {
 
 export default function ProcessInstanceListSaveAsReport({
   onSuccess,
-  columns,
+  columnArray,
   orderBy,
   filterBy,
-  buttonText = 'Save as New Perspective',
+  buttonText = 'Save as Perspective',
 }: OwnProps) {
   const [identifier, setIdentifier] = useState('');
 
@@ -33,9 +33,8 @@ export default function ProcessInstanceListSaveAsReport({
   const addProcessInstanceReport = (event: any) => {
     event.preventDefault();
 
-    const columnArray = columns.split(',').map((column) => {
-      return { Header: column, accessor: column };
-    });
+    console.log(columnArray);
+
     const orderByArray = orderBy.split(',').filter((n) => n);
 
     const filterByArray = filterBy

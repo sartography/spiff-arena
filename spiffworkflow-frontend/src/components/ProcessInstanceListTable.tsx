@@ -622,6 +622,10 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const reportColumns = () => {
+    return (reportMetadata as any).columns;
+  };
+
   const buildTable = () => {
     const headerLabels: Record<string, string> = {
       id: 'Id',
@@ -636,7 +640,7 @@ export default function ProcessInstanceListTable({
     const getHeaderLabel = (header: string) => {
       return headerLabels[header] ?? header;
     };
-    const headers = (reportMetadata as any).columns.map((column: any) => {
+    const headers = reportColumns().map((column: any) => {
       // return <th>{getHeaderLabel((column as any).Header)}</th>;
       return getHeaderLabel((column as any).Header);
     });
@@ -710,7 +714,7 @@ export default function ProcessInstanceListTable({
     };
 
     const rows = processInstances.map((row: any) => {
-      const currentRow = (reportMetadata as any).columns.map((column: any) => {
+      const currentRow = reportColumns().map((column: any) => {
         return formattedColumn(row, column);
       });
       return <tr key={row.id}>{currentRow}</tr>;
@@ -766,11 +770,12 @@ export default function ProcessInstanceListTable({
   };
 
   const saveAsReportComponent = () => {
+    // TODO onSuccess reload/select the new report
     const callback = (_: any) => {};
     return (
       <ProcessInstanceListSaveAsReport
         onSuccess={callback}
-        columns=""
+        columnArray={reportColumns()}
         orderBy=""
         filterBy=""
       />
