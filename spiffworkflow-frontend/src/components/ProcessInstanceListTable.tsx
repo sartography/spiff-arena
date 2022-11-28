@@ -52,6 +52,7 @@ import {
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
+import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
 
 const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
@@ -764,6 +765,18 @@ export default function ProcessInstanceListTable({
     return null;
   };
 
+  const saveAsReportComponent = () => {
+    const callback = (_: any) => {};
+    return (
+      <ProcessInstanceListSaveAsReport
+        onSuccess={callback}
+        columns=""
+        orderBy=""
+        filterBy=""
+      />
+    );
+  };
+
   const filterComponent = () => {
     if (!filtersEnabled) {
       return null;
@@ -788,6 +801,7 @@ export default function ProcessInstanceListTable({
           </Column>
         </Grid>
         {filterOptions()}
+        {saveAsReportComponent()}
       </>
     );
   };
