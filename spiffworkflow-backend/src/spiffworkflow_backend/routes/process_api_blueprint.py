@@ -30,7 +30,6 @@ from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
-from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
@@ -928,7 +927,7 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             UserGroupAssignmentModel.user_id == g.user.id
         )
-        
+
     process_instances = (
         process_instance_query.group_by(ProcessInstanceModel.id)
         .order_by(
