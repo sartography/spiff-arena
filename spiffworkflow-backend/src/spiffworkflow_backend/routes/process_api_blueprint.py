@@ -30,7 +30,6 @@ from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
-from sqlalchemy import select
 from sqlalchemy.orm import joinedload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
@@ -899,7 +898,6 @@ def process_instance_list(
             SpiffStepDetailsModel.completed_by_user_id == g.user.id
         )
 
-    # TODO: not sure if this is exactly what is wanted
     if report_filter.with_tasks_completed_by_my_group is True:
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
@@ -918,20 +916,16 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
         )
-
-        my_groups = (
-            select(UserGroupAssignmentModel)  # type: ignore
-            .where(UserGroupAssignmentModel.user_id == g.user.id)
-            .with_only_columns(UserGroupAssignmentModel.group_id)
+        process_instance_query = process_instance_query.join(
+            GroupModel,
+            GroupModel.id == SpiffStepDetailsModel.lane_assignment_id,
         )
-        users_in_my_groups = (
-            select(UserGroupAssignmentModel)  # type: ignore
-            .where(UserGroupAssignmentModel.group_id.in_(my_groups))
-            .with_only_columns(UserGroupAssignmentModel.user_id)
+        process_instance_query = process_instance_query.join(
+            UserGroupAssignmentModel,
+            UserGroupAssignmentModel.group_id == GroupModel.id,
         )
-
         process_instance_query = process_instance_query.filter(
-            SpiffStepDetailsModel.completed_by_user_id.in_(users_in_my_groups)  # type: ignore
+            UserGroupAssignmentModel.user_id == g.user.id
         )
 
     process_instances = (
