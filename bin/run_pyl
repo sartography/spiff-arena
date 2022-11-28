@@ -20,6 +20,12 @@ function get_python_dirs() {
   (git ls-tree -r HEAD --name-only | grep -E '\.py$' | awk -F '/' '{print $1}' | sort | uniq | grep -v '\.' | grep -Ev '^(bin|migrations)$') || echo ''
 }
 
+function run_fix_docstrings() {
+  if command -v fix_python_docstrings >/dev/null ; then
+    fix_python_docstrings $(get_top_level_directories_containing_python_files)
+  fi
+}
+
 function run_autoflake() {
   if ! command -v autoflake8 >/dev/null ; then
     pip install autoflake8
@@ -51,6 +57,7 @@ done
 
 for python_project in "${python_projects[@]}" ; do
   pushd "$python_project"
+  run_fix_docstrings || run_fix_docstrings
   run_autoflake || run_autoflake
   popd
 done
