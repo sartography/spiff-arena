@@ -778,6 +778,7 @@ export default function ProcessInstanceListTable({
         columnArray={reportColumns()}
         orderBy=""
         processModelSelection={processModelSelection}
+        processStatusSelection={processStatusSelection}
       />
     );
   };
