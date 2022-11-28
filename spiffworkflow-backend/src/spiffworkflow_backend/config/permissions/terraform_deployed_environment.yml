@@ -38,24 +38,6 @@ groups:
         fin1,
       ]
 
-  Project Lead:
-    users:
-      [
-        jakub,
-        alex,
-        dan,
-        mike,
-        jason,
-        j,
-        jarrad,
-        elizabeth,
-        jon,
-        natalia,
-        manuchehr,
-        lead,
-        lead1,
-      ]
-
   demo:
     users:
       [

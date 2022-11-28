@@ -38,24 +38,6 @@ groups:
         fin1,
       ]
 
-  Project Lead:
-    users:
-      [
-        jakub,
-        alex,
-        dan,
-        mike,
-        jason,
-        j,
-        jarrad,
-        elizabeth,
-        jon,
-        natalia,
-        manuchehr,
-        lead,
-        lead1,
-      ]
-
   demo:
     users:
       [
@@ -63,6 +45,8 @@ groups:
         fin,
         fin1,
         harmeet,
+        sasha,
+        manuchehr,
         lead,
         lead1
       ]
@@ -108,6 +92,11 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-instances/reports/*
+  processes-read:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/processes
 
 
   manage-procurement-admin:
