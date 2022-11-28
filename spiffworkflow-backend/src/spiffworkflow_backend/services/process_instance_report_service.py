@@ -125,7 +125,6 @@ class ProcessInstanceReportService:
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "username", "accessor": "username"},
                     {"Header": "status", "accessor": "status"},
-
                 ],
                 "filter_by": [
                     {

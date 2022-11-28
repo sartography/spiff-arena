@@ -4,6 +4,7 @@ groups:
   admin:
     users:
       [
+        admin,
         jakub,
         kb,
         alex,
@@ -16,9 +17,6 @@ groups:
         elizabeth,
         jon,
         natalia,
-        harmeet,
-        sasha,
-        manuchehr,
       ]
 
   Finance Team:
@@ -64,12 +62,17 @@ groups:
         core,
         fin,
         fin1,
+        harmeet,
         lead,
         lead1
       ]
 
   core-contributor:
-    users: [core]
+    users:
+      [
+        core,
+        harmeet,
+      ]
 
 permissions:
   admin:
