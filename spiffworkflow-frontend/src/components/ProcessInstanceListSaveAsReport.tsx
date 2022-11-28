@@ -16,6 +16,10 @@ type OwnProps = {
   orderBy: string;
   processModelSelection: ProcessModel | null;
   processStatusSelection: string[];
+  startFromSeconds: string | null;
+  startToSeconds: string | null;
+  endFromSeconds: string | null;
+  endToSeconds: string | null;
   buttonText?: string;
 };
 
@@ -25,6 +29,10 @@ export default function ProcessInstanceListSaveAsReport({
   orderBy,
   processModelSelection,
   processStatusSelection,
+  startFromSeconds,
+  startToSeconds,
+  endFromSeconds,
+  endToSeconds,
   buttonText = 'Save as Perspective',
 }: OwnProps) {
   const [identifier, setIdentifier] = useState('');
@@ -51,6 +59,34 @@ export default function ProcessInstanceListSaveAsReport({
       filterByArray.push({
         field_name: 'process_status',
         field_value: processStatusSelection[0], // TODO: support more than one status
+      });
+    }
+
+    if (startFromSeconds) {
+      filterByArray.push({
+        field_name: 'start_from',
+        field_value: startFromSeconds,
+      });
+    }
+
+    if (startToSeconds) {
+      filterByArray.push({
+        field_name: 'start_to',
+        field_value: startToSeconds,
+      });
+    }
+
+    if (endFromSeconds) {
+      filterByArray.push({
+        field_name: 'end_from',
+        field_value: endFromSeconds,
+      });
+    }
+
+    if (endToSeconds) {
+      filterByArray.push({
+        field_name: 'end_to',
+        field_value: endToSeconds,
       });
     }
 

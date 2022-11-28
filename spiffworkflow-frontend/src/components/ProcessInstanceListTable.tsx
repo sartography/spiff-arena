@@ -367,16 +367,7 @@ export default function ProcessInstanceListTable({
     }
   };
 
-  const applyFilter = (event: any) => {
-    event.preventDefault();
-    const { page, perPage } = getPageInfoFromSearchParams(
-      searchParams,
-      undefined,
-      undefined,
-      paginationQueryParamPrefix
-    );
-    let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
-
+  const calculateStartAndEndSeconds = () => {
     const startFromSeconds = convertDateAndTimeStringsToSeconds(
       startFromDate,
       startFromTime || '00:00:00'
@@ -393,28 +384,59 @@ export default function ProcessInstanceListTable({
       endToDate,
       endToTime || '00:00:00'
     );
+    let valid = true;
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
       setErrorMessage({
         message: '"Start date from" cannot be after "start date to"',
       });
-      return;
+      valid = false;
     }
     if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
       setErrorMessage({
         message: '"End date from" cannot be after "end date to"',
       });
-      return;
+      valid = false;
     }
     if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
       setErrorMessage({
         message: '"Start date from" cannot be after "end date from"',
       });
-      return;
+      valid = false;
     }
     if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
       setErrorMessage({
         message: '"Start date to" cannot be after "end date to"',
       });
+      valid = false;
+    }
+
+    return {
+      valid,
+      startFromSeconds,
+      startToSeconds,
+      endFromSeconds,
+      endToSeconds,
+    };
+  };
+
+  const applyFilter = (event: any) => {
+    event.preventDefault();
+    const { page, perPage } = getPageInfoFromSearchParams(
+      searchParams,
+      undefined,
+      undefined,
+      paginationQueryParamPrefix
+    );
+    let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
+    const {
+      valid,
+      startFromSeconds,
+      startToSeconds,
+      endFromSeconds,
+      endToSeconds,
+    } = calculateStartAndEndSeconds();
+
+    if (!valid) {
       return;
     }
 
@@ -772,6 +794,17 @@ export default function ProcessInstanceListTable({
   const saveAsReportComponent = () => {
     // TODO onSuccess reload/select the new report in the report search
     const callback = (_: any) => {};
+    const {
+      valid,
+      startFromSeconds,
+      startToSeconds,
+      endFromSeconds,
+      endToSeconds,
+    } = calculateStartAndEndSeconds();
+
+    if (!valid) {
+      return null;
+    }
     return (
       <ProcessInstanceListSaveAsReport
         onSuccess={callback}
@@ -779,6 +812,10 @@ export default function ProcessInstanceListTable({
         orderBy=""
         processModelSelection={processModelSelection}
         processStatusSelection={processStatusSelection}
+        startFromSeconds={startFromSeconds}
+        startToSeconds={startToSeconds}
+        endFromSeconds={endFromSeconds}
+        endToSeconds={endToSeconds}
       />
     );
   };
