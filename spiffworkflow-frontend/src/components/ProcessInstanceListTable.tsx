@@ -777,7 +777,7 @@ export default function ProcessInstanceListTable({
         onSuccess={callback}
         columnArray={reportColumns()}
         orderBy=""
-        filterBy=""
+        processModelSelection={processModelSelection}
       />
     );
   };
