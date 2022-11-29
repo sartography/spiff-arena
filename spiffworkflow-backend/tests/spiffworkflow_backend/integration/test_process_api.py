@@ -4,13 +4,11 @@ import json
 import os
 import time
 from typing import Any
-from conftest import with_super_admin_user
 
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
-from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -22,6 +20,9 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -2554,10 +2555,11 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
+        """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id='test-process-instance-metadata-report',
-            bpmn_file_name='process_instance_metadata.bpmn',
-            process_model_source_directory='test-process-instance-metadata-report',
+            process_model_id="test-process-instance-metadata-report",
+            bpmn_file_name="process_instance_metadata.bpmn",
+            process_model_source_directory="test-process-instance-metadata-report",
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
@@ -2569,7 +2571,6 @@ class TestProcessApi(BaseTest):
             process_instance_id=process_instance.id
         ).all()
         assert len(process_instance_metadata) == 2
-
 
         report_metadata = {
             "columns": [
