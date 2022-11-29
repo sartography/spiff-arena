@@ -841,6 +841,22 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /process-instances/reports/columns:
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_column_list
+      summary: Returns all available columns for a process instance report.
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Workflow.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+
   /process-instances/reports/{report_identifier}:
     parameters:
       - name: report_identifier

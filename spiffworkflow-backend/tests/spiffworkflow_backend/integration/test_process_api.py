@@ -2577,7 +2577,7 @@ class TestProcessApi(BaseTest):
                 {"Header": "ID", "accessor": "id"},
                 {"Header": "Status", "accessor": "status"},
                 {"Header": "Key One", "accessor": "key1"},
-                # {"Header": "Key Two", "accessor": "key2"},
+                {"Header": "Key Two", "accessor": "key2"},
             ],
             "order_by": ["status"],
             "filter_by": [],
@@ -2600,7 +2600,41 @@ class TestProcessApi(BaseTest):
         assert response.json["results"][0]["status"] == "complete"
         assert response.json["results"][0]["id"] == process_instance.id
         assert response.json["results"][0]["key1"] == "value1"
-        # assert response.json["results"][0]["key2"] == "value2"
+        assert response.json["results"][0]["key2"] == "value2"
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["pages"] == 1
         assert response.json["pagination"]["total"] == 1
+
+    def test_can_get_process_instance_report_column_list(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_can_get_process_instance_list_with_report_metadata."""
+        process_model = load_test_spec(
+            process_model_id="test-process-instance-metadata-report",
+            bpmn_file_name="process_instance_metadata.bpmn",
+            process_model_source_directory="test-process-instance-metadata-report",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
+            process_instance_id=process_instance.id
+        ).all()
+        assert len(process_instance_metadata) == 2
+
+        response = client.get(
+            f"/v1.0/process-instances/reports/columns",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.json is not None
+        assert response.status_code == 200
+        assert response.json == [{'Header': 'id', 'accessor': 'id'}, {'Header': 'process_model_display_name', 'accessor': 'process_model_display_name'}, {'Header': 'start_in_seconds', 'accessor': 'start_in_seconds'}, {'Header': 'end_in_seconds', 'accessor': 'end_in_seconds'}, {'Header': 'username', 'accessor': 'username'}, {'Header': 'status', 'accessor': 'status'}, {'Header': 'key1', 'accessor': 'key1'}, {'Header': 'key2', 'accessor': 'key2'}]
+
