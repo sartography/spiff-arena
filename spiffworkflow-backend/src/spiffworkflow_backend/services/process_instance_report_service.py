@@ -5,7 +5,6 @@ from typing import Optional
 import sqlalchemy
 from flask_bpmn.models.db import db
 
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -253,12 +252,11 @@ class ProcessInstanceReportService:
         metadata_columns: list[dict],
     ) -> list[dict]:
         """Add_metadata_columns_to_process_instance."""
-        stock_columns = cls.get_column_names_for_model(ProcessInstanceModel)
         results = []
         for process_instance in process_instance_sqlalchemy_rows:
             process_instance_dict = process_instance["ProcessInstanceModel"].serialized
             for metadata_column in metadata_columns:
-                if metadata_column["accessor"] not in stock_columns:
+                if metadata_column["accessor"] not in process_instance_dict:
                     process_instance_dict[
                         metadata_column["accessor"]
                     ] = process_instance[metadata_column["accessor"]]

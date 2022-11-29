@@ -940,19 +940,17 @@ def process_instance_list(
         if column["accessor"] in stock_columns:
             continue
         instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-        process_instance_query = (
-            process_instance_query.outerjoin(
-                instance_metadata_alias,
+        process_instance_query = process_instance_query.outerjoin(
+            instance_metadata_alias,
+            and_(
                 ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
-            )
-            .filter(instance_metadata_alias.key == column["accessor"])
-            .add_columns(
-                func.max(instance_metadata_alias.value).label(column["accessor"])
-            )
-        )
+                instance_metadata_alias.key == column["accessor"],
+            ),
+        ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
 
     process_instances = (
         process_instance_query.group_by(ProcessInstanceModel.id)
+        .add_columns(ProcessInstanceModel.id)
         .order_by(
             ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
         )
