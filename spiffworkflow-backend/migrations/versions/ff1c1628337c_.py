@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 568f5fe2c9f8
+Revision ID: ff1c1628337c
 Revises: 
-Create Date: 2022-11-24 12:11:46.669020
+Create Date: 2022-11-28 15:08:52.014254
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '568f5fe2c9f8'
+revision = 'ff1c1628337c'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -166,17 +166,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('key')
     )
-    op.create_table('spiff_step_details',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('spiff_step', sa.Integer(), nullable=False),
-    sa.Column('task_json', sa.JSON(), nullable=False),
-    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
-    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
-    sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('user_group_assignment',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -249,6 +238,29 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('principal_id', 'permission_target_id', 'permission', name='permission_assignment_uniq')
     )
+    op.create_table('process_instance_metadata',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('key', sa.String(length=255), nullable=False),
+    sa.Column('value', sa.String(length=255), nullable=False),
+    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=False),
+    sa.Column('created_at_in_seconds', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('process_instance_id', 'key', name='process_instance_metadata_unique')
+    )
+    op.create_table('spiff_step_details',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('spiff_step', sa.Integer(), nullable=False),
+    sa.Column('task_json', sa.JSON(), nullable=False),
+    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
+    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
+    sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('active_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('active_task_id', sa.Integer(), nullable=False),
@@ -282,6 +294,8 @@ def downgrade():
     op.drop_index(op.f('ix_active_task_user_user_id'), table_name='active_task_user')
     op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
     op.drop_table('active_task_user')
+    op.drop_table('spiff_step_details')
+    op.drop_table('process_instance_metadata')
     op.drop_table('permission_assignment')
     op.drop_table('message_instance')
     op.drop_index(op.f('ix_message_correlation_value'), table_name='message_correlation')
@@ -291,7 +305,6 @@ def downgrade():
     op.drop_table('message_correlation')
     op.drop_table('active_task')
     op.drop_table('user_group_assignment')
-    op.drop_table('spiff_step_details')
     op.drop_table('secret')
     op.drop_table('refresh_token')
     op.drop_index(op.f('ix_process_instance_report_identifier'), table_name='process_instance_report')
