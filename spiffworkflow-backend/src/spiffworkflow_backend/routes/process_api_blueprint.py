@@ -936,10 +936,10 @@ def process_instance_list(
     stock_columns = ProcessInstanceReportService.get_column_names_for_model(ProcessInstanceModel)
     # print(f"stock_columns: {stock_columns}")
     # import pdb; pdb.set_trace()
-    # for column in process_instance_report.report_metadata['columns']:
-    #     if column not in stock_columns:
-    #         # continue
-    for column in [{'accessor': 'key1'}]:
+    for column in process_instance_report.report_metadata['columns']:
+        if column['accessor'] in stock_columns:
+            continue
+    # for column in [{'accessor': 'key1'}]:
         # print(f"column: {column['accessor']}")
         # process_instance_query = process_instance_query.outerjoin(ProcessInstanceMetadataModel, ProcessInstanceModel.id == ProcessInstanceMetadataModel.process_instance_id, ProcessInstanceMetadataModel.key == column['accessor'])
         instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
