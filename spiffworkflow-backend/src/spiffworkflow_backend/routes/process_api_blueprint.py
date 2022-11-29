@@ -12,7 +12,6 @@ from typing import Union
 import connexion  # type: ignore
 import flask.wrappers
 import jinja2
-from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 import werkzeug
 from flask import Blueprint
 from flask import current_app
@@ -28,10 +27,12 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
-from sqlalchemy import and_, func
+from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
-from sqlalchemy.orm import aliased, joinedload
+from sqlalchemy import func
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import joinedload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
@@ -53,6 +54,9 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSche
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -814,9 +818,9 @@ def process_instance_list(
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
     # Always join that hot user table for good performance at serialization time.
-    # process_instance_query = process_instance_query.options(
-    #     joinedload(ProcessInstanceModel.process_initiator, ProcessInstanceModel.process_initiator_id == UserModel.id)
-    # )
+    process_instance_query = process_instance_query.options(
+        joinedload(ProcessInstanceModel.process_initiator)
+    )
 
     if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
@@ -929,14 +933,22 @@ def process_instance_list(
             UserGroupAssignmentModel.user_id == g.user.id
         )
 
-    stock_columns = ProcessInstanceReportService.get_column_names_for_model(ProcessInstanceModel)
-    for column in process_instance_report.report_metadata['columns']:
-        if column['accessor'] in stock_columns:
+    stock_columns = ProcessInstanceReportService.get_column_names_for_model(
+        ProcessInstanceModel
+    )
+    for column in process_instance_report.report_metadata["columns"]:
+        if column["accessor"] in stock_columns:
             continue
         instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
         process_instance_query = (
-            process_instance_query.options(joinedload(instance_metadata_alias, ProcessInstanceModel.id == instance_metadata_alias.process_instance_id, innerjoin=False)).filter(instance_metadata_alias.key == column['accessor'])
-            .add_columns(func.max(instance_metadata_alias.value).label(column['accessor']))
+            process_instance_query.outerjoin(
+                instance_metadata_alias,
+                ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
+            )
+            .filter(instance_metadata_alias.key == column["accessor"])
+            .add_columns(
+                func.max(instance_metadata_alias.value).label(column["accessor"])
+            )
         )
 
     process_instances = (
@@ -947,7 +959,9 @@ def process_instance_list(
         .paginate(page=page, per_page=per_page, error_out=False)
     )
 
-    results = ProcessInstanceReportService.add_metadata_columns_to_process_instance(process_instances.items, process_instance_report.report_metadata['columns'])
+    results = ProcessInstanceReportService.add_metadata_columns_to_process_instance(
+        process_instances.items, process_instance_report.report_metadata["columns"]
+    )
     report_metadata = process_instance_report.report_metadata
 
     response_json = {
