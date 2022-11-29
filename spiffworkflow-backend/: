@@ -12,6 +12,7 @@ from typing import Union
 import connexion  # type: ignore
 import flask.wrappers
 import jinja2
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 import werkzeug
 from flask import Blueprint
 from flask import current_app
@@ -30,9 +31,7 @@ from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
-from sqlalchemy import func
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import aliased, joinedload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
@@ -54,9 +53,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSche
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_instance_metadata import (
-    ProcessInstanceMetadataModel,
-)
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -933,32 +929,42 @@ def process_instance_list(
             UserGroupAssignmentModel.user_id == g.user.id
         )
 
-    stock_columns = ProcessInstanceReportService.get_column_names_for_model(
-        ProcessInstanceModel
-    )
-    for column in process_instance_report.report_metadata["columns"]:
-        if column["accessor"] in stock_columns:
-            continue
-        instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-        process_instance_query = process_instance_query.outerjoin(
-            instance_metadata_alias,
-            and_(
-                ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
-                instance_metadata_alias.key == column["accessor"],
-            ),
-        ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
+    # userSkillF = aliased(UserSkill)
+    # userSkillI = aliased(UserSkill)
+
+    import pdb; pdb.set_trace()
+    for column in process_instance_report.report_metadata['columns']:
+        print(f"column: {column['accessor']}")
+        # process_instance_query = process_instance_query.outerjoin(ProcessInstanceMetadataModel, ProcessInstanceModel.id == ProcessInstanceMetadataModel.process_instance_id, ProcessInstanceMetadataModel.key == column['accessor'])
+        instance_metadata_alias = alias(ProcessInstanceMetadataModel)
+        process_instance_query = (
+            process_instance_query.outerjoin(instance_metadata_alias, ProcessInstanceModel.id == instance_metadata_alias.process_instance_id)
+            .add_column(ProcessInstanceMetadataModel.value.label(column['accessor']))
+        )
+    import pdb; pdb.set_trace()
 
     process_instances = (
         process_instance_query.group_by(ProcessInstanceModel.id)
-        .add_columns(ProcessInstanceModel.id)
         .order_by(
             ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
+    import pdb; pdb.set_trace()
 
-    results = ProcessInstanceReportService.add_metadata_columns_to_process_instance(
-        process_instances.items, process_instance_report.report_metadata["columns"]
+    # def awesome_serialize(process_instance)
+    #     dict_thing = process_instance.serialize
+    #
+    #     # add columns since we have access to columns here
+    #     dict_thing['awesome'] = 'awesome'
+    #
+    #     return dict_thing
+
+    results = list(
+        map(
+            ProcessInstanceService.serialize_flat_with_task_data,
+            process_instances.items,
+        )
     )
     report_metadata = process_instance_report.report_metadata
 
