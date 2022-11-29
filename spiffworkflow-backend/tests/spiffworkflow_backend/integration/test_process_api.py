@@ -20,6 +20,9 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -2544,3 +2547,60 @@ class TestProcessApi(BaseTest):
         # make sure the new subgroup does exist
         new_process_group = ProcessModelService.get_process_group(new_sub_path)
         assert new_process_group.id == new_sub_path
+
+    def test_can_get_process_instance_list_with_report_metadata(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_can_get_process_instance_list_with_report_metadata."""
+        process_model = load_test_spec(
+            process_model_id="test-process-instance-metadata-report",
+            bpmn_file_name="process_instance_metadata.bpmn",
+            process_model_source_directory="test-process-instance-metadata-report",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
+            process_instance_id=process_instance.id
+        ).all()
+        assert len(process_instance_metadata) == 2
+
+        report_metadata = {
+            "columns": [
+                {"Header": "ID", "accessor": "id"},
+                {"Header": "Status", "accessor": "status"},
+                {"Header": "Key One", "accessor": "key1"},
+                # {"Header": "Key Two", "accessor": "key2"},
+            ],
+            "order_by": ["status"],
+            "filter_by": [],
+        }
+        process_instance_report = ProcessInstanceReportModel.create_with_attributes(
+            identifier="sure",
+            report_metadata=report_metadata,
+            user=with_super_admin_user,
+        )
+
+        response = client.get(
+            f"/v1.0/process-instances?report_identifier={process_instance_report.identifier}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.json is not None
+        assert response.status_code == 200
+
+        assert len(response.json["results"]) == 1
+        assert response.json["results"][0]["status"] == "complete"
+        assert response.json["results"][0]["id"] == process_instance.id
+        assert response.json["results"][0]["key1"] == "value1"
+        # assert response.json["results"][0]["key2"] == "value2"
+        assert response.json["pagination"]["count"] == 1
+        assert response.json["pagination"]["pages"] == 1
+        assert response.json["pagination"]["total"] == 1

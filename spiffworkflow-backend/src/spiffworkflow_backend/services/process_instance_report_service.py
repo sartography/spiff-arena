@@ -2,6 +2,9 @@
 from dataclasses import dataclass
 from typing import Optional
 
+import sqlalchemy
+from flask_bpmn.models.db import db
+
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -241,3 +244,27 @@ class ProcessInstanceReportService:
             )
 
         return report_filter
+
+    @classmethod
+    def add_metadata_columns_to_process_instance(
+        cls,
+        process_instance_sqlalchemy_rows: list[sqlalchemy.engine.row.Row],  # type: ignore
+        metadata_columns: list[dict],
+    ) -> list[dict]:
+        """Add_metadata_columns_to_process_instance."""
+        results = []
+        for process_instance in process_instance_sqlalchemy_rows:
+            process_instance_dict = process_instance["ProcessInstanceModel"].serialized
+            for metadata_column in metadata_columns:
+                if metadata_column["accessor"] not in process_instance_dict:
+                    process_instance_dict[
+                        metadata_column["accessor"]
+                    ] = process_instance[metadata_column["accessor"]]
+
+            results.append(process_instance_dict)
+        return results
+
+    @classmethod
+    def get_column_names_for_model(cls, model: db.Model) -> list[str]:  # type: ignore
+        """Get_column_names_for_model."""
+        return [i.name for i in model.__table__.columns]

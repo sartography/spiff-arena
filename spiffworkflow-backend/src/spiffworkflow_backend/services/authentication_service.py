@@ -235,8 +235,9 @@ class AuthenticationService:
         refresh_token_object: RefreshTokenModel = RefreshTokenModel.query.filter(
             RefreshTokenModel.user_id == user_id
         ).first()
-        assert refresh_token_object  # noqa: S101
-        return refresh_token_object.token
+        if refresh_token_object:
+            return refresh_token_object.token
+        return None
 
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str) -> dict:
