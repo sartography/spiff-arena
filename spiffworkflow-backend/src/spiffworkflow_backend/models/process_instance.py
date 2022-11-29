@@ -22,6 +22,10 @@ from spiffworkflow_backend.models.task import TaskSchema
 from spiffworkflow_backend.models.user import UserModel
 
 
+class ProcessInstanceNotFoundError(Exception):
+    """ProcessInstanceNotFoundError."""
+
+
 class NavigationItemSchema(Schema):
     """NavigationItemSchema."""
 

@@ -161,6 +161,7 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
+        processor.save()
 
         assert len(process_instance.active_tasks) == 1
         active_task = process_instance.active_tasks[0]
@@ -241,3 +242,42 @@ class TestProcessInstanceProcessor(BaseTest):
         )
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
+
+    def test_does_not_recreate_active_tasks_on_multiple_saves(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_sets_permission_correctly_on_active_task_when_using_dict."""
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
+        initiator_user = self.find_or_create_user("initiator_user")
+        finance_user_three = self.find_or_create_user("testuser3")
+        assert initiator_user.principal is not None
+        assert finance_user_three.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        assert finance_group is not None
+
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes_with_owner_dict.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        assert len(process_instance.active_tasks) == 1
+        initial_active_task_id = process_instance.active_tasks[0].id
+
+        # save again to ensure we go attempt to process the active tasks again
+        processor.save()
+
+        assert len(process_instance.active_tasks) == 1
+        assert initial_active_task_id == process_instance.active_tasks[0].id
