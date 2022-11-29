@@ -2562,7 +2562,7 @@ class TestProcessApi(BaseTest):
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
         )
-        
+
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
@@ -2576,6 +2576,7 @@ class TestProcessApi(BaseTest):
                 {"Header": "ID", "accessor": "id"},
                 {"Header": "Status", "accessor": "status"},
                 {"Header": "Key One", "accessor": "key1"},
+                # {"Header": "Key Two", "accessor": "key2"},
             ],
             "order_by": ["status"],
             "filter_by": [],
@@ -2588,17 +2589,17 @@ class TestProcessApi(BaseTest):
 
         response = client.get(
             f"/v1.0/process-instances?report_identifier={process_instance_report.identifier}",
-            # f"/v1.0/process-instances?report_identifier=demo1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        print(f"response.json: {response.json}")
+
         assert response.json is not None
         assert response.status_code == 200
 
         assert len(response.json["results"]) == 1
         assert response.json["results"][0]["status"] == "complete"
         assert response.json["results"][0]["id"] == process_instance.id
-        # assert response.json["results"][0]["key1"] == "value1"
+        assert response.json["results"][0]["key1"] == "value1"
+        # assert response.json["results"][0]["key2"] == "value2"
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["pages"] == 1
         assert response.json["pagination"]["total"] == 1
