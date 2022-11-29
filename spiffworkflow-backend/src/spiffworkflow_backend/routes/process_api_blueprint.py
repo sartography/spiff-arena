@@ -814,9 +814,9 @@ def process_instance_list(
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
     # Always join that hot user table for good performance at serialization time.
-    process_instance_query = process_instance_query.options(
-        joinedload(ProcessInstanceModel.process_initiator)
-    )
+    # process_instance_query = process_instance_query.options(
+    #     joinedload(ProcessInstanceModel.process_initiator, ProcessInstanceModel.process_initiator_id == UserModel.id)
+    # )
 
     if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
@@ -929,25 +929,15 @@ def process_instance_list(
             UserGroupAssignmentModel.user_id == g.user.id
         )
 
-    # userSkillF = aliased(UserSkill)
-    # userSkillI = aliased(UserSkill)
-
-    # import pdb; pdb.set_trace()
     stock_columns = ProcessInstanceReportService.get_column_names_for_model(ProcessInstanceModel)
-    # print(f"stock_columns: {stock_columns}")
-    # import pdb; pdb.set_trace()
     for column in process_instance_report.report_metadata['columns']:
         if column['accessor'] in stock_columns:
             continue
-    # for column in [{'accessor': 'key1'}]:
-        # print(f"column: {column['accessor']}")
-        # process_instance_query = process_instance_query.outerjoin(ProcessInstanceMetadataModel, ProcessInstanceModel.id == ProcessInstanceMetadataModel.process_instance_id, ProcessInstanceMetadataModel.key == column['accessor'])
         instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
         process_instance_query = (
             process_instance_query.options(joinedload(instance_metadata_alias, ProcessInstanceModel.id == instance_metadata_alias.process_instance_id, innerjoin=False)).filter(instance_metadata_alias.key == column['accessor'])
-            .add_column(func.max(instance_metadata_alias.value).label(column['accessor']))
+            .add_columns(func.max(instance_metadata_alias.value).label(column['accessor']))
         )
-    # import pdb; pdb.set_trace()
 
     process_instances = (
         process_instance_query.group_by(ProcessInstanceModel.id)
@@ -956,26 +946,9 @@ def process_instance_list(
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
-    import pdb; pdb.set_trace()
 
-    # def awesome_serialize(process_instance)
-    #     dict_thing = process_instance.serialize
-    #
-    #     # add columns since we have access to columns here
-    #     dict_thing['awesome'] = 'awesome'
-    #
-    #     return dict_thing
-
-    # results = list(
-    #     map(
-    #         ProcessInstanceService.serialize_flat_with_task_data,
-    #         process_instances.items,
-    #     )
-    # )
     results = ProcessInstanceReportService.add_metadata_columns_to_process_instance(process_instances.items, process_instance_report.report_metadata['columns'])
     report_metadata = process_instance_report.report_metadata
-    print(f"results: {results}")
-    import pdb; pdb.set_trace()
 
     response_json = {
         "report_identifier": process_instance_report.identifier,
