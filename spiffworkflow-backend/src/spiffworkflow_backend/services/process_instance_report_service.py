@@ -268,3 +268,17 @@ class ProcessInstanceReportService:
     def get_column_names_for_model(cls, model: db.Model) -> list[str]:  # type: ignore
         """Get_column_names_for_model."""
         return [i.name for i in model.__table__.columns]
+
+    @classmethod
+    def builtin_column_options(cls) -> list[dict]:
+        return [
+            {"Header": "id", "accessor": "id"},
+            {
+                "Header": "process_model_display_name",
+                "accessor": "process_model_display_name",
+            },
+            {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+            {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
+            {"Header": "username", "accessor": "username"},
+            {"Header": "status", "accessor": "status"},
+        ]

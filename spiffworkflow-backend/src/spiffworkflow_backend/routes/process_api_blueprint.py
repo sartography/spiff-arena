@@ -977,6 +977,15 @@ def process_instance_list(
     return make_response(jsonify(response_json), 200)
 
 
+def process_instance_report_column_list() -> flask.wrappers.Response:
+
+    table_columns = ProcessInstanceReportService.builtin_column_options()
+    columns_for_metadata = db.session.query(ProcessInstanceMetadataModel.key).distinct().all()  # type: ignore
+    columns_for_metadata_strings = [{ 'Header': i[0], 'accessor': i[0]} for i in columns_for_metadata]
+    # columns = sorted(table_columns + columns_for_metadata_strings)
+    return make_response(jsonify(table_columns + columns_for_metadata_strings), 200)
+
+
 def process_instance_show(
     modified_process_model_identifier: str, process_instance_id: int
 ) -> flask.wrappers.Response:
