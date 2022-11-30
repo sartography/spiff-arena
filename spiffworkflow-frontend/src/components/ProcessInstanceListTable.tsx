@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom';
 
 // @ts-ignore
-import { Filter } from '@carbon/icons-react';
+import { Filter, Close } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -21,6 +21,7 @@ import {
   TableHead,
   TableRow,
   TimePicker,
+  Tag,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
@@ -49,6 +50,7 @@ import {
   ProcessModel,
   ProcessInstanceReport,
   ProcessInstance,
+  ReportColumn,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -126,6 +128,10 @@ export default function ProcessInstanceListTable({
     useState<ProcessModel | null>(null);
   const [processInstanceReportSelection, setProcessInstanceReportSelection] =
     useState<ProcessInstanceReport | null>(null);
+
+  const [availableReportColumns, setAvailableReportColumns] = useState<
+    ReportColumn[]
+  >([]);
 
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
     return {
@@ -554,12 +560,99 @@ export default function ProcessInstanceListTable({
     setEndToTime('');
   };
 
+  const processInstanceReportDidChange = (selection: any) => {
+    clearFilters();
+
+    const selectedReport = selection.selectedItem;
+    setProcessInstanceReportSelection(selectedReport);
+
+    const queryParamString = selectedReport
+      ? `&report_identifier=${selectedReport.id}`
+      : '';
+
+    setErrorMessage(null);
+    navigate(`/admin/process-instances?${queryParamString}`);
+  };
+
+  const reportColumns = () => {
+    return (reportMetadata as any).columns;
+  };
+
+  const saveAsReportComponent = () => {
+    // TODO onSuccess reload/select the new report in the report search
+    const callback = (identifier: string) => {
+      processInstanceReportDidChange({
+        selectedItem: { id: identifier, display_name: identifier },
+      });
+    };
+    const {
+      valid,
+      startFromSeconds,
+      startToSeconds,
+      endFromSeconds,
+      endToSeconds,
+    } = calculateStartAndEndSeconds();
+
+    if (!valid) {
+      return null;
+    }
+    return (
+      <ProcessInstanceListSaveAsReport
+        onSuccess={callback}
+        columnArray={reportColumns()}
+        orderBy=""
+        processModelSelection={processModelSelection}
+        processStatusSelection={processStatusSelection}
+        startFromSeconds={startFromSeconds}
+        startToSeconds={startToSeconds}
+        endFromSeconds={endFromSeconds}
+        endToSeconds={endToSeconds}
+      />
+    );
+  };
+
+  const columnSelections = () => {
+    if (reportColumns()) {
+      const tags: any = [];
+
+      (reportColumns() as any).forEach((reportColumn: ReportColumn) => {
+        tags.push(
+          <Tag type="cool-gray" size="sm" title={reportColumn.accessor}>
+            <Button
+              kind="ghost"
+              size="sm"
+              className="button-tag-icon"
+              title="Edit Header"
+            >
+              {reportColumn.Header}
+            </Button>
+            <Button
+              data-qa="remove-report-column"
+              renderIcon={Close}
+              iconDescription="Remove Column"
+              className="button-tag-icon"
+              hasIconOnly
+              size="sm"
+              kind="ghost"
+              onClick={toggleShowFilterOptions}
+            />
+          </Tag>
+        );
+      });
+      return tags;
+    }
+    return null;
+  };
+
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
     }
     return (
       <>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={8}>{columnSelections()}</Column>
+        </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>
             <ProcessModelSearch
@@ -642,12 +735,13 @@ export default function ProcessInstanceListTable({
             </ButtonSet>
           </Column>
         </Grid>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={7} lg={13} sm={3}>
+            {saveAsReportComponent()}
+          </Column>
+        </Grid>
       </>
     );
-  };
-
-  const reportColumns = () => {
-    return (reportMetadata as any).columns;
   };
 
   const buildTable = () => {
@@ -749,20 +843,10 @@ export default function ProcessInstanceListTable({
 
   const toggleShowFilterOptions = () => {
     setShowFilterOptions(!showFilterOptions);
-  };
-
-  const processInstanceReportDidChange = (selection: any) => {
-    clearFilters();
-
-    const selectedReport = selection.selectedItem;
-    setProcessInstanceReportSelection(selectedReport);
-
-    const queryParamString = selectedReport
-      ? `&report_identifier=${selectedReport.id}`
-      : '';
-
-    setErrorMessage(null);
-    navigate(`/admin/process-instances?${queryParamString}`);
+    HttpService.makeCallToBackend({
+      path: `/process-instances/reports/columns`,
+      successCallback: setAvailableReportColumns,
+    });
   };
 
   const reportSearchComponent = () => {
@@ -775,39 +859,6 @@ export default function ProcessInstanceListTable({
       );
     }
     return null;
-  };
-
-  const saveAsReportComponent = () => {
-    // TODO onSuccess reload/select the new report in the report search
-    const callback = (identifier: string) => {
-      processInstanceReportDidChange({
-        selectedItem: { id: identifier, display_name: identifier },
-      });
-    };
-    const {
-      valid,
-      startFromSeconds,
-      startToSeconds,
-      endFromSeconds,
-      endToSeconds,
-    } = calculateStartAndEndSeconds();
-
-    if (!valid) {
-      return null;
-    }
-    return (
-      <ProcessInstanceListSaveAsReport
-        onSuccess={callback}
-        columnArray={reportColumns()}
-        orderBy=""
-        processModelSelection={processModelSelection}
-        processStatusSelection={processStatusSelection}
-        startFromSeconds={startFromSeconds}
-        startToSeconds={startToSeconds}
-        endFromSeconds={endFromSeconds}
-        endToSeconds={endToSeconds}
-      />
-    );
   };
 
   const filterComponent = () => {
@@ -834,7 +885,6 @@ export default function ProcessInstanceListTable({
           </Column>
         </Grid>
         {filterOptions()}
-        {saveAsReportComponent()}
       </>
     );
   };

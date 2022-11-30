@@ -1,12 +1,11 @@
 import { useState } from 'react';
-// TODO: carbon controls
-/*
 import {
   Button,
-  Textbox,
+  TextInput,
+  Form,
+  Stack,
   // @ts-ignore
 } from '@carbon/react';
-*/
 import { ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 
@@ -112,20 +111,21 @@ export default function ProcessInstanceListSaveAsReport({
   };
 
   return (
-    <form onSubmit={addProcessInstanceReport}>
-      <label htmlFor="identifier">
-        identifier:
-        <input
-          name="identifier"
+    <Form onSubmit={addProcessInstanceReport}>
+      <Stack gap={5} orientation="horizontal">
+        <TextInput
           id="identifier"
-          type="text"
+          name="identifier"
+          labelText="Identifier"
+          className="no-wrap"
+          inline
           value={identifier}
-          onChange={(e) => setIdentifier(e.target.value)}
+          onChange={(e: any) => setIdentifier(e.target.value)}
         />
-      </label>
-      <button disabled={!hasIdentifier()} type="submit">
-        {buttonText}
-      </button>
-    </form>
+        <Button disabled={!hasIdentifier()} size="sm">
+          {buttonText}
+        </Button>
+      </Stack>
+    </Form>
   );
 }

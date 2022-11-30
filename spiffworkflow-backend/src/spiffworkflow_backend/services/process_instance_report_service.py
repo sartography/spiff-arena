@@ -76,17 +76,7 @@ class ProcessInstanceReportService:
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
             "default": {
-                "columns": [
-                    {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_model_display_name",
-                        "accessor": "process_model_display_name",
-                    },
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "username", "accessor": "username"},
-                    {"Header": "status", "accessor": "status"},
-                ],
+                "columns": cls.builtin_column_options()
             },
             "system_report_instances_initiated_by_me": {
                 "columns": [
@@ -102,33 +92,13 @@ class ProcessInstanceReportService:
                 "filter_by": [{"field_name": "initiated_by_me", "field_value": True}],
             },
             "system_report_instances_with_tasks_completed_by_me": {
-                "columns": [
-                    {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_model_display_name",
-                        "accessor": "process_model_display_name",
-                    },
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "username", "accessor": "username"},
-                    {"Header": "status", "accessor": "status"},
-                ],
+                "columns": cls.builtin_column_options(),
                 "filter_by": [
                     {"field_name": "with_tasks_completed_by_me", "field_value": True}
                 ],
             },
             "system_report_instances_with_tasks_completed_by_my_groups": {
-                "columns": [
-                    {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_model_display_name",
-                        "accessor": "process_model_display_name",
-                    },
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "username", "accessor": "username"},
-                    {"Header": "status", "accessor": "status"},
-                ],
+                "columns": cls.builtin_column_options(),
                 "filter_by": [
                     {
                         "field_name": "with_tasks_completed_by_my_group",
@@ -273,13 +243,13 @@ class ProcessInstanceReportService:
     def builtin_column_options(cls) -> list[dict]:
         """Builtin_column_options."""
         return [
-            {"Header": "id", "accessor": "id"},
+            {"Header": "Id", "accessor": "id"},
             {
-                "Header": "process_model_display_name",
+                "Header": "Process",
                 "accessor": "process_model_display_name",
             },
-            {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-            {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-            {"Header": "username", "accessor": "username"},
-            {"Header": "status", "accessor": "status"},
+            {"Header": "Start", "accessor": "start_in_seconds"},
+            {"Header": "End", "accessor": "end_in_seconds"},
+            {"Header": "Username", "accessor": "username"},
+            {"Header": "Status", "accessor": "status"},
         ]
