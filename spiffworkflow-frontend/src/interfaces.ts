@@ -152,3 +152,8 @@ export interface FormField {
   type: string;
   enum: string[];
 }
+
+export interface ReportColumn {
+  Header: string;
+  accessor: string;
+}

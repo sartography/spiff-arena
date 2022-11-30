@@ -316,10 +316,21 @@ td.actions-cell {
   padding-bottom: 10px;
 }
 
-.cds--btn--ghost:not([disabled]) svg {
+.cds--btn--ghost:not([disabled]) svg.red-icon {
   fill: red;
 }
 
 .failure-string {
   color: red;
+}
+
+.cds--btn--ghost.cds--btn--sm.button-tag-icon {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+}
+
+/* .no-wrap cds--label cds--label--inline cds--label--inline--md{ */
+.no-wrap .cds--label--inline{
+  word-break: normal;
 }
