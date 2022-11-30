@@ -19,7 +19,7 @@ openid_blueprint = Blueprint(
 
 MY_SECRET_CODE = ":this_should_be_some_crazy_code_different_all_the_time"
 
-@openid_blueprint.route("/well-known/openid-configuration", methods=["GET"])
+@openid_blueprint.route("/.well-known/openid-configuration", methods=["GET"])
 def well_known():
     """OpenID Discovery endpoint -- as these urls can be very different from system to system,
        this is just a small subset."""
@@ -52,9 +52,10 @@ def form_submit():
         state = request.values.get('state')
         data = {
             "state": base64.b64encode(bytes(state, 'UTF-8')),
-            "code": request.values['Uname'] + MY_SECRET_CODE
+            "code": request.values['Uname'] + MY_SECRET_CODE,
+            "session_state": ""
         }
-        url = request.values.get('redirect_uri') + urlencode(data)
+        url = request.values.get('redirect_uri') + "?" + urlencode(data)
         return redirect(url, code=200)
     else:
         return render_template('login.html',
