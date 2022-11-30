@@ -39,6 +39,28 @@ export interface ProcessFile {
 export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
+  process_model_display_name: string;
+}
+
+export interface MessageCorrelationProperties {
+  [key: string]: string;
+}
+
+export interface MessageCorrelations {
+  [key: string]: MessageCorrelationProperties;
+}
+
+export interface MessageInstance {
+  id: number;
+  process_model_identifier: string;
+  process_model_display_name: string;
+  process_instance_id: number;
+  message_identifier: string;
+  message_type: string;
+  failure_cause: string;
+  status: string;
+  created_at_in_seconds: number;
+  message_correlations?: MessageCorrelations;
 }
 
 export interface ProcessInstanceReport {

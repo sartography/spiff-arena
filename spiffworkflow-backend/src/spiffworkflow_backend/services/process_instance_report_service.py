@@ -271,6 +271,7 @@ class ProcessInstanceReportService:
 
     @classmethod
     def builtin_column_options(cls) -> list[dict]:
+        """Builtin_column_options."""
         return [
             {"Header": "id", "accessor": "id"},
             {

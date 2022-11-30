@@ -53,6 +53,7 @@ import {
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
+import { FormatProcessModelDisplayName } from './MiniComponents';
 
 const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
@@ -693,22 +694,6 @@ export default function ProcessInstanceListTable({
       );
     };
 
-    const formatProcessModelDisplayName = (
-      row: ProcessInstance,
-      displayName: string
-    ) => {
-      return (
-        <Link
-          to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
-            row.process_model_identifier
-          )}`}
-          title={row.process_model_identifier}
-        >
-          {displayName}
-        </Link>
-      );
-    };
-
     const formatSecondsForDisplay = (_row: any, seconds: any) => {
       return convertSecondsToFormattedDateTime(seconds) || '-';
     };
@@ -719,7 +704,7 @@ export default function ProcessInstanceListTable({
     const columnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
-      process_model_display_name: formatProcessModelDisplayName,
+      process_model_display_name: FormatProcessModelDisplayName,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
     };
