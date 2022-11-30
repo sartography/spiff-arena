@@ -66,9 +66,11 @@ backendCallProps) => {
     method: httpMethod,
   });
 
+  const updatedPath = path.replace(/^\/v1\.0/, '');
+
   let isSuccessful = true;
   let is403 = false;
-  fetch(`${BACKEND_BASE_URL}${path}`, httpArgs)
+  fetch(`${BACKEND_BASE_URL}${updatedPath}`, httpArgs)
     .then((response) => {
       if (response.status === 401) {
         UserService.doLogin();

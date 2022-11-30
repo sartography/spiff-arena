@@ -96,7 +96,7 @@ def setup_process_instances_for_reports(
     # )
     process_instances = []
     for data in [kay(), ray(), jay()]:
-        process_instance = ProcessInstanceService.create_process_instance(
+        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             # process_group_identifier=process_group_id,
             process_model_identifier=process_model_identifier,
             user=user,

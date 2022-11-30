@@ -29,6 +29,7 @@ class ProcessGroup:
         default_factory=list[ProcessModelInfo]
     )
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
+    parent_groups: list[dict] | None = None
 
     def __post_init__(self) -> None:
         """__post_init__."""

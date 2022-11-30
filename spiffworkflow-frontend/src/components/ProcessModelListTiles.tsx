@@ -15,11 +15,13 @@ import ProcessInstanceRun from './ProcessInstanceRun';
 type OwnProps = {
   headerElement?: ReactElement;
   processGroup?: ProcessGroup;
+  checkPermissions?: boolean;
 };
 
 export default function ProcessModelListTiles({
   headerElement,
   processGroup,
+  checkPermissions = true,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [processModels, setProcessModels] = useState<ProcessModel[] | null>(
@@ -33,9 +35,11 @@ export default function ProcessModelListTiles({
       setProcessModels(result.results);
     };
     // only allow 10 for now until we get the backend only returning certain models for user execution
-    let queryParams = '?per_page=100';
+    let queryParams = '?per_page=20';
     if (processGroup) {
       queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
+    } else {
+      queryParams = `${queryParams}&recursive=true&filter_runnable_by_user=true`;
     }
     HttpService.makeCallToBackend({
       path: `/process-models${queryParams}`,
@@ -73,12 +77,19 @@ export default function ProcessModelListTiles({
           <Tile
             id={`process-model-tile-${row.id}`}
             className="tile-process-group"
-            href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
-              row.id
-            )}`}
           >
             <div className="tile-process-group-content-container">
-              <div className="tile-title-top">{row.display_name}</div>
+              <div className="tile-title-top">
+                <a
+                  title={row.id}
+                  data-qa="process-model-show-link"
+                  href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                    row.id
+                  )}`}
+                >
+                  {row.display_name}
+                </a>
+              </div>
               <p className="tile-description">
                 {truncateString(row.description || '', 100)}
               </p>
@@ -86,6 +97,7 @@ export default function ProcessModelListTiles({
                 processModel={row}
                 onSuccessCallback={setProcessInstance}
                 className="tile-pin-bottom"
+                checkPermissions={checkPermissions}
               />
             </div>
           </Tile>

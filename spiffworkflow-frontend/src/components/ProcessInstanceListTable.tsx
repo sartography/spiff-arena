@@ -33,6 +33,7 @@ import {
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessIdentifierForPathParam,
+  refreshAtInterval,
 } from '../helpers';
 
 import PaginationForTable from './PaginationForTable';
@@ -47,15 +48,24 @@ import {
   PaginationObject,
   ProcessModel,
   ProcessInstanceReport,
+  ProcessInstance,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
+
+const REFRESH_INTERVAL = 5;
+const REFRESH_TIMEOUT = 600;
 
 type OwnProps = {
   filtersEnabled?: boolean;
   processModelFullIdentifier?: string;
   paginationQueryParamPrefix?: string;
   perPageOptions?: number[];
+  showReports?: boolean;
+  reportIdentifier?: string;
+  textToShowIfEmpty?: string;
+  paginationClassName?: string;
+  autoReload?: boolean;
 };
 
 interface dateParameters {
@@ -67,6 +77,11 @@ export default function ProcessInstanceListTable({
   processModelFullIdentifier,
   paginationQueryParamPrefix,
   perPageOptions,
+  showReports = true,
+  reportIdentifier,
+  textToShowIfEmpty,
+  paginationClassName,
+  autoReload = false,
 }: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -171,9 +186,14 @@ export default function ProcessInstanceListTable({
         queryParamString += `&user_filter=${userAppliedFilter}`;
       }
 
-      const reportIdentifier = searchParams.get('report_identifier');
-      if (reportIdentifier) {
-        queryParamString += `&report_identifier=${reportIdentifier}`;
+      let reportIdentifierToUse: any = reportIdentifier;
+
+      if (!reportIdentifierToUse) {
+        reportIdentifierToUse = searchParams.get('report_identifier');
+      }
+
+      if (reportIdentifierToUse) {
+        queryParamString += `&report_identifier=${reportIdentifierToUse}`;
       }
 
       Object.keys(dateParametersToAlwaysFilterBy).forEach(
@@ -250,17 +270,24 @@ export default function ProcessInstanceListTable({
 
       getProcessInstances();
     }
+    const checkFiltersAndRun = () => {
+      if (filtersEnabled) {
+        // populate process model selection
+        HttpService.makeCallToBackend({
+          path: `/process-models?per_page=1000&recursive=true`,
+          successCallback: processResultForProcessModels,
+        });
+      } else {
+        getProcessInstances();
+      }
+    };
 
-    if (filtersEnabled) {
-      // populate process model selection
-      HttpService.makeCallToBackend({
-        path: `/process-models?per_page=1000&recursive=true`,
-        successCallback: processResultForProcessModels,
-      });
-    } else {
-      getProcessInstances();
+    checkFiltersAndRun();
+    if (autoReload) {
+      refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, checkFiltersAndRun);
     }
   }, [
+    autoReload,
     searchParams,
     params,
     oneMonthInSeconds,
@@ -271,6 +298,7 @@ export default function ProcessInstanceListTable({
     paginationQueryParamPrefix,
     processModelFullIdentifier,
     perPageOptions,
+    reportIdentifier,
   ]);
 
   // This sets the filter data using the saved reports returned from the initial instance_list query.
@@ -596,10 +624,12 @@ export default function ProcessInstanceListTable({
   const buildTable = () => {
     const headerLabels: Record<string, string> = {
       id: 'Id',
-      process_model_identifier: 'Process Model',
+      process_model_identifier: 'Process',
+      process_model_display_name: 'Process',
       start_in_seconds: 'Start Time',
       end_in_seconds: 'End Time',
       status: 'Status',
+      username: 'Started By',
       spiff_step: 'SpiffWorkflow Step',
     };
     const getHeaderLabel = (header: string) => {
@@ -610,13 +640,14 @@ export default function ProcessInstanceListTable({
       return getHeaderLabel((column as any).Header);
     });
 
-    const formatProcessInstanceId = (row: any, id: any) => {
+    const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
       const modifiedProcessModelId: String =
         modifyProcessIdentifierForPathParam(row.process_model_identifier);
       return (
         <Link
           data-qa="process-instance-show-link"
-          to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${row.id}`}
+          to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${id}`}
+          title={`View process instance ${id}`}
         >
           {id}
         </Link>
@@ -633,6 +664,23 @@ export default function ProcessInstanceListTable({
         </Link>
       );
     };
+
+    const formatProcessModelDisplayName = (
+      row: ProcessInstance,
+      displayName: string
+    ) => {
+      return (
+        <Link
+          to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+            row.process_model_identifier
+          )}`}
+          title={row.process_model_identifier}
+        >
+          {displayName}
+        </Link>
+      );
+    };
+
     const formatSecondsForDisplay = (_row: any, seconds: any) => {
       return convertSecondsToFormattedDateTime(seconds) || '-';
     };
@@ -643,6 +691,7 @@ export default function ProcessInstanceListTable({
     const columnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
+      process_model_display_name: formatProcessModelDisplayName,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
     };
@@ -704,12 +753,15 @@ export default function ProcessInstanceListTable({
   };
 
   const reportSearchComponent = () => {
-    return (
-      <ProcessInstanceReportSearch
-        onChange={processInstanceReportDidChange}
-        selectedItem={processInstanceReportSelection}
-      />
-    );
+    if (showReports) {
+      return (
+        <ProcessInstanceReportSearch
+          onChange={processInstanceReportDidChange}
+          selectedItem={processInstanceReportSelection}
+        />
+      );
+    }
+    return null;
   };
 
   const filterComponent = () => {
@@ -720,13 +772,13 @@ export default function ProcessInstanceListTable({
       <>
         <Grid fullWidth>
           <Column
+            className="filterIcon"
             sm={{ span: 1, offset: 3 }}
             md={{ span: 1, offset: 7 }}
             lg={{ span: 1, offset: 15 }}
           >
             <Button
               data-qa="filter-section-expand-toggle"
-              kind="ghost"
               renderIcon={Filter}
               iconDescription="Filter Options"
               hasIconOnly
@@ -740,7 +792,7 @@ export default function ProcessInstanceListTable({
     );
   };
 
-  if (pagination) {
+  if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
     // eslint-disable-next-line prefer-const
     let { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -763,8 +815,16 @@ export default function ProcessInstanceListTable({
           tableToDisplay={buildTable()}
           paginationQueryParamPrefix={paginationQueryParamPrefix}
           perPageOptions={perPageOptions}
+          paginationClassName={paginationClassName}
         />
       </>
+    );
+  }
+  if (textToShowIfEmpty) {
+    return (
+      <p className="no-results-message with-large-bottom-margin">
+        {textToShowIfEmpty}
+      </p>
     );
   }
 

@@ -36,10 +36,8 @@ class ExampleDataLoader:
             display_name=display_name,
             description=description,
             display_order=display_order,
-            is_review=False,
         )
-        workflow_spec_service = ProcessModelService()
-        workflow_spec_service.add_process_model(spec)
+        ProcessModelService.add_process_model(spec)
 
         bpmn_file_name_with_extension = bpmn_file_name
         if not bpmn_file_name_with_extension:
@@ -88,7 +86,7 @@ class ExampleDataLoader:
                     )
                     spec.primary_process_id = references[0].identifier
                     spec.primary_file_name = filename
-                    ProcessModelService().save_process_model(spec)
+                    ProcessModelService.save_process_model(spec)
             finally:
                 if file:
                     file.close()

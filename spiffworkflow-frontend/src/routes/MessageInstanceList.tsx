@@ -8,7 +8,6 @@ import {
   convertSecondsToFormattedDateString,
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
-  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 
@@ -102,12 +101,11 @@ export default function MessageInstanceList() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${params.process_model_id}`,
-              `process_model:${unModifyProcessIdentifierForPathParam(
-                searchParams.get('process_model_id') || ''
-              )}:link`,
-            ],
+            {
+              entityToExplode: searchParams.get('process_model_id') || '',
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
             [
               `Process Instance: ${searchParams.get('process_instance_id')}`,
               `/admin/process-models/${searchParams.get(

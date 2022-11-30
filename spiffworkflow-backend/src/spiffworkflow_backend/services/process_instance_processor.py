@@ -349,7 +349,9 @@ class ProcessInstanceProcessor:
                     check_sub_specs(test_spec, 5)
 
         self.process_model_identifier = process_instance_model.process_model_identifier
-        # self.process_group_identifier = process_instance_model.process_group_identifier
+        self.process_model_display_name = (
+            process_instance_model.process_model_display_name
+        )
 
         try:
             self.bpmn_process_instance = self.__get_bpmn_process_instance(
@@ -374,7 +376,7 @@ class ProcessInstanceProcessor:
         cls, process_model_identifier: str
     ) -> Tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         """Get_process_model_and_subprocesses."""
-        process_model_info = ProcessModelService().get_process_model(
+        process_model_info = ProcessModelService.get_process_model(
             process_model_identifier
         )
         if process_model_info is None:
@@ -540,13 +542,8 @@ class ProcessInstanceProcessor:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
-        task_json = "{}"
-        if "tasks" in wf_json:
-            task_json = json.dumps(wf_json["tasks"])
+        task_json = wf_json["tasks"]
 
-        # TODO want to just save the tasks, something wasn't immediately working
-        # so after the flow works with the full wf_json revisit this
-        task_json = wf_json
         return {
             "process_instance_id": self.process_instance_model.id,
             "spiff_step": self.process_instance_model.spiff_step or 1,
@@ -593,16 +590,12 @@ class ProcessInstanceProcessor:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_model.end_in_seconds = round(time.time())
 
-        active_tasks = ActiveTaskModel.query.filter_by(
-            process_instance_id=self.process_instance_model.id
-        ).all()
-        if len(active_tasks) > 0:
-            for at in active_tasks:
-                db.session.delete(at)
-
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+        active_tasks = ActiveTaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id
+        ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks
@@ -629,27 +622,41 @@ class ProcessInstanceProcessor:
                 if process_model_info is not None:
                     process_model_display_name = process_model_info.display_name
 
-                active_task = ActiveTaskModel(
-                    process_instance_id=self.process_instance_model.id,
-                    process_model_display_name=process_model_display_name,
-                    form_file_name=form_file_name,
-                    ui_form_file_name=ui_form_file_name,
-                    task_id=str(ready_or_waiting_task.id),
-                    task_name=ready_or_waiting_task.task_spec.name,
-                    task_title=ready_or_waiting_task.task_spec.description,
-                    task_type=ready_or_waiting_task.task_spec.__class__.__name__,
-                    task_status=ready_or_waiting_task.get_state_name(),
-                    lane_assignment_id=potential_owner_hash["lane_assignment_id"],
-                )
-                db.session.add(active_task)
-                db.session.commit()
+                active_task = None
+                for at in active_tasks:
+                    if at.task_id == str(ready_or_waiting_task.id):
+                        active_task = at
+                        active_tasks.remove(at)
 
-                for potential_owner_id in potential_owner_hash["potential_owner_ids"]:
-                    active_task_user = ActiveTaskUserModel(
-                        user_id=potential_owner_id, active_task_id=active_task.id
+                if active_task is None:
+                    active_task = ActiveTaskModel(
+                        process_instance_id=self.process_instance_model.id,
+                        process_model_display_name=process_model_display_name,
+                        form_file_name=form_file_name,
+                        ui_form_file_name=ui_form_file_name,
+                        task_id=str(ready_or_waiting_task.id),
+                        task_name=ready_or_waiting_task.task_spec.name,
+                        task_title=ready_or_waiting_task.task_spec.description,
+                        task_type=ready_or_waiting_task.task_spec.__class__.__name__,
+                        task_status=ready_or_waiting_task.get_state_name(),
+                        lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                     )
-                    db.session.add(active_task_user)
-                db.session.commit()
+                    db.session.add(active_task)
+                    db.session.commit()
+
+                    for potential_owner_id in potential_owner_hash[
+                        "potential_owner_ids"
+                    ]:
+                        active_task_user = ActiveTaskUserModel(
+                            user_id=potential_owner_id, active_task_id=active_task.id
+                        )
+                        db.session.add(active_task_user)
+                    db.session.commit()
+
+        if len(active_tasks) > 0:
+            for at in active_tasks:
+                db.session.delete(at)
+            db.session.commit()
 
     @staticmethod
     def get_parser() -> MyCustomParser:
@@ -662,7 +669,7 @@ class ProcessInstanceProcessor:
         bpmn_process_identifier: str,
     ) -> Optional[str]:
         """Backfill_missing_spec_reference_records."""
-        process_models = ProcessModelService().get_process_models(recursive=True)
+        process_models = ProcessModelService.get_process_models(recursive=True)
         for process_model in process_models:
             try:
                 refs = SpecFileService.reference_map(

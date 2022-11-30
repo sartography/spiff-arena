@@ -52,7 +52,7 @@ class SecretServiceTestHelpers(BaseTest):
             process_model_description=self.test_process_model_description,
             user=user,
         )
-        process_model_info = ProcessModelService().get_process_model(
+        process_model_info = ProcessModelService.get_process_model(
             process_model_identifier
         )
         return process_model_info
