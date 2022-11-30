@@ -30,9 +30,8 @@ CONNECTOR_PROXY_URL = environ.get(
 GIT_COMMIT_ON_SAVE = environ.get("GIT_COMMIT_ON_SAVE", default="false") == "true"
 
 # Open ID server
-OPEN_ID_SERVER_URL = environ.get("OPEN_ID_SERVER_URL", default="http://localhost:7002")
+OPEN_ID_SERVER_URL = environ.get("OPEN_ID_SERVER_URL", default="http://localhost:7002/realms/spiffworkflow")
 OPEN_ID_CLIENT_ID = environ.get("OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
-OPEN_ID_REALM_NAME = environ.get("OPEN_ID_REALM_NAME", default="spiffworkflow")
 OPEN_ID_CLIENT_SECRET_KEY = environ.get(
     "OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 )  # noqa: S105

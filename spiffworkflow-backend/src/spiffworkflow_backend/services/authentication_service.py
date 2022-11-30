@@ -15,7 +15,6 @@ from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 
-
 class AuthenticationProviderTypes(enum.Enum):
     """AuthenticationServiceProviders."""
 
@@ -31,14 +30,12 @@ class AuthenticationService:
         """Get_open_id_args."""
         open_id_server_url = current_app.config["OPEN_ID_SERVER_URL"]
         open_id_client_id = current_app.config["OPEN_ID_CLIENT_ID"]
-        open_id_realm_name = current_app.config["OPEN_ID_REALM_NAME"]
         open_id_client_secret_key = current_app.config[
             "OPEN_ID_CLIENT_SECRET_KEY"
         ]  # noqa: S105
         return (
             open_id_server_url,
             open_id_client_id,
-            open_id_realm_name,
             open_id_client_secret_key,
         )
 
@@ -55,11 +52,10 @@ class AuthenticationService:
         (
             open_id_server_url,
             open_id_client_id,
-            open_id_realm_name,
             open_id_client_secret_key,
         ) = AuthenticationService.get_open_id_args()
         request_url = (
-            f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/logout?"
+            f"{open_id_server_url}/protocol/openid-connect/logout?"
             + f"post_logout_redirect_uri={return_redirect_url}&"
             + f"id_token_hint={id_token}"
         )
@@ -79,12 +75,11 @@ class AuthenticationService:
         (
             open_id_server_url,
             open_id_client_id,
-            open_id_realm_name,
             open_id_client_secret_key,
         ) = AuthenticationService.get_open_id_args()
         return_redirect_url = f"{self.get_backend_url()}{redirect_url}"
         login_redirect_url = (
-            f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/auth?"
+            f"{open_id_server_url}/protocol/openid-connect/auth?"
             + f"state={state}&"
             + "response_type=code&"
             + f"client_id={open_id_client_id}&"
@@ -100,7 +95,6 @@ class AuthenticationService:
         (
             open_id_server_url,
             open_id_client_id,
-            open_id_realm_name,
             open_id_client_secret_key,
         ) = AuthenticationService.get_open_id_args()
 
@@ -117,7 +111,7 @@ class AuthenticationService:
             "redirect_uri": f"{self.get_backend_url()}{redirect_url}",
         }
 
-        request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
+        request_url = f"{open_id_server_url}/protocol/openid-connect/token"
 
         response = requests.post(request_url, data=data, headers=headers)
         auth_token_object: dict = json.loads(response.text)
@@ -131,7 +125,6 @@ class AuthenticationService:
         (
             open_id_server_url,
             open_id_client_id,
-            open_id_realm_name,
             open_id_client_secret_key,
         ) = cls.get_open_id_args()
         try:
@@ -142,7 +135,7 @@ class AuthenticationService:
                 message="Cannot decode id_token",
                 status_code=401,
             ) from e
-        if decoded_token["iss"] != f"{open_id_server_url}/realms/{open_id_realm_name}":
+        if decoded_token["iss"] != open_id_server_url:
             valid = False
         elif (
             open_id_client_id not in decoded_token["aud"]
@@ -207,7 +200,6 @@ class AuthenticationService:
         (
             open_id_server_url,
             open_id_client_id,
-            open_id_realm_name,
             open_id_client_secret_key,
         ) = cls.get_open_id_args()
 
@@ -226,7 +218,7 @@ class AuthenticationService:
             "client_secret": open_id_client_secret_key,
         }
 
-        request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
+        request_url = f"{open_id_server_url}/protocol/openid-connect/token"
 
         response = requests.post(request_url, data=data, headers=headers)
         auth_token_object: dict = json.loads(response.text)
