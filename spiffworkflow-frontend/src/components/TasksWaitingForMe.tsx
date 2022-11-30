@@ -10,6 +10,7 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
+import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 
@@ -45,18 +46,20 @@ export default function TasksWaitingForMe() {
         <tr key={rowToUse.id}>
           <td>
             <Link
-              data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+              data-qa="process-instance-show-link"
+              to={`/admin/process-models/${modifiedProcessModelIdentifier}/process-instances/${rowToUse.process_instance_id}`}
+              title={`View process instance ${rowToUse.process_instance_id}`}
             >
-              {rowToUse.process_model_display_name}
+              {rowToUse.process_instance_id}
             </Link>
           </td>
           <td>
             <Link
-              data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}/process-instances/${rowToUse.process_instance_id}`}
+              data-qa="process-model-show-link"
+              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+              title={rowToUse.process_model_identifier}
             >
-              View {rowToUse.process_instance_id}
+              {rowToUse.process_model_display_name}
             </Link>
           </td>
           <td
@@ -65,18 +68,15 @@ export default function TasksWaitingForMe() {
             {rowToUse.task_title}
           </td>
           <td>{rowToUse.username}</td>
-          <td>{rowToUse.process_instance_status}</td>
           <td>{rowToUse.group_identifier || '-'}</td>
           <td>
             {convertSecondsToFormattedDateTime(
               rowToUse.created_at_in_seconds
             ) || '-'}
           </td>
-          <td>
-            {convertSecondsToFormattedDateTime(
-              rowToUse.updated_at_in_seconds
-            ) || '-'}
-          </td>
+          <TableCellWithTimeAgoInWords
+            timeInSeconds={rowToUse.updated_at_in_seconds}
+          />
           <td>
             <Button
               variant="primary"
@@ -94,14 +94,13 @@ export default function TasksWaitingForMe() {
       <Table striped bordered>
         <thead>
           <tr>
-            <th>Process Model</th>
-            <th>Process Instance</th>
-            <th>Task Name</th>
-            <th>Process Started By</th>
-            <th>Process Instance Status</th>
-            <th>Assigned Group</th>
-            <th>Process Started</th>
-            <th>Process Updated</th>
+            <th>Id</th>
+            <th>Process</th>
+            <th>Task</th>
+            <th>Started By</th>
+            <th>Waiting For</th>
+            <th>Date Started</th>
+            <th>Last Updated</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -112,7 +111,11 @@ export default function TasksWaitingForMe() {
 
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
-      return null;
+      return (
+        <p className="no-results-message with-large-bottom-margin">
+          You have no task assignments at this time.
+        </p>
+      );
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -121,22 +124,26 @@ export default function TasksWaitingForMe() {
       'tasks_waiting_for_me'
     );
     return (
-      <>
-        <h1>Tasks waiting for me</h1>
-        <PaginationForTable
-          page={page}
-          perPage={perPage}
-          perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
-          pagination={pagination}
-          tableToDisplay={buildTable()}
-          paginationQueryParamPrefix="tasks_waiting_for_me"
-        />
-      </>
+      <PaginationForTable
+        page={page}
+        perPage={perPage}
+        perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
+        pagination={pagination}
+        tableToDisplay={buildTable()}
+        paginationQueryParamPrefix="tasks_waiting_for_me"
+        paginationClassName="with-large-bottom-margin"
+      />
     );
   };
 
-  if (pagination) {
-    return tasksComponent();
-  }
-  return null;
+  return (
+    <>
+      <h2>Tasks waiting for me</h2>
+      <p className="data-table-description">
+        These processes are waiting on you to complete the next task. All are
+        processes created by others that are now actionable by you.
+      </p>
+      {tasksComponent()}
+    </>
+  );
 }

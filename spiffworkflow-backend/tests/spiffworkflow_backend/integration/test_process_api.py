@@ -133,12 +133,12 @@ class TestProcessApi(BaseTest):
             process_model_description=model_description,
             user=with_super_admin_user,
         )
-        process_model = ProcessModelService().get_process_model(
+        process_model = ProcessModelService.get_process_model(
             process_model_identifier,
         )
         assert model_display_name == process_model.display_name
         assert 0 == process_model.display_order
-        assert 1 == len(ProcessModelService().get_process_groups())
+        assert 1 == len(ProcessModelService.get_process_groups())
 
         # add bpmn file to the model
         bpmn_file_name = "sample.bpmn"
@@ -155,9 +155,7 @@ class TestProcessApi(BaseTest):
             user=with_super_admin_user,
         )
         # get the model, assert that primary is set
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model.primary_file_name == bpmn_file_name
         assert process_model.primary_process_id == "sample"
 
@@ -208,9 +206,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model.primary_file_name == bpmn_file_name
         assert process_model.primary_process_id == terminal_primary_process_id
 
@@ -236,9 +232,7 @@ class TestProcessApi(BaseTest):
         )
 
         # assert we have a model
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model is not None
         assert process_model.id == process_model_identifier
 
@@ -254,7 +248,7 @@ class TestProcessApi(BaseTest):
 
         # assert we no longer have a model
         with pytest.raises(ProcessEntityNotFoundError):
-            ProcessModelService().get_process_model(process_model_identifier)
+            ProcessModelService.get_process_model(process_model_identifier)
 
     def test_process_model_delete_with_instances(
         self,
@@ -327,19 +321,15 @@ class TestProcessApi(BaseTest):
             process_model_id=process_model_identifier,
             user=with_super_admin_user,
         )
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
         assert process_model.id == process_model_identifier
         assert process_model.display_name == "Cooooookies"
-        assert process_model.is_review is False
         assert process_model.primary_file_name is None
         assert process_model.primary_process_id is None
 
         process_model.display_name = "Updated Display Name"
         process_model.primary_file_name = "superduper.bpmn"
         process_model.primary_process_id = "superduper"
-        process_model.is_review = True  # not in the include list, so get ignored
 
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
         response = client.put(
@@ -353,7 +343,6 @@ class TestProcessApi(BaseTest):
         assert response.json["display_name"] == "Updated Display Name"
         assert response.json["primary_file_name"] == "superduper.bpmn"
         assert response.json["primary_process_id"] == "superduper"
-        assert response.json["is_review"] is False
 
     def test_process_model_list_all(
         self,
@@ -550,7 +539,7 @@ class TestProcessApi(BaseTest):
         assert result.description == "Test Description"
 
         # Check what is persisted
-        persisted = ProcessModelService().get_process_group("test")
+        persisted = ProcessModelService.get_process_group("test")
         assert persisted.display_name == "Another Test Category"
         assert persisted.id == "test"
         assert persisted.description == "Test Description"
@@ -572,7 +561,7 @@ class TestProcessApi(BaseTest):
             process_group_id,
             display_name=process_group_display_name,
         )
-        persisted = ProcessModelService().get_process_group(process_group_id)
+        persisted = ProcessModelService.get_process_group(process_group_id)
         assert persisted is not None
         assert persisted.id == process_group_id
 
@@ -582,7 +571,7 @@ class TestProcessApi(BaseTest):
         )
 
         with pytest.raises(ProcessEntityNotFoundError):
-            ProcessModelService().get_process_group(process_group_id)
+            ProcessModelService.get_process_group(process_group_id)
 
     def test_process_group_update(
         self,
@@ -598,7 +587,7 @@ class TestProcessApi(BaseTest):
         self.create_process_group(
             client, with_super_admin_user, group_id, display_name=group_display_name
         )
-        process_group = ProcessModelService().get_process_group(group_id)
+        process_group = ProcessModelService.get_process_group(group_id)
 
         assert process_group.display_name == group_display_name
 
@@ -612,7 +601,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
 
-        process_group = ProcessModelService().get_process_group(group_id)
+        process_group = ProcessModelService.get_process_group(group_id)
         assert process_group.display_name == "Modified Display Name"
 
     def test_process_group_list(
@@ -979,6 +968,43 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["id"] == process_group_id
         assert response.json["process_models"][0]["id"] == process_model_identifier
+        assert response.json["parent_groups"] == []
+
+    def test_get_process_group_show_when_nested(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_get_process_group_show_when_nested."""
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_one",
+            process_model_id="simple_form",
+            bpmn_file_location="simple_form",
+        )
+
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_one/test_group_two",
+            process_model_id="call_activity_nested",
+            bpmn_file_location="call_activity_nested",
+        )
+
+        response = client.get(
+            "/v1.0/process-groups/test_group_one:test_group_two",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["id"] == "test_group_one/test_group_two"
+        assert response.json["parent_groups"] == [
+            {"display_name": "test_group_one", "id": "test_group_one"}
+        ]
 
     def test_get_process_model_when_found(
         self,
@@ -997,11 +1023,15 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["id"] == process_model_identifier
         assert len(response.json["files"]) == 1
         assert response.json["files"][0]["name"] == "random_fact.bpmn"
+        assert response.json["parent_groups"] == [
+            {"display_name": "test_group", "id": "test_group"}
+        ]
 
     def test_get_process_model_when_not_found(
         self,
@@ -1069,7 +1099,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         process_instance_id = response.json["id"]
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -1101,7 +1131,9 @@ class TestProcessApi(BaseTest):
             process_group_id=process_group_id,
             process_model_id=process_model_id,
         )
-        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+        modified_process_model_identifier = (
+            self.modify_process_identifier_for_path_param(process_model_identifier)
+        )
         headers = self.logged_in_headers(with_super_admin_user)
         create_response = self.create_process_instance_from_process_model_id(
             client, process_model_identifier, headers
@@ -1109,7 +1141,7 @@ class TestProcessApi(BaseTest):
         assert create_response.json is not None
         process_instance_id = create_response.json["id"]
         client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         show_response = client.get(
@@ -1212,7 +1244,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -1272,7 +1304,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1320,7 +1352,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1359,7 +1391,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -1516,7 +1548,7 @@ class TestProcessApi(BaseTest):
                 status=ProcessInstanceStatus[statuses[i]].value,
                 process_initiator=with_super_admin_user,
                 process_model_identifier=process_model_identifier,
-                process_group_identifier="test_process_group_id",
+                process_model_display_name=process_model_identifier,
                 updated_at_in_seconds=round(time.time()),
                 start_in_seconds=(1000 * i) + 1000,
                 end_in_seconds=(1000 * i) + 2000,
@@ -1818,7 +1850,7 @@ class TestProcessApi(BaseTest):
         assert process.status == "not_started"
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
@@ -1862,10 +1894,8 @@ class TestProcessApi(BaseTest):
         process_instance_id = self.setup_testing_instance(
             client, process_model_identifier, with_super_admin_user
         )
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
-        ProcessModelService().update_process_model(
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
+        ProcessModelService.update_process_model(
             process_model,
             {"fault_or_suspend_on_exception": NotificationType.suspend.value},
         )
@@ -1879,7 +1909,7 @@ class TestProcessApi(BaseTest):
         assert process.status == "not_started"
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 400
@@ -1917,10 +1947,8 @@ class TestProcessApi(BaseTest):
             client, process_model_identifier, with_super_admin_user
         )
 
-        process_model = ProcessModelService().get_process_model(
-            process_model_identifier
-        )
-        ProcessModelService().update_process_model(
+        process_model = ProcessModelService.get_process_model(process_model_identifier)
+        ProcessModelService.update_process_model(
             process_model,
             {"exception_notification_addresses": ["with_super_admin_user@example.com"]},
         )
@@ -1929,7 +1957,7 @@ class TestProcessApi(BaseTest):
         with mail.record_messages() as outbox:
 
             response = client.post(
-                f"/v1.0/process-instances/{process_instance_id}/run",
+                f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
                 headers=self.logged_in_headers(with_super_admin_user),
             )
             assert response.status_code == 400
@@ -2114,7 +2142,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         process_instance_id = response.json["id"]
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(initiator_user),
         )
         assert response.status_code == 200
@@ -2319,7 +2347,7 @@ class TestProcessApi(BaseTest):
         process_instance_id = response.json["id"]
 
         client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -2339,7 +2367,7 @@ class TestProcessApi(BaseTest):
 
         # TODO: Why can I run a suspended process instance?
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/run",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
@@ -2408,7 +2436,7 @@ class TestProcessApi(BaseTest):
     def setup_initial_groups_for_move_tests(
         self, client: FlaskClient, with_super_admin_user: UserModel
     ) -> None:
-        """setup_initial_groups_for_move_tests."""
+        """Setup_initial_groups_for_move_tests."""
         groups = ["group_a", "group_b", "group_b/group_bb"]
         # setup initial groups
         for group in groups:
@@ -2417,7 +2445,7 @@ class TestProcessApi(BaseTest):
             )
         # make sure initial groups exist
         for group in groups:
-            persisted = ProcessModelService().get_process_group(group)
+            persisted = ProcessModelService.get_process_group(group)
             assert persisted is not None
             assert persisted.id == group
 
@@ -2428,7 +2456,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """test_move_model."""
+        """Test_move_model."""
         self.setup_initial_groups_for_move_tests(client, with_super_admin_user)
 
         process_model_id = "test_model"
@@ -2443,7 +2471,7 @@ class TestProcessApi(BaseTest):
             process_model_display_name=process_model_id,
             process_model_description=process_model_id,
         )
-        persisted = ProcessModelService().get_process_model(original_process_model_path)
+        persisted = ProcessModelService.get_process_model(original_process_model_path)
         assert persisted is not None
         assert persisted.id == original_process_model_path
 
@@ -2463,11 +2491,11 @@ class TestProcessApi(BaseTest):
 
         # make sure the original model does not exist
         with pytest.raises(ProcessEntityNotFoundError) as e:
-            ProcessModelService().get_process_model(original_process_model_path)
+            ProcessModelService.get_process_model(original_process_model_path)
         assert e.value.args[0] == "process_model_not_found"
 
         # make sure the new model does exist
-        new_process_model = ProcessModelService().get_process_model(
+        new_process_model = ProcessModelService.get_process_model(
             new_process_model_path
         )
         assert new_process_model is not None
@@ -2480,7 +2508,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """test_move_group."""
+        """Test_move_group."""
         self.setup_initial_groups_for_move_tests(client, with_super_admin_user)
 
         # add sub group to `group_a`
@@ -2491,7 +2519,7 @@ class TestProcessApi(BaseTest):
             client, with_super_admin_user, original_sub_path, display_name=sub_group_id
         )
         # make sure original subgroup exists
-        persisted = ProcessModelService().get_process_group(original_sub_path)
+        persisted = ProcessModelService.get_process_group(original_sub_path)
         assert persisted is not None
         assert persisted.id == original_sub_path
 
@@ -2508,11 +2536,11 @@ class TestProcessApi(BaseTest):
 
         # make sure the original subgroup does not exist
         with pytest.raises(ProcessEntityNotFoundError) as e:
-            ProcessModelService().get_process_group(original_sub_path)
+            ProcessModelService.get_process_group(original_sub_path)
 
         assert e.value.args[0] == "process_group_not_found"
         assert e.value.args[1] == f"Process Group Id: {original_sub_path}"
 
         # make sure the new subgroup does exist
-        new_process_group = ProcessModelService().get_process_group(new_sub_path)
+        new_process_group = ProcessModelService.get_process_group(new_sub_path)
         assert new_process_group.id == new_sub_path

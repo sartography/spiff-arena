@@ -7,6 +7,7 @@ import {
   TrashCan,
   Favorite,
   Edit,
+  View,
   ArrowRight,
   // @ts-ignore
 } from '@carbon/icons-react';
@@ -41,62 +42,12 @@ import {
   ProcessFile,
   ProcessInstance,
   ProcessModel,
-  RecentProcessModel,
 } from '../interfaces';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
-
-const storeRecentProcessModelInLocalStorage = (
-  processModelForStorage: ProcessModel
-) => {
-  // All values stored in localStorage are strings.
-  // Grab our recentProcessModels string from localStorage.
-  const stringFromLocalStorage = window.localStorage.getItem(
-    'recentProcessModels'
-  );
-
-  // adapted from https://stackoverflow.com/a/59424458/6090676
-  // If that value is null (meaning that we've never saved anything to that spot in localStorage before), use an empty array as our array. Otherwise, use the value we parse out.
-  let array: RecentProcessModel[] = [];
-  if (stringFromLocalStorage !== null) {
-    // Then parse that string into an actual value.
-    array = JSON.parse(stringFromLocalStorage);
-  }
-
-  // Here's the value we want to add
-  const value = {
-    processModelIdentifier: processModelForStorage.id,
-    processModelDisplayName: processModelForStorage.display_name,
-  };
-
-  // anything with a processGroupIdentifier is old and busted. leave it behind.
-  array = array.filter((item) => item.processGroupIdentifier === undefined);
-
-  // If our parsed/empty array doesn't already have this value in it...
-  const matchingItem = array.find(
-    (item) => item.processModelIdentifier === value.processModelIdentifier
-  );
-  if (matchingItem === undefined) {
-    // add the value to the beginning of the array
-    array.unshift(value);
-
-    // Keep the array to 3 items
-    if (array.length > 3) {
-      array.pop();
-    }
-  }
-
-  // once the old and busted serializations are gone, we can put these two statements inside the above if statement
-
-  // turn the array WITH THE NEW VALUE IN IT into a string to prepare it to be stored in localStorage
-  const stringRepresentingArray = JSON.stringify(array);
-
-  // and store it in localStorage as "recentProcessModels"
-  window.localStorage.setItem('recentProcessModels', stringRepresentingArray);
-};
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -116,9 +67,11 @@ export default function ProcessModelShow() {
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['POST'],
-    [targetUris.processModelFileCreatePath]: ['POST', 'GET', 'DELETE'],
+    [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -128,7 +81,6 @@ export default function ProcessModelShow() {
     const processResult = (result: ProcessModel) => {
       setProcessModel(result);
       setReloadModel(false);
-      storeRecentProcessModelInLocalStorage(result);
     };
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}`,
@@ -139,7 +91,7 @@ export default function ProcessModelShow() {
   const processInstanceRunResultTag = () => {
     if (processInstance) {
       return (
-        <div className="alert alert-success" role="alert">
+        <div className="alert alert-success with-top-margin" role="alert">
           <p>
             Process Instance {processInstance.id} kicked off (
             <Link
@@ -150,6 +102,7 @@ export default function ProcessModelShow() {
             </Link>
             ).
           </p>
+          <br />
         </div>
       );
     }
@@ -262,12 +215,18 @@ export default function ProcessModelShow() {
     isPrimaryBpmnFile: boolean
   ) => {
     const elements = [];
+    let icon = View;
+    let actionWord = 'View';
+    if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
+      icon = Edit;
+      actionWord = 'Edit';
+    }
     elements.push(
       <Can I="GET" a={targetUris.processModelFileCreatePath} ability={ability}>
         <Button
           kind="ghost"
-          renderIcon={Edit}
-          iconDescription="Edit File"
+          renderIcon={icon}
+          iconDescription={`${actionWord} File`}
           hasIconOnly
           size="lg"
           data-qa={`edit-file-${processModelFile.name.replace('.', '-')}`}
@@ -325,7 +284,7 @@ export default function ProcessModelShow() {
   };
 
   const processModelFileList = () => {
-    if (!processModel) {
+    if (!processModel || !permissionsLoaded) {
       return null;
     }
     let constructedTag;
@@ -439,12 +398,16 @@ export default function ProcessModelShow() {
     );
   };
 
-  const processModelButtons = () => {
+  const processModelFilesSection = () => {
     if (!processModel) {
       return null;
     }
     return (
-      <Grid condensed fullWidth>
+      <Grid
+        condensed
+        fullWidth
+        className="megacondensed process-model-files-section"
+      >
         <Column md={5} lg={9} sm={3}>
           <Accordion align="end" open>
             <AccordionItem
@@ -518,7 +481,10 @@ export default function ProcessModelShow() {
   const processInstanceListTableButton = () => {
     if (processModel) {
       return (
-        <Grid fullWidth>
+        <Grid fullWidth condensed>
+          <Column sm={{ span: 3 }} md={{ span: 4 }} lg={{ span: 3 }}>
+            <h2>Process Instances</h2>
+          </Column>
           <Column
             sm={{ span: 1, offset: 3 }}
             md={{ span: 1, offset: 7 }}
@@ -551,17 +517,28 @@ export default function ProcessModelShow() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${processModel.id}`,
-              `process_model:${processModel.id}`,
-            ],
+            {
+              entityToExplode: processModel,
+              entityType: 'process-model',
+            },
           ]}
         />
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
             Process Model: {processModel.display_name}
           </h1>
-
+          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
+            <Button
+              kind="ghost"
+              data-qa="edit-process-model-button"
+              renderIcon={Edit}
+              iconDescription="Edit Process Model"
+              hasIconOnly
+              href={`/admin/process-models/${modifiedProcessModelId}/edit`}
+            >
+              Edit process model
+            </Button>
+          </Can>
           <Can I="DELETE" a={targetUris.processModelShowPath} ability={ability}>
             <ButtonWithConfirmation
               kind="ghost"
@@ -582,34 +559,27 @@ export default function ProcessModelShow() {
             a={targetUris.processInstanceActionPath}
             ability={ability}
           >
-            <ProcessInstanceRun
-              processModel={processModel}
-              onSuccessCallback={setProcessInstance}
-            />
-          </Can>
-          <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
-            <Button
-              href={`/admin/process-models/${modifiedProcessModelId}/edit`}
-              variant="secondary"
-            >
-              Edit process model
-            </Button>
+            <>
+              <ProcessInstanceRun
+                processModel={processModel}
+                onSuccessCallback={setProcessInstance}
+              />
+              <br />
+              <br />
+            </>
           </Can>
         </Stack>
-        <br />
-        <br />
         {processInstanceRunResultTag()}
-        <br />
+        {processModelFilesSection()}
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
           {processInstanceListTableButton()}
           <ProcessInstanceListTable
             filtersEnabled={false}
             processModelFullIdentifier={processModel.id}
             perPageOptions={[2, 5, 25]}
+            showReports={false}
           />
-          <br />
         </Can>
-        {processModelButtons()}
       </>
     );
   }

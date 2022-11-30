@@ -68,7 +68,7 @@ def main():
             print(f"priority: {priority}")
             # if there is no month, who cares about it.
             if month:
-                process_instance = ProcessInstanceService.create_process_instance(
+                process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
                     process_model_identifier=process_model_identifier_ticket,
                     user=user,
                     process_group_identifier="sartography-admin",

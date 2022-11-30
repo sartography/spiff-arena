@@ -163,6 +163,7 @@ export default function NavigationBar() {
         </Can>
         {configurationElement()}
         <HeaderMenuItem
+          hidden
           href="/admin/process-instances/reports"
           isCurrentPage={isActivePage('/admin/process-instances/reports')}
         >

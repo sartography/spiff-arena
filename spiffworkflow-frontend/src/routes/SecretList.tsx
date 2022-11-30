@@ -62,7 +62,7 @@ export default function SecretList() {
       <Table striped bordered>
         <thead>
           <tr>
-            <th>ID</th>
+            <th>Id</th>
             <th>Secret Key</th>
             <th>Creator</th>
             <th>Delete</th>

@@ -8,6 +8,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import deferred
 
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 
 @dataclass
@@ -16,7 +17,9 @@ class SpiffStepDetailsModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "spiff_step_details"
     id: int = db.Column(db.Integer, primary_key=True)
-    process_instance_id: int = db.Column(db.Integer, nullable=False)
+    process_instance_id: int = db.Column(
+        ForeignKey(ProcessInstanceModel.id), nullable=False  # type: ignore
+    )
     spiff_step: int = db.Column(db.Integer, nullable=False)
     task_json: str = deferred(db.Column(db.JSON, nullable=False))  # type: ignore
     timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False)

@@ -54,7 +54,7 @@ export default function AuthenticationList() {
         <Table striped bordered>
           <thead>
             <tr>
-              <th>ID</th>
+              <th>Id</th>
             </tr>
           </thead>
           <tbody>{rows}</tbody>

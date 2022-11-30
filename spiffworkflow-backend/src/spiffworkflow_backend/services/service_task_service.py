@@ -8,6 +8,7 @@ from flask import g
 
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.secret_service import SecretService
+from spiffworkflow_backend.services.user_service import UserService
 
 
 class ConnectorProxyError(Exception):
@@ -65,7 +66,8 @@ class ServiceTaskDelegate:
 
         secret_key = parsed_response["auth"]
         refreshed_token_set = json.dumps(parsed_response["refreshed_token_set"])
-        SecretService().update_secret(secret_key, refreshed_token_set, g.user.id)
+        user_id = g.user.id if UserService.has_user() else None
+        SecretService().update_secret(secret_key, refreshed_token_set, user_id)
 
         return json.dumps(parsed_response["api_response"])
 

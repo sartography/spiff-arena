@@ -1,5 +1,5 @@
 import { string } from 'prop-types';
-import { modifyProcessModelPath } from '../../src/helpers';
+import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
 
 // ***********************************************
 // This example commands.js shows you how to
@@ -78,8 +78,7 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 
   cy.url().should(
     'include',
-    `process-models/${modifyProcessModelPath(groupId)}:${modelId}`
-    // `process-models/${groupId}:${modelId}`
+    `process-models/${modifyProcessIdentifierForPathParam(groupId)}:${modelId}`
   );
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
@@ -104,12 +103,12 @@ Cypress.Commands.add(
   'navigateToProcessModel',
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
-    cy.contains('Misc').click();
-    cy.contains(`Process Group: 99-Misc`, { timeout: 10000 });
+    cy.contains('99-Shared Resources').click();
+    cy.contains(`Process Group: 99-Shared Resources`, { timeout: 10000 });
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
-    cy.getBySel('process-model-show-link').contains(modelIdentifier).click();
+    cy.getBySel('process-model-show-link').contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
   }
 );
@@ -132,9 +131,4 @@ Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
 
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
   cy.contains(/\b0–0 of 0 items/);
-});
-
-Cypress.Commands.add('modifyProcessModelPath', (path) => {
-  path.replace('/', ':');
-  return path;
 });

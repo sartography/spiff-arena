@@ -44,7 +44,7 @@ class TestMessageInstance(BaseTest):
             client, with_super_admin_user
         )
 
-        process_model = ProcessModelService().get_process_model(
+        process_model = ProcessModelService.get_process_model(
             process_model_id=process_model_identifier
         )
         process_instance = self.create_process_instance_from_process_model(
@@ -81,7 +81,7 @@ class TestMessageInstance(BaseTest):
             client, with_super_admin_user
         )
 
-        process_model = ProcessModelService().get_process_model(
+        process_model = ProcessModelService.get_process_model(
             process_model_id=process_model_identifier
         )
         process_instance = self.create_process_instance_from_process_model(
@@ -127,7 +127,7 @@ class TestMessageInstance(BaseTest):
             client, with_super_admin_user
         )
 
-        process_model = ProcessModelService().get_process_model(
+        process_model = ProcessModelService.get_process_model(
             process_model_id=process_model_identifier
         )
         process_instance = self.create_process_instance_from_process_model(
@@ -174,7 +174,7 @@ class TestMessageInstance(BaseTest):
             client, with_super_admin_user
         )
 
-        process_model = ProcessModelService().get_process_model(
+        process_model = ProcessModelService.get_process_model(
             process_model_id=process_model_identifier
         )
         process_instance = self.create_process_instance_from_process_model(

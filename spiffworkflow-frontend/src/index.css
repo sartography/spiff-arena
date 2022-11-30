@@ -5,6 +5,10 @@
   color: white;
 }
 
+.megacondensed {
+  padding-left: 0px;
+}
+
 /* defaults to 3rem, which isn't long sufficient for "elizabeth" */
 .cds--header__action.username-header-text {
   width: 5rem;
@@ -143,6 +147,14 @@ h1.with-icons {
   margin-bottom: 1em;
 }
 
+.with-top-margin {
+  margin-top: 1em;
+}
+
+.with-large-bottom-margin {
+  margin-bottom: 3em;
+}
+
 .diagram-viewer-canvas {
   border:1px solid #000000;
   height:70vh;
@@ -247,4 +259,41 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 .tile-pin-bottom {
   position: absolute;
   bottom: 1em;
+}
+
+.cds--tabs .cds--tabs__nav-link {
+  max-width: 20rem;
+}
+
+.clear-left {
+  clear: left;
+}
+
+td.actions-cell {
+  width: 1em;
+}
+
+.no-results-message {
+  font-style: italic;
+  margin-left: 2em;
+  margin-top: 1em;
+  font-size: 14px;
+}
+
+.data-table-description {
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  color: #525252;
+  margin-bottom: 1em;
+}
+
+/* top and bottom margin since this is sort of the middle of three sections on the process model show page */
+.process-model-files-section {
+  margin: 2em 0;
+}
+
+.filterIcon {
+  text-align: right;
+  padding-bottom: 10px;
 }

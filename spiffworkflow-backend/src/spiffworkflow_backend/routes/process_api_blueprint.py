@@ -30,6 +30,7 @@ from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
+from sqlalchemy.orm import joinedload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
@@ -63,6 +64,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -157,9 +159,8 @@ def un_modify_modified_process_model_id(modified_process_model_id: str) -> str:
 
 def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
-    process_model_service = ProcessModelService()
     process_group = ProcessGroup(**body)
-    process_model_service.add_process_group(process_group)
+    ProcessModelService.add_process_group(process_group)
     return make_response(jsonify(process_group), 201)
 
 
@@ -183,20 +184,20 @@ def process_group_update(
 
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
-    ProcessModelService().update_process_group(process_group)
+    ProcessModelService.update_process_group(process_group)
     return make_response(jsonify(process_group), 200)
 
 
-def process_groups_list(
+def process_group_list(
     process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    """Process_groups_list."""
+    """Process_group_list."""
     if process_group_identifier is not None:
-        process_groups = ProcessModelService().get_process_groups(
+        process_groups = ProcessModelService.get_process_groups(
             process_group_identifier
         )
     else:
-        process_groups = ProcessModelService().get_process_groups()
+        process_groups = ProcessModelService.get_process_groups()
     batch = ProcessModelService().get_batch(
         items=process_groups, page=page, per_page=per_page
     )
@@ -222,7 +223,7 @@ def process_group_show(
     """Process_group_show."""
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     try:
-        process_group = ProcessModelService().get_process_group(process_group_id)
+        process_group = ProcessModelService.get_process_group(process_group_id)
     except ProcessEntityNotFoundError as exception:
         raise (
             ApiError(
@@ -231,13 +232,17 @@ def process_group_show(
                 status_code=400,
             )
         ) from exception
+
+    process_group.parent_groups = ProcessModelService.get_parent_group_array(
+        process_group.id
+    )
     return make_response(jsonify(process_group), 200)
 
 
 def process_group_move(
     modified_process_group_identifier: str, new_location: str
 ) -> flask.wrappers.Response:
-    """process_group_move."""
+    """Process_group_move."""
     original_process_group_id = un_modify_modified_process_model_id(
         modified_process_group_identifier
     )
@@ -268,8 +273,7 @@ def process_model_create(
     unmodified_process_group_id = un_modify_modified_process_model_id(
         modified_process_group_id
     )
-    process_model_service = ProcessModelService()
-    process_group = process_model_service.get_process_group(unmodified_process_group_id)
+    process_group = ProcessModelService.get_process_group(unmodified_process_group_id)
     if process_group is None:
         raise ApiError(
             error_code="process_model_could_not_be_created",
@@ -277,7 +281,7 @@ def process_model_create(
             status_code=400,
         )
 
-    process_model_service.add_process_model(process_model_info)
+    ProcessModelService.add_process_model(process_model_info)
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,
@@ -314,7 +318,7 @@ def process_model_update(
 
     # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
-    ProcessModelService().update_process_model(process_model, body_filtered)
+    ProcessModelService.update_process_model(process_model, body_filtered)
     return ProcessModelInfoSchema().dump(process_model)
 
 
@@ -329,14 +333,17 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
     process_model.files = files
     for file in process_model.files:
         file.references = SpecFileService.get_references_for_file(file, process_model)
-    process_model_json = ProcessModelInfoSchema().dump(process_model)
-    return process_model_json
+
+    process_model.parent_groups = ProcessModelService.get_parent_group_array(
+        process_model.id
+    )
+    return make_response(jsonify(process_model), 200)
 
 
 def process_model_move(
     modified_process_model_identifier: str, new_location: str
 ) -> flask.wrappers.Response:
-    """process_model_move."""
+    """Process_model_move."""
     original_process_model_id = un_modify_modified_process_model_id(
         modified_process_model_identifier
     )
@@ -349,12 +356,15 @@ def process_model_move(
 def process_model_list(
     process_group_identifier: Optional[str] = None,
     recursive: Optional[bool] = False,
+    filter_runnable_by_user: Optional[bool] = False,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process model list!"""
-    process_models = ProcessModelService().get_process_models(
-        process_group_id=process_group_identifier, recursive=recursive
+    process_models = ProcessModelService.get_process_models(
+        process_group_id=process_group_identifier,
+        recursive=recursive,
+        filter_runnable_by_user=filter_runnable_by_user,
     )
     batch = ProcessModelService().get_batch(
         process_models, page=page, per_page=per_page
@@ -483,8 +493,10 @@ def process_instance_create(modified_process_model_id: str) -> flask.wrappers.Re
     process_model_identifier = un_modify_modified_process_model_id(
         modified_process_model_id
     )
-    process_instance = ProcessInstanceService.create_process_instance(
-        process_model_identifier, g.user
+    process_instance = (
+        ProcessInstanceService.create_process_instance_from_process_model_identifier(
+            process_model_identifier, g.user
+        )
     )
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
@@ -494,6 +506,7 @@ def process_instance_create(modified_process_model_id: str) -> flask.wrappers.Re
 
 
 def process_instance_run(
+    modified_process_model_identifier: str,
     process_instance_id: int,
     do_engine_steps: bool = True,
 ) -> flask.wrappers.Response:
@@ -758,6 +771,9 @@ def process_instance_list(
     end_from: Optional[int] = None,
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
+    initiated_by_me: Optional[bool] = None,
+    with_tasks_completed_by_me: Optional[bool] = None,
+    with_tasks_completed_by_my_group: Optional[bool] = None,
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
@@ -774,6 +790,9 @@ def process_instance_list(
             end_from,
             end_to,
             process_status.split(",") if process_status else None,
+            initiated_by_me,
+            with_tasks_completed_by_me,
+            with_tasks_completed_by_my_group,
         )
     else:
         report_filter = (
@@ -785,11 +804,19 @@ def process_instance_list(
                 end_from,
                 end_to,
                 process_status,
+                initiated_by_me,
+                with_tasks_completed_by_me,
+                with_tasks_completed_by_my_group,
             )
         )
 
     # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
+    # Always join that hot user table for good performance at serialization time.
+    process_instance_query = process_instance_query.options(
+        joinedload(ProcessInstanceModel.process_initiator)
+    )
+
     if report_filter.process_model_identifier is not None:
         process_model = get_process_model(
             f"{report_filter.process_model_identifier}",
@@ -833,9 +860,81 @@ def process_instance_list(
             ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
         )
 
-    process_instances = process_instance_query.order_by(
-        ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    if report_filter.initiated_by_me is True:
+        process_instance_query = process_instance_query.filter(
+            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
+        )
+        process_instance_query = process_instance_query.filter_by(
+            process_initiator=g.user
+        )
+
+    # TODO: not sure if this is exactly what is wanted
+    if report_filter.with_tasks_completed_by_me is True:
+        process_instance_query = process_instance_query.filter(
+            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
+        )
+        # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
+        # process_instance_query = process_instance_query.add_columns(UserModel.username)
+        # search for process_instance.UserModel.username in this file for more details about why adding columns is annoying.
+
+        process_instance_query = process_instance_query.filter(
+            ProcessInstanceModel.process_initiator_id != g.user.id
+        )
+        process_instance_query = process_instance_query.join(
+            SpiffStepDetailsModel,
+            ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
+        )
+        process_instance_query = process_instance_query.join(
+            SpiffLoggingModel,
+            ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
+        )
+        process_instance_query = process_instance_query.filter(
+            SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
+        )
+        process_instance_query = process_instance_query.filter(
+            SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
+        )
+        process_instance_query = process_instance_query.filter(
+            SpiffStepDetailsModel.completed_by_user_id == g.user.id
+        )
+
+    if report_filter.with_tasks_completed_by_my_group is True:
+        process_instance_query = process_instance_query.filter(
+            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
+        )
+        process_instance_query = process_instance_query.join(
+            SpiffStepDetailsModel,
+            ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
+        )
+        process_instance_query = process_instance_query.join(
+            SpiffLoggingModel,
+            ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
+        )
+        process_instance_query = process_instance_query.filter(
+            SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
+        )
+        process_instance_query = process_instance_query.filter(
+            SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
+        )
+        process_instance_query = process_instance_query.join(
+            GroupModel,
+            GroupModel.id == SpiffStepDetailsModel.lane_assignment_id,
+        )
+        process_instance_query = process_instance_query.join(
+            UserGroupAssignmentModel,
+            UserGroupAssignmentModel.group_id == GroupModel.id,
+        )
+        process_instance_query = process_instance_query.filter(
+            UserGroupAssignmentModel.user_id == g.user.id
+        )
+
+    process_instances = (
+        process_instance_query.group_by(ProcessInstanceModel.id)
+        .order_by(
+            ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
+        )
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
 
     results = list(
         map(
@@ -1001,7 +1100,7 @@ def authentication_callback(
         f"{service}/{auth_method}", response, g.user.id, create_if_not_exists=True
     )
     return redirect(
-        f"{current_app.config['SPIFFWORKFLOW_FRONTEND_URL']}/admin/authentications"
+        f"{current_app.config['SPIFFWORKFLOW_FRONTEND_URL']}/admin/configuration"
     )
 
 
@@ -1056,7 +1155,7 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
         # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.process_group_identifier,
+            ProcessInstanceModel.process_model_display_name,
             ProcessInstanceModel.status,
             ActiveTaskModel.task_name,
             ActiveTaskModel.task_title,
@@ -1197,8 +1296,10 @@ def process_instance_task_list(
             )
             .first()
         )
-        if step_detail is not None:
-            process_instance.bpmn_json = json.dumps(step_detail.task_json)
+        if step_detail is not None and process_instance.bpmn_json is not None:
+            bpmn_json = json.loads(process_instance.bpmn_json)
+            bpmn_json["tasks"] = step_detail.task_json
+            process_instance.bpmn_json = json.dumps(bpmn_json)
 
     processor = ProcessInstanceProcessor(process_instance)
 
@@ -1318,7 +1419,7 @@ def task_submit(
         task_id, process_instance, processor=processor
     )
     AuthorizationService.assert_user_can_complete_spiff_task(
-        processor, spiff_task, principal.user
+        process_instance.id, spiff_task, principal.user
     )
 
     if spiff_task.state != TaskState.READY:
@@ -1503,7 +1604,7 @@ def get_process_model(process_model_id: str) -> ProcessModelInfo:
     """Get_process_model."""
     process_model = None
     try:
-        process_model = ProcessModelService().get_process_model(process_model_id)
+        process_model = ProcessModelService.get_process_model(process_model_id)
     except ProcessEntityNotFoundError as exception:
         raise (
             ApiError(

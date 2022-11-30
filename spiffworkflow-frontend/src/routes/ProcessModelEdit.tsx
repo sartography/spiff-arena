@@ -24,10 +24,11 @@ export default function ProcessModelEdit() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${processModel.id}`,
-              `process_model:${processModel.id}:link`,
-            ],
+            {
+              entityToExplode: processModel,
+              entityType: 'process-model',
+              linkLastItem: true,
+            },
           ]}
         />
         <h1>Edit Process Model: {(processModel as any).id}</h1>
