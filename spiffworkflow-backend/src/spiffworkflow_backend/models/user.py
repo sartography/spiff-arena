@@ -83,10 +83,6 @@ class UserModel(SpiffworkflowBaseDBModel):
             algorithm="HS256",
         )
 
-    def is_admin(self) -> bool:
-        """Is_admin."""
-        return True
-
     # @classmethod
     # def from_open_id_user_info(cls, user_info: dict) -> Any:
     #     """From_open_id_user_info."""

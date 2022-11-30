@@ -1,6 +1,7 @@
 """User."""
 import ast
 import base64
+import json
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -14,9 +15,12 @@ from flask import request
 from flask_bpmn.api.api_error import ApiError
 from werkzeug.wrappers import Response
 
+from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
+from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import (
-    AuthenticationService,
+    AuthenticationService, AuthenticationProviderTypes,
 )
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
@@ -58,7 +62,6 @@ def verify_token(
         decoded_token = get_decoded_token(token)
 
         if decoded_token is not None:
-
             if "token_type" in decoded_token:
                 token_type = decoded_token["token_type"]
                 if token_type == "internal":  # noqa: S105
@@ -68,11 +71,11 @@ def verify_token(
                         current_app.logger.error(
                             f"Exception in verify_token getting user from decoded internal token. {e}"
                         )
-
             elif "iss" in decoded_token.keys():
                 try:
-                    user_info = AuthenticationService.get_user_info_from_open_id(token)
-                except ApiError as ae:
+                    if AuthenticationService.validate_id_token(token):
+                        user_info = decoded_token
+                except ApiError as ae:  # API Error is only thrown in the token is outdated.
                     # Try to refresh the token
                     user = UserService.get_user_by_service_and_service_id(
                         "open_id", decoded_token["sub"]
@@ -86,14 +89,9 @@ def verify_token(
                                 )
                             )
                             if auth_token and "error" not in auth_token:
-                                # redirect to original url, with auth_token?
-                                user_info = (
-                                    AuthenticationService.get_user_info_from_open_id(
-                                        auth_token["access_token"]
-                                    )
-                                )
-                                if not user_info:
-                                    raise ae
+                                # We have the user, but this code is a bit convoluted, and will later demand
+                                # a user_info object so it can look up the user.  Sorry to leave this crap here.
+                                user_info = {"sub": user.service_id }
                             else:
                                 raise ae
                         else:
@@ -202,6 +200,15 @@ def login(redirect_url: str = "/") -> Response:
     )
     return redirect(login_redirect_url)
 
+def parse_id_token(token: str) -> dict:
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise Exception("Incorrect id token format")
+
+    payload = parts[1]
+    padded = payload + '=' * (4 - len(payload) % 4)
+    decoded = base64.b64decode(padded)
+    return json.loads(decoded)
 
 def login_return(code: str, state: str, session_state: str) -> Optional[Response]:
     """Login_return."""
@@ -211,10 +218,9 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
 
+        user_info = parse_id_token(id_token)
+
         if AuthenticationService.validate_id_token(id_token):
-            user_info = AuthenticationService.get_user_info_from_open_id(
-                auth_token_object["access_token"]
-            )
             if user_info and "error" not in user_info:
                 user_model = AuthorizationService.create_user_from_sign_in(user_info)
                 g.user = user_model.id
@@ -332,15 +338,11 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserMo
         .filter(UserModel.service_id == service_id)
         .first()
     )
-    # user: UserModel = UserModel.query.filter()
     if user:
         return user
     user = UserModel(
         username=service_id,
-        uid=service_id,
         service=service,
         service_id=service_id,
-        name="API User",
     )
-
     return user
