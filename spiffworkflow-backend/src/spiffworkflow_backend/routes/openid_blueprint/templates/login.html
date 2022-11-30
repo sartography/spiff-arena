@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Form</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            background-color:white;
+            font-family: 'Arial';
+        }
+        .error {
+            margin: 20px auto;
+            color: red;
+            font-weight: bold;
+            text-align: center;
+        }
+        .login{
+                width: 382px;
+                overflow: hidden;
+                margin: 20px auto;
+                padding: 80px;
+                background: #000;
+                border-radius: 15px ;
+
+        }
+        h2{
+            text-align: center;
+            color: #277582;
+            padding: 20px;
+        }
+        label{
+            color: #fff;
+            font-size: 17px;
+        }
+        #Uname{
+            width: 300px;
+            height: 30px;
+            border: none;
+            border-radius: 3px;
+            padding-left: 8px;
+        }
+        #Pass{
+            width: 300px;
+            height: 30px;
+            border: none;
+            border-radius: 3px;
+            padding-left: 8px;
+
+        }
+        #log{
+            width: 300px;
+            height: 30px;
+            border: none;
+            border-radius: 17px;
+            padding-left: 7px;
+            color: blue;
+
+
+        }
+        span{
+            color: white;
+            font-size: 17px;
+        }
+        a{
+            float: right;
+            background-color: grey;
+        }
+    </style>
+</head>
+<body>
+    <h2>Login to SpiffWorkflow</h2><br>
+    <div class="error">{{error_message}}</div>
+    <div class="login">
+    <form id="login" method="post" action="{{ url_for('openid.form_submit') }}">
+        <label><b>User Name
+        </b>
+        </label>
+        <input type="text" name="Uname" id="Uname" placeholder="Username">
+        <br><br>
+        <label><b>Password
+        </b>
+        </label>
+        <input type="Password" name="Pass" id="Pass" placeholder="Password">
+        <br><br>
+        <input type="hidden" name="state" value="{{state}}"/>
+        <input type="hidden" name="response_type" value="{{response_type}}"/>
+        <input type="hidden" name="client_id" value="{{client_id}}"/>
+        <input type="hidden" name="scope" value="{{scope}}"/>
+        <input type="hidden" name="redirect_uri" value="{{redirect_uri}}"/>
+        <input type="submit" name="log" id="log" value="Log In">
+        <br><br>
+        <!-- should maybe add this stuff in eventually, but this is just for testing.
+        <input type="checkbox" id="check">
+        <span>Remember me</span>
+        <br><br>
+        Forgot <a href="#">Password</a>
+         -->
+    </form>
+</div>
+</body>
+</html>

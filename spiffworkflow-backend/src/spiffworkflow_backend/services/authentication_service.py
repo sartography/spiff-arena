@@ -42,43 +42,6 @@ class AuthenticationService:
             open_id_client_secret_key,
         )
 
-    @classmethod
-    def get_user_info_from_open_id(cls, token: str) -> dict:
-        """The token is an auth_token."""
-        (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        ) = cls.get_open_id_args()
-
-        headers = {"Authorization": f"Bearer {token}"}
-
-        request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/userinfo"
-        try:
-            request_response = requests.get(request_url, headers=headers)
-        except Exception as e:
-            current_app.logger.error(f"Exception in get_user_info_from_id_token: {e}")
-            raise ApiError(
-                error_code="token_error",
-                message=f"Exception in get_user_info_from_id_token: {e}",
-                status_code=401,
-            ) from e
-
-        if request_response.status_code == 401:
-            raise ApiError(
-                error_code="invalid_token", message="Please login", status_code=401
-            )
-        elif request_response.status_code == 200:
-            user_info: dict = json.loads(request_response.text)
-            return user_info
-
-        raise ApiError(
-            error_code="user_info_error",
-            message="Cannot get user info in get_user_info_from_id_token",
-            status_code=401,
-        )
-
     @staticmethod
     def get_backend_url() -> str:
         """Get_backend_url."""
