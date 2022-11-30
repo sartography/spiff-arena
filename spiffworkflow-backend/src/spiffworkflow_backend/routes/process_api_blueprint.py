@@ -647,6 +647,7 @@ def message_instance_list(
         .add_columns(
             MessageModel.identifier.label("message_identifier"),
             ProcessInstanceModel.process_model_identifier,
+            ProcessInstanceModel.process_model_display_name,
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
@@ -978,10 +979,12 @@ def process_instance_list(
 
 
 def process_instance_report_column_list() -> flask.wrappers.Response:
-
+    """Process_instance_report_column_list."""
     table_columns = ProcessInstanceReportService.builtin_column_options()
     columns_for_metadata = db.session.query(ProcessInstanceMetadataModel.key).distinct().all()  # type: ignore
-    columns_for_metadata_strings = [{ 'Header': i[0], 'accessor': i[0]} for i in columns_for_metadata]
+    columns_for_metadata_strings = [
+        {"Header": i[0], "accessor": i[0]} for i in columns_for_metadata
+    ]
     # columns = sorted(table_columns + columns_for_metadata_strings)
     return make_response(jsonify(table_columns + columns_for_metadata_strings), 200)
 

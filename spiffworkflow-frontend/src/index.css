@@ -69,6 +69,20 @@ h2 {
   color: black;
 }
 
+/* match normal link colors */
+.cds--btn--ghost.button-link {
+  color: #0062fe;
+}
+.cds--btn--ghost.button-link:visited {
+  color: #0062fe;
+}
+.cds--btn--ghost.button-link:hover {
+  color: #0062fe;
+}
+.cds--btn--ghost.button-link:visited:hover {
+  color: #0062fe;
+}
+
 .cds--header__global .cds--btn--primary {
   background-color: #161616
 }
