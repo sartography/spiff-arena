@@ -72,15 +72,19 @@ h2 {
 /* match normal link colors */
 .cds--btn--ghost.button-link {
   color: #0062fe;
+  padding-left: 0;
 }
 .cds--btn--ghost.button-link:visited {
   color: #0062fe;
+  padding-left: 0;
 }
 .cds--btn--ghost.button-link:hover {
   color: #0062fe;
+  padding-left: 0;
 }
 .cds--btn--ghost.button-link:visited:hover {
   color: #0062fe;
+  padding-left: 0;
 }
 
 .cds--header__global .cds--btn--primary {
@@ -310,4 +314,12 @@ td.actions-cell {
 .filterIcon {
   text-align: right;
   padding-bottom: 10px;
+}
+
+.cds--btn--ghost:not([disabled]) svg {
+  fill: red;
+}
+
+.failure-string {
+  color: red;
 }

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
+import { ErrorOutline } from '@carbon/icons-react';
+// @ts-ignore
 import { Table, Modal, Button } from '@carbon/react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
@@ -46,14 +48,27 @@ export default function MessageInstanceList() {
 
   const correlationsDisplayModal = () => {
     if (messageInstanceForModal) {
+      let failureCausePre = null;
+      if (messageInstanceForModal.failure_cause) {
+        failureCausePre = (
+          <>
+            <p className="failure-string">
+              {messageInstanceForModal.failure_cause}
+            </p>
+            <br />
+          </>
+        );
+      }
       return (
         <Modal
           open={!!messageInstanceForModal}
           passiveModal
           onRequestClose={handleCorrelationDisplayClose}
           modalHeading={`Message ${messageInstanceForModal.id} (${messageInstanceForModal.message_identifier}) ${messageInstanceForModal.message_type} data:`}
-          modalLabel="Correlations"
+          modalLabel="Details"
         >
+          {failureCausePre}
+          <p>Correlations:</p>
           <pre>
             {JSON.stringify(
               messageInstanceForModal.message_correlations,
@@ -69,6 +84,17 @@ export default function MessageInstanceList() {
 
   const buildTable = () => {
     const rows = messageIntances.map((row: MessageInstance) => {
+      let errorIcon = null;
+      let errorTitle = null;
+      if (row.failure_cause) {
+        errorTitle = 'Instance has an error';
+        errorIcon = (
+          <>
+            &nbsp;
+            <ErrorOutline className="red-icon" />
+          </>
+        );
+      }
       return (
         <tr key={row.id}>
           <td>{row.id}</td>
@@ -85,14 +111,15 @@ export default function MessageInstanceList() {
           </td>
           <td>{row.message_identifier}</td>
           <td>{row.message_type}</td>
-          <td>{row.failure_cause || '-'}</td>
           <td>
             <Button
               kind="ghost"
               className="button-link"
               onClick={() => setMessageInstanceForModal(row)}
+              title={errorTitle}
             >
               View
+              {errorIcon}
             </Button>
           </td>
           <td>{row.status}</td>
@@ -111,8 +138,7 @@ export default function MessageInstanceList() {
             <th>Process Instance</th>
             <th>Name</th>
             <th>Type</th>
-            <th>Failure Cause</th>
-            <th>Correlations</th>
+            <th>Details</th>
             <th>Status</th>
             <th>Created At</th>
           </tr>
