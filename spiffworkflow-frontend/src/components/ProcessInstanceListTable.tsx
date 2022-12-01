@@ -139,10 +139,11 @@ export default function ProcessInstanceListTable({
   >([]);
   const [processInstanceReportJustSaved, setProcessInstanceReportJustSaved] =
     useState<boolean>(false);
-  const [showColumnForm, setShowColumnForm] = useState<boolean>(false);
+  const [showReportColumnForm, setShowReportColumnForm] =
+    useState<boolean>(false);
   const [reportColumnToOperateOn, setReportColumnToOperateOn] =
     useState<ReportColumn | null>(null);
-  const [columnFormMode, setColumnFormMode] = useState<string>('');
+  const [reportColumnFormMode, setReportColumnFormMode] = useState<string>('');
 
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
     return {
@@ -664,8 +665,8 @@ export default function ProcessInstanceListTable({
   };
 
   const handleColumnFormClose = () => {
-    setShowColumnForm(false);
-    setColumnFormMode('');
+    setShowReportColumnForm(false);
+    setReportColumnFormMode('');
     setReportColumnToOperateOn(null);
   };
 
@@ -673,7 +674,7 @@ export default function ProcessInstanceListTable({
     if (reportColumnToOperateOn) {
       const reportMetadataCopy = { ...reportMetadata };
       let newReportColumns = null;
-      if (columnFormMode === 'new') {
+      if (reportColumnFormMode === 'new') {
         newReportColumns = reportColumns().concat([reportColumnToOperateOn]);
       } else {
         newReportColumns = reportColumns().map((rc: ReportColumn) => {
@@ -688,8 +689,8 @@ export default function ProcessInstanceListTable({
       });
       setReportMetadata(reportMetadataCopy);
       setReportColumnToOperateOn(null);
-      setShowColumnForm(false);
-      setShowColumnForm(false);
+      setShowReportColumnForm(false);
+      setShowReportColumnForm(false);
     }
   };
 
@@ -709,8 +710,8 @@ export default function ProcessInstanceListTable({
     );
   };
 
-  const columnForm = () => {
-    if (columnFormMode === '') {
+  const reportColumnForm = () => {
+    if (reportColumnFormMode === '') {
       return null;
     }
     const formElements = [
@@ -731,7 +732,7 @@ export default function ProcessInstanceListTable({
         }}
       />,
     ];
-    if (columnFormMode === 'new') {
+    if (reportColumnFormMode === 'new') {
       formElements.push(
         <ComboBox
           onChange={updateReportColumn}
@@ -753,14 +754,14 @@ export default function ProcessInstanceListTable({
       );
     }
     const modalHeading =
-      columnFormMode === 'new'
+      reportColumnFormMode === 'new'
         ? 'Add Column'
         : `Edit ${
             reportColumnToOperateOn ? reportColumnToOperateOn.accessor : ''
           } column`;
     return (
       <Modal
-        open={showColumnForm}
+        open={showReportColumnForm}
         modalHeading={modalHeading}
         primaryButtonText="Save"
         primaryButtonDisabled={!reportColumnToOperateOn}
@@ -791,8 +792,8 @@ export default function ProcessInstanceListTable({
               title="Edit Header"
               onClick={() => {
                 setReportColumnToOperateOn(reportColumn);
-                setShowColumnForm(true);
-                setColumnFormMode('edit');
+                setShowReportColumnForm(true);
+                setReportColumnFormMode('edit');
               }}
             >
               {reportColumn.Header}
@@ -822,8 +823,8 @@ export default function ProcessInstanceListTable({
             hasIconOnly
             size="sm"
             onClick={() => {
-              setShowColumnForm(true);
-              setColumnFormMode('new');
+              setShowReportColumnForm(true);
+              setReportColumnFormMode('new');
             }}
           />
         </Stack>
@@ -985,7 +986,7 @@ export default function ProcessInstanceListTable({
       return value;
     };
 
-    const columnFormatters: Record<string, any> = {
+    const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
       process_model_display_name: FormatProcessModelDisplayName,
@@ -993,7 +994,8 @@ export default function ProcessInstanceListTable({
       end_in_seconds: formatSecondsForDisplay,
     };
     const formattedColumn = (row: any, column: any) => {
-      const formatter = columnFormatters[column.accessor] ?? defaultFormatter;
+      const formatter =
+        reportColumnFormatters[column.accessor] ?? defaultFormatter;
       const value = row[column.accessor];
       if (column.accessor === 'status') {
         return (
@@ -1093,7 +1095,7 @@ export default function ProcessInstanceListTable({
     }
     return (
       <>
-        {columnForm()}
+        {reportColumnForm()}
         {processInstanceReportSaveTag()}
         {filterComponent()}
         {reportSearchComponent()}
