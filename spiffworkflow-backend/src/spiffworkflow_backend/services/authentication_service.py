@@ -26,24 +26,24 @@ class AuthenticationProviderTypes(enum.Enum):
 class AuthenticationService:
     """AuthenticationService."""
 
-    ENDPOINT_CACHE = (
+    ENDPOINT_CACHE: dict = (
         {}
     )  # We only need to find the openid endpoints once, then we can cache them.
 
     @staticmethod
-    def client_id():
-        return current_app.config["OPEN_ID_CLIENT_ID"]
+    def client_id() -> str:
+        return current_app.config.get("OPEN_ID_CLIENT_ID", "")
 
     @staticmethod
-    def server_url():
-        return current_app.config["OPEN_ID_SERVER_URL"]
+    def server_url() -> str:
+        return current_app.config.get("OPEN_ID_SERVER_URL","")
 
     @staticmethod
-    def secret_key():
-        return current_app.config["OPEN_ID_CLIENT_SECRET_KEY"]
+    def secret_key() -> str:
+        return current_app.config.get("OPEN_ID_CLIENT_SECRET_KEY", "")
 
     @classmethod
-    def open_id_endpoint_for_name(cls, name: str) -> None:
+    def open_id_endpoint_for_name(cls, name: str) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
         if name not in AuthenticationService.ENDPOINT_CACHE:
             request_url = f"{cls.server_url()}/.well-known/openid-configuration"
@@ -51,7 +51,7 @@ class AuthenticationService:
             AuthenticationService.ENDPOINT_CACHE = response.json()
         if name not in AuthenticationService.ENDPOINT_CACHE:
             raise Exception(f"Unknown OpenID Endpoint: {name}")
-        return AuthenticationService.ENDPOINT_CACHE[name]
+        return AuthenticationService.ENDPOINT_CACHE.get(name, "")
 
     @staticmethod
     def get_backend_url() -> str:
