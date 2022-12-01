@@ -243,13 +243,13 @@ class ProcessInstanceReportService:
     def builtin_column_options(cls) -> list[dict]:
         """Builtin_column_options."""
         return [
-            {"Header": "Id", "accessor": "id"},
+            {"Header": "Id", "accessor": "id", "filterable": False},
             {
                 "Header": "Process",
-                "accessor": "process_model_display_name",
+                "accessor": "process_model_display_name", "filterable": False,
             },
-            {"Header": "Start", "accessor": "start_in_seconds"},
-            {"Header": "End", "accessor": "end_in_seconds"},
-            {"Header": "Username", "accessor": "username"},
-            {"Header": "Status", "accessor": "status"},
+            {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
+            {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
+            {"Header": "Username", "accessor": "username", "filterable": False},
+            {"Header": "Status", "accessor": "status", "filterable": False},
         ]

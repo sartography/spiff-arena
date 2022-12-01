@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom';
 
 // @ts-ignore
-import { Filter, Close } from '@carbon/icons-react';
+import { Filter, Close, AddAlt, AddFilled } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -22,6 +22,11 @@ import {
   TableRow,
   TimePicker,
   Tag,
+  InlineNotification,
+  Stack,
+  Modal,
+  ComboBox,
+  TextInput,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
@@ -88,7 +93,7 @@ export default function ProcessInstanceListTable({
   autoReload = false,
 }: OwnProps) {
   const params = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
@@ -132,6 +137,12 @@ export default function ProcessInstanceListTable({
   const [availableReportColumns, setAvailableReportColumns] = useState<
     ReportColumn[]
   >([]);
+  const [processInstanceReportJustSaved, setProcessInstanceReportJustSaved] =
+    useState<boolean>(false);
+  const [showColumnForm, setShowColumnForm] = useState<boolean>(false);
+  const [reportColumnToOperateOn, setReportColumnToOperateOn] =
+    useState<ReportColumn | null>(null);
+  const [columnFormMode, setColumnFormMode] = useState<string>('');
 
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
     return {
@@ -357,6 +368,23 @@ export default function ProcessInstanceListTable({
     processModelAvailableItems,
   ]);
 
+  const processInstanceReportSaveTag = () => {
+    if (processInstanceReportJustSaved) {
+      return (
+        <InlineNotification
+          title="Perspective Saved"
+          subtitle={`as '${
+            processInstanceReportSelection
+              ? processInstanceReportSelection.display_name
+              : ''
+          }'`}
+          kind="success"
+        />
+      );
+    }
+    return null;
+  };
+
   // does the comparison, but also returns false if either argument
   // is not truthy and therefore not comparable.
   const isTrueComparison = (param1: any, operation: any, param2: any) => {
@@ -473,6 +501,7 @@ export default function ProcessInstanceListTable({
     }
 
     setErrorMessage(null);
+    setProcessInstanceReportJustSaved(false);
     navigate(`/admin/process-instances?${queryParamString}`);
   };
 
@@ -560,17 +589,22 @@ export default function ProcessInstanceListTable({
     setEndToTime('');
   };
 
-  const processInstanceReportDidChange = (selection: any) => {
+  const processInstanceReportDidChange = (
+    selection: any,
+    savedReport: boolean = false
+  ) => {
     clearFilters();
 
     const selectedReport = selection.selectedItem;
     setProcessInstanceReportSelection(selectedReport);
 
-    const queryParamString = selectedReport
-      ? `&report_identifier=${selectedReport.id}`
-      : '';
+    let queryParamString = '';
+    if (selectedReport) {
+      queryParamString = `&report_identifier=${selectedReport.id}`;
+    }
 
     setErrorMessage(null);
+    setProcessInstanceReportJustSaved(savedReport);
     navigate(`/admin/process-instances?${queryParamString}`);
   };
 
@@ -578,12 +612,21 @@ export default function ProcessInstanceListTable({
     return (reportMetadata as any).columns;
   };
 
+  const reportColumnAccessors = () => {
+    return reportColumns().map((reportColumn: ReportColumn) => {
+      return reportColumn.accessor;
+    });
+  };
+
   const saveAsReportComponent = () => {
     // TODO onSuccess reload/select the new report in the report search
     const callback = (identifier: string) => {
-      processInstanceReportDidChange({
-        selectedItem: { id: identifier, display_name: identifier },
-      });
+      processInstanceReportDidChange(
+        {
+          selectedItem: { id: identifier, display_name: identifier },
+        },
+        true
+      );
     };
     const {
       valid,
@@ -611,18 +654,146 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const removeColumn = (reportColumn: ReportColumn) => {
+    const reportMetadataCopy = { ...reportMetadata };
+    const newColumns = reportColumns().filter(
+      (rc: ReportColumn) => rc.accessor !== reportColumn.accessor
+    );
+    Object.assign(reportMetadataCopy, { columns: newColumns });
+    setReportMetadata(reportMetadataCopy);
+  };
+
+  const handleColumnFormClose = () => {
+    setShowColumnForm(false);
+    setColumnFormMode('');
+    setReportColumnToOperateOn(null);
+  };
+
+  const handleUpdateColumn = () => {
+    if (reportColumnToOperateOn) {
+      const reportMetadataCopy = { ...reportMetadata };
+      let newReportColumns = null;
+      if (columnFormMode === 'new') {
+        newReportColumns = reportColumns().concat([reportColumnToOperateOn]);
+      } else {
+        newReportColumns = reportColumns().map((rc: ReportColumn) => {
+          if (rc.accessor === reportColumnToOperateOn.accessor) {
+            return reportColumnToOperateOn;
+          }
+          return rc;
+        });
+      }
+      Object.assign(reportMetadataCopy, {
+        columns: newReportColumns,
+      });
+      setReportMetadata(reportMetadataCopy);
+      setReportColumnToOperateOn(null);
+      setShowColumnForm(false);
+      setShowColumnForm(false);
+    }
+  };
+
+  const updateReportColumn = (event: any) => {
+    setReportColumnToOperateOn(event.selectedItem);
+  };
+
+  // options includes item and inputValue
+  const shouldFilterReportColumn = (options: any) => {
+    const reportColumn: ReportColumn = options.item;
+    const { inputValue } = options;
+    return (
+      !reportColumnAccessors().includes(reportColumn.accessor) &&
+      (reportColumn.accessor || '')
+        .toLowerCase()
+        .includes((inputValue || '').toLowerCase())
+    );
+  };
+
+  const columnForm = () => {
+    if (columnFormMode === '') {
+      return null;
+    }
+    const formElements = [
+      <TextInput
+        id="report-column-display-name"
+        name="report-column-display-name"
+        labelText="Display Name"
+        disabled={!reportColumnToOperateOn}
+        value={reportColumnToOperateOn ? reportColumnToOperateOn.Header : ''}
+        onChange={(event: any) => {
+          if (reportColumnToOperateOn) {
+            const reportColumnToOperateOnCopy = {
+              ...reportColumnToOperateOn,
+            };
+            reportColumnToOperateOnCopy.Header = event.target.value;
+            setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+          }
+        }}
+      />,
+    ];
+    if (columnFormMode === 'new') {
+      formElements.push(
+        <ComboBox
+          onChange={updateReportColumn}
+          className="combo-box-in-modal"
+          id="report-column-selection"
+          data-qa="report-column-selection"
+          data-modal-primary-focus
+          items={availableReportColumns}
+          itemToString={(reportColumn: ReportColumn) => {
+            if (reportColumn) {
+              return reportColumn.accessor;
+            }
+            return null;
+          }}
+          shouldFilterItem={shouldFilterReportColumn}
+          placeholder="Choose a report column"
+          titleText="Report Column"
+        />
+      );
+    }
+    const modalHeading =
+      columnFormMode === 'new'
+        ? 'Add Column'
+        : `Edit ${
+            reportColumnToOperateOn ? reportColumnToOperateOn.accessor : ''
+          } column`;
+    return (
+      <Modal
+        open={showColumnForm}
+        modalHeading={modalHeading}
+        primaryButtonText="Save"
+        primaryButtonDisabled={!reportColumnToOperateOn}
+        onRequestSubmit={handleUpdateColumn}
+        onRequestClose={handleColumnFormClose}
+        hasScrollingContent
+      >
+        {formElements}
+      </Modal>
+    );
+  };
+
   const columnSelections = () => {
     if (reportColumns()) {
       const tags: any = [];
 
       (reportColumns() as any).forEach((reportColumn: ReportColumn) => {
+        let tagType = 'cool-gray';
+        if (reportColumn.filterable) {
+          tagType = 'green';
+        }
         tags.push(
-          <Tag type="cool-gray" size="sm" title={reportColumn.accessor}>
+          <Tag type={tagType} size="sm" title={reportColumn.accessor}>
             <Button
               kind="ghost"
               size="sm"
               className="button-tag-icon"
               title="Edit Header"
+              onClick={() => {
+                setReportColumnToOperateOn(reportColumn);
+                setShowColumnForm(true);
+                setColumnFormMode('edit');
+              }}
             >
               {reportColumn.Header}
             </Button>
@@ -634,12 +805,29 @@ export default function ProcessInstanceListTable({
               hasIconOnly
               size="sm"
               kind="ghost"
-              onClick={toggleShowFilterOptions}
+              onClick={() => removeColumn(reportColumn)}
             />
           </Tag>
         );
       });
-      return tags;
+      return (
+        <Stack orientation="horizontal">
+          {tags}
+          <Button
+            data-qa="add-column-button"
+            renderIcon={AddAlt}
+            iconDescription="Filter Options"
+            className="with-tiny-top-margin"
+            kind="ghost"
+            hasIconOnly
+            size="sm"
+            onClick={() => {
+              setShowColumnForm(true);
+              setColumnFormMode('new');
+            }}
+          />
+        </Stack>
+      );
     }
     return null;
   };
@@ -651,7 +839,9 @@ export default function ProcessInstanceListTable({
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
-          <Column md={8}>{columnSelections()}</Column>
+          <Column md={8} lg={16} sm={4}>
+            {columnSelections()}
+          </Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>
@@ -903,6 +1093,8 @@ export default function ProcessInstanceListTable({
     }
     return (
       <>
+        {columnForm()}
+        {processInstanceReportSaveTag()}
         {filterComponent()}
         {reportSearchComponent()}
         <PaginationForTable

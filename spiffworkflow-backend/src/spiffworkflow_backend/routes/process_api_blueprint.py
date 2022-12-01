@@ -816,7 +816,6 @@ def process_instance_list(
             )
         )
 
-    # process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
     process_instance_query = ProcessInstanceModel.query
     # Always join that hot user table for good performance at serialization time.
     process_instance_query = process_instance_query.options(
@@ -983,9 +982,8 @@ def process_instance_report_column_list() -> flask.wrappers.Response:
     table_columns = ProcessInstanceReportService.builtin_column_options()
     columns_for_metadata = db.session.query(ProcessInstanceMetadataModel.key).distinct().all()  # type: ignore
     columns_for_metadata_strings = [
-        {"Header": i[0], "accessor": i[0]} for i in columns_for_metadata
+        {"Header": i[0], "accessor": i[0], "filterable": True} for i in columns_for_metadata
     ]
-    # columns = sorted(table_columns + columns_for_metadata_strings)
     return make_response(jsonify(table_columns + columns_for_metadata_strings), 200)
 
 
@@ -1139,7 +1137,6 @@ def process_instance_report_show(
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
-    """Process_instance_list."""
     process_instances = ProcessInstanceModel.query.order_by(  # .filter_by(process_model_identifier=process_model.id)
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(

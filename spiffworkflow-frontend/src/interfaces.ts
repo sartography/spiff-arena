@@ -156,4 +156,5 @@ export interface FormField {
 export interface ReportColumn {
   Header: string;
   accessor: string;
+  filterable: boolean;
 }
