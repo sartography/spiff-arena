@@ -30,7 +30,8 @@ class UserModel(SpiffworkflowBaseDBModel):
     __table_args__ = (db.UniqueConstraint("service", "service_id", name="service_key"),)
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), nullable=False, unique=False)  # server and service id must be unique, not username.
+    # server and service id must be unique, not username.
+    username = db.Column(db.String(255), nullable=False, unique=False)
     uid = db.Column(db.String(50), unique=True)
     service = db.Column(db.String(50), nullable=False, unique=False)
     service_id = db.Column(db.String(255), nullable=False, unique=False)

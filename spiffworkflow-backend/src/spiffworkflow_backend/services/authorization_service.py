@@ -6,9 +6,10 @@ from typing import Union
 
 import jwt
 import yaml
-from flask import current_app, scaffold
+from flask import current_app
 from flask import g
 from flask import request
+from flask import scaffold
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -126,7 +127,6 @@ class AuthorizationService:
             )
             db.session.add(user_group_assignemnt)
             db.session.commit()
-
 
     @classmethod
     def import_permissions_from_yaml_file(
@@ -447,7 +447,6 @@ class AuthorizationService:
                 username=username,
                 email=email,
             )
-
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because

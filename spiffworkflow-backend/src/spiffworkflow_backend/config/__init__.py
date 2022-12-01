@@ -52,12 +52,6 @@ def setup_config(app: Flask) -> None:
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config.from_object("spiffworkflow_backend.config.default")
 
-    # This allows config/testing.py or instance/config.py to override the default config
-    if "ENV_IDENTIFIER" in app.config and app.config["ENV_IDENTIFIER"] == "testing":
-        app.config.from_pyfile("config/testing.py", silent=True)
-    else:
-        app.config.from_pyfile(f"{app.instance_path}/config.py", silent=True)
-
     env_config_prefix = "spiffworkflow_backend.config."
     env_config_module = env_config_prefix + app.config["ENV_IDENTIFIER"]
     try:
@@ -72,6 +66,12 @@ def setup_config(app: Flask) -> None:
             raise ModuleNotFoundError(
                 f"Cannot find config module: {env_config_module}"
             ) from exception
+
+    # This allows config/testing.py or instance/config.py to override the default config
+    if "ENV_IDENTIFIER" in app.config and app.config["ENV_IDENTIFIER"] == "testing":
+        app.config.from_pyfile("config/testing.py", silent=True)
+    else:
+        app.config.from_pyfile(f"{app.instance_path}/config.py", silent=True)
 
     setup_database_uri(app)
     setup_logger(app)

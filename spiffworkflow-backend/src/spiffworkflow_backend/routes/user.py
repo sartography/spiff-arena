@@ -15,12 +15,9 @@ from flask import request
 from flask_bpmn.api.api_error import ApiError
 from werkzeug.wrappers import Response
 
-from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
-from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import (
-    AuthenticationService, AuthenticationProviderTypes,
+    AuthenticationService,
 )
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
@@ -91,7 +88,7 @@ def verify_token(
                             if auth_token and "error" not in auth_token:
                                 # We have the user, but this code is a bit convoluted, and will later demand
                                 # a user_info object so it can look up the user.  Sorry to leave this crap here.
-                                user_info = {"sub": user.service_id }
+                                user_info = {"sub": user.service_id}
                             else:
                                 raise ae
                         else:
@@ -200,15 +197,17 @@ def login(redirect_url: str = "/") -> Response:
     )
     return redirect(login_redirect_url)
 
+
 def parse_id_token(token: str) -> dict:
     parts = token.split(".")
     if len(parts) != 3:
         raise Exception("Incorrect id token format")
 
     payload = parts[1]
-    padded = payload + '=' * (4 - len(payload) % 4)
+    padded = payload + "=" * (4 - len(payload) % 4)
     decoded = base64.b64decode(padded)
     return json.loads(decoded)
+
 
 def login_return(code: str, state: str, session_state: str) -> Optional[Response]:
     """Login_return."""
