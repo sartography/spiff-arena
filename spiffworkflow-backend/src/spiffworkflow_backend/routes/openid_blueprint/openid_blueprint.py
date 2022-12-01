@@ -53,7 +53,7 @@ def auth() -> str:
 
 
 @openid_blueprint.route("/form_submit", methods=["POST"])
-def form_submit() -> Response | str:
+def form_submit() -> Any:
     users = get_users()
     if (
         request.values["Uname"] in users
