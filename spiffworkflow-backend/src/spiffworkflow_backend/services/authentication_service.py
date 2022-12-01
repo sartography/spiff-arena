@@ -3,7 +3,6 @@ import base64
 import enum
 import json
 import time
-import typing
 from typing import Optional
 
 import jwt
@@ -26,7 +25,10 @@ class AuthenticationProviderTypes(enum.Enum):
 
 class AuthenticationService:
     """AuthenticationService."""
-    ENDPOINT_CACHE = {}  # We only need to find the openid endpoints once, then we can cache them.
+
+    ENDPOINT_CACHE = (
+        {}
+    )  # We only need to find the openid endpoints once, then we can cache them.
 
     @staticmethod
     def client_id():
@@ -39,7 +41,6 @@ class AuthenticationService:
     @staticmethod
     def secret_key():
         return current_app.config["OPEN_ID_CLIENT_SECRET_KEY"]
-
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str) -> None:

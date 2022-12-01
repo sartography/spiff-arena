@@ -6,46 +6,46 @@ services:
     platform: linux/amd64
     cap_add:
       - SYS_NICE
-    restart: "${SPIFFWORKFLOW_BACKEND_DATABASE_DOCKER_RESTART_POLICY:-no}"
+    restart: "no"
     environment:
-      - MYSQL_DATABASE=${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
-      - MYSQL_ROOT_PASSWORD=${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw}
+      - MYSQL_DATABASE=spiffworkflow_backend_development
+      - MYSQL_ROOT_PASSWORD=my-secret-pw
       - MYSQL_TCP_PORT=7003
     ports:
       - "7003"
-    volumes:
-      - spiffworkflow_backend:/var/lib/mysql
     healthcheck:
-      test: mysql --user=root --password=${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw} -e 'select 1' ${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
+      test: mysql --user=root --password=my-secret-pw -e 'select 1' spiffworkflow_backend_development
       interval: 10s
       timeout: 5s
       retries: 10
 
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
-    image: ghcr.io/sartography/spiffworkflow-backend
+    image: ghcr.io/sartography/spiffworkflow-backend:latest
     depends_on:
       spiffworkflow-db:
         condition: service_healthy
     environment:
       - APPLICATION_ROOT=/
-      - SPIFFWORKFLOW_BACKEND_ENV=${SPIFFWORKFLOW_BACKEND_ENV:-development}
+      - SPIFFWORKFLOW_BACKEND_ENV=development
       - FLASK_DEBUG=0
-      - FLASK_SESSION_SECRET_KEY=${FLASK_SESSION_SECRET_KEY:-super_secret_key}
-      - OPEN_ID_SERVER_URL=${OPEN_ID_SERVER_URL:-http://spiffworkflow-openid:7002}
-      - SPIFFWORKFLOW_FRONTEND_URL=${SPIFFWORKFLOW_FRONTEND_URL:-http://spiffworkflow-frontend:7001}
-      - SPIFFWORKFLOW_BACKEND_URL=${SPIFFWORKFLOW_BACKEND_URL:-http://spiffworkflow-backend:7000}
+      - FLASK_SESSION_SECRET_KEY=super_secret_key
+      - OPEN_ID_SERVER_URL=http://localhost:7000/openid
+      - SPIFFWORKFLOW_FRONTEND_URL=http://localhost:7001
+      - SPIFFWORKFLOW_BACKEND_URL=http://localhost:7000
       - SPIFFWORKFLOW_BACKEND_PORT=7000
       - SPIFFWORKFLOW_BACKEND_UPGRADE_DB=true
-      - SPIFFWORKFLOW_BACKEND_DATABASE_URI=mysql+mysqlconnector://root:${SPIFFWORKFLOW_BACKEND_MYSQL_ROOT_DATABASE:-my-secret-pw}@spiffworkflow-db:7003/${SPIFFWORKFLOW_BACKEND_DATABASE_NAME:-spiffworkflow_backend_development}
+      - SPIFFWORKFLOW_BACKEND_DATABASE_URI=mysql+mysqlconnector://root:my-secret-pw@spiffworkflow-db:7003/spiffworkflow_backend_development
       - BPMN_SPEC_ABSOLUTE_DIR=/app/process_models
-      - SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-false}
-      - SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=${SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME:-acceptance_tests.yml}
+      - SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=false
+      - SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=demo.yml
       - RUN_BACKGROUND_SCHEDULER=true
+      - OPEN_ID_CLIENT_ID=spiffworkflow-backend
+      - OPEN_ID_CLIENT_SECRET_KEY=my_open_id_secret_key
     ports:
       - "7000:7000"
     volumes:
-      - ${BPMN_SPEC_ABSOLUTE_DIR:-./../sample-process-models}:/app/process_models
+      - ./process_models:/app/process_models
       - ./log:/app/log
     healthcheck:
       test: curl localhost:7000/v1.0/status --fail
