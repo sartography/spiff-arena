@@ -1,4 +1,6 @@
-"""
+"""OpenID Implementation for demos and local development.
+
+A very insecure and partial OpenID implementation for use in demos and testing.
 Provides the bare minimum endpoints required by SpiffWorkflow to
 handle openid authentication -- definitely not a production ready system.
 This is just here to make local development, testing, and demonstration easier.
@@ -22,13 +24,15 @@ openid_blueprint = Blueprint(
     "openid", __name__, template_folder="templates", static_folder="static"
 )
 
-MY_SECRET_CODE = ":this_is_not_secure_do_not_use_in_production"
+OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
 
 
 @openid_blueprint.route("/.well-known/openid-configuration", methods=["GET"])
 def well_known() -> dict:
-    """OpenID Discovery endpoint -- as these urls can be very different from system to system,
-    this is just a small subset."""
+    """Open ID Discovery endpoint.
+
+    These urls can be very different from one openid impl to the next, this is just a small subset.
+    """
     host_url = request.host_url.strip("/")
     return {
         "issuer": f"{host_url}/openid",
@@ -40,7 +44,7 @@ def well_known() -> dict:
 
 @openid_blueprint.route("/auth", methods=["GET"])
 def auth() -> str:
-    """Accepts a series of parameters"""
+    """Accepts a series of parameters."""
     return render_template(
         "login.html",
         state=request.args.get("state"),
@@ -54,6 +58,7 @@ def auth() -> str:
 
 @openid_blueprint.route("/form_submit", methods=["POST"])
 def form_submit() -> Any:
+    """Handles the login form submission."""
     users = get_users()
     if (
         request.values["Uname"] in users
@@ -63,7 +68,7 @@ def form_submit() -> Any:
         state = request.values.get("state")
         data = {
             "state": state,
-            "code": request.values["Uname"] + MY_SECRET_CODE,
+            "code": request.values["Uname"] + OPEN_ID_CODE,
             "session_state": "",
         }
         url = request.values.get("redirect_uri") + "?" + urlencode(data)
@@ -82,7 +87,7 @@ def form_submit() -> Any:
 
 @openid_blueprint.route("/token", methods=["POST"])
 def token() -> dict:
-    """Url that will return a valid token, given the super secret sauce"""
+    """Url that will return a valid token, given the super secret sauce."""
     request.values.get("grant_type")
     code = request.values.get("code")
     request.values.get("redirect_uri")
@@ -98,8 +103,6 @@ def token() -> dict:
     client_id, client_secret = authorization.split(":")
 
     base_url = request.host_url + "openid"
-    access_token = user_name + ":" + "always_good_demo_access_token"
-    refresh_token = user_name + ":" + "always_good_demo_refresh_token"
 
     id_token = jwt.encode(
         {
@@ -123,6 +126,7 @@ def token() -> dict:
 
 @openid_blueprint.route("/end_session", methods=["GET"])
 def end_session() -> Response:
+    """Logout."""
     redirect_url = request.args.get("post_logout_redirect_uri", "http://localhost")
     request.args.get("id_token_hint")
     return redirect(redirect_url)
@@ -130,6 +134,7 @@ def end_session() -> Response:
 
 @openid_blueprint.route("/refresh", methods=["POST"])
 def refresh() -> str:
+    """Refresh."""
     return ""
 
 
@@ -137,6 +142,7 @@ permission_cache = None
 
 
 def get_users() -> Any:
+    """Load users from a local configuration file."""
     global permission_cache
     if not permission_cache:
         with open(current_app.config["PERMISSIONS_FILE_FULLPATH"]) as file:

@@ -5,9 +5,11 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestFaskOpenId(BaseTest):
-    """An integrated Open ID that responds to openID requests
-    by referencing a build in YAML file.  Useful for
-    local development, testing, demos etc..."""
+    """An integrated Open ID that responds to openID requests.
+
+    By referencing a build in YAML file.  Useful for
+    local development, testing, demos etc...
+    """
 
     def test_discovery_of_endpoints(
         self,
@@ -15,6 +17,7 @@ class TestFaskOpenId(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test discovery endpoints."""
         response = client.get("/openid/.well-known/openid-configuration")
         discovered_urls = response.json
         assert "http://localhost/openid" == discovered_urls["issuer"]
@@ -29,7 +32,7 @@ class TestFaskOpenId(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        # It should be possible to get to a login page
+        """It should be possible to get to a login page."""
         data = {"state": {"bubblegum": 1, "daydream": 2}}
         response = client.get("/openid/auth", query_string=data)
         assert b"<h2>Login</h2>" in response.data
@@ -41,7 +44,7 @@ class TestFaskOpenId(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-
+        """It should be possible to get a token."""
         code = (
             "c3BpZmZ3b3JrZmxvdy1iYWNrZW5kOkpYZVFFeG0wSmhRUEx1bWdIdElJcWY1MmJEYWxIejBx"
         )
