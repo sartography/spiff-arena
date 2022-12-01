@@ -6,7 +6,7 @@ from typing import Union
 
 import jwt
 import yaml
-from flask import current_app
+from flask import current_app, scaffold
 from flask import g
 from flask import request
 from flask_bpmn.api.api_error import ApiError
@@ -253,6 +253,7 @@ class AuthorizationService:
             or api_view_function.__name__ in authentication_exclusion_list
             or api_view_function.__name__ in swagger_functions
             or module == openid_blueprint
+            or module == scaffold  # don't check permissions for static assets
         ):
             return True
 
