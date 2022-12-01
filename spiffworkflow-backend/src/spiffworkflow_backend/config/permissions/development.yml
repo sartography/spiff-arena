@@ -4,11 +4,7 @@ users:
   admin:
     email: admin@spiffworkflow.org
     password: admin
-  dan:
-    email: dan@spiffworkflow.org
-    password: password
-
-
+    preferred_username: Admin
 
 groups:
   admin:

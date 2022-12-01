@@ -21,7 +21,7 @@ class TestFaskOpenId(BaseTest):
                                     app: Flask,
                                     client: FlaskClient,
                                     with_db_and_bpmn_file_cleanup: None,) -> None:
-        response = client.get("/openid/well-known/openid-configuration")
+        response = client.get("/openid/.well-known/openid-configuration")
         discovered_urls = response.json
         assert "http://localhost/openid" == discovered_urls["issuer"]
         assert "http://localhost/openid/auth" == discovered_urls["authorization_endpoint"]
@@ -57,23 +57,3 @@ class TestFaskOpenId(BaseTest):
         response = client.post("/openid/token", data=data, headers=headers)
         assert response
 
-    def test_refresh_token_endpoint(self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,) -> None:
-        pass
-        # Handle a refresh with the following
-        # data provided
-        #             "grant_type": "refresh_token",
-        #             "refresh_token": refresh_token,
-        #             "client_id": open_id_client_id,
-        #             "client_secret": open_id_client_secret_key,
-        # Return an json response with:
-        #   id  - (this users' id)
-
-    def test_logout(self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,) -> None:
-        pass
-        # It should be possible to logout and be redirected back.
