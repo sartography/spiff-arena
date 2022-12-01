@@ -32,7 +32,7 @@ class TestFaskOpenId(BaseTest):
         # It should be possible to get to a login page
         data = {"state": {"bubblegum": 1, "daydream": 2}}
         response = client.get("/openid/auth", query_string=data)
-        assert b"<h2>Login to SpiffWorkflow</h2>" in response.data
+        assert b"<h2>Login</h2>" in response.data
         assert b"bubblegum" in response.data
 
     def test_get_token(

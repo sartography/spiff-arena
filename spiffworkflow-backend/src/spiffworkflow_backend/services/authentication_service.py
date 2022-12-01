@@ -36,7 +36,7 @@ class AuthenticationService:
 
     @staticmethod
     def server_url() -> str:
-        return current_app.config.get("OPEN_ID_SERVER_URL","")
+        return current_app.config.get("OPEN_ID_SERVER_URL", "")
 
     @staticmethod
     def secret_key() -> str:
@@ -61,11 +61,10 @@ class AuthenticationService:
     def logout(self, id_token: str, redirect_url: Optional[str] = None) -> Response:
         """Logout."""
         if redirect_url is None:
-            redirect_url = "/"
-        return_redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
+            redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
         request_url = (
             self.open_id_endpoint_for_name("end_session_endpoint")
-            + f"?post_logout_redirect_uri={return_redirect_url}&"
+            + f"?post_logout_redirect_uri={redirect_url}&"
             + f"id_token_hint={id_token}"
         )
 
