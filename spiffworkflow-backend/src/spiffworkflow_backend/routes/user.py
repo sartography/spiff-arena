@@ -198,7 +198,7 @@ def login(redirect_url: str = "/") -> Response:
     return redirect(login_redirect_url)
 
 
-def parse_id_token(token: str) -> dict:
+def parse_id_token(token: str) -> Any:
     parts = token.split(".")
     if len(parts) != 3:
         raise Exception("Incorrect id token format")
