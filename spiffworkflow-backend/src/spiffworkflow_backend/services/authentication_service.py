@@ -32,14 +32,17 @@ class AuthenticationService:
 
     @staticmethod
     def client_id() -> str:
+        """Returns the client id from the config."""
         return current_app.config.get("OPEN_ID_CLIENT_ID", "")
 
     @staticmethod
     def server_url() -> str:
+        """Returns the server url from the config."""
         return current_app.config.get("OPEN_ID_SERVER_URL", "")
 
     @staticmethod
     def secret_key() -> str:
+        """Returns the secret key from the config."""
         return current_app.config.get("OPEN_ID_CLIENT_SECRET_KEY", "")
 
     @classmethod
@@ -188,7 +191,7 @@ class AuthenticationService:
 
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str) -> dict:
-
+        """Converts a refresh token to an Auth Token by calling the openid's auth endpoint."""
         backend_basic_auth_string = f"{cls.client_id()}:{cls.secret_key()}"
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
