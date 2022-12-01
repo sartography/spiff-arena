@@ -169,6 +169,10 @@ h1.with-icons {
   margin-top: 1em;
 }
 
+.with-tiny-top-margin {
+  margin-top: 4px;
+}
+
 .with-large-bottom-margin {
   margin-bottom: 3em;
 }
@@ -333,4 +337,8 @@ td.actions-cell {
 /* .no-wrap cds--label cds--label--inline cds--label--inline--md{ */
 .no-wrap .cds--label--inline{
   word-break: normal;
+}
+
+.combo-box-in-modal {
+  height: 300px;
 }

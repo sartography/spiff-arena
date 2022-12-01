@@ -50,7 +50,6 @@ export default function ProcessInstanceListSaveAsReport({
     event.preventDefault();
 
     const orderByArray = orderBy.split(',').filter((n) => n);
-
     const filterByArray: any = [];
 
     if (processModelSelection) {
@@ -122,7 +121,7 @@ export default function ProcessInstanceListSaveAsReport({
           value={identifier}
           onChange={(e: any) => setIdentifier(e.target.value)}
         />
-        <Button disabled={!hasIdentifier()} size="sm">
+        <Button disabled={!hasIdentifier()} size="sm" type="submit">
           {buttonText}
         </Button>
       </Stack>
