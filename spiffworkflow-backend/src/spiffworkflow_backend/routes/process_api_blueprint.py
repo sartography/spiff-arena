@@ -261,17 +261,24 @@ def process_model_create(
     modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Process_model_create."""
-    process_model_info = ProcessModelInfoSchema().load(body)
+    body_include_list = [
+        "id",
+        "display_name",
+        "primary_file_name",
+        "primary_process_id",
+        "description",
+        "metadata_extraction_paths",
+    ]
+    body_filtered = {
+        include_item: body[include_item]
+        for include_item in body_include_list
+        if include_item in body
+    }
+
     if modified_process_group_id is None:
         raise ApiError(
             error_code="process_group_id_not_specified",
             message="Process Model could not be created when process_group_id path param is unspecified",
-            status_code=400,
-        )
-    if process_model_info is None:
-        raise ApiError(
-            error_code="process_model_could_not_be_created",
-            message=f"Process Model could not be created from given body: {body}",
             status_code=400,
         )
 
@@ -283,6 +290,14 @@ def process_model_create(
         raise ApiError(
             error_code="process_model_could_not_be_created",
             message=f"Process Model could not be created from given body because Process Group could not be found: {body}",
+            status_code=400,
+        )
+
+    process_model_info = ProcessModelInfo(**body_filtered)  # type: ignore
+    if process_model_info is None:
+        raise ApiError(
+            error_code="process_model_could_not_be_created",
+            message=f"Process Model could not be created from given body: {body}",
             status_code=400,
         )
 
@@ -299,7 +314,6 @@ def process_model_delete(
 ) -> flask.wrappers.Response:
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    # process_model_identifier = f"{process_group_id}/{process_model_id}"
     ProcessModelService().process_model_delete(process_model_identifier)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -314,6 +328,7 @@ def process_model_update(
         "primary_file_name",
         "primary_process_id",
         "description",
+        "metadata_extraction_paths",
     ]
     body_filtered = {
         include_item: body[include_item]
@@ -321,7 +336,6 @@ def process_model_update(
         if include_item in body
     }
 
-    # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
     ProcessModelService.update_process_model(process_model, body_filtered)
     return ProcessModelInfoSchema().dump(process_model)
@@ -330,10 +344,7 @@ def process_model_update(
 def process_model_show(modified_process_model_identifier: str) -> Any:
     """Process_model_show."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
-    # TODO: Temporary. Should not need the next line once models have correct ids
-    # process_model.id = process_model_identifier
     files = sorted(SpecFileService.get_files(process_model))
     process_model.files = files
     for file in process_model.files:
@@ -425,7 +436,6 @@ def process_model_file_update(
 ) -> flask.wrappers.Response:
     """Process_model_file_update."""
     process_model_identifier = modified_process_model_id.replace(":", "/")
-    # process_model_identifier = f"{process_group_id}/{process_model_id}"
     process_model = get_process_model(process_model_identifier)
 
     request_file = get_file_from_request()
@@ -1142,7 +1152,7 @@ def process_instance_report_show(
     per_page: int = 100,
 ) -> flask.wrappers.Response:
     """Process_instance_report_show."""
-    process_instances = ProcessInstanceModel.query.order_by(  # .filter_by(process_model_identifier=process_model.id)
+    process_instances = ProcessInstanceModel.query.order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(
         page=page, per_page=per_page, error_out=False

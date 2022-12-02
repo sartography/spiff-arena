@@ -98,6 +98,10 @@ export interface ProcessGroupLite {
   display_name: string;
 }
 
+export interface MetadataExtractionPaths {
+  [key: string]: string;
+}
+
 export interface ProcessModel {
   id: string;
   description: string;
@@ -105,6 +109,7 @@ export interface ProcessModel {
   primary_file_name: string;
   files: ProcessFile[];
   parent_groups?: ProcessGroupLite[];
+  metadata_extraction_paths?: MetadataExtractionPaths;
 }
 
 export interface ProcessGroup {

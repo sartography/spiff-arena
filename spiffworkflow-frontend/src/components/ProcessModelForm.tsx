@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
+// @ts-ignore
+import { AddAlt } from '@carbon/icons-react';
 import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
-import { ProcessModel } from '../interfaces';
+import { MetadataExtractionPaths, ProcessModel } from '../interfaces';
 
 type OwnProps = {
   mode: string;
@@ -23,6 +25,7 @@ export default function ProcessModelForm({
   const [idHasBeenUpdatedByUser, setIdHasBeenUpdatedByUser] =
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
+  useState<boolean>(false);
   const navigate = useNavigate();
 
   const navigateToProcessModel = (result: ProcessModel) => {
@@ -64,6 +67,7 @@ export default function ProcessModelForm({
     const postBody = {
       display_name: processModel.display_name,
       description: processModel.description,
+      metadata_extraction_paths: processModel.metadata_extraction_paths,
     };
     if (mode === 'new') {
       Object.assign(postBody, {
@@ -85,6 +89,66 @@ export default function ProcessModelForm({
     };
     Object.assign(processModelToCopy, newValues);
     setProcessModel(processModelToCopy);
+  };
+
+  const metadataExtractionPathForm = (
+    metadataKey: string,
+    metadataPath: string
+  ) => {
+    return (
+      <>
+        <TextInput
+          id="process-model-metadata-extraction-path-key"
+          labelText="Extraction Key"
+          value={metadataKey}
+          onChange={(event: any) => {
+            const cep: MetadataExtractionPaths =
+              processModel.metadata_extraction_paths || {};
+            delete cep[metadataKey];
+            cep[event.target.value] = metadataPath;
+            updateProcessModel({ metadata_extraction_paths: cep });
+          }}
+        />
+        <TextInput
+          id="process-model-metadata-extraction-path"
+          labelText="Extraction Path"
+          value={metadataPath}
+          onChange={(event: any) => {
+            const cep: MetadataExtractionPaths =
+              processModel.metadata_extraction_paths || {};
+            cep[metadataKey] = event.target.value;
+            updateProcessModel({ metadata_extraction_paths: cep });
+          }}
+        />
+      </>
+    );
+  };
+
+  const metadataExtractionPathFormArea = () => {
+    if (processModel.metadata_extraction_paths) {
+      console.log(
+        'processModel.metadata_extraction_paths',
+        processModel.metadata_extraction_paths
+      );
+      return Object.keys(processModel.metadata_extraction_paths).map(
+        (metadataKey: string) => {
+          return metadataExtractionPathForm(
+            metadataKey,
+            processModel.metadata_extraction_paths
+              ? processModel.metadata_extraction_paths[metadataKey]
+              : ''
+          );
+        }
+      );
+    }
+    return null;
+  };
+
+  const addBlankMetadataExtractionPath = () => {
+    const cep: MetadataExtractionPaths =
+      processModel.metadata_extraction_paths || {};
+    Object.assign(cep, { '': '' });
+    updateProcessModel({ metadata_extraction_paths: cep });
   };
 
   const onDisplayNameChanged = (newDisplayName: any) => {
@@ -143,6 +207,22 @@ export default function ProcessModelForm({
           updateProcessModel({ description: event.target.value })
         }
       />
+    );
+
+    textInputs.push(<>{metadataExtractionPathFormArea()}</>);
+    textInputs.push(
+      <Button
+        data-qa="add-metadata-extraction-path-button"
+        renderIcon={AddAlt}
+        className="button-white-background"
+        kind=""
+        size="sm"
+        onClick={() => {
+          addBlankMetadataExtractionPath();
+        }}
+      >
+        Add Metadata Extraction Path
+      </Button>
     );
 
     return textInputs;

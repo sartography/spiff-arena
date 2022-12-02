@@ -333,6 +333,7 @@ class TestProcessApi(BaseTest):
         process_model.display_name = "Updated Display Name"
         process_model.primary_file_name = "superduper.bpmn"
         process_model.primary_process_id = "superduper"
+        process_model.metadata_extraction_paths = {'extraction1': 'path1'}
 
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
         response = client.put(
@@ -346,6 +347,7 @@ class TestProcessApi(BaseTest):
         assert response.json["display_name"] == "Updated Display Name"
         assert response.json["primary_file_name"] == "superduper.bpmn"
         assert response.json["primary_process_id"] == "superduper"
+        assert response.json["metadata_extraction_paths"] == {'extraction1': 'path1'}
 
     def test_process_model_list_all(
         self,
