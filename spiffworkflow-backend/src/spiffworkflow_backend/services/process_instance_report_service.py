@@ -29,6 +29,8 @@ class ProcessInstanceReportFilter:
         """To_dict."""
         d = {}
 
+        print(f"dir(self): {dir(self)}")
+
         if self.process_model_identifier is not None:
             d["process_model_identifier"] = self.process_model_identifier
         if self.start_from is not None:
@@ -60,12 +62,21 @@ class ProcessInstanceReportService:
 
     @classmethod
     def report_with_identifier(
-        cls, user: UserModel, report_identifier: Optional[str] = None
+        cls,
+        user: UserModel,
+        report_id: Optional[int] = None,
+        report_identifier: Optional[str] = None,
     ) -> ProcessInstanceReportModel:
         """Report_with_filter."""
+        if report_id is not None:
+            process_instance_report = ProcessInstanceReportModel.query.filter_by(
+                id=report_id, created_by_id=user.id
+            ).first()
+            if process_instance_report is not None:
+                return process_instance_report  # type: ignore
+
         if report_identifier is None:
             report_identifier = "default"
-
         process_instance_report = ProcessInstanceReportModel.query.filter_by(
             identifier=report_identifier, created_by_id=user.id
         ).first()
@@ -75,9 +86,7 @@ class ProcessInstanceReportService:
 
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
-            "default": {
-                "columns": cls.builtin_column_options()
-            },
+            "default": {"columns": cls.builtin_column_options()},
             "system_report_instances_initiated_by_me": {
                 "columns": [
                     {"Header": "id", "accessor": "id"},
@@ -113,6 +122,7 @@ class ProcessInstanceReportService:
             created_by_id=user.id,
             report_metadata=temp_system_metadata_map[report_identifier],  # type: ignore
         )
+        # db.session.add(pro
 
         return process_instance_report  # type: ignore
 
@@ -246,7 +256,8 @@ class ProcessInstanceReportService:
             {"Header": "Id", "accessor": "id", "filterable": False},
             {
                 "Header": "Process",
-                "accessor": "process_model_display_name", "filterable": False,
+                "accessor": "process_model_display_name",
+                "filterable": False,
             },
             {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
             {"Header": "End", "accessor": "end_in_seconds", "filterable": False},

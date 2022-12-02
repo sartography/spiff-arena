@@ -63,9 +63,22 @@ export interface MessageInstance {
   message_correlations?: MessageCorrelations;
 }
 
+export interface ReportColumn {
+  Header: string;
+  accessor: string;
+  filterable: boolean;
+  condition_value?: string;
+}
+
+export interface ReportMetadata {
+  columns: ReportColumn[];
+}
+
 export interface ProcessInstanceReport {
-  id: string;
-  display_name: string;
+  id: number;
+  identifier: string;
+  name: string;
+  report_metadata: ReportMetadata;
 }
 
 export interface ProcessGroupLite {
@@ -151,10 +164,4 @@ export interface FormField {
   required: boolean;
   type: string;
   enum: string[];
-}
-
-export interface ReportColumn {
-  Header: string;
-  accessor: string;
-  filterable: boolean;
 }

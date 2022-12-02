@@ -782,10 +782,12 @@ def process_instance_list(
     with_tasks_completed_by_my_group: Optional[bool] = None,
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
+    report_id: Optional[int] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
+
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
-        g.user, report_identifier
+        g.user, report_id, report_identifier
     )
 
     if user_filter:
@@ -960,11 +962,9 @@ def process_instance_list(
     results = ProcessInstanceReportService.add_metadata_columns_to_process_instance(
         process_instances.items, process_instance_report.report_metadata["columns"]
     )
-    report_metadata = process_instance_report.report_metadata
 
     response_json = {
-        "report_identifier": process_instance_report.identifier,
-        "report_metadata": report_metadata,
+        "report": process_instance_report,
         "results": results,
         "filters": report_filter.to_dict(),
         "pagination": {
@@ -982,7 +982,8 @@ def process_instance_report_column_list() -> flask.wrappers.Response:
     table_columns = ProcessInstanceReportService.builtin_column_options()
     columns_for_metadata = db.session.query(ProcessInstanceMetadataModel.key).distinct().all()  # type: ignore
     columns_for_metadata_strings = [
-        {"Header": i[0], "accessor": i[0], "filterable": True} for i in columns_for_metadata
+        {"Header": i[0], "accessor": i[0], "filterable": True}
+        for i in columns_for_metadata
     ]
     return make_response(jsonify(table_columns + columns_for_metadata_strings), 200)
 
@@ -1043,22 +1044,22 @@ def process_instance_report_list(
 
 def process_instance_report_create(body: Dict[str, Any]) -> flask.wrappers.Response:
     """Process_instance_report_create."""
-    ProcessInstanceReportModel.create_report(
+    process_instance_report = ProcessInstanceReportModel.create_report(
         identifier=body["identifier"],
         user=g.user,
         report_metadata=body["report_metadata"],
     )
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify(process_instance_report), 201)
 
 
 def process_instance_report_update(
-    report_identifier: str,
+    report_id: int,
     body: Dict[str, Any],
 ) -> flask.wrappers.Response:
     """Process_instance_report_create."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        identifier=report_identifier,
+        id=report_id,
         created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
@@ -1071,15 +1072,15 @@ def process_instance_report_update(
     process_instance_report.report_metadata = body["report_metadata"]
     db.session.commit()
 
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    return make_response(jsonify(process_instance_report), 201)
 
 
 def process_instance_report_delete(
-    report_identifier: str,
+    report_id: int,
 ) -> flask.wrappers.Response:
     """Process_instance_report_create."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        identifier=report_identifier,
+        id=report_id,
         created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
@@ -1098,8 +1099,6 @@ def process_instance_report_delete(
 def service_tasks_show() -> flask.wrappers.Response:
     """Service_tasks_show."""
     available_connectors = ServiceTaskService.available_connectors()
-    print(available_connectors)
-
     return Response(
         json.dumps(available_connectors), status=200, mimetype="application/json"
     )
@@ -1133,10 +1132,11 @@ def authentication_callback(
 
 
 def process_instance_report_show(
-    report_identifier: str,
+    report_id: int,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
+    """Process_instance_report_show."""
     process_instances = ProcessInstanceModel.query.order_by(  # .filter_by(process_model_identifier=process_model.id)
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
     ).paginate(
@@ -1144,7 +1144,7 @@ def process_instance_report_show(
     )
 
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        identifier=report_identifier,
+        id=report_id,
         created_by_id=g.user.id,
     ).first()
     if process_instance_report is None:
@@ -1421,9 +1421,6 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 task.form_ui_schema = ui_form_contents
 
     if task.properties and task.data and "instructionsForEndUser" in task.properties:
-        print(
-            f"task.properties['instructionsForEndUser']: {task.properties['instructionsForEndUser']}"
-        )
         if task.properties["instructionsForEndUser"]:
             task.properties["instructionsForEndUser"] = render_jinja_template(
                 task.properties["instructionsForEndUser"], task.data

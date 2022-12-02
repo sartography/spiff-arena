@@ -177,6 +177,10 @@ h1.with-icons {
   margin-bottom: 3em;
 }
 
+.with-tiny-bottom-margin {
+  margin-bottom: 4px;
+}
+
 .diagram-viewer-canvas {
   border:1px solid #000000;
   height:70vh;
