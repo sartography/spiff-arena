@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom';
 
 // @ts-ignore
-import { Filter, Close, AddAlt, AddFilled } from '@carbon/icons-react';
+import { Filter, Close, AddAlt } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -27,6 +27,7 @@ import {
   Modal,
   ComboBox,
   TextInput,
+  FormLabel,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
@@ -93,7 +94,7 @@ export default function ProcessInstanceListTable({
   autoReload = false,
 }: OwnProps) {
   const params = useParams();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
@@ -175,16 +176,12 @@ export default function ProcessInstanceListTable({
     function setProcessInstancesFromResult(result: any) {
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
-      setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
       setProcessInstanceFilters(result.filters);
 
-      // TODO: need to iron out this interaction some more
-      if (result.report_identifier !== 'default') {
-        setProcessInstanceReportSelection({
-          id: result.report_identifier,
-          display_name: result.report_identifier,
-        });
+      setReportMetadata(result.report.report_metadata);
+      if (result.report.id) {
+        setProcessInstanceReportSelection(result.report);
       }
     }
     function getProcessInstances() {
@@ -206,14 +203,10 @@ export default function ProcessInstanceListTable({
         queryParamString += `&user_filter=${userAppliedFilter}`;
       }
 
-      let reportIdentifierToUse: any = reportIdentifier;
-
-      if (!reportIdentifierToUse) {
-        reportIdentifierToUse = searchParams.get('report_identifier');
-      }
-
-      if (reportIdentifierToUse) {
-        queryParamString += `&report_identifier=${reportIdentifierToUse}`;
+      if (searchParams.get('report_id')) {
+        queryParamString += `&report_id=${searchParams.get('report_id')}`;
+      } else if (reportIdentifier) {
+        queryParamString += `&report_identifier=${reportIdentifier}`;
       }
 
       Object.keys(dateParametersToAlwaysFilterBy).forEach(
@@ -376,7 +369,7 @@ export default function ProcessInstanceListTable({
           title="Perspective Saved"
           subtitle={`as '${
             processInstanceReportSelection
-              ? processInstanceReportSelection.display_name
+              ? processInstanceReportSelection.identifier
               : ''
           }'`}
           kind="success"
@@ -498,7 +491,7 @@ export default function ProcessInstanceListTable({
     }
 
     if (processInstanceReportSelection) {
-      queryParamString += `&report_identifier=${processInstanceReportSelection.id}`;
+      queryParamString += `&report_id=${processInstanceReportSelection.id}`;
     }
 
     setErrorMessage(null);
@@ -595,18 +588,17 @@ export default function ProcessInstanceListTable({
     savedReport: boolean = false
   ) => {
     clearFilters();
-
     const selectedReport = selection.selectedItem;
     setProcessInstanceReportSelection(selectedReport);
 
     let queryParamString = '';
     if (selectedReport) {
-      queryParamString = `&report_identifier=${selectedReport.id}`;
+      queryParamString = `?report_id=${selectedReport.id}`;
     }
 
     setErrorMessage(null);
     setProcessInstanceReportJustSaved(savedReport);
-    navigate(`/admin/process-instances?${queryParamString}`);
+    navigate(`/admin/process-instances${queryParamString}`);
   };
 
   const reportColumns = () => {
@@ -619,16 +611,17 @@ export default function ProcessInstanceListTable({
     });
   };
 
+  // TODO onSuccess reload/select the new report in the report search
+  const onSaveReportSuccess = (result: any) => {
+    processInstanceReportDidChange(
+      {
+        selectedItem: result,
+      },
+      true
+    );
+  };
+
   const saveAsReportComponent = () => {
-    // TODO onSuccess reload/select the new report in the report search
-    const callback = (identifier: string) => {
-      processInstanceReportDidChange(
-        {
-          selectedItem: { id: identifier, display_name: identifier },
-        },
-        true
-      );
-    };
     const {
       valid,
       startFromSeconds,
@@ -642,9 +635,10 @@ export default function ProcessInstanceListTable({
     }
     return (
       <ProcessInstanceListSaveAsReport
-        onSuccess={callback}
+        onSuccess={onSaveReportSuccess}
         columnArray={reportColumns()}
         orderBy=""
+        buttonText="Save As New Perspective"
         processModelSelection={processModelSelection}
         processStatusSelection={processStatusSelection}
         startFromSeconds={startFromSeconds}
@@ -710,6 +704,16 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const setReportColumnConditionValue = (event: any) => {
+    if (reportColumnToOperateOn) {
+      const reportColumnToOperateOnCopy = {
+        ...reportColumnToOperateOn,
+      };
+      reportColumnToOperateOnCopy.condition_value = event.target.value;
+      setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+    }
+  };
+
   const reportColumnForm = () => {
     if (reportColumnFormMode === '') {
       return null;
@@ -732,6 +736,22 @@ export default function ProcessInstanceListTable({
         }}
       />,
     ];
+    if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
+      console.log('reportColumnToOperateOn', reportColumnToOperateOn);
+      formElements.push(
+        <TextInput
+          id="report-column-condition-value"
+          name="report-column-condition-value"
+          labelText="Condition Value"
+          value={
+            reportColumnToOperateOn
+              ? reportColumnToOperateOn.condition_value
+              : ''
+          }
+          onChange={setReportColumnConditionValue}
+        />
+      );
+    }
     if (reportColumnFormMode === 'new') {
       formElements.push(
         <ComboBox
@@ -783,20 +803,24 @@ export default function ProcessInstanceListTable({
         if (reportColumn.filterable) {
           tagType = 'green';
         }
+        let reportColumnLabel = reportColumn.Header;
+        if (reportColumn.condition_value) {
+          reportColumnLabel = `${reportColumnLabel}=${reportColumn.condition_value}`;
+        }
         tags.push(
-          <Tag type={tagType} size="sm" title={reportColumn.accessor}>
+          <Tag type={tagType} size="sm">
             <Button
               kind="ghost"
               size="sm"
               className="button-tag-icon"
-              title="Edit Header"
+              title={`Edit ${reportColumn.accessor}`}
               onClick={() => {
                 setReportColumnToOperateOn(reportColumn);
                 setShowReportColumnForm(true);
                 setReportColumnFormMode('edit');
               }}
             >
-              {reportColumn.Header}
+              {reportColumnLabel}
             </Button>
             <Button
               data-qa="remove-report-column"
@@ -841,6 +865,8 @@ export default function ProcessInstanceListTable({
       <>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8} lg={16} sm={4}>
+            <FormLabel>Columns</FormLabel>
+            <br />
             {columnSelections()}
           </Column>
         </Grid>
@@ -1043,11 +1069,40 @@ export default function ProcessInstanceListTable({
 
   const reportSearchComponent = () => {
     if (showReports) {
+      const { startFromSeconds, startToSeconds, endFromSeconds, endToSeconds } =
+        calculateStartAndEndSeconds();
+      const columns = [
+        <Column sm={2} md={4} lg={7}>
+          <ProcessInstanceReportSearch
+            onChange={processInstanceReportDidChange}
+            selectedItem={processInstanceReportSelection}
+          />
+        </Column>,
+      ];
+      if (processInstanceReportSelection && showFilterOptions) {
+        columns.push(
+          <Column sm={2} md={4} lg={2}>
+            <ProcessInstanceListSaveAsReport
+              buttonClassName="with-tiny-top-margin"
+              onSuccess={onSaveReportSuccess}
+              columnArray={reportColumns()}
+              orderBy=""
+              buttonText="Save"
+              processModelSelection={processModelSelection}
+              processStatusSelection={processStatusSelection}
+              startFromSeconds={startFromSeconds}
+              startToSeconds={startToSeconds}
+              endFromSeconds={endFromSeconds}
+              endToSeconds={endToSeconds}
+              processInstanceReportSelection={processInstanceReportSelection}
+            />
+          </Column>
+        );
+      }
       return (
-        <ProcessInstanceReportSearch
-          onChange={processInstanceReportDidChange}
-          selectedItem={processInstanceReportSelection}
-        />
+        <Grid className="with-tiny-bottom-margin" fullWidth>
+          {columns}
+        </Grid>
       );
     }
     return null;

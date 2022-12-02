@@ -6,7 +6,7 @@ import {
   Stack,
   // @ts-ignore
 } from '@carbon/react';
-import { ProcessModel } from '../interfaces';
+import { ProcessInstanceReport, ProcessModel } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 type OwnProps = {
@@ -20,6 +20,8 @@ type OwnProps = {
   endFromSeconds: string | null;
   endToSeconds: string | null;
   buttonText?: string;
+  buttonClassName?: string;
+  processInstanceReportSelection?: ProcessInstanceReport | null;
 };
 
 export default function ProcessInstanceListSaveAsReport({
@@ -27,23 +29,31 @@ export default function ProcessInstanceListSaveAsReport({
   columnArray,
   orderBy,
   processModelSelection,
+  processInstanceReportSelection,
   processStatusSelection,
   startFromSeconds,
   startToSeconds,
   endFromSeconds,
   endToSeconds,
   buttonText = 'Save as Perspective',
+  buttonClassName,
 }: OwnProps) {
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState<string>(
+    processInstanceReportSelection?.identifier || ''
+  );
 
   const hasIdentifier = () => {
     return identifier?.length > 0;
   };
 
   const responseHandler = (result: any) => {
-    if (result.ok === true) {
-      onSuccess(identifier);
+    if (result) {
+      onSuccess(result);
     }
+  };
+
+  const isEditMode = () => {
+    return !!processInstanceReportSelection;
   };
 
   const addProcessInstanceReport = (event: any) => {
@@ -94,10 +104,17 @@ export default function ProcessInstanceListSaveAsReport({
       });
     }
 
+    let path = `/process-instances/reports`;
+    let httpMethod = 'POST';
+    if (isEditMode() && processInstanceReportSelection) {
+      httpMethod = 'PUT';
+      path = `${path}/${processInstanceReportSelection.id}`;
+    }
+
     HttpService.makeCallToBackend({
-      path: `/process-instances/reports`,
+      path,
       successCallback: responseHandler,
-      httpMethod: 'POST',
+      httpMethod,
       postBody: {
         identifier,
         report_metadata: {
@@ -109,19 +126,31 @@ export default function ProcessInstanceListSaveAsReport({
     });
   };
 
+  let textInputComponent = null;
+  if (!isEditMode()) {
+    textInputComponent = (
+      <TextInput
+        id="identifier"
+        name="identifier"
+        labelText="Identifier"
+        className="no-wrap"
+        inline
+        value={identifier}
+        onChange={(e: any) => setIdentifier(e.target.value)}
+      />
+    );
+  }
+
   return (
     <Form onSubmit={addProcessInstanceReport}>
       <Stack gap={5} orientation="horizontal">
-        <TextInput
-          id="identifier"
-          name="identifier"
-          labelText="Identifier"
-          className="no-wrap"
-          inline
-          value={identifier}
-          onChange={(e: any) => setIdentifier(e.target.value)}
-        />
-        <Button disabled={!hasIdentifier()} size="sm" type="submit">
+        {textInputComponent}
+        <Button
+          disabled={!hasIdentifier()}
+          size="sm"
+          type="submit"
+          className={buttonClassName}
+        >
           {buttonText}
         </Button>
       </Stack>

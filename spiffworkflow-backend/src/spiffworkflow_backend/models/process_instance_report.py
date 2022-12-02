@@ -26,6 +26,10 @@ from spiffworkflow_backend.services.process_instance_processor import (
 ReportMetadata = dict[str, Any]
 
 
+class ProcessInstanceReportAlreadyExistsError(Exception):
+    """ProcessInstanceReportAlreadyExistsError."""
+
+
 class ProcessInstanceReportResult(TypedDict):
     """ProcessInstanceReportResult."""
 
@@ -63,7 +67,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.Integer, primary_key=True)
     identifier: str = db.Column(db.String(50), nullable=False, index=True)
     report_metadata: dict = deferred(db.Column(db.JSON))  # type: ignore
     created_by_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)
@@ -120,21 +124,27 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         identifier: str,
         user: UserModel,
         report_metadata: ReportMetadata,
-    ) -> None:
+    ) -> ProcessInstanceReportModel:
         """Make_fixture_report."""
         process_instance_report = ProcessInstanceReportModel.query.filter_by(
             identifier=identifier,
             created_by_id=user.id,
         ).first()
 
-        if process_instance_report is None:
-            process_instance_report = cls(
-                identifier=identifier,
-                created_by_id=user.id,
-                report_metadata=report_metadata,
+        if process_instance_report is not None:
+            raise ProcessInstanceReportAlreadyExistsError(
+                f"Process instance report with identifier already exists: {identifier}"
             )
-            db.session.add(process_instance_report)
-            db.session.commit()
+
+        process_instance_report = cls(
+            identifier=identifier,
+            created_by_id=user.id,
+            report_metadata=report_metadata,
+        )
+        db.session.add(process_instance_report)
+        db.session.commit()
+
+        return process_instance_report  # type: ignore
 
     @classmethod
     def ticket_for_month_report(cls) -> dict:
