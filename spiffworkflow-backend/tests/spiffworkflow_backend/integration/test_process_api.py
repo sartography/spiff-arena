@@ -1806,7 +1806,6 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 404
         data = json.loads(response.get_data(as_text=True))
-        print(f"data: {data}")
         assert data["error_code"] == "unknown_process_instance_report"
 
     def setup_testing_instance(
