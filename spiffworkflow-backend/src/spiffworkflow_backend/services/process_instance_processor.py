@@ -178,7 +178,12 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         )
         return Script.generate_augmented_list(script_attributes_context)
 
-    def evaluate(self, task: SpiffTask, expression: str, external_methods=None) -> Any:
+    def evaluate(
+        self,
+        task: SpiffTask,
+        expression: str,
+        external_methods: Optional[dict[str, Any]] = None,
+    ) -> Any:
         """Evaluate."""
         return self._evaluate(expression, task.data, task, external_methods)
 
