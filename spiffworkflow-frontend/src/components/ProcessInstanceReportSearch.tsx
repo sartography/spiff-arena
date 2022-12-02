@@ -41,7 +41,7 @@ export default function ProcessInstanceReportSearch({
   const reportSelectionString = (
     processInstanceReport: ProcessInstanceReport
   ) => {
-    return `${truncateString(processInstanceReport.identifier, 20)} (${
+    return `${truncateString(processInstanceReport.identifier, 20)} (Id: ${
       processInstanceReport.id
     })`;
   };

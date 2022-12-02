@@ -29,8 +29,6 @@ class ProcessInstanceReportFilter:
         """To_dict."""
         d = {}
 
-        print(f"dir(self): {dir(self)}")
-
         if self.process_model_identifier is not None:
             d["process_model_identifier"] = self.process_model_identifier
         if self.start_from is not None:
@@ -86,7 +84,7 @@ class ProcessInstanceReportService:
 
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
-            "default": {"columns": cls.builtin_column_options()},
+            "default": {"columns": cls.builtin_column_options(), "filter_by": [], 'order_by': ['-start_in_seconds', '-id']},
             "system_report_instances_initiated_by_me": {
                 "columns": [
                     {"Header": "id", "accessor": "id"},
@@ -98,13 +96,13 @@ class ProcessInstanceReportService:
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "status", "accessor": "status"},
                 ],
-                "filter_by": [{"field_name": "initiated_by_me", "field_value": True}],
+                "filter_by": [{"field_name": "initiated_by_me", "field_value": True}],'order_by': ['-start_in_seconds', '-id']
             },
             "system_report_instances_with_tasks_completed_by_me": {
                 "columns": cls.builtin_column_options(),
                 "filter_by": [
                     {"field_name": "with_tasks_completed_by_me", "field_value": True}
-                ],
+                ],'order_by': ['-start_in_seconds', '-id']
             },
             "system_report_instances_with_tasks_completed_by_my_groups": {
                 "columns": cls.builtin_column_options(),
@@ -113,16 +111,15 @@ class ProcessInstanceReportService:
                         "field_name": "with_tasks_completed_by_my_group",
                         "field_value": True,
                     }
-                ],
+                ],'order_by': ['-start_in_seconds', '-id']
             },
         }
 
         process_instance_report = ProcessInstanceReportModel(
             identifier=report_identifier,
             created_by_id=user.id,
-            report_metadata=temp_system_metadata_map[report_identifier],  # type: ignore
+            report_metadata=temp_system_metadata_map[report_identifier],
         )
-        # db.session.add(pro
 
         return process_instance_report  # type: ignore
 

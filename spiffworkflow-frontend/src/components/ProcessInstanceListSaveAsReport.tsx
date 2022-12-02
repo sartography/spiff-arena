@@ -6,12 +6,18 @@ import {
   Stack,
   // @ts-ignore
 } from '@carbon/react';
-import { ProcessInstanceReport, ProcessModel } from '../interfaces';
+import {
+  ReportFilter,
+  ProcessInstanceReport,
+  ProcessModel,
+  ReportColumn,
+  ReportMetadata,
+} from '../interfaces';
 import HttpService from '../services/HttpService';
 
 type OwnProps = {
   onSuccess: (..._args: any[]) => any;
-  columnArray: { Header: string; accessor: string };
+  columnArray: ReportColumn[];
   orderBy: string;
   processModelSelection: ProcessModel | null;
   processStatusSelection: string[];
@@ -22,6 +28,7 @@ type OwnProps = {
   buttonText?: string;
   buttonClassName?: string;
   processInstanceReportSelection?: ProcessInstanceReport | null;
+  reportMetadata: ReportMetadata;
 };
 
 export default function ProcessInstanceListSaveAsReport({
@@ -37,6 +44,7 @@ export default function ProcessInstanceListSaveAsReport({
   endToSeconds,
   buttonText = 'Save as Perspective',
   buttonClassName,
+  reportMetadata,
 }: OwnProps) {
   const [identifier, setIdentifier] = useState<string>(
     processInstanceReportSelection?.identifier || ''
@@ -59,7 +67,11 @@ export default function ProcessInstanceListSaveAsReport({
   const addProcessInstanceReport = (event: any) => {
     event.preventDefault();
 
-    const orderByArray = orderBy.split(',').filter((n) => n);
+    // TODO: make a field to set this
+    let orderByArray = ['-start_in_seconds', '-id'];
+    if (orderBy) {
+      orderByArray = orderBy.split(',').filter((n) => n);
+    }
     const filterByArray: any = [];
 
     if (processModelSelection) {
@@ -72,7 +84,8 @@ export default function ProcessInstanceListSaveAsReport({
     if (processStatusSelection.length > 0) {
       filterByArray.push({
         field_name: 'process_status',
-        field_value: processStatusSelection[0], // TODO: support more than one status
+        field_value: processStatusSelection.join(','),
+        operator: 'in',
       });
     }
 
@@ -103,6 +116,17 @@ export default function ProcessInstanceListSaveAsReport({
         field_value: endToSeconds,
       });
     }
+
+    reportMetadata.filter_by.forEach((reportFilter: ReportFilter) => {
+      columnArray.forEach((reportColumn: ReportColumn) => {
+        if (
+          reportColumn.accessor === reportFilter.field_name &&
+          reportColumn.filterable
+        ) {
+          filterByArray.push(reportFilter);
+        }
+      });
+    });
 
     let path = `/process-instances/reports`;
     let httpMethod = 'POST';
