@@ -84,7 +84,11 @@ class ProcessInstanceReportService:
 
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
-            "default": {"columns": cls.builtin_column_options(), "filter_by": [], 'order_by': ['-start_in_seconds', '-id']},
+            "default": {
+                "columns": cls.builtin_column_options(),
+                "filter_by": [],
+                "order_by": ["-start_in_seconds", "-id"],
+            },
             "system_report_instances_initiated_by_me": {
                 "columns": [
                     {"Header": "id", "accessor": "id"},
@@ -96,13 +100,15 @@ class ProcessInstanceReportService:
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "status", "accessor": "status"},
                 ],
-                "filter_by": [{"field_name": "initiated_by_me", "field_value": True}],'order_by': ['-start_in_seconds', '-id']
+                "filter_by": [{"field_name": "initiated_by_me", "field_value": True}],
+                "order_by": ["-start_in_seconds", "-id"],
             },
             "system_report_instances_with_tasks_completed_by_me": {
                 "columns": cls.builtin_column_options(),
                 "filter_by": [
                     {"field_name": "with_tasks_completed_by_me", "field_value": True}
-                ],'order_by': ['-start_in_seconds', '-id']
+                ],
+                "order_by": ["-start_in_seconds", "-id"],
             },
             "system_report_instances_with_tasks_completed_by_my_groups": {
                 "columns": cls.builtin_column_options(),
@@ -111,7 +117,8 @@ class ProcessInstanceReportService:
                         "field_name": "with_tasks_completed_by_my_group",
                         "field_value": True,
                     }
-                ],'order_by': ['-start_in_seconds', '-id']
+                ],
+                "order_by": ["-start_in_seconds", "-id"],
             },
         }
 
