@@ -38,7 +38,7 @@ class ProcessModelInfo:
     fault_or_suspend_on_exception: str = NotificationType.fault.value
     exception_notification_addresses: list[str] = field(default_factory=list)
     parent_groups: list[dict] | None = None
-    metadata_extraction_paths: dict[str, str] | None = None
+    metadata_extraction_paths: list[dict[str, str]] | None = None
 
     def __post_init__(self) -> None:
         """__post_init__."""
@@ -77,8 +77,13 @@ class ProcessModelInfoSchema(Schema):
     exception_notification_addresses = marshmallow.fields.List(
         marshmallow.fields.String
     )
-    metadata_extraction_paths = marshmallow.fields.Dict(keys=marshmallow.fields.Str(required=False), values=marshmallow.fields.Str(required=False), required=False)
-
+    metadata_extraction_paths = marshmallow.fields.List(
+        marshmallow.fields.Dict(
+            keys=marshmallow.fields.Str(required=False),
+            values=marshmallow.fields.Str(required=False),
+            required=False,
+        )
+    )
 
     @post_load
     def make_spec(

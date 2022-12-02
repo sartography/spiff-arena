@@ -952,17 +952,26 @@ def process_instance_list(
             continue
         instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
 
-        filter_for_column = next((f for f in process_instance_report.report_metadata['filter_by'] if f['field_name'] == column['accessor']), None)
+        filter_for_column = next(
+            (
+                f
+                for f in process_instance_report.report_metadata["filter_by"]
+                if f["field_name"] == column["accessor"]
+            ),
+            None,
+        )
         isouter = True
-        conditions = [ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
-        instance_metadata_alias.key == column["accessor"]]
+        conditions = [
+            ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
+            instance_metadata_alias.key == column["accessor"],
+        ]
         if filter_for_column:
             isouter = False
-            conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+            conditions.append(
+                instance_metadata_alias.value == filter_for_column["field_value"]
+            )
         process_instance_query = process_instance_query.join(
-            instance_metadata_alias,
-            and_(*conditions),
-            isouter=isouter
+            instance_metadata_alias, and_(*conditions), isouter=isouter
         ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
 
     process_instances = (
@@ -1154,9 +1163,7 @@ def process_instance_report_show(
     """Process_instance_report_show."""
     process_instances = ProcessInstanceModel.query.order_by(
         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-    ).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
+    ).paginate(page=page, per_page=per_page, error_out=False)
 
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         id=report_id,
