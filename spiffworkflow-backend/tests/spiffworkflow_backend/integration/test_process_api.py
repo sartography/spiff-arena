@@ -1732,14 +1732,14 @@ class TestProcessApi(BaseTest):
             ],
         }
 
-        ProcessInstanceReportModel.create_with_attributes(
+        report = ProcessInstanceReportModel.create_with_attributes(
             identifier="sure",
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
         response = client.get(
-            "/v1.0/process-instances/reports/sure",
+            f"/v1.0/process-instances/reports/{report.id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1778,14 +1778,14 @@ class TestProcessApi(BaseTest):
             ],
         }
 
-        ProcessInstanceReportModel.create_with_attributes(
+        report = ProcessInstanceReportModel.create_with_attributes(
             identifier="sure",
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
         response = client.get(
-            "/v1.0/process-instances/reports/sure?grade_level=1",
+            f"/v1.0/process-instances/reports/{report.id}?grade_level=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1800,13 +1800,13 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
         setup_process_instances_for_reports: list[ProcessInstanceModel],
     ) -> None:
-        """Test_process_instance_report_show_with_default_list."""
         response = client.get(
-            "/v1.0/process-instances/reports/sure?grade_level=1",
+            "/v1.0/process-instances/reports/13000000?grade_level=1",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 404
         data = json.loads(response.get_data(as_text=True))
+        print(f"data: {data}")
         assert data["error_code"] == "unknown_process_instance_report"
 
     def setup_testing_instance(
@@ -2643,15 +2643,16 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.status_code == 200
         assert response.json == [
-            {"Header": "id", "accessor": "id"},
+            {"Header": "Id", "accessor": "id", "filterable": False},
             {
-                "Header": "process_model_display_name",
+                "Header": "Process",
                 "accessor": "process_model_display_name",
+                "filterable": False,
             },
-            {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-            {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-            {"Header": "username", "accessor": "username"},
-            {"Header": "status", "accessor": "status"},
-            {"Header": "key1", "accessor": "key1"},
-            {"Header": "key2", "accessor": "key2"},
+            {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
+            {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
+            {"Header": "Username", "accessor": "username", "filterable": False},
+            {"Header": "Status", "accessor": "status", "filterable": False},
+            {"Header": "key1", "accessor": "key1", "filterable": True},
+            {"Header": "key2", "accessor": "key2", "filterable": True},
         ]
