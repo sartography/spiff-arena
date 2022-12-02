@@ -785,7 +785,6 @@ def process_instance_list(
     report_id: Optional[int] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
-
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
         g.user, report_id, report_identifier
     )
@@ -942,12 +941,18 @@ def process_instance_list(
         if column["accessor"] in stock_columns:
             continue
         instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-        process_instance_query = process_instance_query.outerjoin(
+
+        filter_for_column = next((f for f in process_instance_report.report_metadata['filter_by'] if f['field_name'] == column['accessor']), None)
+        isouter = True
+        conditions = [ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
+        instance_metadata_alias.key == column["accessor"]]
+        if filter_for_column:
+            isouter = False
+            conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+        process_instance_query = process_instance_query.join(
             instance_metadata_alias,
-            and_(
-                ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
-                instance_metadata_alias.key == column["accessor"],
-            ),
+            and_(*conditions),
+            isouter=isouter
         ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
 
     process_instances = (

@@ -63,15 +63,27 @@ export interface MessageInstance {
   message_correlations?: MessageCorrelations;
 }
 
+export interface ReportFilter {
+  field_name: string;
+  field_value: string;
+  operator?: string;
+}
+
 export interface ReportColumn {
   Header: string;
   accessor: string;
   filterable: boolean;
-  condition_value?: string;
+}
+
+export interface ReportColumnForEditing extends ReportColumn {
+  filter_field_value: string;
+  filter_operator: string;
 }
 
 export interface ReportMetadata {
   columns: ReportColumn[];
+  filter_by: ReportFilter[];
+  order_by: string[];
 }
 
 export interface ProcessInstanceReport {

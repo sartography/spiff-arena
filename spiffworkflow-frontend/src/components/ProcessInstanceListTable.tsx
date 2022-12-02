@@ -57,6 +57,9 @@ import {
   ProcessInstanceReport,
   ProcessInstance,
   ReportColumn,
+  ReportColumnForEditing,
+  ReportMetadata,
+  ReportFilter,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -98,7 +101,7 @@ export default function ProcessInstanceListTable({
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
-  const [reportMetadata, setReportMetadata] = useState({});
+  const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [processInstanceFilters, setProcessInstanceFilters] = useState({});
 
@@ -143,7 +146,7 @@ export default function ProcessInstanceListTable({
   const [showReportColumnForm, setShowReportColumnForm] =
     useState<boolean>(false);
   const [reportColumnToOperateOn, setReportColumnToOperateOn] =
-    useState<ReportColumn | null>(null);
+    useState<ReportColumnForEditing | null>(null);
   const [reportColumnFormMode, setReportColumnFormMode] = useState<string>('');
 
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
@@ -630,17 +633,19 @@ export default function ProcessInstanceListTable({
       endToSeconds,
     } = calculateStartAndEndSeconds();
 
-    if (!valid) {
+    if (!valid || !reportMetadata) {
       return null;
     }
     return (
       <ProcessInstanceListSaveAsReport
         onSuccess={onSaveReportSuccess}
+        buttonClassName="narrow-button"
         columnArray={reportColumns()}
         orderBy=""
-        buttonText="Save As New Perspective"
+        buttonText="Save New Perspective"
         processModelSelection={processModelSelection}
         processStatusSelection={processStatusSelection}
+        reportMetadata={reportMetadata}
         startFromSeconds={startFromSeconds}
         startToSeconds={startToSeconds}
         endFromSeconds={endFromSeconds}
@@ -650,12 +655,14 @@ export default function ProcessInstanceListTable({
   };
 
   const removeColumn = (reportColumn: ReportColumn) => {
-    const reportMetadataCopy = { ...reportMetadata };
-    const newColumns = reportColumns().filter(
-      (rc: ReportColumn) => rc.accessor !== reportColumn.accessor
-    );
-    Object.assign(reportMetadataCopy, { columns: newColumns });
-    setReportMetadata(reportMetadataCopy);
+    if (reportMetadata) {
+      const reportMetadataCopy = { ...reportMetadata };
+      const newColumns = reportColumns().filter(
+        (rc: ReportColumn) => rc.accessor !== reportColumn.accessor
+      );
+      Object.assign(reportMetadataCopy, { columns: newColumns });
+      setReportMetadata(reportMetadataCopy);
+    }
   };
 
   const handleColumnFormClose = () => {
@@ -664,8 +671,49 @@ export default function ProcessInstanceListTable({
     setReportColumnToOperateOn(null);
   };
 
-  const handleUpdateColumn = () => {
-    if (reportColumnToOperateOn) {
+  const getFilterByFromReportMetadata = (reportColumnAccessor: string) => {
+    if (reportMetadata) {
+      return reportMetadata.filter_by.find((reportFilter: ReportFilter) => {
+        return reportColumnAccessor === reportFilter.field_name;
+      });
+    }
+    return null;
+  };
+
+  const getNewFiltersFromReportForEditing = (
+    reportColumnForEditing: ReportColumnForEditing
+  ) => {
+    if (!reportMetadata) {
+      return null;
+    }
+    const reportMetadataCopy = { ...reportMetadata };
+    let newReportFilters = reportMetadataCopy.filter_by;
+    if (reportColumnForEditing.filterable) {
+      const newReportFilter: ReportFilter = {
+        field_name: reportColumnForEditing.accessor,
+        field_value: reportColumnForEditing.filter_field_value,
+        operator: reportColumnForEditing.filter_operator || 'equals',
+      };
+      const existingReportFilter = getFilterByFromReportMetadata(
+        reportColumnForEditing.accessor
+      );
+      if (existingReportFilter) {
+        const existingReportFilterIndex =
+          reportMetadataCopy.filter_by.indexOf(existingReportFilter);
+        if (reportColumnForEditing.filter_field_value) {
+          newReportFilters[existingReportFilterIndex] = newReportFilter;
+        } else {
+          newReportFilters.splice(existingReportFilterIndex, 1);
+        }
+      } else {
+        newReportFilters = newReportFilters.concat([newReportFilter]);
+      }
+    }
+    return newReportFilters;
+  };
+
+  const handleUpdateReportColumn = () => {
+    if (reportColumnToOperateOn && reportMetadata) {
       const reportMetadataCopy = { ...reportMetadata };
       let newReportColumns = null;
       if (reportColumnFormMode === 'new') {
@@ -680,6 +728,7 @@ export default function ProcessInstanceListTable({
       }
       Object.assign(reportMetadataCopy, {
         columns: newReportColumns,
+        filter_by: getNewFiltersFromReportForEditing(reportColumnToOperateOn),
       });
       setReportMetadata(reportMetadataCopy);
       setReportColumnToOperateOn(null);
@@ -688,8 +737,27 @@ export default function ProcessInstanceListTable({
     }
   };
 
+  const reportColumnToReportColumnForEditing = (reportColumn: ReportColumn) => {
+    const reportColumnForEditing: ReportColumnForEditing = Object.assign(
+      reportColumn,
+      { filter_field_value: '', filter_operator: '' }
+    );
+    const reportFilter = getFilterByFromReportMetadata(
+      reportColumnForEditing.accessor
+    );
+    if (reportFilter) {
+      reportColumnForEditing.filter_field_value = reportFilter.field_value;
+      reportColumnForEditing.filter_operator =
+        reportFilter.operator || 'equals';
+    }
+    return reportColumnForEditing;
+  };
+
   const updateReportColumn = (event: any) => {
-    setReportColumnToOperateOn(event.selectedItem);
+    const reportColumnForEditing = reportColumnToReportColumnForEditing(
+      event.selectedItem
+    );
+    setReportColumnToOperateOn(reportColumnForEditing);
   };
 
   // options includes item and inputValue
@@ -709,7 +777,7 @@ export default function ProcessInstanceListTable({
       const reportColumnToOperateOnCopy = {
         ...reportColumnToOperateOn,
       };
-      reportColumnToOperateOnCopy.condition_value = event.target.value;
+      reportColumnToOperateOnCopy.filter_field_value = event.target.value;
       setReportColumnToOperateOn(reportColumnToOperateOnCopy);
     }
   };
@@ -737,7 +805,6 @@ export default function ProcessInstanceListTable({
       />,
     ];
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
-      console.log('reportColumnToOperateOn', reportColumnToOperateOn);
       formElements.push(
         <TextInput
           id="report-column-condition-value"
@@ -745,7 +812,7 @@ export default function ProcessInstanceListTable({
           labelText="Condition Value"
           value={
             reportColumnToOperateOn
-              ? reportColumnToOperateOn.condition_value
+              ? reportColumnToOperateOn.filter_field_value
               : ''
           }
           onChange={setReportColumnConditionValue}
@@ -785,7 +852,7 @@ export default function ProcessInstanceListTable({
         modalHeading={modalHeading}
         primaryButtonText="Save"
         primaryButtonDisabled={!reportColumnToOperateOn}
-        onRequestSubmit={handleUpdateColumn}
+        onRequestSubmit={handleUpdateReportColumn}
         onRequestClose={handleColumnFormClose}
         hasScrollingContent
       >
@@ -799,13 +866,16 @@ export default function ProcessInstanceListTable({
       const tags: any = [];
 
       (reportColumns() as any).forEach((reportColumn: ReportColumn) => {
+        const reportColumnForEditing =
+          reportColumnToReportColumnForEditing(reportColumn);
+
         let tagType = 'cool-gray';
-        if (reportColumn.filterable) {
+        if (reportColumnForEditing.filterable) {
           tagType = 'green';
         }
-        let reportColumnLabel = reportColumn.Header;
-        if (reportColumn.condition_value) {
-          reportColumnLabel = `${reportColumnLabel}=${reportColumn.condition_value}`;
+        let reportColumnLabel = reportColumnForEditing.Header;
+        if (reportColumnForEditing.filter_field_value) {
+          reportColumnLabel = `${reportColumnLabel}=${reportColumnForEditing.filter_field_value}`;
         }
         tags.push(
           <Tag type={tagType} size="sm">
@@ -813,9 +883,9 @@ export default function ProcessInstanceListTable({
               kind="ghost"
               size="sm"
               className="button-tag-icon"
-              title={`Edit ${reportColumn.accessor}`}
+              title={`Edit ${reportColumnForEditing.accessor}`}
               onClick={() => {
-                setReportColumnToOperateOn(reportColumn);
+                setReportColumnToOperateOn(reportColumnForEditing);
                 setShowReportColumnForm(true);
                 setReportColumnFormMode('edit');
               }}
@@ -830,7 +900,7 @@ export default function ProcessInstanceListTable({
               hasIconOnly
               size="sm"
               kind="ghost"
-              onClick={() => removeColumn(reportColumn)}
+              onClick={() => removeColumn(reportColumnForEditing)}
             />
           </Tag>
         );
@@ -933,11 +1003,14 @@ export default function ProcessInstanceListTable({
           </Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
-          <Column md={4}>
+          <Column sm={4} md={4} lg={8}>
+            {saveAsReportComponent()}
+          </Column>
+          <Column sm={4} md={4} lg={8}>
             <ButtonSet>
               <Button
                 kind=""
-                className="button-white-background"
+                className="button-white-background narrow-button"
                 onClick={clearFilters}
               >
                 Clear
@@ -946,15 +1019,11 @@ export default function ProcessInstanceListTable({
                 kind="secondary"
                 onClick={applyFilter}
                 data-qa="filter-button"
+                className="narrow-button"
               >
                 Filter
               </Button>
             </ButtonSet>
-          </Column>
-        </Grid>
-        <Grid fullWidth className="with-bottom-margin">
-          <Column md={7} lg={13} sm={3}>
-            {saveAsReportComponent()}
           </Column>
         </Grid>
       </>
@@ -1079,7 +1148,11 @@ export default function ProcessInstanceListTable({
           />
         </Column>,
       ];
-      if (processInstanceReportSelection && showFilterOptions) {
+      if (
+        processInstanceReportSelection &&
+        showFilterOptions &&
+        reportMetadata
+      ) {
         columns.push(
           <Column sm={2} md={4} lg={2}>
             <ProcessInstanceListSaveAsReport
@@ -1090,6 +1163,7 @@ export default function ProcessInstanceListTable({
               buttonText="Save"
               processModelSelection={processModelSelection}
               processStatusSelection={processStatusSelection}
+              reportMetadata={reportMetadata}
               startFromSeconds={startFromSeconds}
               startToSeconds={startToSeconds}
               endFromSeconds={endFromSeconds}
