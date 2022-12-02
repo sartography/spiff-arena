@@ -142,7 +142,7 @@ export default function ProcessInstanceListTable({
     ReportColumn[]
   >([]);
   const [processInstanceReportJustSaved, setProcessInstanceReportJustSaved] =
-    useState<boolean>(false);
+    useState<string | null>(null);
   const [showReportColumnForm, setShowReportColumnForm] =
     useState<boolean>(false);
   const [reportColumnToOperateOn, setReportColumnToOperateOn] =
@@ -367,10 +367,14 @@ export default function ProcessInstanceListTable({
 
   const processInstanceReportSaveTag = () => {
     if (processInstanceReportJustSaved) {
+      let titleOperation = 'Updated';
+      if (processInstanceReportJustSaved === 'new') {
+        titleOperation = 'Created';
+      }
       return (
         <InlineNotification
-          title="Perspective Saved"
-          subtitle={`as '${
+          title={`Perspective ${titleOperation}:`}
+          subtitle={`'${
             processInstanceReportSelection
               ? processInstanceReportSelection.identifier
               : ''
@@ -498,7 +502,7 @@ export default function ProcessInstanceListTable({
     }
 
     setErrorMessage(null);
-    setProcessInstanceReportJustSaved(false);
+    setProcessInstanceReportJustSaved(null);
     navigate(`/admin/process-instances?${queryParamString}`);
   };
 
@@ -586,10 +590,7 @@ export default function ProcessInstanceListTable({
     setEndToTime('');
   };
 
-  const processInstanceReportDidChange = (
-    selection: any,
-    savedReport: boolean = false
-  ) => {
+  const processInstanceReportDidChange = (selection: any, mode?: string) => {
     clearFilters();
     const selectedReport = selection.selectedItem;
     setProcessInstanceReportSelection(selectedReport);
@@ -600,7 +601,7 @@ export default function ProcessInstanceListTable({
     }
 
     setErrorMessage(null);
-    setProcessInstanceReportJustSaved(savedReport);
+    setProcessInstanceReportJustSaved(mode || null);
     navigate(`/admin/process-instances${queryParamString}`);
   };
 
@@ -615,12 +616,12 @@ export default function ProcessInstanceListTable({
   };
 
   // TODO onSuccess reload/select the new report in the report search
-  const onSaveReportSuccess = (result: any) => {
+  const onSaveReportSuccess = (result: any, mode: string) => {
     processInstanceReportDidChange(
       {
         selectedItem: result,
       },
-      true
+      mode
     );
   };
 
@@ -638,7 +639,7 @@ export default function ProcessInstanceListTable({
     }
     return (
       <ProcessInstanceListSaveAsReport
-        onSuccess={onSaveReportSuccess}
+        onSuccess={(result: any) => onSaveReportSuccess(result, 'new')}
         buttonClassName="narrow-button"
         columnArray={reportColumns()}
         orderBy=""
@@ -705,7 +706,7 @@ export default function ProcessInstanceListTable({
         } else {
           newReportFilters.splice(existingReportFilterIndex, 1);
         }
-      } else {
+      } else if (reportColumnForEditing.filter_field_value) {
         newReportFilters = newReportFilters.concat([newReportFilter]);
       }
     }
@@ -1157,7 +1158,7 @@ export default function ProcessInstanceListTable({
           <Column sm={2} md={4} lg={2}>
             <ProcessInstanceListSaveAsReport
               buttonClassName="with-tiny-top-margin"
-              onSuccess={onSaveReportSuccess}
+              onSuccess={(result: any) => onSaveReportSuccess(result, 'edit')}
               columnArray={reportColumns()}
               orderBy=""
               buttonText="Save"
