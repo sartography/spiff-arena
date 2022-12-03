@@ -81,7 +81,9 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
@@ -577,8 +579,10 @@ class ProcessInstanceProcessor:
         db.session.add(details_model)
         db.session.commit()
 
-    def extract_metadata(self, process_model_info: ProcessModelInfo) -> dict:
-        if process_model_info.metadata_extraction_paths is None:
+    def extract_metadata(self, process_model_info: ProcessModelInfo) -> None:
+        """Extract_metadata."""
+        metadata_extraction_paths = process_model_info.metadata_extraction_paths
+        if metadata_extraction_paths is None:
             return
         if len(metadata_extraction_paths) > 0:
             return
