@@ -2563,9 +2563,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id="test-process-instance-metadata-report",
-            bpmn_file_name="process_instance_metadata.bpmn",
-            process_model_source_directory="test-process-instance-metadata-report",
+            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            bpmn_file_name="save_process_instance_metadata.bpmn",
+            process_model_source_directory="save_process_instance_metadata",
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
@@ -2576,7 +2576,7 @@ class TestProcessApi(BaseTest):
         process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
             process_instance_id=process_instance.id
         ).all()
-        assert len(process_instance_metadata) == 2
+        assert len(process_instance_metadata) == 3
 
         report_metadata = {
             "columns": [
@@ -2620,9 +2620,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id="test-process-instance-metadata-report",
-            bpmn_file_name="process_instance_metadata.bpmn",
-            process_model_source_directory="test-process-instance-metadata-report",
+            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            bpmn_file_name="save_process_instance_metadata.bpmn",
+            process_model_source_directory="save_process_instance_metadata",
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
@@ -2633,7 +2633,7 @@ class TestProcessApi(BaseTest):
         process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
             process_instance_id=process_instance.id
         ).all()
-        assert len(process_instance_metadata) == 2
+        assert len(process_instance_metadata) == 3
 
         response = client.get(
             "/v1.0/process-instances/reports/columns",
@@ -2655,4 +2655,5 @@ class TestProcessApi(BaseTest):
             {"Header": "Status", "accessor": "status", "filterable": False},
             {"Header": "key1", "accessor": "key1", "filterable": True},
             {"Header": "key2", "accessor": "key2", "filterable": True},
+            {"Header": "key3", "accessor": "key3", "filterable": True},
         ]
