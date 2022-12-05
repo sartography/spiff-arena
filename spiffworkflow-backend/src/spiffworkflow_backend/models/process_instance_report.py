@@ -76,6 +76,10 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds = db.Column(db.Integer)
 
     @classmethod
+    def default_order_by(cls) -> list[str]:
+        return ["-start_in_seconds", "-id"]
+
+    @classmethod
     def add_fixtures(cls) -> None:
         """Add_fixtures."""
         try:
