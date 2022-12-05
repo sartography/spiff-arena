@@ -735,7 +735,7 @@ export default function ProcessModelEditDiagram() {
     if (processModel) {
       const files = processModel.files.filter((f) => f.type === type);
       files.some((file) => {
-        if (file.references.some((ref) => ref.id === id)) {
+        if (file.references.some((ref) => ref.identifier === id)) {
           matchFile = file;
           return true;
         }
