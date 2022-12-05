@@ -12,9 +12,8 @@ export interface RecentProcessModel {
 }
 
 export interface ProcessReference {
-  id: string; // The unique id of the process or decision table.
   name: string; // The process or decision Display name.
-  identifier: string;
+  identifier: string; // The unique id of the process
   display_name: string;
   process_group_id: string;
   process_model_id: string;
