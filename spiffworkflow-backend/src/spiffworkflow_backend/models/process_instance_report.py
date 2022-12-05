@@ -77,6 +77,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def default_order_by(cls) -> list[str]:
+        """Default_order_by."""
         return ["-start_in_seconds", "-id"]
 
     @classmethod

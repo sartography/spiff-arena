@@ -1,9 +1,9 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 import random
+import re
 import string
 import uuid
-import re
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -953,10 +953,10 @@ def process_instance_list(
         if column["accessor"] in stock_columns:
             continue
         instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-        instance_metadata_aliases[column['accessor']] = instance_metadata_alias
+        instance_metadata_aliases[column["accessor"]] = instance_metadata_alias
 
         filter_for_column = None
-        if 'filter_by' in process_instance_report.report_metadata:
+        if "filter_by" in process_instance_report.report_metadata:
             filter_for_column = next(
                 (
                     f
@@ -980,28 +980,34 @@ def process_instance_list(
         ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
 
     order_by_query_array = []
-    order_by_array = process_instance_report.report_metadata['order_by']
+    order_by_array = process_instance_report.report_metadata["order_by"]
     if len(order_by_array) < 1:
         order_by_array = ProcessInstanceReportModel.default_order_by()
     for order_by_option in order_by_array:
-        attribute = re.sub('^-', '', order_by_option)
+        attribute = re.sub("^-", "", order_by_option)
         if attribute in stock_columns:
-            if order_by_option.startswith('-'):
-                order_by_query_array.append(getattr(ProcessInstanceModel, attribute).desc())
+            if order_by_option.startswith("-"):
+                order_by_query_array.append(
+                    getattr(ProcessInstanceModel, attribute).desc()
+                )
             else:
-                order_by_query_array.append(getattr(ProcessInstanceModel, attribute).asc())
+                order_by_query_array.append(
+                    getattr(ProcessInstanceModel, attribute).asc()
+                )
         elif attribute in instance_metadata_aliases:
-            if order_by_option.startswith('-'):
-                order_by_query_array.append(instance_metadata_aliases[attribute].value.desc())
+            if order_by_option.startswith("-"):
+                order_by_query_array.append(
+                    instance_metadata_aliases[attribute].value.desc()
+                )
             else:
-                order_by_query_array.append(instance_metadata_aliases[attribute].value.asc())
+                order_by_query_array.append(
+                    instance_metadata_aliases[attribute].value.asc()
+                )
 
     process_instances = (
         process_instance_query.group_by(ProcessInstanceModel.id)
         .add_columns(ProcessInstanceModel.id)
-        .order_by(
-            *order_by_query_array
-        )
+        .order_by(*order_by_query_array)
         .paginate(page=page, per_page=per_page, error_out=False)
     )
 
