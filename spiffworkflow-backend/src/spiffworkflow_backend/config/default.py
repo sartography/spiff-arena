@@ -60,3 +60,7 @@ SENTRY_TRACES_SAMPLE_RATE = environ.get(
 SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
     "SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info"
 )
+
+# Datbase Configuration
+SPIFF_DATABASE_TYPE =environ.get("SPIFF_DATABASE_TYPE", default="mysql")  # can also be sqlite, postgres
+SPIFFWORKFLOW_BACKEND_DATABASE_URI=environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI", default=None) # Overide above with specific sqlalchymy connection string.
