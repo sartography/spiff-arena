@@ -7,7 +7,7 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-port="${CONNECTOR_PROXY_STATUS_IM_PORT:-}"
+port="${CONNECTOR_PROXY_PORT:-}"
 if [[ -z "$port" ]]; then
   port=7004
 fi
