@@ -39,9 +39,9 @@ export default function TaskShow() {
     const processResult = (result: any) => {
       setTask(result);
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifyProcessIdentifierForPathParam(
+        path: `/task-data/${modifyProcessIdentifierForPathParam(
           result.process_model_identifier
-        )}/${params.process_instance_id}/tasks`,
+        )}/${params.process_instance_id}`,
         successCallback: setUserTasks,
       });
     };

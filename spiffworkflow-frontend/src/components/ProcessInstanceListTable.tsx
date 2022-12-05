@@ -1166,6 +1166,9 @@ export default function ProcessInstanceListTable({
     return (
       <>
         <Grid fullWidth>
+          <Column sm={2} md={4} lg={7}>
+            {reportSearchComponent()}
+          </Column>
           <Column
             className="filterIcon"
             sm={{ span: 1, offset: 3 }}
@@ -1204,7 +1207,6 @@ export default function ProcessInstanceListTable({
         {reportColumnForm()}
         {processInstanceReportSaveTag()}
         {filterComponent()}
-        {reportSearchComponent()}
         <PaginationForTable
           page={page}
           perPage={perPage}

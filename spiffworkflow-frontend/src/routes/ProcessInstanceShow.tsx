@@ -85,7 +85,7 @@ export default function ProcessInstanceShow() {
       }
       if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
         HttpService.makeCallToBackend({
-          path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/tasks${taskParams}`,
+          path: `${targetUris.processInstanceTaskListPath}${taskParams}`,
           successCallback: setTasks,
           failureCallback: processTaskFailure,
         });
