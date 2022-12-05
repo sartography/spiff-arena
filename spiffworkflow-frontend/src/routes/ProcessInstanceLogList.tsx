@@ -10,6 +10,7 @@ import {
   convertSecondsToFormattedDateTime,
 } from '../helpers';
 import HttpService from '../services/HttpService';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
 export default function ProcessInstanceLogList() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function ProcessInstanceLogList() {
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
+  const { targetUris } = useUriListForPermissions();
 
   useEffect(() => {
     const setProcessInstanceLogListFromResult = (result: any) => {
@@ -27,7 +29,7 @@ export default function ProcessInstanceLogList() {
     };
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     HttpService.makeCallToBackend({
-      path: `/process-instances/${params.process_instance_id}/logs?per_page=${perPage}&page=${page}`,
+      path: `${targetUris.processInstanceLogListPath}?per_page=${perPage}&page=${page}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
   }, [searchParams, params]);
@@ -46,7 +48,7 @@ export default function ProcessInstanceLogList() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
+              to={`/admin/process-instances/${modifiedProcessModelId}/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
             >
               {convertSecondsToFormattedDateTime(rowToUse.timestamp)}
             </Link>
@@ -86,7 +88,7 @@ export default function ProcessInstanceLogList() {
             },
             [
               `Process Instance: ${params.process_instance_id}`,
-              `/admin/process-models/${params.process_model_id}/process-instances/${params.process_instance_id}`,
+              `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`,
             ],
             ['Logs'],
           ]}

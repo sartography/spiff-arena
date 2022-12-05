@@ -565,6 +565,7 @@ def process_instance_run(
 
 def process_instance_terminate(
     process_instance_id: int,
+    modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_instance_run."""
     process_instance = ProcessInstanceService().get_process_instance(
@@ -577,6 +578,7 @@ def process_instance_terminate(
 
 def process_instance_suspend(
     process_instance_id: int,
+    modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_instance_suspend."""
     process_instance = ProcessInstanceService().get_process_instance(
@@ -589,6 +591,7 @@ def process_instance_suspend(
 
 def process_instance_resume(
     process_instance_id: int,
+    modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_instance_resume."""
     process_instance = ProcessInstanceService().get_process_instance(
@@ -600,6 +603,7 @@ def process_instance_resume(
 
 
 def process_instance_log_list(
+    modified_process_model_identifier: str,
     process_instance_id: int,
     page: int = 1,
     per_page: int = 100,
@@ -1071,7 +1075,7 @@ def process_instance_show(
     return make_response(jsonify(process_instance), 200)
 
 
-def process_instance_delete(process_instance_id: int) -> flask.wrappers.Response:
+def process_instance_delete(process_instance_id: int, modified_process_model_identifier: str) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 

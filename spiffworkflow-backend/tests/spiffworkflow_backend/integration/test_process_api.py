@@ -912,7 +912,7 @@ class TestProcessApi(BaseTest):
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         response = client.post(
-            f"/v1.0/process-models/{modified_process_model_identifier}/process-instances",
+            f"/v1.0/process-instances/{modified_process_model_identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 201
@@ -1154,10 +1154,11 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         show_response = client.get(
-            f"/v1.0/process-models/{modified_process_model_identifier}/process-instances/{process_instance_id}",
+            f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert show_response.json is not None
+        assert show_response.status_code == 200
         file_system_root = FileSystemService.root_path()
         file_path = (
             f"{file_system_root}/{process_model_identifier}/{process_model_id}.bpmn"
@@ -1320,7 +1321,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
 
         response = client.post(
-            f"/v1.0/process-instances/{process_instance_id}/terminate",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/terminate",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1367,7 +1368,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
 
         delete_response = client.delete(
-            f"/v1.0/process-instances/{process_instance_id}",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert delete_response.status_code == 200
@@ -2366,7 +2367,7 @@ class TestProcessApi(BaseTest):
         assert process_instance.status == "user_input_required"
 
         client.post(
-            f"/v1.0/process-instances/{process_instance_id}/suspend",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/suspend",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         process_instance = ProcessInstanceService().get_process_instance(

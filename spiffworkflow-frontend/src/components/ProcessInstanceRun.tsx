@@ -83,7 +83,7 @@ export default function ProcessInstanceRun({
     processModel.id
   );
 
-  const processInstanceActionPath = `/v1.0/process-models/${modifiedProcessModelId}/process-instances`;
+  const processInstanceActionPath = `/v1.0/process-instances/${modifiedProcessModelId}`;
   let permissionRequestData: PermissionsToCheck = {
     [processInstanceActionPath]: ['POST'],
   };

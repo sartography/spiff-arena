@@ -265,7 +265,7 @@ class BaseTest:
             )
         modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
-            f"/v1.0/process-models/{modified_process_model_id}/process-instances",
+            f"/v1.0/process-instances/{modified_process_model_id}",
             headers=headers,
         )
         assert response.status_code == 201
