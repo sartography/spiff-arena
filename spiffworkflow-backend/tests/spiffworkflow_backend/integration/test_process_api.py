@@ -2657,3 +2657,86 @@ class TestProcessApi(BaseTest):
             {"Header": "key2", "accessor": "key2", "filterable": True},
             {"Header": "key3", "accessor": "key3", "filterable": True},
         ]
+
+    def test_process_instance_list_can_order_by_metadata(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
+        process_model = load_test_spec(
+            "test_group/hello_world",
+            process_model_source_directory="nested-task-data-structure",
+        )
+        ProcessModelService.update_process_model(
+            process_model,
+            {
+                "metadata_extraction_paths": [
+                    {"key": "time_ns", "path": "outer.time"},
+                ]
+            },
+        )
+
+        process_instance_one = self.create_process_instance_from_process_model(
+            process_model
+        )
+        processor = ProcessInstanceProcessor(process_instance_one)
+        processor.do_engine_steps(save=True)
+        assert process_instance_one.status == "complete"
+        process_instance_two = self.create_process_instance_from_process_model(
+            process_model
+        )
+        processor = ProcessInstanceProcessor(process_instance_two)
+        processor.do_engine_steps(save=True)
+        assert process_instance_two.status == "complete"
+
+        report_metadata = {
+            "columns": [
+                {"Header": "id", "accessor": "id"},
+                {"Header": "Time", "accessor": "time_ns"},
+            ],
+            "order_by": ["time_ns"],
+        }
+        report_one = ProcessInstanceReportModel.create_with_attributes(
+            identifier="report_one",
+            report_metadata=report_metadata,
+            user=with_super_admin_user,
+        )
+
+        response = client.get(
+            f"/v1.0/process-instances?report_id={report_one.id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 2
+        assert response.json['results'][0]['id'] == process_instance_one.id
+        assert response.json['results'][1]['id'] == process_instance_two.id
+
+        report_metadata = {
+            "columns": [
+                {"Header": "id", "accessor": "id"},
+                {"Header": "Time", "accessor": "time_ns"},
+            ],
+            "order_by": ["-time_ns"],
+        }
+        report_two = ProcessInstanceReportModel.create_with_attributes(
+            identifier="report_two",
+            report_metadata=report_metadata,
+            user=with_super_admin_user,
+        )
+
+        response = client.get(
+            f"/v1.0/process-instances?report_id={report_two.id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 2
+        assert response.json['results'][1]['id'] == process_instance_one.id
+        assert response.json['results'][0]['id'] == process_instance_two.id

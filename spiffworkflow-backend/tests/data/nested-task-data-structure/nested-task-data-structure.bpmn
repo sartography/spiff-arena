@@ -14,7 +14,8 @@
       <bpmn:outgoing>Flow_18gs4jt</bpmn:outgoing>
       <bpmn:script>outer = {}
 invoice_number = 123
-outer["inner"] = 'sweet1'</bpmn:script>
+outer["inner"] = 'sweet1'
+outer['time'] = time.time_ns()</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:sequenceFlow id="Flow_1flxgry" sourceRef="Activity_1bvyv67" targetRef="Event_1tk4dsv" />
     <bpmn:scriptTask id="Activity_1bvyv67" name="First setting of data">
