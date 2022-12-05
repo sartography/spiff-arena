@@ -1027,7 +1027,7 @@ export default function ProcessInstanceListTable({
             </ButtonSet>
           </Column>
           <Column sm={4} md={4} lg={8}>
-           {saveAsReportComponent()}
+            {saveAsReportComponent()}
           </Column>
         </Grid>
       </>

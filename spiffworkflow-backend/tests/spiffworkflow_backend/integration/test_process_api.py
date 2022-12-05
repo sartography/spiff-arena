@@ -2665,6 +2665,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
+        """Test_process_instance_list_can_order_by_metadata."""
         self.create_process_group(
             client, with_super_admin_user, "test_group", "test_group"
         )
@@ -2714,8 +2715,8 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert len(response.json["results"]) == 2
-        assert response.json['results'][0]['id'] == process_instance_one.id
-        assert response.json['results'][1]['id'] == process_instance_two.id
+        assert response.json["results"][0]["id"] == process_instance_one.id
+        assert response.json["results"][1]["id"] == process_instance_two.id
 
         report_metadata = {
             "columns": [
@@ -2738,5 +2739,5 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert len(response.json["results"]) == 2
-        assert response.json['results'][1]['id'] == process_instance_one.id
-        assert response.json['results'][0]['id'] == process_instance_two.id
+        assert response.json["results"][1]["id"] == process_instance_one.id
+        assert response.json["results"][0]["id"] == process_instance_two.id
