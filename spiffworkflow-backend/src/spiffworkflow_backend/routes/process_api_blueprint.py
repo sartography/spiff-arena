@@ -30,7 +30,7 @@ from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
@@ -814,7 +814,7 @@ def process_instance_list(
     process_instance_query = ProcessInstanceModel.query
     # Always join that hot user table for good performance at serialization time.
     process_instance_query = process_instance_query.options(
-        joinedload(ProcessInstanceModel.process_initiator)
+        selectinload(ProcessInstanceModel.process_initiator)
     )
 
     if report_filter.process_model_identifier is not None:
@@ -928,13 +928,16 @@ def process_instance_list(
             UserGroupAssignmentModel.user_id == g.user.id
         )
 
-    process_instances = (
-        process_instance_query.group_by(ProcessInstanceModel.id)
-        .order_by(
-            ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
+    try:
+        process_instances = (
+            process_instance_query.group_by(ProcessInstanceModel.id)
+            .order_by(
+                ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
+            )
+            .paginate(page=page, per_page=per_page, error_out=False)
         )
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
+    except Exception as e:
+        print(e)
 
     results = list(
         map(
