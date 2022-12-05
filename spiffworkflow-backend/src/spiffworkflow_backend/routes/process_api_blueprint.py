@@ -158,9 +158,9 @@ def modify_process_model_id(process_model_id: str) -> str:
     return process_model_id.replace("/", ":")
 
 
-def un_modify_modified_process_model_id(modified_process_model_id: str) -> str:
+def un_modify_modified_process_model_id(modified_process_model_identifier: str) -> str:
     """Un_modify_modified_process_model_id."""
-    return modified_process_model_id.replace(":", "/")
+    return modified_process_model_identifier.replace(":", "/")
 
 
 def process_group_add(body: dict) -> flask.wrappers.Response:
@@ -411,9 +411,9 @@ def process_list() -> Any:
     return SpecReferenceSchema(many=True).dump(references)
 
 
-def get_file(modified_process_model_id: str, file_name: str) -> Any:
+def get_file(modified_process_model_identifier: str, file_name: str) -> Any:
     """Get_file."""
-    process_model_identifier = modified_process_model_id.replace(":", "/")
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     files = SpecFileService.get_files(process_model, file_name)
     if len(files) == 0:
@@ -433,10 +433,10 @@ def get_file(modified_process_model_id: str, file_name: str) -> Any:
 
 
 def process_model_file_update(
-    modified_process_model_id: str, file_name: str
+    modified_process_model_identifier: str, file_name: str
 ) -> flask.wrappers.Response:
     """Process_model_file_update."""
-    process_model_identifier = modified_process_model_id.replace(":", "/")
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
 
     request_file = get_file_from_request()
@@ -462,10 +462,10 @@ def process_model_file_update(
 
 
 def process_model_file_delete(
-    modified_process_model_id: str, file_name: str
+    modified_process_model_identifier: str, file_name: str
 ) -> flask.wrappers.Response:
     """Process_model_file_delete."""
-    process_model_identifier = modified_process_model_id.replace(":", "/")
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     try:
         SpecFileService.delete_file(process_model, file_name)
@@ -481,9 +481,9 @@ def process_model_file_delete(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def add_file(modified_process_model_id: str) -> flask.wrappers.Response:
+def add_file(modified_process_model_identifier: str) -> flask.wrappers.Response:
     """Add_file."""
-    process_model_identifier = modified_process_model_id.replace(":", "/")
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     request_file = get_file_from_request()
     if not request_file.filename:
@@ -504,10 +504,12 @@ def add_file(modified_process_model_id: str) -> flask.wrappers.Response:
     )
 
 
-def process_instance_create(modified_process_model_id: str) -> flask.wrappers.Response:
+def process_instance_create(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_model_identifier = un_modify_modified_process_model_id(
-        modified_process_model_id
+        modified_process_model_identifier
     )
     process_instance = (
         ProcessInstanceService.create_process_instance_from_process_model_identifier(
@@ -1075,7 +1077,9 @@ def process_instance_show(
     return make_response(jsonify(process_instance), 200)
 
 
-def process_instance_delete(process_instance_id: int, modified_process_model_identifier: str) -> flask.wrappers.Response:
+def process_instance_delete(
+    process_instance_id: int, modified_process_model_identifier: str
+) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
@@ -1157,8 +1161,8 @@ def process_instance_report_delete(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def service_tasks_show() -> flask.wrappers.Response:
-    """Service_tasks_show."""
+def service_task_list() -> flask.wrappers.Response:
+    """Service_task_list."""
     available_connectors = ServiceTaskService.available_connectors()
     return Response(
         json.dumps(available_connectors), status=200, mimetype="application/json"
@@ -1365,7 +1369,7 @@ def get_tasks(
 
 
 def process_instance_task_list(
-    modified_process_model_id: str,
+    modified_process_model_identifier: str,
     process_instance_id: int,
     all_tasks: bool = False,
     spiff_step: int = 0,
@@ -1926,7 +1930,12 @@ def _update_form_schema_with_task_data_as_needed(
                     _update_form_schema_with_task_data_as_needed(o, task_data)
 
 
-def update_task_data(process_instance_id: str, task_id: str, body: Dict) -> Response:
+def update_task_data(
+    process_instance_id: str,
+    modified_process_model_identifier: str,
+    task_id: str,
+    body: Dict,
+) -> Response:
     """Update task data."""
     process_instance = ProcessInstanceModel.query.filter(
         ProcessInstanceModel.id == int(process_instance_id)

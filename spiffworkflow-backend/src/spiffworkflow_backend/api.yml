@@ -338,9 +338,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
 
-  /process-models/{modified_process_model_id}/files:
+  /process-models/{modified_process_model_identifier}/files:
     parameters:
-      - name: modified_process_model_id
+      - name: modified_process_model_identifier
         in: path
         required: true
         description: The process_model_id, modified to replace slashes (/)
@@ -565,33 +565,6 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
 
-  /process-instances/{process_instance_id}/task/{task_id}/update:
-    parameters:
-      - name: process_instance_id
-        in: path
-        required: true
-        description: The unique id of the process instance
-        schema:
-          type: string
-      - name: task_id
-        in: path
-        required: true
-        description: The unique id of the task
-        schema:
-          type: string
-    post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.update_task_data
-      summary: Update the task data for requested instance and task
-      tags:
-        - Process Instances
-      responses:
-        "200":
-          description: Task Updated Successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Workflow"
-
   /process-models/{process_group_id}/{process_model_id}/script-unit-tests:
     parameters:
       - name: process_group_id
@@ -646,9 +619,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-instances/{modified_process_model_id}:
+  /process-instances/{modified_process_model_identifier}:
     parameters:
-      - name: modified_process_model_id
+      - name: modified_process_model_identifier
         in: path
         required: true
         description: The unique id of an existing process model.
@@ -912,9 +885,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-models/{modified_process_model_id}/files/{file_name}:
+  /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:
-      - name: modified_process_model_id
+      - name: modified_process_model_identifier
         in: path
         required: true
         description: The modified process model id
@@ -1091,9 +1064,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /task-data/{modified_process_model_id}/{process_instance_id}:
+  /task-data/{modified_process_model_identifier}/{process_instance_id}:
     parameters:
-      - name: modified_process_model_id
+      - name: modified_process_model_identifier
         in: path
         required: true
         description: The modified id of an existing process model
@@ -1132,11 +1105,44 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /service_tasks:
+  /task-data/{modified_process_model_identifier}/{process_instance_id}/{task_id}:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified id of an existing process model
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: task_id
+        in: path
+        required: true
+        description: The unique id of the task.
+        schema:
+          type: string
+    put:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.update_task_data
+      summary: Update the task data for requested instance and task
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Task Updated Successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /service-tasks:
     get:
       tags:
         - Service Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.service_tasks_show
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.service_task_list
       summary: Gets all available service task connectors
       responses:
         "200":
