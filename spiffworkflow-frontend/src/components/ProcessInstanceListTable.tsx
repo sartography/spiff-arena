@@ -1059,7 +1059,7 @@ export default function ProcessInstanceListTable({
       return (
         <Link
           data-qa="process-instance-show-link"
-          to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${id}`}
+          to={`/admin/process-instances/${modifiedProcessModelId}/${id}`}
           title={`View process instance ${id}`}
         >
           {id}

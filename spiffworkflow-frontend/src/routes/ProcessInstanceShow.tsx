@@ -273,7 +273,7 @@ export default function ProcessInstanceShow() {
                   size="sm"
                   className="button-white-background"
                   data-qa="process-instance-log-list-link"
-                  href={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
+                  href={`/admin/logs/${modifiedProcessModelId}/${params.process_instance_id}`}
                 >
                   Logs
                 </Button>
