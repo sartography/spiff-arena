@@ -639,13 +639,14 @@ export default function ProcessInstanceListTable({
     }
     return (
       <ProcessInstanceListSaveAsReport
-        onSuccess={(result: any) => onSaveReportSuccess(result, 'new')}
-        buttonClassName="narrow-button"
+        onSuccess={onSaveReportSuccess}
+        buttonClassName="button-white-background narrow-button"
         columnArray={reportColumns()}
         orderBy=""
-        buttonText="Save New Perspective"
+        buttonText="Save"
         processModelSelection={processModelSelection}
         processStatusSelection={processStatusSelection}
+        processInstanceReportSelection={processInstanceReportSelection}
         reportMetadata={reportMetadata}
         startFromSeconds={startFromSeconds}
         startToSeconds={startToSeconds}
@@ -871,8 +872,10 @@ export default function ProcessInstanceListTable({
           reportColumnToReportColumnForEditing(reportColumn);
 
         let tagType = 'cool-gray';
+        let tagTypeClass = '';
         if (reportColumnForEditing.filterable) {
           tagType = 'green';
+          tagTypeClass = 'tag-type-green';
         }
         let reportColumnLabel = reportColumnForEditing.Header;
         if (reportColumnForEditing.filter_field_value) {
@@ -883,7 +886,7 @@ export default function ProcessInstanceListTable({
             <Button
               kind="ghost"
               size="sm"
-              className="button-tag-icon"
+              className={`button-tag-icon ${tagTypeClass}`}
               title={`Edit ${reportColumnForEditing.accessor}`}
               onClick={() => {
                 setReportColumnToOperateOn(reportColumnForEditing);
@@ -897,7 +900,7 @@ export default function ProcessInstanceListTable({
               data-qa="remove-report-column"
               renderIcon={Close}
               iconDescription="Remove Column"
-              className="button-tag-icon"
+              className={`button-tag-icon ${tagTypeClass}`}
               hasIconOnly
               size="sm"
               kind="ghost"
@@ -1005,9 +1008,6 @@ export default function ProcessInstanceListTable({
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column sm={4} md={4} lg={8}>
-            {saveAsReportComponent()}
-          </Column>
-          <Column sm={4} md={4} lg={8}>
             <ButtonSet>
               <Button
                 kind=""
@@ -1025,6 +1025,9 @@ export default function ProcessInstanceListTable({
                 Filter
               </Button>
             </ButtonSet>
+          </Column>
+          <Column sm={4} md={4} lg={8}>
+           {saveAsReportComponent()}
           </Column>
         </Grid>
       </>
@@ -1139,8 +1142,6 @@ export default function ProcessInstanceListTable({
 
   const reportSearchComponent = () => {
     if (showReports) {
-      const { startFromSeconds, startToSeconds, endFromSeconds, endToSeconds } =
-        calculateStartAndEndSeconds();
       const columns = [
         <Column sm={2} md={4} lg={7}>
           <ProcessInstanceReportSearch
@@ -1149,31 +1150,6 @@ export default function ProcessInstanceListTable({
           />
         </Column>,
       ];
-      if (
-        processInstanceReportSelection &&
-        showFilterOptions &&
-        reportMetadata
-      ) {
-        columns.push(
-          <Column sm={2} md={4} lg={2}>
-            <ProcessInstanceListSaveAsReport
-              buttonClassName="with-tiny-top-margin"
-              onSuccess={(result: any) => onSaveReportSuccess(result, 'edit')}
-              columnArray={reportColumns()}
-              orderBy=""
-              buttonText="Save"
-              processModelSelection={processModelSelection}
-              processStatusSelection={processStatusSelection}
-              reportMetadata={reportMetadata}
-              startFromSeconds={startFromSeconds}
-              startToSeconds={startToSeconds}
-              endFromSeconds={endFromSeconds}
-              endToSeconds={endToSeconds}
-              processInstanceReportSelection={processInstanceReportSelection}
-            />
-          </Column>
-        );
-      }
       return (
         <Grid className="with-tiny-bottom-margin" fullWidth>
           {columns}

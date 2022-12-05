@@ -2,8 +2,8 @@ import { useState } from 'react';
 import {
   Button,
   TextInput,
-  Form,
   Stack,
+  Modal,
   // @ts-ignore
 } from '@carbon/react';
 import {
@@ -42,26 +42,31 @@ export default function ProcessInstanceListSaveAsReport({
   startToSeconds,
   endFromSeconds,
   endToSeconds,
-  buttonText = 'Save as Perspective',
   buttonClassName,
+  buttonText = 'Save as Perspective',
   reportMetadata,
 }: OwnProps) {
   const [identifier, setIdentifier] = useState<string>(
     processInstanceReportSelection?.identifier || ''
   );
+  const [showSaveForm, setShowSaveForm] = useState<boolean>(false);
 
-  const hasIdentifier = () => {
-    return identifier?.length > 0;
+  const isEditMode = () => {
+    return (
+      processInstanceReportSelection &&
+      processInstanceReportSelection.identifier === identifier
+    );
   };
 
   const responseHandler = (result: any) => {
     if (result) {
-      onSuccess(result);
+      onSuccess(result, isEditMode() ? 'edit' : 'new');
     }
   };
 
-  const isEditMode = () => {
-    return !!processInstanceReportSelection;
+  const handleSaveFormClose = () => {
+    setIdentifier(processInstanceReportSelection?.identifier || '');
+    setShowSaveForm(false);
   };
 
   const addProcessInstanceReport = (event: any) => {
@@ -148,36 +153,53 @@ export default function ProcessInstanceListSaveAsReport({
         },
       },
     });
+    handleSaveFormClose();
   };
 
   let textInputComponent = null;
-  if (!isEditMode()) {
-    textInputComponent = (
-      <TextInput
-        id="identifier"
-        name="identifier"
-        labelText="Identifier"
-        className="no-wrap"
-        inline
-        value={identifier}
-        onChange={(e: any) => setIdentifier(e.target.value)}
-      />
-    );
+  textInputComponent = (
+    <TextInput
+      id="identifier"
+      name="identifier"
+      labelText="Identifier"
+      className="no-wrap"
+      inline
+      value={identifier}
+      onChange={(e: any) => setIdentifier(e.target.value)}
+    />
+  );
+
+  let descriptionText =
+    'Save the current columns and filters as a perspective so you can come back to this view in the future.';
+  if (processInstanceReportSelection) {
+    descriptionText =
+      'Keep the identifier the same and click Save to update the current perspective. Change the identifier if you want to save the current view with a new name.';
   }
 
   return (
-    <Form onSubmit={addProcessInstanceReport}>
-      <Stack gap={5} orientation="horizontal">
+    <Stack gap={5} orientation="horizontal">
+      <Modal
+        open={showSaveForm}
+        modalHeading="Save Perspective"
+        primaryButtonText="Save"
+        primaryButtonDisabled={!identifier}
+        onRequestSubmit={addProcessInstanceReport}
+        onRequestClose={handleSaveFormClose}
+        hasScrollingContent
+      >
+        <p className="data-table-description">{descriptionText}</p>
         {textInputComponent}
-        <Button
-          disabled={!hasIdentifier()}
-          size="sm"
-          type="submit"
-          className={buttonClassName}
-        >
-          {buttonText}
-        </Button>
-      </Stack>
-    </Form>
+      </Modal>
+      <Button
+        kind=""
+        className={buttonClassName}
+        onClick={() => {
+          setIdentifier(processInstanceReportSelection?.identifier || '');
+          setShowSaveForm(true);
+        }}
+      >
+        {buttonText}
+      </Button>
+    </Stack>
   );
 }

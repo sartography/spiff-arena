@@ -5,6 +5,7 @@ import {
   FormLabel,
   // @ts-ignore
 } from '@carbon/react';
+import { useSearchParams } from 'react-router-dom';
 import { truncateString } from '../helpers';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -24,6 +25,9 @@ export default function ProcessInstanceReportSearch({
     ProcessInstanceReport[] | null
   >(null);
 
+  const [searchParams] = useSearchParams();
+  const reportId = searchParams.get('report_id');
+
   useEffect(() => {
     function setProcessInstanceReportsFromResult(
       result: ProcessInstanceReport[]
@@ -31,12 +35,11 @@ export default function ProcessInstanceReportSearch({
       setProcessInstanceReports(result);
     }
 
-    setProcessInstanceReports([]);
     HttpService.makeCallToBackend({
       path: `/process-instances/reports`,
       successCallback: setProcessInstanceReportsFromResult,
     });
-  }, []);
+  }, [reportId]);
 
   const reportSelectionString = (
     processInstanceReport: ProcessInstanceReport

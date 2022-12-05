@@ -169,6 +169,10 @@ h1.with-icons {
   margin-top: 1em;
 }
 
+.with-extra-top-margin {
+  margin-top: 1.3em;
+}
+
 .with-tiny-top-margin {
   margin-top: 4px;
 }
@@ -353,3 +357,8 @@ td.actions-cell {
   word-break: normal;
 
 }
+
+.tag-type-green:hover {
+  background-color:	#00FF00;
+}
+
