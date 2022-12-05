@@ -102,9 +102,9 @@ export default function MessageInstanceList() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+              to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
                 row.process_model_identifier
-              )}/process-instances/${row.process_instance_id}`}
+              )}/${row.process_instance_id}`}
             >
               {row.process_instance_id}
             </Link>
@@ -163,9 +163,9 @@ export default function MessageInstanceList() {
             },
             [
               `Process Instance: ${searchParams.get('process_instance_id')}`,
-              `/admin/process-models/${searchParams.get(
+              `/admin/process-instances/${searchParams.get(
                 'process_model_id'
-              )}/process-instances/${searchParams.get('process_instance_id')}`,
+              )}/${searchParams.get('process_instance_id')}`,
             ],
             ['Messages'],
           ]}

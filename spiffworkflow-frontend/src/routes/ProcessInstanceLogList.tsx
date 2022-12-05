@@ -32,7 +32,7 @@ export default function ProcessInstanceLogList() {
       path: `${targetUris.processInstanceLogListPath}?per_page=${perPage}&page=${page}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
-  }, [searchParams, params]);
+  }, [searchParams, params, targetUris]);
 
   const buildTable = () => {
     const rows = processInstanceLogs.map((row) => {
