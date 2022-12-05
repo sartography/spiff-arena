@@ -81,7 +81,7 @@ export default function ProcessInstanceShow() {
         setTasksCallHadError(true);
       };
       HttpService.makeCallToBackend({
-        path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}`,
+        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}`,
         successCallback: setProcessInstance,
       });
       let taskParams = '?all_tasks=true';
@@ -179,7 +179,7 @@ export default function ProcessInstanceShow() {
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`/admin/process-models/${
+        to={`/admin/process-instances/${
           params.process_model_id
         }/process-instances/${params.process_instance_id}/${
           currentSpiffStep(processInstanceToUse) + distance
@@ -447,8 +447,8 @@ export default function ProcessInstanceShow() {
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
-      path: `/process-instances/${params.process_instance_id}/task/${taskToUse.id}/update`,
-      httpMethod: 'POST',
+      path: `/task-data/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
+      httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,
       postBody: {
