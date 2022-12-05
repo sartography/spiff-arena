@@ -64,7 +64,6 @@ sphinx-click = "^4.3.0"
 Pygments = "^2.13.0"
 pyupgrade = "^3.2.2"
 furo = ">=2021.11.12"
-MonkeyType = "^22.2.0"
 
 [tool.poetry.scripts]
 flask-bpmn = "flask_bpmn.__main__:main"

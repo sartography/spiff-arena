@@ -1,10 +1,10 @@
 """Test_message_service."""
 import os
+from flask_bpmn.models.db import db
 
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from flask_bpmn.models.db import db
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec

@@ -1,5 +1,7 @@
 """Main."""
 import json
+from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
 from typing import Any
 from typing import Final
 
@@ -7,8 +9,6 @@ import flask.wrappers
 from flask import Blueprint
 from flask import request
 from flask import Response
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from sqlalchemy.exc import IntegrityError
 
 from spiffworkflow_backend.models.group import GroupModel

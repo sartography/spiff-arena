@@ -1,7 +1,6 @@
 """Get_env."""
-from typing import Any
-
 from flask_bpmn.models.db import db
+from typing import Any
 
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,

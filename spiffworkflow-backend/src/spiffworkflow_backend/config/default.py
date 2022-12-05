@@ -62,5 +62,10 @@ SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
 )
 
 # Datbase Configuration
-SPIFF_DATABASE_TYPE =environ.get("SPIFF_DATABASE_TYPE", default="mysql")  # can also be sqlite, postgres
-SPIFFWORKFLOW_BACKEND_DATABASE_URI=environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI", default=None) # Overide above with specific sqlalchymy connection string.
+SPIFF_DATABASE_TYPE = environ.get(
+    "SPIFF_DATABASE_TYPE", default="mysql"
+)  # can also be sqlite, postgres
+# Overide above with specific sqlalchymy connection string.
+SPIFFWORKFLOW_BACKEND_DATABASE_URI = environ.get(
+    "SPIFFWORKFLOW_BACKEND_DATABASE_URI", default=None
+)
