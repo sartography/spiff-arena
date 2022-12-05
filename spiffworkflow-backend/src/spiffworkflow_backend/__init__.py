@@ -1,5 +1,8 @@
 """__init__."""
 import os
+from flask_bpmn.api.api_error import api_error_blueprint
+from flask_bpmn.models.db import db
+from flask_bpmn.models.db import migrate
 from typing import Any
 
 import connexion  # type: ignore
@@ -9,9 +12,6 @@ import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
 from flask.json.provider import DefaultJSONProvider
-from flask_bpmn.api.api_error import api_error_blueprint
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import migrate
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
 from werkzeug.exceptions import NotFound

@@ -1,7 +1,8 @@
 """Process Model."""
+from flask_bpmn.models.db import db
+
 from flask.app import Flask
 from flask.testing import FlaskClient
-from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 

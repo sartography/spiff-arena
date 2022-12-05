@@ -1,8 +1,9 @@
 """Test_message_instance."""
+from flask_bpmn.models.db import db
+
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
-from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel

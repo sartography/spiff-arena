@@ -1,8 +1,8 @@
 """Acceptance_test_fixtures."""
 import time
+from flask_bpmn.models.db import db
 
 from flask import current_app
-from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel

@@ -3,14 +3,14 @@ import base64
 import enum
 import json
 import time
+from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
 from typing import Optional
 
 import jwt
 import requests
 from flask import current_app
 from flask import redirect
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel

@@ -8,6 +8,8 @@ import re
 import time
 from datetime import datetime
 from datetime import timedelta
+from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
 from typing import Any
 from typing import Callable
 from typing import Dict
@@ -21,8 +23,6 @@ from typing import Union
 import dateparser
 import pytz
 from flask import current_app
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from lxml import etree  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore

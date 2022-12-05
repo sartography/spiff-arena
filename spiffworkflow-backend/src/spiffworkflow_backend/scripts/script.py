@@ -5,10 +5,9 @@ import importlib
 import os
 import pkgutil
 from abc import abstractmethod
+from flask_bpmn.api.api_error import ApiError
 from typing import Any
 from typing import Callable
-
-from flask_bpmn.api.api_error import ApiError
 
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
