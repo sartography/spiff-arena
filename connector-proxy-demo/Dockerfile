@@ -6,8 +6,7 @@ RUN useradd _gunicorn --no-create-home --user-group
 RUN apt-get update && \
     apt-get install -y -q \
         gcc libssl-dev \
-        curl git-core libpq-dev \
-        gunicorn3 default-mysql-client
+        curl gunicorn3
 
 WORKDIR /app
 COPY pyproject.toml poetry.lock /app/

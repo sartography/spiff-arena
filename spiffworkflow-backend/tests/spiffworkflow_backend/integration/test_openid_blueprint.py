@@ -4,7 +4,7 @@ from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
-class TestFaskOpenId(BaseTest):
+class TestFlaskOpenId(BaseTest):
     """An integrated Open ID that responds to openID requests.
 
     By referencing a build in YAML file.  Useful for
