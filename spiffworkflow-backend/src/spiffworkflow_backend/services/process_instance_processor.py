@@ -584,7 +584,7 @@ class ProcessInstanceProcessor:
         metadata_extraction_paths = process_model_info.metadata_extraction_paths
         if metadata_extraction_paths is None:
             return
-        if len(metadata_extraction_paths) > 0:
+        if len(metadata_extraction_paths) <= 0:
             return
 
         current_data = self.get_current_data()
