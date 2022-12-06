@@ -108,11 +108,14 @@ def create_app() -> flask.app.Flask:
     app.register_blueprint(admin_blueprint, url_prefix="/admin")
     app.register_blueprint(openid_blueprint, url_prefix="/openid")
 
+    # preflight options requests will be allowed if they meet the requirements of the url regex.
+    # we will add an Access-Control-Max-Age header to the response to tell the browser it doesn't
+    # need to continually keep asking for the same path.
     origins_re = [
         r"^https?:\/\/%s(.*)" % o.replace(".", r"\.")
         for o in app.config["CORS_ALLOW_ORIGINS"]
     ]
-    CORS(app, origins=origins_re)
+    CORS(app, origins=origins_re, max_age=3600)
 
     connexion_app.add_api("api.yml", base_path="/v1.0")
 

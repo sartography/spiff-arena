@@ -57,7 +57,7 @@ class TestLoggingService(BaseTest):
         assert response.status_code == 200
 
         log_response = client.get(
-            f"/v1.0/process-instances/{process_instance_id}/logs",
+            f"/v1.0/logs/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=headers,
         )
         assert log_response.status_code == 200

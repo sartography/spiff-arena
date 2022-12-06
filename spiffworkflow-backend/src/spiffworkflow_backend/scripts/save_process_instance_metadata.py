@@ -1,4 +1,6 @@
-"""Get_env."""
+"""Save process instance metadata."""
+from typing import Any
+
 from flask_bpmn.models.db import db
 from typing import Any
 
