@@ -194,7 +194,6 @@ export default function ProcessModelForm({
         onChange={(event: any) => {
           onDisplayNameChanged(event.target.value);
         }}
-        onBlur={(event: any) => console.log('event', event)}
       />,
     ];
 

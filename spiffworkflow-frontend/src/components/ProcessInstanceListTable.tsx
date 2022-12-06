@@ -372,15 +372,18 @@ export default function ProcessInstanceListTable({
         titleOperation = 'Created';
       }
       return (
-        <InlineNotification
-          title={`Perspective ${titleOperation}:`}
-          subtitle={`'${
-            processInstanceReportSelection
-              ? processInstanceReportSelection.identifier
-              : ''
-          }'`}
-          kind="success"
-        />
+        <>
+          <InlineNotification
+            title={`Perspective ${titleOperation}:`}
+            subtitle={`'${
+              processInstanceReportSelection
+                ? processInstanceReportSelection.identifier
+                : ''
+            }'`}
+            kind="success"
+          />
+          <br />
+        </>
       );
     }
     return null;
@@ -935,6 +938,15 @@ export default function ProcessInstanceListTable({
     if (!showFilterOptions) {
       return null;
     }
+
+    // get the columns anytime we display the filter options if they are empty
+    if (availableReportColumns.length < 1) {
+      HttpService.makeCallToBackend({
+        path: `/process-instances/reports/columns`,
+        successCallback: setAvailableReportColumns,
+      });
+    }
+
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
@@ -1059,7 +1071,7 @@ export default function ProcessInstanceListTable({
       return (
         <Link
           data-qa="process-instance-show-link"
-          to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${id}`}
+          to={`/admin/process-instances/${modifiedProcessModelId}/${id}`}
           title={`View process instance ${id}`}
         >
           {id}
@@ -1134,10 +1146,6 @@ export default function ProcessInstanceListTable({
 
   const toggleShowFilterOptions = () => {
     setShowFilterOptions(!showFilterOptions);
-    HttpService.makeCallToBackend({
-      path: `/process-instances/reports/columns`,
-      successCallback: setAvailableReportColumns,
-    });
   };
 
   const reportSearchComponent = () => {
@@ -1166,6 +1174,9 @@ export default function ProcessInstanceListTable({
     return (
       <>
         <Grid fullWidth>
+          <Column sm={2} md={4} lg={7}>
+            {reportSearchComponent()}
+          </Column>
           <Column
             className="filterIcon"
             sm={{ span: 1, offset: 3 }}
@@ -1204,7 +1215,6 @@ export default function ProcessInstanceListTable({
         {reportColumnForm()}
         {processInstanceReportSaveTag()}
         {filterComponent()}
-        {reportSearchComponent()}
         <PaginationForTable
           page={page}
           perPage={perPage}
