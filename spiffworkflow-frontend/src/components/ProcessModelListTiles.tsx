@@ -54,9 +54,9 @@ export default function ProcessModelListTiles({
           <p>
             Process Instance {processInstance.id} kicked off (
             <Link
-              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+              to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
                 processInstance.process_model_identifier
-              )}/process-instances/${processInstance.id}`}
+              )}/${processInstance.id}`}
               data-qa="process-instance-show-link"
             >
               view

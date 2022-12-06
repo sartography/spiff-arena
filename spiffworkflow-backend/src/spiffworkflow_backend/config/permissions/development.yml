@@ -12,7 +12,6 @@ groups:
         mike,
         jason,
         j,
-        amir,
         jarrad,
         elizabeth,
         jon,
@@ -70,6 +69,12 @@ permissions:
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/tasks/*
+  service-tasks:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/service-tasks
+
 
   # read all for everybody
   read-all-process-groups:
@@ -97,6 +102,12 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/processes
+
+  task-data-read:
+    groups: [demo]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/task-data/*
 
 
   manage-procurement-admin:
@@ -170,17 +181,17 @@ permissions:
     uri: /v1.0/process-instances/manage-procurement:vendor-lifecycle-management:*
 
   core1-admin-models-instantiate:
-    groups: ["core-contributor"]
+    groups: ["core-contributor", "Finance Team"]
     users: []
     allowed_permissions: [create]
     uri: /v1.0/process-models/misc:category_number_one:process-model-with-form/process-instances
   core1-admin-instances:
-    groups: ["core-contributor"]
+    groups: ["core-contributor", "Finance Team"]
     users: []
     allowed_permissions: [create, read]
     uri: /v1.0/process-instances/misc:category_number_one:process-model-with-form:*
   core1-admin-instances-slash:
-    groups: ["core-contributor"]
+    groups: ["core-contributor", "Finance Team"]
     users: []
     allowed_permissions: [create, read]
     uri: /v1.0/process-instances/misc:category_number_one:process-model-with-form/*
