@@ -203,6 +203,14 @@ export default function ProcessModelShow() {
     });
   };
 
+  const publishProcessModel = () => {
+    HttpService.makeCallToBackend({
+      path: `/process-models/${modifiedProcessModelId}/publish`,
+      successCallback: navigateToProcessModels,
+      httpMethod: 'PUT',
+    });
+  };
+
   const navigateToFileEdit = (processModelFile: ProcessFile) => {
     const url = profileModelFileEditUrl(processModelFile);
     if (url) {
@@ -568,6 +576,9 @@ export default function ProcessModelShow() {
               <br />
             </>
           </Can>
+          <div>
+            <Button onClick={publishProcessModel}>Publish Changes</Button>
+          </div>
         </Stack>
         {processInstanceRunResultTag()}
         {processModelFilesSection()}

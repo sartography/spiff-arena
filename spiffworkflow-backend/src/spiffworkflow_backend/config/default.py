@@ -57,3 +57,4 @@ SENTRY_TRACES_SAMPLE_RATE = environ.get(
 SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
     "SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info"
 )
+GIT_MERGE_BRANCH = environ.get("GIT_MERGE_BRANCH", default="staging")
