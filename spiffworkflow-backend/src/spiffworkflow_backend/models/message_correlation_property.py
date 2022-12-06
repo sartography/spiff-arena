@@ -1,6 +1,7 @@
 """Message_correlation_property."""
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
+
 from sqlalchemy import ForeignKey
 
 from spiffworkflow_backend.models.message_model import MessageModel

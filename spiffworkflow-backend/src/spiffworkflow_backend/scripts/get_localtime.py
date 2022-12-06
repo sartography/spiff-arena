@@ -1,9 +1,9 @@
 """Get_localtime."""
 from datetime import datetime
+from flask_bpmn.api.api_error import ApiError
 from typing import Any
 
 import pytz
-from flask_bpmn.api.api_error import ApiError
 
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,

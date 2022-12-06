@@ -4,6 +4,8 @@ import random
 import re
 import string
 import uuid
+from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -22,8 +24,6 @@ from flask import make_response
 from flask import redirect
 from flask import request
 from flask.wrappers import Response
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -34,6 +34,7 @@ from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import selectinload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
@@ -841,7 +842,7 @@ def process_instance_list(
     process_instance_query = ProcessInstanceModel.query
     # Always join that hot user table for good performance at serialization time.
     process_instance_query = process_instance_query.options(
-        joinedload(ProcessInstanceModel.process_initiator)
+        selectinload(ProcessInstanceModel.process_initiator)
     )
 
     if report_filter.process_model_identifier is not None:
