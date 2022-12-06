@@ -283,7 +283,7 @@ export default function ProcessModelEditDiagram() {
 
   const onServiceTasksRequested = (event: any) => {
     HttpService.makeCallToBackend({
-      path: `/service_tasks`,
+      path: `/service-tasks`,
       successCallback: makeApiHandler(event),
     });
   };

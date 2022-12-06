@@ -5,12 +5,16 @@ from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
 class TestProcessModel(BaseTest):
@@ -121,6 +125,53 @@ class TestProcessModel(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         assert process_instance.status == "complete"
+
+    def test_extract_metadata(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_can_run_process_model_with_call_activities."""
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
+        process_model = load_test_spec(
+            "test_group/hello_world",
+            process_model_source_directory="nested-task-data-structure",
+        )
+        ProcessModelService.update_process_model(
+            process_model,
+            {
+                "metadata_extraction_paths": [
+                    {"key": "awesome_var", "path": "outer.inner"},
+                    {"key": "invoice_number", "path": "invoice_number"},
+                ]
+            },
+        )
+
+        process_instance = self.create_process_instance_from_process_model(
+            process_model
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        assert process_instance.status == "complete"
+
+        process_instance_metadata_awesome_var = (
+            ProcessInstanceMetadataModel.query.filter_by(
+                process_instance_id=process_instance.id, key="awesome_var"
+            ).first()
+        )
+        assert process_instance_metadata_awesome_var is not None
+        assert process_instance_metadata_awesome_var.value == "sweet2"
+        process_instance_metadata_awesome_var = (
+            ProcessInstanceMetadataModel.query.filter_by(
+                process_instance_id=process_instance.id, key="invoice_number"
+            ).first()
+        )
+        assert process_instance_metadata_awesome_var is not None
+        assert process_instance_metadata_awesome_var.value == "123"
 
     def create_test_process_model(self, id: str, display_name: str) -> ProcessModelInfo:
         """Create_test_process_model."""
