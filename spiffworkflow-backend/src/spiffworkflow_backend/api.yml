@@ -544,6 +544,12 @@ paths:
         description: Specifies the identifier of a report to use, if any
         schema:
           type: string
+      - name: report_id
+        in: query
+        required: false
+        description: Specifies the identifier of a report to use, if any
+        schema:
+          type: integer
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list
       summary: Returns a list of process instances for a given process model
@@ -841,14 +847,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-instances/reports/{report_identifier}:
+  /process-instances/reports/columns:
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_column_list
+      summary: Returns all available columns for a process instance report.
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Workflow.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+
+  /process-instances/reports/{report_id}:
     parameters:
-      - name: report_identifier
+      - name: report_id
         in: path
         required: true
         description: The unique id of an existing report
         schema:
-          type: string
+          type: integer
       - name: page
         in: query
         required: false

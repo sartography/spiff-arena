@@ -14,6 +14,7 @@ export const PROCESS_STATUSES = [
   'complete',
   'error',
   'suspended',
+  'terminated',
 ];
 
 // with time: yyyy-MM-dd HH:mm:ss

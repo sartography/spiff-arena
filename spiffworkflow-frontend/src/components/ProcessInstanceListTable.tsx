@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom';
 
 // @ts-ignore
-import { Filter } from '@carbon/icons-react';
+import { Filter, Close, AddAlt } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -21,6 +21,13 @@ import {
   TableHead,
   TableRow,
   TimePicker,
+  Tag,
+  InlineNotification,
+  Stack,
+  Modal,
+  ComboBox,
+  TextInput,
+  FormLabel,
   // @ts-ignore
 } from '@carbon/react';
 import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
@@ -49,9 +56,15 @@ import {
   ProcessModel,
   ProcessInstanceReport,
   ProcessInstance,
+  ReportColumn,
+  ReportColumnForEditing,
+  ReportMetadata,
+  ReportFilter,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
+import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
+import { FormatProcessModelDisplayName } from './MiniComponents';
 
 const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
@@ -88,7 +101,7 @@ export default function ProcessInstanceListTable({
   const navigate = useNavigate();
 
   const [processInstances, setProcessInstances] = useState([]);
-  const [reportMetadata, setReportMetadata] = useState({});
+  const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
   const [processInstanceFilters, setProcessInstanceFilters] = useState({});
 
@@ -125,6 +138,17 @@ export default function ProcessInstanceListTable({
   const [processInstanceReportSelection, setProcessInstanceReportSelection] =
     useState<ProcessInstanceReport | null>(null);
 
+  const [availableReportColumns, setAvailableReportColumns] = useState<
+    ReportColumn[]
+  >([]);
+  const [processInstanceReportJustSaved, setProcessInstanceReportJustSaved] =
+    useState<string | null>(null);
+  const [showReportColumnForm, setShowReportColumnForm] =
+    useState<boolean>(false);
+  const [reportColumnToOperateOn, setReportColumnToOperateOn] =
+    useState<ReportColumnForEditing | null>(null);
+  const [reportColumnFormMode, setReportColumnFormMode] = useState<string>('');
+
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
     return {
       start_from: [setStartFromDate, setStartFromTime],
@@ -155,16 +179,12 @@ export default function ProcessInstanceListTable({
     function setProcessInstancesFromResult(result: any) {
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
-      setReportMetadata(result.report_metadata);
       setPagination(result.pagination);
       setProcessInstanceFilters(result.filters);
 
-      // TODO: need to iron out this interaction some more
-      if (result.report_identifier !== 'default') {
-        setProcessInstanceReportSelection({
-          id: result.report_identifier,
-          display_name: result.report_identifier,
-        });
+      setReportMetadata(result.report.report_metadata);
+      if (result.report.id) {
+        setProcessInstanceReportSelection(result.report);
       }
     }
     function getProcessInstances() {
@@ -186,14 +206,10 @@ export default function ProcessInstanceListTable({
         queryParamString += `&user_filter=${userAppliedFilter}`;
       }
 
-      let reportIdentifierToUse: any = reportIdentifier;
-
-      if (!reportIdentifierToUse) {
-        reportIdentifierToUse = searchParams.get('report_identifier');
-      }
-
-      if (reportIdentifierToUse) {
-        queryParamString += `&report_identifier=${reportIdentifierToUse}`;
+      if (searchParams.get('report_id')) {
+        queryParamString += `&report_id=${searchParams.get('report_id')}`;
+      } else if (reportIdentifier) {
+        queryParamString += `&report_identifier=${reportIdentifier}`;
       }
 
       Object.keys(dateParametersToAlwaysFilterBy).forEach(
@@ -349,6 +365,27 @@ export default function ProcessInstanceListTable({
     processModelAvailableItems,
   ]);
 
+  const processInstanceReportSaveTag = () => {
+    if (processInstanceReportJustSaved) {
+      let titleOperation = 'Updated';
+      if (processInstanceReportJustSaved === 'new') {
+        titleOperation = 'Created';
+      }
+      return (
+        <InlineNotification
+          title={`Perspective ${titleOperation}:`}
+          subtitle={`'${
+            processInstanceReportSelection
+              ? processInstanceReportSelection.identifier
+              : ''
+          }'`}
+          kind="success"
+        />
+      );
+    }
+    return null;
+  };
+
   // does the comparison, but also returns false if either argument
   // is not truthy and therefore not comparable.
   const isTrueComparison = (param1: any, operation: any, param2: any) => {
@@ -366,16 +403,8 @@ export default function ProcessInstanceListTable({
     }
   };
 
-  const applyFilter = (event: any) => {
-    event.preventDefault();
-    const { page, perPage } = getPageInfoFromSearchParams(
-      searchParams,
-      undefined,
-      undefined,
-      paginationQueryParamPrefix
-    );
-    let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
-
+  // TODO: after factoring this out page hangs when invalid date ranges and applying the filter
+  const calculateStartAndEndSeconds = () => {
     const startFromSeconds = convertDateAndTimeStringsToSeconds(
       startFromDate,
       startFromTime || '00:00:00'
@@ -392,28 +421,59 @@ export default function ProcessInstanceListTable({
       endToDate,
       endToTime || '00:00:00'
     );
+    let valid = true;
     if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
       setErrorMessage({
         message: '"Start date from" cannot be after "start date to"',
       });
-      return;
+      valid = false;
     }
     if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
       setErrorMessage({
         message: '"End date from" cannot be after "end date to"',
       });
-      return;
+      valid = false;
     }
     if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
       setErrorMessage({
         message: '"Start date from" cannot be after "end date from"',
       });
-      return;
+      valid = false;
     }
     if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
       setErrorMessage({
         message: '"Start date to" cannot be after "end date to"',
       });
+      valid = false;
+    }
+
+    return {
+      valid,
+      startFromSeconds,
+      startToSeconds,
+      endFromSeconds,
+      endToSeconds,
+    };
+  };
+
+  const applyFilter = (event: any) => {
+    event.preventDefault();
+    const { page, perPage } = getPageInfoFromSearchParams(
+      searchParams,
+      undefined,
+      undefined,
+      paginationQueryParamPrefix
+    );
+    let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
+    const {
+      valid,
+      startFromSeconds,
+      startToSeconds,
+      endFromSeconds,
+      endToSeconds,
+    } = calculateStartAndEndSeconds();
+
+    if (!valid) {
       return;
     }
 
@@ -438,10 +498,11 @@ export default function ProcessInstanceListTable({
     }
 
     if (processInstanceReportSelection) {
-      queryParamString += `&report_identifier=${processInstanceReportSelection.id}`;
+      queryParamString += `&report_id=${processInstanceReportSelection.id}`;
     }
 
     setErrorMessage(null);
+    setProcessInstanceReportJustSaved(null);
     navigate(`/admin/process-instances?${queryParamString}`);
   };
 
@@ -529,12 +590,360 @@ export default function ProcessInstanceListTable({
     setEndToTime('');
   };
 
+  const processInstanceReportDidChange = (selection: any, mode?: string) => {
+    clearFilters();
+    const selectedReport = selection.selectedItem;
+    setProcessInstanceReportSelection(selectedReport);
+
+    let queryParamString = '';
+    if (selectedReport) {
+      queryParamString = `?report_id=${selectedReport.id}`;
+    }
+
+    setErrorMessage(null);
+    setProcessInstanceReportJustSaved(mode || null);
+    navigate(`/admin/process-instances${queryParamString}`);
+  };
+
+  const reportColumns = () => {
+    return (reportMetadata as any).columns;
+  };
+
+  const reportColumnAccessors = () => {
+    return reportColumns().map((reportColumn: ReportColumn) => {
+      return reportColumn.accessor;
+    });
+  };
+
+  // TODO onSuccess reload/select the new report in the report search
+  const onSaveReportSuccess = (result: any, mode: string) => {
+    processInstanceReportDidChange(
+      {
+        selectedItem: result,
+      },
+      mode
+    );
+  };
+
+  const saveAsReportComponent = () => {
+    const {
+      valid,
+      startFromSeconds,
+      startToSeconds,
+      endFromSeconds,
+      endToSeconds,
+    } = calculateStartAndEndSeconds();
+
+    if (!valid || !reportMetadata) {
+      return null;
+    }
+    return (
+      <ProcessInstanceListSaveAsReport
+        onSuccess={onSaveReportSuccess}
+        buttonClassName="button-white-background narrow-button"
+        columnArray={reportColumns()}
+        orderBy=""
+        buttonText="Save"
+        processModelSelection={processModelSelection}
+        processStatusSelection={processStatusSelection}
+        processInstanceReportSelection={processInstanceReportSelection}
+        reportMetadata={reportMetadata}
+        startFromSeconds={startFromSeconds}
+        startToSeconds={startToSeconds}
+        endFromSeconds={endFromSeconds}
+        endToSeconds={endToSeconds}
+      />
+    );
+  };
+
+  const removeColumn = (reportColumn: ReportColumn) => {
+    if (reportMetadata) {
+      const reportMetadataCopy = { ...reportMetadata };
+      const newColumns = reportColumns().filter(
+        (rc: ReportColumn) => rc.accessor !== reportColumn.accessor
+      );
+      Object.assign(reportMetadataCopy, { columns: newColumns });
+      setReportMetadata(reportMetadataCopy);
+    }
+  };
+
+  const handleColumnFormClose = () => {
+    setShowReportColumnForm(false);
+    setReportColumnFormMode('');
+    setReportColumnToOperateOn(null);
+  };
+
+  const getFilterByFromReportMetadata = (reportColumnAccessor: string) => {
+    if (reportMetadata) {
+      return reportMetadata.filter_by.find((reportFilter: ReportFilter) => {
+        return reportColumnAccessor === reportFilter.field_name;
+      });
+    }
+    return null;
+  };
+
+  const getNewFiltersFromReportForEditing = (
+    reportColumnForEditing: ReportColumnForEditing
+  ) => {
+    if (!reportMetadata) {
+      return null;
+    }
+    const reportMetadataCopy = { ...reportMetadata };
+    let newReportFilters = reportMetadataCopy.filter_by;
+    if (reportColumnForEditing.filterable) {
+      const newReportFilter: ReportFilter = {
+        field_name: reportColumnForEditing.accessor,
+        field_value: reportColumnForEditing.filter_field_value,
+        operator: reportColumnForEditing.filter_operator || 'equals',
+      };
+      const existingReportFilter = getFilterByFromReportMetadata(
+        reportColumnForEditing.accessor
+      );
+      if (existingReportFilter) {
+        const existingReportFilterIndex =
+          reportMetadataCopy.filter_by.indexOf(existingReportFilter);
+        if (reportColumnForEditing.filter_field_value) {
+          newReportFilters[existingReportFilterIndex] = newReportFilter;
+        } else {
+          newReportFilters.splice(existingReportFilterIndex, 1);
+        }
+      } else if (reportColumnForEditing.filter_field_value) {
+        newReportFilters = newReportFilters.concat([newReportFilter]);
+      }
+    }
+    return newReportFilters;
+  };
+
+  const handleUpdateReportColumn = () => {
+    if (reportColumnToOperateOn && reportMetadata) {
+      const reportMetadataCopy = { ...reportMetadata };
+      let newReportColumns = null;
+      if (reportColumnFormMode === 'new') {
+        newReportColumns = reportColumns().concat([reportColumnToOperateOn]);
+      } else {
+        newReportColumns = reportColumns().map((rc: ReportColumn) => {
+          if (rc.accessor === reportColumnToOperateOn.accessor) {
+            return reportColumnToOperateOn;
+          }
+          return rc;
+        });
+      }
+      Object.assign(reportMetadataCopy, {
+        columns: newReportColumns,
+        filter_by: getNewFiltersFromReportForEditing(reportColumnToOperateOn),
+      });
+      setReportMetadata(reportMetadataCopy);
+      setReportColumnToOperateOn(null);
+      setShowReportColumnForm(false);
+      setShowReportColumnForm(false);
+    }
+  };
+
+  const reportColumnToReportColumnForEditing = (reportColumn: ReportColumn) => {
+    const reportColumnForEditing: ReportColumnForEditing = Object.assign(
+      reportColumn,
+      { filter_field_value: '', filter_operator: '' }
+    );
+    const reportFilter = getFilterByFromReportMetadata(
+      reportColumnForEditing.accessor
+    );
+    if (reportFilter) {
+      reportColumnForEditing.filter_field_value = reportFilter.field_value;
+      reportColumnForEditing.filter_operator =
+        reportFilter.operator || 'equals';
+    }
+    return reportColumnForEditing;
+  };
+
+  const updateReportColumn = (event: any) => {
+    const reportColumnForEditing = reportColumnToReportColumnForEditing(
+      event.selectedItem
+    );
+    setReportColumnToOperateOn(reportColumnForEditing);
+  };
+
+  // options includes item and inputValue
+  const shouldFilterReportColumn = (options: any) => {
+    const reportColumn: ReportColumn = options.item;
+    const { inputValue } = options;
+    return (
+      !reportColumnAccessors().includes(reportColumn.accessor) &&
+      (reportColumn.accessor || '')
+        .toLowerCase()
+        .includes((inputValue || '').toLowerCase())
+    );
+  };
+
+  const setReportColumnConditionValue = (event: any) => {
+    if (reportColumnToOperateOn) {
+      const reportColumnToOperateOnCopy = {
+        ...reportColumnToOperateOn,
+      };
+      reportColumnToOperateOnCopy.filter_field_value = event.target.value;
+      setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+    }
+  };
+
+  const reportColumnForm = () => {
+    if (reportColumnFormMode === '') {
+      return null;
+    }
+    const formElements = [
+      <TextInput
+        id="report-column-display-name"
+        name="report-column-display-name"
+        labelText="Display Name"
+        disabled={!reportColumnToOperateOn}
+        value={reportColumnToOperateOn ? reportColumnToOperateOn.Header : ''}
+        onChange={(event: any) => {
+          if (reportColumnToOperateOn) {
+            const reportColumnToOperateOnCopy = {
+              ...reportColumnToOperateOn,
+            };
+            reportColumnToOperateOnCopy.Header = event.target.value;
+            setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+          }
+        }}
+      />,
+    ];
+    if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
+      formElements.push(
+        <TextInput
+          id="report-column-condition-value"
+          name="report-column-condition-value"
+          labelText="Condition Value"
+          value={
+            reportColumnToOperateOn
+              ? reportColumnToOperateOn.filter_field_value
+              : ''
+          }
+          onChange={setReportColumnConditionValue}
+        />
+      );
+    }
+    if (reportColumnFormMode === 'new') {
+      formElements.push(
+        <ComboBox
+          onChange={updateReportColumn}
+          className="combo-box-in-modal"
+          id="report-column-selection"
+          data-qa="report-column-selection"
+          data-modal-primary-focus
+          items={availableReportColumns}
+          itemToString={(reportColumn: ReportColumn) => {
+            if (reportColumn) {
+              return reportColumn.accessor;
+            }
+            return null;
+          }}
+          shouldFilterItem={shouldFilterReportColumn}
+          placeholder="Choose a report column"
+          titleText="Report Column"
+        />
+      );
+    }
+    const modalHeading =
+      reportColumnFormMode === 'new'
+        ? 'Add Column'
+        : `Edit ${
+            reportColumnToOperateOn ? reportColumnToOperateOn.accessor : ''
+          } column`;
+    return (
+      <Modal
+        open={showReportColumnForm}
+        modalHeading={modalHeading}
+        primaryButtonText="Save"
+        primaryButtonDisabled={!reportColumnToOperateOn}
+        onRequestSubmit={handleUpdateReportColumn}
+        onRequestClose={handleColumnFormClose}
+        hasScrollingContent
+      >
+        {formElements}
+      </Modal>
+    );
+  };
+
+  const columnSelections = () => {
+    if (reportColumns()) {
+      const tags: any = [];
+
+      (reportColumns() as any).forEach((reportColumn: ReportColumn) => {
+        const reportColumnForEditing =
+          reportColumnToReportColumnForEditing(reportColumn);
+
+        let tagType = 'cool-gray';
+        let tagTypeClass = '';
+        if (reportColumnForEditing.filterable) {
+          tagType = 'green';
+          tagTypeClass = 'tag-type-green';
+        }
+        let reportColumnLabel = reportColumnForEditing.Header;
+        if (reportColumnForEditing.filter_field_value) {
+          reportColumnLabel = `${reportColumnLabel}=${reportColumnForEditing.filter_field_value}`;
+        }
+        tags.push(
+          <Tag type={tagType} size="sm">
+            <Button
+              kind="ghost"
+              size="sm"
+              className={`button-tag-icon ${tagTypeClass}`}
+              title={`Edit ${reportColumnForEditing.accessor}`}
+              onClick={() => {
+                setReportColumnToOperateOn(reportColumnForEditing);
+                setShowReportColumnForm(true);
+                setReportColumnFormMode('edit');
+              }}
+            >
+              {reportColumnLabel}
+            </Button>
+            <Button
+              data-qa="remove-report-column"
+              renderIcon={Close}
+              iconDescription="Remove Column"
+              className={`button-tag-icon ${tagTypeClass}`}
+              hasIconOnly
+              size="sm"
+              kind="ghost"
+              onClick={() => removeColumn(reportColumnForEditing)}
+            />
+          </Tag>
+        );
+      });
+      return (
+        <Stack orientation="horizontal">
+          {tags}
+          <Button
+            data-qa="add-column-button"
+            renderIcon={AddAlt}
+            iconDescription="Filter Options"
+            className="with-tiny-top-margin"
+            kind="ghost"
+            hasIconOnly
+            size="sm"
+            onClick={() => {
+              setShowReportColumnForm(true);
+              setReportColumnFormMode('new');
+            }}
+          />
+        </Stack>
+      );
+    }
+    return null;
+  };
+
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
     }
     return (
       <>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={8} lg={16} sm={4}>
+            <FormLabel>Columns</FormLabel>
+            <br />
+            {columnSelections()}
+          </Column>
+        </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>
             <ProcessModelSearch
@@ -598,11 +1007,11 @@ export default function ProcessInstanceListTable({
           </Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
-          <Column md={4}>
+          <Column sm={4} md={4} lg={8}>
             <ButtonSet>
               <Button
                 kind=""
-                className="button-white-background"
+                className="button-white-background narrow-button"
                 onClick={clearFilters}
               >
                 Clear
@@ -611,10 +1020,14 @@ export default function ProcessInstanceListTable({
                 kind="secondary"
                 onClick={applyFilter}
                 data-qa="filter-button"
+                className="narrow-button"
               >
                 Filter
               </Button>
             </ButtonSet>
+          </Column>
+          <Column sm={4} md={4} lg={8}>
+            {saveAsReportComponent()}
           </Column>
         </Grid>
       </>
@@ -635,7 +1048,7 @@ export default function ProcessInstanceListTable({
     const getHeaderLabel = (header: string) => {
       return headerLabels[header] ?? header;
     };
-    const headers = (reportMetadata as any).columns.map((column: any) => {
+    const headers = reportColumns().map((column: any) => {
       // return <th>{getHeaderLabel((column as any).Header)}</th>;
       return getHeaderLabel((column as any).Header);
     });
@@ -665,22 +1078,6 @@ export default function ProcessInstanceListTable({
       );
     };
 
-    const formatProcessModelDisplayName = (
-      row: ProcessInstance,
-      displayName: string
-    ) => {
-      return (
-        <Link
-          to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
-            row.process_model_identifier
-          )}`}
-          title={row.process_model_identifier}
-        >
-          {displayName}
-        </Link>
-      );
-    };
-
     const formatSecondsForDisplay = (_row: any, seconds: any) => {
       return convertSecondsToFormattedDateTime(seconds) || '-';
     };
@@ -688,15 +1085,16 @@ export default function ProcessInstanceListTable({
       return value;
     };
 
-    const columnFormatters: Record<string, any> = {
+    const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
-      process_model_display_name: formatProcessModelDisplayName,
+      process_model_display_name: FormatProcessModelDisplayName,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
     };
     const formattedColumn = (row: any, column: any) => {
-      const formatter = columnFormatters[column.accessor] ?? defaultFormatter;
+      const formatter =
+        reportColumnFormatters[column.accessor] ?? defaultFormatter;
       const value = row[column.accessor];
       if (column.accessor === 'status') {
         return (
@@ -709,7 +1107,7 @@ export default function ProcessInstanceListTable({
     };
 
     const rows = processInstances.map((row: any) => {
-      const currentRow = (reportMetadata as any).columns.map((column: any) => {
+      const currentRow = reportColumns().map((column: any) => {
         return formattedColumn(row, column);
       });
       return <tr key={row.id}>{currentRow}</tr>;
@@ -736,29 +1134,26 @@ export default function ProcessInstanceListTable({
 
   const toggleShowFilterOptions = () => {
     setShowFilterOptions(!showFilterOptions);
-  };
-
-  const processInstanceReportDidChange = (selection: any) => {
-    clearFilters();
-
-    const selectedReport = selection.selectedItem;
-    setProcessInstanceReportSelection(selectedReport);
-
-    const queryParamString = selectedReport
-      ? `&report_identifier=${selectedReport.id}`
-      : '';
-
-    setErrorMessage(null);
-    navigate(`/admin/process-instances?${queryParamString}`);
+    HttpService.makeCallToBackend({
+      path: `/process-instances/reports/columns`,
+      successCallback: setAvailableReportColumns,
+    });
   };
 
   const reportSearchComponent = () => {
     if (showReports) {
+      const columns = [
+        <Column sm={2} md={4} lg={7}>
+          <ProcessInstanceReportSearch
+            onChange={processInstanceReportDidChange}
+            selectedItem={processInstanceReportSelection}
+          />
+        </Column>,
+      ];
       return (
-        <ProcessInstanceReportSearch
-          onChange={processInstanceReportDidChange}
-          selectedItem={processInstanceReportSelection}
-        />
+        <Grid className="with-tiny-bottom-margin" fullWidth>
+          {columns}
+        </Grid>
       );
     }
     return null;
@@ -806,6 +1201,8 @@ export default function ProcessInstanceListTable({
     }
     return (
       <>
+        {reportColumnForm()}
+        {processInstanceReportSaveTag()}
         {filterComponent()}
         {reportSearchComponent()}
         <PaginationForTable
