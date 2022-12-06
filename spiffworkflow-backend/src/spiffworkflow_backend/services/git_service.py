@@ -1,7 +1,10 @@
 """Git_service."""
+import datetime
 import os
+import shutil
 
 from flask import current_app
+from flask import g
 
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -54,3 +57,40 @@ class GitService:
         shell_command = f"./bin/git_commit_bpmn_models_repo '{bpmn_spec_absolute_dir}' '{message}' '{git_username}' '{git_email}'"
         output = os.popen(shell_command).read()  # noqa: S605
         return output
+
+    @staticmethod
+    def publish(process_model_id, branch_to_update):
+        source_process_model_root = FileSystemService.root_path()
+        source_process_model_path = os.path.join(source_process_model_root, process_model_id)
+
+        # clone new instance of sample-process-models, checkout branch_to_update
+        os.chdir("/tmp")
+        destination_process_root = "/tmp/sample-process-models"
+        if os.path.exists(destination_process_root):
+            shutil.rmtree(destination_process_root)
+        os.system("git clone https://github.com/sartography/sample-process-models.git")
+        os.chdir(destination_process_root)
+
+        # create publish branch from branch_to_update
+        os.system(f"git checkout {branch_to_update}")  # noqa: S605
+        publish_branch = f"publish-{process_model_id}"
+        command = f"git show-ref --verify refs/remotes/origin/{publish_branch}"
+        output = os.popen(command).read()  # noqa: S605
+        if output:
+            os.system(f"git checkout {publish_branch}")
+        else:
+            os.system(f"git checkout -b {publish_branch}")  # noqa: S605
+
+        # copy files from process model into the new publish branch
+        destination_process_model_path = os.path.join(destination_process_root, process_model_id)
+        if os.path.exists(destination_process_model_path):
+            shutil.rmtree(destination_process_model_path)
+        shutil.copytree(source_process_model_path, destination_process_model_path)
+
+        # add and commit files to publish_branch, then push
+        os.chdir(destination_process_root)
+        os.system("git add .")  # noqa: S605
+        commit_message = f"Request to publish changes to {process_model_id}, from {g.user.username}"
+        os.system(f"git commit -m '{commit_message}'")  # noqa: S605
+        os.system("git push")
+        print("publish")

@@ -29,7 +29,7 @@ class FileSystemService:
         # fixme: allow absolute files
         dir_name = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
         app_root = current_app.root_path
-        return os.path.join(app_root, "..", dir_name)
+        return os.path.abspath(os.path.join(app_root, "..", dir_name))
 
     @staticmethod
     def id_string_to_relative_path(id_string: str) -> str:
