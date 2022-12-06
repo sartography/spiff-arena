@@ -372,15 +372,18 @@ export default function ProcessInstanceListTable({
         titleOperation = 'Created';
       }
       return (
-        <InlineNotification
-          title={`Perspective ${titleOperation}:`}
-          subtitle={`'${
-            processInstanceReportSelection
-              ? processInstanceReportSelection.identifier
-              : ''
-          }'`}
-          kind="success"
-        />
+        <>
+          <InlineNotification
+            title={`Perspective ${titleOperation}:`}
+            subtitle={`'${
+              processInstanceReportSelection
+                ? processInstanceReportSelection.identifier
+                : ''
+            }'`}
+            kind="success"
+          />
+          <br />
+        </>
       );
     }
     return null;
@@ -935,6 +938,15 @@ export default function ProcessInstanceListTable({
     if (!showFilterOptions) {
       return null;
     }
+
+    // get the columns anytime we display the filter options if they are empty
+    if (availableReportColumns.length < 1) {
+      HttpService.makeCallToBackend({
+        path: `/process-instances/reports/columns`,
+        successCallback: setAvailableReportColumns,
+      });
+    }
+
     return (
       <>
         <Grid fullWidth className="with-bottom-margin">
@@ -1134,10 +1146,6 @@ export default function ProcessInstanceListTable({
 
   const toggleShowFilterOptions = () => {
     setShowFilterOptions(!showFilterOptions);
-    HttpService.makeCallToBackend({
-      path: `/process-instances/reports/columns`,
-      successCallback: setAvailableReportColumns,
-    });
   };
 
   const reportSearchComponent = () => {
