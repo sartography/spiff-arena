@@ -66,7 +66,7 @@ export default function ProcessModelShow() {
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
     [targetUris.processInstanceListPath]: ['GET'],
-    [targetUris.processInstanceActionPath]: ['POST'],
+    [targetUris.processInstanceCreatePath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
@@ -95,7 +95,7 @@ export default function ProcessModelShow() {
           <p>
             Process Instance {processInstance.id} kicked off (
             <Link
-              to={`/admin/process-models/${modifiedProcessModelId}/process-instances/${processInstance.id}`}
+              to={`/admin/process-instances/${modifiedProcessModelId}/${processInstance.id}`}
               data-qa="process-instance-show-link"
             >
               view
@@ -556,7 +556,7 @@ export default function ProcessModelShow() {
         <Stack orientation="horizontal" gap={3}>
           <Can
             I="POST"
-            a={targetUris.processInstanceActionPath}
+            a={targetUris.processInstanceCreatePath}
             ability={ability}
           >
             <>

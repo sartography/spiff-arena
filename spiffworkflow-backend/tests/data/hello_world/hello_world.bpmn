@@ -19,7 +19,11 @@
       <bpmn:scriptTask id="hot_script_task_OH_YEEEEEEEEEEEEEEEEEEEEAH" name="OHHHHHHHHHHYEEEESSSSSSSSSS">
         <bpmn:incoming>Flow_0bazl8x</bpmn:incoming>
         <bpmn:outgoing>Flow_1mcaszp</bpmn:outgoing>
-        <bpmn:script>a = 1</bpmn:script>
+        <bpmn:script>a = 1
+b = 2
+outer = {}
+outer["inner"] = 'sweet1'
+      </bpmn:script>
       </bpmn:scriptTask>
       <bpmn:endEvent id="Event_1vch1y0">
         <bpmn:incoming>Flow_1mcaszp</bpmn:incoming>

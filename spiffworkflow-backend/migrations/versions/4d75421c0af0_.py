@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 3f049fa4d8ac
+Revision ID: 4d75421c0af0
 Revises: 
-Create Date: 2022-11-30 16:49:54.805372
+Create Date: 2022-12-06 17:42:56.417673
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3f049fa4d8ac'
+revision = '4d75421c0af0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -248,6 +248,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('process_instance_id', 'key', name='process_instance_metadata_unique')
     )
+    op.create_index(op.f('ix_process_instance_metadata_key'), 'process_instance_metadata', ['key'], unique=False)
     op.create_table('spiff_step_details',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -294,6 +295,7 @@ def downgrade():
     op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
     op.drop_table('active_task_user')
     op.drop_table('spiff_step_details')
+    op.drop_index(op.f('ix_process_instance_metadata_key'), table_name='process_instance_metadata')
     op.drop_table('process_instance_metadata')
     op.drop_table('permission_assignment')
     op.drop_table('message_instance')

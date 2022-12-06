@@ -71,11 +71,11 @@ export default function AdminRoutes() {
           element={<ProcessModelEdit />}
         />
         <Route
-          path="process-models/:process_model_id/process-instances/:process_instance_id"
+          path="process-instances/:process_model_id/:process_instance_id"
           element={<ProcessInstanceShow />}
         />
         <Route
-          path="process-models/:process_model_id/process-instances/:process_instance_id/:spiff_step"
+          path="process-instances/:process_model_id/:process_instance_id/:spiff_step"
           element={<ProcessInstanceShow />}
         />
         <Route
@@ -103,7 +103,7 @@ export default function AdminRoutes() {
           element={<ReactFormEditor />}
         />
         <Route
-          path="process-models/:process_model_id/process-instances/:process_instance_id/logs"
+          path="logs/:process_model_id/:process_instance_id"
           element={<ProcessInstanceLogList />}
         />
         <Route path="process-instances" element={<ProcessInstanceList />} />
