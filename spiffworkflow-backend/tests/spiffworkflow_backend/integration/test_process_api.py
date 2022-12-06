@@ -2544,3 +2544,120 @@ class TestProcessApi(BaseTest):
         # make sure the new subgroup does exist
         new_process_group = ProcessModelService.get_process_group(new_sub_path)
         assert new_process_group.id == new_sub_path
+
+    def test_process_model_publish(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+
+        bpmn_root = FileSystemService.root_path()
+        shell_command = f"git init {bpmn_root}"
+        output = os.popen(shell_command).read()  # noqa: S605
+        assert output == f"Initialized empty Git repository in {bpmn_root}/.git/\n"
+        os.chdir(bpmn_root)
+        output = os.popen("git status").read()  # noqa: S605
+        assert "On branch main" in output
+        assert "No commits yet" in output
+        assert "nothing to commit (create/copy files and use \"git add\" to track)" in output
+
+        process_group_id = "test_group"
+        self.create_process_group(
+                client,
+                with_super_admin_user,
+                process_group_id,
+                process_group_id
+        )
+
+        sub_process_group_id = "test_group/test_sub_group"
+        process_model_id = "hello_world"
+        bpmn_file_name = "hello_world.bpmn"
+        bpmn_file_location = "hello_world"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=sub_process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+        process_model_absolute_dir = os.path.join(bpmn_root, process_model_identifier)
+
+        output = os.popen("git status").read()  # noqa: S605
+        test_string = \
+            'Untracked files:\n  (use "git add <file>..." to include in what will be committed)\n\ttest_group'
+        assert test_string in output
+
+        os.system("git add .")
+        output = os.popen("git commit -m 'Initial Commit'").read()
+        assert "Initial Commit" in output
+        assert "4 files changed" in output
+        assert "test_group/process_group.json" in output
+        assert "test_group/test_sub_group/hello_world/hello_world.bpmn" in output
+        assert "test_group/test_sub_group/hello_world/process_model.json" in output
+        assert "test_group/test_sub_group/process_group.json" in output
+
+        output = os.popen("git status").read()  # noqa: S605
+        assert "On branch main" in output
+        assert "nothing to commit" in output
+        assert "working tree clean" in output
+
+        output = os.popen("git branch --list").read()  # noqa: S605
+        assert output == "* main\n"
+        os.system("git branch staging")
+        output = os.popen("git branch --list").read()  # noqa: S605
+        assert output == "* main\n  staging\n"
+
+        os.system("git checkout staging")
+
+        output = os.popen("git status").read()  # noqa: S605
+        assert "On branch staging" in output
+        assert "nothing to commit" in output
+        assert "working tree clean" in output
+
+        # process_model = ProcessModelService.get_process_model(process_model_identifier)
+
+        listing = os.listdir(process_model_absolute_dir)
+        assert len(listing) == 2
+        assert "hello_world.bpmn" in listing
+        assert "process_model.json" in listing
+
+        os.system("git checkout main")
+
+        output = os.popen("git status").read()  # noqa: S605
+        assert "On branch main" in output
+        assert "nothing to commit" in output
+        assert "working tree clean" in output
+
+        file_data = b"abc123"
+        new_file_path = os.path.join(process_model_absolute_dir, "new_file.txt")
+        with open(new_file_path, 'wb') as f_open:
+            f_open.write(file_data)
+
+        output = os.popen("git status").read()  # noqa: S605
+        assert "On branch main" in output
+        assert "Untracked files:" in output
+        assert "test_group/test_sub_group/hello_world/new_file.txt" in output
+
+        os.system("git add test_group/test_sub_group/hello_world/new_file.txt")  # noqa: S605
+        output = os.popen("git commit -m 'add new_file.txt'").read()  # noqa: S605
+
+        assert "add new_file.txt" in output
+        assert "1 file changed, 1 insertion(+)" in output
+        assert "test_group/test_sub_group/hello_world/new_file.txt" in output
+
+        listing = os.listdir(process_model_absolute_dir)
+        assert len(listing) == 3
+        assert "hello_world.bpmn" in listing
+        assert "process_model.json" in listing
+        assert "new_file.txt" in listing
+
+        modified_process_model_id = process_model_identifier.replace("/", ":")
+        # response = client.put(
+        #     f"/v1.0/process-models/{modified_process_model_id}/publish?branch_to_update=staging",
+        #     headers=self.logged_in_headers(with_super_admin_user),
+        # )
+
+        print("test_process_model_publish")
