@@ -59,7 +59,7 @@ class GitService:
         return output
 
     @staticmethod
-    def publish(process_model_id, branch_to_update):
+    def publish(process_model_id: str, branch_to_update: str) -> None:
         source_process_model_root = FileSystemService.root_path()
         source_process_model_path = os.path.join(source_process_model_root, process_model_id)
 
