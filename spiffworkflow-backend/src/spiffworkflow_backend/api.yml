@@ -1342,6 +1342,12 @@ paths:
         description: The number of items to show per page. Defaults to page 10.
         schema:
           type: integer
+      - name: detailed
+        in: query
+        required: false
+        description: Show the detailed view, which includes all log entries
+        schema:
+          type: boolean
     get:
       tags:
         - Process Instances
