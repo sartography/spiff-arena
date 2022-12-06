@@ -1,11 +1,11 @@
 """User_service."""
+from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
 from typing import Any
 from typing import Optional
 
 from flask import current_app
 from flask import g
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 
 from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel

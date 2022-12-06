@@ -1,5 +1,11 @@
 default_group: everybody
 
+users:
+  admin:
+    email: admin@spiffworkflow.org
+    password: admin
+    preferred_username: Admin
+
 groups:
   admin:
     users:

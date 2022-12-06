@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from flask_bpmn.models.db import db
+from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from typing import Any
 from typing import cast
 from typing import Optional
 from typing import TypedDict
 
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import deferred
 from sqlalchemy.orm import relationship
