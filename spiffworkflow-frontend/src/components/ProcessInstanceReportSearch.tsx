@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ComboBox,
+  Stack,
+  FormLabel,
   // @ts-ignore
 } from '@carbon/react';
+import { useSearchParams } from 'react-router-dom';
 import { truncateString } from '../helpers';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -22,52 +25,61 @@ export default function ProcessInstanceReportSearch({
     ProcessInstanceReport[] | null
   >(null);
 
-  function setProcessInstanceReportsFromResult(result: any) {
-    const processInstanceReportsFromApi = result.map((item: any) => {
-      return { id: item.identifier, display_name: item.identifier };
-    });
-    setProcessInstanceReports(processInstanceReportsFromApi);
-  }
+  const [searchParams] = useSearchParams();
+  const reportId = searchParams.get('report_id');
 
-  if (processInstanceReports === null) {
-    setProcessInstanceReports([]);
+  useEffect(() => {
+    function setProcessInstanceReportsFromResult(
+      result: ProcessInstanceReport[]
+    ) {
+      setProcessInstanceReports(result);
+    }
+
     HttpService.makeCallToBackend({
       path: `/process-instances/reports`,
       successCallback: setProcessInstanceReportsFromResult,
     });
-  }
+  }, [reportId]);
+
+  const reportSelectionString = (
+    processInstanceReport: ProcessInstanceReport
+  ) => {
+    return `${truncateString(processInstanceReport.identifier, 20)} (Id: ${
+      processInstanceReport.id
+    })`;
+  };
 
   const shouldFilterProcessInstanceReport = (options: any) => {
     const processInstanceReport: ProcessInstanceReport = options.item;
     const { inputValue } = options;
-    return `${processInstanceReport.id} (${processInstanceReport.display_name})`.includes(
-      inputValue
-    );
+    return reportSelectionString(processInstanceReport).includes(inputValue);
   };
 
   const reportsAvailable = () => {
     return processInstanceReports && processInstanceReports.length > 0;
   };
 
-  return reportsAvailable() ? (
-    <ComboBox
-      onChange={onChange}
-      id="process-instance-report-select"
-      data-qa="process-instance-report-selection"
-      items={processInstanceReports}
-      itemToString={(processInstanceReport: ProcessInstanceReport) => {
-        if (processInstanceReport) {
-          return `${processInstanceReport.id} (${truncateString(
-            processInstanceReport.display_name,
-            20
-          )})`;
-        }
-        return null;
-      }}
-      shouldFilterItem={shouldFilterProcessInstanceReport}
-      placeholder="Choose a process instance perspective"
-      titleText={titleText}
-      selectedItem={selectedItem}
-    />
-  ) : null;
+  if (reportsAvailable()) {
+    return (
+      <Stack orientation="horizontal" gap={2}>
+        <FormLabel className="with-top-margin">{titleText}</FormLabel>
+        <ComboBox
+          onChange={onChange}
+          id="process-instance-report-select"
+          data-qa="process-instance-report-selection"
+          items={processInstanceReports}
+          itemToString={(processInstanceReport: ProcessInstanceReport) => {
+            if (processInstanceReport) {
+              return reportSelectionString(processInstanceReport);
+            }
+            return null;
+          }}
+          shouldFilterItem={shouldFilterProcessInstanceReport}
+          placeholder="Choose a process instance perspective"
+          selectedItem={selectedItem}
+        />
+      </Stack>
+    );
+  }
+  return null;
 }

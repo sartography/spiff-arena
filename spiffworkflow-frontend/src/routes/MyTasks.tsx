@@ -55,9 +55,9 @@ export default function MyTasks() {
           <p>
             Process Instance {processInstance.id} kicked off (
             <Link
-              to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+              to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
                 processInstance.process_model_identifier
-              )}/process-instances/${processInstance.id}`}
+              )}/${processInstance.id}`}
               data-qa="process-instance-show-link"
             >
               view
@@ -95,7 +95,7 @@ export default function MyTasks() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}/process-instances/${rowToUse.process_instance_id}`}
+              to={`/admin/process-instances/${modifiedProcessModelIdentifier}/${rowToUse.process_instance_id}`}
             >
               {rowToUse.process_instance_id}
             </Link>

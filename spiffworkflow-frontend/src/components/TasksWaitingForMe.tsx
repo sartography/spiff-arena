@@ -47,7 +47,7 @@ export default function TasksWaitingForMe() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}/process-instances/${rowToUse.process_instance_id}`}
+              to={`/admin/${modifiedProcessModelIdentifier}/${rowToUse.process_instance_id}`}
               title={`View process instance ${rowToUse.process_instance_id}`}
             >
               {rowToUse.process_instance_id}

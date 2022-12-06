@@ -83,9 +83,9 @@ export default function ProcessInstanceRun({
     processModel.id
   );
 
-  const processInstanceActionPath = `/v1.0/process-models/${modifiedProcessModelId}/process-instances`;
+  const processInstanceCreatePath = `/v1.0/process-instances/${modifiedProcessModelId}`;
   let permissionRequestData: PermissionsToCheck = {
-    [processInstanceActionPath]: ['POST'],
+    [processInstanceCreatePath]: ['POST'],
   };
 
   if (!checkPermissions) {
@@ -117,14 +117,14 @@ export default function ProcessInstanceRun({
 
   const processInstanceCreateAndRun = () => {
     HttpService.makeCallToBackend({
-      path: processInstanceActionPath,
+      path: processInstanceCreatePath,
       successCallback: processModelRun,
       httpMethod: 'POST',
     });
   };
   if (checkPermissions) {
     return (
-      <Can I="POST" a={processInstanceActionPath} ability={ability}>
+      <Can I="POST" a={processInstanceCreatePath} ability={ability}>
         <Button onClick={processInstanceCreateAndRun} className={className}>
           Start
         </Button>

@@ -37,7 +37,7 @@ def test_generate_report_with_filter_by_with_variable_substitution(
     with_db_and_bpmn_file_cleanup: None,
     setup_process_instances_for_reports: list[ProcessInstanceModel],
 ) -> None:
-    """Test_user_can_be_given_permission_to_administer_process_group."""
+    """Test_generate_report_with_filter_by_with_variable_substitution."""
     process_instances = setup_process_instances_for_reports
     report_metadata = {
         "filter_by": [
@@ -61,7 +61,7 @@ def test_generate_report_with_order_by_and_one_field(
     with_db_and_bpmn_file_cleanup: None,
     setup_process_instances_for_reports: list[ProcessInstanceModel],
 ) -> None:
-    """Test_user_can_be_given_permission_to_administer_process_group."""
+    """Test_generate_report_with_order_by_and_one_field."""
     process_instances = setup_process_instances_for_reports
     report_metadata = {"order_by": ["test_score"]}
     results = do_report_with_metadata_and_instances(report_metadata, process_instances)
@@ -75,7 +75,7 @@ def test_generate_report_with_order_by_and_two_fields(
     with_db_and_bpmn_file_cleanup: None,
     setup_process_instances_for_reports: list[ProcessInstanceModel],
 ) -> None:
-    """Test_user_can_be_given_permission_to_administer_process_group."""
+    """Test_generate_report_with_order_by_and_two_fields."""
     process_instances = setup_process_instances_for_reports
     report_metadata = {"order_by": ["grade_level", "test_score"]}
     results = do_report_with_metadata_and_instances(report_metadata, process_instances)
@@ -89,7 +89,7 @@ def test_generate_report_with_order_by_desc(
     with_db_and_bpmn_file_cleanup: None,
     setup_process_instances_for_reports: list[ProcessInstanceModel],
 ) -> None:
-    """Test_user_can_be_given_permission_to_administer_process_group."""
+    """Test_generate_report_with_order_by_desc."""
     process_instances = setup_process_instances_for_reports
     report_metadata = {"order_by": ["grade_level", "-test_score"]}
     results = do_report_with_metadata_and_instances(report_metadata, process_instances)
@@ -103,7 +103,7 @@ def test_generate_report_with_columns(
     with_db_and_bpmn_file_cleanup: None,
     setup_process_instances_for_reports: list[ProcessInstanceModel],
 ) -> None:
-    """Test_user_can_be_given_permission_to_administer_process_group."""
+    """Test_generate_report_with_columns."""
     process_instances = setup_process_instances_for_reports
     report_metadata = {
         "columns": [
