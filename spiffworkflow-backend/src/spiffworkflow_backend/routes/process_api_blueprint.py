@@ -609,16 +609,20 @@ def process_instance_log_list(
     process_instance_id: int,
     page: int = 1,
     per_page: int = 100,
+    detailed: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_log_list."""
     # to make sure the process instance exists
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
 
+    log_query = SpiffLoggingModel.query.filter(
+        SpiffLoggingModel.process_instance_id == process_instance.id
+    )
+    if not detailed:
+        log_query = log_query.filter(SpiffLoggingModel.message.in_(["State change to COMPLETED"]))  # type: ignore
+
     logs = (
-        SpiffLoggingModel.query.filter(
-            SpiffLoggingModel.process_instance_id == process_instance.id
-        )
-        .order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
+        log_query.order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
         .join(
             UserModel, UserModel.id == SpiffLoggingModel.current_user_id, isouter=True
         )  # isouter since if we don't have a user, we still want the log

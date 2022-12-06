@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
-import { Table } from '@carbon/react';
+import { Table, Tabs, TabList, Tab } from '@carbon/react';
 import { useParams, useSearchParams, Link } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
@@ -14,13 +14,14 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
 export default function ProcessInstanceLogList() {
   const params = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
   const { targetUris } = useUriListForPermissions();
+  const isDetailedView = searchParams.get('detailed') === 'true';
 
   useEffect(() => {
     const setProcessInstanceLogListFromResult = (result: any) => {
@@ -29,21 +30,31 @@ export default function ProcessInstanceLogList() {
     };
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceLogListPath}?per_page=${perPage}&page=${page}`,
+      path: `${targetUris.processInstanceLogListPath}?per_page=${perPage}&page=${page}&detailed=${isDetailedView}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
-  }, [searchParams, params, targetUris]);
+  }, [
+    searchParams,
+    params,
+    targetUris.processInstanceLogListPath,
+    isDetailedView,
+  ]);
 
   const buildTable = () => {
     const rows = processInstanceLogs.map((row) => {
       const rowToUse = row as any;
       return (
         <tr key={rowToUse.id}>
-          <td>{rowToUse.bpmn_process_identifier}</td>
+          <td>{rowToUse.id}</td>
           <td>{rowToUse.message}</td>
-          <td>{rowToUse.bpmn_task_identifier}</td>
           <td>{rowToUse.bpmn_task_name}</td>
-          <td>{rowToUse.bpmn_task_type}</td>
+          {isDetailedView && (
+            <>
+              <td>{rowToUse.bpmn_task_identifier}</td>
+              <td>{rowToUse.bpmn_task_type}</td>
+              <td>{rowToUse.bpmn_process_identifier}</td>
+            </>
+          )}
           <td>{rowToUse.username}</td>
           <td>
             <Link
@@ -60,11 +71,16 @@ export default function ProcessInstanceLogList() {
       <Table size="lg">
         <thead>
           <tr>
-            <th>Bpmn Process Identifier</th>
+            <th>Id</th>
             <th>Message</th>
-            <th>Task Identifier</th>
             <th>Task Name</th>
-            <th>Task Type</th>
+            {isDetailedView && (
+              <>
+                <th>Task Identifier</th>
+                <th>Task Type</th>
+                <th>Bpmn Process Identifier</th>
+              </>
+            )}
             <th>User</th>
             <th>Timestamp</th>
           </tr>
@@ -73,11 +89,12 @@ export default function ProcessInstanceLogList() {
       </Table>
     );
   };
+  const selectedTabIndex = isDetailedView ? 1 : 0;
 
   if (pagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
     return (
-      <main>
+      <>
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
@@ -93,13 +110,36 @@ export default function ProcessInstanceLogList() {
             ['Logs'],
           ]}
         />
+        <Tabs selectedIndex={selectedTabIndex}>
+          <TabList aria-label="List of tabs">
+            <Tab
+              title="Only show a subset of the logs, and show fewer columns"
+              onClick={() => {
+                searchParams.set('detailed', 'false');
+                setSearchParams(searchParams);
+              }}
+            >
+              Simple
+            </Tab>
+            <Tab
+              title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
+              onClick={() => {
+                searchParams.set('detailed', 'true');
+                setSearchParams(searchParams);
+              }}
+            >
+              Detailed
+            </Tab>
+          </TabList>
+        </Tabs>
+        <br />
         <PaginationForTable
           page={page}
           perPage={perPage}
           pagination={pagination}
           tableToDisplay={buildTable()}
         />
-      </main>
+      </>
     );
   }
   return null;
