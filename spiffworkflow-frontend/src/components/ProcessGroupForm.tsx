@@ -115,7 +115,6 @@ export default function ProcessGroupForm({
         labelText="Display Name*"
         value={processGroup.display_name}
         onChange={(event: any) => onDisplayNameChanged(event.target.value)}
-        onBlur={(event: any) => console.log('event', event)}
       />,
     ];
 
