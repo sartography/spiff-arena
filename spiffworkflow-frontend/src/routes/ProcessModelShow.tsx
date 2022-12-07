@@ -21,6 +21,7 @@ import {
   ButtonSet,
   Modal,
   FileUploader,
+  InlineNotification,
   Table,
   TableHead,
   TableHeader,
@@ -60,6 +61,7 @@ export default function ProcessModelShow() {
   const [filesToUpload, setFilesToUpload] = useState<any>(null);
   const [showFileUploadModal, setShowFileUploadModal] =
     useState<boolean>(false);
+  const [processModelPublished, setProcessModelPublished] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const { targetUris } = useUriListForPermissions();
@@ -203,10 +205,14 @@ export default function ProcessModelShow() {
     });
   };
 
+  const postPublish = (value: any) => {
+    setProcessModelPublished(value);
+  };
+
   const publishProcessModel = () => {
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}/publish`,
-      successCallback: navigateToProcessModels,
+      successCallback: postPublish,
       httpMethod: 'PUT',
     });
   };
@@ -518,10 +524,28 @@ export default function ProcessModelShow() {
     return null;
   };
 
+  const processModelPublishMessage = () => {
+    console.log(`processModelPublishMessage: `);
+    if (processModelPublished) {
+      return (
+        <>
+          <InlineNotification
+            title={`Model Published:`}
+            subtitle={`Your model was published`}
+            kind="success"
+          />
+          <br />
+        </>
+      );
+    }
+    return null;
+  };
+
   if (processModel) {
     return (
       <>
         {fileUploadModal()}
+        {processModelPublishMessage()}
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
