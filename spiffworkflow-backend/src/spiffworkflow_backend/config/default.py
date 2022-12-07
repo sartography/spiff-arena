@@ -57,4 +57,6 @@ SENTRY_TRACES_SAMPLE_RATE = environ.get(
 SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
     "SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info"
 )
+# When a user clicks on the `Publish` button, this is the default branch this server merges into.
+# I.e., dev server could have `staging` here. Staging server might have `production` here.
 GIT_MERGE_BRANCH = environ.get("GIT_MERGE_BRANCH", default="staging")
