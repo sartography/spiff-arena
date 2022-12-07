@@ -61,7 +61,7 @@ def setup_config(app: Flask) -> None:
             os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
             and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
         ):
-            app.config.from_object("{env_config_prefix}terraform_deployed_environment")
+            app.config.from_object(f"{env_config_prefix}terraform_deployed_environment")
         else:
             raise ModuleNotFoundError(
                 f"Cannot find config module: {env_config_module}"
