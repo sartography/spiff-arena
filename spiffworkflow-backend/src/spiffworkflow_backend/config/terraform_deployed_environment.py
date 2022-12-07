@@ -14,3 +14,8 @@ SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(
 RUN_BACKGROUND_SCHEDULER = (
     environ.get("RUN_BACKGROUND_SCHEDULER", default="false") == "true"
 )
+
+OPEN_ID_SERVER_URL = f"https://keycloak.{environment_identifier_for_this_config_file_only}.spiffworkflow.org/realms/spiffworkflow"
+SPIFFWORKFLOW_FRONTEND_URL = f"https://{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
+SPIFFWORKFLOW_BACKEND_URL = f"https://api.{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
+CONNECTOR_PROXY_URL = f"https://connector-proxy.{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
