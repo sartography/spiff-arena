@@ -96,8 +96,8 @@ class GitService:
         os.system("git push")
 
         # build url for github page to open PR
-        output = os.popen("git remote -v").read()
-        remote_url = output.strip().split("\n")[0].split("\t")[1].split(" ")[0].replace(".git", "")
+        output = os.popen("git config --get remote.origin.url").read()
+        remote_url = output.strip().replace(".git", "")
         pr_url = f"{remote_url}/compare/{publish_branch}?expand=1"
 
         # try to clean up

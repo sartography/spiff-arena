@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom';
 
 // @ts-ignore
-import { Filter, Close, AddAlt } from '@carbon/icons-react';
+import { Filter, Close, AddAlt, CheckmarkFilled } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -65,6 +65,7 @@ import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
 import { FormatProcessModelDisplayName } from './MiniComponents';
+import { Notification } from './Notification';
 
 const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
@@ -372,18 +373,13 @@ export default function ProcessInstanceListTable({
         titleOperation = 'Created';
       }
       return (
-        <>
-          <InlineNotification
-            title={`Perspective ${titleOperation}:`}
-            subtitle={`'${
+        <Notification title={`Perspective: ${titleOperation}`} onClose={() => setProcessInstanceReportJustSaved(null)}>
+            <span>{`'${
               processInstanceReportSelection
                 ? processInstanceReportSelection.identifier
                 : ''
-            }'`}
-            kind="success"
-          />
-          <br />
-        </>
+            }'`}</span>
+        </Notification>
       );
     }
     return null;

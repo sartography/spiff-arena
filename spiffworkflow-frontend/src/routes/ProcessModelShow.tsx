@@ -49,6 +49,7 @@ import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
+import { Notification } from '../components/Notification';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -62,11 +63,13 @@ export default function ProcessModelShow() {
   const [showFileUploadModal, setShowFileUploadModal] =
     useState<boolean>(false);
   const [processModelPublished, setProcessModelPublished] = useState<any>(null);
+  const [publishDisabled, setPublishDisabled] = useState<boolean>(false);
   const navigate = useNavigate();
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
+    [targetUris.processModelPublishPath]: ['POST'],
     [targetUris.processInstanceListPath]: ['GET'],
     [targetUris.processInstanceCreatePath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
@@ -93,19 +96,17 @@ export default function ProcessModelShow() {
   const processInstanceRunResultTag = () => {
     if (processInstance) {
       return (
-        <div className="alert alert-success with-top-margin" role="alert">
-          <p>
-            Process Instance {processInstance.id} kicked off (
-            <Link
-              to={`/admin/process-instances/${modifiedProcessModelId}/${processInstance.id}`}
-              data-qa="process-instance-show-link"
-            >
-              view
-            </Link>
-            ).
-          </p>
-          <br />
-        </div>
+        <Notification
+          title="Process Instance Kicked Off:"
+          onClose={() => setProcessInstance(null)}
+        >
+          <Link
+            to={`/admin/process-instances/${modifiedProcessModelId}/${processInstance.id}`}
+            data-qa="process-instance-show-link"
+          >
+            view
+          </Link>
+        </Notification>
       );
     }
     return null;
@@ -206,15 +207,17 @@ export default function ProcessModelShow() {
   };
 
   const postPublish = (value: any) => {
+    setPublishDisabled(false);
     setProcessModelPublished(value);
   };
 
   const publishProcessModel = () => {
+    setPublishDisabled(true);
     setProcessModelPublished(null);
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}/publish`,
       successCallback: postPublish,
-      httpMethod: 'PUT',
+      httpMethod: 'POST',
     });
   };
 
@@ -529,16 +532,14 @@ export default function ProcessModelShow() {
     if (processModelPublished) {
       const prUrl: string = processModelPublished.pr_url;
       return (
-        <>
-          <InlineNotification
-            title="Model Published:"
-            subtitle={`You can view the changes and create a Pull Request at ${prUrl}`}
-            kind="success"
-            type="banner"
-            links={prUrl}
-          />
-          <br />
-        </>
+        <Notification
+          title="Model Published:"
+          onClose={() => setProcessModelPublished(false)}
+        >
+          <a href={prUrl} target="_void()">
+            view the changes and create a Pull Request
+          </a>
+        </Notification>
       );
     }
     return null;
@@ -548,7 +549,6 @@ export default function ProcessModelShow() {
     return (
       <>
         {fileUploadModal()}
-        {processModelPublishMessage()}
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
@@ -558,6 +558,8 @@ export default function ProcessModelShow() {
             },
           ]}
         />
+        {processModelPublishMessage()}
+        {processInstanceRunResultTag()}
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
             Process Model: {processModel.display_name}
@@ -603,11 +605,16 @@ export default function ProcessModelShow() {
               <br />
             </>
           </Can>
-          <div>
-            <Button onClick={publishProcessModel}>Publish Changes</Button>
-          </div>
+          <Can
+            I="POST"
+            a={targetUris.processModelPublishPath}
+            ability={ability}
+          >
+            <Button disabled={publishDisabled} onClick={publishProcessModel}>
+              Publish Changes
+            </Button>
+          </Can>
         </Stack>
-        {processInstanceRunResultTag()}
         {processModelFilesSection()}
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
           {processInstanceListTableButton()}

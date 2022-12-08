@@ -18,6 +18,7 @@ export const useUriListForPermissions = () => {
       processModelCreatePath: `/v1.0/process-models/${params.process_group_id}`,
       processModelFileCreatePath: `/v1.0/process-models/${params.process_model_id}/files`,
       processModelFileShowPath: `/v1.0/process-models/${params.process_model_id}/files/${params.file_name}`,
+      processModelPublishPath: `/v1.0/process-models/${params.process_model_id}/publish`,
       processModelShowPath: `/v1.0/process-models/${params.process_model_id}`,
       secretListPath: `/v1.0/secrets`,
     };
