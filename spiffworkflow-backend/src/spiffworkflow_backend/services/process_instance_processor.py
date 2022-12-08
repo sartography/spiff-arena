@@ -100,6 +100,7 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskDeleg
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
+
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
 
@@ -594,20 +595,25 @@ class ProcessInstanceProcessor:
             path_segments = path.split(".")
             data_for_key = current_data
             for path_segment in path_segments:
-                data_for_key = data_for_key[path_segment]
+                if path_segment in data_for_key:
+                    data_for_key = data_for_key[path_segment]
+                else:
+                    data_for_key = None  # type: ignore
+                    break
 
-            pim = ProcessInstanceMetadataModel.query.filter_by(
-                process_instance_id=self.process_instance_model.id,
-                key=key,
-            ).first()
-            if pim is None:
-                pim = ProcessInstanceMetadataModel(
+            if data_for_key is not None:
+                pim = ProcessInstanceMetadataModel.query.filter_by(
                     process_instance_id=self.process_instance_model.id,
                     key=key,
-                )
-            pim.value = data_for_key
-            db.session.add(pim)
-            db.session.commit()
+                ).first()
+                if pim is None:
+                    pim = ProcessInstanceMetadataModel(
+                        process_instance_id=self.process_instance_model.id,
+                        key=key,
+                    )
+                pim.value = data_for_key
+                db.session.add(pim)
+                db.session.commit()
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""

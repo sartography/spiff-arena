@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+port="${CONNECTOR_PROXY_PORT:-}"
+if [[ -z "$port" ]]; then
+  port=7004
+fi
+
+workers=3
+
+# THIS MUST BE THE LAST COMMAND!
+# default --limit-request-line is 4094. see https://stackoverflow.com/a/66688382/6090676
+exec poetry run gunicorn --bind "0.0.0.0:$port" --workers="$workers" --limit-request-line 8192 --timeout 90 --capture-output --access-logfile '-' --log-level debug app:app

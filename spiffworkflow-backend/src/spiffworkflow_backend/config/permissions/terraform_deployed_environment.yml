@@ -70,6 +70,13 @@ permissions:
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/tasks/*
 
+  service-tasks:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/service-tasks
+
+
   # read all for everybody
   read-all-process-groups:
     groups: [everybody]
