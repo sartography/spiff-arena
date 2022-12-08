@@ -2664,7 +2664,7 @@ class TestProcessApi(BaseTest):
         assert "process_model.json" in listing
         assert "new_file.txt" in listing
 
-        modified_process_model_id = process_model_identifier.replace("/", ":")
+        # modified_process_model_id = process_model_identifier.replace("/", ":")
         # response = client.post(
         #     f"/v1.0/process-models/{modified_process_model_id}/publish?branch_to_update=staging",
         #     headers=self.logged_in_headers(with_super_admin_user),

@@ -2,7 +2,7 @@
 import os
 from contextlib import contextmanager
 from datetime import datetime
-from typing import List
+from typing import Generator, List
 from typing import Optional
 
 import pytz
@@ -25,9 +25,9 @@ class FileSystemService:
     PROCESS_MODEL_JSON_FILE = "process_model.json"
 
     # https://stackoverflow.com/a/24176022/6090676
-    @contextmanager
     @staticmethod
-    def cd(newdir):
+    @contextmanager
+    def cd(newdir: str) -> Generator:
         """Cd."""
         prevdir = os.getcwd()
         os.chdir(os.path.expanduser(newdir))
