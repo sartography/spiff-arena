@@ -377,8 +377,9 @@ def process_model_publish(
     if branch_to_update is None:
         branch_to_update = current_app.config["GIT_MERGE_BRANCH"]
     process_model_identifier = un_modify_modified_process_model_id(modified_process_model_identifier)
-    GitService().publish(process_model_identifier, branch_to_update)
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    pr_url = GitService().publish(process_model_identifier, branch_to_update)
+    data = {"ok": True, "pr_url": pr_url}
+    return Response(json.dumps(data), status=200, mimetype="application/json")
 
 
 def process_model_list(

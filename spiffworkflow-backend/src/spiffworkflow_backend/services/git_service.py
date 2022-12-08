@@ -94,4 +94,15 @@ class GitService:
         commit_message = f"Request to publish changes to {process_model_id}, from {g.user.username}"
         os.system(f"git commit -m '{commit_message}'")  # noqa: S605
         os.system("git push")
-        print("publish")
+
+        # build url for github page to open PR
+        output = os.popen("git remote -v").read()
+        remote_url = output.strip().split("\n")[0].split("\t")[1].split(" ")[0].replace(".git", "")
+        pr_url = f"{remote_url}/compare/{publish_branch}?expand=1"
+
+        # try to clean up
+        os.chdir("/tmp")
+        if os.path.exists(destination_process_root):
+            shutil.rmtree(destination_process_root)
+
+        return pr_url
