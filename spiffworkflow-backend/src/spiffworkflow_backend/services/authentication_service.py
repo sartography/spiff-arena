@@ -26,58 +26,35 @@ class AuthenticationProviderTypes(enum.Enum):
 class AuthenticationService:
     """AuthenticationService."""
 
+    ENDPOINT_CACHE: dict = (
+        {}
+    )  # We only need to find the openid endpoints once, then we can cache them.
+
     @staticmethod
-    def get_open_id_args() -> tuple:
-        """Get_open_id_args."""
-        open_id_server_url = current_app.config["OPEN_ID_SERVER_URL"]
-        open_id_client_id = current_app.config["OPEN_ID_CLIENT_ID"]
-        open_id_realm_name = current_app.config["OPEN_ID_REALM_NAME"]
-        open_id_client_secret_key = current_app.config[
-            "OPEN_ID_CLIENT_SECRET_KEY"
-        ]  # noqa: S105
-        return (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        )
+    def client_id() -> str:
+        """Returns the client id from the config."""
+        return current_app.config.get("OPEN_ID_CLIENT_ID", "")
+
+    @staticmethod
+    def server_url() -> str:
+        """Returns the server url from the config."""
+        return current_app.config.get("OPEN_ID_SERVER_URL", "")
+
+    @staticmethod
+    def secret_key() -> str:
+        """Returns the secret key from the config."""
+        return current_app.config.get("OPEN_ID_CLIENT_SECRET_KEY", "")
 
     @classmethod
-    def get_user_info_from_open_id(cls, token: str) -> dict:
-        """The token is an auth_token."""
-        (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        ) = cls.get_open_id_args()
-
-        headers = {"Authorization": f"Bearer {token}"}
-
-        request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/userinfo"
-        try:
-            request_response = requests.get(request_url, headers=headers)
-        except Exception as e:
-            current_app.logger.error(f"Exception in get_user_info_from_id_token: {e}")
-            raise ApiError(
-                error_code="token_error",
-                message=f"Exception in get_user_info_from_id_token: {e}",
-                status_code=401,
-            ) from e
-
-        if request_response.status_code == 401:
-            raise ApiError(
-                error_code="invalid_token", message="Please login", status_code=401
-            )
-        elif request_response.status_code == 200:
-            user_info: dict = json.loads(request_response.text)
-            return user_info
-
-        raise ApiError(
-            error_code="user_info_error",
-            message="Cannot get user info in get_user_info_from_id_token",
-            status_code=401,
-        )
+    def open_id_endpoint_for_name(cls, name: str) -> str:
+        """All openid systems provide a mapping of static names to the full path of that endpoint."""
+        if name not in AuthenticationService.ENDPOINT_CACHE:
+            request_url = f"{cls.server_url()}/.well-known/openid-configuration"
+            response = requests.get(request_url)
+            AuthenticationService.ENDPOINT_CACHE = response.json()
+        if name not in AuthenticationService.ENDPOINT_CACHE:
+            raise Exception(f"Unknown OpenID Endpoint: {name}")
+        return AuthenticationService.ENDPOINT_CACHE.get(name, "")
 
     @staticmethod
     def get_backend_url() -> str:
@@ -87,17 +64,10 @@ class AuthenticationService:
     def logout(self, id_token: str, redirect_url: Optional[str] = None) -> Response:
         """Logout."""
         if redirect_url is None:
-            redirect_url = "/"
-        return_redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
-        (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        ) = AuthenticationService.get_open_id_args()
+            redirect_url = f"{self.get_backend_url()}/v1.0/logout_return"
         request_url = (
-            f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/logout?"
-            + f"post_logout_redirect_uri={return_redirect_url}&"
+            self.open_id_endpoint_for_name("end_session_endpoint")
+            + f"?post_logout_redirect_uri={redirect_url}&"
             + f"id_token_hint={id_token}"
         )
 
@@ -113,18 +83,12 @@ class AuthenticationService:
         self, state: str, redirect_url: str = "/v1.0/login_return"
     ) -> str:
         """Get_login_redirect_url."""
-        (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        ) = AuthenticationService.get_open_id_args()
         return_redirect_url = f"{self.get_backend_url()}{redirect_url}"
         login_redirect_url = (
-            f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/auth?"
-            + f"state={state}&"
+            self.open_id_endpoint_for_name("authorization_endpoint")
+            + f"?state={state}&"
             + "response_type=code&"
-            + f"client_id={open_id_client_id}&"
+            + f"client_id={self.client_id()}&"
             + "scope=openid&"
             + f"redirect_uri={return_redirect_url}"
         )
@@ -134,14 +98,7 @@ class AuthenticationService:
         self, code: str, redirect_url: str = "/v1.0/login_return"
     ) -> dict:
         """Get_auth_token_object."""
-        (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        ) = AuthenticationService.get_open_id_args()
-
-        backend_basic_auth_string = f"{open_id_client_id}:{open_id_client_secret_key}"
+        backend_basic_auth_string = f"{self.client_id()}:{self.secret_key()}"
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
         headers = {
@@ -154,7 +111,7 @@ class AuthenticationService:
             "redirect_uri": f"{self.get_backend_url()}{redirect_url}",
         }
 
-        request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
+        request_url = self.open_id_endpoint_for_name("token_endpoint")
 
         response = requests.post(request_url, data=data, headers=headers)
         auth_token_object: dict = json.loads(response.text)
@@ -165,12 +122,6 @@ class AuthenticationService:
         """Https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation."""
         valid = True
         now = time.time()
-        (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        ) = cls.get_open_id_args()
         try:
             decoded_token = jwt.decode(id_token, options={"verify_signature": False})
         except Exception as e:
@@ -179,15 +130,15 @@ class AuthenticationService:
                 message="Cannot decode id_token",
                 status_code=401,
             ) from e
-        if decoded_token["iss"] != f"{open_id_server_url}/realms/{open_id_realm_name}":
+        if decoded_token["iss"] != cls.server_url():
             valid = False
         elif (
-            open_id_client_id not in decoded_token["aud"]
+            cls.client_id() not in decoded_token["aud"]
             and "account" not in decoded_token["aud"]
         ):
             valid = False
         elif "azp" in decoded_token and decoded_token["azp"] not in (
-            open_id_client_id,
+            cls.client_id(),
             "account",
         ):
             valid = False
@@ -241,15 +192,8 @@ class AuthenticationService:
 
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str) -> dict:
-        """Get a new auth_token from a refresh_token."""
-        (
-            open_id_server_url,
-            open_id_client_id,
-            open_id_realm_name,
-            open_id_client_secret_key,
-        ) = cls.get_open_id_args()
-
-        backend_basic_auth_string = f"{open_id_client_id}:{open_id_client_secret_key}"
+        """Converts a refresh token to an Auth Token by calling the openid's auth endpoint."""
+        backend_basic_auth_string = f"{cls.client_id()}:{cls.secret_key()}"
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
         headers = {
@@ -260,11 +204,11 @@ class AuthenticationService:
         data = {
             "grant_type": "refresh_token",
             "refresh_token": refresh_token,
-            "client_id": open_id_client_id,
-            "client_secret": open_id_client_secret_key,
+            "client_id": cls.client_id(),
+            "client_secret": cls.secret_key(),
         }
 
-        request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
+        request_url = cls.open_id_endpoint_for_name("token_endpoint")
 
         response = requests.post(request_url, data=data, headers=headers)
         auth_token_object: dict = json.loads(response.text)

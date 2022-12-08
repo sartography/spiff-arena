@@ -1,4 +1,5 @@
 """Authorization_service."""
+import inspect
 import re
 from typing import Optional
 from typing import Union
@@ -8,6 +9,7 @@ import yaml
 from flask import current_app
 from flask import g
 from flask import request
+from flask import scaffold
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -23,6 +25,7 @@ from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -241,6 +244,7 @@ class AuthorizationService:
             return True
 
         api_view_function = current_app.view_functions[request.endpoint]
+        module = inspect.getmodule(api_view_function)
         if (
             api_view_function
             and api_view_function.__name__.startswith("login")
@@ -248,6 +252,8 @@ class AuthorizationService:
             or api_view_function.__name__.startswith("console_ui_")
             or api_view_function.__name__ in authentication_exclusion_list
             or api_view_function.__name__ in swagger_functions
+            or module == openid_blueprint
+            or module == scaffold  # don't check permissions for static assets
         ):
             return True
 
