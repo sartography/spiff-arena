@@ -370,6 +370,20 @@ def process_model_move(
     return make_response(jsonify(new_process_model), 201)
 
 
+def process_model_publish(
+    modified_process_model_identifier: str, branch_to_update: Optional[str] = None
+) -> flask.wrappers.Response:
+    """Process_model_publish."""
+    if branch_to_update is None:
+        branch_to_update = current_app.config["GIT_MERGE_BRANCH"]
+    process_model_identifier = un_modify_modified_process_model_id(
+        modified_process_model_identifier
+    )
+    pr_url = GitService().publish(process_model_identifier, branch_to_update)
+    data = {"ok": True, "pr_url": pr_url}
+    return Response(json.dumps(data), status=200, mimetype="application/json")
+
+
 def process_model_list(
     process_group_identifier: Optional[str] = None,
     recursive: Optional[bool] = False,

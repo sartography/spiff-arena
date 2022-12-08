@@ -27,3 +27,5 @@ per-file-ignores =
     # this file overwrites methods from the logging library so we can't change them
     # and ignore long comment line
     src/spiffworkflow_backend/services/logging_service.py:N802,B950
+
+    tests/spiffworkflow_backend/integration/test_process_api.py:S607,S101,D103,S605

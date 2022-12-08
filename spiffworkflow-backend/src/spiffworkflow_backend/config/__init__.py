@@ -38,6 +38,17 @@ def setup_database_uri(app: Flask) -> None:
         )
 
 
+def load_config_file(app: Flask, env_config_module: str) -> None:
+    """Load_config_file."""
+    try:
+        app.config.from_object(env_config_module)
+    except ImportStringError as exception:
+        if os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") != "true":
+            raise ModuleNotFoundError(
+                f"Cannot find config module: {env_config_module}"
+            ) from exception
+
+
 def setup_config(app: Flask) -> None:
     """Setup_config."""
     # ensure the instance folder exists
@@ -53,19 +64,14 @@ def setup_config(app: Flask) -> None:
     app.config.from_object("spiffworkflow_backend.config.default")
 
     env_config_prefix = "spiffworkflow_backend.config."
+    if (
+        os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
+        and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
+    ):
+        load_config_file(app, f"{env_config_prefix}terraform_deployed_environment")
+
     env_config_module = env_config_prefix + app.config["ENV_IDENTIFIER"]
-    try:
-        app.config.from_object(env_config_module)
-    except ImportStringError as exception:
-        if (
-            os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
-            and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
-        ):
-            app.config.from_object(f"{env_config_prefix}terraform_deployed_environment")
-        else:
-            raise ModuleNotFoundError(
-                f"Cannot find config module: {env_config_module}"
-            ) from exception
+    load_config_file(app, env_config_module)
 
     # This allows config/testing.py or instance/config.py to override the default config
     if "ENV_IDENTIFIER" in app.config and app.config["ENV_IDENTIFIER"] == "testing":
