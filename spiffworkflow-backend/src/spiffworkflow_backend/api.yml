@@ -459,7 +459,7 @@ paths:
         description: the name of the branch we want to merge into
         schema:
           type: string
-    put:
+    post:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_publish
       summary: Merge changes from this model to another branch.
       tags:
