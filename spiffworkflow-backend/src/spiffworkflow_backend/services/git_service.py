@@ -1,7 +1,8 @@
 """Git_service."""
-import datetime
+
 import os
 import shutil
+import uuid
 
 from flask import current_app
 from flask import g
@@ -59,16 +60,16 @@ class GitService:
         return output
 
     @staticmethod
-    def publish(process_model_id: str, branch_to_update: str) -> None:
+    def publish(process_model_id: str, branch_to_update: str) -> str:
         source_process_model_root = FileSystemService.root_path()
         source_process_model_path = os.path.join(source_process_model_root, process_model_id)
+        unique_hex = uuid.uuid4().hex
+        clone_dir = f"sample-process-models.{unique_hex}"
 
         # clone new instance of sample-process-models, checkout branch_to_update
         os.chdir("/tmp")
-        destination_process_root = "/tmp/sample-process-models"
-        if os.path.exists(destination_process_root):
-            shutil.rmtree(destination_process_root)
-        os.system("git clone https://github.com/sartography/sample-process-models.git")
+        destination_process_root = f"/tmp/{clone_dir}"
+        os.system(f"git clone https://github.com/sartography/sample-process-models.git {clone_dir}")
         os.chdir(destination_process_root)
 
         # create publish branch from branch_to_update
