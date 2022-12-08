@@ -44,7 +44,7 @@ class GitService:
         return file_contents.encode("utf-8")
 
     @staticmethod
-    def commit(message: str, repo_path: Optional[str]) -> str:
+    def commit(message: str, repo_path: Optional[str] = None) -> str:
         """Commit."""
         repo_path_to_use = repo_path
         if repo_path is None:
@@ -73,10 +73,14 @@ class GitService:
         clone_dir = f"sample-process-models.{unique_hex}"
 
         # clone new instance of sample-process-models, checkout branch_to_update
-        destination_process_root = f"/tmp/{clone_dir}"
-        os.system(
-            f"git clone https://{current_app.config['GIT_USERNAME']}:{current_app.config['GIT_USER_PASSWORD']}@github.com/sartography/sample-process-models.git {destination_process_root}"
+        # we are adding a guid to this so the flake8 issue has been mitigated
+        destination_process_root = f"/tmp/{clone_dir}"  # noqa
+
+        cmd = (
+            f"git clone https://{current_app.config['GIT_USERNAME']}:{current_app.config['GIT_USER_PASSWORD']}"
+            f"@github.com/sartography/sample-process-models.git {destination_process_root}"
         )
+        os.system(cmd)  # noqa: S605
         with FileSystemService.cd(destination_process_root):
             # create publish branch from branch_to_update
             os.system(f"git checkout {branch_to_update}")  # noqa: S605
@@ -84,7 +88,7 @@ class GitService:
             command = f"git show-ref --verify refs/remotes/origin/{publish_branch}"
             output = os.popen(command).read()  # noqa: S605
             if output:
-                os.system(f"git checkout {publish_branch}")
+                os.system(f"git checkout {publish_branch}")  # noqa: S605
             else:
                 os.system(f"git checkout -b {publish_branch}")  # noqa: S605
 
@@ -99,10 +103,10 @@ class GitService:
             # add and commit files to publish_branch, then push
             commit_message = f"Request to publish changes to {process_model_id}, from {g.user.username}"
             cls.commit(commit_message, destination_process_root)
-            os.system("git push")
+            os.system("git push")  # noqa
 
             # build url for github page to open PR
-            output = os.popen("git config --get remote.origin.url").read()
+            output = os.popen("git config --get remote.origin.url").read()  # noqa
             remote_url = output.strip().replace(".git", "")
             pr_url = f"{remote_url}/compare/{publish_branch}?expand=1"
 
