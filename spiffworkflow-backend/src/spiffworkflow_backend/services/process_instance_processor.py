@@ -595,20 +595,25 @@ class ProcessInstanceProcessor:
             path_segments = path.split(".")
             data_for_key = current_data
             for path_segment in path_segments:
-                data_for_key = data_for_key[path_segment]
+                if path_segment in data_for_key:
+                    data_for_key = data_for_key[path_segment]
+                else:
+                    data_for_key = None
+                    break
 
-            pim = ProcessInstanceMetadataModel.query.filter_by(
-                process_instance_id=self.process_instance_model.id,
-                key=key,
-            ).first()
-            if pim is None:
-                pim = ProcessInstanceMetadataModel(
+            if data_for_key is not None:
+                pim = ProcessInstanceMetadataModel.query.filter_by(
                     process_instance_id=self.process_instance_model.id,
                     key=key,
-                )
-            pim.value = data_for_key
-            db.session.add(pim)
-            db.session.commit()
+                ).first()
+                if pim is None:
+                    pim = ProcessInstanceMetadataModel(
+                        process_instance_id=self.process_instance_model.id,
+                        key=key,
+                    )
+                pim.value = data_for_key
+                db.session.add(pim)
+                db.session.commit()
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
