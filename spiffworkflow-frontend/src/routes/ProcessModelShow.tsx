@@ -61,7 +61,7 @@ export default function ProcessModelShow() {
   const [filesToUpload, setFilesToUpload] = useState<any>(null);
   const [showFileUploadModal, setShowFileUploadModal] =
     useState<boolean>(false);
-  const [processModelPublished, setProcessModelPublished] = useState<string | null>(null);
+  const [processModelPublished, setProcessModelPublished] = useState<any>(null);
   const navigate = useNavigate();
 
   const { targetUris } = useUriListForPermissions();
@@ -210,6 +210,7 @@ export default function ProcessModelShow() {
   };
 
   const publishProcessModel = () => {
+    setProcessModelPublished(null);
     HttpService.makeCallToBackend({
       path: `/process-models/${modifiedProcessModelId}/publish`,
       successCallback: postPublish,
@@ -525,14 +526,16 @@ export default function ProcessModelShow() {
   };
 
   const processModelPublishMessage = () => {
-    console.log(`processModelPublishMessage: `);
     if (processModelPublished) {
+      const prUrl: string = processModelPublished.pr_url;
       return (
         <>
           <InlineNotification
-            title={`Model Published:`}
-            subtitle={`Your model was published`}
+            title="Model Published:"
+            subtitle={`You can view the changes and create a Pull Request at ${prUrl}`}
             kind="success"
+            type="banner"
+            links={prUrl}
           />
           <br />
         </>
