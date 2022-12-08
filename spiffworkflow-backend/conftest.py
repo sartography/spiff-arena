@@ -1,12 +1,12 @@
 """Conftest."""
 import os
 import shutil
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
+from flask_bpmn.models.db import db
+from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel

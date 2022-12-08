@@ -2,12 +2,12 @@
 import json
 import logging
 import re
-from flask_bpmn.models.db import db
 from typing import Any
 from typing import Optional
 
 from flask import g
 from flask.app import Flask
+from flask_bpmn.models.db import db
 
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 

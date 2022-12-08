@@ -1,8 +1,9 @@
 """Spiff_logging."""
 from dataclasses import dataclass
+from typing import Optional
+
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-from typing import Optional
 
 
 @dataclass

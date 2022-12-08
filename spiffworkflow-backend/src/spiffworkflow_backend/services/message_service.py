@@ -1,8 +1,8 @@
 """Message_service."""
-from flask_bpmn.models.db import db
 from typing import Any
 from typing import Optional
 
+from flask_bpmn.models.db import db
 from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy import select

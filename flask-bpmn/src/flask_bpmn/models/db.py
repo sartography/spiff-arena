@@ -8,8 +8,8 @@ from typing import Any
 from flask_migrate import Migrate  # type: ignore
 from flask_sqlalchemy import SQLAlchemy  # type: ignore
 from sqlalchemy import event  # type: ignore
-from sqlalchemy.engine.base import Connection
-from sqlalchemy.orm.mapper import Mapper
+from sqlalchemy.engine.base import Connection  # type: ignore
+from sqlalchemy.orm.mapper import Mapper  # type: ignore
 
 db = SQLAlchemy()
 migrate = Migrate()

@@ -1,8 +1,8 @@
 """Message_correlation_message_instance."""
 from dataclasses import dataclass
+
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-
 from sqlalchemy import ForeignKey
 
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel

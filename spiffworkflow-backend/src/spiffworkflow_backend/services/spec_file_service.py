@@ -2,10 +2,10 @@
 import os
 import shutil
 from datetime import datetime
-from flask_bpmn.models.db import db
 from typing import List
 from typing import Optional
 
+from flask_bpmn.models.db import db
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 
 from spiffworkflow_backend.models.file import File

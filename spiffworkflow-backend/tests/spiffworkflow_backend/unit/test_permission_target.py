@@ -1,8 +1,7 @@
 """Process Model."""
-from flask_bpmn.models.db import db
-
 import pytest
 from flask.app import Flask
+from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.permission_target import (
