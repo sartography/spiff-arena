@@ -2,7 +2,8 @@
 import os
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Generator, List
+from typing import Generator
+from typing import List
 from typing import Optional
 
 import pytz
