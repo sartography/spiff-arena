@@ -1,8 +1,8 @@
 """Db_helper."""
 import time
-from flask_bpmn.models.db import db
 
 import sqlalchemy
+from flask_bpmn.models.db import db
 
 
 def try_to_connect(start_time: float) -> None:

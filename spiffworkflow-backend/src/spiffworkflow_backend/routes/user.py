@@ -2,7 +2,6 @@
 import ast
 import base64
 import json
-from flask_bpmn.api.api_error import ApiError
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -13,6 +12,7 @@ from flask import current_app
 from flask import g
 from flask import redirect
 from flask import request
+from flask_bpmn.api.api_error import ApiError
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.models.user import UserModel

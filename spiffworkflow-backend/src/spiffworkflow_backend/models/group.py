@@ -1,10 +1,10 @@
 """Group."""
 from __future__ import annotations
 
-from flask_bpmn.models.db import db
-from flask_bpmn.models.group import FlaskBpmnGroupModel
 from typing import TYPE_CHECKING
 
+from flask_bpmn.models.db import db
+from flask_bpmn.models.group import FlaskBpmnGroupModel
 from sqlalchemy.orm import relationship
 
 if TYPE_CHECKING:

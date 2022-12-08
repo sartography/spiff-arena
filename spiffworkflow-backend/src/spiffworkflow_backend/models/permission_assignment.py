@@ -1,9 +1,9 @@
 """PermissionAssignment."""
 import enum
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from typing import Any
 
+from flask_bpmn.models.db import db
+from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import validates
 

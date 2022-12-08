@@ -1,8 +1,8 @@
 """Secret_model."""
 from dataclasses import dataclass
+
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
-
 from marshmallow import Schema
 from sqlalchemy import ForeignKey
 

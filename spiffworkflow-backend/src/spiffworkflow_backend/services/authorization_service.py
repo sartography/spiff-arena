@@ -1,8 +1,6 @@
 """Authorization_service."""
 import inspect
 import re
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from typing import Optional
 from typing import Union
 
@@ -12,6 +10,8 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
+from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
