@@ -1,8 +1,8 @@
 """Git_service."""
-
 import os
 import shutil
 import uuid
+from typing import Optional
 
 from flask import current_app
 from flask import g
@@ -44,64 +44,69 @@ class GitService:
         return file_contents.encode("utf-8")
 
     @staticmethod
-    def commit(message: str) -> str:
+    def commit(message: str, repo_path: Optional[str]) -> str:
         """Commit."""
-        bpmn_spec_absolute_dir = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
+        repo_path_to_use = repo_path
+        if repo_path is None:
+            repo_path_to_use = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
+
         git_username = ""
         git_email = ""
-        if (
-            current_app.config["GIT_COMMIT_USERNAME"]
-            and current_app.config["GIT_COMMIT_EMAIL"]
-        ):
-            git_username = current_app.config["GIT_COMMIT_USERNAME"]
-            git_email = current_app.config["GIT_COMMIT_EMAIL"]
-        shell_command = f"./bin/git_commit_bpmn_models_repo '{bpmn_spec_absolute_dir}' '{message}' '{git_username}' '{git_email}'"
+        if current_app.config["GIT_USERNAME"] and current_app.config["GIT_USER_EMAIL"]:
+            git_username = current_app.config["GIT_USERNAME"]
+            git_email = current_app.config["GIT_USER_EMAIL"]
+        shell_command_path = os.path.join(
+            current_app.root_path, "..", "..", "bin", "git_commit_bpmn_models_repo"
+        )
+        shell_command = f"{shell_command_path} '{repo_path_to_use}' '{message}' '{git_username}' '{git_email}'"
         output = os.popen(shell_command).read()  # noqa: S605
         return output
 
-    @staticmethod
-    def publish(process_model_id: str, branch_to_update: str) -> str:
+    @classmethod
+    def publish(cls, process_model_id: str, branch_to_update: str) -> str:
+        """Publish."""
         source_process_model_root = FileSystemService.root_path()
-        source_process_model_path = os.path.join(source_process_model_root, process_model_id)
+        source_process_model_path = os.path.join(
+            source_process_model_root, process_model_id
+        )
         unique_hex = uuid.uuid4().hex
         clone_dir = f"sample-process-models.{unique_hex}"
 
         # clone new instance of sample-process-models, checkout branch_to_update
-        os.chdir("/tmp")
         destination_process_root = f"/tmp/{clone_dir}"
-        os.system(f"git clone https://github.com/sartography/sample-process-models.git {clone_dir}")
-        os.chdir(destination_process_root)
+        os.system(
+            f"git clone https://{current_app.config['GIT_USERNAME']}:{current_app.config['GIT_USER_PASSWORD']}@github.com/sartography/sample-process-models.git {destination_process_root}"
+        )
+        with FileSystemService.cd(destination_process_root):
+            # create publish branch from branch_to_update
+            os.system(f"git checkout {branch_to_update}")  # noqa: S605
+            publish_branch = f"publish-{process_model_id}"
+            command = f"git show-ref --verify refs/remotes/origin/{publish_branch}"
+            output = os.popen(command).read()  # noqa: S605
+            if output:
+                os.system(f"git checkout {publish_branch}")
+            else:
+                os.system(f"git checkout -b {publish_branch}")  # noqa: S605
 
-        # create publish branch from branch_to_update
-        os.system(f"git checkout {branch_to_update}")  # noqa: S605
-        publish_branch = f"publish-{process_model_id}"
-        command = f"git show-ref --verify refs/remotes/origin/{publish_branch}"
-        output = os.popen(command).read()  # noqa: S605
-        if output:
-            os.system(f"git checkout {publish_branch}")
-        else:
-            os.system(f"git checkout -b {publish_branch}")  # noqa: S605
+            # copy files from process model into the new publish branch
+            destination_process_model_path = os.path.join(
+                destination_process_root, process_model_id
+            )
+            if os.path.exists(destination_process_model_path):
+                shutil.rmtree(destination_process_model_path)
+            shutil.copytree(source_process_model_path, destination_process_model_path)
 
-        # copy files from process model into the new publish branch
-        destination_process_model_path = os.path.join(destination_process_root, process_model_id)
-        if os.path.exists(destination_process_model_path):
-            shutil.rmtree(destination_process_model_path)
-        shutil.copytree(source_process_model_path, destination_process_model_path)
+            # add and commit files to publish_branch, then push
+            commit_message = f"Request to publish changes to {process_model_id}, from {g.user.username}"
+            cls.commit(commit_message, destination_process_root)
+            os.system("git push")
 
-        # add and commit files to publish_branch, then push
-        os.chdir(destination_process_root)
-        os.system("git add .")  # noqa: S605
-        commit_message = f"Request to publish changes to {process_model_id}, from {g.user.username}"
-        os.system(f"git commit -m '{commit_message}'")  # noqa: S605
-        os.system("git push")
-
-        # build url for github page to open PR
-        output = os.popen("git config --get remote.origin.url").read()
-        remote_url = output.strip().replace(".git", "")
-        pr_url = f"{remote_url}/compare/{publish_branch}?expand=1"
+            # build url for github page to open PR
+            output = os.popen("git config --get remote.origin.url").read()
+            remote_url = output.strip().replace(".git", "")
+            pr_url = f"{remote_url}/compare/{publish_branch}?expand=1"
 
         # try to clean up
-        os.chdir("/tmp")
         if os.path.exists(destination_process_root):
             shutil.rmtree(destination_process_root)
 

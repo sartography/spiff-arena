@@ -21,7 +21,6 @@ import {
   ButtonSet,
   Modal,
   FileUploader,
-  InlineNotification,
   Table,
   TableHead,
   TableHeader,
