@@ -332,6 +332,14 @@ td.actions-cell {
   fill: red;
 }
 
+svg.green-icon {
+  fill: #198038;
+}
+
+svg.notification-icon {
+  margin-right: 1rem;
+}
+
 .failure-string {
   color: red;
 }
@@ -358,7 +366,7 @@ td.actions-cell {
 
 }
 
+/* lime green */
 .tag-type-green:hover {
-  background-color:	#00FF00;
+  background-color:	#80ee90;
 }
-

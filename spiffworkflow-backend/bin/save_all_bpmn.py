@@ -1,13 +1,13 @@
 """Grabs tickets from csv and makes process instances."""
 import os
 
-from spiffworkflow_backend import get_hacked_up_app_for_script
+from spiffworkflow_backend import create_app
 from spiffworkflow_backend.services.data_setup_service import DataSetupService
 
 
 def main() -> None:
     """Main."""
-    app = get_hacked_up_app_for_script()
+    app = create_app()
     with app.app_context():
         failing_process_models = DataSetupService.save_all_process_models()
         for bpmn_errors in failing_process_models:
