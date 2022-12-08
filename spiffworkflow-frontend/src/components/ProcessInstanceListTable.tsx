@@ -7,7 +7,7 @@ import {
 } from 'react-router-dom';
 
 // @ts-ignore
-import { Filter, Close, AddAlt, CheckmarkFilled } from '@carbon/icons-react';
+import { Filter, Close, AddAlt } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -22,7 +22,6 @@ import {
   TableRow,
   TimePicker,
   Tag,
-  InlineNotification,
   Stack,
   Modal,
   ComboBox,
@@ -373,12 +372,15 @@ export default function ProcessInstanceListTable({
         titleOperation = 'Created';
       }
       return (
-        <Notification title={`Perspective: ${titleOperation}`} onClose={() => setProcessInstanceReportJustSaved(null)}>
-            <span>{`'${
-              processInstanceReportSelection
-                ? processInstanceReportSelection.identifier
-                : ''
-            }'`}</span>
+        <Notification
+          title={`Perspective: ${titleOperation}`}
+          onClose={() => setProcessInstanceReportJustSaved(null)}
+        >
+          <span>{`'${
+            processInstanceReportSelection
+              ? processInstanceReportSelection.identifier
+              : ''
+          }'`}</span>
         </Notification>
       );
     }

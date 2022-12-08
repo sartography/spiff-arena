@@ -2562,7 +2562,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-
+        """Test_process_model_publish."""
         bpmn_root = FileSystemService.root_path()
         shell_command = f"git init {bpmn_root}"
         output = os.popen(shell_command).read()  # noqa: S605
@@ -2571,14 +2571,13 @@ class TestProcessApi(BaseTest):
         output = os.popen("git status").read()  # noqa: S605
         assert "On branch main" in output
         assert "No commits yet" in output
-        assert "nothing to commit (create/copy files and use \"git add\" to track)" in output
+        assert (
+            'nothing to commit (create/copy files and use "git add" to track)' in output
+        )
 
         process_group_id = "test_group"
         self.create_process_group(
-                client,
-                with_super_admin_user,
-                process_group_id,
-                process_group_id
+            client, with_super_admin_user, process_group_id, process_group_id
         )
 
         sub_process_group_id = "test_group/test_sub_group"
@@ -2596,8 +2595,7 @@ class TestProcessApi(BaseTest):
         process_model_absolute_dir = os.path.join(bpmn_root, process_model_identifier)
 
         output = os.popen("git status").read()  # noqa: S605
-        test_string = \
-            'Untracked files:\n  (use "git add <file>..." to include in what will be committed)\n\ttest_group'
+        test_string = 'Untracked files:\n  (use "git add <file>..." to include in what will be committed)\n\ttest_group'
         assert test_string in output
 
         os.system("git add .")
@@ -2643,7 +2641,7 @@ class TestProcessApi(BaseTest):
 
         file_data = b"abc123"
         new_file_path = os.path.join(process_model_absolute_dir, "new_file.txt")
-        with open(new_file_path, 'wb') as f_open:
+        with open(new_file_path, "wb") as f_open:
             f_open.write(file_data)
 
         output = os.popen("git status").read()  # noqa: S605
@@ -2651,7 +2649,9 @@ class TestProcessApi(BaseTest):
         assert "Untracked files:" in output
         assert "test_group/test_sub_group/hello_world/new_file.txt" in output
 
-        os.system("git add test_group/test_sub_group/hello_world/new_file.txt")  # noqa: S605
+        os.system(
+            "git add test_group/test_sub_group/hello_world/new_file.txt"
+        )  # noqa: S605
         output = os.popen("git commit -m 'add new_file.txt'").read()  # noqa: S605
 
         assert "add new_file.txt" in output
