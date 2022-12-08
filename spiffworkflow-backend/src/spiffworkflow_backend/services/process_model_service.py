@@ -148,20 +148,18 @@ class ProcessModelService(FileSystemService):
                 error_code="existing_instances",
                 message=f"We cannot delete the model `{process_model_id}`, there are existing instances that depend on it.",
             )
-        self.get_process_model(process_model_id)
-        # path = self.workflow_path(process_model)
-        path = f"{FileSystemService.root_path()}/{process_model_id}"
+        process_model = self.get_process_model(process_model_id)
+        path = self.workflow_path(process_model)
         shutil.rmtree(path)
 
     def process_model_move(
         self, original_process_model_id: str, new_location: str
     ) -> ProcessModelInfo:
         """Process_model_move."""
-        original_model_path = os.path.abspath(
-            os.path.join(FileSystemService.root_path(), original_process_model_id)
-        )
+        process_model = self.get_process_model(original_process_model_id)
+        original_model_path = self.workflow_path(process_model)
         _, model_id = os.path.split(original_model_path)
-        new_relative_path = f"{new_location}/{model_id}"
+        new_relative_path = os.path.join(new_location, model_id)
         new_model_path = os.path.abspath(
             os.path.join(FileSystemService.root_path(), new_relative_path)
         )
@@ -245,7 +243,7 @@ class ProcessModelService(FileSystemService):
             if full_group_id_path is None:
                 full_group_id_path = process_group_id_segment
             else:
-                full_group_id_path = f"{full_group_id_path}/{process_group_id_segment}"  # type: ignore
+                full_group_id_path = os.path.join(full_group_id_path, process_group_id_segment)  # type: ignore
             parent_group = ProcessModelService.get_process_group(full_group_id_path)
             if parent_group:
                 parent_group_array.append(
@@ -307,8 +305,8 @@ class ProcessModelService(FileSystemService):
     ) -> ProcessGroup:
         """Process_group_move."""
         original_group_path = self.process_group_path(original_process_group_id)
-        original_root, original_group_id = os.path.split(original_group_path)
-        new_root = f"{FileSystemService.root_path()}/{new_location}"
+        _, original_group_id = os.path.split(original_group_path)
+        new_root = os.path.join(FileSystemService.root_path(), new_location)
         new_group_path = os.path.abspath(
             os.path.join(FileSystemService.root_path(), new_root, original_group_id)
         )
