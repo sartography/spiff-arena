@@ -5,8 +5,8 @@ from os import environ
 environment_identifier_for_this_config_file_only = environ["SPIFFWORKFLOW_BACKEND_ENV"]
 
 GIT_COMMIT_ON_SAVE = True
-GIT_USERNAME = environment_identifier_for_this_config_file_only
-GIT_USER_EMAIL = f"{environment_identifier_for_this_config_file_only}@example.com"
+GIT_USERNAME = "sartography-automated-committer"
+GIT_USER_EMAIL = f"{GIT_USERNAME}@users.noreply.github.com"
 SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(
     "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME",
     default="terraform_deployed_environment.yml",
@@ -24,3 +24,6 @@ SPIFFWORKFLOW_BACKEND_URL = (
     f"https://api.{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
 )
 CONNECTOR_PROXY_URL = f"https://connector-proxy.{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
+GIT_CLONE_URL_FOR_PUBLISHING = environ.get(
+    "GIT_CLONE_URL", default="https://github.com/sartography/sample-process-models.git"
+)

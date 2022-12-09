@@ -375,7 +375,7 @@ def process_model_publish(
 ) -> flask.wrappers.Response:
     """Process_model_publish."""
     if branch_to_update is None:
-        branch_to_update = current_app.config["GIT_MERGE_BRANCH"]
+        branch_to_update = current_app.config["GIT_BRANCH_TO_PUBLISH_TO"]
     process_model_identifier = un_modify_modified_process_model_id(
         modified_process_model_identifier
     )
@@ -1817,13 +1817,13 @@ def get_spiff_task_from_process_instance(
 
 
 # sample body:
-# {'ref': 'refs/heads/main', 'repository': {'name': 'sample-process-models',
-# 'full_name': 'sartography/sample-process-models', 'private': False .... }}
+# {"ref": "refs/heads/main", "repository": {"name": "sample-process-models",
+# "full_name": "sartography/sample-process-models", "private": False .... }}
 # test with: ngrok http 7000
 # where 7000 is the port the app is running on locally
-def github_webhook_receive(body: dict) -> Response:
+def github_webhook_receive(body: Dict) -> Response:
     """Github_webhook_receive."""
-    print(f"body: {body}")
+    GitService.handle_web_hook(body)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
