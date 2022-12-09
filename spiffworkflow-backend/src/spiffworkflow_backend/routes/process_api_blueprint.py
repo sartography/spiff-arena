@@ -1088,7 +1088,7 @@ def process_instance_show(
         ):
             bpmn_xml_file_contents = SpecFileService.get_data(
                 process_model, process_model.primary_file_name
-            )
+            ).decode("utf-8")
         else:
             bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
                 process_model, process_instance.bpmn_version_control_identifier
