@@ -490,6 +490,20 @@ paths:
                 items:
                   $ref: "#/components/schemas/Process"
 
+  /github-webhook-receive:
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.github_webhook_receive
+      summary: receives push webhooks from github so we can keep our process model repo up to date
+      tags:
+        - git
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /process-instances:
     parameters:
       - name: process_model_identifier

@@ -1816,9 +1816,20 @@ def get_spiff_task_from_process_instance(
     return spiff_task
 
 
+# sample body:
+# {'ref': 'refs/heads/main', 'repository': {'name': 'sample-process-models',
+# 'full_name': 'sartography/sample-process-models', 'private': False .... }}
+def github_webhook_receive(body: dict) -> Response:
+    """Github_webhook_receive."""
+    print(f"body: {body}")
+    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
 #
 # Methods for secrets CRUD - maybe move somewhere else:
 #
+
+
 def get_secret(key: str) -> Optional[str]:
     """Get_secret."""
     return SecretService.get_secret(key)
