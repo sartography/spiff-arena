@@ -536,7 +536,7 @@ export default function ProcessModelShow() {
           onClose={() => setProcessModelPublished(false)}
         >
           <a href={prUrl} target="_void()">
-            view the changes and create a Pull Request
+            View the changes and create a Pull Request
           </a>
         </Notification>
       );
