@@ -1819,6 +1819,8 @@ def get_spiff_task_from_process_instance(
 # sample body:
 # {'ref': 'refs/heads/main', 'repository': {'name': 'sample-process-models',
 # 'full_name': 'sartography/sample-process-models', 'private': False .... }}
+# test with: ngrok http 7000
+# where 7000 is the port the app is running on locally
 def github_webhook_receive(body: dict) -> Response:
     """Github_webhook_receive."""
     print(f"body: {body}")
