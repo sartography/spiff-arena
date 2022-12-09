@@ -17,3 +17,5 @@ GIT_CLONE_URL_FOR_PUBLISHING = environ.get(
 )
 GIT_USERNAME = "sartography-automated-committer"
 GIT_USER_EMAIL = f"{GIT_USERNAME}@users.noreply.github.com"
+GIT_BRANCH_TO_PUBLISH_TO = "main"
+GIT_BRANCH = "main"

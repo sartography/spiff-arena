@@ -1,6 +1,9 @@
 """Authorization_service."""
 import inspect
 import re
+from hashlib import sha256
+from hmac import compare_digest
+from hmac import HMAC
 from typing import Optional
 from typing import Union
 
@@ -44,6 +47,27 @@ class UserDoesNotHaveAccessToTaskError(Exception):
 
 class AuthorizationService:
     """Determine whether a user has permission to perform their request."""
+
+    # https://stackoverflow.com/a/71320673/6090676
+    @classmethod
+    def verify_sha256_token(cls, auth_header: Optional[str]) -> None:
+        """Verify_sha256_token."""
+        if auth_header is None:
+            raise ApiError(
+                error_code="unauthorized",
+                message="",
+                status_code=403,
+            )
+
+        received_sign = auth_header.split("sha256=")[-1].strip()
+        secret = current_app.config["GITHUB_WEBHOOK_SECRET"].encode()
+        expected_sign = HMAC(key=secret, msg=request.data, digestmod=sha256).hexdigest()
+        if not compare_digest(received_sign, expected_sign):
+            raise ApiError(
+                error_code="unauthorized",
+                message="",
+                status_code=403,
+            )
 
     @classmethod
     def has_permission(
