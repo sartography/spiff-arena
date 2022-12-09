@@ -3,7 +3,7 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 import { truncateString } from '../helpers';
-import { ProcessModel } from '../interfaces';
+import { ProcessGroupLite, ProcessModel } from '../interfaces';
 
 type OwnProps = {
   onChange: (..._args: any[]) => any;
@@ -18,12 +18,23 @@ export default function ProcessModelSearch({
   onChange,
   titleText = 'Process model',
 }: OwnProps) {
+  const getParentGroupsDisplayName = (processModel: ProcessModel) => {
+    if (processModel.parent_groups) {
+      return processModel.parent_groups
+        .map((parentGroup: ProcessGroupLite) => {
+          return parentGroup.display_name;
+        })
+        .join(' ');
+    }
+    return '';
+  };
+
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
     const { inputValue } = options;
-    return `${processModel.id} (${processModel.display_name})`.includes(
-      inputValue
-    );
+    return `${processModel.id} (${getParentGroupsDisplayName(processModel)} ${
+      processModel.display_name
+    })`.includes(inputValue);
   };
   return (
     <ComboBox
