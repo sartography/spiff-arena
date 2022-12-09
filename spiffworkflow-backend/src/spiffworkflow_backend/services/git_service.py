@@ -228,7 +228,7 @@ class GitService:
                 f"from {g.user.username} on {current_app.config['ENV_IDENTIFIER']}"
             )
             cls.commit(commit_message, destination_process_root)
-            cls.run_shell_command(["git", "push"])
+            cls.run_shell_command(["git", "push", "--set-upstream", "origin", branch_to_pull_request])
 
             # build url for github page to open PR
             git_remote = cls.run_shell_command_to_get_stdout(
