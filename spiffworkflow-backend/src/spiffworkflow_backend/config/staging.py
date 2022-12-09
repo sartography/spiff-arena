@@ -1,4 +1,4 @@
-"""staging."""
+"""Staging."""
 from os import environ
 
 GIT_BRANCH = environ.get("GIT_BRANCH_TO_PUBLISH_TO", default="staging")
