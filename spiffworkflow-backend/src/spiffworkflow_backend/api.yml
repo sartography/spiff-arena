@@ -285,6 +285,12 @@ paths:
         description: Get only the process models that the user can run
         schema:
           type: boolean
+      - name: include_parent_groups
+        in: query
+        required: false
+        description: Get the display names for the parent groups as well
+        schema:
+          type: boolean
       - name: page
         in: query
         required: false
