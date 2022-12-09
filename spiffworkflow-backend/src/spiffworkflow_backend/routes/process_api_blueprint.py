@@ -346,7 +346,10 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
     """Process_model_show."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
-    files = sorted(SpecFileService.get_files(process_model))
+    files = sorted(
+        SpecFileService.get_files(process_model),
+        key=lambda f: "" if f.name == process_model.primary_file_name else f.sort_index,
+    )
     process_model.files = files
     for file in process_model.files:
         file.references = SpecFileService.get_references_for_file(file, process_model)
