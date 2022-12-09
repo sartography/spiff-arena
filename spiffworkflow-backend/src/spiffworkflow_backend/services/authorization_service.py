@@ -232,7 +232,11 @@ class AuthorizationService:
     def should_disable_auth_for_request(cls) -> bool:
         """Should_disable_auth_for_request."""
         swagger_functions = ["get_json_spec"]
-        authentication_exclusion_list = ["status", "authentication_callback"]
+        authentication_exclusion_list = [
+            "status",
+            "authentication_callback",
+            "github_webhook_receive",
+        ]
         if request.method == "OPTIONS":
             return True
 
