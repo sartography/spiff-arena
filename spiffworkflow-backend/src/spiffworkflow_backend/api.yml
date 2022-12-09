@@ -494,6 +494,11 @@ paths:
     post:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.github_webhook_receive
       summary: receives push webhooks from github so we can keep our process model repo up to date
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModelCategory"
       tags:
         - git
       responses:
