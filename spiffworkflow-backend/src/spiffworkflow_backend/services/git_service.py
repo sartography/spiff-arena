@@ -140,7 +140,7 @@ class GitService:
 
     # only supports github right now
     @classmethod
-    def handle_web_hook(cls, webhook: dict) -> None:
+    def handle_web_hook(cls, webhook: dict) -> bool:
         """Handle_web_hook."""
         cls.check_for_configs()
 
@@ -155,8 +155,25 @@ class GitService:
                 f"Configured clone url does not match clone url from webhook: {clone_url}"
             )
 
+        if "ref" not in webhook:
+            raise InvalidGitWebhookBodyError(
+                f"Could not find the 'ref' arg in the webhook boy: {webhook}"
+            )
+
+        if current_app.config["GIT_BRANCH"] is None:
+            raise MissingGitConfigsError(
+                "Missing config for GIT_BRANCH. "
+                "This is required for updating the repository as a result of the webhook"
+            )
+
+        ref = webhook["ref"]
+        git_branch = current_app.config["GIT_BRANCH"]
+        if ref != f"refs/heads/{git_branch}":
+            return False
+
         with FileSystemService.cd(current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]):
             cls.run_shell_command(["git", "pull"])
+        return True
 
     @classmethod
     def publish(cls, process_model_id: str, branch_to_update: str) -> str:

@@ -9,7 +9,6 @@ import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
-from spiffworkflow_backend.services.git_service import GitService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -33,6 +32,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -2573,7 +2573,8 @@ class TestProcessApi(BaseTest):
             assert "On branch main" in output
             assert "No commits yet" in output
             assert (
-                'nothing to commit (create/copy files and use "git add" to track)' in output
+                'nothing to commit (create/copy files and use "git add" to track)'
+                in output
             )
 
             process_group_id = "test_group"
@@ -2593,7 +2594,9 @@ class TestProcessApi(BaseTest):
                 bpmn_file_name=bpmn_file_name,
                 bpmn_file_location=bpmn_file_location,
             )
-            process_model_absolute_dir = os.path.join(bpmn_root, process_model_identifier)
+            process_model_absolute_dir = os.path.join(
+                bpmn_root, process_model_identifier
+            )
 
             output = GitService.run_shell_command_to_get_stdout(["git", "status"])
             test_string = 'Untracked files:\n  (use "git add <file>..." to include in what will be committed)\n\ttest_group'

@@ -1826,8 +1826,12 @@ def get_spiff_task_from_process_instance(
 # where 7000 is the port the app is running on locally
 def github_webhook_receive(body: Dict) -> Response:
     """Github_webhook_receive."""
-    GitService.handle_web_hook(body)
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    auth_header = request.headers.get("X-Hub-Signature-256")
+    AuthorizationService.verify_sha256_token(auth_header)
+    result = GitService.handle_web_hook(body)
+    return Response(
+        json.dumps({"git_pull": result}), status=200, mimetype="application/json"
+    )
 
 
 #
