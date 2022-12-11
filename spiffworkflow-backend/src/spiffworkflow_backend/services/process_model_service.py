@@ -172,7 +172,6 @@ class ProcessModelService(FileSystemService):
         cls, relative_path: str
     ) -> ProcessModelInfo:
         """Get_process_model_from_relative_path."""
-        process_group_identifier, _ = os.path.split(relative_path)
         path = os.path.join(FileSystemService.root_path(), relative_path)
         return cls.__scan_process_model(path)
 
@@ -430,6 +429,9 @@ class ProcessModelService(FileSystemService):
                 # process_group.process_groups.sort()
         return process_group
 
+    # path might have backslashes on windows, not sure
+    # not sure if os.path.join converts forward slashes in the relative_path argument to backslashes:
+    #   path = os.path.join(FileSystemService.root_path(), relative_path)
     @classmethod
     def __scan_process_model(
         cls,
@@ -446,6 +448,10 @@ class ProcessModelService(FileSystemService):
                     data.pop("process_group_id")
                 # we don't save `id` in the json file, so we add it back in here.
                 relative_path = os.path.relpath(path, FileSystemService.root_path())
+
+                # even on windows, use forward slashes for ids
+                relative_path = relative_path.replace("\\", "/")
+
                 data["id"] = relative_path
                 process_model_info = ProcessModelInfo(**data)
                 if process_model_info is None:
