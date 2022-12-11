@@ -29,7 +29,7 @@ from .ValidationException import ValidationException
 from ..specs.BpmnProcessSpec import BpmnProcessSpec
 from ..specs.events.EndEvent import EndEvent
 from ..specs.events.StartEvent import StartEvent
-from ..specs.events.IntermediateEvent import BoundaryEvent, IntermediateCatchEvent, IntermediateThrowEvent
+from ..specs.events.IntermediateEvent import BoundaryEvent, IntermediateCatchEvent, IntermediateThrowEvent, EventBasedGateway
 from ..specs.events.IntermediateEvent import SendTask, ReceiveTask
 from ..specs.SubWorkflowTask import CallActivity, SubWorkflowTask, TransactionSubprocess
 from ..specs.ExclusiveGateway import ExclusiveGateway
@@ -47,7 +47,7 @@ from .task_parsers import (UserTaskParser, NoneTaskParser, ManualTaskParser,
                            ExclusiveGatewayParser, ParallelGatewayParser, InclusiveGatewayParser,
                            CallActivityParser, ScriptTaskParser, SubWorkflowParser,
                            ServiceTaskParser)
-from .event_parsers import (StartEventParser, EndEventParser, BoundaryEventParser,
+from .event_parsers import (EventBasedGatewayParser, StartEventParser, EndEventParser, BoundaryEventParser,
                            IntermediateCatchEventParser, IntermediateThrowEventParser,
                            SendTaskParser, ReceiveTaskParser)
 
@@ -57,7 +57,8 @@ XSD_PATH = os.path.join(os.path.dirname(__file__), 'schema', 'BPMN20.xsd')
 class BpmnValidator:
 
     def __init__(self, xsd_path=XSD_PATH, imports=None):
-        schema = etree.parse(open(xsd_path))
+        with open(xsd_path) as xsd:
+            schema = etree.parse(xsd)
         if imports is not None:
             for ns, fn in imports.items():
                 elem = etree.Element(
@@ -104,6 +105,7 @@ class BpmnParser(object):
         full_tag('boundaryEvent'): (BoundaryEventParser, BoundaryEvent),
         full_tag('receiveTask'): (ReceiveTaskParser, ReceiveTask),
         full_tag('sendTask'): (SendTaskParser, SendTask),
+        full_tag('eventBasedGateway'): (EventBasedGatewayParser, EventBasedGateway),
     }
 
     OVERRIDE_PARSER_CLASSES = {}
