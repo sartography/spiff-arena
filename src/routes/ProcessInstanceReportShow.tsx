@@ -76,9 +76,7 @@ export default function ProcessInstanceReport() {
     return (
       <main>
         <ProcessBreadcrumb
-          processModelId={params.process_model_id}
-          processGroupId={params.process_group_id}
-          linkProcessModel
+          hotCrumbs={[['Process Groups', '/admin'], ['Process Instance']]}
         />
         <h1>Process Instance Perspective: {params.report_identifier}</h1>
         <Button

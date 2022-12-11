@@ -174,18 +174,18 @@ export const getProcessModelFullIdentifierFromSearchParams = (
 // https://stackoverflow.com/a/71352046/6090676
 export const truncateString = (text: string, len: number) => {
   if (text.length > len && text.length > 0) {
-    return `${text.split(' ').slice(0, len).join(' ')} ...`;
+    return `${text.split('').slice(0, len).join('')} ...`;
   }
   return text;
 };
 
 // Because of limitations in the way openapi defines parameters, we have to modify process models ids
 // which are basically paths to the models
-export const modifyProcessModelPath = (path: string) => {
+export const modifyProcessIdentifierForPathParam = (path: string) => {
   return path.replace(/\//g, ':') || '';
 };
 
-export const unModifyProcessModelPath = (path: string) => {
+export const unModifyProcessIdentifierForPathParam = (path: string) => {
   return path.replace(/:/g, '/') || '';
 };
 

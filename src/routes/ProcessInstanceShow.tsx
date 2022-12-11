@@ -29,7 +29,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
-  unModifyProcessModelPath,
+  unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ErrorContext from '../contexts/ErrorContext';
@@ -43,13 +43,14 @@ export default function ProcessInstanceShow() {
 
   const [processInstance, setProcessInstance] = useState(null);
   const [tasks, setTasks] = useState<Array<object> | null>(null);
+  const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  const unModifiedProcessModelId = unModifyProcessModelPath(
+  const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
   const modifiedProcessModelId = params.process_model_id;
@@ -57,8 +58,16 @@ export default function ProcessInstanceShow() {
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.messageInstanceListPath]: ['GET'],
+    [targetUris.processInstanceTaskListPath]: ['GET'],
+    [targetUris.processInstanceActionPath]: ['DELETE'],
+    [targetUris.processInstanceLogListPath]: ['GET'],
+    [`${targetUris.processInstanceActionPath}/suspend`]: ['PUT'],
+    [`${targetUris.processInstanceActionPath}/terminate`]: ['PUT'],
+    [`${targetUris.processInstanceActionPath}/resume`]: ['PUT'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   const navigateToProcessInstances = (_result: any) => {
     navigate(
@@ -67,25 +76,33 @@ export default function ProcessInstanceShow() {
   };
 
   useEffect(() => {
-    HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}`,
-      successCallback: setProcessInstance,
-    });
-    if (typeof params.spiff_step === 'undefined')
+    if (permissionsLoaded) {
+      const processTaskFailure = () => {
+        setTasksCallHadError(true);
+      };
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/tasks?all_tasks=true`,
-        successCallback: setTasks,
+        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}`,
+        successCallback: setProcessInstance,
       });
-    else
-      HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/tasks?all_tasks=true&spiff_step=${params.spiff_step}`,
-        successCallback: setTasks,
-      });
-  }, [params, modifiedProcessModelId]);
+      let taskParams = '?all_tasks=true';
+      if (typeof params.spiff_step !== 'undefined') {
+        taskParams = `${taskParams}&spiff_step=${params.spiff_step}`;
+      }
+      if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+        HttpService.makeCallToBackend({
+          path: `${targetUris.processInstanceTaskListPath}${taskParams}`,
+          successCallback: setTasks,
+          failureCallback: processTaskFailure,
+        });
+      } else {
+        setTasksCallHadError(true);
+      }
+    }
+  }, [params, modifiedProcessModelId, permissionsLoaded, ability, targetUris]);
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-instances/${params.process_instance_id}`,
+      path: targetUris.processInstanceActionPath,
       successCallback: navigateToProcessInstances,
       httpMethod: 'DELETE',
     });
@@ -98,7 +115,7 @@ export default function ProcessInstanceShow() {
 
   const terminateProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-instances/${params.process_instance_id}/terminate`,
+      path: `${targetUris.processInstanceActionPath}/terminate`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -106,7 +123,7 @@ export default function ProcessInstanceShow() {
 
   const suspendProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-instances/${params.process_instance_id}/suspend`,
+      path: `${targetUris.processInstanceActionPath}/suspend`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -114,7 +131,7 @@ export default function ProcessInstanceShow() {
 
   const resumeProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `/process-instances/${params.process_instance_id}/resume`,
+      path: `${targetUris.processInstanceActionPath}/resume`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -162,7 +179,7 @@ export default function ProcessInstanceShow() {
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`/admin/process-models/${
+        to={`/admin/process-instances/${
           params.process_model_id
         }/process-instances/${params.process_instance_id}/${
           currentSpiffStep(processInstanceToUse) + distance
@@ -197,7 +214,7 @@ export default function ProcessInstanceShow() {
     if (currentEndDate) {
       currentEndDateTag = (
         <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={1} className="grid-list-title">
+          <Column sm={1} md={1} lg={2} className="grid-list-title">
             Completed:{' '}
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
@@ -223,7 +240,7 @@ export default function ProcessInstanceShow() {
     return (
       <>
         <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={1} className="grid-list-title">
+          <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started:{' '}
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
@@ -234,7 +251,7 @@ export default function ProcessInstanceShow() {
         </Grid>
         {currentEndDateTag}
         <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={1} className="grid-list-title">
+          <Column sm={1} md={1} lg={2} className="grid-list-title">
             Status:{' '}
           </Column>
           <Column sm={3} md={3} lg={3}>
@@ -247,14 +264,20 @@ export default function ProcessInstanceShow() {
         <Grid condensed fullWidth>
           <Column sm={2} md={2} lg={2}>
             <ButtonSet>
-              <Button
-                size="sm"
-                className="button-white-background"
-                data-qa="process-instance-log-list-link"
-                href={`/admin/process-models/${modifiedProcessModelId}/process-instances/${params.process_instance_id}/logs`}
+              <Can
+                I="GET"
+                a={targetUris.processInstanceLogListPath}
+                ability={ability}
               >
-                Logs
-              </Button>
+                <Button
+                  size="sm"
+                  className="button-white-background"
+                  data-qa="process-instance-log-list-link"
+                  href={`/admin/logs/${modifiedProcessModelId}/${params.process_instance_id}`}
+                >
+                  Logs
+                </Button>
+              </Can>
               <Can
                 I="GET"
                 a={targetUris.messageInstanceListPath}
@@ -424,8 +447,8 @@ export default function ProcessInstanceShow() {
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
-      path: `/process-instances/${params.process_instance_id}/task/${taskToUse.id}/update`,
-      httpMethod: 'POST',
+      path: `/task-data/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
+      httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,
       postBody: {
@@ -532,28 +555,40 @@ export default function ProcessInstanceShow() {
 
   const buttonIcons = (processInstanceToUse: any) => {
     const elements = [];
-    elements.push(terminateButton(processInstanceToUse));
-    elements.push(suspendButton(processInstanceToUse));
-    elements.push(resumeButton(processInstanceToUse));
-    elements.push(
-      <ButtonWithConfirmation
-        data-qa="process-instance-delete"
-        kind="ghost"
-        renderIcon={TrashCan}
-        iconDescription="Delete"
-        hasIconOnly
-        description={`Delete Process Instance: ${processInstanceToUse.id}`}
-        onConfirmation={deleteProcessInstance}
-        confirmButtonLabel="Delete"
-      />
-    );
+    if (
+      ability.can('POST', `${targetUris.processInstanceActionPath}/terminate`)
+    ) {
+      elements.push(terminateButton(processInstanceToUse));
+    }
+    if (
+      ability.can('POST', `${targetUris.processInstanceActionPath}/suspend`)
+    ) {
+      elements.push(suspendButton(processInstanceToUse));
+    }
+    if (ability.can('POST', `${targetUris.processInstanceActionPath}/resume`)) {
+      elements.push(resumeButton(processInstanceToUse));
+    }
+    if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
+      elements.push(
+        <ButtonWithConfirmation
+          data-qa="process-instance-delete"
+          kind="ghost"
+          renderIcon={TrashCan}
+          iconDescription="Delete"
+          hasIconOnly
+          description={`Delete Process Instance: ${processInstanceToUse.id}`}
+          onConfirmation={deleteProcessInstance}
+          confirmButtonLabel="Delete"
+        />
+      );
+    }
     return elements;
   };
 
-  if (processInstance && tasks) {
+  if (processInstance && (tasks || tasksCallHadError)) {
     const processInstanceToUse = processInstance as any;
     const taskIds = getTaskIds();
-    const processModelId = unModifyProcessModelPath(
+    const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
     );
 
@@ -562,10 +597,11 @@ export default function ProcessInstanceShow() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${processModelId}`,
-              `process_model:${processModelId}:link`,
-            ],
+            {
+              entityToExplode: processModelId,
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
             [`Process Instance Id: ${processInstanceToUse.id}`],
           ]}
         />

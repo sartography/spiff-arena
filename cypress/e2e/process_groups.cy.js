@@ -19,25 +19,22 @@ describe('process-groups', () => {
     cy.url().should('include', `process-groups/${groupId}`);
     cy.contains(`Process Group: ${groupDisplayName}`);
 
-    cy.contains('Edit process group').click();
+    cy.getBySel('edit-process-group-button').click();
     cy.get('input[name=display_name]').clear().type(newGroupDisplayName);
     cy.contains('Submit').click();
     cy.contains(`Process Group: ${newGroupDisplayName}`);
 
-    cy.contains('Edit process group').click();
-    cy.get('input[name=display_name]').should(
-      'have.value',
-      newGroupDisplayName
-    );
-
-    cy.contains('Delete').click();
+    cy.getBySel('delete-process-group-button').click();
     cy.contains('Are you sure');
-    cy.getBySel('modal-confirmation-dialog').find('.cds--btn--danger').click();
+    cy.getBySel('delete-process-group-button-modal-confirmation-dialog')
+      .find('.cds--btn--danger')
+      .click();
     cy.url().should('include', `process-groups`);
     cy.contains(groupId).should('not.exist');
   });
 
-  it('can paginate items', () => {
-    cy.basicPaginationTest();
-  });
+  // process groups no longer has pagination post-tiles
+  // it('can paginate items', () => {
+  //   cy.basicPaginationTest();
+  // });
 });

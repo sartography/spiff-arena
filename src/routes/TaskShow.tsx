@@ -15,6 +15,7 @@ import {
   Tabs,
   Grid,
   Column,
+  Button,
   // @ts-ignore
 } from '@carbon/react';
 
@@ -24,7 +25,10 @@ import remarkGfm from 'remark-gfm';
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { modifyProcessModelPath } from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function TaskShow() {
   const [task, setTask] = useState(null);
@@ -34,24 +38,36 @@ export default function TaskShow() {
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
-  useEffect(() => {
-    const processResult = (result: any) => {
-      setTask(result);
-      HttpService.makeCallToBackend({
-        path: `/process-instances/${modifyProcessModelPath(
-          result.process_model_identifier
-        )}/${params.process_instance_id}/tasks`,
-        successCallback: setUserTasks,
-      });
-    };
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processInstanceTaskListPath]: ['GET'],
+  };
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
-    HttpService.makeCallToBackend({
-      path: `/tasks/${params.process_instance_id}/${params.task_id}`,
-      successCallback: processResult,
-      // This causes the page to continuously reload
-      // failureCallback: setErrorMessage,
-    });
-  }, [params]);
+  useEffect(() => {
+    if (permissionsLoaded) {
+      const processResult = (result: any) => {
+        setTask(result);
+        if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+          HttpService.makeCallToBackend({
+            path: `/task-data/${modifyProcessIdentifierForPathParam(
+              result.process_model_identifier
+            )}/${params.process_instance_id}`,
+            successCallback: setUserTasks,
+          });
+        }
+      };
+
+      HttpService.makeCallToBackend({
+        path: `/tasks/${params.process_instance_id}/${params.task_id}`,
+        successCallback: processResult,
+        // This causes the page to continuously reload
+        // failureCallback: setErrorMessage,
+      });
+    }
+  }, [params, permissionsLoaded, ability, targetUris]);
 
   const processSubmitResult = (result: any) => {
     setErrorMessage(null);
@@ -115,17 +131,18 @@ export default function TaskShow() {
         }
         return null;
       });
+      return (
+        <Tabs
+          title="Steps in this process instance involving people"
+          selectedIndex={selectedTabIndex}
+        >
+          <TabList aria-label="List of tabs" contained>
+            {userTasksElement}
+          </TabList>
+        </Tabs>
+      );
     }
-    return (
-      <Tabs
-        title="Steps in this process instance involving people"
-        selectedIndex={selectedTabIndex}
-      >
-        <TabList aria-label="List of tabs" contained>
-          {userTasksElement}
-        </TabList>
-      </Tabs>
-    );
+    return null;
   };
 
   const formElement = (taskToUse: any) => {
@@ -167,6 +184,14 @@ export default function TaskShow() {
       reactFragmentToHideSubmitButton = <div />;
     }
 
+    if (taskToUse.type === 'Manual Task') {
+      reactFragmentToHideSubmitButton = (
+        <div>
+          <Button type="submit">Continue</Button>
+        </div>
+      );
+    }
+
     return (
       <Grid fullWidth condensed>
         <Column md={5} lg={8} sm={4}>
@@ -198,7 +223,7 @@ export default function TaskShow() {
     );
   };
 
-  if (task && userTasks) {
+  if (task) {
     const taskToUse = task as any;
     let statusString = '';
     if (taskToUse.state !== 'READY') {

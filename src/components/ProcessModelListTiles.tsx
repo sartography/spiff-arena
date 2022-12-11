@@ -5,15 +5,24 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 import HttpService from '../services/HttpService';
-import { ProcessModel, ProcessInstance } from '../interfaces';
-import { modifyProcessModelPath, truncateString } from '../helpers';
+import { ProcessModel, ProcessInstance, ProcessGroup } from '../interfaces';
+import {
+  modifyProcessIdentifierForPathParam,
+  truncateString,
+} from '../helpers';
 import ProcessInstanceRun from './ProcessInstanceRun';
 
 type OwnProps = {
   headerElement?: ReactElement;
+  processGroup?: ProcessGroup;
+  checkPermissions?: boolean;
 };
 
-export default function ProcessModelListTiles({ headerElement }: OwnProps) {
+export default function ProcessModelListTiles({
+  headerElement,
+  processGroup,
+  checkPermissions = true,
+}: OwnProps) {
   const [searchParams] = useSearchParams();
   const [processModels, setProcessModels] = useState<ProcessModel[] | null>(
     null
@@ -25,13 +34,18 @@ export default function ProcessModelListTiles({ headerElement }: OwnProps) {
     const setProcessModelsFromResult = (result: any) => {
       setProcessModels(result.results);
     };
-    // only allow 10 for now until we get the backend only returnin certain models for user execution
-    const queryParams = '?per_page=10';
+    // only allow 10 for now until we get the backend only returning certain models for user execution
+    let queryParams = '?per_page=20';
+    if (processGroup) {
+      queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
+    } else {
+      queryParams = `${queryParams}&recursive=true&filter_runnable_by_user=true`;
+    }
     HttpService.makeCallToBackend({
       path: `/process-models${queryParams}`,
       successCallback: setProcessModelsFromResult,
     });
-  }, [searchParams]);
+  }, [searchParams, processGroup]);
 
   const processInstanceRunResultTag = () => {
     if (processInstance) {
@@ -40,9 +54,9 @@ export default function ProcessModelListTiles({ headerElement }: OwnProps) {
           <p>
             Process Instance {processInstance.id} kicked off (
             <Link
-              to={`/admin/process-models/${modifyProcessModelPath(
+              to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
                 processInstance.process_model_identifier
-              )}/process-instances/${processInstance.id}`}
+              )}/${processInstance.id}`}
               data-qa="process-instance-show-link"
             >
               view
@@ -61,19 +75,29 @@ export default function ProcessModelListTiles({ headerElement }: OwnProps) {
       displayText = (processModels || []).map((row: ProcessModel) => {
         return (
           <Tile
-            id="tile-1"
+            id={`process-model-tile-${row.id}`}
             className="tile-process-group"
-            href={`/admin/process-models/${modifyProcessModelPath(row.id)}`}
           >
             <div className="tile-process-group-content-container">
-              <div className="tile-title-top">{row.display_name}</div>
+              <div className="tile-title-top">
+                <a
+                  title={row.id}
+                  data-qa="process-model-show-link"
+                  href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                    row.id
+                  )}`}
+                >
+                  {row.display_name}
+                </a>
+              </div>
               <p className="tile-description">
-                {truncateString(row.description || '', 25)}
+                {truncateString(row.description || '', 100)}
               </p>
               <ProcessInstanceRun
                 processModel={row}
                 onSuccessCallback={setProcessInstance}
                 className="tile-pin-bottom"
+                checkPermissions={checkPermissions}
               />
             </div>
           </Tile>

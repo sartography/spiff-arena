@@ -6,59 +6,68 @@ import PaginationForTable from './PaginationForTable';
 import {
   convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
-  modifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
+  refreshAtInterval,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject } from '../interfaces';
+import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
 const paginationQueryParamPrefix = 'tasks_waiting_for_my_groups';
+const REFRESH_INTERVAL = 5;
+const REFRESH_TIMEOUT = 600;
 
-export default function TasksForWaitingForMyGroups() {
+export default function TasksWaitingForMyGroups() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState([]);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
   useEffect(() => {
-    const { page, perPage } = getPageInfoFromSearchParams(
-      searchParams,
-      PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
-      undefined,
-      paginationQueryParamPrefix
-    );
-    const setTasksFromResult = (result: any) => {
-      setTasks(result.results);
-      setPagination(result.pagination);
+    const getTasks = () => {
+      const { page, perPage } = getPageInfoFromSearchParams(
+        searchParams,
+        PER_PAGE_FOR_TASKS_ON_HOME_PAGE,
+        undefined,
+        paginationQueryParamPrefix
+      );
+      const setTasksFromResult = (result: any) => {
+        setTasks(result.results);
+        setPagination(result.pagination);
+      };
+      HttpService.makeCallToBackend({
+        path: `/tasks/for-my-groups?per_page=${perPage}&page=${page}`,
+        successCallback: setTasksFromResult,
+      });
     };
-    HttpService.makeCallToBackend({
-      path: `/tasks/for-my-groups?per_page=${perPage}&page=${page}`,
-      successCallback: setTasksFromResult,
-    });
+    getTasks();
+    refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
   }, [searchParams]);
 
   const buildTable = () => {
     const rows = tasks.map((row) => {
       const rowToUse = row as any;
       const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.task_id}`;
-      const modifiedProcessModelIdentifier = modifyProcessModelPath(
-        rowToUse.process_model_identifier
-      );
+      const modifiedProcessModelIdentifier =
+        modifyProcessIdentifierForPathParam(rowToUse.process_model_identifier);
       return (
         <tr key={rowToUse.id}>
           <td>
             <Link
-              data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+              data-qa="process-instance-show-link"
+              to={`/admin/process-instances/${modifiedProcessModelIdentifier}/${rowToUse.process_instance_id}`}
+              title={`View process instance ${rowToUse.process_instance_id}`}
             >
-              {rowToUse.process_model_display_name}
+              {rowToUse.process_instance_id}
             </Link>
           </td>
           <td>
             <Link
-              data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}/process-instances/${rowToUse.process_instance_id}`}
+              data-qa="process-model-show-link"
+              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+              title={rowToUse.process_model_identifier}
             >
-              View {rowToUse.process_instance_id}
+              {rowToUse.process_model_display_name}
             </Link>
           </td>
           <td
@@ -67,18 +76,15 @@ export default function TasksForWaitingForMyGroups() {
             {rowToUse.task_title}
           </td>
           <td>{rowToUse.username}</td>
-          <td>{rowToUse.process_instance_status}</td>
           <td>{rowToUse.group_identifier || '-'}</td>
           <td>
             {convertSecondsToFormattedDateTime(
               rowToUse.created_at_in_seconds
             ) || '-'}
           </td>
-          <td>
-            {convertSecondsToFormattedDateTime(
-              rowToUse.updated_at_in_seconds
-            ) || '-'}
-          </td>
+          <TableCellWithTimeAgoInWords
+            timeInSeconds={rowToUse.updated_at_in_seconds}
+          />
           <td>
             <Button
               variant="primary"
@@ -96,14 +102,13 @@ export default function TasksForWaitingForMyGroups() {
       <Table striped bordered>
         <thead>
           <tr>
-            <th>Process Model</th>
-            <th>Process Instance</th>
-            <th>Task Name</th>
-            <th>Process Started By</th>
-            <th>Process Instance Status</th>
-            <th>Assigned Group</th>
-            <th>Process Started</th>
-            <th>Process Updated</th>
+            <th>Id</th>
+            <th>Process</th>
+            <th>Task</th>
+            <th>Started By</th>
+            <th>Waiting For</th>
+            <th>Date Started</th>
+            <th>Last Updated</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -114,7 +119,11 @@ export default function TasksForWaitingForMyGroups() {
 
   const tasksComponent = () => {
     if (pagination && pagination.total < 1) {
-      return null;
+      return (
+        <p className="no-results-message">
+          Your groups have no task assignments at this time.
+        </p>
+      );
     }
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
@@ -123,22 +132,25 @@ export default function TasksForWaitingForMyGroups() {
       paginationQueryParamPrefix
     );
     return (
-      <>
-        <h1>Tasks waiting for my groups</h1>
-        <PaginationForTable
-          page={page}
-          perPage={perPage}
-          perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
-          pagination={pagination}
-          tableToDisplay={buildTable()}
-          paginationQueryParamPrefix={paginationQueryParamPrefix}
-        />
-      </>
+      <PaginationForTable
+        page={page}
+        perPage={perPage}
+        perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
+        pagination={pagination}
+        tableToDisplay={buildTable()}
+        paginationQueryParamPrefix={paginationQueryParamPrefix}
+      />
     );
   };
 
-  if (pagination) {
-    return tasksComponent();
-  }
-  return null;
+  return (
+    <>
+      <h2>Tasks waiting for my groups</h2>
+      <p className="data-table-description">
+        This is a list of tasks for groups you belong to that can be completed
+        by any member of the group.
+      </p>
+      {tasksComponent()}
+    </>
+  );
 }

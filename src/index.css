@@ -5,6 +5,15 @@
   color: white;
 }
 
+.megacondensed {
+  padding-left: 0px;
+}
+
+/* defaults to 3rem, which isn't long sufficient for "elizabeth" */
+.cds--header__action.username-header-text {
+  width: 5rem;
+}
+
 h1 {
   font-weight: 400;
   font-size: 28px;
@@ -58,6 +67,24 @@ h2 {
 }
 .cds--btn--ghost:visited:hover {
   color: black;
+}
+
+/* match normal link colors */
+.cds--btn--ghost.button-link {
+  color: #0062fe;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link:visited {
+  color: #0062fe;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link:hover {
+  color: #0062fe;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link:visited:hover {
+  color: #0062fe;
+  padding-left: 0;
 }
 
 .cds--header__global .cds--btn--primary {
@@ -136,6 +163,26 @@ h1.with-icons {
 
 .with-bottom-margin {
   margin-bottom: 1em;
+}
+
+.with-top-margin {
+  margin-top: 1em;
+}
+
+.with-extra-top-margin {
+  margin-top: 1.3em;
+}
+
+.with-tiny-top-margin {
+  margin-top: 4px;
+}
+
+.with-large-bottom-margin {
+  margin-bottom: 3em;
+}
+
+.with-tiny-bottom-margin {
+  margin-bottom: 4px;
 }
 
 .diagram-viewer-canvas {
@@ -242,4 +289,84 @@ in on this with the react-jsonschema-form repo. This is just a patch fix to allo
 .tile-pin-bottom {
   position: absolute;
   bottom: 1em;
+}
+
+.cds--tabs .cds--tabs__nav-link {
+  max-width: 20rem;
+}
+
+.clear-left {
+  clear: left;
+}
+
+td.actions-cell {
+  width: 1em;
+}
+
+.no-results-message {
+  font-style: italic;
+  margin-left: 2em;
+  margin-top: 1em;
+  font-size: 14px;
+}
+
+.data-table-description {
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  color: #525252;
+  margin-bottom: 1em;
+}
+
+/* top and bottom margin since this is sort of the middle of three sections on the process model show page */
+.process-model-files-section {
+  margin: 2em 0;
+}
+
+.filterIcon {
+  text-align: right;
+  padding-bottom: 10px;
+}
+
+.cds--btn--ghost:not([disabled]) svg.red-icon {
+  fill: red;
+}
+
+svg.green-icon {
+  fill: #198038;
+}
+
+svg.notification-icon {
+  margin-right: 1rem;
+}
+
+.failure-string {
+  color: red;
+}
+
+.cds--btn--ghost.cds--btn--sm.button-tag-icon {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+}
+
+/* .no-wrap cds--label cds--label--inline cds--label--inline--md{ */
+.no-wrap .cds--label--inline{
+  word-break: normal;
+}
+
+.combo-box-in-modal {
+  height: 300px;
+}
+
+.cds--btn.narrow-button {
+  max-width: 10rem;
+  min-width: 5rem;
+  word-break: normal;
+
+}
+
+/* lime green */
+.tag-type-green:hover {
+  background-color:	#80ee90;
 }

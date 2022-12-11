@@ -46,7 +46,7 @@ export default function ButtonWithConfirmation({
       <Modal
         open={showConfirmationPrompt}
         danger
-        data-qa="modal-confirmation-dialog"
+        data-qa={`${dataQa}-modal-confirmation-dialog`}
         modalHeading={description}
         modalLabel={title}
         primaryButtonText={confirmButtonLabel}

@@ -429,7 +429,7 @@ export default function ReactDiagramEditor({
       fetch(urlToUse)
         .then((response) => response.text())
         .then((text) => {
-          const processId = `Proccess_${makeid(7)}`;
+          const processId = `Process_${makeid(7)}`;
           const newText = text.replace('{{PROCESS_ID}}', processId);
           setDiagramXMLString(newText);
         })
@@ -569,7 +569,7 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button onClick={downloadXmlFile}>Download xml</Button>
+            <Button onClick={downloadXmlFile}>Download</Button>
           </Can>
         </>
       );

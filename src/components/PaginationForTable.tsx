@@ -14,6 +14,7 @@ type OwnProps = {
   pagination: PaginationObject | null;
   tableToDisplay: any;
   paginationQueryParamPrefix?: string;
+  paginationClassName?: string;
 };
 
 export default function PaginationForTable({
@@ -23,6 +24,7 @@ export default function PaginationForTable({
   pagination,
   tableToDisplay,
   paginationQueryParamPrefix,
+  paginationClassName,
 }: OwnProps) {
   const PER_PAGE_OPTIONS = [2, 10, 50, 100];
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,6 +46,7 @@ export default function PaginationForTable({
       <>
         {tableToDisplay}
         <Pagination
+          className={paginationClassName}
           data-qa="pagination-options"
           backwardText="Previous page"
           forwardText="Next page"

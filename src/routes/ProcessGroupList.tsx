@@ -7,7 +7,7 @@ import {
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import { modifyProcessModelPath } from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { CarbonComboBoxSelection, PermissionsToCheck } from '../interfaces';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -39,7 +39,7 @@ export default function ProcessGroupList() {
     };
     // for search box
     HttpService.makeCallToBackend({
-      path: `/process-models?per_page=1000`,
+      path: `/process-models?per_page=1000&recursive=true`,
       successCallback: processResultForProcessModels,
     });
   }, [searchParams]);
@@ -48,7 +48,9 @@ export default function ProcessGroupList() {
     const processModelSearchOnChange = (selection: CarbonComboBoxSelection) => {
       const processModel = selection.selectedItem;
       navigate(
-        `/admin/process-models/${modifyProcessModelPath(processModel.id)}`
+        `/admin/process-models/${modifyProcessIdentifierForPathParam(
+          processModel.id
+        )}`
       );
     };
     return (

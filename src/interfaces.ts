@@ -12,9 +12,8 @@ export interface RecentProcessModel {
 }
 
 export interface ProcessReference {
-  id: string; // The unique id of the process or decision table.
   name: string; // The process or decision Display name.
-  identifier: string;
+  identifier: string; // The unique id of the process
   display_name: string;
   process_group_id: string;
   process_model_id: string;
@@ -39,6 +38,68 @@ export interface ProcessFile {
 export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
+  process_model_display_name: string;
+}
+
+export interface MessageCorrelationProperties {
+  [key: string]: string;
+}
+
+export interface MessageCorrelations {
+  [key: string]: MessageCorrelationProperties;
+}
+
+export interface MessageInstance {
+  id: number;
+  process_model_identifier: string;
+  process_model_display_name: string;
+  process_instance_id: number;
+  message_identifier: string;
+  message_type: string;
+  failure_cause: string;
+  status: string;
+  created_at_in_seconds: number;
+  message_correlations?: MessageCorrelations;
+}
+
+export interface ReportFilter {
+  field_name: string;
+  field_value: string;
+  operator?: string;
+}
+
+export interface ReportColumn {
+  Header: string;
+  accessor: string;
+  filterable: boolean;
+}
+
+export interface ReportColumnForEditing extends ReportColumn {
+  filter_field_value: string;
+  filter_operator: string;
+}
+
+export interface ReportMetadata {
+  columns: ReportColumn[];
+  filter_by: ReportFilter[];
+  order_by: string[];
+}
+
+export interface ProcessInstanceReport {
+  id: number;
+  identifier: string;
+  name: string;
+  report_metadata: ReportMetadata;
+}
+
+export interface ProcessGroupLite {
+  id: string;
+  display_name: string;
+}
+
+export interface MetadataExtractionPath {
+  key: string;
+  path: string;
 }
 
 export interface ProcessModel {
@@ -47,6 +108,8 @@ export interface ProcessModel {
   display_name: string;
   primary_file_name: string;
   files: ProcessFile[];
+  parent_groups?: ProcessGroupLite[];
+  metadata_extraction_paths?: MetadataExtractionPath[];
 }
 
 export interface ProcessGroup {
@@ -55,10 +118,19 @@ export interface ProcessGroup {
   description?: string | null;
   process_models?: ProcessModel[];
   process_groups?: ProcessGroup[];
+  parent_groups?: ProcessGroupLite[];
 }
 
+export interface HotCrumbItemObject {
+  entityToExplode: ProcessModel | ProcessGroup | string;
+  entityType: string;
+  linkLastItem?: boolean;
+}
+
+export type HotCrumbItemArray = [displayValue: string, url?: string];
+
 // tuple of display value and URL
-export type HotCrumbItem = [displayValue: string, url?: string];
+export type HotCrumbItem = HotCrumbItemArray | HotCrumbItemObject;
 
 export interface ErrorForDisplay {
   message: string;

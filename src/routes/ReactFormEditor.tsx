@@ -6,7 +6,7 @@ import { Button, Modal } from '@carbon/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-import { modifyProcessModelPath, unModifyProcessModelPath } from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessFile } from '../interfaces';
 
 // NOTE: This is mostly the same as ProcessModelEditDiagram and if we go this route could
@@ -38,7 +38,7 @@ export default function ReactFormEditor() {
 
   const editorDefaultLanguage = fileExtension === 'md' ? 'markdown' : 'json';
 
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
 
@@ -156,14 +156,11 @@ export default function ReactFormEditor() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${unModifyProcessModelPath(
-                params.process_model_id || ''
-              )}`,
-              `process_model:${unModifyProcessModelPath(
-                params.process_model_id || ''
-              )}:link`,
-            ],
+            {
+              entityToExplode: params.process_model_id || '',
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
             [processModelFileName],
           ]}
         />
@@ -190,6 +187,7 @@ export default function ReactFormEditor() {
         )}
         {params.file_name ? (
           <ButtonWithConfirmation
+            data-qa="delete-process-model-file"
             description={`Delete file ${params.file_name}?`}
             onConfirmation={deleteFile}
             buttonLabel="Delete"

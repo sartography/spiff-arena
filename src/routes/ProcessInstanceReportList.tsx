@@ -2,11 +2,21 @@ import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
 import { useParams, Link } from 'react-router-dom';
+import { Can } from '@casl/react';
 import HttpService from '../services/HttpService';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { PermissionsToCheck } from '../interfaces';
+import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessInstanceReportList() {
   const params = useParams();
   const [processInstanceReports, setProcessInstanceReports] = useState([]);
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processInstanceReportListPath]: ['POST'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
     HttpService.makeCallToBackend({
@@ -45,9 +55,11 @@ export default function ProcessInstanceReportList() {
   const headerStuff = (
     <>
       <h1>Process Instance Perspectives</h1>
-      <Button href="/admin/process-instances/reports/new">
-        Add a process instance perspective
-      </Button>
+      <Can I="POST" a={targetUris.processInstanceListPath} ability={ability}>
+        <Button href="/admin/process-instances/reports/new">
+          Add a process instance perspective
+        </Button>
+      </Can>
     </>
   );
   if (processInstanceReports?.length > 0) {

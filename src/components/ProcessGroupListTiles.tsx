@@ -10,7 +10,10 @@ import {
 } from '@carbon/react';
 import HttpService from '../services/HttpService';
 import { ProcessGroup } from '../interfaces';
-import { modifyProcessModelPath, truncateString } from '../helpers';
+import {
+  modifyProcessIdentifierForPathParam,
+  truncateString,
+} from '../helpers';
 
 type OwnProps = {
   processGroup?: ProcessGroup;
@@ -51,9 +54,11 @@ export default function ProcessGroupListTiles({
       displayText = (processGroups || []).map((row: ProcessGroup) => {
         return (
           <ClickableTile
-            id="tile-1"
+            id={`process-group-tile-${row.id}`}
             className="tile-process-group"
-            href={`/admin/process-groups/${modifyProcessModelPath(row.id)}`}
+            href={`/admin/process-groups/${modifyProcessIdentifierForPathParam(
+              row.id
+            )}`}
           >
             <div className="tile-process-group-content-container">
               <ArrowRight />
@@ -61,7 +66,7 @@ export default function ProcessGroupListTiles({
                 {row.display_name}
               </div>
               <p className="tile-description">
-                {truncateString(row.description || '', 25)}
+                {truncateString(row.description || '', 100)}
               </p>
               <p className="tile-process-group-children-count tile-pin-bottom">
                 Total Sub Items: {processGroupDirectChildrenCount(row)}

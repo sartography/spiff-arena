@@ -1,10 +1,20 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Button,
+  ButtonSet,
+  Form,
+  Stack,
+  TextInput,
+  Grid,
+  Column,
+  // @ts-ignore
+} from '@carbon/react';
 // @ts-ignore
-import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import { modifyProcessModelPath, slugifyString } from '../helpers';
+import { AddAlt, TrashCan } from '@carbon/icons-react';
+import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
 import HttpService from '../services/HttpService';
-import { ProcessModel } from '../interfaces';
+import { MetadataExtractionPath, ProcessModel } from '../interfaces';
 
 type OwnProps = {
   mode: string;
@@ -23,13 +33,13 @@ export default function ProcessModelForm({
   const [idHasBeenUpdatedByUser, setIdHasBeenUpdatedByUser] =
     useState<boolean>(false);
   const [displayNameInvalid, setDisplayNameInvalid] = useState<boolean>(false);
+  useState<boolean>(false);
   const navigate = useNavigate();
 
   const navigateToProcessModel = (result: ProcessModel) => {
     if ('id' in result) {
-      const modifiedProcessModelPathFromResult = modifyProcessModelPath(
-        result.id
-      );
+      const modifiedProcessModelPathFromResult =
+        modifyProcessIdentifierForPathParam(result.id);
       navigate(`/admin/process-models/${modifiedProcessModelPathFromResult}`);
     }
   };
@@ -52,14 +62,20 @@ export default function ProcessModelForm({
     if (hasErrors) {
       return;
     }
-    const path = `/process-models/${processGroupId}`;
+    let path = `/process-models/${modifyProcessIdentifierForPathParam(
+      processGroupId || ''
+    )}`;
     let httpMethod = 'POST';
     if (mode === 'edit') {
       httpMethod = 'PUT';
+      path = `/process-models/${modifyProcessIdentifierForPathParam(
+        processModel.id
+      )}`;
     }
     const postBody = {
       display_name: processModel.display_name,
       description: processModel.description,
+      metadata_extraction_paths: processModel.metadata_extraction_paths,
     };
     if (mode === 'new') {
       Object.assign(postBody, {
@@ -83,6 +99,80 @@ export default function ProcessModelForm({
     setProcessModel(processModelToCopy);
   };
 
+  const metadataExtractionPathForm = (
+    index: number,
+    metadataExtractionPath: MetadataExtractionPath
+  ) => {
+    return (
+      <Grid>
+        <Column md={3} lg={7} sm={1}>
+          <TextInput
+            id={`process-model-metadata-extraction-path-key-${index}`}
+            labelText="Extraction Key"
+            value={metadataExtractionPath.key}
+            onChange={(event: any) => {
+              const cep: MetadataExtractionPath[] =
+                processModel.metadata_extraction_paths || [];
+              const newMeta = { ...metadataExtractionPath };
+              newMeta.key = event.target.value;
+              cep[index] = newMeta;
+              updateProcessModel({ metadata_extraction_paths: cep });
+            }}
+          />
+        </Column>
+        <Column md={4} lg={8} sm={2}>
+          <TextInput
+            id={`process-model-metadata-extraction-path-${index}`}
+            labelText="Extraction Path"
+            value={metadataExtractionPath.path}
+            onChange={(event: any) => {
+              const cep: MetadataExtractionPath[] =
+                processModel.metadata_extraction_paths || [];
+              const newMeta = { ...metadataExtractionPath };
+              newMeta.path = event.target.value;
+              cep[index] = newMeta;
+              updateProcessModel({ metadata_extraction_paths: cep });
+            }}
+          />
+        </Column>
+        <Column md={1} lg={1} sm={1}>
+          <Button
+            kind="ghost"
+            renderIcon={TrashCan}
+            iconDescription="Remove Key"
+            hasIconOnly
+            size="lg"
+            className="with-extra-top-margin"
+            onClick={() => {
+              const cep: MetadataExtractionPath[] =
+                processModel.metadata_extraction_paths || [];
+              cep.splice(index, 1);
+              updateProcessModel({ metadata_extraction_paths: cep });
+            }}
+          />
+        </Column>
+      </Grid>
+    );
+  };
+
+  const metadataExtractionPathFormArea = () => {
+    if (processModel.metadata_extraction_paths) {
+      return processModel.metadata_extraction_paths.map(
+        (metadataExtractionPath: MetadataExtractionPath, index: number) => {
+          return metadataExtractionPathForm(index, metadataExtractionPath);
+        }
+      );
+    }
+    return null;
+  };
+
+  const addBlankMetadataExtractionPath = () => {
+    const cep: MetadataExtractionPath[] =
+      processModel.metadata_extraction_paths || [];
+    cep.push({ key: '', path: '' });
+    updateProcessModel({ metadata_extraction_paths: cep });
+  };
+
   const onDisplayNameChanged = (newDisplayName: any) => {
     setDisplayNameInvalid(false);
     const updateDict = { display_name: newDisplayName };
@@ -104,7 +194,6 @@ export default function ProcessModelForm({
         onChange={(event: any) => {
           onDisplayNameChanged(event.target.value);
         }}
-        onBlur={(event: any) => console.log('event', event)}
       />,
     ];
 
@@ -139,6 +228,38 @@ export default function ProcessModelForm({
           updateProcessModel({ description: event.target.value })
         }
       />
+    );
+
+    textInputs.push(<h2>Metadata Extractions</h2>);
+    textInputs.push(
+      <Grid>
+        <Column md={8} lg={16} sm={4}>
+          <p className="data-table-description">
+            You can provide one or more metadata extractions to pull data from
+            your process instances to provide quick access in searches and
+            perspectives.
+          </p>
+        </Column>
+      </Grid>
+    );
+    textInputs.push(<>{metadataExtractionPathFormArea()}</>);
+    textInputs.push(
+      <Grid>
+        <Column md={4} lg={8} sm={2}>
+          <Button
+            data-qa="add-metadata-extraction-path-button"
+            renderIcon={AddAlt}
+            className="button-white-background"
+            kind=""
+            size="sm"
+            onClick={() => {
+              addBlankMetadataExtractionPath();
+            }}
+          >
+            Add Metadata Extraction Path
+          </Button>
+        </Column>
+      </Grid>
     );
 
     return textInputs;

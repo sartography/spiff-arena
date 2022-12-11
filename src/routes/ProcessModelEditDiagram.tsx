@@ -17,7 +17,7 @@ import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ErrorContext from '../contexts/ErrorContext';
-import { makeid, modifyProcessModelPath } from '../helpers';
+import { makeid, modifyProcessIdentifierForPathParam } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
   ProcessFile,
@@ -94,7 +94,7 @@ export default function ProcessModelEditDiagram() {
   const [bpmnXmlForDiagramRendering, setBpmnXmlForDiagramRendering] =
     useState(null);
 
-  const modifiedProcessModelId = modifyProcessModelPath(
+  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     (params as any).process_model_id
   );
 
@@ -283,7 +283,7 @@ export default function ProcessModelEditDiagram() {
 
   const onServiceTasksRequested = (event: any) => {
     HttpService.makeCallToBackend({
-      path: `/service_tasks`,
+      path: `/service-tasks`,
       successCallback: makeApiHandler(event),
     });
   };
@@ -735,7 +735,7 @@ export default function ProcessModelEditDiagram() {
     if (processModel) {
       const files = processModel.files.filter((f) => f.type === type);
       files.some((file) => {
-        if (file.references.some((ref) => ref.id === id)) {
+        if (file.references.some((ref) => ref.identifier === id)) {
           matchFile = file;
           return true;
         }
@@ -753,7 +753,7 @@ export default function ProcessModelEditDiagram() {
       const path = generatePath(
         '/admin/process-models/:process_model_path/files/:file_name',
         {
-          process_model_path: modifyProcessModelPath(
+          process_model_path: modifyProcessIdentifierForPathParam(
             processRef.process_model_id
           ),
           file_name: processRef.file_name,
@@ -844,10 +844,11 @@ export default function ProcessModelEditDiagram() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${processModel.id}`,
-              `process_model:${processModel.id}:link`,
-            ],
+            {
+              entityToExplode: processModel,
+              entityType: 'process-model',
+              linkLastItem: true,
+            },
             [processModelFileName],
           ]}
         />

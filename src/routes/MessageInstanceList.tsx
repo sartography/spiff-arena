@@ -1,22 +1,28 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
-import { Table } from '@carbon/react';
+import { ErrorOutline } from '@carbon/icons-react';
+// @ts-ignore
+import { Table, Modal, Button } from '@carbon/react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
-  convertSecondsToFormattedDateString,
+  convertSecondsToFormattedDateTime,
   getPageInfoFromSearchParams,
-  modifyProcessModelPath,
-  unModifyProcessModelPath,
+  modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import HttpService from '../services/HttpService';
+import { FormatProcessModelDisplayName } from '../components/MiniComponents';
+import { MessageInstance } from '../interfaces';
 
 export default function MessageInstanceList() {
   const params = useParams();
   const [searchParams] = useSearchParams();
   const [messageIntances, setMessageInstances] = useState([]);
   const [pagination, setPagination] = useState(null);
+
+  const [messageInstanceForModal, setMessageInstanceForModal] =
+    useState<MessageInstance | null>(null);
 
   useEffect(() => {
     const setMessageInstanceListFromResult = (result: any) => {
@@ -36,41 +42,89 @@ export default function MessageInstanceList() {
     });
   }, [searchParams, params]);
 
-  const buildTable = () => {
-    // return null;
-    const rows = messageIntances.map((row) => {
-      const rowToUse = row as any;
+  const handleCorrelationDisplayClose = () => {
+    setMessageInstanceForModal(null);
+  };
+
+  const correlationsDisplayModal = () => {
+    if (messageInstanceForModal) {
+      let failureCausePre = null;
+      if (messageInstanceForModal.failure_cause) {
+        failureCausePre = (
+          <>
+            <p className="failure-string">
+              {messageInstanceForModal.failure_cause}
+            </p>
+            <br />
+          </>
+        );
+      }
       return (
-        <tr key={rowToUse.id}>
-          <td>{rowToUse.id}</td>
-          <td>
-            <Link
-              data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifyProcessModelPath(
-                rowToUse.process_model_identifier
-              )}`}
-            >
-              {rowToUse.process_model_identifier}
-            </Link>
-          </td>
+        <Modal
+          open={!!messageInstanceForModal}
+          passiveModal
+          onRequestClose={handleCorrelationDisplayClose}
+          modalHeading={`Message ${messageInstanceForModal.id} (${messageInstanceForModal.message_identifier}) ${messageInstanceForModal.message_type} data:`}
+          modalLabel="Details"
+        >
+          {failureCausePre}
+          <p>Correlations:</p>
+          <pre>
+            {JSON.stringify(
+              messageInstanceForModal.message_correlations,
+              null,
+              2
+            )}
+          </pre>
+        </Modal>
+      );
+    }
+    return null;
+  };
+
+  const buildTable = () => {
+    const rows = messageIntances.map((row: MessageInstance) => {
+      let errorIcon = null;
+      let errorTitle = null;
+      if (row.failure_cause) {
+        errorTitle = 'Instance has an error';
+        errorIcon = (
+          <>
+            &nbsp;
+            <ErrorOutline className="red-icon" />
+          </>
+        );
+      }
+      return (
+        <tr key={row.id}>
+          <td>{row.id}</td>
+          <td>{FormatProcessModelDisplayName(row)}</td>
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-models/${modifyProcessModelPath(
-                rowToUse.process_model_identifier
-              )}/process-instances/${rowToUse.process_instance_id}`}
+              to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
+                row.process_model_identifier
+              )}/${row.process_instance_id}`}
             >
-              {rowToUse.process_instance_id}
+              {row.process_instance_id}
             </Link>
           </td>
-          <td>{rowToUse.message_identifier}</td>
-          <td>{rowToUse.message_type}</td>
-          <td>{rowToUse.failure_cause || '-'}</td>
-          <td>{rowToUse.status}</td>
+          <td>{row.message_identifier}</td>
+          <td>{row.message_type}</td>
           <td>
-            {convertSecondsToFormattedDateString(
-              rowToUse.created_at_in_seconds
-            )}
+            <Button
+              kind="ghost"
+              className="button-link"
+              onClick={() => setMessageInstanceForModal(row)}
+              title={errorTitle}
+            >
+              View
+              {errorIcon}
+            </Button>
+          </td>
+          <td>{row.status}</td>
+          <td>
+            {convertSecondsToFormattedDateTime(row.created_at_in_seconds)}
           </td>
         </tr>
       );
@@ -79,12 +133,12 @@ export default function MessageInstanceList() {
       <Table striped bordered>
         <thead>
           <tr>
-            <th>Instance Id</th>
-            <th>Process Model</th>
+            <th>Id</th>
+            <th>Process</th>
             <th>Process Instance</th>
-            <th>Message Model</th>
+            <th>Name</th>
             <th>Type</th>
-            <th>Failure Cause</th>
+            <th>Details</th>
             <th>Status</th>
             <th>Created At</th>
           </tr>
@@ -102,17 +156,16 @@ export default function MessageInstanceList() {
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
-            [
-              `Process Model: ${params.process_model_id}`,
-              `process_model:${unModifyProcessModelPath(
-                searchParams.get('process_model_id') || ''
-              )}:link`,
-            ],
+            {
+              entityToExplode: searchParams.get('process_model_id') || '',
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
             [
               `Process Instance: ${searchParams.get('process_instance_id')}`,
-              `/admin/process-models/${searchParams.get(
+              `/admin/process-instances/${searchParams.get(
                 'process_model_id'
-              )}/process-instances/${searchParams.get('process_instance_id')}`,
+              )}/${searchParams.get('process_instance_id')}`,
             ],
             ['Messages'],
           ]}
@@ -123,6 +176,7 @@ export default function MessageInstanceList() {
       <>
         {breadcrumbElement}
         <h1>Messages</h1>
+        {correlationsDisplayModal()}
         <PaginationForTable
           page={page}
           perPage={perPage}
