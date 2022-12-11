@@ -1708,6 +1708,8 @@ def get_file_from_request() -> Any:
     return request_file
 
 
+# process_model_id uses forward slashes on all OSes
+# this seems to return an object where process_model.id has backslashes on windows
 def get_process_model(process_model_id: str) -> ProcessModelInfo:
     """Get_process_model."""
     process_model = None
