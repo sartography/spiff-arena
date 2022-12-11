@@ -2565,7 +2565,7 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_process_model_publish."""
         bpmn_root = FileSystemService.root_path()
-        shell_command = ["git", "init", bpmn_root]
+        shell_command = ["git", "init", "--initial-branch=main", bpmn_root]
         output = GitService.run_shell_command_to_get_stdout(shell_command)
         assert output == f"Initialized empty Git repository in {bpmn_root}/.git/\n"
         with FileSystemService.cd(bpmn_root):
