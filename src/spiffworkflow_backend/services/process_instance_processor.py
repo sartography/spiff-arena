@@ -81,6 +81,9 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
@@ -96,6 +99,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
+
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
@@ -178,9 +182,14 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         )
         return Script.generate_augmented_list(script_attributes_context)
 
-    def evaluate(self, task: SpiffTask, expression: str) -> Any:
+    def evaluate(
+        self,
+        task: SpiffTask,
+        expression: str,
+        external_methods: Optional[dict[str, Any]] = None,
+    ) -> Any:
         """Evaluate."""
-        return self._evaluate(expression, task.data, task)
+        return self._evaluate(expression, task.data, task, external_methods)
 
     def _evaluate(
         self,
@@ -349,7 +358,9 @@ class ProcessInstanceProcessor:
                     check_sub_specs(test_spec, 5)
 
         self.process_model_identifier = process_instance_model.process_model_identifier
-        # self.process_group_identifier = process_instance_model.process_group_identifier
+        self.process_model_display_name = (
+            process_instance_model.process_model_display_name
+        )
 
         try:
             self.bpmn_process_instance = self.__get_bpmn_process_instance(
@@ -359,20 +370,7 @@ class ProcessInstanceProcessor:
                 subprocesses=subprocesses,
             )
             self.bpmn_process_instance.script_engine = self._script_engine
-
             self.add_user_info_to_process_instance(self.bpmn_process_instance)
-
-            if self.PROCESS_INSTANCE_ID_KEY not in self.bpmn_process_instance.data:
-                if not process_instance_model.id:
-                    db.session.add(process_instance_model)
-                    # If the model is new, and has no id, save it, write it into the process_instance model
-                    # and save it again.  In this way, the workflow process is always aware of the
-                    # database model to which it is associated, and scripts running within the model
-                    # can then load data as needed.
-                self.bpmn_process_instance.data[
-                    ProcessInstanceProcessor.PROCESS_INSTANCE_ID_KEY
-                ] = process_instance_model.id
-                self.save()
 
         except MissingSpecError as ke:
             raise ApiError(
@@ -387,7 +385,7 @@ class ProcessInstanceProcessor:
         cls, process_model_identifier: str
     ) -> Tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
         """Get_process_model_and_subprocesses."""
-        process_model_info = ProcessModelService().get_process_model(
+        process_model_info = ProcessModelService.get_process_model(
             process_model_identifier
         )
         if process_model_info is None:
@@ -553,13 +551,8 @@ class ProcessInstanceProcessor:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
-        task_json = "{}"
-        if "tasks" in wf_json:
-            task_json = json.dumps(wf_json["tasks"])
+        task_json = wf_json["tasks"]
 
-        # TODO want to just save the tasks, something wasn't immediately working
-        # so after the flow works with the full wf_json revisit this
-        task_json = wf_json
         return {
             "process_instance_id": self.process_instance_model.id,
             "spiff_step": self.process_instance_model.spiff_step or 1,
@@ -587,6 +580,41 @@ class ProcessInstanceProcessor:
         db.session.add(details_model)
         db.session.commit()
 
+    def extract_metadata(self, process_model_info: ProcessModelInfo) -> None:
+        """Extract_metadata."""
+        metadata_extraction_paths = process_model_info.metadata_extraction_paths
+        if metadata_extraction_paths is None:
+            return
+        if len(metadata_extraction_paths) <= 0:
+            return
+
+        current_data = self.get_current_data()
+        for metadata_extraction_path in metadata_extraction_paths:
+            key = metadata_extraction_path["key"]
+            path = metadata_extraction_path["path"]
+            path_segments = path.split(".")
+            data_for_key = current_data
+            for path_segment in path_segments:
+                if path_segment in data_for_key:
+                    data_for_key = data_for_key[path_segment]
+                else:
+                    data_for_key = None  # type: ignore
+                    break
+
+            if data_for_key is not None:
+                pim = ProcessInstanceMetadataModel.query.filter_by(
+                    process_instance_id=self.process_instance_model.id,
+                    key=key,
+                ).first()
+                if pim is None:
+                    pim = ProcessInstanceMetadataModel(
+                        process_instance_id=self.process_instance_model.id,
+                        key=key,
+                    )
+                pim.value = data_for_key
+                db.session.add(pim)
+                db.session.commit()
+
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
@@ -606,17 +634,22 @@ class ProcessInstanceProcessor:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_model.end_in_seconds = round(time.time())
 
-        active_tasks = ActiveTaskModel.query.filter_by(
-            process_instance_id=self.process_instance_model.id
-        ).all()
-        if len(active_tasks) > 0:
-            for at in active_tasks:
-                db.session.delete(at)
-
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+        active_tasks = ActiveTaskModel.query.filter_by(
+            process_instance_id=self.process_instance_model.id
+        ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
+        process_model_display_name = ""
+        process_model_info = self.process_model_service.get_process_model(
+            self.process_instance_model.process_model_identifier
+        )
+        if process_model_info is not None:
+            process_model_display_name = process_model_info.display_name
+
+        self.extract_metadata(process_model_info)
+
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks
             task_spec = ready_or_waiting_task.task_spec
@@ -635,34 +668,41 @@ class ProcessInstanceProcessor:
                     if "formUiSchemaFilename" in properties:
                         ui_form_file_name = properties["formUiSchemaFilename"]
 
-                process_model_display_name = ""
-                process_model_info = self.process_model_service.get_process_model(
-                    self.process_instance_model.process_model_identifier
-                )
-                if process_model_info is not None:
-                    process_model_display_name = process_model_info.display_name
+                active_task = None
+                for at in active_tasks:
+                    if at.task_id == str(ready_or_waiting_task.id):
+                        active_task = at
+                        active_tasks.remove(at)
 
-                active_task = ActiveTaskModel(
-                    process_instance_id=self.process_instance_model.id,
-                    process_model_display_name=process_model_display_name,
-                    form_file_name=form_file_name,
-                    ui_form_file_name=ui_form_file_name,
-                    task_id=str(ready_or_waiting_task.id),
-                    task_name=ready_or_waiting_task.task_spec.name,
-                    task_title=ready_or_waiting_task.task_spec.description,
-                    task_type=ready_or_waiting_task.task_spec.__class__.__name__,
-                    task_status=ready_or_waiting_task.get_state_name(),
-                    lane_assignment_id=potential_owner_hash["lane_assignment_id"],
-                )
-                db.session.add(active_task)
-                db.session.commit()
-
-                for potential_owner_id in potential_owner_hash["potential_owner_ids"]:
-                    active_task_user = ActiveTaskUserModel(
-                        user_id=potential_owner_id, active_task_id=active_task.id
+                if active_task is None:
+                    active_task = ActiveTaskModel(
+                        process_instance_id=self.process_instance_model.id,
+                        process_model_display_name=process_model_display_name,
+                        form_file_name=form_file_name,
+                        ui_form_file_name=ui_form_file_name,
+                        task_id=str(ready_or_waiting_task.id),
+                        task_name=ready_or_waiting_task.task_spec.name,
+                        task_title=ready_or_waiting_task.task_spec.description,
+                        task_type=ready_or_waiting_task.task_spec.__class__.__name__,
+                        task_status=ready_or_waiting_task.get_state_name(),
+                        lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                     )
-                    db.session.add(active_task_user)
-                db.session.commit()
+                    db.session.add(active_task)
+                    db.session.commit()
+
+                    for potential_owner_id in potential_owner_hash[
+                        "potential_owner_ids"
+                    ]:
+                        active_task_user = ActiveTaskUserModel(
+                            user_id=potential_owner_id, active_task_id=active_task.id
+                        )
+                        db.session.add(active_task_user)
+                    db.session.commit()
+
+        if len(active_tasks) > 0:
+            for at in active_tasks:
+                db.session.delete(at)
+            db.session.commit()
 
     @staticmethod
     def get_parser() -> MyCustomParser:
@@ -675,7 +715,7 @@ class ProcessInstanceProcessor:
         bpmn_process_identifier: str,
     ) -> Optional[str]:
         """Backfill_missing_spec_reference_records."""
-        process_models = ProcessModelService().get_process_models()
+        process_models = ProcessModelService.get_process_models(recursive=True)
         for process_model in process_models:
             try:
                 refs = SpecFileService.reference_map(
@@ -1152,8 +1192,8 @@ class ProcessInstanceProcessor:
     def get_current_data(self) -> dict[str, Any]:
         """Get the current data for the process.
 
-        Return either most recent task data or the process data
-        if the process instance is complete
+        Return either the most recent task data or--if the process instance is complete--
+        the process data.
         """
         if self.process_instance_model.status == "complete":
             return self.get_data()

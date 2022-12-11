@@ -1,5 +1,9 @@
 """Authorization_service."""
+import inspect
 import re
+from hashlib import sha256
+from hmac import compare_digest
+from hmac import HMAC
 from typing import Optional
 from typing import Union
 
@@ -8,6 +12,7 @@ import yaml
 from flask import current_app
 from flask import g
 from flask import request
+from flask import scaffold
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -23,10 +28,8 @@ from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.group_service import GroupService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -44,6 +47,27 @@ class UserDoesNotHaveAccessToTaskError(Exception):
 
 class AuthorizationService:
     """Determine whether a user has permission to perform their request."""
+
+    # https://stackoverflow.com/a/71320673/6090676
+    @classmethod
+    def verify_sha256_token(cls, auth_header: Optional[str]) -> None:
+        """Verify_sha256_token."""
+        if auth_header is None:
+            raise ApiError(
+                error_code="unauthorized",
+                message="",
+                status_code=403,
+            )
+
+        received_sign = auth_header.split("sha256=")[-1].strip()
+        secret = current_app.config["GITHUB_WEBHOOK_SECRET"].encode()
+        expected_sign = HMAC(key=secret, msg=request.data, digestmod=sha256).hexdigest()
+        if not compare_digest(received_sign, expected_sign):
+            raise ApiError(
+                error_code="unauthorized",
+                message="",
+                status_code=403,
+            )
 
     @classmethod
     def has_permission(
@@ -232,7 +256,11 @@ class AuthorizationService:
     def should_disable_auth_for_request(cls) -> bool:
         """Should_disable_auth_for_request."""
         swagger_functions = ["get_json_spec"]
-        authentication_exclusion_list = ["status", "authentication_callback"]
+        authentication_exclusion_list = [
+            "status",
+            "authentication_callback",
+            "github_webhook_receive",
+        ]
         if request.method == "OPTIONS":
             return True
 
@@ -244,6 +272,7 @@ class AuthorizationService:
             return True
 
         api_view_function = current_app.view_functions[request.endpoint]
+        module = inspect.getmodule(api_view_function)
         if (
             api_view_function
             and api_view_function.__name__.startswith("login")
@@ -251,6 +280,8 @@ class AuthorizationService:
             or api_view_function.__name__.startswith("console_ui_")
             or api_view_function.__name__ in authentication_exclusion_list
             or api_view_function.__name__ in swagger_functions
+            or module == openid_blueprint
+            or module == scaffold  # don't check permissions for static assets
         ):
             return True
 
@@ -393,25 +424,25 @@ class AuthorizationService:
 
     @staticmethod
     def assert_user_can_complete_spiff_task(
-        processor: ProcessInstanceProcessor,
+        process_instance_id: int,
         spiff_task: SpiffTask,
         user: UserModel,
     ) -> bool:
         """Assert_user_can_complete_spiff_task."""
         active_task = ActiveTaskModel.query.filter_by(
             task_name=spiff_task.task_spec.name,
-            process_instance_id=processor.process_instance_model.id,
+            process_instance_id=process_instance_id,
         ).first()
         if active_task is None:
             raise ActiveTaskNotFoundError(
                 f"Could find an active task with task name '{spiff_task.task_spec.name}'"
-                f" for process instance '{processor.process_instance_model.id}'"
+                f" for process instance '{process_instance_id}'"
             )
 
         if user not in active_task.potential_owners:
             raise UserDoesNotHaveAccessToTaskError(
                 f"User {user.username} does not have access to update task'{spiff_task.task_spec.name}'"
-                f" for process instance '{processor.process_instance_model.id}'"
+                f" for process instance '{process_instance_id}'"
             )
         return True
 

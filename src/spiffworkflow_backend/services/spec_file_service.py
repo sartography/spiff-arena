@@ -171,12 +171,11 @@ class SpecFileService(FileSystemService):
                 ref.is_primary = True
 
             if ref.is_primary:
-                ProcessModelService().update_process_model(
+                ProcessModelService.update_process_model(
                     process_model_info,
                     {
                         "primary_process_id": ref.identifier,
                         "primary_file_name": file_name,
-                        "is_review": ref.has_lanes,
                     },
                 )
             SpecFileService.update_caches(ref)
@@ -322,7 +321,6 @@ class SpecFileService(FileSystemService):
                 message_triggerable_process_model = MessageTriggerableProcessModel(
                     message_model_id=message_model.id,
                     process_model_identifier=ref.process_model_id,
-                    process_group_identifier="process_group_identifier",
                 )
                 db.session.add(message_triggerable_process_model)
                 db.session.commit()
@@ -330,8 +328,6 @@ class SpecFileService(FileSystemService):
                 if (
                     message_triggerable_process_model.process_model_identifier
                     != ref.process_model_id
-                    # or message_triggerable_process_model.process_group_identifier
-                    # != process_model_info.process_group_id
                 ):
                     raise ValidationException(
                         f"Message model is already used to start process model {ref.process_model_id}"

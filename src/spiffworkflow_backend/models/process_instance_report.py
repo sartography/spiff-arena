@@ -26,6 +26,10 @@ from spiffworkflow_backend.services.process_instance_processor import (
 ReportMetadata = dict[str, Any]
 
 
+class ProcessInstanceReportAlreadyExistsError(Exception):
+    """ProcessInstanceReportAlreadyExistsError."""
+
+
 class ProcessInstanceReportResult(TypedDict):
     """ProcessInstanceReportResult."""
 
@@ -63,7 +67,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         ),
     )
 
-    id = db.Column(db.Integer, primary_key=True)
+    id: int = db.Column(db.Integer, primary_key=True)
     identifier: str = db.Column(db.String(50), nullable=False, index=True)
     report_metadata: dict = deferred(db.Column(db.JSON))  # type: ignore
     created_by_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)
@@ -72,41 +76,15 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds = db.Column(db.Integer)
 
     @classmethod
-    def default_report(cls, user: UserModel) -> ProcessInstanceReportModel:
-        """Default_report."""
-        identifier = "default"
-        process_instance_report = ProcessInstanceReportModel.query.filter_by(
-            identifier=identifier, created_by_id=user.id
-        ).first()
-
-        # TODO replace with system report that is loaded on launch (or similar)
-        if process_instance_report is None:
-            report_metadata = {
-                "columns": [
-                    {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_model_identifier",
-                        "accessor": "process_model_identifier",
-                    },
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "status", "accessor": "status"},
-                ],
-            }
-
-            process_instance_report = cls(
-                identifier=identifier,
-                created_by_id=user.id,
-                report_metadata=report_metadata,
-            )
-
-        return process_instance_report  # type: ignore
+    def default_order_by(cls) -> list[str]:
+        """Default_order_by."""
+        return ["-start_in_seconds", "-id"]
 
     @classmethod
     def add_fixtures(cls) -> None:
         """Add_fixtures."""
         try:
-            # process_model = ProcessModelService().get_process_model(
+            # process_model = ProcessModelService.get_process_model(
             #     process_model_id="sartography-admin/ticket"
             # )
             user = UserModel.query.first()
@@ -151,21 +129,27 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         identifier: str,
         user: UserModel,
         report_metadata: ReportMetadata,
-    ) -> None:
+    ) -> ProcessInstanceReportModel:
         """Make_fixture_report."""
         process_instance_report = ProcessInstanceReportModel.query.filter_by(
             identifier=identifier,
             created_by_id=user.id,
         ).first()
 
-        if process_instance_report is None:
-            process_instance_report = cls(
-                identifier=identifier,
-                created_by_id=user.id,
-                report_metadata=report_metadata,
+        if process_instance_report is not None:
+            raise ProcessInstanceReportAlreadyExistsError(
+                f"Process instance report with identifier already exists: {identifier}"
             )
-            db.session.add(process_instance_report)
-            db.session.commit()
+
+        process_instance_report = cls(
+            identifier=identifier,
+            created_by_id=user.id,
+            report_metadata=report_metadata,
+        )
+        db.session.add(process_instance_report)
+        db.session.commit()
+
+        return process_instance_report  # type: ignore
 
     @classmethod
     def ticket_for_month_report(cls) -> dict:
@@ -235,18 +219,8 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         user: UserModel,
     ) -> ProcessInstanceReportModel:
         """Create_with_attributes."""
-        # <<<<<<< HEAD
-        #         process_model = ProcessModelService().get_process_model(
-        #             process_model_id=f"{process_model_identifier}"
-        #         )
-        #         process_instance_report = cls(
-        #             identifier=identifier,
-        #             process_group_identifier="process_model.process_group_id",
-        #             process_model_identifier=process_model.id,
-        # =======
         process_instance_report = cls(
             identifier=identifier,
-            # >>>>>>> main
             created_by_id=user.id,
             report_metadata=report_metadata,
         )

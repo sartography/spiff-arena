@@ -188,7 +188,7 @@ class TestSpecFileService(BaseTest):
         #     ,
         #     process_model_source_directory="call_activity_nested",
         # )
-        process_model_info = ProcessModelService().get_process_model(
+        process_model_info = ProcessModelService.get_process_model(
             process_model_identifier
         )
         files = SpecFileService.get_files(process_model_info)

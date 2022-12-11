@@ -1,7 +1,6 @@
 """Process_instance."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 from typing import cast
 
@@ -18,10 +17,13 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskSchema
 from spiffworkflow_backend.models.user import UserModel
+
+
+class ProcessInstanceNotFoundError(Exception):
+    """ProcessInstanceNotFoundError."""
 
 
 class NavigationItemSchema(Schema):
@@ -74,7 +76,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_model_identifier: str = db.Column(
         db.String(255), nullable=False, index=True
     )
-    process_group_identifier: str = db.Column(db.String(50), nullable=False, index=True)
+    process_model_display_name: str = db.Column(
+        db.String(255), nullable=False, index=True
+    )
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
     process_initiator = relationship("UserModel")
 
@@ -89,7 +93,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer)
     status: str = db.Column(db.String(50))
 
-    bpmn_xml_file_contents: bytes | None = None
+    bpmn_xml_file_contents: str | None = None
     bpmn_version_control_type: str = db.Column(db.String(50))
     bpmn_version_control_identifier: str = db.Column(db.String(255))
     spiff_step: int = db.Column(db.Integer)
@@ -97,21 +101,19 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     @property
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
-        local_bpmn_xml_file_contents = ""
-        if self.bpmn_xml_file_contents:
-            local_bpmn_xml_file_contents = self.bpmn_xml_file_contents.decode("utf-8")
         return {
             "id": self.id,
             "process_model_identifier": self.process_model_identifier,
-            "process_group_identifier": self.process_group_identifier,
+            "process_model_display_name": self.process_model_display_name,
             "status": self.status,
             "start_in_seconds": self.start_in_seconds,
             "end_in_seconds": self.end_in_seconds,
             "process_initiator_id": self.process_initiator_id,
-            "bpmn_xml_file_contents": local_bpmn_xml_file_contents,
+            "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "spiff_step": self.spiff_step,
+            "username": self.process_initiator.username,
         }
 
     @property
@@ -140,7 +142,7 @@ class ProcessInstanceModelSchema(Schema):
         fields = [
             "id",
             "process_model_identifier",
-            "process_group_identifier",
+            "process_model_display_name",
             "process_initiator_id",
             "start_in_seconds",
             "end_in_seconds",
@@ -166,23 +168,18 @@ class ProcessInstanceApi:
         status: ProcessInstanceStatus,
         next_task: Task | None,
         process_model_identifier: str,
-        process_group_identifier: str,
+        process_model_display_name: str,
         completed_tasks: int,
         updated_at_in_seconds: int,
-        is_review: bool,
-        title: str,
     ) -> None:
         """__init__."""
         self.id = id
         self.status = status
         self.next_task = next_task  # The next task that requires user input.
-        #        self.navigation = navigation  fixme:  would be a hotness.
         self.process_model_identifier = process_model_identifier
-        self.process_group_identifier = process_group_identifier
+        self.process_model_display_name = process_model_display_name
         self.completed_tasks = completed_tasks
         self.updated_at_in_seconds = updated_at_in_seconds
-        self.title = title
-        self.is_review = is_review
 
 
 class ProcessInstanceApiSchema(Schema):
@@ -196,24 +193,15 @@ class ProcessInstanceApiSchema(Schema):
             "id",
             "status",
             "next_task",
-            "navigation",
             "process_model_identifier",
-            "process_group_identifier",
+            "process_model_display_name",
             "completed_tasks",
             "updated_at_in_seconds",
-            "is_review",
-            "title",
-            "study_id",
-            "state",
         ]
         unknown = INCLUDE
 
     status = EnumField(ProcessInstanceStatus)
     next_task = marshmallow.fields.Nested(TaskSchema, dump_only=True, required=False)
-    navigation = marshmallow.fields.List(
-        marshmallow.fields.Nested(NavigationItemSchema, dump_only=True)
-    )
-    state = marshmallow.fields.String(allow_none=True)
 
     @marshmallow.post_load
     def make_process_instance(
@@ -224,73 +212,11 @@ class ProcessInstanceApiSchema(Schema):
             "id",
             "status",
             "next_task",
-            "navigation",
             "process_model_identifier",
-            "process_group_identifier",
+            "process_model_display_name",
             "completed_tasks",
             "updated_at_in_seconds",
-            "is_review",
-            "title",
-            "study_id",
-            "state",
         ]
         filtered_fields = {key: data[key] for key in keys}
         filtered_fields["next_task"] = TaskSchema().make_task(data["next_task"])
         return ProcessInstanceApi(**filtered_fields)
-
-
-@dataclass
-class ProcessInstanceMetadata:
-    """ProcessInstanceMetadata."""
-
-    id: int
-    display_name: str | None = None
-    description: str | None = None
-    spec_version: str | None = None
-    state: str | None = None
-    status: str | None = None
-    completed_tasks: int | None = None
-    is_review: bool | None = None
-    state_message: str | None = None
-    process_model_identifier: str | None = None
-    process_group_id: str | None = None
-
-    @classmethod
-    def from_process_instance(
-        cls, process_instance: ProcessInstanceModel, process_model: ProcessModelInfo
-    ) -> ProcessInstanceMetadata:
-        """From_process_instance."""
-        instance = cls(
-            id=process_instance.id,
-            display_name=process_model.display_name,
-            description=process_model.description,
-            process_group_id=process_model.process_group,
-            state_message=process_instance.state_message,
-            status=process_instance.status,
-            completed_tasks=process_instance.completed_tasks,
-            is_review=process_model.is_review,
-            process_model_identifier=process_instance.process_model_identifier,
-        )
-        return instance
-
-
-class ProcessInstanceMetadataSchema(Schema):
-    """ProcessInstanceMetadataSchema."""
-
-    status = EnumField(ProcessInstanceStatus)
-
-    class Meta:
-        """Meta."""
-
-        model = ProcessInstanceMetadata
-        additional = [
-            "id",
-            "display_name",
-            "description",
-            "state",
-            "completed_tasks",
-            "process_group_id",
-            "is_review",
-            "state_message",
-        ]
-        unknown = INCLUDE

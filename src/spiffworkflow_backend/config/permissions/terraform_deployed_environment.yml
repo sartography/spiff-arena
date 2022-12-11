@@ -4,20 +4,18 @@ groups:
   admin:
     users:
       [
+        admin,
         jakub,
         kb,
         alex,
         dan,
         mike,
         jason,
-        amir,
+        j,
         jarrad,
         elizabeth,
         jon,
         natalia,
-        harmeet,
-        sasha,
-        manuchehr,
       ]
 
   Finance Team:
@@ -28,60 +26,157 @@ groups:
         dan,
         mike,
         jason,
+        j,
         amir,
         jarrad,
         elizabeth,
         jon,
         natalia,
         sasha,
+        fin,
+        fin1,
       ]
 
-  Project Lead:
+  demo:
     users:
       [
-        jakub,
-        alex,
-        dan,
-        mike,
-        jason,
-        jarrad,
-        elizabeth,
-        jon,
-        natalia,
+        core,
+        fin,
+        fin1,
+        harmeet,
+        sasha,
         manuchehr,
+        lead,
+        lead1
       ]
 
-  hr:
-    users: [manuchehr]
+  core-contributor:
+    users:
+      [
+        core,
+        harmeet,
+      ]
 
 permissions:
+  admin:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /*
+
   tasks-crud:
     groups: [everybody]
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/tasks/*
 
-  admin:
-    groups: [admin]
+  service-tasks:
+    groups: [everybody]
     users: []
-    allowed_permissions: [create, read, update, delete, list, instantiate]
-    uri: /*
+    allowed_permissions: [read]
+    uri: /v1.0/service-tasks
 
-  # TODO: all uris should really have the same structure
-  finance-admin-group:
-    groups: ["Finance Team"]
+
+  # read all for everybody
+  read-all-process-groups:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-groups/*
+  read-all-process-models:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-models/*
+  read-all-process-instance:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-instances/*
+  read-process-instance-reports:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-instances/reports/*
+  processes-read:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/processes
+
+  task-data-read:
+    groups: [demo]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/task-data/*
+
+
+  manage-procurement-admin:
+    groups: ["Project Lead"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/finance/*
+    uri: /v1.0/process-groups/manage-procurement:*
+  manage-procurement-admin-slash:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-groups/manage-procurement/*
+  manage-procurement-admin-models:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/manage-procurement:*
+  manage-procurement-admin-models-slash:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-models/manage-procurement/*
+  manage-procurement-admin-instances:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/manage-procurement:*
+  manage-procurement-admin-instances-slash:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/manage-procurement/*
 
   finance-admin:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/finance/*
+    uri: /v1.0/process-groups/manage-procurement:procurement:*
 
-  read-all:
-    groups: ["Finance Team", "Project Lead", hr, admin]
+  manage-revenue-streams-instantiate:
+    groups: ["core-contributor", "demo"]
     users: []
-    allowed_permissions: [read]
-    uri: /*
+    allowed_permissions: [create]
+    uri: /v1.0/process-models/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+  manage-revenue-streams-instances:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /v1.0/process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+
+  manage-procurement-invoice-instantiate:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:*
+  manage-procurement-invoice-instances:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
+
+  manage-procurement-instantiate:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/process-models/manage-procurement:vendor-lifecycle-management:*
+  manage-procurement-instances:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /v1.0/process-instances/manage-procurement:vendor-lifecycle-management:*

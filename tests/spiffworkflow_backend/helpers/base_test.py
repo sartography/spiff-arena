@@ -140,7 +140,7 @@ class BaseTest:
             process_group_path = os.path.abspath(
                 os.path.join(FileSystemService.root_path(), process_group_id)
             )
-            if ProcessModelService().is_group(process_group_path):
+            if ProcessModelService.is_group(process_group_path):
 
                 if exception_notification_addresses is None:
                     exception_notification_addresses = []
@@ -149,7 +149,6 @@ class BaseTest:
                     id=process_model_id,
                     display_name=process_model_display_name,
                     description=process_model_description,
-                    is_review=False,
                     primary_process_id=primary_process_id,
                     primary_file_name=primary_file_name,
                     fault_or_suspend_on_exception=fault_or_suspend_on_exception,
@@ -253,9 +252,20 @@ class BaseTest:
 
         There must be an existing process model to instantiate.
         """
+        if not ProcessModelService.is_model_identifier(test_process_model_id):
+            dirname = os.path.dirname(test_process_model_id)
+            if not ProcessModelService.is_group_identifier(dirname):
+                process_group = ProcessGroup(id=dirname, display_name=dirname)
+                ProcessModelService.add_process_group(process_group)
+            basename = os.path.basename(test_process_model_id)
+            load_test_spec(
+                process_model_id=test_process_model_id,
+                process_model_source_directory=basename,
+                bpmn_file_name=basename,
+            )
         modified_process_model_id = test_process_model_id.replace("/", ":")
         response = client.post(
-            f"/v1.0/process-models/{modified_process_model_id}/process-instances",
+            f"/v1.0/process-instances/{modified_process_model_id}",
             headers=headers,
         )
         assert response.status_code == 201
@@ -284,7 +294,7 @@ class BaseTest:
             status=status,
             process_initiator=user,
             process_model_identifier=process_model.id,
-            process_group_identifier="",
+            process_model_display_name=process_model.display_name,
             updated_at_in_seconds=round(time.time()),
             start_in_seconds=current_time - (3600 * 1),
             end_in_seconds=current_time - (3600 * 1 - 20),
@@ -347,3 +357,16 @@ class BaseTest:
             target_uri=target_uri,
         )
         assert has_permission is expected_result
+
+    def modify_process_identifier_for_path_param(self, identifier: str) -> str:
+        """Identifier."""
+        if "\\" in identifier:
+            raise Exception(f"Found backslash in identifier: {identifier}")
+
+        return identifier.replace("/", ":")
+
+    def un_modify_modified_process_identifier_for_path_param(
+        self, modified_identifier: str
+    ) -> str:
+        """Un_modify_modified_process_model_id."""
+        return modified_identifier.replace(":", "/")

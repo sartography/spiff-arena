@@ -30,7 +30,8 @@ class UserModel(SpiffworkflowBaseDBModel):
     __table_args__ = (db.UniqueConstraint("service", "service_id", name="service_key"),)
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), nullable=False, unique=True)
+    # server and service id must be unique, not username.
+    username = db.Column(db.String(255), nullable=False, unique=False)
     uid = db.Column(db.String(50), unique=True)
     service = db.Column(db.String(50), nullable=False, unique=False)
     service_id = db.Column(db.String(255), nullable=False, unique=False)
@@ -82,10 +83,6 @@ class UserModel(SpiffworkflowBaseDBModel):
             secret_key,
             algorithm="HS256",
         )
-
-    def is_admin(self) -> bool:
-        """Is_admin."""
-        return True
 
     # @classmethod
     # def from_open_id_user_info(cls, user_info: dict) -> Any:

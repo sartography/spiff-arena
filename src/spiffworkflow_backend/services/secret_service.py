@@ -19,15 +19,15 @@ from spiffworkflow_backend.models.secret_model import SecretModel
 class SecretService:
     """SecretService."""
 
-    def encrypt_key(self, plain_key: str) -> str:
-        """Encrypt_key."""
-        # flask_secret = current_app.secret_key
-        # print("encrypt_key")
-        ...
+    # def encrypt_key(self, plain_key: str) -> str:
+    #     """Encrypt_key."""
+    #     # flask_secret = current_app.secret_key
+    #     # print("encrypt_key")
+    #     ...
 
-    def decrypt_key(self, encrypted_key: str) -> str:
-        """Decrypt key."""
-        ...
+    # def decrypt_key(self, encrypted_key: str) -> str:
+    #     """Decrypt key."""
+    #     ...
 
     @staticmethod
     def add_secret(
@@ -65,7 +65,7 @@ class SecretService:
     def update_secret(
         key: str,
         value: str,
-        user_id: int,
+        user_id: Optional[int] = None,
         create_if_not_exists: Optional[bool] = False,
     ) -> None:
         """Does this pass pre commit?"""
@@ -79,6 +79,12 @@ class SecretService:
                 db.session.rollback()
                 raise e
         elif create_if_not_exists:
+            if user_id is None:
+                raise ApiError(
+                    error_code="update_secret_error_no_user_id",
+                    message=f"Cannot update secret with key: {key}. Missing user id.",
+                    status_code=404,
+                )
             SecretService.add_secret(key=key, value=value, user_id=user_id)
         else:
             raise ApiError(

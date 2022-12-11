@@ -117,7 +117,7 @@ class MessageService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Process_message_triggerable_process_model."""
-        process_instance_receive = ProcessInstanceService.create_process_instance(
+        process_instance_receive = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             message_triggerable_process_model.process_model_identifier,
             user,
         )

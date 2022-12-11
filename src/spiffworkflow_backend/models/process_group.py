@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import dataclasses
+import os
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
@@ -28,10 +29,11 @@ class ProcessGroup:
         default_factory=list[ProcessModelInfo]
     )
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
+    parent_groups: list[dict] | None = None
 
     def __post_init__(self) -> None:
         """__post_init__."""
-        self.sort_index = self.id
+        self.sort_index = self.display_name
 
     def __eq__(self, other: Any) -> bool:
         """__eq__."""
@@ -46,6 +48,11 @@ class ProcessGroup:
         """Serialized."""
         original_dict = dataclasses.asdict(self)
         return {x: original_dict[x] for x in original_dict if x not in ["sort_index"]}
+
+    # for use with os.path.join, so it can work on windows
+    def id_for_file_path(self) -> str:
+        """Id_for_file_path."""
+        return self.id.replace("/", os.sep)
 
 
 class ProcessGroupSchema(Schema):
