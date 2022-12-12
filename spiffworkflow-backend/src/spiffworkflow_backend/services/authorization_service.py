@@ -450,18 +450,23 @@ class AuthorizationService:
     def create_user_from_sign_in(cls, user_info: dict) -> UserModel:
         """Create_user_from_sign_in."""
         is_new_user = False
-        user_model = (
-            UserModel.query.filter(UserModel.service == "open_id")
-            .filter(UserModel.service_id == user_info["sub"])
-            .first()
-        )
+        if user_info.get('email', None) is not None:
+            user_model = (
+                UserModel.query.filter(UserModel.email == user_info["email"]).first()
+            )
+        else:
+            user_model = (
+                UserModel.query.filter(UserModel.service == user_info["iss"])
+                .filter(UserModel.service_id == user_info["sub"])
+                .first()
+            )
 
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             is_new_user = True
-            name = username = email = ""
+            username = email = ""
             if "name" in user_info:
-                name = user_info["name"]
+                username = user_info["name"]
             if "username" in user_info:
                 username = user_info["username"]
             elif "preferred_username" in user_info:
@@ -469,9 +474,8 @@ class AuthorizationService:
             if "email" in user_info:
                 email = user_info["email"]
             user_model = UserService().create_user(
-                service="open_id",
+                service=user_info["iss"],
                 service_id=user_info["sub"],
-                name=name,
                 username=username,
                 email=email,
             )

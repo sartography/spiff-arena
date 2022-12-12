@@ -75,7 +75,7 @@ def verify_token(
                 except ApiError as ae:  # API Error is only thrown in the token is outdated.
                     # Try to refresh the token
                     user = UserService.get_user_by_service_and_service_id(
-                        "open_id", decoded_token["sub"]
+                        decoded_token["iss"], decoded_token["sub"]
                     )
                     if user:
                         refresh_token = AuthenticationService.get_refresh_token(user.id)
@@ -107,7 +107,7 @@ def verify_token(
                     user_info is not None and "error" not in user_info
                 ):  # not sure what to test yet
                     user_model = (
-                        UserModel.query.filter(UserModel.service == "open_id")
+                        UserModel.query.filter(UserModel.service == user_info["iss"])
                         .filter(UserModel.service_id == user_info["sub"])
                         .first()
                     )
@@ -340,9 +340,5 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserMo
     )
     if user:
         return user
-    user = UserModel(
-        username=service_id,
-        service=service,
-        service_id=service_id,
-    )
+    user = UserService.create_user(service, service_id, username=service_id)
     return user

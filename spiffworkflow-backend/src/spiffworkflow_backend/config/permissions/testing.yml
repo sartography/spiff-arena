@@ -1,5 +1,12 @@
 default_group: everybody
 
+users:
+  testadmin1:
+    service: https://testing/openid/thing
+    email: testadmin1@spiffworkflow.org
+    password: admin
+    preferred_username: El administrador de la muerte
+
 groups:
   admin:
     users: [testadmin1, testadmin2]

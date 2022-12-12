@@ -63,6 +63,7 @@ groups:
         harmeet,
       ]
 
+# permission "admin"
 permissions:
   admin:
     groups: [admin]
@@ -70,6 +71,7 @@ permissions:
     allowed_permissions: [create, read, update, delete]
     uri: /*
 
+  # permission:  "basic"
   tasks-crud:
     groups: [everybody]
     users: []
@@ -80,7 +82,6 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/service-tasks
-
 
   # read all for everybody
   read-all-process-groups:

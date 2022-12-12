@@ -424,6 +424,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "admin@status.im",
     "firstName" : "",
     "lastName" : "",
     "credentials" : [ {
@@ -446,6 +447,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "alex@sartography.com",
     "credentials" : [ {
       "id" : "81a61a3b-228d-42b3-b39a-f62d8e7f57ca",
       "type" : "password",
@@ -465,6 +467,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "amir@status.im",
     "credentials" : [ {
       "id" : "e589f3ad-bf7b-4756-89f7-7894c03c2831",
       "type" : "password",
@@ -484,6 +487,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "ciadmin1@status.im",
     "credentials" : [ {
       "id" : "111b5ea1-c2ab-470a-a16b-2373bc94de7a",
       "type" : "password",
@@ -506,6 +510,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "ciuser1@status.im",
     "credentials" : [ {
       "id" : "762f36e9-47af-44da-8520-cf09d752497a",
       "type" : "password",
@@ -528,6 +533,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "core@status.im",
     "firstName" : "",
     "lastName" : "",
     "credentials" : [ {
@@ -550,6 +556,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "dan@sartography.com",
     "credentials" : [ {
       "id" : "d517c520-f500-4542-80e5-7144daef1e32",
       "type" : "password",
@@ -569,6 +576,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "daniel@sartography.com",
     "credentials" : [ {
       "id" : "f240495c-265b-42fc-99db-46928580d07d",
       "type" : "password",
@@ -588,6 +596,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "elizabeth@sartography.com",
     "credentials" : [ {
       "id" : "ae951ec8-9fc9-4f1b-b340-bbbe463ae5c2",
       "type" : "password",
@@ -607,6 +616,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "fin@status.im",
     "firstName" : "",
     "lastName" : "",
     "credentials" : [ {
@@ -629,6 +639,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "fin1@status.im",
     "firstName" : "",
     "lastName" : "",
     "credentials" : [ {
@@ -651,6 +662,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "finance_user1@status.im",
     "credentials" : [ {
       "id" : "f14722ec-13a7-4d35-a4ec-0475d405ae58",
       "type" : "password",
@@ -670,6 +682,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "harmeet@status.im",
     "credentials" : [ {
       "id" : "89c26090-9bd3-46ac-b038-883d02e3f125",
       "type" : "password",
@@ -689,6 +702,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "j@status.im",
     "firstName" : "",
     "lastName" : "",
     "credentials" : [ {
@@ -711,6 +725,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "jakub@status.im",
     "credentials" : [ {
       "id" : "ce141fa5-b8d5-4bbe-93e7-22e7119f97c2",
       "type" : "password",
@@ -730,6 +745,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "jarrad@status.im",
     "credentials" : [ {
       "id" : "113e0343-1069-476d-83f9-21d98edb9cfa",
       "type" : "password",
@@ -749,6 +765,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "jason@sartography.com",
     "credentials" : [ {
       "id" : "40abf32e-f0cc-4a17-8231-1a69a02c1b0b",
       "type" : "password",
@@ -768,6 +785,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "jon@sartography.com",
     "credentials" : [ {
       "id" : "8b520e01-5b9b-44ab-9ee8-505bd0831a45",
       "type" : "password",
@@ -787,6 +805,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "kb@sartography.com",
     "credentials" : [ {
       "id" : "2c0be363-038f-48f1-86d6-91fdd28657cf",
       "type" : "password",
@@ -806,6 +825,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "lead@status.im",
     "firstName" : "",
     "lastName" : "",
     "credentials" : [ {
@@ -828,6 +848,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "lead1@status.im",
     "firstName" : "",
     "lastName" : "",
     "credentials" : [ {
@@ -850,6 +871,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "manuchehr@status.im",
     "credentials" : [ {
       "id" : "07dabf55-b5d3-4f98-abba-3334086ecf5e",
       "type" : "password",
@@ -869,6 +891,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "mike@sartography.com",
     "credentials" : [ {
       "id" : "1ed375fb-0f1a-4c2a-9243-2477242cf7bd",
       "type" : "password",
@@ -888,6 +911,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "natalia@sartography.com",
     "credentials" : [ {
       "id" : "b6aa9936-39cc-4931-bfeb-60e6753de5ba",
       "type" : "password",
@@ -907,6 +931,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "sasha@status.im",
     "credentials" : [ {
       "id" : "4a170af4-6f0c-4e7b-b70c-e674edf619df",
       "type" : "password",
@@ -926,6 +951,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "service-account@status.im",
     "serviceAccountClientId" : "spiffworkflow-backend",
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
@@ -943,6 +969,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email": "service-account-withauth@status.im",
     "serviceAccountClientId" : "withAuth",
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],

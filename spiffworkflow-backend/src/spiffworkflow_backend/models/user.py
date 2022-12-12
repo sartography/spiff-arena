@@ -28,14 +28,10 @@ class UserModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "user"
     __table_args__ = (db.UniqueConstraint("service", "service_id", name="service_key"),)
-
     id = db.Column(db.Integer, primary_key=True)
-    # server and service id must be unique, not username.
-    username = db.Column(db.String(255), nullable=False, unique=False)
-    uid = db.Column(db.String(50), unique=True)
-    service = db.Column(db.String(50), nullable=False, unique=False)
+    username = db.Column(db.String(255), nullable=False, unique=True) # should always be an email address.
+    service = db.Column(db.String(50), nullable=False, unique=False) # not 'openid' -- google, aws
     service_id = db.Column(db.String(255), nullable=False, unique=False)
-    name = db.Column(db.String(255))
     email = db.Column(db.String(255))
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")  # type: ignore
@@ -46,21 +42,6 @@ class UserModel(SpiffworkflowBaseDBModel):
         overlaps="user_group_assignments,users",
     )
     principal = relationship("PrincipalModel", uselist=False)  # type: ignore
-
-    @validates("service")
-    def validate_service(self, key: str, value: Any) -> str:
-        """Validate_service."""
-        try:
-            ap_type = getattr(AuthenticationProviderTypes, value, None)
-        except Exception as e:
-            raise ValueError(f"invalid service type: {value}") from e
-        if ap_type is not None:
-            ap_value: str = ap_type.value
-            return ap_value
-        raise ApiError(
-            error_code="invalid_service",
-            message=f"Could not validate service with value: {value}",
-        )
 
     def encode_auth_token(self) -> str:
         """Generate the Auth Token.

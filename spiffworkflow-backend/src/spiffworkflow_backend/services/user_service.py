@@ -23,7 +23,6 @@ class UserService:
         cls,
         service: str,
         service_id: str,
-        name: Optional[str] = "",
         username: Optional[str] = "",
         email: Optional[str] = "",
     ) -> UserModel:
@@ -41,7 +40,6 @@ class UserService:
                 username=username,
                 service=service,
                 service_id=service_id,
-                name=name,
                 email=email,
             )
             db.session.add(user_model)
@@ -69,44 +67,11 @@ class UserService:
                 )
             )
 
-    @classmethod
-    def find_or_create_user(
-        cls,
-        service: str,
-        service_id: str,
-        name: Optional[str] = None,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-    ) -> UserModel:
-        """Find_or_create_user."""
-        user_model: UserModel
-        try:
-            user_model = cls.create_user(
-                service=service,
-                service_id=service_id,
-                name=name,
-                username=username,
-                email=email,
-            )
-        except ApiError:
-            user_model = (
-                UserModel.query.filter(UserModel.service == service)
-                .filter(UserModel.service_id == service_id)
-                .first()
-            )
-        return user_model
-
     # Returns true if the current user is logged in.
     @staticmethod
     def has_user() -> bool:
         """Has_user."""
         return "token" in g and bool(g.token) and "user" in g and bool(g.user)
-
-    # Returns true if the given user uid is different from the current user's uid.
-    @staticmethod
-    def is_different_user(uid: str) -> bool:
-        """Is_different_user."""
-        return UserService.has_user() and uid is not None and uid is not g.user.uid
 
     @staticmethod
     def current_user() -> Any:
@@ -116,20 +81,6 @@ class UserService:
                 "logged_out", "You are no longer logged in.", status_code=401
             )
         return g.user
-
-    @staticmethod
-    def in_list(uids: list[str]) -> bool:
-        """Returns true if the current user's id is in the given list of ids.
-
-        False if there is no user, or the user is not in the list.
-        """
-        if (
-            UserService.has_user()
-        ):  # If someone is logged in, lock tasks that don't belong to them.
-            user = UserService.current_user()
-            if user.uid in uids:
-                return True
-        return False
 
     @staticmethod
     def get_principal_by_user_id(user_id: int) -> PrincipalModel:
