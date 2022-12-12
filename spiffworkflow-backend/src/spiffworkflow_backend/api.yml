@@ -1082,6 +1082,12 @@ paths:
 
   /tasks/for-my-groups:
     parameters:
+      - name: group_identifier
+        in: query
+        required: false
+        description: The identifier of the group to get the tasks for
+        schema:
+          type: string
       - name: page
         in: query
         required: false
@@ -1102,6 +1108,22 @@ paths:
       responses:
         "200":
           description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+  /tasks/user-groups:
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_user_groups
+      summary: Group identifiers for current logged in user
+      responses:
+        "200":
+          description: list of user groups
           content:
             application/json:
               schema:

@@ -11,6 +11,16 @@ export interface RecentProcessModel {
   processModelDisplayName: string;
 }
 
+export interface ProcessInstanceTask {
+  id: number;
+  process_model_display_name: string;
+  process_model_identifier: string;
+  task_title: string;
+  lane_assignment_id: string;
+  process_instance_status: number;
+  updated_at_in_seconds: number;
+}
+
 export interface ProcessReference {
   name: string; // The process or decision Display name.
   identifier: string; // The unique id of the process
