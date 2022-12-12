@@ -65,7 +65,8 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.secret_model import SecretModelSchema
-from spiffworkflow_backend.models.spec_reference import SpecReferenceCache, SpecReferenceNotFoundError
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
@@ -1073,7 +1074,9 @@ def process_instance_report_column_list() -> flask.wrappers.Response:
 
 
 def process_instance_show(
-    modified_process_model_identifier: str, process_instance_id: int, process_identifier: Optional[str] = None
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    process_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
@@ -1083,11 +1086,17 @@ def process_instance_show(
     process_model_with_diagram = None
     name_of_file_with_diagram = None
     if process_identifier:
-        spec_reference = SpecReferenceCache.query.filter_by(identifier=process_identifier).first()
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier=process_identifier
+        ).first()
         if spec_reference is None:
-            raise SpecReferenceNotFoundError(f"Could not find given process identifier in the cache: {process_identifier}")
+            raise SpecReferenceNotFoundError(
+                f"Could not find given process identifier in the cache: {process_identifier}"
+            )
 
-        process_model_with_diagram = ProcessModelService.get_process_model(spec_reference.process_model_id)
+        process_model_with_diagram = ProcessModelService.get_process_model(
+            spec_reference.process_model_id
+        )
         name_of_file_with_diagram = spec_reference.file_name
     else:
         process_model_with_diagram = get_process_model(process_model_identifier)
@@ -1104,7 +1113,9 @@ def process_instance_show(
             ).decode("utf-8")
         else:
             bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
-                process_model_with_diagram, process_instance.bpmn_version_control_identifier, file_name=name_of_file_with_diagram
+                process_model_with_diagram,
+                process_instance.bpmn_version_control_identifier,
+                file_name=name_of_file_with_diagram,
             )
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 

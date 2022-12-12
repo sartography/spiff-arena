@@ -46,7 +46,10 @@ class GitService:
 
     @classmethod
     def get_instance_file_contents_for_revision(
-        cls, process_model: ProcessModelInfo, revision: str, file_name: Optional[str] = None
+        cls,
+        process_model: ProcessModelInfo,
+        revision: str,
+        file_name: Optional[str] = None,
     ) -> str:
         """Get_instance_file_contents_for_revision."""
         bpmn_spec_absolute_dir = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]

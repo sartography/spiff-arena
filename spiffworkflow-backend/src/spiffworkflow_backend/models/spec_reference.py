@@ -9,7 +9,7 @@ from sqlalchemy import UniqueConstraint
 
 
 class SpecReferenceNotFoundError(Exception):
-    pass
+    """SpecReferenceNotFoundError."""
 
 
 @dataclass()

@@ -1174,6 +1174,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
+        """Test_process_instance_show_with_specified_process_identifier."""
         process_model_id = "call_activity_nested"
         process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
@@ -1182,7 +1183,9 @@ class TestProcessApi(BaseTest):
             process_model_id=process_model_id,
             bpmn_file_location="call_activity_nested",
         )
-        spec_reference = SpecReferenceCache.query.filter_by(identifier="Level2b").first()
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier="Level2b"
+        ).first()
         assert spec_reference
         modified_process_model_identifier = (
             self.modify_process_identifier_for_path_param(process_model_identifier)
@@ -1211,8 +1214,8 @@ class TestProcessApi(BaseTest):
         with open(process_instance_file_path) as f_open:
             xml_file_contents = f_open.read()
             assert show_response.json["bpmn_xml_file_contents"] != xml_file_contents
-        spec_reference_file_path = (
-            os.path.join(file_system_root, spec_reference.relative_path)
+        spec_reference_file_path = os.path.join(
+            file_system_root, spec_reference.relative_path
         )
         with open(spec_reference_file_path) as f_open:
             xml_file_contents = f_open.read()
