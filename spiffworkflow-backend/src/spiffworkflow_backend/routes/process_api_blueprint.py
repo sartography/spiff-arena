@@ -821,6 +821,7 @@ def process_instance_list(
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
+    group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
@@ -960,10 +961,16 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
         )
-        process_instance_query = process_instance_query.join(
-            GroupModel,
-            GroupModel.id == SpiffStepDetailsModel.lane_assignment_id,
-        )
+        if (group_identifier):
+            process_instance_query = process_instance_query.join(
+                GroupModel,
+                GroupModel.identifier == group_identifier,
+            )
+        else:
+            process_instance_query = process_instance_query.join(
+                GroupModel,
+                GroupModel.id == SpiffStepDetailsModel.lane_assignment_id,
+            )
         process_instance_query = process_instance_query.join(
             UserGroupAssignmentModel,
             UserGroupAssignmentModel.group_id == GroupModel.id,

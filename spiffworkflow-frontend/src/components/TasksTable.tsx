@@ -58,7 +58,7 @@ export default function TasksTable({
       };
       let params = `?per_page=${perPage}&page=${page}`;
       if (additionalParams) {
-        params = `${params}&${additionalParams}`;
+        params += `&${additionalParams}`;
       }
       HttpService.makeCallToBackend({
         path: `${apiPath}${params}`,
