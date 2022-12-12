@@ -11,6 +11,7 @@ export default function TasksWaitingForMyGroups() {
       successCallback: setUserGroups,
     });
   }, [setUserGroups]);
+
   const tableComponents = () => {
     if (!userGroups) {
       return null;

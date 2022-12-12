@@ -595,6 +595,12 @@ paths:
         description: Specifies the identifier of a report to use, if any
         schema:
           type: integer
+      - name: group_identifier
+        in: query
+        required: false
+        description: The identifier of the group to get the process instances for
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list
       summary: Returns a list of process instances for a given process model
