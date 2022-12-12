@@ -1,6 +1,11 @@
 import { useContext, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+  useParams,
+  useNavigate,
+  Link,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   TrashCan,
   StopOutline,
@@ -40,6 +45,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 export default function ProcessInstanceShow() {
   const navigate = useNavigate();
   const params = useParams();
+  const [searchParams] = useSearchParams();
 
   const [processInstance, setProcessInstance] = useState(null);
   const [tasks, setTasks] = useState<Array<object> | null>(null);
@@ -80,8 +86,13 @@ export default function ProcessInstanceShow() {
       const processTaskFailure = () => {
         setTasksCallHadError(true);
       };
+      let queryParams = '';
+      const processIdentifier = searchParams.get('process_identifier');
+      if (processIdentifier) {
+        queryParams = `?process_identifier=${processIdentifier}`;
+      }
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}`,
+        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
         successCallback: setProcessInstance,
       });
       let taskParams = '?all_tasks=true';
@@ -98,7 +109,14 @@ export default function ProcessInstanceShow() {
         setTasksCallHadError(true);
       }
     }
-  }, [params, modifiedProcessModelId, permissionsLoaded, ability, targetUris]);
+  }, [
+    params,
+    modifiedProcessModelId,
+    permissionsLoaded,
+    ability,
+    targetUris,
+    searchParams,
+  ]);
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({
@@ -179,11 +197,9 @@ export default function ProcessInstanceShow() {
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`/admin/process-instances/${
-          params.process_model_id
-        }/process-instances/${params.process_instance_id}/${
-          currentSpiffStep(processInstanceToUse) + distance
-        }`}
+        to={`/admin/process-instances/${params.process_model_id}/${
+          params.process_instance_id
+        }/${currentSpiffStep(processInstanceToUse) + distance}`}
       >
         {label}
       </Link>
@@ -471,19 +487,28 @@ export default function ProcessInstanceShow() {
       );
     }
 
+    if (task.type === 'Call Activity') {
+      buttons.push(
+        <Link
+          data-qa="go-to-call-activity-result"
+          to={`/admin/process-instances/${params.process_model_id}/${params.process_instance_id}?process_identifier=${task.call_activity_process_identifier}`}
+          target="_blank"
+        >
+          View Call Activity Diagram
+        </Link>
+      );
+    }
+
     if (canEditTaskData(task)) {
       if (editingTaskData) {
         buttons.push(
-          <Button
-            data-qa="create-script-unit-test-button"
-            onClick={saveTaskData}
-          >
+          <Button data-qa="save-task-data-button" onClick={saveTaskData}>
             Save
           </Button>
         );
         buttons.push(
           <Button
-            data-qa="create-script-unit-test-button"
+            data-qa="cancel-task-data-edit-button"
             onClick={cancelEditingTaskData}
           >
             Cancel
@@ -492,7 +517,7 @@ export default function ProcessInstanceShow() {
       } else {
         buttons.push(
           <Button
-            data-qa="create-script-unit-test-button"
+            data-qa="edit-task-data-button"
             onClick={() => setEditingTaskData(true)}
           >
             Edit

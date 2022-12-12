@@ -118,6 +118,7 @@ class Task:
         form_schema: Union[str, None] = None,
         form_ui_schema: Union[str, None] = None,
         parent: Optional[str] = None,
+        call_activity_process_identifier: Optional[str] = None,
     ):
         """__init__."""
         self.id = id
@@ -129,6 +130,7 @@ class Task:
         self.documentation = documentation
         self.lane = lane
         self.parent = parent
+        self.call_activity_process_identifier = call_activity_process_identifier
 
         self.data = data
         if self.data is None:
@@ -187,6 +189,7 @@ class Task:
             "form_schema": self.form_schema,
             "form_ui_schema": self.form_ui_schema,
             "parent": self.parent,
+            "call_activity_process_identifier": self.call_activity_process_identifier,
         }
 
     @classmethod

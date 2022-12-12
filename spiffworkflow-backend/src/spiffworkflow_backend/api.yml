@@ -699,6 +699,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
+      - name: process_identifier
+        in: query
+        required: false
+        description: The identifier of the process to use for the diagram. Useful for displaying the diagram for a call activity.
+        schema:
+          type: string
     get:
       tags:
         - Process Instances
