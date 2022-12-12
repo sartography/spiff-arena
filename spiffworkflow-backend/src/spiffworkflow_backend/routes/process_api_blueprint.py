@@ -1301,6 +1301,7 @@ def task_list_for_my_open_processes(
 
 
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+    """Task_list_for_me."""
     return get_tasks(
         processes_started_by_user=False,
         has_lane_assignment_id=False,
@@ -1310,17 +1311,22 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
 
 
 def task_list_for_my_groups(
-    group_identifier: str = None,
-    page: int = 1, per_page: int = 100
+    group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    return get_tasks(group_identifier=group_identifier, processes_started_by_user=False, page=page, per_page=per_page)
+    """Task_list_for_my_groups."""
+    return get_tasks(
+        group_identifier=group_identifier,
+        processes_started_by_user=False,
+        page=page,
+        per_page=per_page,
+    )
 
 
-def task_list_user_groups(
-) -> flask.wrappers.Response:
+def task_list_user_groups() -> flask.wrappers.Response:
+    """Task_list_user_groups."""
     groups = g.user.groups
     # TODO: filter out the default group and have a way to know what is the default group
-    group_identifiers = [i.identifier for i in groups if i.identifier != 'everybody']
+    group_identifiers = [i.identifier for i in groups if i.identifier != "everybody"]
     return make_response(jsonify(sorted(group_identifiers)), 200)
 
 
@@ -1329,7 +1335,7 @@ def get_tasks(
     has_lane_assignment_id: bool = True,
     page: int = 1,
     per_page: int = 100,
-    group_identifier: str = None,
+    group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Get_tasks."""
     user_id = g.user.id
