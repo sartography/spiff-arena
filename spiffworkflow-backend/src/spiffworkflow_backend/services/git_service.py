@@ -46,18 +46,21 @@ class GitService:
 
     @classmethod
     def get_instance_file_contents_for_revision(
-        cls, process_model: ProcessModelInfo, revision: str
+        cls, process_model: ProcessModelInfo, revision: str, file_name: Optional[str] = None
     ) -> str:
         """Get_instance_file_contents_for_revision."""
         bpmn_spec_absolute_dir = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
         process_model_relative_path = FileSystemService.process_model_relative_path(
             process_model
         )
+        file_name_to_use = file_name
+        if file_name_to_use is None:
+            file_name_to_use = process_model.primary_file_name
         with FileSystemService.cd(bpmn_spec_absolute_dir):
             shell_command = [
                 "git",
                 "show",
-                f"{revision}:{process_model_relative_path}/{process_model.primary_file_name}",
+                f"{revision}:{process_model_relative_path}/{file_name_to_use}",
             ]
             return cls.run_shell_command_to_get_stdout(shell_command)
 
