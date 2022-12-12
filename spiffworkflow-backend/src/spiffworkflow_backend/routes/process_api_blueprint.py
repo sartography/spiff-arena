@@ -1322,8 +1322,8 @@ def task_list_for_my_groups(
     )
 
 
-def task_list_user_groups() -> flask.wrappers.Response:
-    """Task_list_user_groups."""
+def user_groups_for_current_user() -> flask.wrappers.Response:
+    """User_groups_for_current_user."""
     groups = g.user.groups
     # TODO: filter out the default group and have a way to know what is the default group
     group_identifiers = [i.identifier for i in groups if i.identifier != "everybody"]

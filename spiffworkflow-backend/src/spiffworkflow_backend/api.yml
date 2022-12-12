@@ -1115,11 +1115,11 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /tasks/user-groups:
+  /user-groups/for-current-user:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_user_groups
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.user_groups_for_current_user
       summary: Group identifiers for current logged in user
       responses:
         "200":

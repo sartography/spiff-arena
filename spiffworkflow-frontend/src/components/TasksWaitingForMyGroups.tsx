@@ -7,7 +7,7 @@ export default function TasksWaitingForMyGroups() {
 
   useEffect(() => {
     HttpService.makeCallToBackend({
-      path: `/tasks/user-groups`,
+      path: `/user-groups/for-current-user`,
       successCallback: setUserGroups,
     });
   }, [setUserGroups]);
