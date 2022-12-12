@@ -115,7 +115,7 @@ class GitService:
         result: subprocess.CompletedProcess[bytes] = cls.run_shell_command(
             command, return_success_state=False
         )  # type: ignore
-        return result.stdout.decode("utf-8")
+        return result.stdout.decode("utf-8").strip()
 
     @classmethod
     def run_shell_command(
