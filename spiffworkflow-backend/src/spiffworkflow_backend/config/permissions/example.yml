@@ -2,14 +2,17 @@ default_group: everybody
 
 users:
   admin:
+    service: local_open_id
     email: admin@spiffworkflow.org
     password: admin
     preferred_username: Admin
   nelson:
+    service: local_open_id
     email: nelson@spiffworkflow.org
     password: nelson
     preferred_username: Nelson
   malala:
+    service: local_open_id
     email: malala@spiffworkflow.org
     password: malala
     preferred_username: Malala
@@ -72,8 +75,7 @@ permissions:
     users: [ ]
     allowed_permissions: [ read ]
     uri: /v1.0/processes
-
-  # Members of the Education group can change they processes work.
+  # Members of the Education group can change the processes under "education".
   education-admin:
     groups: ["Education", "President"]
     users: []
