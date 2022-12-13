@@ -70,3 +70,8 @@ class TestFlaskOpenId(BaseTest):
         assert 'access_token' in response.json
         assert 'id_token' in response.json
         assert 'refresh_token' in response.json
+
+        decoded_token = jwt.decode(response.json['id_token'], options={"verify_signature": False})
+        assert 'iss' in decoded_token
+        assert 'email' in decoded_token
+

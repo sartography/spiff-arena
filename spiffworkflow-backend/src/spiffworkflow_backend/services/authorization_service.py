@@ -460,25 +460,31 @@ class AuthorizationService:
                 .filter(UserModel.service_id == user_info["sub"])
                 .first()
             )
+        username = email = ""
+        if "name" in user_info:
+            username = user_info["name"]
+        if "username" in user_info:
+            username = user_info["username"]
+        elif "preferred_username" in user_info:
+            username = user_info["preferred_username"]
+        if "email" in user_info:
+            email = user_info["email"]
 
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             is_new_user = True
-            username = email = ""
-            if "name" in user_info:
-                username = user_info["name"]
-            if "username" in user_info:
-                username = user_info["username"]
-            elif "preferred_username" in user_info:
-                username = user_info["preferred_username"]
-            if "email" in user_info:
-                email = user_info["email"]
             user_model = UserService().create_user(
                 service=user_info["iss"],
                 service_id=user_info["sub"],
                 username=username,
                 email=email,
             )
+        else :
+            # Update with the latest information
+            user_model.username = username
+            user_model.email = email
+            user_model.service = user_info["iss"]
+            user_model.service_id = user_info["sub"]
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
