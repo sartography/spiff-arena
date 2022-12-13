@@ -1,4 +1,3 @@
-"""Spiff_step_details."""
 from dataclasses import dataclass
 
 from flask_bpmn.models.db import db
