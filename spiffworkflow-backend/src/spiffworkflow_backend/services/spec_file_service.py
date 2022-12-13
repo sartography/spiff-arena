@@ -167,7 +167,7 @@ class SpecFileService(FileSystemService):
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
             # updated file.
-            if not primary_process_ref and ref.type == "process" and ref.is_executable:
+            if not process_model_info.primary_file_name and not primary_process_ref and ref.type == "process" and ref.is_executable:
                 ref.is_primary = True
 
             if ref.is_primary:
