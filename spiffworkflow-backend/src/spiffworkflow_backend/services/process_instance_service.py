@@ -302,6 +302,11 @@ class ProcessInstanceService:
         else:
             lane = None
 
+        if hasattr(spiff_task.task_spec, "spec"):
+            call_activity_process_identifier = spiff_task.task_spec.spec
+        else:
+            call_activity_process_identifier = None
+
         parent_id = None
         if spiff_task.parent:
             parent_id = spiff_task.parent.id
@@ -316,9 +321,10 @@ class ProcessInstanceService:
             multi_instance_type=mi_type,
             multi_instance_count=info["mi_count"],
             multi_instance_index=info["mi_index"],
-            process_name=spiff_task.task_spec._wf_spec.description,
+            process_identifier=spiff_task.task_spec._wf_spec.name,
             properties=props,
             parent=parent_id,
+            call_activity_process_identifier=call_activity_process_identifier,
         )
 
         return task

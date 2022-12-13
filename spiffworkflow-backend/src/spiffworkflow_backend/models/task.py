@@ -108,7 +108,7 @@ class Task:
         multi_instance_type: Union[MultiInstanceType, None] = None,
         multi_instance_count: str = "",
         multi_instance_index: str = "",
-        process_name: str = "",
+        process_identifier: str = "",
         properties: Union[dict, None] = None,
         process_instance_id: Union[int, None] = None,
         process_instance_status: Union[str, None] = None,
@@ -118,6 +118,7 @@ class Task:
         form_schema: Union[str, None] = None,
         form_ui_schema: Union[str, None] = None,
         parent: Optional[str] = None,
+        call_activity_process_identifier: Optional[str] = None,
     ):
         """__init__."""
         self.id = id
@@ -129,6 +130,7 @@ class Task:
         self.documentation = documentation
         self.lane = lane
         self.parent = parent
+        self.call_activity_process_identifier = call_activity_process_identifier
 
         self.data = data
         if self.data is None:
@@ -151,7 +153,7 @@ class Task:
         self.multi_instance_index = (
             multi_instance_index  # And the index of the currently repeating task.
         )
-        self.process_name = process_name
+        self.process_identifier = process_identifier
 
         self.properties = properties  # Arbitrary extension properties from BPMN editor.
         if self.properties is None:
@@ -177,7 +179,7 @@ class Task:
             "multi_instance_type": multi_instance_type,
             "multi_instance_count": self.multi_instance_count,
             "multi_instance_index": self.multi_instance_index,
-            "process_name": self.process_name,
+            "process_identifier": self.process_identifier,
             "properties": self.properties,
             "process_instance_id": self.process_instance_id,
             "process_instance_status": self.process_instance_status,
@@ -187,6 +189,7 @@ class Task:
             "form_schema": self.form_schema,
             "form_ui_schema": self.form_ui_schema,
             "parent": self.parent,
+            "call_activity_process_identifier": self.call_activity_process_identifier,
         }
 
     @classmethod
@@ -282,7 +285,7 @@ class TaskSchema(Schema):
             "multi_instance_type",
             "multi_instance_count",
             "multi_instance_index",
-            "process_name",
+            "process_identifier",
             "properties",
             "process_instance_id",
             "form_schema",
@@ -293,7 +296,7 @@ class TaskSchema(Schema):
     documentation = marshmallow.fields.String(required=False, allow_none=True)
     # form = marshmallow.fields.Nested(FormSchema, required=False, allow_none=True)
     title = marshmallow.fields.String(required=False, allow_none=True)
-    process_name = marshmallow.fields.String(required=False, allow_none=True)
+    process_identifier = marshmallow.fields.String(required=False, allow_none=True)
     lane = marshmallow.fields.String(required=False, allow_none=True)
 
     @marshmallow.post_load

@@ -8,6 +8,10 @@ from marshmallow import INCLUDE
 from sqlalchemy import UniqueConstraint
 
 
+class SpecReferenceNotFoundError(Exception):
+    """SpecReferenceNotFoundError."""
+
+
 @dataclass()
 class SpecReference:
     """File Reference Information.
