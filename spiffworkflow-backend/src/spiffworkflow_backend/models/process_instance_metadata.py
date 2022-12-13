@@ -1,3 +1,4 @@
+"""Process_instance_metadata."""
 from dataclasses import dataclass
 
 from flask_bpmn.models.db import db
