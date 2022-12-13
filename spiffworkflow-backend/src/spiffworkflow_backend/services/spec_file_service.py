@@ -167,17 +167,22 @@ class SpecFileService(FileSystemService):
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
             # updated file.
-            if not process_model_info.primary_file_name and not primary_process_ref and ref.type == "process" and ref.is_executable:
+            if not primary_process_ref and ref.type == "process" and ref.is_executable:
                 ref.is_primary = True
 
             if ref.is_primary:
-                ProcessModelService.update_process_model(
-                    process_model_info,
-                    {
-                        "primary_process_id": ref.identifier,
-                        "primary_file_name": file_name,
-                    },
-                )
+                update_hash = {}
+                if not process_model_info.primary_file_name:
+                    update_hash["primary_process_id"] = ref.identifier
+                    update_hash["primary_file_name"] = file_name
+                elif file_name == process_model_info.primary_file_name:
+                    update_hash["primary_process_id"] = ref.identifier
+
+                if len(update_hash) > 0:
+                    ProcessModelService.update_process_model(
+                        process_model_info,
+                        update_hash,
+                    )
             SpecFileService.update_caches(ref)
         return file
 

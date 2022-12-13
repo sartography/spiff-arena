@@ -21,7 +21,7 @@ class SpiffStepDetailsModel(SpiffworkflowBaseDBModel):
         ForeignKey(ProcessInstanceModel.id), nullable=False  # type: ignore
     )
     spiff_step: int = db.Column(db.Integer, nullable=False)
-    task_json: str = deferred(db.Column(db.JSON, nullable=False))  # type: ignore
+    task_json: dict = deferred(db.Column(db.JSON, nullable=False))  # type: ignore
     timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False)
     completed_by_user_id: int = db.Column(db.Integer, nullable=True)
     lane_assignment_id: Optional[int] = db.Column(
