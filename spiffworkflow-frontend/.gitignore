@@ -8,6 +8,9 @@
 # testing
 /coverage
 
+# in case we accidentally run backend tests in frontend. :D
+/.coverage.*
+
 # production
 /build
 
