@@ -300,7 +300,7 @@ export default function ProcessInstanceListTable({
 
     checkFiltersAndRun();
     if (autoReload) {
-      refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, checkFiltersAndRun);
+      return refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, checkFiltersAndRun);
     }
   }, [
     autoReload,
