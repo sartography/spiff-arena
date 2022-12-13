@@ -7,6 +7,7 @@ from spiffworkflow_backend.services.git_service import GitService
 
 
 class TestGitService(BaseTest):
+    """TestGitService."""
 
     def test_strips_output_of_stdout_from_command(
         self,
@@ -14,5 +15,8 @@ class TestGitService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        output = GitService.run_shell_command_to_get_stdout(["echo", '   This output should not end in space or newline  \n'])
-        assert output == 'This output should not end in space or newline'
+        """Test_strips_output_of_stdout_from_command."""
+        output = GitService.run_shell_command_to_get_stdout(
+            ["echo", "   This output should not end in space or newline  \n"]
+        )
+        assert output == "This output should not end in space or newline"
