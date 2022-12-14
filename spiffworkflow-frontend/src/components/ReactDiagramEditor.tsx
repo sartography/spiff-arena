@@ -52,6 +52,8 @@ import TouchModule from 'diagram-js/lib/navigation/touch';
 // @ts-expect-error TS(7016) FIXME
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
+import { useNavigate } from 'react-router-dom';
+
 import { Can } from '@casl/react';
 import HttpService from '../services/HttpService';
 
@@ -119,6 +121,7 @@ export default function ReactDiagramEditor({
     [targetUris.processModelFileShowPath]: ['POST', 'GET', 'PUT', 'DELETE'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (diagramModelerState) {
@@ -542,6 +545,10 @@ export default function ReactDiagramEditor({
       });
   };
 
+  const viewXmlFile = () => {
+    navigate(`/admin/process-models/${processModelId}/form/${fileName}`);
+  };
+
   const userActionOptions = () => {
     if (diagramType !== 'readonly') {
       return (
@@ -579,6 +586,13 @@ export default function ReactDiagramEditor({
             ability={ability}
           >
             <Button onClick={downloadXmlFile}>Download</Button>
+          </Can>
+          <Can
+            I="GET"
+            a={targetUris.processModelFileShowPath}
+            ability={ability}
+          >
+            <Button onClick={viewXmlFile}>View XML</Button>
           </Can>
         </>
       );
