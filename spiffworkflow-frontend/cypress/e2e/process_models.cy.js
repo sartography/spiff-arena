@@ -1,4 +1,5 @@
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
+import { miscDisplayName } from '../support/helpers';
 
 describe('process-models', () => {
   beforeEach(() => {
@@ -16,7 +17,7 @@ describe('process-models', () => {
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     const newModelDisplayName = `${modelDisplayName} edited`;
-    cy.contains('99-Shared Resources').click();
+    cy.contains(miscDisplayName).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
@@ -61,7 +62,7 @@ describe('process-models', () => {
     const dmnFileName = `dmn_test_file_${id}`;
     const jsonFileName = `json_test_file_${id}`;
 
-    cy.contains('99-Shared Resources').click();
+    cy.contains(miscDisplayName).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
@@ -151,7 +152,7 @@ describe('process-models', () => {
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     cy.contains('Add a process group');
-    cy.contains('99-Shared Resources').click();
+    cy.contains(miscDisplayName).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
@@ -203,7 +204,7 @@ describe('process-models', () => {
 
   // process models no longer has pagination post-tiles
   // it.only('can paginate items', () => {
-  //   cy.contains('99-Shared Resources').click();
+  //   cy.contains(miscDisplayName).click();
   //   cy.wait(500);
   //   cy.contains('Acceptance Tests Group One').click();
   //   cy.basicPaginationTest();
