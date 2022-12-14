@@ -36,7 +36,20 @@ export default function ReactFormEditor() {
     return searchParams.get('file_ext') ?? 'json';
   })();
 
-  const editorDefaultLanguage = fileExtension === 'md' ? 'markdown' : 'json';
+  const hasDiagram = fileExtension === 'bpmn' || fileExtension === 'dmn';
+
+  const editorDefaultLanguage = (() => {
+    if (fileExtension === 'json') {
+      return 'json';
+    }
+    if (hasDiagram) {
+      return 'xml';
+    }
+    if (fileExtension === 'md') {
+      return 'markdown';
+    }
+    return 'text';
+  })();
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -192,6 +205,19 @@ export default function ReactFormEditor() {
             onConfirmation={deleteFile}
             buttonLabel="Delete"
           />
+        ) : null}
+        {hasDiagram ? (
+          <Button
+            onClick={() =>
+              navigate(
+                `/admin/process-models/${modifiedProcessModelId}/files/${params.file_name}`
+              )
+            }
+            variant="danger"
+            data-qa="form-builder-button"
+          >
+            View Diagram
+          </Button>
         ) : null}
         <Editor
           height={600}
