@@ -21,10 +21,11 @@ export default function ProcessInstanceList() {
       <ProcessBreadcrumb
         hotCrumbs={[
           ['Process Groups', '/admin'],
-          [
-            `Process Model: ${processModelFullIdentifier}`,
-            `process_model:${processModelFullIdentifier}:link`,
-          ],
+          {
+            entityToExplode: processModelFullIdentifier,
+            entityType: 'process-model-id',
+            linkLastItem: true,
+          },
           ['Process Instances'],
         ]}
       />

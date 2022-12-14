@@ -35,7 +35,7 @@ describe('process-models', () => {
     cy.contains(`Process Model: ${newModelDisplayName}`);
 
     // go back to process model show by clicking on the breadcrumb
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
 
     cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
@@ -47,6 +47,7 @@ describe('process-models', () => {
       `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
     );
     cy.contains(modelId).should('not.exist');
+    cy.contains(modelDisplayName).should('not.exist');
   });
 
   it('can create new bpmn, dmn, and json files', () => {
@@ -66,7 +67,7 @@ describe('process-models', () => {
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
-    cy.contains(directParentGroupId).click();
+    cy.contains(groupDisplayName).click();
     cy.contains(modelDisplayName).click();
     cy.url().should(
       'include',
@@ -91,7 +92,7 @@ describe('process-models', () => {
     cy.get('input[name=file_name]').type(bpmnFileName);
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${bpmnFileName}`);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${bpmnFileName}.bpmn`).should('exist');
@@ -109,7 +110,7 @@ describe('process-models', () => {
     cy.get('input[name=file_name]').type(dmnFileName);
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${dmnFileName}`);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${dmnFileName}.dmn`).should('exist');
@@ -125,7 +126,7 @@ describe('process-models', () => {
     cy.contains(`Process Model File: ${jsonFileName}`);
     // wait for json to load before clicking away to avoid network errors
     cy.wait(500);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${jsonFileName}.json`).should('exist');
@@ -157,7 +158,7 @@ describe('process-models', () => {
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
 
-    cy.contains(`${directParentGroupId}`).click();
+    cy.contains(`${groupDisplayName}`).click();
     cy.contains('Add a process model');
     cy.contains(modelDisplayName).click();
     cy.url().should(
@@ -187,7 +188,7 @@ describe('process-models', () => {
       .click();
 
     // in breadcrumb
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
 
     cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
