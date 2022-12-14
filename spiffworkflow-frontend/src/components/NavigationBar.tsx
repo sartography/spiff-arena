@@ -42,7 +42,7 @@ export default function NavigationBar() {
   const { targetUris } = useUriListForPermissions();
 
   // App.jsx forces login (which redirects to keycloak) so we should never get here if we're not logged in.
-  if (UserService.isLoggedIn()) {
+  if (!UserService.isLoggedIn()) {
     throw new UnauthenticatedError('You must be authenticated to do this.');
   }
   const permissionRequestData: PermissionsToCheck = {
