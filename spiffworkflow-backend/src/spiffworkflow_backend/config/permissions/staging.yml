@@ -1,0 +1,165 @@
+default_group: everybody
+
+groups:
+  admin:
+    users:
+      [
+        admin,
+        jakub,
+        kb,
+        alex,
+        dan,
+        mike,
+        jason,
+        j,
+        jarrad,
+        elizabeth,
+        jon,
+        natalia,
+      ]
+
+  Finance Team:
+    users:
+      [
+        jakub,
+        alex,
+        dan,
+        mike,
+        jason,
+        j,
+        amir,
+        jarrad,
+        elizabeth,
+        jon,
+        natalia,
+        sasha,
+        fin,
+        fin1,
+      ]
+
+  demo:
+    users:
+      [
+        core,
+        fin,
+        fin1,
+        harmeet,
+        sasha,
+        manuchehr,
+        lead,
+        lead1
+      ]
+
+  core-contributor:
+    users:
+      [
+        core,
+        harmeet,
+      ]
+
+permissions:
+  admin:
+    groups: [admin]
+    users: []
+    allowed_permissions: [read]
+    uri: /*
+  admin-process-instances:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /process-instances/*
+
+  tasks-crud:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/tasks/*
+
+  service-tasks:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/service-tasks
+
+
+  # read all for everybody
+  read-all-process-groups:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-groups/*
+  read-all-process-models:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-models/*
+  read-all-process-instance:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-instances/*
+  read-process-instance-reports:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/process-instances/reports/*
+  processes-read:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/processes
+
+
+  manage-procurement-admin-instances:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/manage-procurement:*
+  manage-procurement-admin-instances-slash:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/manage-procurement/*
+  manage-procurement-admin-instance-logs:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-procurement:*
+  manage-procurement-admin-instance-logs-slash:
+    groups: ["Project Lead"]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-procurement/*
+
+  manage-revenue-streams-instances:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /v1.0/process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+  manage-revenue-streams-instance-logs:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+
+  manage-procurement-invoice-instances:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
+  manage-procurement-invoice-instance-logs:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-procurement:procurement:core-contributor-invoice-management:*
+
+  manage-procurement-instances:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /v1.0/process-instances/manage-procurement:vendor-lifecycle-management:*
+  manage-procurement-instance-logs:
+    groups: ["core-contributor", "demo"]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-procurement:vendor-lifecycle-management:*
