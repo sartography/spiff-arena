@@ -67,7 +67,7 @@ permissions:
     groups: [admin]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /process-instances/*
+    uri: /v1.0/process-instances/*
 
   tasks-crud:
     groups: [everybody]
