@@ -1025,11 +1025,11 @@ def process_instance_list(
         elif attribute in instance_metadata_aliases:
             if order_by_option.startswith("-"):
                 order_by_query_array.append(
-                    instance_metadata_aliases[attribute].value.desc()
+                    func.max(instance_metadata_aliases[attribute].value).desc()
                 )
             else:
                 order_by_query_array.append(
-                    instance_metadata_aliases[attribute].value.asc()
+                    func.max(instance_metadata_aliases[attribute].value).asc()
                 )
 
     process_instances = (
