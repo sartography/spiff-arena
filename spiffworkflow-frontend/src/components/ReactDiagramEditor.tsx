@@ -545,9 +545,7 @@ export default function ReactDiagramEditor({
       });
   };
 
-  const viewXmlFile = () => {
-    navigate(`/admin/process-models/${processModelId}/form/${fileName}`);
-  };
+  const canViewXml = fileName !== undefined;
 
   const userActionOptions = () => {
     if (diagramType !== 'readonly') {
@@ -592,7 +590,17 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            <Button onClick={viewXmlFile}>View XML</Button>
+            {canViewXml && (
+              <Button
+                onClick={() => {
+                  navigate(
+                    `/admin/process-models/${processModelId}/form/${fileName}`
+                  );
+                }}
+              >
+                View XML
+              </Button>
+            )}
           </Can>
         </>
       );
