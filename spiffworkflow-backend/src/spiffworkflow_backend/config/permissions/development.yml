@@ -17,7 +17,6 @@ groups:
         dan,
         mike,
         jason,
-        j,
         jarrad,
         elizabeth,
         jon,
@@ -32,7 +31,6 @@ groups:
         dan,
         mike,
         jason,
-        j,
         amir,
         jarrad,
         elizabeth,
@@ -63,12 +61,29 @@ groups:
         harmeet,
       ]
 
+  admin-ro:
+    users:
+      [
+        j,
+      ]
+
 permissions:
   admin:
     groups: [admin]
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /*
+
+  admin-readonly:
+    groups: [admin-ro]
+    users: []
+    allowed_permissions: [read]
+    uri: /*
+  admin-process-instances-for-readonly:
+    groups: [admin-ro]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /v1.0/process-instances/*
 
   tasks-crud:
     groups: [everybody]
