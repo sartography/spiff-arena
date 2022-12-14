@@ -1898,7 +1898,6 @@ def secret_list(
 def add_secret(body: Dict) -> Response:
     """Add secret."""
     secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
-    assert secret_model  # noqa: S101
     return Response(
         json.dumps(SecretModelSchema().dump(secret_model)),
         status=201,
