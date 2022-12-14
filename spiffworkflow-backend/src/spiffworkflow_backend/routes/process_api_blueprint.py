@@ -1311,7 +1311,7 @@ def process_instance_task_list(
 
     tasks = []
     for spiff_task in spiff_tasks:
-        task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
         task.data = spiff_task.data
         tasks.append(task)
 
@@ -1344,7 +1344,9 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             form_schema_file_name = properties["formJsonSchemaFilename"]
         if "formUiSchemaFilename" in properties:
             form_ui_schema_file_name = properties["formUiSchemaFilename"]
-    task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
+
+    processor = ProcessInstanceProcessor(process_instance)
+    task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
     task.process_model_identifier = process_model.id
@@ -1876,6 +1878,24 @@ def update_task_data(process_instance_id: str, task_id: str, body: Dict) -> Resp
         raise ApiError(
             error_code="update_task_data_error",
             message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
+
+def send_bpmn_event(process_instance_id: str, body: Dict) -> Response:
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.send_bpmn_event(body)
+    else:
+        raise ApiError(
+            error_code="send_bpmn_event_error",
+            message=f"Could not send event to Instance: {process_instance_id}",
         )
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),

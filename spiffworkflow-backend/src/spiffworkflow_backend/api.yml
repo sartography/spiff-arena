@@ -586,6 +586,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
+  /process-instances/{process_instance_id}/event:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of the process instance
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.send_bpmn_event
+      summary: Send a BPMN event to the process
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Event Sent Successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
   /process-models/{process_group_id}/{process_model_id}/script-unit-tests:
     parameters:
       - name: process_group_id

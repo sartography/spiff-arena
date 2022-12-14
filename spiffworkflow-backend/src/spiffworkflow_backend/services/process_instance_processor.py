@@ -45,9 +45,8 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import (
 from SpiffWorkflow.spiff.serializer.task_spec_converters import EndEventConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import (
     IntermediateCatchEventConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
     IntermediateThrowEventConverter,
+    EventBasedGatewayConverter,
 )
 from SpiffWorkflow.spiff.serializer.task_spec_converters import ManualTaskConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverter
@@ -254,6 +253,7 @@ class ProcessInstanceProcessor:
             EndEventConverter,
             IntermediateCatchEventConverter,
             IntermediateThrowEventConverter,
+            EventBasedGatewayConverter,
             ManualTaskConverter,
             NoneTaskConverter,
             ReceiveTaskConverter,
@@ -267,6 +267,7 @@ class ProcessInstanceProcessor:
         ]
     )
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
+    _event_serializer = EventBasedGatewayConverter()
 
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
     VALIDATION_PROCESS_KEY = "validate_only"
@@ -657,6 +658,18 @@ class ProcessInstanceProcessor:
             for at in active_tasks:
                 db.session.delete(at)
             db.session.commit()
+
+    def serialize_task_spec(self, task_spec: SpiffTask) -> dict[str, Any]:
+        return self._serializer.spec_converter.convert(task_spec)
+
+    def send_bpmn_event(self, event_data: dict[str,Any]) -> None:
+        payload = event_data.pop("payload", None)
+        event_definition = self._event_serializer.restore(event_data)
+        if payload is not None:
+            event_definition.payload = payload
+        current_app.logger.info(f"Event of type {event_definition.event_type} sent to process instance {self.process_instance_model.id}")
+        self.bpmn_process_instance.catch(event_definition)
+        self.do_engine_steps(save=True)
 
     @staticmethod
     def get_parser() -> MyCustomParser:
