@@ -87,15 +87,15 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
   (expectAutoRedirectToHumanTask = false) => {
-    cy.contains('Run').click();
+    cy.contains('Start').click();
     if (expectAutoRedirectToHumanTask) {
       // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
       cy.url().should('include', `/tasks/`);
       cy.contains('Task: ');
     } else {
-      cy.contains(/Process Instance.*kicked off/);
+      cy.contains(/Process Instance.*[kK]icked [oO]ff/);
       cy.reload(true);
-      cy.contains(/Process Instance.*kicked off/).should('not.exist');
+      cy.contains(/Process Instance.*[kK]icked [oO]ff/).should('not.exist');
     }
   }
 );
