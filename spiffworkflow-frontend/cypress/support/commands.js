@@ -1,5 +1,6 @@
 import { string } from 'prop-types';
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
+import { miscDisplayName } from './helpers';
 
 // ***********************************************
 // This example commands.js shows you how to
@@ -103,8 +104,8 @@ Cypress.Commands.add(
   'navigateToProcessModel',
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
-    cy.contains('99-Shared Resources').click();
-    cy.contains(`Process Group: 99-Shared Resources`, { timeout: 10000 });
+    cy.contains(miscDisplayName).click();
+    cy.contains(`Process Group: ${miscDisplayName}`, { timeout: 10000 });
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676
