@@ -214,7 +214,7 @@ export default function ReactFormEditor() {
               )
             }
             variant="danger"
-            data-qa="form-builder-button"
+            data-qa="view-diagram-button"
           >
             View Diagram
           </Button>
