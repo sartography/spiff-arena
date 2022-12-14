@@ -20,6 +20,7 @@ import {
   ButtonSet,
   Tag,
   Modal,
+  Dropdown,
   Stack,
   // @ts-ignore
 } from '@carbon/react';
@@ -47,6 +48,9 @@ export default function ProcessInstanceShow() {
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
+  const [selectingEvent, setSelectingEvent] = useState<boolean>(false);
+  const [eventToSend, setEventToSend] = useState<any>({});
+  const [eventPayload, setEventPayload] = useState<string>('{}');
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
 
@@ -404,8 +408,34 @@ export default function ProcessInstanceShow() {
     );
   };
 
-  const cancelEditingTaskData = () => {
+  const canSendEvent = (task: any) => {
+    // We actually could allow this for any waiting events
+    const taskTypes = ['Event Based Gateway'];
+    return (
+      taskTypes.filter((t) => t === task.type).length > 0 &&
+      task.state === 'WAITING' && 
+      showingLastSpiffStep(processInstance as any)
+    );
+  };
+
+  const getEvents = (task: any) => {
+    const handleMessage = (eventDefinition: any) => {
+      if (eventDefinition.typename === 'MessageEventDefinition') {
+        delete eventDefinition.message_var;
+        eventDefinition.payload = {};
+      }
+      return eventDefinition;
+    };
+    if (task.event_definition && task.event_definition.event_definitions)
+      return task.event_definition.event_definitions.map((e: any) => handleMessage(e));
+    if (task.event_definition)
+      return [handleMessage(task.event_definition)];
+    return [];
+  };
+
+  const cancelUpdatingTask = () => {
     setEditingTaskData(false);
+    setSelectingEvent(false);
     initializeTaskDataToDisplay(taskToDisplay);
     setErrorMessage(null);
   };
@@ -446,6 +476,18 @@ export default function ProcessInstanceShow() {
     });
   };
 
+  const sendEvent = () => {
+    if ('payload' in eventToSend)
+      eventToSend.payload = JSON.parse(eventPayload);
+    HttpService.makeCallToBackend({
+      path: `/process-instances/${params.process_instance_id}/event`,
+      httpMethod: 'POST',
+      successCallback: saveTaskDataResult,
+      failureCallback: saveTaskDataFailure,
+      postBody: eventToSend,
+    });
+  };
+
   const taskDataButtons = (task: any) => {
     const buttons = [];
 
@@ -460,7 +502,7 @@ export default function ProcessInstanceShow() {
       );
     }
 
-    if (canEditTaskData(task)) {
+    if (canEditTaskData(task) || canSendEvent(task)) {
       if (editingTaskData) {
         buttons.push(
           <Button
@@ -473,7 +515,24 @@ export default function ProcessInstanceShow() {
         buttons.push(
           <Button
             data-qa="create-script-unit-test-button"
-            onClick={cancelEditingTaskData}
+            onClick={cancelUpdatingTask}
+          >
+            Cancel
+          </Button>
+        );
+      } else if (selectingEvent) {
+        buttons.push(
+          <Button
+            data-qa="create-script-unit-test-button"
+            onClick={sendEvent}
+          >
+            Send
+          </Button>
+        );
+        buttons.push(
+          <Button
+            data-qa="create-script-unit-test-button"
+            onClick={cancelUpdatingTask}
           >
             Cancel
           </Button>
@@ -487,6 +546,16 @@ export default function ProcessInstanceShow() {
             Edit
           </Button>
         );
+        if (canSendEvent(task)) {
+          buttons.push(
+            <Button
+              data-qa="create-script-unit-test-button"
+              onClick={() => setSelectingEvent(true)}
+            >
+              Send Event
+            </Button>
+          );
+        }
       }
     }
 
@@ -507,8 +576,35 @@ export default function ProcessInstanceShow() {
     );
   };
 
-  const taskDataDisplayArea = () => {
+  const eventSelector = (candidateEvents: any) => {
+    const editor = (
+      <Editor
+        height={300}
+        width="auto"
+        defaultLanguage="json"
+        onChange={(value: any) => setEventPayload(value || '{}')}
+      />
+    )
+    return selectingEvent ? (
+      <Stack orientation="vertical">
+        <Dropdown
+          id="process-instance-select-event"
+          titleText="Event"
+          label="Select Event"
+          items={candidateEvents}
+          itemToString={(item: any) => item.name || item.label || item.typename}
+          onChange={(value: any) => setEventToSend(value.selectedItem)}
+        />
+        {'payload' in eventToSend ? editor : ''}
+      </Stack>
+    ) : (
+      taskDataContainer()
+    );
+  };
+
+  const taskUpdateDisplayArea = () => {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
+    const candidateEvents: any = getEvents(taskToUse);
     if (taskToDisplay) {
       return (
         <Modal
@@ -520,7 +616,7 @@ export default function ProcessInstanceShow() {
             {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
             {taskDataButtons(taskToUse)}
           </Stack>
-          {taskDataContainer()}
+          {selectingEvent ? eventSelector(candidateEvents) : taskDataContainer()}
         </Modal>
       );
     }
@@ -592,7 +688,7 @@ export default function ProcessInstanceShow() {
         <br />
         {getInfoTag(processInstanceToUse)}
         <br />
-        {taskDataDisplayArea()}
+        {taskUpdateDisplayArea()}
         {stepsElement(processInstanceToUse)}
         <br />
         <ReactDiagramEditor
