@@ -2550,7 +2550,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_original_process_model_id}/move?new_location={new_location}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
         assert response.json["id"] == new_process_model_path
 
         # make sure the original model does not exist
@@ -2595,7 +2595,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-groups/{modified_original_process_group_id}/move?new_location={new_location}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
         assert response.json["id"] == new_sub_path
 
         # make sure the original subgroup does not exist
