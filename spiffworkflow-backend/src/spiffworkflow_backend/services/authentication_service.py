@@ -93,7 +93,7 @@ class AuthenticationService:
             + f"?state={state}&"
             + "response_type=code&"
             + f"client_id={self.client_id()}&"
-            + "scope=openid email&"
+            + "scope=openid profile email&"
             + f"redirect_uri={return_redirect_url}"
         )
         return login_redirect_url

@@ -21,17 +21,17 @@ groups:
   admin:
     users:
       [
-        admin,
+        admin@spiffworkflow.org,
       ]
   Education:
     users:
       [
-        malala
+        malala@spiffworkflow.org
       ]
   President:
     users:
       [
-        nelson
+        nelson@spiffworkflow.org
       ]
 
 permissions:

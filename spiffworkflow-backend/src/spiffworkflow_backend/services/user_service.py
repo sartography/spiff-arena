@@ -13,6 +13,7 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
 
 
 class UserService:
@@ -21,10 +22,11 @@ class UserService:
     @classmethod
     def create_user(
         cls,
+        username: str,
         service: str,
         service_id: str,
-        username: Optional[str] = "",
         email: Optional[str] = "",
+        display_name:  Optional[str] = ""
     ) -> UserModel:
         """Create_user."""
         user_model: Optional[UserModel] = (
@@ -41,6 +43,7 @@ class UserService:
                 service=service,
                 service_id=service_id,
                 email=email,
+                display_name=display_name
             )
             db.session.add(user_model)
 
@@ -124,8 +127,26 @@ class UserService:
     @classmethod
     def add_user_to_group(cls, user: UserModel, group: GroupModel) -> None:
         """Add_user_to_group."""
-        ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
-        db.session.add(ugam)
+        exists = UserGroupAssignmentModel().query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
+        if not exists:
+            ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
+            db.session.add(ugam)
+            db.session.commit()
+
+    @classmethod
+    def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> None:
+        exists = UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).count()
+        if not exists:
+            wugam = UserGroupAssignmentWaitingModel(username=username, group_id=group.id)
+            db.session.add(wugam)
+            db.session.commit()
+
+    @classmethod
+    def apply_waiting_group_assignments(cls, user: UserModel) -> None:
+        waiting = UserGroupAssignmentWaitingModel().query.filter(UserGroupAssignmentWaitingModel.username == user.username).all()
+        for assignment in waiting:
+            cls.add_user_to_group(user, assignment.group)
+            db.session.delete(assignment)
         db.session.commit()
 
     @staticmethod

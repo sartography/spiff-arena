@@ -29,9 +29,10 @@ class UserModel(SpiffworkflowBaseDBModel):
     __tablename__ = "user"
     __table_args__ = (db.UniqueConstraint("service", "service_id", name="service_key"),)
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), nullable=False, unique=True) # should always be an email address.
+    username = db.Column(db.String(255), nullable=False, unique=True) # should always be a unique value
     service = db.Column(db.String(50), nullable=False, unique=False) # not 'openid' -- google, aws
     service_id = db.Column(db.String(255), nullable=False, unique=False)
+    display_name = db.Column(db.String(255))
     email = db.Column(db.String(255))
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")  # type: ignore
