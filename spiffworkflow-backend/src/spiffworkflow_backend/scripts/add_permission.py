@@ -9,16 +9,17 @@ from spiffworkflow_backend.models.script_attributes_context import (
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.scripts.script import Script
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 
-
-class AddUserToGroup(Script):
+# add_permission("read", "test/*", "Editors")
+class AddPermission(Script):
     """AddUserToGroup."""
 
     def get_description(self) -> str:
         """Get_description."""
-        return """Add a given user to a given group. Ex. add_user_to_group(group='Education', service_id='1234123')"""
+        return """Add a permission to a group. ex: add_permission("read", "test/*", "Editors") """
 
     def run(
         self,
@@ -27,12 +28,11 @@ class AddUserToGroup(Script):
         **kwargs: Any,
     ) -> Any:
         """Run."""
-        username = args[0]
-        group_identifier = args[1]
-
+        allowed_permission = args[0]
+        uri = args[1]
+        group_identifier = args[2]
         group = GroupService.find_or_create_group(group_identifier)
-        user = UserModel.query.filter_by(username=username).first()
-        if user:
-            UserService.add_user_to_group(user, group)
-        else:
-            UserService.add_waiting_group_assignment(username, group)
+        target = AuthorizationService.find_or_create_permission_target(uri)
+        AuthorizationService.create_permission_for_principal(
+            group.principal, target, allowed_permission
+        )

@@ -27,6 +27,7 @@ class GroupModel(FlaskBpmnGroupModel):
     identifier = db.Column(db.String(255))
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")
+    user_group_assignments_waiting = relationship("UserGroupAssignmentWaitingModel", cascade="delete")
     users = relationship(  # type: ignore
         "UserModel",
         viewonly=True,

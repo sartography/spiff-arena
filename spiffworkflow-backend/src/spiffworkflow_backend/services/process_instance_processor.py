@@ -151,6 +151,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "decimal": decimal,
             "_strptime": _strptime,
+            "enumerate": enumerate,
         }
 
         # This will overwrite the standard builtins

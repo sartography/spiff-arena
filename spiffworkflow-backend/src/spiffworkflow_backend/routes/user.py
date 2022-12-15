@@ -341,5 +341,5 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserMo
     )
     if user:
         return user
-    user = UserService.create_user(service, service_id, username=service_id)
+    user = UserService.create_user(service_id, service, service_id)
     return user

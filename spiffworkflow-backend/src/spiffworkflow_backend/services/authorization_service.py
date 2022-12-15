@@ -127,17 +127,15 @@ class AuthorizationService:
         return cls.has_permission(principals, permission, target_uri)
 
     @classmethod
-    def delete_all_permissions_and_recreate(cls) -> None:
-        """Delete_all_permissions_and_recreate."""
+    def delete_all_permissions(cls) -> None:
+        """Delete_all_permissions_and_recreate.  EXCEPT For permissions for the current user?"""
         for model in [PermissionAssignmentModel, PermissionTargetModel]:
             db.session.query(model).delete()
 
         # cascading to principals doesn't seem to work when attempting to delete all so do it like this instead
         for group in GroupModel.query.all():
             db.session.delete(group)
-
         db.session.commit()
-        cls.import_permissions_from_yaml_file()
 
     @classmethod
     def associate_user_with_group(cls, user: UserModel, group: GroupModel) -> None:
@@ -193,14 +191,7 @@ class AuthorizationService:
                 "permissions"
             ].items():
                 uri = permission_config["uri"]
-                uri_with_percent = re.sub(r"\*", "%", uri)
-                permission_target = PermissionTargetModel.query.filter_by(
-                    uri=uri_with_percent
-                ).first()
-                if permission_target is None:
-                    permission_target = PermissionTargetModel(uri=uri_with_percent)
-                    db.session.add(permission_target)
-                    db.session.commit()
+                permission_target = cls.find_or_create_permission_target(uri)
 
                 for allowed_permission in permission_config["allowed_permissions"]:
                     if "groups" in permission_config:
@@ -225,6 +216,18 @@ class AuthorizationService:
         if default_group is not None:
             for user in UserModel.query.all():
                 cls.associate_user_with_group(user, default_group)
+
+    @classmethod
+    def find_or_create_permission_target(cls, uri):
+        uri_with_percent = re.sub(r"\*", "%", uri)
+        permission_target = PermissionTargetModel.query.filter_by(
+            uri=uri_with_percent
+        ).first()
+        if permission_target is None:
+            permission_target = PermissionTargetModel(uri=uri_with_percent)
+            db.session.add(permission_target)
+            db.session.commit()
+        return permission_target
 
     @classmethod
     def create_permission_for_principal(
@@ -449,40 +452,46 @@ class AuthorizationService:
     @classmethod
     def create_user_from_sign_in(cls, user_info: dict) -> UserModel:
         """Create_user_from_sign_in."""
+        """name, family_name, given_name, middle_name, nickname, preferred_username,"""
+        """profile, picture, website, gender, birthdate, zoneinfo, locale, and updated_at. """
+        """email"""
         is_new_user = False
-        if user_info.get('email', None) is not None:
-            user_model = (
-                UserModel.query.filter(UserModel.email == user_info["email"]).first()
-            )
-        else:
-            user_model = (
-                UserModel.query.filter(UserModel.service == user_info["iss"])
-                .filter(UserModel.service_id == user_info["sub"])
-                .first()
-            )
-        username = email = ""
-        if "name" in user_info:
-            username = user_info["name"]
-        if "username" in user_info:
-            username = user_info["username"]
-        elif "preferred_username" in user_info:
-            username = user_info["preferred_username"]
+        user_model = (
+            UserModel.query.filter(UserModel.service == user_info["iss"])
+            .filter(UserModel.service_id == user_info["sub"])
+            .first()
+        )
+        email = display_name = username = ""
         if "email" in user_info:
+            username = user_info["email"]
             email = user_info["email"]
+        else:  # we fall back to the sub, which may be very ugly.
+            username = user_info["sub"] + "@" + user_info["iss"]
+
+        if "preferred_username" in user_info:
+            display_name = user_info["preferred_username"]
+        elif "nickname" in user_info:
+            display_name = user_info["nickname"]
+        elif "name" in user_info:
+            display_name = user_info["name"]
 
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             is_new_user = True
             user_model = UserService().create_user(
+                username=username,
                 service=user_info["iss"],
                 service_id=user_info["sub"],
-                username=username,
                 email=email,
+                display_name = display_name
             )
+            UserService().apply_waiting_group_assignments(user_model)
+
         else :
             # Update with the latest information
             user_model.username = username
             user_model.email = email
+            user_model.display_name = display_name
             user_model.service = user_info["iss"]
             user_model.service_id = user_info["sub"]
 
