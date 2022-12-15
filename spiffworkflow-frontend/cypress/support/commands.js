@@ -86,15 +86,15 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
   (expectAutoRedirectToHumanTask = false) => {
-    cy.contains('Run').click();
+    cy.contains('Start').click();
     if (expectAutoRedirectToHumanTask) {
       // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
       cy.url().should('include', `/tasks/`);
       cy.contains('Task: ');
     } else {
-      cy.contains(/Process Instance.*kicked off/);
+      cy.contains(/Process Instance Kicked Off/);
       cy.reload(true);
-      cy.contains(/Process Instance.*kicked off/).should('not.exist');
+      cy.contains(/Process Instance Kicked Off/).should('not.exist');
     }
   }
 );
@@ -132,3 +132,18 @@ Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
   cy.contains(/\b0–0 of 0 items/);
 });
+
+Cypress.Commands.add(
+  'deleteProcessModelAndConfirm',
+  (buttonId, groupId) => {
+    cy.getBySel(buttonId).click();
+    cy.contains('Are you sure');
+    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
+      .find('.cds--btn--danger')
+      .click();
+    cy.url().should(
+      'include',
+      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
+    );
+  }
+);

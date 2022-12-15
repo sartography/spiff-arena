@@ -8,16 +8,19 @@ describe('process-models', () => {
     cy.logout();
   });
 
+  const sharedResourceString = 'Shared Resources';
+  const groupDisplayName = 'Acceptance Tests Group One';
+  const deleteProcessModelButtonId = 'delete-process-model-button';
+
   it('can perform crud operations', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const groupId = 'misc/acceptance-tests-group-one';
-    const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     const newModelDisplayName = `${modelDisplayName} edited`;
-    cy.contains('99-Shared Resources').click();
-    cy.wait(500);
+    cy.contains(sharedResourceString).click();
+    cy.wait(750);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.url().should(
@@ -33,18 +36,8 @@ describe('process-models', () => {
     cy.contains('Submit').click();
     cy.contains(`Process Model: ${newModelDisplayName}`);
 
-    // go back to process model show by clicking on the breadcrumb
-    cy.contains(modelId).click();
+    cy.deleteProcessModelAndConfirm(deleteProcessModelButtonId, groupId);
 
-    cy.getBySel('delete-process-model-button').click();
-    cy.contains('Are you sure');
-    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
-      .find('.cds--btn--danger')
-      .click();
-    cy.url().should(
-      'include',
-      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
-    );
     cy.contains(modelId).should('not.exist');
   });
 
@@ -52,20 +45,22 @@ describe('process-models', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const directParentGroupId = 'acceptance-tests-group-one';
+    const directParentGroupName = 'Acceptance Tests Group One';
     const groupId = `misc/${directParentGroupId}`;
-    const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
 
     const bpmnFileName = `bpmn_test_file_${id}`;
     const dmnFileName = `dmn_test_file_${id}`;
     const jsonFileName = `json_test_file_${id}`;
+    const decision_acceptance_test_id = `decision_acceptance_test_${id}`;
 
-    cy.contains('99-Shared Resources').click();
+    cy.contains(sharedResourceString).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
-    cy.contains(directParentGroupId).click();
+    cy.contains(directParentGroupName).click();
+    cy.wait(500);
     cy.contains(modelDisplayName).click();
     cy.url().should(
       'include',
@@ -90,7 +85,7 @@ describe('process-models', () => {
     cy.get('input[name=file_name]').type(bpmnFileName);
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${bpmnFileName}`);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${bpmnFileName}.bpmn`).should('exist');
@@ -102,13 +97,13 @@ describe('process-models', () => {
     cy.contains('General').click();
     cy.get('#bio-properties-panel-id')
       .clear()
-      .type('decision_acceptance_test_1');
+      .type(decision_acceptance_test_id);
     cy.contains('General').click();
     cy.contains('Save').click();
     cy.get('input[name=file_name]').type(dmnFileName);
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${dmnFileName}`);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${dmnFileName}.dmn`).should('exist');
@@ -124,20 +119,12 @@ describe('process-models', () => {
     cy.contains(`Process Model File: ${jsonFileName}`);
     // wait for json to load before clicking away to avoid network errors
     cy.wait(500);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${jsonFileName}.json`).should('exist');
 
-    cy.getBySel('delete-process-model-button').click();
-    cy.contains('Are you sure');
-    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
-      .find('.cds--btn--danger')
-      .click();
-    cy.url().should(
-      'include',
-      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
-    );
+    cy.deleteProcessModelAndConfirm(deleteProcessModelButtonId, groupId);
     cy.contains(modelId).should('not.exist');
     cy.contains(modelDisplayName).should('not.exist');
   });
@@ -147,16 +134,15 @@ describe('process-models', () => {
     const id = uuid();
     const directParentGroupId = 'acceptance-tests-group-one';
     const groupId = `misc/${directParentGroupId}`;
-    const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     cy.contains('Add a process group');
-    cy.contains('99-Shared Resources').click();
+    cy.contains(sharedResourceString).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
 
-    cy.contains(`${directParentGroupId}`).click();
+    cy.contains(`${groupDisplayName}`).click();
     cy.contains('Add a process model');
     cy.contains(modelDisplayName).click();
     cy.url().should(
@@ -188,26 +174,19 @@ describe('process-models', () => {
     // in breadcrumb
     cy.contains(modelId).click();
 
-    cy.getBySel('delete-process-model-button').click();
+    cy.getBySel(deleteProcessModelButtonId).click();
     cy.contains('Are you sure');
     cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
       .find('.cds--btn--danger')
       .click();
-    cy.url().should(
-      'include',
-      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
-    );
+    // cy.url().should(
+    //   'include',
+    //   `process-instances?process_model_identifier=${modifyProcessIdentifierForPathParam(groupId)}`
+    // );
+    // cy.wait(750);
     cy.contains(modelId).should('not.exist');
     cy.contains(modelDisplayName).should('not.exist');
   });
-
-  // process models no longer has pagination post-tiles
-  // it.only('can paginate items', () => {
-  //   cy.contains('99-Shared Resources').click();
-  //   cy.wait(500);
-  //   cy.contains('Acceptance Tests Group One').click();
-  //   cy.basicPaginationTest();
-  // });
 
   it('can allow searching for model', () => {
     cy.getBySel('process-model-selection').click().type('model-3');
