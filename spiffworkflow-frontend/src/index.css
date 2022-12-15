@@ -69,6 +69,24 @@ h2 {
   color: black;
 }
 
+/* match normal link colors */
+.cds--btn--ghost.button-link {
+  color: #0062fe;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link:visited {
+  color: #0062fe;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link:hover {
+  color: #0062fe;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link:visited:hover {
+  color: #0062fe;
+  padding-left: 0;
+}
+
 .cds--header__global .cds--btn--primary {
   background-color: #161616
 }
@@ -151,8 +169,20 @@ h1.with-icons {
   margin-top: 1em;
 }
 
+.with-extra-top-margin {
+  margin-top: 1.3em;
+}
+
+.with-tiny-top-margin {
+  margin-top: 4px;
+}
+
 .with-large-bottom-margin {
   margin-bottom: 3em;
+}
+
+.with-tiny-bottom-margin {
+  margin-bottom: 4px;
 }
 
 .diagram-viewer-canvas {
@@ -296,4 +326,47 @@ td.actions-cell {
 .filterIcon {
   text-align: right;
   padding-bottom: 10px;
+}
+
+.cds--btn--ghost:not([disabled]) svg.red-icon {
+  fill: red;
+}
+
+svg.green-icon {
+  fill: #198038;
+}
+
+svg.notification-icon {
+  margin-right: 1rem;
+}
+
+.failure-string {
+  color: red;
+}
+
+.cds--btn--ghost.cds--btn--sm.button-tag-icon {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+}
+
+/* .no-wrap cds--label cds--label--inline cds--label--inline--md{ */
+.no-wrap .cds--label--inline{
+  word-break: normal;
+}
+
+.combo-box-in-modal {
+  height: 300px;
+}
+
+.cds--btn.narrow-button {
+  max-width: 10rem;
+  min-width: 5rem;
+  word-break: normal;
+
+}
+
+/* lime green */
+.tag-type-green:hover {
+  background-color:	#80ee90;
 }

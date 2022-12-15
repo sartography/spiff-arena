@@ -1,6 +1,8 @@
 """File_system_service."""
 import os
+from contextlib import contextmanager
 from datetime import datetime
+from typing import Generator
 from typing import List
 from typing import Optional
 
@@ -23,13 +25,25 @@ class FileSystemService:
     PROCESS_GROUP_JSON_FILE = "process_group.json"
     PROCESS_MODEL_JSON_FILE = "process_model.json"
 
+    # https://stackoverflow.com/a/24176022/6090676
+    @staticmethod
+    @contextmanager
+    def cd(newdir: str) -> Generator:
+        """Cd."""
+        prevdir = os.getcwd()
+        os.chdir(os.path.expanduser(newdir))
+        try:
+            yield
+        finally:
+            os.chdir(prevdir)
+
     @staticmethod
     def root_path() -> str:
         """Root_path."""
         # fixme: allow absolute files
         dir_name = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
         app_root = current_app.root_path
-        return os.path.join(app_root, "..", dir_name)
+        return os.path.abspath(os.path.join(app_root, "..", dir_name))
 
     @staticmethod
     def id_string_to_relative_path(id_string: str) -> str:

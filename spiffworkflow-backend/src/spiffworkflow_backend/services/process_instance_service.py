@@ -304,6 +304,11 @@ class ProcessInstanceService:
         else:
             lane = None
 
+        if hasattr(spiff_task.task_spec, "spec"):
+            call_activity_process_identifier = spiff_task.task_spec.spec
+        else:
+            call_activity_process_identifier = None
+
         parent_id = None
         if spiff_task.parent:
             parent_id = spiff_task.parent.id
@@ -320,25 +325,11 @@ class ProcessInstanceService:
             multi_instance_type=mi_type,
             multi_instance_count=info["mi_count"],
             multi_instance_index=info["mi_index"],
-            process_name=spiff_task.task_spec._wf_spec.description,
+            process_identifier=spiff_task.task_spec._wf_spec.name,
             properties=props,
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),
+            call_activity_process_identifier=call_activity_process_identifier,
         )
 
         return task
-
-    @staticmethod
-    def serialize_flat_with_task_data(
-        process_instance: ProcessInstanceModel,
-    ) -> dict[str, Any]:
-        """NOTE:  This is crazy slow.  Put the latest task data in the database."""
-        """Serialize_flat_with_task_data."""
-        # results = {}
-        # try:
-        #     processor = ProcessInstanceProcessor(process_instance)
-        #     process_instance.data = processor.get_current_data()
-        #     results = process_instance.serialized_flat
-        # except ApiError:
-        results = process_instance.serialized
-        return results

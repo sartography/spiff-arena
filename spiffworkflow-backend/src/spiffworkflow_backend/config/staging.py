@@ -1,9 +1,7 @@
 """Staging."""
 from os import environ
 
-GIT_COMMIT_ON_SAVE = True
-GIT_COMMIT_USERNAME = "staging"
-GIT_COMMIT_EMAIL = "staging@example.com"
-SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(
-    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME", default="staging.yml"
-)
+GIT_BRANCH = environ.get("GIT_BRANCH_TO_PUBLISH_TO", default="staging")
+GIT_BRANCH_TO_PUBLISH_TO = environ.get("GIT_BRANCH_TO_PUBLISH_TO", default="main")
+GIT_COMMIT_ON_SAVE = False
+SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = "staging.yml"

@@ -2,6 +2,9 @@
 from dataclasses import dataclass
 from typing import Optional
 
+import sqlalchemy
+from flask_bpmn.models.db import db
+
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -57,12 +60,21 @@ class ProcessInstanceReportService:
 
     @classmethod
     def report_with_identifier(
-        cls, user: UserModel, report_identifier: Optional[str] = None
+        cls,
+        user: UserModel,
+        report_id: Optional[int] = None,
+        report_identifier: Optional[str] = None,
     ) -> ProcessInstanceReportModel:
         """Report_with_filter."""
+        if report_id is not None:
+            process_instance_report = ProcessInstanceReportModel.query.filter_by(
+                id=report_id, created_by_id=user.id
+            ).first()
+            if process_instance_report is not None:
+                return process_instance_report  # type: ignore
+
         if report_identifier is None:
             report_identifier = "default"
-
         process_instance_report = ProcessInstanceReportModel.query.filter_by(
             identifier=report_identifier, created_by_id=user.id
         ).first()
@@ -73,17 +85,9 @@ class ProcessInstanceReportService:
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
             "default": {
-                "columns": [
-                    {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_model_display_name",
-                        "accessor": "process_model_display_name",
-                    },
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "username", "accessor": "username"},
-                    {"Header": "status", "accessor": "status"},
-                ],
+                "columns": cls.builtin_column_options(),
+                "filter_by": [],
+                "order_by": ["-start_in_seconds", "-id"],
             },
             "system_report_instances_initiated_by_me": {
                 "columns": [
@@ -97,48 +101,31 @@ class ProcessInstanceReportService:
                     {"Header": "status", "accessor": "status"},
                 ],
                 "filter_by": [{"field_name": "initiated_by_me", "field_value": True}],
+                "order_by": ["-start_in_seconds", "-id"],
             },
             "system_report_instances_with_tasks_completed_by_me": {
-                "columns": [
-                    {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_model_display_name",
-                        "accessor": "process_model_display_name",
-                    },
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "username", "accessor": "username"},
-                    {"Header": "status", "accessor": "status"},
-                ],
+                "columns": cls.builtin_column_options(),
                 "filter_by": [
                     {"field_name": "with_tasks_completed_by_me", "field_value": True}
                 ],
+                "order_by": ["-start_in_seconds", "-id"],
             },
             "system_report_instances_with_tasks_completed_by_my_groups": {
-                "columns": [
-                    {"Header": "id", "accessor": "id"},
-                    {
-                        "Header": "process_model_display_name",
-                        "accessor": "process_model_display_name",
-                    },
-                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                    {"Header": "username", "accessor": "username"},
-                    {"Header": "status", "accessor": "status"},
-                ],
+                "columns": cls.builtin_column_options(),
                 "filter_by": [
                     {
                         "field_name": "with_tasks_completed_by_my_group",
                         "field_value": True,
                     }
                 ],
+                "order_by": ["-start_in_seconds", "-id"],
             },
         }
 
         process_instance_report = ProcessInstanceReportModel(
             identifier=report_identifier,
             created_by_id=user.id,
-            report_metadata=temp_system_metadata_map[report_identifier],  # type: ignore
+            report_metadata=temp_system_metadata_map[report_identifier],
         )
 
         return process_instance_report  # type: ignore
@@ -241,3 +228,43 @@ class ProcessInstanceReportService:
             )
 
         return report_filter
+
+    @classmethod
+    def add_metadata_columns_to_process_instance(
+        cls,
+        process_instance_sqlalchemy_rows: list[sqlalchemy.engine.row.Row],  # type: ignore
+        metadata_columns: list[dict],
+    ) -> list[dict]:
+        """Add_metadata_columns_to_process_instance."""
+        results = []
+        for process_instance in process_instance_sqlalchemy_rows:
+            process_instance_dict = process_instance["ProcessInstanceModel"].serialized
+            for metadata_column in metadata_columns:
+                if metadata_column["accessor"] not in process_instance_dict:
+                    process_instance_dict[
+                        metadata_column["accessor"]
+                    ] = process_instance[metadata_column["accessor"]]
+
+            results.append(process_instance_dict)
+        return results
+
+    @classmethod
+    def get_column_names_for_model(cls, model: db.Model) -> list[str]:  # type: ignore
+        """Get_column_names_for_model."""
+        return [i.name for i in model.__table__.columns]
+
+    @classmethod
+    def builtin_column_options(cls) -> list[dict]:
+        """Builtin_column_options."""
+        return [
+            {"Header": "Id", "accessor": "id", "filterable": False},
+            {
+                "Header": "Process",
+                "accessor": "process_model_display_name",
+                "filterable": False,
+            },
+            {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
+            {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
+            {"Header": "Username", "accessor": "username", "filterable": False},
+            {"Header": "Status", "accessor": "status", "filterable": False},
+        ]

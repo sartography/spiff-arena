@@ -1,4 +1,4 @@
-"""Spiff_step_details."""
+"""Process_instance_metadata."""
 from dataclasses import dataclass
 
 from flask_bpmn.models.db import db
@@ -23,7 +23,7 @@ class ProcessInstanceMetadataModel(SpiffworkflowBaseDBModel):
     process_instance_id: int = db.Column(
         ForeignKey(ProcessInstanceModel.id), nullable=False  # type: ignore
     )
-    key: str = db.Column(db.String(255), nullable=False)
+    key: str = db.Column(db.String(255), nullable=False, index=True)
     value: str = db.Column(db.String(255), nullable=False)
 
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)

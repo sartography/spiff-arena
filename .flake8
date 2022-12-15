@@ -27,3 +27,8 @@ per-file-ignores =
     # this file overwrites methods from the logging library so we can't change them
     # and ignore long comment line
     spiffworkflow-backend/src/spiffworkflow_backend/services/logging_service.py:N802,B950
+
+    # TODO: fix the S issues:
+    # S607 Starting a process with a partial executable path
+    # S605 Starting a process with a shell: Seems safe, but may be changed in the future, consider rewriting without shell
+    spiffworkflow-backend/tests/spiffworkflow_backend/integration/test_process_api.py:S607,S101,D103,S605
