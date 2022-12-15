@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+import os
 import random
 import re
 import string
@@ -75,6 +76,7 @@ from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignme
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -1484,7 +1486,25 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
     task.process_model_identifier = process_model.id
+
     process_model_with_form = process_model
+    refs = SpecFileService.get_references_for_process(process_model_with_form)
+    all_processes = [i.identifier for i in refs]
+    if task.process_identifier not in all_processes:
+        bpmn_file_full_path = (
+            ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
+                task.process_identifier
+            )
+        )
+        relative_path = os.path.relpath(
+            bpmn_file_full_path, start=FileSystemService.root_path()
+        )
+        process_model_relative_path = os.path.dirname(relative_path)
+        process_model_with_form = (
+            ProcessModelService.get_process_model_from_relative_path(
+                process_model_relative_path
+            )
+        )
 
     if task.type == "User Task":
         if not form_schema_file_name:
