@@ -2041,6 +2041,7 @@ def update_task_data(
         mimetype="application/json",
     )
 
+
 def send_bpmn_event(process_instance_id: str, body: Dict) -> Response:
     process_instance = ProcessInstanceModel.query.filter(
         ProcessInstanceModel.id == int(process_instance_id)

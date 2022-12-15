@@ -279,7 +279,7 @@ class ProcessInstanceService:
     def spiff_task_to_api_task(
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
-        add_docs_and_forms: bool = False
+        add_docs_and_forms: bool = False,
     ) -> Task:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.spec_type
