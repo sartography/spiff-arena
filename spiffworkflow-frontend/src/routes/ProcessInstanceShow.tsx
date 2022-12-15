@@ -392,13 +392,13 @@ export default function ProcessInstanceShow() {
 
   const handleClickedDiagramTask = (
     shapeElement: any,
-    bpmnRootElement: any
+    bpmnProcessIdentifiers: any
   ) => {
     if (tasks) {
       const matchingTask: any = tasks.find(
         (task: any) =>
           task.name === shapeElement.id &&
-          task.process_identifier === bpmnRootElement.id
+          bpmnProcessIdentifiers.includes(task.process_identifier)
       );
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
