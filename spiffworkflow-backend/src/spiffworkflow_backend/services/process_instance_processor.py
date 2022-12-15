@@ -705,15 +705,17 @@ class ProcessInstanceProcessor:
                 db.session.delete(at)
             db.session.commit()
 
-    def serialize_task_spec(self, task_spec: SpiffTask) -> dict[str, Any]:
+    def serialize_task_spec(self, task_spec: SpiffTask) -> Any:
         return self._serializer.spec_converter.convert(task_spec)
 
-    def send_bpmn_event(self, event_data: dict[str,Any]) -> None:
+    def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
         payload = event_data.pop("payload", None)
         event_definition = self._event_serializer.restore(event_data)
         if payload is not None:
             event_definition.payload = payload
-        current_app.logger.info(f"Event of type {event_definition.event_type} sent to process instance {self.process_instance_model.id}")
+        current_app.logger.info(
+            f"Event of type {event_definition.event_type} sent to process instance {self.process_instance_model.id}"
+        )
         self.bpmn_process_instance.catch(event_definition)
         self.do_engine_steps(save=True)
 
