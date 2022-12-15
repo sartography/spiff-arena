@@ -41,7 +41,7 @@ export default function MyOpenProcesses() {
       });
     };
     getTasks();
-    refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
+    return refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
   }, [searchParams]);
 
   const buildTable = () => {

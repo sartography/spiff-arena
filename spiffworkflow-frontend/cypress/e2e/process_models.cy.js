@@ -1,4 +1,5 @@
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
+import { miscDisplayName } from '../support/helpers';
 
 describe('process-models', () => {
   beforeEach(() => {
@@ -16,7 +17,7 @@ describe('process-models', () => {
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     const newModelDisplayName = `${modelDisplayName} edited`;
-    cy.contains('99-Shared Resources').click();
+    cy.contains(miscDisplayName).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
@@ -34,7 +35,7 @@ describe('process-models', () => {
     cy.contains(`Process Model: ${newModelDisplayName}`);
 
     // go back to process model show by clicking on the breadcrumb
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
 
     cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
@@ -46,6 +47,7 @@ describe('process-models', () => {
       `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
     );
     cy.contains(modelId).should('not.exist');
+    cy.contains(modelDisplayName).should('not.exist');
   });
 
   it('can create new bpmn, dmn, and json files', () => {
@@ -61,11 +63,11 @@ describe('process-models', () => {
     const dmnFileName = `dmn_test_file_${id}`;
     const jsonFileName = `json_test_file_${id}`;
 
-    cy.contains('99-Shared Resources').click();
+    cy.contains(miscDisplayName).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
-    cy.contains(directParentGroupId).click();
+    cy.contains(groupDisplayName).click();
     cy.contains(modelDisplayName).click();
     cy.url().should(
       'include',
@@ -90,7 +92,7 @@ describe('process-models', () => {
     cy.get('input[name=file_name]').type(bpmnFileName);
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${bpmnFileName}`);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${bpmnFileName}.bpmn`).should('exist');
@@ -108,7 +110,7 @@ describe('process-models', () => {
     cy.get('input[name=file_name]').type(dmnFileName);
     cy.contains('Save Changes').click();
     cy.contains(`Process Model File: ${dmnFileName}`);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${dmnFileName}.dmn`).should('exist');
@@ -124,7 +126,7 @@ describe('process-models', () => {
     cy.contains(`Process Model File: ${jsonFileName}`);
     // wait for json to load before clicking away to avoid network errors
     cy.wait(500);
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
     // cy.getBySel('files-accordion').click();
     cy.contains(`${jsonFileName}.json`).should('exist');
@@ -151,12 +153,12 @@ describe('process-models', () => {
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     cy.contains('Add a process group');
-    cy.contains('99-Shared Resources').click();
+    cy.contains(miscDisplayName).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
 
-    cy.contains(`${directParentGroupId}`).click();
+    cy.contains(`${groupDisplayName}`).click();
     cy.contains('Add a process model');
     cy.contains(modelDisplayName).click();
     cy.url().should(
@@ -186,7 +188,7 @@ describe('process-models', () => {
       .click();
 
     // in breadcrumb
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
 
     cy.getBySel('delete-process-model-button').click();
     cy.contains('Are you sure');
@@ -203,7 +205,7 @@ describe('process-models', () => {
 
   // process models no longer has pagination post-tiles
   // it.only('can paginate items', () => {
-  //   cy.contains('99-Shared Resources').click();
+  //   cy.contains(miscDisplayName).click();
   //   cy.wait(500);
   //   cy.contains('Acceptance Tests Group One').click();
   //   cy.basicPaginationTest();

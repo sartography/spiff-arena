@@ -223,7 +223,7 @@ class ProcessModelService(FileSystemService):
             user = UserService.current_user()
             new_process_model_list = []
             for process_model in process_models:
-                uri = f"/v1.0/process-models/{process_model.id.replace('/', ':')}/process-instances"
+                uri = f"/v1.0/process-instances/{process_model.id.replace('/', ':')}"
                 result = AuthorizationService.user_has_permission(
                     user=user, permission="create", target_uri=uri
                 )

@@ -208,5 +208,8 @@ export const refreshAtInterval = (
     () => clearInterval(intervalRef),
     timeout * 1000
   );
-  return [intervalRef, timeoutRef];
+  return () => {
+    clearInterval(intervalRef);
+    clearTimeout(timeoutRef);
+  };
 };
