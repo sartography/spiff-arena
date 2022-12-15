@@ -1702,7 +1702,7 @@ def script_unit_test_create(
 
     extension_elements = None
     extension_elements_array = script_task_element.xpath(
-        "//bpmn:extensionElements",
+        ".//bpmn:extensionElements",
         namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"},
     )
     if len(extension_elements_array) == 0:
