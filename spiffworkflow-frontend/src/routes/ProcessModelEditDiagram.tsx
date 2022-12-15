@@ -6,11 +6,11 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 // @ts-ignore
-import { Button, Modal, Stack, Content } from '@carbon/react';
+import { Button, Modal, Content, Tabs, TabList, Tab, TabPanels, TabPanel } from '@carbon/react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
-import Editor from '@monaco-editor/react';
+import Editor, { DiffEditor } from '@monaco-editor/react';
 
 import MDEditor from '@uiw/react-md-editor';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -397,6 +397,13 @@ export default function ProcessModelEditDiagram() {
     };
   };
 
+  const jsonEditorOptions = () => {
+    return Object.assign(generalEditorOptions(), {
+        minimap: { enabled: false },
+        folding: true
+    });
+  }
+
   const setPreviousScriptUnitTest = () => {
     resetUnitTextResult();
     const newScriptIndex = currentScriptUnitTestIndex - 1;
@@ -491,11 +498,32 @@ export default function ProcessModelEditDiagram() {
       }
       let errorContextElement = null;
       if (scriptUnitTestResult.context) {
+        errorStringElement = (
+          <span>Unexpected result. Please see the comparison below.</span>
+        );
+        let outputJson = '{}';
+        if (currentScriptUnitTest) {
+          outputJson = JSON.stringify(
+            JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
+            null,
+            '  '
+          );
+        }
+        const contextJson = JSON.stringify(
+          scriptUnitTestResult.context,
+          null,
+          '  '
+        );
         errorContextElement = (
-          <span>
-            Received unexpected output:{' '}
-            {JSON.stringify(scriptUnitTestResult.context)}
-          </span>
+          <DiffEditor
+            height={200}
+            width="auto"
+            originalLanguage="json"
+            modifiedLanguage="json"
+            options={Object.assign(jsonEditorOptions(), {})}
+            original={outputJson}
+            modified={contextJson}
+          />
         );
       }
       return (
@@ -539,19 +567,29 @@ export default function ProcessModelEditDiagram() {
           </Col>
         );
       }
+      const inputJson = JSON.stringify(
+        JSON.parse(currentScriptUnitTest.inputJson.value),
+        null,
+        '  '
+      );
+      const outputJson = JSON.stringify(
+        JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
+        null,
+        '  '
+      );
+
       return (
         <main>
           <Content>
             <Row>
               <Col xs={8}>
-                <Button variant="link" disabled style={{ fontSize: '1.5em' }}>
+                <Button variant="link" disabled>
                   Unit Test: {currentScriptUnitTest.id}
                 </Button>
               </Col>
               <Col xs={1}>
                 <Button
                   data-qa="unit-test-previous-button"
-                  style={{ fontSize: '1.5em' }}
                   onClick={setPreviousScriptUnitTest}
                   variant="link"
                   disabled={previousButtonDisable}
@@ -582,52 +620,61 @@ export default function ProcessModelEditDiagram() {
               </Col>
               <Col xs={1}>{scriptUnitTestResultBoolElement}</Col>
             </Row>
+            <Row>
+              <Col>{unitTestFailureElement()}</Col>
+            </Row>
+            <Row>
+              <Col>
+                <div>Input Json:</div>
+                <div>
+                  <Editor
+                    height={500}
+                    width="auto"
+                    defaultLanguage="json"
+                    options={Object.assign(jsonEditorOptions(), {})}
+                    value={inputJson}
+                    onChange={handleEditorScriptTestUnitInputChange}
+                  />
+                </div>
+              </Col>
+              <Col>
+                <div>Expected Output Json:</div>
+                <div>
+                  <Editor
+                    height={500}
+                    width="auto"
+                    defaultLanguage="json"
+                    options={Object.assign(jsonEditorOptions(), {})}
+                    value={outputJson}
+                    onChange={handleEditorScriptTestUnitOutputChange}
+                  />
+                </div>
+              </Col>
+            </Row>
           </Content>
-          <Stack orientation="horizontal" gap={3}>
-            {unitTestFailureElement()}
-          </Stack>
-          <Stack orientation="horizontal" gap={3}>
-            <Stack>
-              <div>Input Json:</div>
-              <div>
-                <Editor
-                  height={200}
-                  defaultLanguage="json"
-                  options={Object.assign(generalEditorOptions(), {
-                    minimap: { enabled: false },
-                  })}
-                  value={currentScriptUnitTest.inputJson.value}
-                  onChange={handleEditorScriptTestUnitInputChange}
-                />
-              </div>
-            </Stack>
-            <Stack>
-              <div>Expected Output Json:</div>
-              <div>
-                <Editor
-                  height={200}
-                  defaultLanguage="json"
-                  options={Object.assign(generalEditorOptions(), {
-                    minimap: { enabled: false },
-                  })}
-                  value={currentScriptUnitTest.expectedOutputJson.value}
-                  onChange={handleEditorScriptTestUnitOutputChange}
-                />
-              </div>
-            </Stack>
-          </Stack>
         </main>
       );
     }
     return null;
   };
-
   const scriptEditor = () => {
+    return (
+      <Editor
+        height={500}
+        width="auto"
+        options={generalEditorOptions()}
+        defaultLanguage="python"
+        value={scriptText}
+        onChange={handleEditorScriptChange}
+        onMount={handleEditorDidMount}
+      />
+    );
+  };
+  const scriptEditorAndTests = () => {
     let scriptName = '';
     if (scriptElement) {
       scriptName = (scriptElement as any).di.bpmnElement.name;
     }
-
     return (
       <Modal
         open={showScriptEditor}
@@ -637,16 +684,16 @@ export default function ProcessModelEditDiagram() {
         size="lg"
         onRequestClose={handleScriptEditorClose}
       >
-        <Editor
-          height={500}
-          width="auto"
-          options={generalEditorOptions()}
-          defaultLanguage="python"
-          value={scriptText}
-          onChange={handleEditorScriptChange}
-          onMount={handleEditorDidMount}
-        />
-        {scriptUnitTestEditorElement()}
+        <Tabs>
+          <TabList aria-label="List of tabs" activation="manual">
+            <Tab>Script Editor</Tab>
+            <Tab>Unit Tests</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel>{scriptEditor()}</TabPanel>
+            <TabPanel>{scriptUnitTestEditorElement()}</TabPanel>
+          </TabPanels>
+        </Tabs>
       </Modal>
     );
   };
@@ -858,7 +905,7 @@ export default function ProcessModelEditDiagram() {
         </h1>
         {appropriateEditor()}
         {newFileNameBox()}
-        {scriptEditor()}
+        {scriptEditorAndTests()}
         {markdownEditor()}
         {processModelSelector()}
         <div id="diagram-container" />
