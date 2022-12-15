@@ -6,7 +6,7 @@ import 'react-bootstrap-typeahead/css/Typeahead.css';
 import 'react-bootstrap-typeahead/css/Typeahead.bs5.css';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
-import { getProcessModelFullIdentifierFromSearchParams } from '../helpers';
+import {getProcessModelFullIdentifierFromSearchParams, modifyProcessIdentifierForPathParam} from '../helpers';
 
 export default function ProcessInstanceList() {
   const [searchParams] = useSearchParams();
@@ -16,6 +16,9 @@ export default function ProcessInstanceList() {
     if (processModelFullIdentifier === null) {
       return null;
     }
+    const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
+      processModelFullIdentifier
+    );
 
     return (
       <ProcessBreadcrumb
@@ -23,7 +26,7 @@ export default function ProcessInstanceList() {
           ['Process Groups', '/admin'],
           [
             `Process Model: ${processModelFullIdentifier}`,
-            `process_model:${processModelFullIdentifier}:link`,
+            `process-models/${modifiedProcessModelId}`,
           ],
           ['Process Instances'],
         ]}
