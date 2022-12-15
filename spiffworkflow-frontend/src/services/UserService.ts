@@ -27,8 +27,8 @@ const doLogout = () => {
   const idToken = getIdToken();
   localStorage.removeItem('jwtAccessToken');
   localStorage.removeItem('jwtIdToken');
-  const redirctUrl = `${window.location.origin}/`;
-  const url = `${BACKEND_BASE_URL}/logout?redirect_url=${redirctUrl}&id_token=${idToken}`;
+  const redirectUrl = `${window.location.origin}`;
+  const url = `${BACKEND_BASE_URL}/logout?redirect_url=${redirectUrl}&id_token=${idToken}`;
   window.location.href = url;
 };
 

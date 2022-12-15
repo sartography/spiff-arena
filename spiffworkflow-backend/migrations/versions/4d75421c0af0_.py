@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: ff1c1628337c
+Revision ID: 4d75421c0af0
 Revises: 
-Create Date: 2022-11-28 15:08:52.014254
+Create Date: 2022-12-06 17:42:56.417673
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'ff1c1628337c'
+revision = '4d75421c0af0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -79,8 +79,7 @@ def upgrade():
     sa.Column('email', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('service', 'service_id', name='service_key'),
-    sa.UniqueConstraint('uid'),
-    sa.UniqueConstraint('username')
+    sa.UniqueConstraint('uid')
     )
     op.create_table('message_correlation_property',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -249,6 +248,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('process_instance_id', 'key', name='process_instance_metadata_unique')
     )
+    op.create_index(op.f('ix_process_instance_metadata_key'), 'process_instance_metadata', ['key'], unique=False)
     op.create_table('spiff_step_details',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -295,6 +295,7 @@ def downgrade():
     op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
     op.drop_table('active_task_user')
     op.drop_table('spiff_step_details')
+    op.drop_index(op.f('ix_process_instance_metadata_key'), table_name='process_instance_metadata')
     op.drop_table('process_instance_metadata')
     op.drop_table('permission_assignment')
     op.drop_table('message_instance')

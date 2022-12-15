@@ -19,6 +19,9 @@ from werkzeug.exceptions import NotFound
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.config import setup_config
 from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_blueprint
+from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
+    openid_blueprint,
+)
 from spiffworkflow_backend.routes.process_api_blueprint import process_api_blueprint
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
@@ -103,6 +106,7 @@ def create_app() -> flask.app.Flask:
     app.register_blueprint(process_api_blueprint)
     app.register_blueprint(api_error_blueprint)
     app.register_blueprint(admin_blueprint, url_prefix="/admin")
+    app.register_blueprint(openid_blueprint, url_prefix="/openid")
 
     # preflight options requests will be allowed if they meet the requirements of the url regex.
     # we will add an Access-Control-Max-Age header to the response to tell the browser it doesn't

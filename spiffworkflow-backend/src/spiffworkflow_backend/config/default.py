@@ -27,12 +27,13 @@ CONNECTOR_PROXY_URL = environ.get(
     "CONNECTOR_PROXY_URL", default="http://localhost:7004"
 )
 
-GIT_COMMIT_ON_SAVE = environ.get("GIT_COMMIT_ON_SAVE", default="false") == "true"
-
 # Open ID server
-OPEN_ID_SERVER_URL = environ.get("OPEN_ID_SERVER_URL", default="http://localhost:7002")
+OPEN_ID_SERVER_URL = environ.get(
+    "OPEN_ID_SERVER_URL", default="http://localhost:7002/realms/spiffworkflow"
+)
+# Replace above line with this to use the built-in Open ID Server.
+# OPEN_ID_SERVER_URL = environ.get("OPEN_ID_SERVER_URL", default="http://localhost:7000/openid")
 OPEN_ID_CLIENT_ID = environ.get("OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
-OPEN_ID_REALM_NAME = environ.get("OPEN_ID_REALM_NAME", default="spiffworkflow")
 OPEN_ID_CLIENT_SECRET_KEY = environ.get(
     "OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 )  # noqa: S105
@@ -56,4 +57,20 @@ SENTRY_TRACES_SAMPLE_RATE = environ.get(
 
 SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
     "SPIFFWORKFLOW_BACKEND_LOG_LEVEL", default="info"
+)
+
+# When a user clicks on the `Publish` button, this is the default branch this server merges into.
+# I.e., dev server could have `staging` here. Staging server might have `production` here.
+GIT_BRANCH_TO_PUBLISH_TO = environ.get("GIT_BRANCH_TO_PUBLISH_TO")
+GIT_BRANCH = environ.get("GIT_BRANCH")
+GIT_CLONE_URL_FOR_PUBLISHING = environ.get("GIT_CLONE_URL")
+GIT_COMMIT_ON_SAVE = environ.get("GIT_COMMIT_ON_SAVE", default="false") == "true"
+
+# Datbase Configuration
+SPIFF_DATABASE_TYPE = environ.get(
+    "SPIFF_DATABASE_TYPE", default="mysql"
+)  # can also be sqlite, postgres
+# Overide above with specific sqlalchymy connection string.
+SPIFFWORKFLOW_BACKEND_DATABASE_URI = environ.get(
+    "SPIFFWORKFLOW_BACKEND_DATABASE_URI", default=None
 )

@@ -338,9 +338,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
 
-  /process-models/{modified_process_model_id}/files:
+  /process-models/{modified_process_model_identifier}/files:
     parameters:
-      - name: modified_process_model_id
+      - name: modified_process_model_identifier
         in: path
         required: true
         description: The process_model_id, modified to replace slashes (/)
@@ -445,6 +445,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
 
+  /process-models/{modified_process_model_identifier}/publish:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: the modified process model id
+        schema:
+          type: string
+      - name: branch_to_update
+        in: query
+        required: false
+        description: the name of the branch we want to merge into
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_publish
+      summary: Merge changes from this model to another branch.
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: The process model was published.
+          content:
+            application/json:
+              schema:
+                type: string
 
   /processes:
     get:
@@ -463,6 +489,25 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Process"
+
+  /github-webhook-receive:
+    post:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.github_webhook_receive
+      summary: receives push webhooks from github so we can keep our process model repo up to date
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModelCategory"
+      tags:
+        - git
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
   /process-instances:
     parameters:
@@ -544,6 +589,12 @@ paths:
         description: Specifies the identifier of a report to use, if any
         schema:
           type: string
+      - name: report_id
+        in: query
+        required: false
+        description: Specifies the identifier of a report to use, if any
+        schema:
+          type: integer
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list
       summary: Returns a list of process instances for a given process model
@@ -558,33 +609,6 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/Workflow"
-
-  /process-instances/{process_instance_id}/task/{task_id}/update:
-    parameters:
-      - name: process_instance_id
-        in: path
-        required: true
-        description: The unique id of the process instance
-        schema:
-          type: string
-      - name: task_id
-        in: path
-        required: true
-        description: The unique id of the task
-        schema:
-          type: string
-    post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.update_task_data
-      summary: Update the task data for requested instance and task
-      tags:
-        - Process Instances
-      responses:
-        "200":
-          description: Task Updated Successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Workflow"
 
   /process-instances/{process_instance_id}/event:
     parameters:
@@ -661,15 +685,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-models/{modified_process_model_id}/process-instances:
+  /process-instances/{modified_process_model_identifier}:
     parameters:
-      - name: modified_process_model_id
+      - name: modified_process_model_identifier
         in: path
         required: true
         description: The unique id of an existing process model.
         schema:
           type: string
-    # process_instance_create
     post:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_create
       summary: Creates an process instance from a process model and returns the instance
@@ -683,28 +706,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-instances/{process_instance_id}:
-    parameters:
-      - name: process_instance_id
-        in: path
-        required: true
-        description: The unique id of an existing process instance.
-        schema:
-          type: integer
-    delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_delete
-      summary: Deletes a single process instance
-      tags:
-        - Process Instances
-      responses:
-        "200":
-          description: The process instance was deleted.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OkTrue"
-
-  /process-models/{modified_process_model_identifier}/process-instances/{process_instance_id}:
+  /process-instances/{modified_process_model_identifier}/{process_instance_id}:
     parameters:
       - name: modified_process_model_identifier
         in: path
@@ -718,6 +720,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
+      - name: process_identifier
+        in: query
+        required: false
+        description: The identifier of the process to use for the diagram. Useful for displaying the diagram for a call activity.
+        schema:
+          type: string
     get:
       tags:
         - Process Instances
@@ -730,6 +738,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Workflow"
+    delete:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_delete
+      summary: Deletes a single process instance
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: The process instance was deleted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
   /process-instances/{modified_process_model_identifier}/{process_instance_id}/run:
     parameters:
@@ -758,7 +778,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-instances/{process_instance_id}/terminate:
+  /process-instances/{modified_process_model_identifier}/{process_instance_id}/terminate:
     parameters:
       - name: process_instance_id
         in: path
@@ -779,7 +799,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-instances/{process_instance_id}/suspend:
+  /process-instances/{modified_process_model_identifier}/{process_instance_id}/suspend:
     parameters:
       - name: process_instance_id
         in: path
@@ -800,7 +820,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-instances/{process_instance_id}/resume:
+  /process-instances/{modified_process_model_identifier}/{process_instance_id}/resume:
     parameters:
       - name: process_instance_id
         in: path
@@ -862,14 +882,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-instances/reports/{report_identifier}:
+  /process-instances/reports/columns:
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_column_list
+      summary: Returns all available columns for a process instance report.
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Workflow.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+
+  /process-instances/reports/{report_id}:
     parameters:
-      - name: report_identifier
+      - name: report_id
         in: path
         required: true
         description: The unique id of an existing report
         schema:
-          type: string
+          type: integer
       - name: page
         in: query
         required: false
@@ -921,9 +957,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
-  /process-models/{modified_process_model_id}/files/{file_name}:
+  /process-models/{modified_process_model_identifier}/files/{file_name}:
     parameters:
-      - name: modified_process_model_id
+      - name: modified_process_model_identifier
         in: path
         required: true
         description: The modified process model id
@@ -1100,9 +1136,9 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /process-instances/{modified_process_model_id}/{process_instance_id}/tasks:
+  /task-data/{modified_process_model_identifier}/{process_instance_id}:
     parameters:
-      - name: modified_process_model_id
+      - name: modified_process_model_identifier
         in: path
         required: true
         description: The modified id of an existing process model
@@ -1141,11 +1177,44 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /service_tasks:
+  /task-data/{modified_process_model_identifier}/{process_instance_id}/{task_id}:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The modified id of an existing process model
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: task_id
+        in: path
+        required: true
+        description: The unique id of the task.
+        schema:
+          type: string
+    put:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.update_task_data
+      summary: Update the task data for requested instance and task
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Task Updated Successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /service-tasks:
     get:
       tags:
         - Service Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.service_tasks_show
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.service_task_list
       summary: Gets all available service task connectors
       responses:
         "200":
@@ -1325,7 +1394,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /process-instances/{process_instance_id}/logs:
+  /logs/{modified_process_model_identifier}/{process_instance_id}:
     parameters:
       - name: process_instance_id
         in: path
@@ -1345,6 +1414,12 @@ paths:
         description: The number of items to show per page. Defaults to page 10.
         schema:
           type: integer
+      - name: detailed
+        in: query
+        required: false
+        description: Show the detailed view, which includes all log entries
+        schema:
+          type: boolean
     get:
       tags:
         - Process Instances
