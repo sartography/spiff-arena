@@ -66,6 +66,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
@@ -1024,11 +1025,11 @@ def process_instance_list(
         elif attribute in instance_metadata_aliases:
             if order_by_option.startswith("-"):
                 order_by_query_array.append(
-                    instance_metadata_aliases[attribute].value.desc()
+                    func.max(instance_metadata_aliases[attribute].value).desc()
                 )
             else:
                 order_by_query_array.append(
-                    instance_metadata_aliases[attribute].value.asc()
+                    func.max(instance_metadata_aliases[attribute].value).asc()
                 )
 
     process_instances = (
@@ -1073,25 +1074,48 @@ def process_instance_report_column_list() -> flask.wrappers.Response:
 
 
 def process_instance_show(
-    modified_process_model_identifier: str, process_instance_id: int
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    process_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
     current_version_control_revision = GitService.get_current_revision()
-    process_model = get_process_model(process_model_identifier)
 
-    if process_model.primary_file_name:
+    process_model_with_diagram = None
+    name_of_file_with_diagram = None
+    if process_identifier:
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier=process_identifier
+        ).first()
+        if spec_reference is None:
+            raise SpecReferenceNotFoundError(
+                f"Could not find given process identifier in the cache: {process_identifier}"
+            )
+
+        process_model_with_diagram = ProcessModelService.get_process_model(
+            spec_reference.process_model_id
+        )
+        name_of_file_with_diagram = spec_reference.file_name
+    else:
+        process_model_with_diagram = get_process_model(process_model_identifier)
+        if process_model_with_diagram.primary_file_name:
+            name_of_file_with_diagram = process_model_with_diagram.primary_file_name
+
+    if process_model_with_diagram and name_of_file_with_diagram:
         if (
             process_instance.bpmn_version_control_identifier
             == current_version_control_revision
         ):
             bpmn_xml_file_contents = SpecFileService.get_data(
-                process_model, process_model.primary_file_name
+                process_model_with_diagram, name_of_file_with_diagram
             ).decode("utf-8")
         else:
             bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
-                process_model, process_instance.bpmn_version_control_identifier
+                process_model_with_diagram,
+                process_instance.bpmn_version_control_identifier,
+                file_name=name_of_file_with_diagram,
             )
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
@@ -1409,7 +1433,8 @@ def process_instance_task_list(
         )
         if step_detail is not None and process_instance.bpmn_json is not None:
             bpmn_json = json.loads(process_instance.bpmn_json)
-            bpmn_json["tasks"] = step_detail.task_json
+            bpmn_json["tasks"] = step_detail.task_json["tasks"]
+            bpmn_json["subprocesses"] = step_detail.task_json["subprocesses"]
             process_instance.bpmn_json = json.dumps(bpmn_json)
 
     processor = ProcessInstanceProcessor(process_instance)
@@ -1588,7 +1613,7 @@ def task_submit(
 
 
 def script_unit_test_create(
-    process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Script_unit_test_create."""
     bpmn_task_identifier = _get_required_parameter_or_raise(
@@ -1599,7 +1624,7 @@ def script_unit_test_create(
         "expected_output_json", body
     )
 
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     file = SpecFileService.get_files(process_model, process_model.primary_file_name)[0]
     if file is None:
@@ -1677,7 +1702,7 @@ def script_unit_test_create(
 
 
 def script_unit_test_run(
-    process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works
@@ -1873,7 +1898,6 @@ def secret_list(
 def add_secret(body: Dict) -> Response:
     """Add secret."""
     secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
-    assert secret_model  # noqa: S101
     return Response(
         json.dumps(SecretModelSchema().dump(secret_model)),
         status=201,

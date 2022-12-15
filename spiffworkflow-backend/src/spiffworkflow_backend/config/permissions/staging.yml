@@ -1,11 +1,5 @@
 default_group: everybody
 
-users:
-  admin:
-    email: admin@spiffworkflow.org
-    password: admin
-    preferred_username: Admin
-
 groups:
   admin:
     users:
@@ -17,6 +11,7 @@ groups:
         dan,
         mike,
         jason,
+        j,
         jarrad,
         elizabeth,
         jon,
@@ -31,6 +26,7 @@ groups:
         dan,
         mike,
         jason,
+        j,
         amir,
         jarrad,
         elizabeth,
@@ -60,25 +56,15 @@ groups:
         core,
         harmeet,
       ]
-  admin-ro:
-    users:
-      [
-        j,
-      ]
 
 permissions:
   admin:
     groups: [admin]
     users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /*
-  admin-readonly:
-    groups: [admin-ro]
-    users: []
     allowed_permissions: [read]
     uri: /*
-  admin-process-instances-for-readonly:
-    groups: [admin-ro]
+  admin-process-instances:
+    groups: [admin]
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-instances/*
@@ -88,11 +74,13 @@ permissions:
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/tasks/*
+
   service-tasks:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
     uri: /v1.0/service-tasks
+
 
   # read all for everybody
   read-all-process-groups:
@@ -121,33 +109,7 @@ permissions:
     allowed_permissions: [read]
     uri: /v1.0/processes
 
-  task-data-read:
-    groups: [demo]
-    users: []
-    allowed_permissions: [read]
-    uri: /v1.0/task-data/*
 
-
-  manage-procurement-admin:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement:*
-  manage-procurement-admin-slash:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement/*
-  manage-procurement-admin-models:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/manage-procurement:*
-  manage-procurement-admin-models-slash:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/manage-procurement/*
   manage-procurement-admin-instances:
     groups: ["Project Lead"]
     users: []
@@ -158,58 +120,46 @@ permissions:
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-instances/manage-procurement/*
-
-  finance-admin:
-    groups: ["Finance Team"]
+  manage-procurement-admin-instance-logs:
+    groups: ["Project Lead"]
     users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement:procurement:*
-
-  manage-revenue-streams-instantiate:
-    groups: ["core-contributor", "demo"]
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-procurement:*
+  manage-procurement-admin-instance-logs-slash:
+    groups: ["Project Lead"]
     users: []
-    allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-procurement/*
+
   manage-revenue-streams-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
     uri: /v1.0/process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
-
-  manage-procurement-invoice-instantiate:
+  manage-revenue-streams-instance-logs:
     groups: ["core-contributor", "demo"]
     users: []
-    allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:*
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+
   manage-procurement-invoice-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
     uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
-
-  manage-procurement-instantiate:
+  manage-procurement-invoice-instance-logs:
     groups: ["core-contributor", "demo"]
     users: []
-    allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-procurement:vendor-lifecycle-management:*
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-procurement:procurement:core-contributor-invoice-management:*
+
   manage-procurement-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
     uri: /v1.0/process-instances/manage-procurement:vendor-lifecycle-management:*
-
-  core1-admin-models-instantiate:
-    groups: ["core-contributor", "Finance Team"]
+  manage-procurement-instance-logs:
+    groups: ["core-contributor", "demo"]
     users: []
-    allowed_permissions: [create]
-    uri: /v1.0/process-models/misc:category_number_one:process-model-with-form/process-instances
-  core1-admin-instances:
-    groups: ["core-contributor", "Finance Team"]
-    users: []
-    allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/misc:category_number_one:process-model-with-form:*
-  core1-admin-instances-slash:
-    groups: ["core-contributor", "Finance Team"]
-    users: []
-    allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/misc:category_number_one:process-model-with-form/*
+    allowed_permissions: [read]
+    uri: /v1.0/logs/manage-procurement:vendor-lifecycle-management:*

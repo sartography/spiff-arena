@@ -16,8 +16,9 @@ from flask_bpmn.api.api_error import ApiError
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import (
-    AuthenticationService,
+    MissingAccessTokenError,
 )
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
@@ -268,10 +269,10 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
         code, "/v1.0/login_api_return"
     )
     access_token: str = auth_token_object["access_token"]
-    assert access_token  # noqa: S101
+    if access_token is None:
+        raise MissingAccessTokenError("Cannot find the access token for the request")
+
     return access_token
-    # return redirect("localhost:7000/v1.0/ui")
-    # return {'uid': 'user_1'}
 
 
 def logout(id_token: str, redirect_url: Optional[str]) -> Response:

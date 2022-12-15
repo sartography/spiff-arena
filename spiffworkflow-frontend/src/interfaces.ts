@@ -11,6 +11,13 @@ export interface RecentProcessModel {
   processModelDisplayName: string;
 }
 
+export interface ProcessInstanceTask {
+  id: string;
+  state: string;
+  process_identifier: string;
+  name: string;
+}
+
 export interface ProcessReference {
   name: string; // The process or decision Display name.
   identifier: string; // The unique id of the process
@@ -39,6 +46,7 @@ export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
   process_model_display_name: string;
+  spiff_step?: number;
 }
 
 export interface MessageCorrelationProperties {

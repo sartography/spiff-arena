@@ -13,6 +13,7 @@ import AdminRoutes from './routes/AdminRoutes';
 import { ErrorForDisplay } from './interfaces';
 
 import { AbilityContext } from './contexts/Can';
+import UserService from './services/UserService';
 
 export default function App() {
   const [errorMessage, setErrorMessage] = useState<ErrorForDisplay | null>(
@@ -23,6 +24,11 @@ export default function App() {
     () => [errorMessage, setErrorMessage],
     [errorMessage]
   );
+
+  if (!UserService.isLoggedIn()) {
+    UserService.doLogin();
+    return null;
+  }
 
   const ability = defineAbility(() => {});
 

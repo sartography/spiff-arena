@@ -551,7 +551,7 @@ class ProcessInstanceProcessor:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
-        task_json = wf_json["tasks"]
+        task_json = {"tasks": wf_json["tasks"], "subprocesses": wf_json["subprocesses"]}
 
         return {
             "process_instance_id": self.process_instance_model.id,
