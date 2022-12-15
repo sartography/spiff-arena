@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+import os
 import random
 import re
 import string
@@ -75,6 +76,7 @@ from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignme
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -168,6 +170,9 @@ def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_group = ProcessGroup(**body)
     ProcessModelService.add_process_group(process_group)
+    commit_and_push_to_git(
+        f"User: {g.user.username} added process group {process_group.id}"
+    )
     return make_response(jsonify(process_group), 201)
 
 
@@ -175,6 +180,9 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
     """Process_group_delete."""
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     ProcessModelService().process_group_delete(process_group_id)
+    commit_and_push_to_git(
+        f"User: {g.user.username} deleted process group {process_group_id}"
+    )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -192,6 +200,9 @@ def process_group_update(
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService.update_process_group(process_group)
+    commit_and_push_to_git(
+        f"User: {g.user.username} updated process group {process_group_id}"
+    )
     return make_response(jsonify(process_group), 200)
 
 
@@ -256,7 +267,10 @@ def process_group_move(
     new_process_group = ProcessModelService().process_group_move(
         original_process_group_id, new_location
     )
-    return make_response(jsonify(new_process_group), 201)
+    commit_and_push_to_git(
+        f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
+    )
+    return make_response(jsonify(new_process_group), 200)
 
 
 def process_model_create(
@@ -304,6 +318,9 @@ def process_model_create(
         )
 
     ProcessModelService.add_process_model(process_model_info)
+    commit_and_push_to_git(
+        f"User: {g.user.username} created process model {process_model_info.id}"
+    )
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,
@@ -317,6 +334,9 @@ def process_model_delete(
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     ProcessModelService().process_model_delete(process_model_identifier)
+    commit_and_push_to_git(
+        f"User: {g.user.username} deleted process model {process_model_identifier}"
+    )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -340,6 +360,9 @@ def process_model_update(
 
     process_model = get_process_model(process_model_identifier)
     ProcessModelService.update_process_model(process_model, body_filtered)
+    commit_and_push_to_git(
+        f"User: {g.user.username} updated process model {process_model_identifier}"
+    )
     return ProcessModelInfoSchema().dump(process_model)
 
 
@@ -371,7 +394,10 @@ def process_model_move(
     new_process_model = ProcessModelService().process_model_move(
         original_process_model_id, new_location
     )
-    return make_response(jsonify(new_process_model), 201)
+    commit_and_push_to_git(
+        f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
+    )
+    return make_response(jsonify(new_process_model), 200)
 
 
 def process_model_publish(
@@ -467,14 +493,9 @@ def process_model_file_update(
         )
 
     SpecFileService.update_file(process_model, file_name, request_file_contents)
-
-    if current_app.config["GIT_COMMIT_ON_SAVE"]:
-        git_output = GitService.commit(
-            message=f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
-        )
-        current_app.logger.info(f"git output: {git_output}")
-    else:
-        current_app.logger.info("Git commit on save is disabled")
+    commit_and_push_to_git(
+        f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
+    )
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -496,6 +517,9 @@ def process_model_file_delete(
             )
         ) from exception
 
+    commit_and_push_to_git(
+        f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}"
+    )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -517,6 +541,9 @@ def add_file(modified_process_model_identifier: str) -> flask.wrappers.Response:
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
     file.process_model_id = process_model.id
+    commit_and_push_to_git(
+        f"User: {g.user.username} added process model file {process_model_identifier}/{file.name}"
+    )
     return Response(
         json.dumps(FileSchema().dump(file)), status=201, mimetype="application/json"
     )
@@ -1484,7 +1511,25 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
     task.process_model_identifier = process_model.id
+
     process_model_with_form = process_model
+    refs = SpecFileService.get_references_for_process(process_model_with_form)
+    all_processes = [i.identifier for i in refs]
+    if task.process_identifier not in all_processes:
+        bpmn_file_full_path = (
+            ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
+                task.process_identifier
+            )
+        )
+        relative_path = os.path.relpath(
+            bpmn_file_full_path, start=FileSystemService.root_path()
+        )
+        process_model_relative_path = os.path.dirname(relative_path)
+        process_model_with_form = (
+            ProcessModelService.get_process_model_from_relative_path(
+                process_model_relative_path
+            )
+        )
 
     if task.type == "User Task":
         if not form_schema_file_name:
@@ -1657,7 +1702,7 @@ def script_unit_test_create(
 
     extension_elements = None
     extension_elements_array = script_task_element.xpath(
-        "//bpmn:extensionElements",
+        ".//bpmn:extensionElements",
         namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"},
     )
     if len(extension_elements_array) == 0:
@@ -2038,3 +2083,12 @@ def update_task_data(
         status=200,
         mimetype="application/json",
     )
+
+
+def commit_and_push_to_git(message: str) -> None:
+    """Commit_and_push_to_git."""
+    if current_app.config["GIT_COMMIT_ON_SAVE"]:
+        git_output = GitService.commit(message=message)
+        current_app.logger.info(f"git output: {git_output}")
+    else:
+        current_app.logger.info("Git commit on save is disabled")

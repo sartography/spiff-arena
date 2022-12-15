@@ -18,7 +18,19 @@ set -o errtrace -o errexit -o nounset -o pipefail
 if ! docker network inspect spiffworkflow > /dev/null 2>&1; then
   docker network create spiffworkflow
 fi
-docker rm keycloak 2>/dev/null || echo 'no keycloak container found, safe to start new container'
+
+# https://stackoverflow.com/a/60579344/6090676
+container_name="keycloak"
+if [[ -n "$(docker ps -qa -f name=$container_name)" ]]; then
+  echo ":: Found container - $container_name"
+  if [[ -n "$(docker ps -q -f name=$container_name)" ]]; then
+    echo ":: Stopping running container - $container_name"
+    docker stop $container_name
+  fi
+  echo ":: Removing stopped container - $container_name"
+  docker rm $container_name
+fi
+
 docker run \
   -p 7002:8080 \
   -d \
