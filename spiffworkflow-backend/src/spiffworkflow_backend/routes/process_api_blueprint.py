@@ -1633,7 +1633,7 @@ def task_submit(
 
 
 def script_unit_test_create(
-    process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Script_unit_test_create."""
     bpmn_task_identifier = _get_required_parameter_or_raise(
@@ -1644,7 +1644,7 @@ def script_unit_test_create(
         "expected_output_json", body
     )
 
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     file = SpecFileService.get_files(process_model, process_model.primary_file_name)[0]
     if file is None:
@@ -1722,7 +1722,7 @@ def script_unit_test_create(
 
 
 def script_unit_test_run(
-    process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works
