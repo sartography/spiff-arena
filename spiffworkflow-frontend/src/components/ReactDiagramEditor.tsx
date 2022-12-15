@@ -58,7 +58,7 @@ import { Can } from '@casl/react';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
-import { makeid } from '../helpers';
+import { getBpmnProcessIdentifiers, makeid } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck, ProcessInstanceTask } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -231,8 +231,10 @@ export default function ReactDiagramEditor({
     function handleElementClick(event: any) {
       if (onElementClick) {
         const canvas = diagramModeler.get('canvas');
-        const rootElement = canvas.getRootElement();
-        onElementClick(event.element, rootElement);
+        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+          canvas.getRootElement()
+        );
+        onElementClick(event.element, bpmnProcessIdentifiers);
       }
     }
 
@@ -357,11 +359,15 @@ export default function ReactDiagramEditor({
       canvas: any,
       processInstanceTask: ProcessInstanceTask,
       bpmnIoClassName: string,
-      bpmnRootElementId: string
+      bpmnProcessIdentifiers: string[]
     ) {
       if (checkTaskCanBeHighlighted(processInstanceTask.name)) {
         try {
-          if (bpmnRootElementId === processInstanceTask.process_identifier) {
+          if (
+            bpmnProcessIdentifiers.includes(
+              processInstanceTask.process_identifier
+            )
+          ) {
             canvas.addMarker(processInstanceTask.name, bpmnIoClassName);
           }
         } catch (bpmnIoError: any) {
@@ -403,24 +409,28 @@ export default function ReactDiagramEditor({
       // Option 3 at:
       //  https://github.com/bpmn-io/bpmn-js-examples/tree/master/colors
       if (readyOrWaitingProcessInstanceTasks) {
-        const rootElement = canvas.getRootElement();
+        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+          canvas.getRootElement()
+        );
         readyOrWaitingProcessInstanceTasks.forEach((readyOrWaitingBpmnTask) => {
           highlightBpmnIoElement(
             canvas,
             readyOrWaitingBpmnTask,
             'active-task-highlight',
-            rootElement.id
+            bpmnProcessIdentifiers
           );
         });
       }
       if (completedProcessInstanceTasks) {
-        const rootElement = canvas.getRootElement();
+        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+          canvas.getRootElement()
+        );
         completedProcessInstanceTasks.forEach((completedTask) => {
           highlightBpmnIoElement(
             canvas,
             completedTask,
             'completed-task-highlight',
-            rootElement.id
+            bpmnProcessIdentifiers
           );
         });
       }
