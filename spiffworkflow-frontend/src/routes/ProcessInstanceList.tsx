@@ -39,7 +39,7 @@ export default function ProcessInstanceList() {
     <>
       {processInstanceBreadcrumbElement()}
       {processInstanceTitleElement()}
-      <ProcessInstanceListTable />
+      <ProcessInstanceListTable additionalParams="with_relation_to_me=true" />
     </>
   );
 }

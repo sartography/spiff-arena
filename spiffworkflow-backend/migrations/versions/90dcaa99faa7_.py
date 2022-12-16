@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 4d75421c0af0
+Revision ID: 90dcaa99faa7
 Revises: 
-Create Date: 2022-12-06 17:42:56.417673
+Create Date: 2022-12-16 16:40:22.246123
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4d75421c0af0'
+revision = '90dcaa99faa7'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -189,12 +189,14 @@ def upgrade():
     sa.Column('task_type', sa.String(length=50), nullable=True),
     sa.Column('task_status', sa.String(length=50), nullable=True),
     sa.Column('process_model_display_name', sa.String(length=255), nullable=True),
+    sa.Column('completed', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['actual_owner_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('task_id', 'process_instance_id', name='active_task_unique')
     )
+    op.create_index(op.f('ix_active_task_completed'), 'active_task', ['completed'], unique=False)
     op.create_table('message_correlation',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -304,6 +306,7 @@ def downgrade():
     op.drop_index(op.f('ix_message_correlation_name'), table_name='message_correlation')
     op.drop_index(op.f('ix_message_correlation_message_correlation_property_id'), table_name='message_correlation')
     op.drop_table('message_correlation')
+    op.drop_index(op.f('ix_active_task_completed'), table_name='active_task')
     op.drop_table('active_task')
     op.drop_table('user_group_assignment')
     op.drop_table('secret')
