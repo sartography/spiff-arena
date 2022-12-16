@@ -35,7 +35,7 @@ export default function ProcessModelListTiles({
       setProcessModels(result.results);
     };
     // only allow 10 for now until we get the backend only returning certain models for user execution
-    let queryParams = '?per_page=20';
+    let queryParams = '?per_page=1000';
     if (processGroup) {
       queryParams = `${queryParams}&process_group_identifier=${processGroup.id}`;
     } else {

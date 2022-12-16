@@ -79,6 +79,7 @@ type OwnProps = {
   textToShowIfEmpty?: string;
   paginationClassName?: string;
   autoReload?: boolean;
+  additionalParams?: string;
 };
 
 interface dateParameters {
@@ -90,6 +91,7 @@ export default function ProcessInstanceListTable({
   processModelFullIdentifier,
   paginationQueryParamPrefix,
   perPageOptions,
+  additionalParams,
   showReports = true,
   reportIdentifier,
   textToShowIfEmpty,
@@ -253,6 +255,10 @@ export default function ProcessInstanceListTable({
         }
       );
 
+      if (additionalParams) {
+        queryParamString += `&${additionalParams}`;
+      }
+
       HttpService.makeCallToBackend({
         path: `/process-instances?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
@@ -320,6 +326,7 @@ export default function ProcessInstanceListTable({
     processModelFullIdentifier,
     perPageOptions,
     reportIdentifier,
+    additionalParams,
   ]);
 
   // This sets the filter data using the saved reports returned from the initial instance_list query.

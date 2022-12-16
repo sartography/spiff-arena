@@ -595,6 +595,12 @@ paths:
         description: Specifies the identifier of a report to use, if any
         schema:
           type: integer
+      - name: group_identifier
+        in: query
+        required: false
+        description: The identifier of the group to get the process instances for
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list
       summary: Returns a list of process instances for a given process model
@@ -672,6 +678,53 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Workflow"
+
+  /process-instances/{modified_process_model_identifier}/{process_instance_id}/task-info:
+    parameters:
+      - name: modified_process_model_identifier
+        in: path
+        required: true
+        description: The unique id of an existing process model
+        schema:
+          type: string
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+      - name: process_identifier
+        in: query
+        required: false
+        description: The identifier of the process to use for the diagram. Useful for displaying the diagram for a call activity.
+        schema:
+          type: string
+      - name: all_tasks
+        in: query
+        required: false
+        description: If true, this wil return all tasks associated with the process instance and not just user tasks.
+        schema:
+          type: boolean
+      - name: spiff_step
+        in: query
+        required: false
+        description: If set will return the tasks as they were during a specific step of execution.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_task_list_without_task_data
+      summary: returns the list of all user tasks associated with process instance without the task data
+      responses:
+        "200":
+          description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
 
   /process-instances/{modified_process_model_identifier}/{process_instance_id}:
     parameters:
@@ -1103,6 +1156,12 @@ paths:
 
   /tasks/for-my-groups:
     parameters:
+      - name: group_identifier
+        in: query
+        required: false
+        description: The identifier of the group to get the tasks for
+        schema:
+          type: string
       - name: page
         in: query
         required: false
@@ -1123,6 +1182,22 @@ paths:
       responses:
         "200":
           description: list of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+
+  /user-groups/for-current-user:
+    get:
+      tags:
+        - Process Instances
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.user_group_list_for_current_user
+      summary: Group identifiers for current logged in user
+      responses:
+        "200":
+          description: list of user groups
           content:
             application/json:
               schema:
@@ -1159,8 +1234,8 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_task_list
-      summary: returns the list of all user tasks associated with process instance
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_task_list_with_task_data
+      summary: returns the list of all user tasks associated with process instance with the task data
       responses:
         "200":
           description: list of tasks
