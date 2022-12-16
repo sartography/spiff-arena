@@ -8,7 +8,7 @@ from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 
 @dataclass
 class SpiffLoggingModel(SpiffworkflowBaseDBModel):
-    """LoggingModel."""
+    """SpiffLoggingModel."""
 
     __tablename__ = "spiff_logging"
     id: int = db.Column(db.Integer, primary_key=True)
