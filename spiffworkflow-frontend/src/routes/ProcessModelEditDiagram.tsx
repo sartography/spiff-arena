@@ -6,7 +6,16 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 // @ts-ignore
-import { Button, Modal, Content, Tabs, TabList, Tab, TabPanels, TabPanel } from '@carbon/react';
+import {
+  Button,
+  Modal,
+  Content,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+} from '@carbon/react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
@@ -399,10 +408,10 @@ export default function ProcessModelEditDiagram() {
 
   const jsonEditorOptions = () => {
     return Object.assign(generalEditorOptions(), {
-        minimap: { enabled: false },
-        folding: true
+      minimap: { enabled: false },
+      folding: true,
     });
-  }
+  };
 
   const setPreviousScriptUnitTest = () => {
     resetUnitTextResult();
