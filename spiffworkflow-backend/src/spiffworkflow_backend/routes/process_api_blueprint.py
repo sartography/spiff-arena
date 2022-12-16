@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+import os
 import random
 import re
 import string
@@ -66,6 +67,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.secret_model import SecretModel
 from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
@@ -74,6 +76,7 @@ from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignme
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -167,6 +170,9 @@ def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_group = ProcessGroup(**body)
     ProcessModelService.add_process_group(process_group)
+    commit_and_push_to_git(
+        f"User: {g.user.username} added process group {process_group.id}"
+    )
     return make_response(jsonify(process_group), 201)
 
 
@@ -174,6 +180,9 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
     """Process_group_delete."""
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     ProcessModelService().process_group_delete(process_group_id)
+    commit_and_push_to_git(
+        f"User: {g.user.username} deleted process group {process_group_id}"
+    )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -191,6 +200,9 @@ def process_group_update(
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService.update_process_group(process_group)
+    commit_and_push_to_git(
+        f"User: {g.user.username} updated process group {process_group_id}"
+    )
     return make_response(jsonify(process_group), 200)
 
 
@@ -255,7 +267,10 @@ def process_group_move(
     new_process_group = ProcessModelService().process_group_move(
         original_process_group_id, new_location
     )
-    return make_response(jsonify(new_process_group), 201)
+    commit_and_push_to_git(
+        f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
+    )
+    return make_response(jsonify(new_process_group), 200)
 
 
 def process_model_create(
@@ -303,6 +318,9 @@ def process_model_create(
         )
 
     ProcessModelService.add_process_model(process_model_info)
+    commit_and_push_to_git(
+        f"User: {g.user.username} created process model {process_model_info.id}"
+    )
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,
@@ -316,6 +334,9 @@ def process_model_delete(
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     ProcessModelService().process_model_delete(process_model_identifier)
+    commit_and_push_to_git(
+        f"User: {g.user.username} deleted process model {process_model_identifier}"
+    )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -339,6 +360,9 @@ def process_model_update(
 
     process_model = get_process_model(process_model_identifier)
     ProcessModelService.update_process_model(process_model, body_filtered)
+    commit_and_push_to_git(
+        f"User: {g.user.username} updated process model {process_model_identifier}"
+    )
     return ProcessModelInfoSchema().dump(process_model)
 
 
@@ -370,7 +394,10 @@ def process_model_move(
     new_process_model = ProcessModelService().process_model_move(
         original_process_model_id, new_location
     )
-    return make_response(jsonify(new_process_model), 201)
+    commit_and_push_to_git(
+        f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
+    )
+    return make_response(jsonify(new_process_model), 200)
 
 
 def process_model_publish(
@@ -466,14 +493,9 @@ def process_model_file_update(
         )
 
     SpecFileService.update_file(process_model, file_name, request_file_contents)
-
-    if current_app.config["GIT_COMMIT_ON_SAVE"]:
-        git_output = GitService.commit(
-            message=f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
-        )
-        current_app.logger.info(f"git output: {git_output}")
-    else:
-        current_app.logger.info("Git commit on save is disabled")
+    commit_and_push_to_git(
+        f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
+    )
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -495,6 +517,9 @@ def process_model_file_delete(
             )
         ) from exception
 
+    commit_and_push_to_git(
+        f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}"
+    )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -516,6 +541,9 @@ def add_file(modified_process_model_identifier: str) -> flask.wrappers.Response:
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
     file.process_model_id = process_model.id
+    commit_and_push_to_git(
+        f"User: {g.user.username} added process model file {process_model_identifier}/{file.name}"
+    )
     return Response(
         json.dumps(FileSchema().dump(file)), status=201, mimetype="application/json"
     )
@@ -1031,11 +1059,11 @@ def process_instance_list(
         elif attribute in instance_metadata_aliases:
             if order_by_option.startswith("-"):
                 order_by_query_array.append(
-                    instance_metadata_aliases[attribute].value.desc()
+                    func.max(instance_metadata_aliases[attribute].value).desc()
                 )
             else:
                 order_by_query_array.append(
-                    instance_metadata_aliases[attribute].value.asc()
+                    func.max(instance_metadata_aliases[attribute].value).asc()
                 )
 
     process_instances = (
@@ -1080,25 +1108,48 @@ def process_instance_report_column_list() -> flask.wrappers.Response:
 
 
 def process_instance_show(
-    modified_process_model_identifier: str, process_instance_id: int
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    process_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
     current_version_control_revision = GitService.get_current_revision()
-    process_model = get_process_model(process_model_identifier)
 
-    if process_model.primary_file_name:
+    process_model_with_diagram = None
+    name_of_file_with_diagram = None
+    if process_identifier:
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier=process_identifier
+        ).first()
+        if spec_reference is None:
+            raise SpecReferenceNotFoundError(
+                f"Could not find given process identifier in the cache: {process_identifier}"
+            )
+
+        process_model_with_diagram = ProcessModelService.get_process_model(
+            spec_reference.process_model_id
+        )
+        name_of_file_with_diagram = spec_reference.file_name
+    else:
+        process_model_with_diagram = get_process_model(process_model_identifier)
+        if process_model_with_diagram.primary_file_name:
+            name_of_file_with_diagram = process_model_with_diagram.primary_file_name
+
+    if process_model_with_diagram and name_of_file_with_diagram:
         if (
             process_instance.bpmn_version_control_identifier
             == current_version_control_revision
         ):
             bpmn_xml_file_contents = SpecFileService.get_data(
-                process_model, process_model.primary_file_name
+                process_model_with_diagram, name_of_file_with_diagram
             ).decode("utf-8")
         else:
             bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
-                process_model, process_instance.bpmn_version_control_identifier
+                process_model_with_diagram,
+                process_instance.bpmn_version_control_identifier,
+                file_name=name_of_file_with_diagram,
             )
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
@@ -1415,11 +1466,44 @@ def get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def process_instance_task_list(
+def process_instance_task_list_without_task_data(
     modified_process_model_identifier: str,
     process_instance_id: int,
     all_tasks: bool = False,
     spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_task_list_without_task_data."""
+    return process_instance_task_list(
+        modified_process_model_identifier,
+        process_instance_id,
+        all_tasks,
+        spiff_step,
+        get_task_data=False,
+    )
+
+
+def process_instance_task_list_with_task_data(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_task_list_with_task_data."""
+    return process_instance_task_list(
+        modified_process_model_identifier,
+        process_instance_id,
+        all_tasks,
+        spiff_step,
+        get_task_data=True,
+    )
+
+
+def process_instance_task_list(
+    _modified_process_model_identifier: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
+    get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
@@ -1435,7 +1519,8 @@ def process_instance_task_list(
         )
         if step_detail is not None and process_instance.bpmn_json is not None:
             bpmn_json = json.loads(process_instance.bpmn_json)
-            bpmn_json["tasks"] = step_detail.task_json
+            bpmn_json["tasks"] = step_detail.task_json["tasks"]
+            bpmn_json["subprocesses"] = step_detail.task_json["subprocesses"]
             process_instance.bpmn_json = json.dumps(bpmn_json)
 
     processor = ProcessInstanceProcessor(process_instance)
@@ -1449,7 +1534,8 @@ def process_instance_task_list(
     tasks = []
     for spiff_task in spiff_tasks:
         task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
-        task.data = spiff_task.data
+        if get_task_data:
+            task.data = spiff_task.data
         tasks.append(task)
 
     return make_response(jsonify(tasks), 200)
@@ -1485,7 +1571,25 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
     task.process_model_identifier = process_model.id
+
     process_model_with_form = process_model
+    refs = SpecFileService.get_references_for_process(process_model_with_form)
+    all_processes = [i.identifier for i in refs]
+    if task.process_identifier not in all_processes:
+        bpmn_file_full_path = (
+            ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
+                task.process_identifier
+            )
+        )
+        relative_path = os.path.relpath(
+            bpmn_file_full_path, start=FileSystemService.root_path()
+        )
+        process_model_relative_path = os.path.dirname(relative_path)
+        process_model_with_form = (
+            ProcessModelService.get_process_model_from_relative_path(
+                process_model_relative_path
+            )
+        )
 
     if task.type == "User Task":
         if not form_schema_file_name:
@@ -1614,7 +1718,7 @@ def task_submit(
 
 
 def script_unit_test_create(
-    process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Script_unit_test_create."""
     bpmn_task_identifier = _get_required_parameter_or_raise(
@@ -1625,7 +1729,7 @@ def script_unit_test_create(
         "expected_output_json", body
     )
 
-    process_model_identifier = f"{process_group_id}/{process_model_id}"
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = get_process_model(process_model_identifier)
     file = SpecFileService.get_files(process_model, process_model.primary_file_name)[0]
     if file is None:
@@ -1703,7 +1807,7 @@ def script_unit_test_create(
 
 
 def script_unit_test_run(
-    process_group_id: str, process_model_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works
@@ -1899,7 +2003,6 @@ def secret_list(
 def add_secret(body: Dict) -> Response:
     """Add secret."""
     secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
-    assert secret_model  # noqa: S101
     return Response(
         json.dumps(SecretModelSchema().dump(secret_model)),
         status=201,
@@ -2040,3 +2143,12 @@ def update_task_data(
         status=200,
         mimetype="application/json",
     )
+
+
+def commit_and_push_to_git(message: str) -> None:
+    """Commit_and_push_to_git."""
+    if current_app.config["GIT_COMMIT_ON_SAVE"]:
+        git_output = GitService.commit(message=message)
+        current_app.logger.info(f"git output: {git_output}")
+    else:
+        current_app.logger.info("Git commit on save is disabled")

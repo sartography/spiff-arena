@@ -1,6 +1,11 @@
 import { useContext, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import {
+  useParams,
+  useNavigate,
+  Link,
+  useSearchParams,
+} from 'react-router-dom';
 import {
   TrashCan,
   StopOutline,
@@ -34,15 +39,21 @@ import {
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import ErrorContext from '../contexts/ErrorContext';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck } from '../interfaces';
+import {
+  PermissionsToCheck,
+  ProcessInstance,
+  ProcessInstanceTask,
+} from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function ProcessInstanceShow() {
   const navigate = useNavigate();
   const params = useParams();
+  const [searchParams] = useSearchParams();
 
-  const [processInstance, setProcessInstance] = useState(null);
-  const [tasks, setTasks] = useState<Array<object> | null>(null);
+  const [processInstance, setProcessInstance] =
+    useState<ProcessInstance | null>(null);
+  const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
@@ -59,8 +70,10 @@ export default function ProcessInstanceShow() {
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceTaskListPath]: ['GET'],
+    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
+    [targetUris.processModelShowPath]: ['PUT'],
     [`${targetUris.processInstanceActionPath}/suspend`]: ['PUT'],
     [`${targetUris.processInstanceActionPath}/terminate`]: ['PUT'],
     [`${targetUris.processInstanceActionPath}/resume`]: ['PUT'],
@@ -80,17 +93,28 @@ export default function ProcessInstanceShow() {
       const processTaskFailure = () => {
         setTasksCallHadError(true);
       };
+      let queryParams = '';
+      const processIdentifier = searchParams.get('process_identifier');
+      if (processIdentifier) {
+        queryParams = `?process_identifier=${processIdentifier}`;
+      }
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}`,
+        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
         successCallback: setProcessInstance,
       });
       let taskParams = '?all_tasks=true';
       if (typeof params.spiff_step !== 'undefined') {
         taskParams = `${taskParams}&spiff_step=${params.spiff_step}`;
       }
-      if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+      let taskPath = '';
+      if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
+        taskPath = `${targetUris.processInstanceTaskListDataPath}${taskParams}`;
+      } else if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+        taskPath = `${targetUris.processInstanceTaskListPath}${taskParams}`;
+      }
+      if (taskPath) {
         HttpService.makeCallToBackend({
-          path: `${targetUris.processInstanceTaskListPath}${taskParams}`,
+          path: taskPath,
           successCallback: setTasks,
           failureCallback: processTaskFailure,
         });
@@ -98,7 +122,14 @@ export default function ProcessInstanceShow() {
         setTasksCallHadError(true);
       }
     }
-  }, [params, modifiedProcessModelId, permissionsLoaded, ability, targetUris]);
+  }, [
+    params,
+    modifiedProcessModelId,
+    permissionsLoaded,
+    ability,
+    targetUris,
+    searchParams,
+  ]);
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({
@@ -140,12 +171,12 @@ export default function ProcessInstanceShow() {
   const getTaskIds = () => {
     const taskIds = { completed: [], readyOrWaiting: [] };
     if (tasks) {
-      tasks.forEach(function getUserTasksElement(task: any) {
+      tasks.forEach(function getUserTasksElement(task: ProcessInstanceTask) {
         if (task.state === 'COMPLETED') {
-          (taskIds.completed as any).push(task.name);
+          (taskIds.completed as any).push(task);
         }
         if (task.state === 'READY' || task.state === 'WAITING') {
-          (taskIds.readyOrWaiting as any).push(task.name);
+          (taskIds.readyOrWaiting as any).push(task);
         }
       });
     }
@@ -175,15 +206,18 @@ export default function ProcessInstanceShow() {
     label: any,
     distance: number
   ) => {
+    const processIdentifier = searchParams.get('process_identifier');
+    let queryParams = '';
+    if (processIdentifier) {
+      queryParams = `?process_identifier=${processIdentifier}`;
+    }
     return (
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`/admin/process-instances/${
-          params.process_model_id
-        }/process-instances/${params.process_instance_id}/${
-          currentSpiffStep(processInstanceToUse) + distance
-        }`}
+        to={`/admin/process-instances/${params.process_model_id}/${
+          params.process_instance_id
+        }/${currentSpiffStep(processInstanceToUse) + distance}${queryParams}`}
       >
         {label}
       </Link>
@@ -364,10 +398,15 @@ export default function ProcessInstanceShow() {
     }
   };
 
-  const handleClickedDiagramTask = (shapeElement: any) => {
+  const handleClickedDiagramTask = (
+    shapeElement: any,
+    bpmnProcessIdentifiers: any
+  ) => {
     if (tasks) {
       const matchingTask: any = tasks.find(
-        (task: any) => task.name === shapeElement.id
+        (task: any) =>
+          task.name === shapeElement.id &&
+          bpmnProcessIdentifiers.includes(task.process_identifier)
       );
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
@@ -411,7 +450,9 @@ export default function ProcessInstanceShow() {
 
   const canEditTaskData = (task: any) => {
     return (
-      task.state === 'READY' && showingLastSpiffStep(processInstance as any)
+      ability.can('PUT', targetUris.processInstanceTaskListDataPath) &&
+      task.state === 'READY' &&
+      showingLastSpiffStep(processInstance as any)
     );
   };
 
@@ -460,7 +501,10 @@ export default function ProcessInstanceShow() {
   const taskDataButtons = (task: any) => {
     const buttons = [];
 
-    if (task.type === 'Script Task') {
+    if (
+      task.type === 'Script Task' &&
+      ability.can('PUT', targetUris.processModelShowPath)
+    ) {
       buttons.push(
         <Button
           data-qa="create-script-unit-test-button"
@@ -471,19 +515,28 @@ export default function ProcessInstanceShow() {
       );
     }
 
+    if (task.type === 'Call Activity') {
+      buttons.push(
+        <Link
+          data-qa="go-to-call-activity-result"
+          to={`${window.location.pathname}?process_identifier=${task.call_activity_process_identifier}`}
+          target="_blank"
+        >
+          View Call Activity Diagram
+        </Link>
+      );
+    }
+
     if (canEditTaskData(task)) {
       if (editingTaskData) {
         buttons.push(
-          <Button
-            data-qa="create-script-unit-test-button"
-            onClick={saveTaskData}
-          >
+          <Button data-qa="save-task-data-button" onClick={saveTaskData}>
             Save
           </Button>
         );
         buttons.push(
           <Button
-            data-qa="create-script-unit-test-button"
+            data-qa="cancel-task-data-edit-button"
             onClick={cancelEditingTaskData}
           >
             Cancel
@@ -492,7 +545,7 @@ export default function ProcessInstanceShow() {
       } else {
         buttons.push(
           <Button
-            data-qa="create-script-unit-test-button"
+            data-qa="edit-task-data-button"
             onClick={() => setEditingTaskData(true)}
           >
             Edit
@@ -622,8 +675,8 @@ export default function ProcessInstanceShow() {
           processModelId={processModelId || ''}
           diagramXML={processInstanceToUse.bpmn_xml_file_contents || ''}
           fileName={processInstanceToUse.bpmn_xml_file_contents || ''}
-          readyOrWaitingBpmnTaskIds={taskIds.readyOrWaiting}
-          completedTasksBpmnIds={taskIds.completed}
+          readyOrWaitingProcessInstanceTasks={taskIds.readyOrWaiting}
+          completedProcessInstanceTasks={taskIds.completed}
           diagramType="readonly"
           onElementClick={handleClickedDiagramTask}
         />

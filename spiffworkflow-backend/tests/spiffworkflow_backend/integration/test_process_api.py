@@ -1167,6 +1167,60 @@ class TestProcessApi(BaseTest):
             xml_file_contents = f_open.read()
             assert show_response.json["bpmn_xml_file_contents"] == xml_file_contents
 
+    def test_process_instance_show_with_specified_process_identifier(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_process_instance_show_with_specified_process_identifier."""
+        process_model_id = "call_activity_nested"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_two",
+            process_model_id=process_model_id,
+            bpmn_file_location="call_activity_nested",
+        )
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier="Level2b"
+        ).first()
+        assert spec_reference
+        modified_process_model_identifier = (
+            self.modify_process_identifier_for_path_param(process_model_identifier)
+        )
+        headers = self.logged_in_headers(with_super_admin_user)
+        create_response = self.create_process_instance_from_process_model_id(
+            client, process_model_identifier, headers
+        )
+        assert create_response.json is not None
+        assert create_response.status_code == 201
+        process_instance_id = create_response.json["id"]
+        client.post(
+            f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        show_response = client.get(
+            f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}?process_identifier={spec_reference.identifier}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert show_response.json is not None
+        assert show_response.status_code == 200
+        file_system_root = FileSystemService.root_path()
+        process_instance_file_path = (
+            f"{file_system_root}/{process_model_identifier}/{process_model_id}.bpmn"
+        )
+        with open(process_instance_file_path) as f_open:
+            xml_file_contents = f_open.read()
+            assert show_response.json["bpmn_xml_file_contents"] != xml_file_contents
+        spec_reference_file_path = os.path.join(
+            file_system_root, spec_reference.relative_path
+        )
+        with open(spec_reference_file_path) as f_open:
+            xml_file_contents = f_open.read()
+            assert show_response.json["bpmn_xml_file_contents"] == xml_file_contents
+
     def test_message_start_when_starting_process_instance(
         self,
         app: Flask,
@@ -2496,7 +2550,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-models/{modified_original_process_model_id}/move?new_location={new_location}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
         assert response.json["id"] == new_process_model_path
 
         # make sure the original model does not exist
@@ -2541,7 +2595,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-groups/{modified_original_process_group_id}/move?new_location={new_location}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert response.status_code == 201
+        assert response.status_code == 200
         assert response.json["id"] == new_sub_path
 
         # make sure the original subgroup does not exist

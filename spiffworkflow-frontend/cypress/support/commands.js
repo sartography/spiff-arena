@@ -1,5 +1,6 @@
 import { string } from 'prop-types';
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
+import { miscDisplayName } from './helpers';
 
 // ***********************************************
 // This example commands.js shows you how to
@@ -86,15 +87,15 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
   (expectAutoRedirectToHumanTask = false) => {
-    cy.contains('Run').click();
+    cy.contains('Start').click();
     if (expectAutoRedirectToHumanTask) {
       // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
       cy.url().should('include', `/tasks/`);
       cy.contains('Task: ');
     } else {
-      cy.contains(/Process Instance.*kicked off/);
+      cy.contains(/Process Instance.*[kK]icked [oO]ff/);
       cy.reload(true);
-      cy.contains(/Process Instance.*kicked off/).should('not.exist');
+      cy.contains(/Process Instance.*[kK]icked [oO]ff/).should('not.exist');
     }
   }
 );
@@ -103,8 +104,8 @@ Cypress.Commands.add(
   'navigateToProcessModel',
   (groupDisplayName, modelDisplayName, modelIdentifier) => {
     cy.navigateToAdmin();
-    cy.contains('99-Shared Resources').click();
-    cy.contains(`Process Group: 99-Shared Resources`, { timeout: 10000 });
+    cy.contains(miscDisplayName).click();
+    cy.contains(`Process Group: ${miscDisplayName}`, { timeout: 10000 });
     cy.contains(groupDisplayName).click();
     cy.contains(`Process Group: ${groupDisplayName}`);
     // https://stackoverflow.com/q/51254946/6090676

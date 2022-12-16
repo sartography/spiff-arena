@@ -46,24 +46,39 @@ class GitService:
 
     @classmethod
     def get_instance_file_contents_for_revision(
-        cls, process_model: ProcessModelInfo, revision: str
+        cls,
+        process_model: ProcessModelInfo,
+        revision: str,
+        file_name: Optional[str] = None,
     ) -> str:
         """Get_instance_file_contents_for_revision."""
         bpmn_spec_absolute_dir = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
         process_model_relative_path = FileSystemService.process_model_relative_path(
             process_model
         )
+        file_name_to_use = file_name
+        if file_name_to_use is None:
+            file_name_to_use = process_model.primary_file_name
         with FileSystemService.cd(bpmn_spec_absolute_dir):
             shell_command = [
                 "git",
                 "show",
-                f"{revision}:{process_model_relative_path}/{process_model.primary_file_name}",
+                f"{revision}:{process_model_relative_path}/{file_name_to_use}",
             ]
             return cls.run_shell_command_to_get_stdout(shell_command)
 
     @classmethod
-    def commit(cls, message: str, repo_path: Optional[str] = None) -> str:
+    def commit(
+        cls,
+        message: str,
+        repo_path: Optional[str] = None,
+        branch_name: Optional[str] = None,
+    ) -> str:
         """Commit."""
+        cls.check_for_basic_configs()
+        branch_name_to_use = branch_name
+        if branch_name_to_use is None:
+            branch_name_to_use = current_app.config["GIT_BRANCH"]
         repo_path_to_use = repo_path
         if repo_path is None:
             repo_path_to_use = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
@@ -82,14 +97,25 @@ class GitService:
             shell_command_path,
             repo_path_to_use,
             message,
+            branch_name_to_use,
             git_username,
             git_email,
         ]
         return cls.run_shell_command_to_get_stdout(shell_command)
 
     @classmethod
-    def check_for_configs(cls) -> None:
+    def check_for_basic_configs(cls) -> None:
+        """Check_for_basic_configs."""
+        if current_app.config["GIT_BRANCH"] is None:
+            raise MissingGitConfigsError(
+                "Missing config for GIT_BRANCH. "
+                "This is required for publishing process models"
+            )
+
+    @classmethod
+    def check_for_publish_configs(cls) -> None:
         """Check_for_configs."""
+        cls.check_for_basic_configs()
         if current_app.config["GIT_BRANCH_TO_PUBLISH_TO"] is None:
             raise MissingGitConfigsError(
                 "Missing config for GIT_BRANCH_TO_PUBLISH_TO. "
@@ -142,7 +168,7 @@ class GitService:
     @classmethod
     def handle_web_hook(cls, webhook: dict) -> bool:
         """Handle_web_hook."""
-        cls.check_for_configs()
+        cls.check_for_publish_configs()
 
         if "repository" not in webhook or "clone_url" not in webhook["repository"]:
             raise InvalidGitWebhookBodyError(
@@ -178,7 +204,7 @@ class GitService:
     @classmethod
     def publish(cls, process_model_id: str, branch_to_update: str) -> str:
         """Publish."""
-        cls.check_for_configs()
+        cls.check_for_publish_configs()
         source_process_model_root = FileSystemService.root_path()
         source_process_model_path = os.path.join(
             source_process_model_root, process_model_id
@@ -227,10 +253,7 @@ class GitService:
                 f"Request to publish changes to {process_model_id}, "
                 f"from {g.user.username} on {current_app.config['ENV_IDENTIFIER']}"
             )
-            cls.commit(commit_message, destination_process_root)
-            cls.run_shell_command(
-                ["git", "push", "--set-upstream", "origin", branch_to_pull_request]
-            )
+            cls.commit(commit_message, destination_process_root, branch_to_pull_request)
 
             # build url for github page to open PR
             git_remote = cls.run_shell_command_to_get_stdout(
