@@ -823,6 +823,7 @@ export default function ProcessModelEditDiagram() {
         processModelId={params.process_model_id || ''}
         saveDiagram={saveDiagram}
         onDeleteFile={onDeleteFile}
+        isPrimaryFile={params.file_name === processModel?.primary_file_name}
         onSetPrimaryFile={onSetPrimaryFileCallback}
         diagramXML={bpmnXmlForDiagramRendering}
         fileName={params.file_name}
