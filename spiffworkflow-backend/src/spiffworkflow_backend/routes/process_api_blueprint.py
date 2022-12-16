@@ -1440,11 +1440,44 @@ def get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def process_instance_task_list(
+def process_instance_task_list_without_task_data(
     modified_process_model_identifier: str,
     process_instance_id: int,
     all_tasks: bool = False,
     spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_task_list_without_task_data."""
+    return process_instance_task_list(
+        modified_process_model_identifier,
+        process_instance_id,
+        all_tasks,
+        spiff_step,
+        get_task_data=False,
+    )
+
+
+def process_instance_task_list_with_task_data(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_task_list_with_task_data."""
+    return process_instance_task_list(
+        modified_process_model_identifier,
+        process_instance_id,
+        all_tasks,
+        spiff_step,
+        get_task_data=True,
+    )
+
+
+def process_instance_task_list(
+    _modified_process_model_identifier: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
+    get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
@@ -1475,7 +1508,8 @@ def process_instance_task_list(
     tasks = []
     for spiff_task in spiff_tasks:
         task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
-        task.data = spiff_task.data
+        if get_task_data:
+            task.data = spiff_task.data
         tasks.append(task)
 
     return make_response(jsonify(tasks), 200)
