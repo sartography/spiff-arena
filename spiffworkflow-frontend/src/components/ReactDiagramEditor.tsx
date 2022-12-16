@@ -70,6 +70,7 @@ type OwnProps = {
   completedProcessInstanceTasks?: ProcessInstanceTask[] | null;
   saveDiagram?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
+  isPrimaryFile?: boolean;
   onSetPrimaryFile?: (..._args: any[]) => any;
   diagramXML?: string | null;
   fileName?: string;
@@ -94,6 +95,7 @@ export default function ReactDiagramEditor({
   completedProcessInstanceTasks,
   saveDiagram,
   onDeleteFile,
+  isPrimaryFile,
   onSetPrimaryFile,
   diagramXML,
   fileName,
@@ -573,7 +575,7 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            {fileName && (
+            {fileName && !isPrimaryFile && (
               <ButtonWithConfirmation
                 description={`Delete file ${fileName}?`}
                 onConfirmation={handleDelete}

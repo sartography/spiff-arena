@@ -849,6 +849,7 @@ def process_instance_list(
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
+    group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
@@ -988,10 +989,16 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
         )
-        process_instance_query = process_instance_query.join(
-            GroupModel,
-            GroupModel.id == SpiffStepDetailsModel.lane_assignment_id,
-        )
+        if group_identifier:
+            process_instance_query = process_instance_query.join(
+                GroupModel,
+                GroupModel.identifier == group_identifier,
+            )
+        else:
+            process_instance_query = process_instance_query.join(
+                GroupModel,
+                GroupModel.id == SpiffStepDetailsModel.lane_assignment_id,
+            )
         process_instance_query = process_instance_query.join(
             UserGroupAssignmentModel,
             UserGroupAssignmentModel.group_id == GroupModel.id,
@@ -1352,7 +1359,7 @@ def task_list_for_my_open_processes(
 
 
 def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Task_list_for_processes_started_by_others."""
+    """Task_list_for_me."""
     return get_tasks(
         processes_started_by_user=False,
         has_lane_assignment_id=False,
@@ -1362,10 +1369,23 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
 
 
 def task_list_for_my_groups(
-    page: int = 1, per_page: int = 100
+    group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    """Task_list_for_processes_started_by_others."""
-    return get_tasks(processes_started_by_user=False, page=page, per_page=per_page)
+    """Task_list_for_my_groups."""
+    return get_tasks(
+        group_identifier=group_identifier,
+        processes_started_by_user=False,
+        page=page,
+        per_page=per_page,
+    )
+
+
+def user_group_list_for_current_user() -> flask.wrappers.Response:
+    """User_group_list_for_current_user."""
+    groups = g.user.groups
+    # TODO: filter out the default group and have a way to know what is the default group
+    group_identifiers = [i.identifier for i in groups if i.identifier != "everybody"]
+    return make_response(jsonify(sorted(group_identifiers)), 200)
 
 
 def get_tasks(
@@ -1373,6 +1393,7 @@ def get_tasks(
     has_lane_assignment_id: bool = True,
     page: int = 1,
     per_page: int = 100,
+    group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Get_tasks."""
     user_id = g.user.id
@@ -1409,9 +1430,14 @@ def get_tasks(
             ),
         )
         if has_lane_assignment_id:
-            active_tasks_query = active_tasks_query.filter(
-                ActiveTaskModel.lane_assignment_id.is_not(None)  # type: ignore
-            )
+            if group_identifier:
+                active_tasks_query = active_tasks_query.filter(
+                    GroupModel.identifier == group_identifier
+                )
+            else:
+                active_tasks_query = active_tasks_query.filter(
+                    ActiveTaskModel.lane_assignment_id.is_not(None)  # type: ignore
+                )
         else:
             active_tasks_query = active_tasks_query.filter(ActiveTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
@@ -1440,11 +1466,44 @@ def get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def process_instance_task_list(
+def process_instance_task_list_without_task_data(
     modified_process_model_identifier: str,
     process_instance_id: int,
     all_tasks: bool = False,
     spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_task_list_without_task_data."""
+    return process_instance_task_list(
+        modified_process_model_identifier,
+        process_instance_id,
+        all_tasks,
+        spiff_step,
+        get_task_data=False,
+    )
+
+
+def process_instance_task_list_with_task_data(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_task_list_with_task_data."""
+    return process_instance_task_list(
+        modified_process_model_identifier,
+        process_instance_id,
+        all_tasks,
+        spiff_step,
+        get_task_data=True,
+    )
+
+
+def process_instance_task_list(
+    _modified_process_model_identifier: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
+    get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
@@ -1475,7 +1534,8 @@ def process_instance_task_list(
     tasks = []
     for spiff_task in spiff_tasks:
         task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
-        task.data = spiff_task.data
+        if get_task_data:
+            task.data = spiff_task.data
         tasks.append(task)
 
     return make_response(jsonify(tasks), 200)
