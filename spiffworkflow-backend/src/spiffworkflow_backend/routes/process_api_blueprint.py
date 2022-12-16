@@ -940,7 +940,12 @@ def process_instance_list(
 
     print(f"report_filter.with_relation_to_me: {report_filter.with_relation_to_me}")
     if report_filter.with_relation_to_me is True:
-        process_instance_query = process_instance_query.outerjoin(ActiveTaskModel).outerjoin(ActiveTaskUserModel, ActiveTaskUserModel.user_id == g.user.id)
+        process_instance_query = process_instance_query.outerjoin(ActiveTaskModel).outerjoin(ActiveTaskUserModel,
+            and_(
+                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+                ActiveTaskUserModel.user_id == g.user.id,
+            ),
+        )
         process_instance_query = process_instance_query.filter(or_(ActiveTaskUserModel.id.is_not(None), ProcessInstanceModel.process_initiator_id == g.user.id))
 
     if report_filter.initiated_by_me is True:
@@ -1417,6 +1422,7 @@ def get_tasks(
         .outerjoin(GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
+        .filter(ActiveTaskModel.completed == False)
     )
 
     if processes_started_by_user:
@@ -1451,19 +1457,23 @@ def get_tasks(
         else:
             active_tasks_query = active_tasks_query.filter(ActiveTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
-    active_tasks = active_tasks_query.add_columns(
-        ProcessInstanceModel.process_model_identifier,
-        ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-        ProcessInstanceModel.updated_at_in_seconds,
-        ProcessInstanceModel.created_at_in_seconds,
-        UserModel.username,
-        GroupModel.identifier.label("group_identifier"),
-        ActiveTaskModel.task_name,
-        ActiveTaskModel.task_title,
-        ActiveTaskModel.process_model_display_name,
-        ActiveTaskModel.process_instance_id,
-        ActiveTaskUserModel.user_id.label("current_user_is_potential_owner"),
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    active_tasks = (
+        active_tasks_query.add_columns(
+            ProcessInstanceModel.process_model_identifier,
+            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
+            ProcessInstanceModel.updated_at_in_seconds,
+            ProcessInstanceModel.created_at_in_seconds,
+            UserModel.username,
+            GroupModel.identifier.label("group_identifier"),
+            ActiveTaskModel.task_name,
+            ActiveTaskModel.task_title,
+            ActiveTaskModel.process_model_display_name,
+            ActiveTaskModel.process_instance_id,
+            ActiveTaskUserModel.user_id.label("current_user_is_potential_owner"),
+        )
+        .order_by(desc(ActiveTaskModel.id))  # type: ignore
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
 
     response_json = {
         "results": active_tasks.items,
@@ -1683,7 +1693,7 @@ def task_submit(
         spiff_task.terminate_loop()
 
     active_task = ActiveTaskModel.query.filter_by(
-        process_instance_id=process_instance_id, task_id=task_id
+        process_instance_id=process_instance_id, task_id=task_id, completed=False
     ).first()
     if active_task is None:
         raise (
@@ -1713,7 +1723,7 @@ def task_submit(
     #         next_task = processor.next_task()
 
     next_active_task_assigned_to_me = (
-        ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id)
+        ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
         .order_by(asc(ActiveTaskModel.id))  # type: ignore
         .join(ActiveTaskUserModel)
         .filter_by(user_id=principal.user_id)

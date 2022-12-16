@@ -52,6 +52,7 @@ class ActiveTaskModel(SpiffworkflowBaseDBModel):
     task_type: str = db.Column(db.String(50))
     task_status: str = db.Column(db.String(50))
     process_model_display_name: str = db.Column(db.String(255))
+    completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     active_task_users = relationship("ActiveTaskUserModel", cascade="delete")
     potential_owners = relationship(  # type: ignore
