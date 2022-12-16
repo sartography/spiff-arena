@@ -300,8 +300,13 @@ export default function ProcessInstanceListTable({
 
     checkFiltersAndRun();
     if (autoReload) {
-      refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, checkFiltersAndRun);
+      return refreshAtInterval(
+        REFRESH_INTERVAL,
+        REFRESH_TIMEOUT,
+        checkFiltersAndRun
+      );
     }
+    return undefined;
   }, [
     autoReload,
     searchParams,
@@ -838,8 +843,8 @@ export default function ProcessInstanceListTable({
             return null;
           }}
           shouldFilterItem={shouldFilterReportColumn}
-          placeholder="Choose a report column"
-          titleText="Report Column"
+          placeholder="Choose a column to show"
+          titleText="Column"
         />
       );
     }
@@ -888,7 +893,7 @@ export default function ProcessInstanceListTable({
               kind="ghost"
               size="sm"
               className={`button-tag-icon ${tagTypeClass}`}
-              title={`Edit ${reportColumnForEditing.accessor}`}
+              title={`Edit ${reportColumnForEditing.accessor} column`}
               onClick={() => {
                 setReportColumnToOperateOn(reportColumnForEditing);
                 setShowReportColumnForm(true);
@@ -916,7 +921,7 @@ export default function ProcessInstanceListTable({
           <Button
             data-qa="add-column-button"
             renderIcon={AddAlt}
-            iconDescription="Filter Options"
+            iconDescription="Column options"
             className="with-tiny-top-margin"
             kind="ghost"
             hasIconOnly
