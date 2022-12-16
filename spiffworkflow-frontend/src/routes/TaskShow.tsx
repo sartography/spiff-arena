@@ -40,7 +40,7 @@ export default function TaskShow() {
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.processInstanceTaskListPath]: ['GET'],
+    [targetUris.processInstanceTaskListDataPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -50,7 +50,7 @@ export default function TaskShow() {
     if (permissionsLoaded) {
       const processResult = (result: any) => {
         setTask(result);
-        if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+        if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
           HttpService.makeCallToBackend({
             path: `/task-data/${modifyProcessIdentifierForPathParam(
               result.process_model_identifier
