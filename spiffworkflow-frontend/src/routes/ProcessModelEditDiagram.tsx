@@ -25,6 +25,7 @@ import {
   ProcessReference,
 } from '../interfaces';
 import ProcessSearch from '../components/ProcessSearch';
+import { Notification } from '../components/Notification';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -157,6 +158,8 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
+  const [displaySaveFileMessage, setDisplaySaveFileMessage] =
+    useState<boolean>(false);
   const saveDiagram = (bpmnXML: any, fileName = params.file_name) => {
     setErrorMessage(null);
     setBpmnXmlForDiagramRendering(bpmnXML);
@@ -192,6 +195,7 @@ export default function ProcessModelEditDiagram() {
     // after saving the file, make sure we null out newFileName
     // so it does not get used over the params
     setNewFileName('');
+    setDisplaySaveFileMessage(true);
   };
 
   const onDeleteFile = (fileName = params.file_name) => {
@@ -836,6 +840,20 @@ export default function ProcessModelEditDiagram() {
     );
   };
 
+  const saveFileMessage = () => {
+    if (displaySaveFileMessage) {
+      return (
+        <Notification
+          title="File Saved: "
+          onClose={() => setDisplaySaveFileMessage(false)}
+        >
+          Changes to the file were saved.
+        </Notification>
+      );
+    }
+    return null;
+  };
+
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
   if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
@@ -856,6 +874,7 @@ export default function ProcessModelEditDiagram() {
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h1>
+        {saveFileMessage()}
         {appropriateEditor()}
         {newFileNameBox()}
         {scriptEditor()}
