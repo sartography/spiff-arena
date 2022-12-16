@@ -70,8 +70,10 @@ export default function ProcessInstanceShow() {
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceTaskListPath]: ['GET'],
+    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
+    [targetUris.processModelShowPath]: ['PUT'],
     [`${targetUris.processInstanceActionPath}/suspend`]: ['PUT'],
     [`${targetUris.processInstanceActionPath}/terminate`]: ['PUT'],
     [`${targetUris.processInstanceActionPath}/resume`]: ['PUT'],
@@ -104,9 +106,15 @@ export default function ProcessInstanceShow() {
       if (typeof params.spiff_step !== 'undefined') {
         taskParams = `${taskParams}&spiff_step=${params.spiff_step}`;
       }
-      if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+      let taskPath = '';
+      if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
+        taskPath = `${targetUris.processInstanceTaskListDataPath}${taskParams}`;
+      } else if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+        taskPath = `${targetUris.processInstanceTaskListPath}${taskParams}`;
+      }
+      if (taskPath) {
         HttpService.makeCallToBackend({
-          path: `${targetUris.processInstanceTaskListPath}${taskParams}`,
+          path: taskPath,
           successCallback: setTasks,
           failureCallback: processTaskFailure,
         });
@@ -392,13 +400,13 @@ export default function ProcessInstanceShow() {
 
   const handleClickedDiagramTask = (
     shapeElement: any,
-    bpmnRootElement: any
+    bpmnProcessIdentifiers: any
   ) => {
     if (tasks) {
       const matchingTask: any = tasks.find(
         (task: any) =>
           task.name === shapeElement.id &&
-          task.process_identifier === bpmnRootElement.id
+          bpmnProcessIdentifiers.includes(task.process_identifier)
       );
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
@@ -442,7 +450,9 @@ export default function ProcessInstanceShow() {
 
   const canEditTaskData = (task: any) => {
     return (
-      task.state === 'READY' && showingLastSpiffStep(processInstance as any)
+      ability.can('PUT', targetUris.processInstanceTaskListDataPath) &&
+      task.state === 'READY' &&
+      showingLastSpiffStep(processInstance as any)
     );
   };
 
@@ -491,7 +501,10 @@ export default function ProcessInstanceShow() {
   const taskDataButtons = (task: any) => {
     const buttons = [];
 
-    if (task.type === 'Script Task') {
+    if (
+      task.type === 'Script Task' &&
+      ability.can('PUT', targetUris.processModelShowPath)
+    ) {
       buttons.push(
         <Button
           data-qa="create-script-unit-test-button"
