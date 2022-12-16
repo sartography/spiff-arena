@@ -398,13 +398,13 @@ export default function ProcessInstanceShow() {
 
   const handleClickedDiagramTask = (
     shapeElement: any,
-    bpmnRootElement: any
+    bpmnProcessIdentifiers: any
   ) => {
     if (tasks) {
       const matchingTask: any = tasks.find(
         (task: any) =>
           task.name === shapeElement.id &&
-          task.process_identifier === bpmnRootElement.id
+          bpmnProcessIdentifiers.includes(task.process_identifier)
       );
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
@@ -528,7 +528,7 @@ export default function ProcessInstanceShow() {
     if ('payload' in eventToSend)
       eventToSend.payload = JSON.parse(eventPayload);
     HttpService.makeCallToBackend({
-      path: `/process-instances/${params.process_instance_id}/event`,
+      path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/event`,
       httpMethod: 'POST',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,

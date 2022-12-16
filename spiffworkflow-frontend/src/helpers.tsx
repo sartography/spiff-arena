@@ -213,3 +213,24 @@ export const refreshAtInterval = (
     clearTimeout(timeoutRef);
   };
 };
+
+const getChildProcesses = (bpmnElement: any) => {
+  let elements: string[] = [];
+  bpmnElement.children.forEach((c: any) => {
+    if (c.type === 'bpmn:Participant') {
+      if (c.businessObject.processRef) {
+        elements.push(c.businessObject.processRef.id);
+      }
+      elements = [...elements, ...getChildProcesses(c)];
+    } else if (c.type === 'bpmn:SubProcess') {
+      elements.push(c.id);
+    }
+  });
+  return elements;
+};
+
+export const getBpmnProcessIdentifiers = (rootBpmnElement: any) => {
+  const childProcesses = getChildProcesses(rootBpmnElement);
+  childProcesses.push(rootBpmnElement.businessObject.id);
+  return childProcesses;
+};
