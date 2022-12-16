@@ -577,6 +577,12 @@ paths:
         description: For filtering - show instances with tasks completed by my group
         schema:
           type: boolean
+      - name: with_relation_to_me
+        in: query
+        required: false
+        description: For filtering - show instances that have something to do with me
+        schema:
+          type: boolean
       - name: user_filter
         in: query
         required: false

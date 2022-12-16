@@ -24,6 +24,7 @@ class ProcessInstanceReportFilter:
     initiated_by_me: Optional[bool] = None
     with_tasks_completed_by_me: Optional[bool] = None
     with_tasks_completed_by_my_group: Optional[bool] = None
+    with_relation_to_me: Optional[bool] = None
 
     def to_dict(self) -> dict[str, str]:
         """To_dict."""
@@ -50,6 +51,10 @@ class ProcessInstanceReportFilter:
         if self.with_tasks_completed_by_my_group is not None:
             d["with_tasks_completed_by_my_group"] = str(
                 self.with_tasks_completed_by_my_group
+            ).lower()
+        if self.with_relation_to_me is not None:
+            d["with_relation_to_me"] = str(
+                self.with_relation_to_me
             ).lower()
 
         return d
@@ -174,6 +179,9 @@ class ProcessInstanceReportService:
         with_tasks_completed_by_my_group = bool_value(
             "with_tasks_completed_by_my_group"
         )
+        with_relation_to_me = bool_value(
+            "with_relation_to_me"
+        )
 
         report_filter = ProcessInstanceReportFilter(
             process_model_identifier,
@@ -185,6 +193,7 @@ class ProcessInstanceReportService:
             initiated_by_me,
             with_tasks_completed_by_me,
             with_tasks_completed_by_my_group,
+            with_relation_to_me,
         )
 
         return report_filter
@@ -202,6 +211,7 @@ class ProcessInstanceReportService:
         initiated_by_me: Optional[bool] = None,
         with_tasks_completed_by_me: Optional[bool] = None,
         with_tasks_completed_by_my_group: Optional[bool] = None,
+        with_relation_to_me: Optional[bool] = None,
     ) -> ProcessInstanceReportFilter:
         """Filter_from_metadata_with_overrides."""
         report_filter = cls.filter_from_metadata(process_instance_report)
@@ -225,6 +235,10 @@ class ProcessInstanceReportService:
         if with_tasks_completed_by_my_group is not None:
             report_filter.with_tasks_completed_by_my_group = (
                 with_tasks_completed_by_my_group
+            )
+        if with_relation_to_me is not None:
+            report_filter.with_relation_to_me = (
+                with_relation_to_me
             )
 
         return report_filter
