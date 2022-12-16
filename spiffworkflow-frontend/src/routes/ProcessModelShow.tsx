@@ -264,25 +264,27 @@ export default function ProcessModelShow() {
       </Can>
     );
 
-    elements.push(
-      <Can
-        I="DELETE"
-        a={targetUris.processModelFileCreatePath}
-        ability={ability}
-      >
-        <ButtonWithConfirmation
-          kind="ghost"
-          renderIcon={TrashCan}
-          iconDescription="Delete File"
-          hasIconOnly
-          description={`Delete file: ${processModelFile.name}`}
-          onConfirmation={() => {
-            onDeleteFile(processModelFile.name);
-          }}
-          confirmButtonLabel="Delete"
-        />
-      </Can>
-    );
+    if (!isPrimaryBpmnFile) {
+      elements.push(
+        <Can
+          I="DELETE"
+          a={targetUris.processModelFileCreatePath}
+          ability={ability}
+        >
+          <ButtonWithConfirmation
+            kind="ghost"
+            renderIcon={TrashCan}
+            iconDescription="Delete File"
+            hasIconOnly
+            description={`Delete file: ${processModelFile.name}`}
+            onConfirmation={() => {
+              onDeleteFile(processModelFile.name);
+            }}
+            confirmButtonLabel="Delete"
+          />
+        </Can>
+      );
+    }
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
       elements.push(
         <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
