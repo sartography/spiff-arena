@@ -27,15 +27,17 @@ type OwnProps = {
   autoReload?: boolean;
   showStartedBy?: boolean;
   showWaitingOn?: boolean;
+  textToShowIfEmpty?: string;
 };
 
-export default function TasksTable({
+export default function TaskListTable({
   apiPath,
   tableTitle,
   tableDescription,
   additionalParams,
   paginationQueryParamPrefix,
   paginationClassName,
+  textToShowIfEmpty,
   autoReload = false,
   showStartedBy = true,
   showWaitingOn = true,
@@ -67,8 +69,9 @@ export default function TasksTable({
     };
     getTasks();
     if (autoReload) {
-      refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
+      return refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
     }
+    return undefined;
   }, [
     searchParams,
     additionalParams,
@@ -164,7 +167,7 @@ export default function TasksTable({
     if (pagination && pagination.total < 1) {
       return (
         <p className="no-results-message with-large-bottom-margin">
-          Your groups have no task assignments at this time.
+          {textToShowIfEmpty}
         </p>
       );
     }
