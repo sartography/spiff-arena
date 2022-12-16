@@ -1166,7 +1166,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.user_groups_for_current_user
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.user_group_list_for_current_user
       summary: Group identifiers for current logged in user
       responses:
         "200":

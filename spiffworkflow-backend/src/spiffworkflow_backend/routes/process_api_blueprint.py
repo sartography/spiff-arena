@@ -989,7 +989,7 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
         )
-        if (group_identifier):
+        if group_identifier:
             process_instance_query = process_instance_query.join(
                 GroupModel,
                 GroupModel.identifier == group_identifier,
@@ -1380,8 +1380,8 @@ def task_list_for_my_groups(
     )
 
 
-def user_groups_for_current_user() -> flask.wrappers.Response:
-    """User_groups_for_current_user."""
+def user_group_list_for_current_user() -> flask.wrappers.Response:
+    """User_group_list_for_current_user."""
     groups = g.user.groups
     # TODO: filter out the default group and have a way to know what is the default group
     group_identifiers = [i.identifier for i in groups if i.identifier != "everybody"]
