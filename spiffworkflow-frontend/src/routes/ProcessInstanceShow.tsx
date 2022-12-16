@@ -528,7 +528,7 @@ export default function ProcessInstanceShow() {
     if ('payload' in eventToSend)
       eventToSend.payload = JSON.parse(eventPayload);
     HttpService.makeCallToBackend({
-      path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}/event`,
+      path: `/send-event/${modifiedProcessModelId}/${params.process_instance_id}`,
       httpMethod: 'POST',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,
