@@ -16,6 +16,10 @@ from werkzeug.wrappers import Response
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 
 
+class MissingAccessTokenError(Exception):
+    """MissingAccessTokenError."""
+
+
 class AuthenticationProviderTypes(enum.Enum):
     """AuthenticationServiceProviders."""
 

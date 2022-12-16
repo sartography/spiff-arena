@@ -12,13 +12,16 @@ export interface RecentProcessModel {
 }
 
 export interface ProcessInstanceTask {
-  id: number;
+  id: string;
   process_model_display_name: string;
   process_model_identifier: string;
   task_title: string;
   lane_assignment_id: string;
   process_instance_status: number;
   updated_at_in_seconds: number;
+  state: string;
+  process_identifier: string;
+  name: string;
 }
 
 export interface ProcessReference {
@@ -49,6 +52,7 @@ export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
   process_model_display_name: string;
+  spiff_step?: number;
 }
 
 export interface MessageCorrelationProperties {

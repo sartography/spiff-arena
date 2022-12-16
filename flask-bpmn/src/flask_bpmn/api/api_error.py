@@ -170,15 +170,17 @@ def set_user_sentry_context() -> None:
 def handle_exception(exception: Exception) -> flask.wrappers.Response:
     """Handles unexpected exceptions."""
     set_user_sentry_context()
-    id = capture_exception(exception)
 
-    organization_slug = current_app.config.get("SENTRY_ORGANIZATION_SLUG")
-    project_slug = current_app.config.get("SENTRY_PROJECT_SLUG")
     sentry_link = None
-    if organization_slug and project_slug:
-        sentry_link = (
-            f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
-        )
+    if not isinstance(exception, ApiError) or exception.error_code != "invalid_token":
+        id = capture_exception(exception)
+
+        organization_slug = current_app.config.get("SENTRY_ORGANIZATION_SLUG")
+        project_slug = current_app.config.get("SENTRY_PROJECT_SLUG")
+        if organization_slug and project_slug:
+            sentry_link = (
+                f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
+            )
 
     # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
     # seems to break the sentry sdk context where we no longer get back
