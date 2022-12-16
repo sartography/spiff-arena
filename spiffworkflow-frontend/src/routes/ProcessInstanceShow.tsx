@@ -74,9 +74,9 @@ export default function ProcessInstanceShow() {
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processModelShowPath]: ['PUT'],
-    [`${targetUris.processInstanceActionPath}/suspend`]: ['PUT'],
-    [`${targetUris.processInstanceActionPath}/terminate`]: ['PUT'],
-    [`${targetUris.processInstanceActionPath}/resume`]: ['PUT'],
+    [`${targetUris.processInstanceActionPath}/suspend`]: ['POST'],
+    [`${targetUris.processInstanceActionPath}/terminate`]: ['POST'],
+    [`${targetUris.processInstanceActionPath}/resume`]: ['POST'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData

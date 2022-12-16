@@ -699,10 +699,10 @@ class ProcessInstanceProcessor:
                         db.session.add(active_task_user)
                     db.session.commit()
 
-        if len(active_tasks) > 0:
-            for at in active_tasks:
-                db.session.delete(at)
-            db.session.commit()
+        # if len(active_tasks) > 0:
+        #     for at in active_tasks:
+        #         db.session.delete(at)
+        #     db.session.commit()
 
     @staticmethod
     def get_parser() -> MyCustomParser:

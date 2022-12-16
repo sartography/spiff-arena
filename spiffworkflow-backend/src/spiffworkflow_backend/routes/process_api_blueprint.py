@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+from sqlalchemy import or_
 import os
 import random
 import re
@@ -846,6 +847,7 @@ def process_instance_list(
     initiated_by_me: Optional[bool] = None,
     with_tasks_completed_by_me: Optional[bool] = None,
     with_tasks_completed_by_my_group: Optional[bool] = None,
+    with_relation_to_me: Optional[bool] = None,
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
@@ -855,6 +857,7 @@ def process_instance_list(
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
         g.user, report_id, report_identifier
     )
+    print(f"with_relation_to_me: {with_relation_to_me}")
 
     if user_filter:
         report_filter = ProcessInstanceReportFilter(
@@ -867,6 +870,7 @@ def process_instance_list(
             initiated_by_me,
             with_tasks_completed_by_me,
             with_tasks_completed_by_my_group,
+            with_relation_to_me
         )
     else:
         report_filter = (
@@ -881,6 +885,7 @@ def process_instance_list(
                 initiated_by_me,
                 with_tasks_completed_by_me,
                 with_tasks_completed_by_my_group,
+                with_relation_to_me
             )
         )
 
@@ -932,6 +937,11 @@ def process_instance_list(
         process_instance_query = process_instance_query.filter(
             ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
         )
+
+    print(f"report_filter.with_relation_to_me: {report_filter.with_relation_to_me}")
+    if report_filter.with_relation_to_me is True:
+        process_instance_query = process_instance_query.outerjoin(ActiveTaskModel).outerjoin(ActiveTaskUserModel, ActiveTaskUserModel.user_id == g.user.id)
+        process_instance_query = process_instance_query.filter(or_(ActiveTaskUserModel.id.is_not(None), ProcessInstanceModel.process_initiator_id == g.user.id))
 
     if report_filter.initiated_by_me is True:
         process_instance_query = process_instance_query.filter(
