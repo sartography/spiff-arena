@@ -418,12 +418,18 @@ export default function ProcessModelShow() {
 
   const checkDuplicateFile = (event: any) => {
     if (processModel && processModel.files.length > 0) {
+      let foundExistingFile = false;
       processModel.files.forEach((file) => {
         if (file.name === filesToUpload[0].name) {
-          displayOverwriteConfirmation(file.name);
-          setFileUploadEvent(event);
+          foundExistingFile = true;
         }
       });
+      if (foundExistingFile) {
+        displayOverwriteConfirmation(filesToUpload[0].name);
+        setFileUploadEvent(event);
+      } else {
+        doFileUpload(event);
+      }
     }
   };
 
