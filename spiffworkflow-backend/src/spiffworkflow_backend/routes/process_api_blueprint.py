@@ -2170,6 +2170,30 @@ def send_bpmn_event(
     )
 
 
+def mark_task_complete(
+    modified_process_model_identifier: str,
+    process_instance_id: str,
+    task_id: str,
+    body: Dict,
+) -> Response:
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.mark_task_complete(task_id)
+    else:
+        raise ApiError(
+            error_code="send_bpmn_event_error",
+            message=f"Could not skip Task {task_id} in Instance {process_instance_id}",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
+
+
 def commit_and_push_to_git(message: str) -> None:
     """Commit_and_push_to_git."""
     if current_app.config["GIT_COMMIT_ON_SAVE"]:
