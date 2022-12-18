@@ -16,6 +16,17 @@ react_projects=(
   spiffworkflow-frontend
 )
 
+subcommand="${1:-}"
+
+if [[ "$subcommand" == "pre" ]]; then
+  if [[ -n "$(git status --porcelain SpiffWorkflow)" ]]; then
+    echo "SpiffWorkflow has uncommitted changes. Running its test suite."
+    pushd SpiffWorkflow
+    make tests-par # run tests in parallel
+    popd
+  fi
+fi
+
 function get_python_dirs() {
   (git ls-tree -r HEAD --name-only | grep -E '\.py$' | awk -F '/' '{print $1}' | sort | uniq | grep -v '\.' | grep -Ev '^(bin|migrations)$') || echo ''
 }
@@ -50,23 +61,34 @@ function run_pre_commmit() {
 }
 
 for react_project in "${react_projects[@]}" ; do
-  pushd "$react_project"
-  npm run lint:fix
-  popd
+  # if pre, only do stuff when there are changes
+  if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$react_project")" ]]; then
+    pushd "$react_project"
+    npm run lint:fix
+    popd
+  fi
 done
 
 for python_project in "${python_projects[@]}" ; do
-  pushd "$python_project"
-  run_fix_docstrings || run_fix_docstrings
-  run_autoflake || run_autoflake
-  popd
+  if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
+    pushd "$python_project"
+    run_fix_docstrings || run_fix_docstrings
+    run_autoflake || run_autoflake
+    popd
+  fi
 done
-run_pre_commmit || run_pre_commmit
 
-for python_project in  "${python_projects[@]}"; do
-  pushd "$python_project"
-  poetry install
-  poetry run mypy $(get_python_dirs)
-  poetry run coverage run --parallel -m pytest
-  popd
+if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "spiffworkflow-backend")" ]]; then
+  # rune_pre_commit only applies to spiffworkflow-backend at the moment
+  run_pre_commmit || run_pre_commmit
+fi
+
+for python_project in "${python_projects[@]}"; do
+  if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
+    pushd "$python_project"
+    poetry install
+    poetry run mypy $(get_python_dirs)
+    poetry run coverage run --parallel -m pytest
+    popd
+  fi
 done
