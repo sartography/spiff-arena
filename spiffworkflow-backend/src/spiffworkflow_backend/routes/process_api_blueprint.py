@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from sqlalchemy import or_
 import os
 import random
 import re
@@ -34,6 +33,7 @@ from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
 from sqlalchemy import func
+from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import selectinload
 
@@ -870,7 +870,7 @@ def process_instance_list(
             initiated_by_me,
             with_tasks_completed_by_me,
             with_tasks_completed_by_my_group,
-            with_relation_to_me
+            with_relation_to_me,
         )
     else:
         report_filter = (
@@ -885,7 +885,7 @@ def process_instance_list(
                 initiated_by_me,
                 with_tasks_completed_by_me,
                 with_tasks_completed_by_my_group,
-                with_relation_to_me
+                with_relation_to_me,
             )
         )
 
@@ -940,13 +940,21 @@ def process_instance_list(
 
     print(f"report_filter.with_relation_to_me: {report_filter.with_relation_to_me}")
     if report_filter.with_relation_to_me is True:
-        process_instance_query = process_instance_query.outerjoin(ActiveTaskModel).outerjoin(ActiveTaskUserModel,
+        process_instance_query = process_instance_query.outerjoin(
+            ActiveTaskModel
+        ).outerjoin(
+            ActiveTaskUserModel,
             and_(
                 ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
                 ActiveTaskUserModel.user_id == g.user.id,
             ),
         )
-        process_instance_query = process_instance_query.filter(or_(ActiveTaskUserModel.id.is_not(None), ProcessInstanceModel.process_initiator_id == g.user.id))
+        process_instance_query = process_instance_query.filter(
+            or_(
+                ActiveTaskUserModel.id.is_not(None),
+                ProcessInstanceModel.process_initiator_id == g.user.id,
+            )
+        )
 
     if report_filter.initiated_by_me is True:
         process_instance_query = process_instance_query.filter(
@@ -1336,6 +1344,7 @@ def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Res
         .join(ProcessInstanceModel)
         .join(ActiveTaskUserModel)
         .filter_by(user_id=principal.user_id)
+        .filter(ActiveTaskModel.completed == False)  # noqa: E712
         # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
@@ -1422,7 +1431,7 @@ def get_tasks(
         .outerjoin(GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
-        .filter(ActiveTaskModel.completed == False)
+        .filter(ActiveTaskModel.completed == False)  # noqa: E712
     )
 
     if processes_started_by_user:
@@ -1723,7 +1732,9 @@ def task_submit(
     #         next_task = processor.next_task()
 
     next_active_task_assigned_to_me = (
-        ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
+        ActiveTaskModel.query.filter_by(
+            process_instance_id=process_instance_id, completed=False
+        )
         .order_by(asc(ActiveTaskModel.id))  # type: ignore
         .join(ActiveTaskUserModel)
         .filter_by(user_id=principal.user_id)
