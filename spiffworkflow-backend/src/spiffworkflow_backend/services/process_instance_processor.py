@@ -17,6 +17,7 @@ from typing import Optional
 from typing import Tuple
 from typing import TypedDict
 from typing import Union
+from uuid import UUID
 
 import dateparser
 import pytz
@@ -706,6 +707,8 @@ class ProcessInstanceProcessor:
             db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> Any:
+        # The task spec is NOT actually a SpiffTask, it is the task spec attached to a SpiffTask
+        # Not sure why mypy accepts this but whatever.
         return self._serializer.spec_converter.convert(task_spec)
 
     def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
@@ -717,6 +720,17 @@ class ProcessInstanceProcessor:
             f"Event of type {event_definition.event_type} sent to process instance {self.process_instance_model.id}"
         )
         self.bpmn_process_instance.catch(event_definition)
+        self.do_engine_steps(save=True)
+
+    def mark_task_complete(self, task_id: str) -> None:
+        spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
+        spiff_task._set_state(TaskState.COMPLETED)
+        self.bpmn_process_instance.last_task = spiff_task
+        for child in spiff_task.children:
+            child.task_spec._update(child)
+        current_app.logger.info(
+            f"Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id} skipped"
+        )
         self.do_engine_steps(save=True)
 
     @staticmethod

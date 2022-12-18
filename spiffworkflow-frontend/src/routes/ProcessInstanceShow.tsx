@@ -546,6 +546,16 @@ export default function ProcessInstanceShow() {
     });
   };
 
+  const markTaskComplete = () => {
+    const taskToUse: any = taskToDisplay;
+    HttpService.makeCallToBackend({
+      path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
+      httpMethod: 'POST',
+      successCallback: saveTaskDataResult,
+      failureCallback: saveTaskDataFailure,
+    });
+  };
+
   const taskDataButtons = (task: any) => {
     const buttons = [];
 
@@ -584,7 +594,7 @@ export default function ProcessInstanceShow() {
         );
         buttons.push(
           <Button
-            data-qa="create-script-unit-test-button"
+            data-qa="cancel-task-data-edit-button"
             onClick={cancelUpdatingTask}
           >
             Cancel
@@ -592,7 +602,7 @@ export default function ProcessInstanceShow() {
         );
       } else if (selectingEvent) {
         buttons.push(
-          <Button data-qa="create-script-unit-test-button" onClick={sendEvent}>
+          <Button data-qa="send-event-button" onClick={sendEvent}>
             Send
           </Button>
         );
@@ -616,10 +626,19 @@ export default function ProcessInstanceShow() {
         if (canSendEvent(task)) {
           buttons.push(
             <Button
-              data-qa="create-script-unit-test-button"
+              data-qa="select-event-button"
               onClick={() => setSelectingEvent(true)}
             >
               Send Event
+            </Button>
+          );
+        } else {
+          buttons.push(
+            <Button
+              data-qa="mark-task-complete-button"
+              onClick={() => markTaskComplete()}
+            >
+              Mark Complete
             </Button>
           );
         }
