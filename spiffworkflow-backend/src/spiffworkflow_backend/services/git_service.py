@@ -100,6 +100,7 @@ class GitService:
             branch_name_to_use,
             git_username,
             git_email,
+            current_app.config['GIT_USER_PASSWORD']
         ]
         return cls.run_shell_command_to_get_stdout(shell_command)
 
