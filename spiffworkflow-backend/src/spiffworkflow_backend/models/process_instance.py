@@ -26,6 +26,10 @@ class ProcessInstanceNotFoundError(Exception):
     """ProcessInstanceNotFoundError."""
 
 
+class ProcessInstanceTaskDataCannotBeUpdatedError(Exception):
+    """ProcessInstanceTaskDataCannotBeUpdatedError."""
+
+
 class NavigationItemSchema(Schema):
     """NavigationItemSchema."""
 
