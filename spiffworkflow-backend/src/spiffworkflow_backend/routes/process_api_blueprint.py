@@ -1670,6 +1670,13 @@ def task_submit(
     """Task_submit_user_data."""
     principal = find_principal_or_raise()
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+    if not process_instance.can_submit_task():
+        raise ApiError(
+            error_code="process_instance_not_runnable",
+            message=f"Process Instance ({process_instance.id}) has status "
+            f"{process_instance.status} which does not allow tasks to be submitted.",
+            status_code=400,
+        )
 
     processor = ProcessInstanceProcessor(process_instance)
     spiff_task = get_spiff_task_from_process_instance(
