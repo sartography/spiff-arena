@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 9538a3575b63
+Revision ID: b86f7cc3a74b
 Revises: 
-Create Date: 2022-12-19 14:51:21.949731
+Create Date: 2022-12-19 16:20:27.715487
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '9538a3575b63'
+revision = 'b86f7cc3a74b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -176,7 +176,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id', 'group_id', name='user_group_assignment_unique')
     )
-    op.create_table('active_task',
+    op.create_table('human_task',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
     sa.Column('actual_owner_id', sa.Integer(), nullable=True),
@@ -196,9 +196,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('task_id', 'process_instance_id', name='active_task_unique')
+    sa.UniqueConstraint('task_id', 'process_instance_id', name='human_task_unique')
     )
-    op.create_index(op.f('ix_active_task_completed'), 'active_task', ['completed'], unique=False)
+    op.create_index(op.f('ix_human_task_completed'), 'human_task', ['completed'], unique=False)
     op.create_table('message_correlation',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -265,17 +265,17 @@ def upgrade():
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('active_task_user',
+    op.create_table('human_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('active_task_id', sa.Integer(), nullable=False),
+    sa.Column('human_task_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['active_task_id'], ['active_task.id'], ),
+    sa.ForeignKeyConstraint(['human_task_id'], ['human_task.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('active_task_id', 'user_id', name='active_task_user_unique')
+    sa.UniqueConstraint('human_task_id', 'user_id', name='human_task_user_unique')
     )
-    op.create_index(op.f('ix_active_task_user_active_task_id'), 'active_task_user', ['active_task_id'], unique=False)
-    op.create_index(op.f('ix_active_task_user_user_id'), 'active_task_user', ['user_id'], unique=False)
+    op.create_index(op.f('ix_human_task_user_human_task_id'), 'human_task_user', ['human_task_id'], unique=False)
+    op.create_index(op.f('ix_human_task_user_user_id'), 'human_task_user', ['user_id'], unique=False)
     op.create_table('message_correlation_message_instance',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message_instance_id', sa.Integer(), nullable=False),
@@ -295,9 +295,9 @@ def downgrade():
     op.drop_index(op.f('ix_message_correlation_message_instance_message_instance_id'), table_name='message_correlation_message_instance')
     op.drop_index(op.f('ix_message_correlation_message_instance_message_correlation_id'), table_name='message_correlation_message_instance')
     op.drop_table('message_correlation_message_instance')
-    op.drop_index(op.f('ix_active_task_user_user_id'), table_name='active_task_user')
-    op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
-    op.drop_table('active_task_user')
+    op.drop_index(op.f('ix_human_task_user_user_id'), table_name='human_task_user')
+    op.drop_index(op.f('ix_human_task_user_human_task_id'), table_name='human_task_user')
+    op.drop_table('human_task_user')
     op.drop_table('spiff_step_details')
     op.drop_index(op.f('ix_process_instance_metadata_key'), table_name='process_instance_metadata')
     op.drop_table('process_instance_metadata')
@@ -308,8 +308,8 @@ def downgrade():
     op.drop_index(op.f('ix_message_correlation_name'), table_name='message_correlation')
     op.drop_index(op.f('ix_message_correlation_message_correlation_property_id'), table_name='message_correlation')
     op.drop_table('message_correlation')
-    op.drop_index(op.f('ix_active_task_completed'), table_name='active_task')
-    op.drop_table('active_task')
+    op.drop_index(op.f('ix_human_task_completed'), table_name='human_task')
+    op.drop_table('human_task')
     op.drop_table('user_group_assignment')
     op.drop_table('secret')
     op.drop_table('refresh_token')
