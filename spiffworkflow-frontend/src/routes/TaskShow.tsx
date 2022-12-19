@@ -171,7 +171,6 @@ export default function TaskShow() {
     } else if (taskToUse.form_ui_schema) {
       formUiSchema = JSON.parse(taskToUse.form_ui_schema);
     }
-
     if (taskToUse.state !== 'READY') {
       formUiSchema = Object.assign(formUiSchema || {}, {
         'ui:readonly': true,
@@ -184,7 +183,7 @@ export default function TaskShow() {
       reactFragmentToHideSubmitButton = <div />;
     }
 
-    if (taskToUse.type === 'Manual Task') {
+    if (taskToUse.type === 'Manual Task' && taskToUse.state === 'READY') {
       reactFragmentToHideSubmitButton = (
         <div>
           <Button type="submit">Continue</Button>
