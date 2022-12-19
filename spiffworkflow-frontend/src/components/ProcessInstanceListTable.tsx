@@ -70,6 +70,7 @@ const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
 
 type OwnProps = {
+  apiPath?: string;
   filtersEnabled?: boolean;
   processModelFullIdentifier?: string;
   paginationQueryParamPrefix?: string;
@@ -80,6 +81,7 @@ type OwnProps = {
   paginationClassName?: string;
   autoReload?: boolean;
   additionalParams?: string;
+  variant?: string;
 };
 
 interface dateParameters {
@@ -87,6 +89,7 @@ interface dateParameters {
 }
 
 export default function ProcessInstanceListTable({
+  apiPath = '/process-instances',
   filtersEnabled = true,
   processModelFullIdentifier,
   paginationQueryParamPrefix,
@@ -97,6 +100,7 @@ export default function ProcessInstanceListTable({
   textToShowIfEmpty,
   paginationClassName,
   autoReload = false,
+  variant = 'for-me',
 }: OwnProps) {
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -125,6 +129,11 @@ export default function ProcessInstanceListTable({
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
+
+  const processInstancePathPrefix =
+    variant === 'all'
+      ? '/admin/process-instances'
+      : '/admin/process-instances/for-me';
 
   const [processStatusAllOptions, setProcessStatusAllOptions] = useState<any[]>(
     []
@@ -260,7 +269,7 @@ export default function ProcessInstanceListTable({
       }
 
       HttpService.makeCallToBackend({
-        path: `/process-instances?${queryParamString}`,
+        path: `${apiPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
       });
     }
@@ -516,7 +525,7 @@ export default function ProcessInstanceListTable({
 
     setErrorMessage(null);
     setProcessInstanceReportJustSaved(null);
-    navigate(`/admin/process-instances?${queryParamString}`);
+    navigate(`${processInstancePathPrefix}?${queryParamString}`);
   };
 
   const dateComponent = (
@@ -615,7 +624,7 @@ export default function ProcessInstanceListTable({
 
     setErrorMessage(null);
     setProcessInstanceReportJustSaved(mode || null);
-    navigate(`/admin/process-instances${queryParamString}`);
+    navigate(`${processInstancePathPrefix}${queryParamString}`);
   };
 
   const reportColumns = () => {
@@ -1081,7 +1090,7 @@ export default function ProcessInstanceListTable({
       return (
         <Link
           data-qa="process-instance-show-link"
-          to={`/admin/process-instances/${modifiedProcessModelId}/${id}`}
+          to={`${processInstancePathPrefix}/${modifiedProcessModelId}/${id}`}
           title={`View process instance ${id}`}
         >
           {id}
