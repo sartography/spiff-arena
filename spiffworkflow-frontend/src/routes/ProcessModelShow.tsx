@@ -417,13 +417,15 @@ export default function ProcessModelShow() {
   };
 
   const checkDuplicateFile = (event: any) => {
-    if (processModel && processModel.files.length > 0) {
+    if (processModel) {
       let foundExistingFile = false;
-      processModel.files.forEach((file) => {
-        if (file.name === filesToUpload[0].name) {
-          foundExistingFile = true;
-        }
-      });
+      if (processModel.files.length > 0) {
+        processModel.files.forEach((file) => {
+          if (file.name === filesToUpload[0].name) {
+            foundExistingFile = true;
+          }
+        });
+      }
       if (foundExistingFile) {
         displayOverwriteConfirmation(filesToUpload[0].name);
         setFileUploadEvent(event);
@@ -431,12 +433,11 @@ export default function ProcessModelShow() {
         doFileUpload(event);
       }
     }
+    return null;
   };
 
   const handleFileUpload = (event: any) => {
-    if (processModel) {
-      checkDuplicateFile(event);
-    }
+    checkDuplicateFile(event);
     setShowFileUploadModal(false);
   };
 
@@ -473,9 +474,6 @@ export default function ProcessModelShow() {
   };
 
   const processModelFilesSection = () => {
-    if (!processModel) {
-      return null;
-    }
     return (
       <Grid
         condensed
