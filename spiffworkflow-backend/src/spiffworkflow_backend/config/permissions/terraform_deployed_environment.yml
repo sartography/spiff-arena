@@ -101,7 +101,7 @@ permissions:
   read-process-instance-reports:
     groups: [everybody]
     users: []
-    allowed_permissions: [read]
+    allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-instances/reports/*
   processes-read:
     groups: [everybody]

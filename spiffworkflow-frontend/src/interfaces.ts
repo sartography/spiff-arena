@@ -52,6 +52,10 @@ export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
   process_model_display_name: string;
+  status: string;
+  start_in_seconds: number | null;
+  end_in_seconds: number | null;
+  bpmn_xml_file_contents?: string;
   spiff_step?: number;
 }
 
