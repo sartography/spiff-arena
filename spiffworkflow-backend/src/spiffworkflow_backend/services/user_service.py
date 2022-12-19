@@ -56,6 +56,7 @@ class UserService:
                     message=f"Could not add user {username}",
                 ) from e
             cls.create_principal(user_model.id)
+            UserService().apply_waiting_group_assignments(user_model)
             return user_model
 
         else:
@@ -135,18 +136,26 @@ class UserService:
 
     @classmethod
     def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> None:
-        exists = UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).count()
-        if not exists:
+        wugam = UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).first()
+        if not wugam:
             wugam = UserGroupAssignmentWaitingModel(username=username, group_id=group.id)
             db.session.add(wugam)
             db.session.commit()
+        if wugam.is_match_all():
+            for user in UserModel.query.all():
+                cls.add_user_to_group(user, group)
 
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
-        waiting = UserGroupAssignmentWaitingModel().query.filter(UserGroupAssignmentWaitingModel.username == user.username).all()
+        waiting = UserGroupAssignmentWaitingModel().query.\
+            filter(UserGroupAssignmentWaitingModel.username == user.username).all()
         for assignment in waiting:
             cls.add_user_to_group(user, assignment.group)
             db.session.delete(assignment)
+        wildcard = UserGroupAssignmentWaitingModel().query.\
+            filter(UserGroupAssignmentWaitingModel.username == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS).all()
+        for assignment in wildcard:
+            cls.add_user_to_group(user, assignment.group)
         db.session.commit()
 
     @staticmethod
