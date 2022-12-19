@@ -80,6 +80,11 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/service-tasks
+  user-groups-for-current-user:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/user-groups/for-current-user
 
 
   # read all for everybody
