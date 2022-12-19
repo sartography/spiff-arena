@@ -1375,7 +1375,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/terminate",
+            f"/v1.0/process-instance-terminate/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1396,15 +1396,13 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_process_instance_delete."""
         process_group_id = "my_process_group"
-        process_model_id = "user_task"
-        bpmn_file_name = "user_task.bpmn"
-        bpmn_file_location = "user_task"
+        process_model_id = "sample"
+        bpmn_file_location = "sample"
         process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
             process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
 
@@ -1420,11 +1418,13 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
+        assert response.status_code == 200
 
         delete_response = client.delete(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert delete_response.json["ok"] is True
         assert delete_response.status_code == 200
 
     def test_task_show(
@@ -2421,7 +2421,7 @@ class TestProcessApi(BaseTest):
         assert process_instance.status == "user_input_required"
 
         client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/suspend",
+            f"/v1.0/process-instance-suspend/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         process_instance = ProcessInstanceService().get_process_instance(
@@ -2429,15 +2429,25 @@ class TestProcessApi(BaseTest):
         )
         assert process_instance.status == "suspended"
 
-        # TODO: Why can I run a suspended process instance?
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        process_instance = ProcessInstanceService().get_process_instance(
+            process_instance_id
+        )
+        assert process_instance.status == "suspended"
+        assert response.status_code == 400
 
-        # task = response.json['next_task']
-
-        print("test_process_instance_suspend")
+        response = client.post(
+            f"/v1.0/process-instance-resume/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        process_instance = ProcessInstanceService().get_process_instance(
+            process_instance_id
+        )
+        assert process_instance.status == "waiting"
 
     def test_script_unit_test_run(
         self,

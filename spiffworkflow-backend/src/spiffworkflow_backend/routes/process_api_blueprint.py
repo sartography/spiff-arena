@@ -53,6 +53,9 @@ from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
+from spiffworkflow_backend.models.process_instance import (
+    ProcessInstanceCannotBeDeletedError,
+)
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -580,6 +583,13 @@ def process_instance_run(
     process_instance = ProcessInstanceService().get_process_instance(
         process_instance_id
     )
+    if process_instance.status != "not_started":
+        raise ApiError(
+            error_code="process_instance_not_runnable",
+            message=f"Process Instance ({process_instance.id}) is currently running or has already run.",
+            status_code=400,
+        )
+
     processor = ProcessInstanceProcessor(process_instance)
 
     if do_engine_steps:
@@ -938,7 +948,7 @@ def process_instance_list(
 
     if report_filter.initiated_by_me is True:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
+            ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
         )
         process_instance_query = process_instance_query.filter_by(
             process_initiator=g.user
@@ -947,7 +957,7 @@ def process_instance_list(
     # TODO: not sure if this is exactly what is wanted
     if report_filter.with_tasks_completed_by_me is True:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
+            ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
         )
         # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
         # process_instance_query = process_instance_query.add_columns(UserModel.username)
@@ -976,7 +986,7 @@ def process_instance_list(
 
     if report_filter.with_tasks_completed_by_my_group is True:
         process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
+            ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
         )
         process_instance_query = process_instance_query.join(
             SpiffStepDetailsModel,
@@ -1164,6 +1174,12 @@ def process_instance_delete(
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+
+    if not process_instance.has_terminal_status():
+        raise ProcessInstanceCannotBeDeletedError(
+            f"Process instance ({process_instance.id}) cannot be deleted since it does not have a terminal status. "
+            f"Current status is {process_instance.status}."
+        )
 
     # (Pdb) db.session.delete
     # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
