@@ -56,6 +56,9 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSche
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance import (
+    ProcessInstanceTaskDataCannotBeUpdatedError,
+)
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
@@ -2110,6 +2113,11 @@ def update_task_data(
         ProcessInstanceModel.id == int(process_instance_id)
     ).first()
     if process_instance:
+        if process_instance.status != "suspended":
+            raise ProcessInstanceTaskDataCannotBeUpdatedError(
+                f"The process instance needs to be suspended to udpate the task-data. It is currently: {process_instance.status}"
+            )
+
         process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
         if "new_task_data" in body:
             new_task_data_str: str = body["new_task_data"]
