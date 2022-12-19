@@ -485,7 +485,6 @@ class AuthorizationService:
                 email=email,
                 display_name = display_name
             )
-            UserService().apply_waiting_group_assignments(user_model)
 
         else :
             # Update with the latest information
