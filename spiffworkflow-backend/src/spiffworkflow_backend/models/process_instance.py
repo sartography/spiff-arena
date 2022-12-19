@@ -60,10 +60,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
     process_initiator = relationship("UserModel")
 
-    active_tasks = relationship(
-        "ActiveTaskModel",
+    human_tasks = relationship(
+        "HumanTaskModel",
         cascade="delete",
-        primaryjoin="and_(ActiveTaskModel.process_instance_id==ProcessInstanceModel.id, ActiveTaskModel.completed == False)",
+        primaryjoin="and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id, HumanTaskModel.completed == False)",
     )  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore

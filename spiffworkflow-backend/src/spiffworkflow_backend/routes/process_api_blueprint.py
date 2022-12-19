@@ -40,10 +40,10 @@ from sqlalchemy.orm import selectinload
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
-from spiffworkflow_backend.models.active_task import ActiveTaskModel
-from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
@@ -862,6 +862,7 @@ def process_instance_list_for_me(
     report_id: Optional[int] = None,
     group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
+    """Process_instance_list_for_me."""
     return process_instance_list(
         process_model_identifier=process_model_identifier,
         page=page,
@@ -984,17 +985,17 @@ def process_instance_list(
 
     if report_filter.with_relation_to_me is True:
         process_instance_query = process_instance_query.outerjoin(
-            ActiveTaskModel
+            HumanTaskModel
         ).outerjoin(
-            ActiveTaskUserModel,
+            HumanTaskUserModel,
             and_(
-                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
-                ActiveTaskUserModel.user_id == g.user.id,
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == g.user.id,
             ),
         )
         process_instance_query = process_instance_query.filter(
             or_(
-                ActiveTaskUserModel.id.is_not(None),
+                HumanTaskUserModel.id.is_not(None),
                 ProcessInstanceModel.process_initiator_id == g.user.id,
             )
         )
@@ -1178,20 +1179,25 @@ def process_instance_show_for_me(
     process_instance_id: int,
     process_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
-    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).outerjoin(
-        ActiveTaskModel
-    ).outerjoin(
-        ActiveTaskUserModel,
-        and_(
-            ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
-            ActiveTaskUserModel.user_id == g.user.id,
-        ),
-    ).filter(
-        or_(
-            ActiveTaskUserModel.id.is_not(None),
-            ProcessInstanceModel.process_initiator_id == g.user.id,
+    """Process_instance_show_for_me."""
+    process_instance = (
+        ProcessInstanceModel.query.filter_by(id=process_instance_id)
+        .outerjoin(HumanTaskModel)
+        .outerjoin(
+            HumanTaskUserModel,
+            and_(
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == g.user.id,
+            ),
         )
-    ).first()
+        .filter(
+            or_(
+                HumanTaskUserModel.id.is_not(None),
+                ProcessInstanceModel.process_initiator_id == g.user.id,
+            )
+        )
+        .first()
+    )
 
     if process_instance is None:
         raise (
@@ -1202,7 +1208,11 @@ def process_instance_show_for_me(
             )
         )
 
-    return _get_process_instance(process_instance=process_instance, modified_process_model_identifier=modified_process_model_identifier, process_identifier=process_identifier)
+    return _get_process_instance(
+        process_instance=process_instance,
+        modified_process_model_identifier=modified_process_model_identifier,
+        process_identifier=process_identifier,
+    )
 
 
 def process_instance_show(
@@ -1212,13 +1222,19 @@ def process_instance_show(
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
-    return _get_process_instance(process_instance=process_instance, modified_process_model_identifier=modified_process_model_identifier, process_identifier=process_identifier)
+    return _get_process_instance(
+        process_instance=process_instance,
+        modified_process_model_identifier=modified_process_model_identifier,
+        process_identifier=process_identifier,
+    )
+
 
 def _get_process_instance(
     modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,
     process_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
+    """_get_process_instance."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     current_version_control_revision = GitService.get_current_revision()
 
@@ -1427,36 +1443,36 @@ def process_instance_report_show(
 def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Task_list_my_tasks."""
     principal = find_principal_or_raise()
-    active_tasks = (
-        ActiveTaskModel.query.order_by(desc(ActiveTaskModel.id))  # type: ignore
+    human_tasks = (
+        HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
         .join(ProcessInstanceModel)
-        .join(ActiveTaskUserModel)
+        .join(HumanTaskUserModel)
         .filter_by(user_id=principal.user_id)
-        .filter(ActiveTaskModel.completed == False)  # noqa: E712
+        .filter(HumanTaskModel.completed == False)  # noqa: E712
         # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.process_model_display_name,
             ProcessInstanceModel.status,
-            ActiveTaskModel.task_name,
-            ActiveTaskModel.task_title,
-            ActiveTaskModel.task_type,
-            ActiveTaskModel.task_status,
-            ActiveTaskModel.task_id,
-            ActiveTaskModel.id,
-            ActiveTaskModel.process_model_display_name,
-            ActiveTaskModel.process_instance_id,
+            HumanTaskModel.task_name,
+            HumanTaskModel.task_title,
+            HumanTaskModel.task_type,
+            HumanTaskModel.task_status,
+            HumanTaskModel.task_id,
+            HumanTaskModel.id,
+            HumanTaskModel.process_model_display_name,
+            HumanTaskModel.process_instance_id,
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
-    tasks = [ActiveTaskModel.to_task(active_task) for active_task in active_tasks.items]
+    tasks = [HumanTaskModel.to_task(human_task) for human_task in human_tasks.items]
 
     response_json = {
         "results": tasks,
         "pagination": {
-            "count": len(active_tasks.items),
-            "total": active_tasks.total,
-            "pages": active_tasks.pages,
+            "count": len(human_tasks.items),
+            "total": human_tasks.total,
+            "pages": human_tasks.pages,
         },
     }
 
@@ -1510,74 +1526,74 @@ def get_tasks(
     """Get_tasks."""
     user_id = g.user.id
 
-    # use distinct to ensure we only get one row per active task otherwise
-    # we can get back multiple for the same active task row which throws off
+    # use distinct to ensure we only get one row per human task otherwise
+    # we can get back multiple for the same human task row which throws off
     # pagination later on
     # https://stackoverflow.com/q/34582014/6090676
-    active_tasks_query = (
-        ActiveTaskModel.query.distinct()
-        .outerjoin(GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id)
+    human_tasks_query = (
+        HumanTaskModel.query.distinct()
+        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
-        .filter(ActiveTaskModel.completed == False)  # noqa: E712
+        .filter(HumanTaskModel.completed == False)  # noqa: E712
     )
 
     if processes_started_by_user:
-        active_tasks_query = active_tasks_query.filter(
+        human_tasks_query = human_tasks_query.filter(
             ProcessInstanceModel.process_initiator_id == user_id
         ).outerjoin(
-            ActiveTaskUserModel,
+            HumanTaskUserModel,
             and_(
-                ActiveTaskUserModel.user_id == user_id,
-                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+                HumanTaskUserModel.user_id == user_id,
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
             ),
         )
     else:
-        active_tasks_query = active_tasks_query.filter(
+        human_tasks_query = human_tasks_query.filter(
             ProcessInstanceModel.process_initiator_id != user_id
         ).join(
-            ActiveTaskUserModel,
+            HumanTaskUserModel,
             and_(
-                ActiveTaskUserModel.user_id == user_id,
-                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+                HumanTaskUserModel.user_id == user_id,
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
             ),
         )
         if has_lane_assignment_id:
             if group_identifier:
-                active_tasks_query = active_tasks_query.filter(
+                human_tasks_query = human_tasks_query.filter(
                     GroupModel.identifier == group_identifier
                 )
             else:
-                active_tasks_query = active_tasks_query.filter(
-                    ActiveTaskModel.lane_assignment_id.is_not(None)  # type: ignore
+                human_tasks_query = human_tasks_query.filter(
+                    HumanTaskModel.lane_assignment_id.is_not(None)  # type: ignore
                 )
         else:
-            active_tasks_query = active_tasks_query.filter(ActiveTaskModel.lane_assignment_id.is_(None))  # type: ignore
+            human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
-    active_tasks = (
-        active_tasks_query.add_columns(
+    human_tasks = (
+        human_tasks_query.add_columns(
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
             ProcessInstanceModel.updated_at_in_seconds,
             ProcessInstanceModel.created_at_in_seconds,
             UserModel.username,
             GroupModel.identifier.label("group_identifier"),
-            ActiveTaskModel.task_name,
-            ActiveTaskModel.task_title,
-            ActiveTaskModel.process_model_display_name,
-            ActiveTaskModel.process_instance_id,
-            ActiveTaskUserModel.user_id.label("current_user_is_potential_owner"),
+            HumanTaskModel.task_name,
+            HumanTaskModel.task_title,
+            HumanTaskModel.process_model_display_name,
+            HumanTaskModel.process_instance_id,
+            HumanTaskUserModel.user_id.label("current_user_is_potential_owner"),
         )
-        .order_by(desc(ActiveTaskModel.id))  # type: ignore
+        .order_by(desc(HumanTaskModel.id))  # type: ignore
         .paginate(page=page, per_page=per_page, error_out=False)
     )
 
     response_json = {
-        "results": active_tasks.items,
+        "results": human_tasks.items,
         "pagination": {
-            "count": len(active_tasks.items),
-            "total": active_tasks.total,
-            "pages": active_tasks.pages,
+            "count": len(human_tasks.items),
+            "total": human_tasks.total,
+            "pages": human_tasks.pages,
         },
     }
     return make_response(jsonify(response_json), 200)
@@ -1796,14 +1812,14 @@ def task_submit(
     if terminate_loop and spiff_task.is_looping():
         spiff_task.terminate_loop()
 
-    active_task = ActiveTaskModel.query.filter_by(
+    human_task = HumanTaskModel.query.filter_by(
         process_instance_id=process_instance_id, task_id=task_id, completed=False
     ).first()
-    if active_task is None:
+    if human_task is None:
         raise (
             ApiError(
-                error_code="no_active_task",
-                message="Cannot find an active task with task id '{task_id}' for process instance {process_instance_id}.",
+                error_code="no_human_task",
+                message="Cannot find an human task with task id '{task_id}' for process instance {process_instance_id}.",
                 status_code=500,
             )
         )
@@ -1813,7 +1829,7 @@ def task_submit(
         spiff_task=spiff_task,
         data=body,
         user=g.user,
-        active_task=active_task,
+        human_task=human_task,
     )
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
@@ -1826,18 +1842,18 @@ def task_submit(
     #         last_index = next_task.task_info()["mi_index"]
     #         next_task = processor.next_task()
 
-    next_active_task_assigned_to_me = (
-        ActiveTaskModel.query.filter_by(
+    next_human_task_assigned_to_me = (
+        HumanTaskModel.query.filter_by(
             process_instance_id=process_instance_id, completed=False
         )
-        .order_by(asc(ActiveTaskModel.id))  # type: ignore
-        .join(ActiveTaskUserModel)
+        .order_by(asc(HumanTaskModel.id))  # type: ignore
+        .join(HumanTaskUserModel)
         .filter_by(user_id=principal.user_id)
         .first()
     )
-    if next_active_task_assigned_to_me:
+    if next_human_task_assigned_to_me:
         return make_response(
-            jsonify(ActiveTaskModel.to_task(next_active_task_assigned_to_me)), 200
+            jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200
         )
 
     return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
