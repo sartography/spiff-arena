@@ -848,6 +848,37 @@ def message_start(
     )
 
 
+def process_instance_list_for_me(
+    process_model_identifier: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 100,
+    start_from: Optional[int] = None,
+    start_to: Optional[int] = None,
+    end_from: Optional[int] = None,
+    end_to: Optional[int] = None,
+    process_status: Optional[str] = None,
+    user_filter: Optional[bool] = False,
+    report_identifier: Optional[str] = None,
+    report_id: Optional[int] = None,
+    group_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    return process_instance_list(
+        process_model_identifier=process_model_identifier,
+        page=page,
+        per_page=per_page,
+        start_from=start_from,
+        start_to=start_to,
+        end_from=end_from,
+        end_to=end_to,
+        process_status=process_status,
+        user_filter=user_filter,
+        report_identifier=report_identifier,
+        report_id=report_id,
+        group_identifier=group_identifier,
+        with_relation_to_me=True,
+    )
+
+
 def process_instance_list(
     process_model_identifier: Optional[str] = None,
     page: int = 1,
@@ -951,7 +982,6 @@ def process_instance_list(
             ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
         )
 
-    print(f"report_filter.with_relation_to_me: {report_filter.with_relation_to_me}")
     if report_filter.with_relation_to_me is True:
         process_instance_query = process_instance_query.outerjoin(
             ActiveTaskModel
@@ -1143,14 +1173,53 @@ def process_instance_report_column_list() -> flask.wrappers.Response:
     return make_response(jsonify(table_columns + columns_for_metadata_strings), 200)
 
 
+def process_instance_show_for_me(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    process_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).outerjoin(
+        ActiveTaskModel
+    ).outerjoin(
+        ActiveTaskUserModel,
+        and_(
+            ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+            ActiveTaskUserModel.user_id == g.user.id,
+        ),
+    ).filter(
+        or_(
+            ActiveTaskUserModel.id.is_not(None),
+            ProcessInstanceModel.process_initiator_id == g.user.id,
+        )
+    ).first()
+
+    if process_instance is None:
+        raise (
+            ApiError(
+                error_code="process_instance_cannot_be_found",
+                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
+                status_code=400,
+            )
+        )
+
+    return _get_process_instance(process_instance=process_instance, modified_process_model_identifier=modified_process_model_identifier, process_identifier=process_identifier)
+
+
 def process_instance_show(
     modified_process_model_identifier: str,
     process_instance_id: int,
     process_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+    return _get_process_instance(process_instance=process_instance, modified_process_model_identifier=modified_process_model_identifier, process_identifier=process_identifier)
+
+def _get_process_instance(
+    modified_process_model_identifier: str,
+    process_instance: ProcessInstanceModel,
+    process_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     current_version_control_revision = GitService.get_current_revision()
 
     process_model_with_diagram = None
