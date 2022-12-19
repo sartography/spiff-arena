@@ -45,6 +45,7 @@ import {
   ProcessInstanceTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 
 export default function ProcessInstanceShow() {
   const navigate = useNavigate();
@@ -74,9 +75,9 @@ export default function ProcessInstanceShow() {
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processModelShowPath]: ['PUT'],
-    [`${targetUris.processInstanceActionPath}/suspend`]: ['POST'],
-    [`${targetUris.processInstanceActionPath}/terminate`]: ['POST'],
-    [`${targetUris.processInstanceActionPath}/resume`]: ['POST'],
+    [`${targetUris.processInstanceResumePath}`]: ['POST'],
+    [`${targetUris.processInstanceSuspendPath}`]: ['POST'],
+    [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -146,7 +147,7 @@ export default function ProcessInstanceShow() {
 
   const terminateProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/terminate`,
+      path: `${targetUris.processInstanceTerminatePath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -154,7 +155,7 @@ export default function ProcessInstanceShow() {
 
   const suspendProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/suspend`,
+      path: `${targetUris.processInstanceSuspendPath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -162,7 +163,7 @@ export default function ProcessInstanceShow() {
 
   const resumeProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/resume`,
+      path: `${targetUris.processInstanceResumePath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -333,7 +334,7 @@ export default function ProcessInstanceShow() {
   const terminateButton = () => {
     if (
       processInstance &&
-      !['complete', 'terminated', 'error'].includes(processInstance.status)
+      !ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
       return (
         <ButtonWithConfirmation
@@ -353,9 +354,9 @@ export default function ProcessInstanceShow() {
   const suspendButton = () => {
     if (
       processInstance &&
-      !['complete', 'terminated', 'error', 'suspended'].includes(
-        processInstance.status
-      )
+      !ProcessInstanceClass.terminalStatuses()
+        .concat(['suspended'])
+        .includes(processInstance.status)
     ) {
       return (
         <Button
@@ -608,21 +609,23 @@ export default function ProcessInstanceShow() {
   };
 
   const buttonIcons = () => {
+    if (!processInstance) {
+      return null;
+    }
     const elements = [];
-    if (
-      ability.can('POST', `${targetUris.processInstanceActionPath}/terminate`)
-    ) {
+    if (ability.can('POST', `${targetUris.processInstanceTerminatePath}`)) {
       elements.push(terminateButton());
     }
-    if (
-      ability.can('POST', `${targetUris.processInstanceActionPath}/suspend`)
-    ) {
+    if (ability.can('POST', `${targetUris.processInstanceSuspendPath}`)) {
       elements.push(suspendButton());
     }
-    if (ability.can('POST', `${targetUris.processInstanceActionPath}/resume`)) {
+    if (ability.can('POST', `${targetUris.processInstanceResumePath}`)) {
       elements.push(resumeButton());
     }
-    if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
+    if (
+      ability.can('DELETE', targetUris.processInstanceActionPath) &&
+      ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
+    ) {
       elements.push(
         <ButtonWithConfirmation
           data-qa="process-instance-delete"
@@ -630,7 +633,7 @@ export default function ProcessInstanceShow() {
           renderIcon={TrashCan}
           iconDescription="Delete"
           hasIconOnly
-          description={`Delete Process Instance: ${processInstance}`}
+          description={`Delete Process Instance: ${processInstance.id}`}
           onConfirmation={deleteProcessInstance}
           confirmButtonLabel="Delete"
         />
