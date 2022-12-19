@@ -1180,34 +1180,7 @@ def process_instance_show_for_me(
     process_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_show_for_me."""
-    process_instance = (
-        ProcessInstanceModel.query.filter_by(id=process_instance_id)
-        .outerjoin(HumanTaskModel)
-        .outerjoin(
-            HumanTaskUserModel,
-            and_(
-                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-                HumanTaskUserModel.user_id == g.user.id,
-            ),
-        )
-        .filter(
-            or_(
-                HumanTaskUserModel.id.is_not(None),
-                ProcessInstanceModel.process_initiator_id == g.user.id,
-            )
-        )
-        .first()
-    )
-
-    if process_instance is None:
-        raise (
-            ApiError(
-                error_code="process_instance_cannot_be_found",
-                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
-                status_code=400,
-            )
-        )
-
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
     return _get_process_instance(
         process_instance=process_instance,
         modified_process_model_identifier=modified_process_model_identifier,
@@ -1599,6 +1572,23 @@ def get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
+def process_instance_task_list_without_task_data_for_me(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    print(f"process_instance: {process_instance}")
+    return process_instance_task_list(
+        modified_process_model_identifier,
+        process_instance,
+        all_tasks,
+        spiff_step,
+        get_task_data=False,
+    )
+
+
 def process_instance_task_list_without_task_data(
     modified_process_model_identifier: str,
     process_instance_id: int,
@@ -1606,9 +1596,10 @@ def process_instance_task_list_without_task_data(
     spiff_step: int = 0,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data."""
+    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
     return process_instance_task_list(
         modified_process_model_identifier,
-        process_instance_id,
+        process_instance,
         all_tasks,
         spiff_step,
         get_task_data=False,
@@ -1622,9 +1613,10 @@ def process_instance_task_list_with_task_data(
     spiff_step: int = 0,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_with_task_data."""
+    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
     return process_instance_task_list(
         modified_process_model_identifier,
-        process_instance_id,
+        process_instance,
         all_tasks,
         spiff_step,
         get_task_data=True,
@@ -1633,19 +1625,17 @@ def process_instance_task_list_with_task_data(
 
 def process_instance_task_list(
     _modified_process_model_identifier: str,
-    process_instance_id: int,
+    process_instance: ProcessInstanceModel,
     all_tasks: bool = False,
     spiff_step: int = 0,
     get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
-
     if spiff_step > 0:
         step_detail = (
             db.session.query(SpiffStepDetailsModel)
             .filter(
-                SpiffStepDetailsModel.process_instance_id == process_instance.id,
+                SpiffStepDetailsModel.process_instance.id == process_instance.id,
                 SpiffStepDetailsModel.spiff_step == spiff_step,
             )
             .first()
@@ -2299,3 +2289,35 @@ def commit_and_push_to_git(message: str) -> None:
         current_app.logger.info(f"git output: {git_output}")
     else:
         current_app.logger.info("Git commit on save is disabled")
+
+
+def _find_process_instance_for_me_or_raise(process_instance_id: int) -> ProcessInstanceModel:
+    process_instance = (
+        ProcessInstanceModel.query.filter_by(id=process_instance_id)
+        .outerjoin(HumanTaskModel)
+        .outerjoin(
+            HumanTaskUserModel,
+            and_(
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == g.user.id,
+            ),
+        )
+        .filter(
+            or_(
+                HumanTaskUserModel.id.is_not(None),
+                ProcessInstanceModel.process_initiator_id == g.user.id,
+            )
+        )
+        .first()
+    )
+
+    if process_instance is None:
+        raise (
+            ApiError(
+                error_code="process_instance_cannot_be_found",
+                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
+                status_code=400,
+            )
+        )
+
+    return process_instance

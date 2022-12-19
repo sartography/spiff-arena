@@ -72,9 +72,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const modifiedProcessModelId = params.process_model_id;
 
   const { targetUris } = useUriListForPermissions();
+  const taskListPath =
+    variant === 'all'
+      ? targetUris.processInstanceTaskListPath
+      : targetUris.processInstanceTaskListForMePath;
+
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.messageInstanceListPath]: ['GET'],
-    [targetUris.processInstanceTaskListPath]: ['GET'],
+    [taskListPath]: ['GET'],
     [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
@@ -118,8 +123,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       let taskPath = '';
       if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
         taskPath = `${targetUris.processInstanceTaskListDataPath}${taskParams}`;
-      } else if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
-        taskPath = `${targetUris.processInstanceTaskListPath}${taskParams}`;
+      } else if (ability.can('GET', taskListPath)) {
+        taskPath = `${taskListPath}${taskParams}`;
       }
       if (taskPath) {
         HttpService.makeCallToBackend({
