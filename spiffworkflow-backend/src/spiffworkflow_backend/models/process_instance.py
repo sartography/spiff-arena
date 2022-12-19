@@ -26,6 +26,14 @@ class ProcessInstanceNotFoundError(Exception):
     """ProcessInstanceNotFoundError."""
 
 
+class ProcessInstanceTaskDataCannotBeUpdatedError(Exception):
+    """ProcessInstanceTaskDataCannotBeUpdatedError."""
+
+
+class ProcessInstanceCannotBeDeletedError(Exception):
+    """ProcessInstanceCannotBeDeletedError."""
+
+
 class NavigationItemSchema(Schema):
     """NavigationItemSchema."""
 
@@ -130,6 +138,15 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def validate_status(self, key: str, value: Any) -> Any:
         """Validate_status."""
         return self.validate_enum_field(key, value, ProcessInstanceStatus)
+
+    def has_terminal_status(self) -> bool:
+        """Has_terminal_status."""
+        return self.status in self.terminal_statuses()
+
+    @classmethod
+    def terminal_statuses(cls) -> list[str]:
+        """Terminal_statuses."""
+        return ["complete", "error", "terminated"]
 
 
 class ProcessInstanceModelSchema(Schema):
