@@ -115,7 +115,7 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-models/*
-  read-all-process-instance-for-me:
+  read-all-process-instances-for-me:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
