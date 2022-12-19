@@ -4,6 +4,7 @@ import json
 import os
 import time
 from typing import Any
+from typing import Dict
 
 import pytest
 from flask.app import Flask
@@ -2541,7 +2542,8 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
-        data = {
+        # This is exactly the same the test above, but some reason I to a totally irrelevant type.
+        data: Dict = {
             "correlation_properties": [],
             "expression": None,
             "external": True,
