@@ -18,6 +18,7 @@ export const useUriListForPermissions = () => {
       processInstanceSuspendPath: `/v1.0/process-instance-suspend/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceTaskListDataPath: `/v1.0/task-data/${params.process_model_id}/${params.process_instance_id}`,
       processInstanceTaskListPath: `/v1.0/process-instances/${params.process_model_id}/${params.process_instance_id}/task-info`,
+      processInstanceTaskListForMePath: `/v1.0/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}/task-info`,
       processInstanceTerminatePath: `/v1.0/process-instance-terminate/${params.process_model_id}/${params.process_instance_id}`,
       processModelCreatePath: `/v1.0/process-models/${params.process_group_id}`,
       processModelFileCreatePath: `/v1.0/process-models/${params.process_model_id}/files`,
