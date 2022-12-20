@@ -48,7 +48,11 @@ import {
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 
-export default function ProcessInstanceShow() {
+type OwnProps = {
+  variant: string;
+};
+
+export default function ProcessInstanceShow({ variant }: OwnProps) {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -74,9 +78,14 @@ export default function ProcessInstanceShow() {
   const modifiedProcessModelId = params.process_model_id;
 
   const { targetUris } = useUriListForPermissions();
+  const taskListPath =
+    variant === 'all'
+      ? targetUris.processInstanceTaskListPath
+      : targetUris.processInstanceTaskListForMePath;
+
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.messageInstanceListPath]: ['GET'],
-    [targetUris.processInstanceTaskListPath]: ['GET'],
+    [taskListPath]: ['GET'],
     [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceSendEventPath]: ['POST'],
     [targetUris.processInstanceCompleteTaskPath]: ['POST'],
@@ -107,8 +116,12 @@ export default function ProcessInstanceShow() {
       if (processIdentifier) {
         queryParams = `?process_identifier=${processIdentifier}`;
       }
+      let apiPath = '/process-instances/for-me';
+      if (variant === 'all') {
+        apiPath = '/process-instances';
+      }
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
+        path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
         successCallback: setProcessInstance,
       });
       let taskParams = '?all_tasks=true';
@@ -118,8 +131,8 @@ export default function ProcessInstanceShow() {
       let taskPath = '';
       if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
         taskPath = `${targetUris.processInstanceTaskListDataPath}${taskParams}`;
-      } else if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
-        taskPath = `${targetUris.processInstanceTaskListPath}${taskParams}`;
+      } else if (ability.can('GET', taskListPath)) {
+        taskPath = `${taskListPath}${taskParams}`;
       }
       if (taskPath) {
         HttpService.makeCallToBackend({
@@ -138,6 +151,8 @@ export default function ProcessInstanceShow() {
     ability,
     targetUris,
     searchParams,
+    taskListPath,
+    variant,
   ]);
 
   const deleteProcessInstance = () => {

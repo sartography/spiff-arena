@@ -34,36 +34,6 @@ class ProcessInstanceCannotBeDeletedError(Exception):
     """ProcessInstanceCannotBeDeletedError."""
 
 
-class NavigationItemSchema(Schema):
-    """NavigationItemSchema."""
-
-    class Meta:
-        """Meta."""
-
-        fields = [
-            "spec_id",
-            "name",
-            "spec_type",
-            "task_id",
-            "description",
-            "backtracks",
-            "indent",
-            "lane",
-            "state",
-            "children",
-        ]
-        unknown = INCLUDE
-
-    state = marshmallow.fields.String(required=False, allow_none=True)
-    description = marshmallow.fields.String(required=False, allow_none=True)
-    backtracks = marshmallow.fields.String(required=False, allow_none=True)
-    lane = marshmallow.fields.String(required=False, allow_none=True)
-    task_id = marshmallow.fields.String(required=False, allow_none=True)
-    children = marshmallow.fields.List(
-        marshmallow.fields.Nested(lambda: NavigationItemSchema())
-    )
-
-
 class ProcessInstanceStatus(SpiffEnum):
     """ProcessInstanceStatus."""
 
@@ -90,7 +60,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
     process_initiator = relationship("UserModel")
 
-    active_tasks = relationship("ActiveTaskModel", cascade="delete")  # type: ignore
+    human_tasks = relationship(
+        "HumanTaskModel",
+        cascade="delete",
+        primaryjoin="and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id, HumanTaskModel.completed == False)",
+    )  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
 
@@ -138,6 +112,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def validate_status(self, key: str, value: Any) -> Any:
         """Validate_status."""
         return self.validate_enum_field(key, value, ProcessInstanceStatus)
+
+    def can_submit_task(self) -> bool:
+        """Can_submit_task."""
+        return not self.has_terminal_status() and self.status != "suspended"
 
     def has_terminal_status(self) -> bool:
         """Has_terminal_status."""

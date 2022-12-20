@@ -16,8 +16,8 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
-from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -1463,15 +1463,15 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["next_task"] is not None
 
-        active_tasks = (
-            db.session.query(ActiveTaskModel)
-            .filter(ActiveTaskModel.process_instance_id == process_instance_id)
+        human_tasks = (
+            db.session.query(HumanTaskModel)
+            .filter(HumanTaskModel.process_instance_id == process_instance_id)
             .all()
         )
-        assert len(active_tasks) == 1
-        active_task = active_tasks[0]
+        assert len(human_tasks) == 1
+        human_task = human_tasks[0]
         response = client.get(
-            f"/v1.0/tasks/{process_instance_id}/{active_task.task_id}",
+            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
