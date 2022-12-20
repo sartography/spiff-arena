@@ -860,7 +860,7 @@ def process_instance_list_for_me(
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
-    group_identifier: Optional[str] = None,
+    user_group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list_for_me."""
     return process_instance_list(
@@ -875,7 +875,7 @@ def process_instance_list_for_me(
         user_filter=user_filter,
         report_identifier=report_identifier,
         report_id=report_id,
-        group_identifier=group_identifier,
+        user_group_identifier=user_group_identifier,
         with_relation_to_me=True,
     )
 
@@ -896,183 +896,46 @@ def process_instance_list(
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
-    group_identifier: Optional[str] = None,
+    user_group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
         g.user, report_id, report_identifier
     )
-    print(f"with_relation_to_me: {with_relation_to_me}")
 
     if user_filter:
         report_filter = ProcessInstanceReportFilter(
-            process_model_identifier,
-            start_from,
-            start_to,
-            end_from,
-            end_to,
-            process_status.split(",") if process_status else None,
-            initiated_by_me,
-            with_tasks_completed_by_me,
-            with_tasks_completed_by_my_group,
-            with_relation_to_me,
+            process_model_identifier=process_model_identifier,
+            user_group_identifier=user_group_identifier,
+            start_from=start_from,
+            start_to=start_to,
+            end_from=end_from,
+            end_to=end_to,
+            initiated_by_me=initiated_by_me,
+            with_tasks_completed_by_me=with_tasks_completed_by_me,
+            with_tasks_completed_by_my_group=with_tasks_completed_by_my_group,
+            with_relation_to_me=with_relation_to_me,
+            process_status=process_status.split(",") if process_status else None,
         )
     else:
         report_filter = (
             ProcessInstanceReportService.filter_from_metadata_with_overrides(
-                process_instance_report,
-                process_model_identifier,
-                start_from,
-                start_to,
-                end_from,
-                end_to,
-                process_status,
-                initiated_by_me,
-                with_tasks_completed_by_me,
-                with_tasks_completed_by_my_group,
-                with_relation_to_me,
+                process_instance_report=process_instance_report,
+                process_model_identifier=process_model_identifier,
+                user_group_identifier=user_group_identifier,
+                start_from=start_from,
+                start_to=start_to,
+                end_from=end_from,
+                end_to=end_to,
+                process_status=process_status,
+                initiated_by_me=initiated_by_me,
+                with_tasks_completed_by_me=with_tasks_completed_by_me,
+                with_tasks_completed_by_my_group=with_tasks_completed_by_my_group,
+                with_relation_to_me=with_relation_to_me,
             )
         )
 
-    process_instance_query = ProcessInstanceModel.query
-    # Always join that hot user table for good performance at serialization time.
-    process_instance_query = process_instance_query.options(
-        selectinload(ProcessInstanceModel.process_initiator)
-    )
-
-    if report_filter.process_model_identifier is not None:
-        process_model = get_process_model(
-            f"{report_filter.process_model_identifier}",
-        )
-
-        process_instance_query = process_instance_query.filter_by(
-            process_model_identifier=process_model.id
-        )
-
-    # this can never happen. obviously the class has the columns it defines. this is just to appease mypy.
-    if (
-        ProcessInstanceModel.start_in_seconds is None
-        or ProcessInstanceModel.end_in_seconds is None
-    ):
-        raise (
-            ApiError(
-                error_code="unexpected_condition",
-                message="Something went very wrong",
-                status_code=500,
-            )
-        )
-
-    if report_filter.start_from is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds >= report_filter.start_from
-        )
-    if report_filter.start_to is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds <= report_filter.start_to
-        )
-    if report_filter.end_from is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds >= report_filter.end_from
-        )
-    if report_filter.end_to is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds <= report_filter.end_to
-        )
-    if report_filter.process_status is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
-        )
-
-    if report_filter.initiated_by_me is True:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter_by(
-            process_initiator=g.user
-        )
-
-    if report_filter.with_relation_to_me is True:
-        process_instance_query = process_instance_query.outerjoin(
-            HumanTaskModel
-        ).outerjoin(
-            HumanTaskUserModel,
-            and_(
-                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-                HumanTaskUserModel.user_id == g.user.id,
-            ),
-        )
-        process_instance_query = process_instance_query.filter(
-            or_(
-                HumanTaskUserModel.id.is_not(None),
-                ProcessInstanceModel.process_initiator_id == g.user.id,
-            )
-        )
-
-    # TODO: not sure if this is exactly what is wanted
-    if report_filter.with_tasks_completed_by_me is True:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-        )
-        # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
-        # process_instance_query = process_instance_query.add_columns(UserModel.username)
-        # search for process_instance.UserModel.username in this file for more details about why adding columns is annoying.
-
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.process_initiator_id != g.user.id
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffStepDetailsModel,
-            ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffLoggingModel,
-            ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffStepDetailsModel.completed_by_user_id == g.user.id
-        )
-
-    if report_filter.with_tasks_completed_by_my_group is True:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffStepDetailsModel,
-            ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffLoggingModel,
-            ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
-        )
-        if group_identifier:
-            process_instance_query = process_instance_query.join(
-                GroupModel,
-                GroupModel.identifier == group_identifier,
-            )
-        else:
-            process_instance_query = process_instance_query.join(
-                GroupModel,
-                GroupModel.id == SpiffStepDetailsModel.lane_assignment_id,
-            )
-        process_instance_query = process_instance_query.join(
-            UserGroupAssignmentModel,
-            UserGroupAssignmentModel.group_id == GroupModel.id,
-        )
-        process_instance_query = process_instance_query.filter(
-            UserGroupAssignmentModel.user_id == g.user.id
-        )
+    process_instance_query = ProcessInstanceReportService.run_process_instance_report(report_filter, g.user)
 
     instance_metadata_aliases = {}
     stock_columns = ProcessInstanceReportService.get_column_names_for_model(
@@ -1470,11 +1333,11 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
 
 
 def task_list_for_my_groups(
-    group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+    user_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Task_list_for_my_groups."""
     return get_tasks(
-        group_identifier=group_identifier,
+        user_group_identifier=user_group_identifier,
         processes_started_by_user=False,
         page=page,
         per_page=per_page,
@@ -1494,7 +1357,7 @@ def get_tasks(
     has_lane_assignment_id: bool = True,
     page: int = 1,
     per_page: int = 100,
-    group_identifier: Optional[str] = None,
+    user_group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Get_tasks."""
     user_id = g.user.id
@@ -1532,9 +1395,9 @@ def get_tasks(
             ),
         )
         if has_lane_assignment_id:
-            if group_identifier:
+            if user_group_identifier:
                 human_tasks_query = human_tasks_query.filter(
-                    GroupModel.identifier == group_identifier
+                    GroupModel.identifier == user_group_identifier
                 )
             else:
                 human_tasks_query = human_tasks_query.filter(
@@ -1550,7 +1413,7 @@ def get_tasks(
             ProcessInstanceModel.updated_at_in_seconds,
             ProcessInstanceModel.created_at_in_seconds,
             UserModel.username,
-            GroupModel.identifier.label("group_identifier"),
+            GroupModel.identifier.label("user_group_identifier"),
             HumanTaskModel.task_name,
             HumanTaskModel.task_title,
             HumanTaskModel.process_model_display_name,

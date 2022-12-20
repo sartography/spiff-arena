@@ -1,5 +1,16 @@
 """Process_instance_report_service."""
 from dataclasses import dataclass
+from sqlalchemy import or_
+from sqlalchemy import and_
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from spiffworkflow_backend.models.group import GroupModel
+from flask_bpmn.api.api_error import ApiError
+from sqlalchemy.orm import selectinload
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from typing import Optional
 
 import sqlalchemy
@@ -9,6 +20,7 @@ from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
 @dataclass
@@ -16,6 +28,7 @@ class ProcessInstanceReportFilter:
     """ProcessInstanceReportFilter."""
 
     process_model_identifier: Optional[str] = None
+    user_group_identifier: Optional[str] = None
     start_from: Optional[int] = None
     start_to: Optional[int] = None
     end_from: Optional[int] = None
@@ -32,6 +45,8 @@ class ProcessInstanceReportFilter:
 
         if self.process_model_identifier is not None:
             d["process_model_identifier"] = self.process_model_identifier
+        if self.user_group_identifier is not None:
+            d["user_group_identifier"] = self.user_group_identifier
         if self.start_from is not None:
             d["start_from"] = str(self.start_from)
         if self.start_to is not None:
@@ -167,6 +182,7 @@ class ProcessInstanceReportService:
             return filters[key].split(",") if key in filters else None
 
         process_model_identifier = filters.get("process_model_identifier")
+        user_group_identifier = filters.get("user_group_identifier")
         start_from = int_value("start_from")
         start_to = int_value("start_to")
         end_from = int_value("end_from")
@@ -181,6 +197,7 @@ class ProcessInstanceReportService:
 
         report_filter = ProcessInstanceReportFilter(
             process_model_identifier,
+            user_group_identifier,
             start_from,
             start_to,
             end_from,
@@ -199,6 +216,7 @@ class ProcessInstanceReportService:
         cls,
         process_instance_report: ProcessInstanceReportModel,
         process_model_identifier: Optional[str] = None,
+        user_group_identifier: Optional[str] = None,
         start_from: Optional[int] = None,
         start_to: Optional[int] = None,
         end_from: Optional[int] = None,
@@ -214,6 +232,8 @@ class ProcessInstanceReportService:
 
         if process_model_identifier is not None:
             report_filter.process_model_identifier = process_model_identifier
+        if user_group_identifier is not None:
+            report_filter.user_group_identifier = user_group_identifier
         if start_from is not None:
             report_filter.start_from = start_from
         if start_to is not None:
@@ -276,3 +296,169 @@ class ProcessInstanceReportService:
             {"Header": "Username", "accessor": "username", "filterable": False},
             {"Header": "Status", "accessor": "status", "filterable": False},
         ]
+
+    @classmethod
+    def run_process_instance_report(cls, report_filter: ProcessInstanceReportFilter, user: UserModel) -> None:
+        process_instance_query = ProcessInstanceModel.query
+        # Always join that hot user table for good performance at serialization time.
+        process_instance_query = process_instance_query.options(
+            selectinload(ProcessInstanceModel.process_initiator)
+        )
+
+        if report_filter.process_model_identifier is not None:
+            process_model = ProcessModelService.get_process_model(
+                f"{report_filter.process_model_identifier}",
+            )
+
+            process_instance_query = process_instance_query.filter_by(
+                process_model_identifier=process_model.id
+            )
+
+        # this can never happen. obviously the class has the columns it defines. this is just to appease mypy.
+        if (
+            ProcessInstanceModel.start_in_seconds is None
+            or ProcessInstanceModel.end_in_seconds is None
+        ):
+            raise (
+                ApiError(
+                    error_code="unexpected_condition",
+                    message="Something went very wrong",
+                    status_code=500,
+                )
+            )
+
+        if report_filter.start_from is not None:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.start_in_seconds >= report_filter.start_from
+            )
+        if report_filter.start_to is not None:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.start_in_seconds <= report_filter.start_to
+            )
+        if report_filter.end_from is not None:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.end_in_seconds >= report_filter.end_from
+            )
+        if report_filter.end_to is not None:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.end_in_seconds <= report_filter.end_to
+            )
+        if report_filter.process_status is not None:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
+            )
+
+        if report_filter.initiated_by_me is True:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
+            )
+            process_instance_query = process_instance_query.filter_by(
+                process_initiator=user
+            )
+
+        if report_filter.with_relation_to_me is True:
+            process_instance_query = process_instance_query.outerjoin(
+                HumanTaskModel
+            ).outerjoin(
+                HumanTaskUserModel,
+                and_(
+                    HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                    HumanTaskUserModel.user_id == user.id,
+                ),
+            )
+            process_instance_query = process_instance_query.filter(
+                or_(
+                    HumanTaskUserModel.id.is_not(None),
+                    ProcessInstanceModel.process_initiator_id == user.id,
+                )
+            )
+
+        # TODO: not sure if this is exactly what is wanted
+        if report_filter.with_tasks_completed_by_me is True:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
+            )
+            # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
+            # process_instance_query = process_instance_query.add_columns(UserModel.username)
+            # search for process_instance.UserModel.username in this file for more details about why adding columns is annoying.
+
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.process_initiator_id != user.id
+            )
+            process_instance_query = process_instance_query.join(
+                HumanTaskModel,
+                and_(
+                    HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
+                    HumanTaskModel.completed_by_user_id == user.id
+                )
+            )
+            # ).join(
+            #     HumanTaskUserModel,
+            #     and_(
+            #         HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+            #         HumanTaskUserModel.user_id == user.id,
+            #     ),
+            # )
+            # process_instance_query = process_instance_query.join(
+            #     SpiffStepDetailsModel,
+            #     ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
+            # )
+            # process_instance_query = process_instance_query.join(
+            #     SpiffLoggingModel,
+            #     ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
+            # )
+            # process_instance_query = process_instance_query.filter(
+            #     SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
+            # )
+            # process_instance_query = process_instance_query.filter(
+            #     SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
+            # )
+            # process_instance_query = process_instance_query.filter(
+            #     HumanTaskModel.completed_by_user_id == user.id
+            # )
+
+        if report_filter.with_tasks_completed_by_my_group is True:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
+            )
+            # process_instance_query = process_instance_query.join(
+            #     SpiffStepDetailsModel,
+            #     ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
+            # )
+            # process_instance_query = process_instance_query.join(
+            #     SpiffLoggingModel,
+            #     ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
+            # )
+            # process_instance_query = process_instance_query.filter(
+            #     SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
+            # )
+            # process_instance_query = process_instance_query.filter(
+            #     SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
+            # )
+            if report_filter.user_group_identifier:
+                process_instance_query = process_instance_query.join(
+                    GroupModel,
+                    GroupModel.identifier == report_filter.user_group_identifier,
+                )
+            else:
+                process_instance_query = process_instance_query.join(
+                    HumanTaskModel
+                ).join(
+                    HumanTaskUserModel,
+                    and_(
+                        HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                        HumanTaskUserModel.user_id == user.id,
+                    ),
+                )
+                process_instance_query = process_instance_query.join(
+                    GroupModel,
+                    GroupModel.id == HumanTaskModel.lane_assignment_id,
+                )
+            process_instance_query = process_instance_query.join(
+                UserGroupAssignmentModel,
+                UserGroupAssignmentModel.group_id == GroupModel.id,
+            )
+            process_instance_query = process_instance_query.filter(
+                UserGroupAssignmentModel.user_id == user.id
+            )
+        return process_instance_query
