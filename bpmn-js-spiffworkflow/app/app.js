@@ -6,6 +6,7 @@ import {
 import diagramXML from '../test/spec/bpmn/diagram.bpmn';
 import spiffworkflow from './spiffworkflow';
 import setupFileOperations from './fileOperations';
+import BpmnColorPickerModule from 'bpmn-js-color-picker';
 
 const modelerEl = document.getElementById('modeler');
 const panelEl = document.getElementById('panel');
@@ -27,6 +28,7 @@ try {
       spiffworkflow,
       BpmnPropertiesPanelModule,
       BpmnPropertiesProviderModule,
+      BpmnColorPickerModule,
     ],
     moddleExtensions: {
       spiffworkflowModdle: spiffModdleExtension,
