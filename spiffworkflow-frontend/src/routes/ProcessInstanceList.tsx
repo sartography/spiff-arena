@@ -57,10 +57,8 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
     return <h1>My Process Instances</h1>;
   };
 
-  let apiPath = '/process-instances/for-me';
   let selectedTabIndex = 0;
   if (variant === 'all') {
-    apiPath = '/process-instances';
     selectedTabIndex = 1;
   }
   return (
@@ -90,7 +88,7 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
       <br />
       {processInstanceBreadcrumbElement()}
       {processInstanceTitleElement()}
-      <ProcessInstanceListTable apiPath={apiPath} variant={variant} />
+      <ProcessInstanceListTable variant={variant} />
     </>
   );
 }
