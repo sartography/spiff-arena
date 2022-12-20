@@ -5,16 +5,19 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.models.user import UserModel
+
 
 class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
     """UserGroupAssignmentsWaitingModel - When a user is assinged to a group, but that username does not exist,
     we cache it here to be applied in the event the user does log into the system.
     """
+
     MATCH_ALL_USERS = "*"
     __tablename__ = "user_group_assignment_waiting"
     __table_args__ = (
-        db.UniqueConstraint("username", "group_id", name="user_group_assignment_staged_unique"),
+        db.UniqueConstraint(
+            "username", "group_id", name="user_group_assignment_staged_unique"
+        ),
     )
 
     id = db.Column(db.Integer, primary_key=True)
@@ -24,6 +27,7 @@ class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
     group = relationship("GroupModel", overlaps="groups,user_group_assignment_waiting,users")  # type: ignore
 
     def is_match_all(self):
+        """Is_match_all."""
         if self.username == self.MATCH_ALL_USERS:
             return True
         return False

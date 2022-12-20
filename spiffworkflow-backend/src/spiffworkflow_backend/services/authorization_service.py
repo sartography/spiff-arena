@@ -219,6 +219,7 @@ class AuthorizationService:
 
     @classmethod
     def find_or_create_permission_target(cls, uri):
+        """Find_or_create_permission_target."""
         uri_with_percent = re.sub(r"\*", "%", uri)
         permission_target = PermissionTargetModel.query.filter_by(
             uri=uri_with_percent
@@ -452,9 +453,9 @@ class AuthorizationService:
     @classmethod
     def create_user_from_sign_in(cls, user_info: dict) -> UserModel:
         """Create_user_from_sign_in."""
-        """name, family_name, given_name, middle_name, nickname, preferred_username,"""
-        """profile, picture, website, gender, birthdate, zoneinfo, locale, and updated_at. """
-        """email"""
+        """Name, family_name, given_name, middle_name, nickname, preferred_username,"""
+        """Profile, picture, website, gender, birthdate, zoneinfo, locale, and updated_at. """
+        """Email."""
         is_new_user = False
         user_model = (
             UserModel.query.filter(UserModel.service == user_info["iss"])
@@ -483,10 +484,10 @@ class AuthorizationService:
                 service=user_info["iss"],
                 service_id=user_info["sub"],
                 email=email,
-                display_name = display_name
+                display_name=display_name,
             )
 
-        else :
+        else:
             # Update with the latest information
             user_model.username = username
             user_model.email = email
