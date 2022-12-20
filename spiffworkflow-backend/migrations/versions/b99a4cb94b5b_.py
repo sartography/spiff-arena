@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: b86f7cc3a74b
+Revision ID: b99a4cb94b5b
 Revises: 
-Create Date: 2022-12-19 16:20:27.715487
+Create Date: 2022-12-20 10:45:08.295317
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b86f7cc3a74b'
+revision = 'b99a4cb94b5b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -179,8 +179,9 @@ def upgrade():
     op.create_table('human_task',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('actual_owner_id', sa.Integer(), nullable=True),
     sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
+    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
+    sa.Column('actual_owner_id', sa.Integer(), nullable=True),
     sa.Column('form_file_name', sa.String(length=50), nullable=True),
     sa.Column('ui_form_file_name', sa.String(length=50), nullable=True),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
@@ -193,6 +194,7 @@ def upgrade():
     sa.Column('process_model_display_name', sa.String(length=255), nullable=True),
     sa.Column('completed', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['actual_owner_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id'),
@@ -259,9 +261,6 @@ def upgrade():
     sa.Column('spiff_step', sa.Integer(), nullable=False),
     sa.Column('task_json', sa.JSON(), nullable=False),
     sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
-    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
-    sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
