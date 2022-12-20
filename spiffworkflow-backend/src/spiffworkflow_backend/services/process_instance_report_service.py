@@ -149,7 +149,6 @@ class ProcessInstanceReportService:
                 "order_by": ["-start_in_seconds", "-id"],
             },
         }
-
         process_instance_report = ProcessInstanceReportModel(
             identifier=report_identifier,
             created_by_id=user.id,

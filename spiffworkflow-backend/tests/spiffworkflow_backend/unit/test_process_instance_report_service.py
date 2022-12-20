@@ -1,5 +1,7 @@
 """Test_process_instance_report_service."""
 from typing import Optional
+from flask_bpmn.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -747,7 +749,7 @@ class TestProcessInstanceReportService(BaseTest):
         assert report_filter.end_to is None
         assert report_filter.process_status == ["sue"]
 
-    def test_can_filter_by_initiated_by_me(
+    def test_can_filter_by_completed_instances_initiated_by_me(
         self,
         app: Flask,
         client: FlaskClient,
@@ -762,6 +764,7 @@ class TestProcessInstanceReportService(BaseTest):
         user_one = self.find_or_create_user(username="user_one")
         user_two = self.find_or_create_user(username="user_two")
 
+        # Several processes to ensure they do not return in the result
         _process_instance_created_by_user_one_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
         _process_instance_created_by_user_one_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
         _process_instance_created_by_user_one_three = self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_one)
@@ -786,3 +789,76 @@ class TestProcessInstanceReportService(BaseTest):
         assert response_json['results'][1]['process_initiator_id'] == user_one.id
         assert response_json['results'][0]['status'] == 'complete'
         assert response_json['results'][1]['status'] == 'complete'
+
+    def test_can_filter_by_completed_instances_with_tasks_completed_by_me(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_id = "runs_without_input/sample"
+        bpmn_file_location = "sample"
+        process_model = load_test_spec(
+            process_model_id,
+            process_model_source_directory=bpmn_file_location,
+        )
+        user_one = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="user_two")
+
+        # Several processes to ensure they do not return in the result
+        process_instance_created_by_user_one_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
+        _process_instance_created_by_user_one_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
+        process_instance_created_by_user_one_three = self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_one)
+        process_instance_created_by_user_two_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+        _process_instance_created_by_user_two_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+        process_instance_created_by_user_two_three = self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_two)
+
+        human_task_for_user_one_one = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_one.id,
+            completed_by_user_id=user_one.id,
+        )
+        human_task_for_user_one_two = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_two_one.id,
+            completed_by_user_id=user_one.id,
+        )
+        human_task_for_user_one_three = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_three.id,
+            completed_by_user_id=user_one.id,
+        )
+        human_task_for_user_two_one = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_one.id,
+            completed_by_user_id=user_two.id,
+        )
+        human_task_for_user_two_two = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_two_one.id,
+            completed_by_user_id=user_two.id,
+        )
+        human_task_for_user_two_three = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_three.id,
+            completed_by_user_id=user_two.id,
+        )
+        db.session.add(human_task_for_user_one_one)
+        db.session.add(human_task_for_user_one_two)
+        db.session.add(human_task_for_user_one_three)
+        db.session.add(human_task_for_user_two_one)
+        db.session.add(human_task_for_user_two_two)
+        db.session.add(human_task_for_user_two_three)
+        db.session.commit()
+
+        process_instance_report = ProcessInstanceReportService.report_with_identifier(
+            user=user_one, report_identifier="system_report_completed_instances_with_tasks_completed_by_me"
+        )
+        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
+            process_instance_report=process_instance_report,
+            process_model_identifier=process_model.id,
+        )
+        response_json = ProcessInstanceReportService.run_process_instance_report(
+            report_filter=report_filter,
+            process_instance_report=process_instance_report,
+            user=user_one
+        )
+
+        assert len(response_json['results']) == 1
+        assert response_json['results'][0]['process_initiator_id'] == user_two.id
+        assert response_json['results'][0]['id'] == process_instance_created_by_user_two_one.id
+        assert response_json['results'][0]['status'] == 'complete'
