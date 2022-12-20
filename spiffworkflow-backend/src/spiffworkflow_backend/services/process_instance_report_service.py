@@ -1,9 +1,14 @@
 """Process_instance_report_service."""
 from dataclasses import dataclass
+from sqlalchemy.orm import relationship
+from sqlalchemy import func
+from sqlalchemy.orm import aliased
 from sqlalchemy import or_
 from sqlalchemy import and_
+import re
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
@@ -35,8 +40,9 @@ class ProcessInstanceReportFilter:
     end_to: Optional[int] = None
     process_status: Optional[list[str]] = None
     initiated_by_me: Optional[bool] = None
+    has_terminal_status: Optional[bool] = None
     with_tasks_completed_by_me: Optional[bool] = None
-    with_tasks_completed_by_my_group: Optional[bool] = None
+    with_tasks_assigned_to_my_group: Optional[bool] = None
     with_relation_to_me: Optional[bool] = None
 
     def to_dict(self) -> dict[str, str]:
@@ -59,13 +65,15 @@ class ProcessInstanceReportFilter:
             d["process_status"] = ",".join(self.process_status)
         if self.initiated_by_me is not None:
             d["initiated_by_me"] = str(self.initiated_by_me).lower()
+        if self.has_terminal_status is not None:
+            d["has_terminal_status"] = str(self.has_terminal_status).lower()
         if self.with_tasks_completed_by_me is not None:
             d["with_tasks_completed_by_me"] = str(
                 self.with_tasks_completed_by_me
             ).lower()
-        if self.with_tasks_completed_by_my_group is not None:
-            d["with_tasks_completed_by_my_group"] = str(
-                self.with_tasks_completed_by_my_group
+        if self.with_tasks_assigned_to_my_group is not None:
+            d["with_tasks_assigned_to_my_group"] = str(
+                self.with_tasks_assigned_to_my_group
             ).lower()
         if self.with_relation_to_me is not None:
             d["with_relation_to_me"] = str(self.with_relation_to_me).lower()
@@ -107,7 +115,7 @@ class ProcessInstanceReportService:
                 "filter_by": [],
                 "order_by": ["-start_in_seconds", "-id"],
             },
-            "system_report_instances_initiated_by_me": {
+            "system_report_completed_instances_initiated_by_me": {
                 "columns": [
                     {"Header": "id", "accessor": "id"},
                     {
@@ -118,23 +126,25 @@ class ProcessInstanceReportService:
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "status", "accessor": "status"},
                 ],
-                "filter_by": [{"field_name": "initiated_by_me", "field_value": True}],
+                "filter_by": [{"field_name": "initiated_by_me", "field_value": True}, {"field_name": "has_terminal_status", "field_value": True}],
                 "order_by": ["-start_in_seconds", "-id"],
             },
-            "system_report_instances_with_tasks_completed_by_me": {
+            "system_report_completed_instances_with_tasks_completed_by_me": {
                 "columns": cls.builtin_column_options(),
                 "filter_by": [
-                    {"field_name": "with_tasks_completed_by_me", "field_value": True}
+                    {"field_name": "with_tasks_completed_by_me", "field_value": True},
+                    {"field_name": "has_terminal_status", "field_value": True}
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
-            "system_report_instances_with_tasks_completed_by_my_groups": {
+            "system_report_completed_instances_with_tasks_completed_by_my_groups": {
                 "columns": cls.builtin_column_options(),
                 "filter_by": [
                     {
-                        "field_name": "with_tasks_completed_by_my_group",
+                        "field_name": "with_tasks_assigned_to_my_group",
                         "field_value": True,
-                    }
+                    },
+                    {"field_name": "has_terminal_status", "field_value": True}
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
@@ -189,9 +199,10 @@ class ProcessInstanceReportService:
         end_to = int_value("end_to")
         process_status = list_value("process_status")
         initiated_by_me = bool_value("initiated_by_me")
+        has_terminal_status = bool_value("has_terminal_status")
         with_tasks_completed_by_me = bool_value("with_tasks_completed_by_me")
-        with_tasks_completed_by_my_group = bool_value(
-            "with_tasks_completed_by_my_group"
+        with_tasks_assigned_to_my_group = bool_value(
+            "with_tasks_assigned_to_my_group"
         )
         with_relation_to_me = bool_value("with_relation_to_me")
 
@@ -204,8 +215,9 @@ class ProcessInstanceReportService:
             end_to,
             process_status,
             initiated_by_me,
+            has_terminal_status,
             with_tasks_completed_by_me,
-            with_tasks_completed_by_my_group,
+            with_tasks_assigned_to_my_group,
             with_relation_to_me,
         )
 
@@ -223,8 +235,9 @@ class ProcessInstanceReportService:
         end_to: Optional[int] = None,
         process_status: Optional[str] = None,
         initiated_by_me: Optional[bool] = None,
+        has_terminal_status: Optional[bool] = None,
         with_tasks_completed_by_me: Optional[bool] = None,
-        with_tasks_completed_by_my_group: Optional[bool] = None,
+        with_tasks_assigned_to_my_group: Optional[bool] = None,
         with_relation_to_me: Optional[bool] = None,
     ) -> ProcessInstanceReportFilter:
         """Filter_from_metadata_with_overrides."""
@@ -246,11 +259,13 @@ class ProcessInstanceReportService:
             report_filter.process_status = process_status.split(",")
         if initiated_by_me is not None:
             report_filter.initiated_by_me = initiated_by_me
+        if has_terminal_status is not None:
+            report_filter.has_terminal_status = has_terminal_status
         if with_tasks_completed_by_me is not None:
             report_filter.with_tasks_completed_by_me = with_tasks_completed_by_me
-        if with_tasks_completed_by_my_group is not None:
-            report_filter.with_tasks_completed_by_my_group = (
-                with_tasks_completed_by_my_group
+        if with_tasks_assigned_to_my_group is not None:
+            report_filter.with_tasks_assigned_to_my_group = (
+                with_tasks_assigned_to_my_group
             )
         if with_relation_to_me is not None:
             report_filter.with_relation_to_me = with_relation_to_me
@@ -298,7 +313,14 @@ class ProcessInstanceReportService:
         ]
 
     @classmethod
-    def run_process_instance_report(cls, report_filter: ProcessInstanceReportFilter, user: UserModel) -> None:
+    def run_process_instance_report(
+        cls,
+        report_filter: ProcessInstanceReportFilter,
+        process_instance_report: ProcessInstanceReportModel,
+        user: UserModel,
+        page: int = 1,
+        per_page: int = 100,
+    ) -> dict:
         process_instance_query = ProcessInstanceModel.query
         # Always join that hot user table for good performance at serialization time.
         process_instance_query = process_instance_query.options(
@@ -349,11 +371,13 @@ class ProcessInstanceReportService:
             )
 
         if report_filter.initiated_by_me is True:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-            )
             process_instance_query = process_instance_query.filter_by(
                 process_initiator=user
+            )
+
+        if report_filter.has_terminal_status is True:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
             )
 
         if report_filter.with_relation_to_me is True:
@@ -373,15 +397,7 @@ class ProcessInstanceReportService:
                 )
             )
 
-        # TODO: not sure if this is exactly what is wanted
         if report_filter.with_tasks_completed_by_me is True:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-            )
-            # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
-            # process_instance_query = process_instance_query.add_columns(UserModel.username)
-            # search for process_instance.UserModel.username in this file for more details about why adding columns is annoying.
-
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
             )
@@ -392,49 +408,8 @@ class ProcessInstanceReportService:
                     HumanTaskModel.completed_by_user_id == user.id
                 )
             )
-            # ).join(
-            #     HumanTaskUserModel,
-            #     and_(
-            #         HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-            #         HumanTaskUserModel.user_id == user.id,
-            #     ),
-            # )
-            # process_instance_query = process_instance_query.join(
-            #     SpiffStepDetailsModel,
-            #     ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
-            # )
-            # process_instance_query = process_instance_query.join(
-            #     SpiffLoggingModel,
-            #     ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
-            # )
-            # process_instance_query = process_instance_query.filter(
-            #     SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
-            # )
-            # process_instance_query = process_instance_query.filter(
-            #     SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
-            # )
-            # process_instance_query = process_instance_query.filter(
-            #     HumanTaskModel.completed_by_user_id == user.id
-            # )
 
-        if report_filter.with_tasks_completed_by_my_group is True:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-            )
-            # process_instance_query = process_instance_query.join(
-            #     SpiffStepDetailsModel,
-            #     ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
-            # )
-            # process_instance_query = process_instance_query.join(
-            #     SpiffLoggingModel,
-            #     ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
-            # )
-            # process_instance_query = process_instance_query.filter(
-            #     SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
-            # )
-            # process_instance_query = process_instance_query.filter(
-            #     SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
-            # )
+        if report_filter.with_tasks_assigned_to_my_group is True:
             if report_filter.user_group_identifier:
                 process_instance_query = process_instance_query.join(
                     GroupModel,
@@ -443,12 +418,6 @@ class ProcessInstanceReportService:
             else:
                 process_instance_query = process_instance_query.join(
                     HumanTaskModel
-                ).join(
-                    HumanTaskUserModel,
-                    and_(
-                        HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-                        HumanTaskUserModel.user_id == user.id,
-                    ),
                 )
                 process_instance_query = process_instance_query.join(
                     GroupModel,
@@ -461,4 +430,83 @@ class ProcessInstanceReportService:
             process_instance_query = process_instance_query.filter(
                 UserGroupAssignmentModel.user_id == user.id
             )
-        return process_instance_query
+
+        instance_metadata_aliases = {}
+        stock_columns = ProcessInstanceReportService.get_column_names_for_model(
+            ProcessInstanceModel
+        )
+        for column in process_instance_report.report_metadata["columns"]:
+            if column["accessor"] in stock_columns:
+                continue
+            instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
+            instance_metadata_aliases[column["accessor"]] = instance_metadata_alias
+
+            filter_for_column = None
+            if "filter_by" in process_instance_report.report_metadata:
+                filter_for_column = next(
+                    (
+                        f
+                        for f in process_instance_report.report_metadata["filter_by"]
+                        if f["field_name"] == column["accessor"]
+                    ),
+                    None,
+                )
+            isouter = True
+            conditions = [
+                ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
+                instance_metadata_alias.key == column["accessor"],
+            ]
+            if filter_for_column:
+                isouter = False
+                conditions.append(
+                    instance_metadata_alias.value == filter_for_column["field_value"]
+                )
+            process_instance_query = process_instance_query.join(
+                instance_metadata_alias, and_(*conditions), isouter=isouter
+            ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
+
+        order_by_query_array = []
+        order_by_array = process_instance_report.report_metadata["order_by"]
+        if len(order_by_array) < 1:
+            order_by_array = ProcessInstanceReportModel.default_order_by()
+        for order_by_option in order_by_array:
+            attribute = re.sub("^-", "", order_by_option)
+            if attribute in stock_columns:
+                if order_by_option.startswith("-"):
+                    order_by_query_array.append(
+                        getattr(ProcessInstanceModel, attribute).desc()
+                    )
+                else:
+                    order_by_query_array.append(
+                        getattr(ProcessInstanceModel, attribute).asc()
+                    )
+            elif attribute in instance_metadata_aliases:
+                if order_by_option.startswith("-"):
+                    order_by_query_array.append(
+                        func.max(instance_metadata_aliases[attribute].value).desc()
+                    )
+                else:
+                    order_by_query_array.append(
+                        func.max(instance_metadata_aliases[attribute].value).asc()
+                    )
+        # return process_instance_query
+        process_instances = (
+            process_instance_query.group_by(ProcessInstanceModel.id)
+            .add_columns(ProcessInstanceModel.id)
+            .order_by(*order_by_query_array)
+            .paginate(page=page, per_page=per_page, error_out=False)
+        )
+        results = ProcessInstanceReportService.add_metadata_columns_to_process_instance(
+            process_instances.items, process_instance_report.report_metadata["columns"]
+        )
+        response_json = {
+            "report": process_instance_report,
+            "results": results,
+            "filters": report_filter.to_dict(),
+            "pagination": {
+                "count": len(results),
+                "total": process_instances.total,
+                "pages": process_instances.pages,
+            },
+        }
+        return response_json

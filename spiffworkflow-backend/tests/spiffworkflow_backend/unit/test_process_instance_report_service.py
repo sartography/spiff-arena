@@ -747,7 +747,7 @@ class TestProcessInstanceReportService(BaseTest):
         assert report_filter.end_to is None
         assert report_filter.process_status == ["sue"]
 
-    def test_can_filter_by_with_relation_to_me(
+    def test_can_filter_by_initiated_by_me(
         self,
         app: Flask,
         client: FlaskClient,
@@ -755,11 +755,34 @@ class TestProcessInstanceReportService(BaseTest):
     ) -> None:
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
-        load_test_spec(
+        process_model = load_test_spec(
             process_model_id,
             process_model_source_directory=bpmn_file_location,
         )
         user_one = self.find_or_create_user(username="user_one")
         user_two = self.find_or_create_user(username="user_two")
 
-        process_instance_created_by_user_one_one = ProcessInstanceModel()
+        _process_instance_created_by_user_one_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
+        _process_instance_created_by_user_one_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
+        _process_instance_created_by_user_one_three = self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_one)
+        _process_instance_created_by_user_two_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+        _process_instance_created_by_user_two_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+
+        process_instance_report = ProcessInstanceReportService.report_with_identifier(
+            user=user_one, report_identifier="system_report_completed_instances_initiated_by_me"
+        )
+        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
+            process_instance_report=process_instance_report,
+            process_model_identifier=process_model.id,
+        )
+        response_json = ProcessInstanceReportService.run_process_instance_report(
+            report_filter=report_filter,
+            process_instance_report=process_instance_report,
+            user=user_one
+        )
+
+        assert len(response_json['results']) == 2
+        assert response_json['results'][0]['process_initiator_id'] == user_one.id
+        assert response_json['results'][1]['process_initiator_id'] == user_one.id
+        assert response_json['results'][0]['status'] == 'complete'
+        assert response_json['results'][1]['status'] == 'complete'
