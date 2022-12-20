@@ -33,7 +33,7 @@ export default function CompletedInstances() {
             reportIdentifier="system_report_completed_instances_with_tasks_completed_by_my_groups"
             showReports={false}
             textToShowIfEmpty="This group has no completed instances at this time."
-            additionalParams={`group_identifier=${userGroup}`}
+            additionalParams={`user_group_identifier=${userGroup}`}
           />
         </>
       );

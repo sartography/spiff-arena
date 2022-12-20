@@ -21,7 +21,7 @@ export default function TasksWaitingForMyGroups() {
       return (
         <TaskListTable
           apiPath="/tasks/for-my-groups"
-          additionalParams={`group_identifier=${userGroup}`}
+          additionalParams={`user_group_identifier=${userGroup}`}
           paginationQueryParamPrefix={`group-tasks-${userGroup}`}
           tableTitle={`Tasks waiting for group: ${userGroup}`}
           tableDescription={`This is a list of tasks for the ${userGroup} group. They can be completed by any member of the group.`}
