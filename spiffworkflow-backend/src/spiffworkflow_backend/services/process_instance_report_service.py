@@ -380,7 +380,11 @@ class ProcessInstanceReportService:
                 ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
             )
 
-        if report_filter.with_relation_to_me is True:
+        if (
+            not report_filter.with_tasks_completed_by_me
+            and not report_filter.with_tasks_assigned_to_my_group
+            and report_filter.with_relation_to_me is True
+        ):
             process_instance_query = process_instance_query.outerjoin(
                 HumanTaskModel
             ).outerjoin(
@@ -410,17 +414,14 @@ class ProcessInstanceReportService:
             )
 
         if report_filter.with_tasks_assigned_to_my_group is True:
+            group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
             if report_filter.user_group_identifier:
-                process_instance_query = process_instance_query.join(
-                    GroupModel,
-                    GroupModel.identifier == report_filter.user_group_identifier,
-                )
-            else:
-                process_instance_query = process_instance_query.join(HumanTaskModel)
-                process_instance_query = process_instance_query.join(
-                    GroupModel,
-                    GroupModel.id == HumanTaskModel.lane_assignment_id,
-                )
+                group_model_join_conditions.append(GroupModel.identifier == report_filter.user_group_identifier)
+            process_instance_query = process_instance_query.join(HumanTaskModel)
+            process_instance_query = process_instance_query.join(
+                GroupModel,
+                and_(*group_model_join_conditions)
+            )
             process_instance_query = process_instance_query.join(
                 UserGroupAssignmentModel,
                 UserGroupAssignmentModel.group_id == GroupModel.id,
