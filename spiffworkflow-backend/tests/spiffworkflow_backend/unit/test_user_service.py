@@ -20,10 +20,10 @@ class TestUserService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_waiting_group_assignments."""
-        aTestGroup = GroupService.find_or_create_group("aTestGroup")
-        UserService.add_waiting_group_assignment("initiator_user", aTestGroup)
+        a_test_group = GroupService.find_or_create_group("aTestGroup")
+        UserService.add_waiting_group_assignment("initiator_user", a_test_group)
         initiator_user = self.find_or_create_user("initiator_user")
-        assert initiator_user.groups[0] == aTestGroup
+        assert initiator_user.groups[0] == a_test_group
 
     def test_assigning_a_group_to_all_users_updates_new_users(
         self,

@@ -8,8 +8,9 @@ from spiffworkflow_backend.models.group import GroupModel
 
 
 class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
-    """UserGroupAssignmentsWaitingModel - When a user is assinged to a group, but that username does not exist,
-    we cache it here to be applied in the event the user does log into the system.
+    """When a user is assigned to a group, but that username does not exist.
+
+    We cache it here to be applied in the event the user does log in to the system.
     """
 
     MATCH_ALL_USERS = "*"
@@ -24,9 +25,9 @@ class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
     username = db.Column(db.String(255), nullable=False)
     group_id = db.Column(ForeignKey(GroupModel.id), nullable=False)
 
-    group = relationship("GroupModel", overlaps="groups,user_group_assignment_waiting,users")  # type: ignore
+    group = relationship("GroupModel", overlaps="groups,user_group_assignments_waiting,users")  # type: ignore
 
-    def is_match_all(self):
+    def is_match_all(self) -> bool:
         """Is_match_all."""
         if self.username == self.MATCH_ALL_USERS:
             return True

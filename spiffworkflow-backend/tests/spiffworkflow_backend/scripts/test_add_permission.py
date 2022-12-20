@@ -43,7 +43,7 @@ class TestAddPermission(BaseTest):
         assert group is None
         assert permission_target is None
 
-        result = AddPermission().run(
+        AddPermission().run(
             script_attributes_context, "read", "/test_add_permission/*", "my_test_group"
         )
         group = GroupModel.query.filter(
