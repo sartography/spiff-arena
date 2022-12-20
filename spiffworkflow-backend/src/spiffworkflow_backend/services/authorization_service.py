@@ -218,12 +218,12 @@ class AuthorizationService:
                 cls.associate_user_with_group(user, default_group)
 
     @classmethod
-    def find_or_create_permission_target(cls, uri):
+    def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
         """Find_or_create_permission_target."""
         uri_with_percent = re.sub(r"\*", "%", uri)
-        permission_target = PermissionTargetModel.query.filter_by(
-            uri=uri_with_percent
-        ).first()
+        permission_target: Optional[
+            PermissionTargetModel
+        ] = PermissionTargetModel.query.filter_by(uri=uri_with_percent).first()
         if permission_target is None:
             permission_target = PermissionTargetModel(uri=uri_with_percent)
             db.session.add(permission_target)

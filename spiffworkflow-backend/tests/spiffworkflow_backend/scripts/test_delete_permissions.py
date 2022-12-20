@@ -53,7 +53,7 @@ class TestDeletePermissions(BaseTest):
             process_instance_id=1,
             process_model_identifier="my_test_user",
         )
-        result = ClearPermissions().run(script_attributes_context)
+        ClearPermissions().run(script_attributes_context)
 
         groups = GroupModel.query.all()
         assert 0 == len(groups)

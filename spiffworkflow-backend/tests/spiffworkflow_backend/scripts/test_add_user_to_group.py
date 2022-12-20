@@ -35,7 +35,7 @@ class TestAddUserToGroup(BaseTest):
             process_instance_id=1,
             process_model_identifier="my_test_user",
         )
-        result = AddUserToGroup().run(
+        AddUserToGroup().run(
             script_attributes_context, my_user.username, my_group.identifier
         )
         assert my_user in my_group.users
@@ -54,7 +54,7 @@ class TestAddUserToGroup(BaseTest):
             process_instance_id=1,
             process_model_identifier="my_test_user",
         )
-        result = AddUserToGroup().run(
+        AddUserToGroup().run(
             script_attributes_context, "dan@sartography.com", "competent-joes"
         )
         my_group = GroupModel.query.filter(
