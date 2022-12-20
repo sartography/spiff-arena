@@ -1,15 +1,14 @@
 """Test_process_instance_report_service."""
 from typing import Optional
-from flask_bpmn.models.db import db
-from spiffworkflow_backend.models.human_task import HumanTaskModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from flask import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend.models import process_instance_report
+from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -20,6 +19,7 @@ from spiffworkflow_backend.services.process_instance_report_service import (
 from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportService,
 )
+from spiffworkflow_backend.services.user_service import UserService
 
 
 class TestProcessInstanceReportFilter(BaseTest):
@@ -755,6 +755,7 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_can_filter_by_completed_instances_initiated_by_me."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(
@@ -765,30 +766,43 @@ class TestProcessInstanceReportService(BaseTest):
         user_two = self.find_or_create_user(username="user_two")
 
         # Several processes to ensure they do not return in the result
-        _process_instance_created_by_user_one_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
-        _process_instance_created_by_user_one_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
-        _process_instance_created_by_user_one_three = self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_one)
-        _process_instance_created_by_user_two_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
-        _process_instance_created_by_user_two_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_one
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_one
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="waiting", user=user_one
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_two
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_two
+        )
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(
-            user=user_one, report_identifier="system_report_completed_instances_initiated_by_me"
+            user=user_one,
+            report_identifier="system_report_completed_instances_initiated_by_me",
         )
-        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
-            process_instance_report=process_instance_report,
-            process_model_identifier=process_model.id,
+        report_filter = (
+            ProcessInstanceReportService.filter_from_metadata_with_overrides(
+                process_instance_report=process_instance_report,
+                process_model_identifier=process_model.id,
+            )
         )
         response_json = ProcessInstanceReportService.run_process_instance_report(
             report_filter=report_filter,
             process_instance_report=process_instance_report,
-            user=user_one
+            user=user_one,
         )
 
-        assert len(response_json['results']) == 2
-        assert response_json['results'][0]['process_initiator_id'] == user_one.id
-        assert response_json['results'][1]['process_initiator_id'] == user_one.id
-        assert response_json['results'][0]['status'] == 'complete'
-        assert response_json['results'][1]['status'] == 'complete'
+        assert len(response_json["results"]) == 2
+        assert response_json["results"][0]["process_initiator_id"] == user_one.id
+        assert response_json["results"][1]["process_initiator_id"] == user_one.id
+        assert response_json["results"][0]["status"] == "complete"
+        assert response_json["results"][1]["status"] == "complete"
 
     def test_can_filter_by_completed_instances_with_tasks_completed_by_me(
         self,
@@ -796,6 +810,7 @@ class TestProcessInstanceReportService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_can_filter_by_completed_instances_with_tasks_completed_by_me."""
         process_model_id = "runs_without_input/sample"
         bpmn_file_location = "sample"
         process_model = load_test_spec(
@@ -806,12 +821,30 @@ class TestProcessInstanceReportService(BaseTest):
         user_two = self.find_or_create_user(username="user_two")
 
         # Several processes to ensure they do not return in the result
-        process_instance_created_by_user_one_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
-        _process_instance_created_by_user_one_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
-        process_instance_created_by_user_one_three = self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_one)
-        process_instance_created_by_user_two_one = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
-        _process_instance_created_by_user_two_two = self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
-        process_instance_created_by_user_two_three = self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_two)
+        process_instance_created_by_user_one_one = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="complete", user=user_one
+            )
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_one
+        )
+        process_instance_created_by_user_one_three = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="waiting", user=user_one
+            )
+        )
+        process_instance_created_by_user_two_one = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="complete", user=user_two
+            )
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_two
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="waiting", user=user_two
+        )
 
         human_task_for_user_one_one = HumanTaskModel(
             process_instance_id=process_instance_created_by_user_one_one.id,
@@ -846,19 +879,252 @@ class TestProcessInstanceReportService(BaseTest):
         db.session.commit()
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(
-            user=user_one, report_identifier="system_report_completed_instances_with_tasks_completed_by_me"
+            user=user_one,
+            report_identifier="system_report_completed_instances_with_tasks_completed_by_me",
         )
-        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
-            process_instance_report=process_instance_report,
-            process_model_identifier=process_model.id,
+        report_filter = (
+            ProcessInstanceReportService.filter_from_metadata_with_overrides(
+                process_instance_report=process_instance_report,
+                process_model_identifier=process_model.id,
+            )
         )
         response_json = ProcessInstanceReportService.run_process_instance_report(
             report_filter=report_filter,
             process_instance_report=process_instance_report,
-            user=user_one
+            user=user_one,
         )
 
-        assert len(response_json['results']) == 1
-        assert response_json['results'][0]['process_initiator_id'] == user_two.id
-        assert response_json['results'][0]['id'] == process_instance_created_by_user_two_one.id
-        assert response_json['results'][0]['status'] == 'complete'
+        assert len(response_json["results"]) == 1
+        assert response_json["results"][0]["process_initiator_id"] == user_two.id
+        assert (
+            response_json["results"][0]["id"]
+            == process_instance_created_by_user_two_one.id
+        )
+        assert response_json["results"][0]["status"] == "complete"
+
+    def test_can_filter_by_completed_instances_with_tasks_completed_by_my_groups(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test_can_filter_by_completed_instances_with_tasks_completed_by_my_groups."""
+        process_model_id = "runs_without_input/sample"
+        bpmn_file_location = "sample"
+        process_model = load_test_spec(
+            process_model_id,
+            process_model_source_directory=bpmn_file_location,
+        )
+        user_group_one = GroupModel(identifier="group_one")
+        user_group_two = GroupModel(identifier="group_two")
+        db.session.add(user_group_one)
+        db.session.add(user_group_two)
+        db.session.commit()
+
+        user_one = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="user_two")
+        user_three = self.find_or_create_user(username="user_three")
+        UserService.add_user_to_group(user_one, user_group_one)
+        UserService.add_user_to_group(user_two, user_group_one)
+        UserService.add_user_to_group(user_three, user_group_two)
+
+        # Several processes to ensure they do not return in the result
+        process_instance_created_by_user_one_one = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="complete", user=user_one
+            )
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_one
+        )
+        process_instance_created_by_user_one_three = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="waiting", user=user_one
+            )
+        )
+        process_instance_created_by_user_two_one = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="complete", user=user_two
+            )
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_two
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="waiting", user=user_two
+        )
+
+        human_task_for_user_group_one_one = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_one.id,
+            lane_assignment_id=user_group_one.id,
+        )
+        human_task_for_user_group_one_two = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_three.id,
+            lane_assignment_id=user_group_one.id,
+        )
+        human_task_for_user_group_one_three = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_two_one.id,
+            lane_assignment_id=user_group_one.id,
+        )
+        human_task_for_user_group_two_one = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_two_one.id,
+            lane_assignment_id=user_group_two.id,
+        )
+        human_task_for_user_group_two_two = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_one.id,
+            lane_assignment_id=user_group_two.id,
+        )
+        db.session.add(human_task_for_user_group_one_one)
+        db.session.add(human_task_for_user_group_one_two)
+        db.session.add(human_task_for_user_group_one_three)
+        db.session.add(human_task_for_user_group_two_one)
+        db.session.add(human_task_for_user_group_two_two)
+        db.session.commit()
+
+        process_instance_report = ProcessInstanceReportService.report_with_identifier(
+            user=user_one,
+            report_identifier="system_report_completed_instances_with_tasks_completed_by_my_groups",
+        )
+        report_filter = (
+            ProcessInstanceReportService.filter_from_metadata_with_overrides(
+                process_instance_report=process_instance_report,
+                process_model_identifier=process_model.id,
+            )
+        )
+        response_json = ProcessInstanceReportService.run_process_instance_report(
+            report_filter=report_filter,
+            process_instance_report=process_instance_report,
+            user=user_one,
+        )
+
+        assert len(response_json["results"]) == 2
+        assert response_json["results"][0]["process_initiator_id"] == user_two.id
+        assert (
+            response_json["results"][0]["id"]
+            == process_instance_created_by_user_two_one.id
+        )
+        assert response_json["results"][0]["status"] == "complete"
+        assert response_json["results"][1]["process_initiator_id"] == user_one.id
+        assert (
+            response_json["results"][1]["id"]
+            == process_instance_created_by_user_one_one.id
+        )
+        assert response_json["results"][1]["status"] == "complete"
+
+    def test_can_filter_by_with_relation_to_me(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test_can_filter_by_with_relation_to_me."""
+        process_model_id = "runs_without_input/sample"
+        bpmn_file_location = "sample"
+        process_model = load_test_spec(
+            process_model_id,
+            process_model_source_directory=bpmn_file_location,
+        )
+        user_group_one = GroupModel(identifier="group_one")
+        user_group_two = GroupModel(identifier="group_two")
+        db.session.add(user_group_one)
+        db.session.add(user_group_two)
+        db.session.commit()
+
+        user_one = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="user_two")
+        user_three = self.find_or_create_user(username="user_three")
+        UserService.add_user_to_group(user_one, user_group_one)
+        UserService.add_user_to_group(user_two, user_group_one)
+        UserService.add_user_to_group(user_three, user_group_two)
+
+        # Several processes to ensure they do not return in the result
+        process_instance_created_by_user_one_one = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="complete", user=user_one
+            )
+        )
+        process_instance_created_by_user_one_two = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="complete", user=user_one
+            )
+        )
+        process_instance_created_by_user_one_three = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="waiting", user=user_one
+            )
+        )
+        process_instance_created_by_user_two_one = (
+            self.create_process_instance_from_process_model(
+                process_model=process_model, status="complete", user=user_two
+            )
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_two
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, status="waiting", user=user_two
+        )
+
+        human_task_for_user_group_one_one = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_one.id,
+            lane_assignment_id=user_group_one.id,
+        )
+        human_task_for_user_group_one_two = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_three.id,
+            lane_assignment_id=user_group_one.id,
+        )
+        human_task_for_user_group_one_three = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_two_one.id,
+            lane_assignment_id=user_group_one.id,
+        )
+        human_task_for_user_group_two_one = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_two_one.id,
+            lane_assignment_id=user_group_two.id,
+        )
+        human_task_for_user_group_two_two = HumanTaskModel(
+            process_instance_id=process_instance_created_by_user_one_one.id,
+            lane_assignment_id=user_group_two.id,
+        )
+        db.session.add(human_task_for_user_group_one_one)
+        db.session.add(human_task_for_user_group_one_two)
+        db.session.add(human_task_for_user_group_one_three)
+        db.session.add(human_task_for_user_group_two_one)
+        db.session.add(human_task_for_user_group_two_two)
+        db.session.commit()
+
+        UserService.add_user_to_human_tasks_if_appropriate(user_one)
+
+        process_instance_report = ProcessInstanceReportService.report_with_identifier(
+            user=user_one
+        )
+        report_filter = (
+            ProcessInstanceReportService.filter_from_metadata_with_overrides(
+                process_instance_report=process_instance_report,
+                process_model_identifier=process_model.id,
+                with_relation_to_me=True,
+            )
+        )
+        response_json = ProcessInstanceReportService.run_process_instance_report(
+            report_filter=report_filter,
+            process_instance_report=process_instance_report,
+            user=user_one,
+        )
+
+        assert len(response_json["results"]) == 4
+        process_instance_ids_in_results = [r["id"] for r in response_json["results"]]
+        assert (
+            process_instance_created_by_user_one_one.id
+            in process_instance_ids_in_results
+        )
+        assert (
+            process_instance_created_by_user_one_two.id
+            in process_instance_ids_in_results
+        )
+        assert (
+            process_instance_created_by_user_one_three.id
+            in process_instance_ids_in_results
+        )
+        assert (
+            process_instance_created_by_user_two_one.id
+            in process_instance_ids_in_results
+        )

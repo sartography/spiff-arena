@@ -2,7 +2,6 @@
 import json
 import os
 import random
-import re
 import string
 import uuid
 from typing import Any
@@ -32,10 +31,7 @@ from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
-from sqlalchemy import func
 from sqlalchemy import or_
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import selectinload
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
@@ -79,7 +75,6 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -889,10 +884,7 @@ def process_instance_list(
     end_from: Optional[int] = None,
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
-    # initiated_by_me: Optional[bool] = None,
-    # with_tasks_completed_by_me: Optional[bool] = None,
-    # with_tasks_completed_by_my_group: Optional[bool] = None,
-    # with_relation_to_me: Optional[bool] = None,
+    with_relation_to_me: Optional[bool] = None,
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
@@ -911,10 +903,7 @@ def process_instance_list(
             start_to=start_to,
             end_from=end_from,
             end_to=end_to,
-            # initiated_by_me=initiated_by_me,
-            # with_tasks_completed_by_me=with_tasks_completed_by_me,
-            # with_tasks_completed_by_my_group=with_tasks_completed_by_my_group,
-            # with_relation_to_me=with_relation_to_me,
+            with_relation_to_me=with_relation_to_me,
             process_status=process_status.split(",") if process_status else None,
         )
     else:
@@ -928,10 +917,7 @@ def process_instance_list(
                 end_from=end_from,
                 end_to=end_to,
                 process_status=process_status,
-                # initiated_by_me=initiated_by_me,
-                # with_tasks_completed_by_me=with_tasks_completed_by_me,
-                # with_tasks_completed_by_my_group=with_tasks_completed_by_my_group,
-                # with_relation_to_me=with_relation_to_me,
+                with_relation_to_me=with_relation_to_me,
             )
         )
 
@@ -940,7 +926,7 @@ def process_instance_list(
         process_instance_report=process_instance_report,
         page=page,
         per_page=per_page,
-        user=g.user
+        user=g.user,
     )
 
     return make_response(jsonify(response_json), 200)
