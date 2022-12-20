@@ -889,10 +889,10 @@ def process_instance_list(
     end_from: Optional[int] = None,
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
-    initiated_by_me: Optional[bool] = None,
-    with_tasks_completed_by_me: Optional[bool] = None,
-    with_tasks_completed_by_my_group: Optional[bool] = None,
-    with_relation_to_me: Optional[bool] = None,
+    # initiated_by_me: Optional[bool] = None,
+    # with_tasks_completed_by_me: Optional[bool] = None,
+    # with_tasks_completed_by_my_group: Optional[bool] = None,
+    # with_relation_to_me: Optional[bool] = None,
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
@@ -911,10 +911,10 @@ def process_instance_list(
             start_to=start_to,
             end_from=end_from,
             end_to=end_to,
-            initiated_by_me=initiated_by_me,
-            with_tasks_completed_by_me=with_tasks_completed_by_me,
-            with_tasks_completed_by_my_group=with_tasks_completed_by_my_group,
-            with_relation_to_me=with_relation_to_me,
+            # initiated_by_me=initiated_by_me,
+            # with_tasks_completed_by_me=with_tasks_completed_by_me,
+            # with_tasks_completed_by_my_group=with_tasks_completed_by_my_group,
+            # with_relation_to_me=with_relation_to_me,
             process_status=process_status.split(",") if process_status else None,
         )
     else:
@@ -928,95 +928,20 @@ def process_instance_list(
                 end_from=end_from,
                 end_to=end_to,
                 process_status=process_status,
-                initiated_by_me=initiated_by_me,
-                with_tasks_completed_by_me=with_tasks_completed_by_me,
-                with_tasks_completed_by_my_group=with_tasks_completed_by_my_group,
-                with_relation_to_me=with_relation_to_me,
+                # initiated_by_me=initiated_by_me,
+                # with_tasks_completed_by_me=with_tasks_completed_by_me,
+                # with_tasks_completed_by_my_group=with_tasks_completed_by_my_group,
+                # with_relation_to_me=with_relation_to_me,
             )
         )
 
-    process_instance_query = ProcessInstanceReportService.run_process_instance_report(report_filter, g.user)
-
-    instance_metadata_aliases = {}
-    stock_columns = ProcessInstanceReportService.get_column_names_for_model(
-        ProcessInstanceModel
+    response_json = ProcessInstanceReportService.run_process_instance_report(
+        report_filter=report_filter,
+        process_instance_report=process_instance_report,
+        page=page,
+        per_page=per_page,
+        user=g.user
     )
-    for column in process_instance_report.report_metadata["columns"]:
-        if column["accessor"] in stock_columns:
-            continue
-        instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-        instance_metadata_aliases[column["accessor"]] = instance_metadata_alias
-
-        filter_for_column = None
-        if "filter_by" in process_instance_report.report_metadata:
-            filter_for_column = next(
-                (
-                    f
-                    for f in process_instance_report.report_metadata["filter_by"]
-                    if f["field_name"] == column["accessor"]
-                ),
-                None,
-            )
-        isouter = True
-        conditions = [
-            ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
-            instance_metadata_alias.key == column["accessor"],
-        ]
-        if filter_for_column:
-            isouter = False
-            conditions.append(
-                instance_metadata_alias.value == filter_for_column["field_value"]
-            )
-        process_instance_query = process_instance_query.join(
-            instance_metadata_alias, and_(*conditions), isouter=isouter
-        ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
-
-    order_by_query_array = []
-    order_by_array = process_instance_report.report_metadata["order_by"]
-    if len(order_by_array) < 1:
-        order_by_array = ProcessInstanceReportModel.default_order_by()
-    for order_by_option in order_by_array:
-        attribute = re.sub("^-", "", order_by_option)
-        if attribute in stock_columns:
-            if order_by_option.startswith("-"):
-                order_by_query_array.append(
-                    getattr(ProcessInstanceModel, attribute).desc()
-                )
-            else:
-                order_by_query_array.append(
-                    getattr(ProcessInstanceModel, attribute).asc()
-                )
-        elif attribute in instance_metadata_aliases:
-            if order_by_option.startswith("-"):
-                order_by_query_array.append(
-                    func.max(instance_metadata_aliases[attribute].value).desc()
-                )
-            else:
-                order_by_query_array.append(
-                    func.max(instance_metadata_aliases[attribute].value).asc()
-                )
-
-    process_instances = (
-        process_instance_query.group_by(ProcessInstanceModel.id)
-        .add_columns(ProcessInstanceModel.id)
-        .order_by(*order_by_query_array)
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
-
-    results = ProcessInstanceReportService.add_metadata_columns_to_process_instance(
-        process_instances.items, process_instance_report.report_metadata["columns"]
-    )
-
-    response_json = {
-        "report": process_instance_report,
-        "results": results,
-        "filters": report_filter.to_dict(),
-        "pagination": {
-            "count": len(results),
-            "total": process_instances.total,
-            "pages": process_instances.pages,
-        },
-    }
 
     return make_response(jsonify(response_json), 200)
 
