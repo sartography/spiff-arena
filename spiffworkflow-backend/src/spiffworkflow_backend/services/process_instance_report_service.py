@@ -1,30 +1,29 @@
 """Process_instance_report_service."""
-from dataclasses import dataclass
-from sqlalchemy.orm import relationship
-from sqlalchemy import func
-from sqlalchemy.orm import aliased
-from sqlalchemy import or_
-from sqlalchemy import and_
 import re
-from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.human_task import HumanTaskModel
-from spiffworkflow_backend.models.process_instance_metadata import ProcessInstanceMetadataModel
-from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
-from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
-from spiffworkflow_backend.models.group import GroupModel
-from flask_bpmn.api.api_error import ApiError
-from sqlalchemy.orm import selectinload
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from dataclasses import dataclass
 from typing import Optional
 
 import sqlalchemy
+from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
+from sqlalchemy import and_
+from sqlalchemy import func
+from sqlalchemy import or_
+from sqlalchemy.orm import aliased
+from sqlalchemy.orm import selectinload
 
+from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_metadata import (
+    ProcessInstanceMetadataModel,
+)
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -126,14 +125,17 @@ class ProcessInstanceReportService:
                     {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
                     {"Header": "status", "accessor": "status"},
                 ],
-                "filter_by": [{"field_name": "initiated_by_me", "field_value": True}, {"field_name": "has_terminal_status", "field_value": True}],
+                "filter_by": [
+                    {"field_name": "initiated_by_me", "field_value": True},
+                    {"field_name": "has_terminal_status", "field_value": True},
+                ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
             "system_report_completed_instances_with_tasks_completed_by_me": {
                 "columns": cls.builtin_column_options(),
                 "filter_by": [
                     {"field_name": "with_tasks_completed_by_me", "field_value": True},
-                    {"field_name": "has_terminal_status", "field_value": True}
+                    {"field_name": "has_terminal_status", "field_value": True},
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
@@ -144,7 +146,7 @@ class ProcessInstanceReportService:
                         "field_name": "with_tasks_assigned_to_my_group",
                         "field_value": True,
                     },
-                    {"field_name": "has_terminal_status", "field_value": True}
+                    {"field_name": "has_terminal_status", "field_value": True},
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
@@ -200,9 +202,7 @@ class ProcessInstanceReportService:
         initiated_by_me = bool_value("initiated_by_me")
         has_terminal_status = bool_value("has_terminal_status")
         with_tasks_completed_by_me = bool_value("with_tasks_completed_by_me")
-        with_tasks_assigned_to_my_group = bool_value(
-            "with_tasks_assigned_to_my_group"
-        )
+        with_tasks_assigned_to_my_group = bool_value("with_tasks_assigned_to_my_group")
         with_relation_to_me = bool_value("with_relation_to_me")
 
         report_filter = ProcessInstanceReportFilter(
@@ -320,6 +320,7 @@ class ProcessInstanceReportService:
         page: int = 1,
         per_page: int = 100,
     ) -> dict:
+        """Run_process_instance_report."""
         process_instance_query = ProcessInstanceModel.query
         # Always join that hot user table for good performance at serialization time.
         process_instance_query = process_instance_query.options(
@@ -404,8 +405,8 @@ class ProcessInstanceReportService:
                 HumanTaskModel,
                 and_(
                     HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
-                    HumanTaskModel.completed_by_user_id == user.id
-                )
+                    HumanTaskModel.completed_by_user_id == user.id,
+                ),
             )
 
         if report_filter.with_tasks_assigned_to_my_group is True:
@@ -415,9 +416,7 @@ class ProcessInstanceReportService:
                     GroupModel.identifier == report_filter.user_group_identifier,
                 )
             else:
-                process_instance_query = process_instance_query.join(
-                    HumanTaskModel
-                )
+                process_instance_query = process_instance_query.join(HumanTaskModel)
                 process_instance_query = process_instance_query.join(
                     GroupModel,
                     GroupModel.id == HumanTaskModel.lane_assignment_id,
@@ -462,7 +461,9 @@ class ProcessInstanceReportService:
                 )
             process_instance_query = process_instance_query.join(
                 instance_metadata_alias, and_(*conditions), isouter=isouter
-            ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
+            ).add_columns(
+                func.max(instance_metadata_alias.value).label(column["accessor"])
+            )
 
         order_by_query_array = []
         order_by_array = process_instance_report.report_metadata["order_by"]

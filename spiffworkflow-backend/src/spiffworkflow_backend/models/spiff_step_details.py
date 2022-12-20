@@ -1,14 +1,11 @@
 """Spiff_step_details."""
 from dataclasses import dataclass
-from spiffworkflow_backend.models.human_task import HumanTaskModel
-from typing import Optional
 
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import deferred
 
-from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 

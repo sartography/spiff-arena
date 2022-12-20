@@ -8,7 +8,6 @@ from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm import RelationshipProperty
 
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
