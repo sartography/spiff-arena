@@ -44,9 +44,15 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import (
     CallActivityTaskConverter,
 )
 from SpiffWorkflow.spiff.serializer.task_spec_converters import EndEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import EventBasedGatewayConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import IntermediateCatchEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import IntermediateThrowEventConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    EventBasedGatewayConverter,
+)
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    IntermediateCatchEventConverter,
+)
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    IntermediateThrowEventConverter,
+)
 from SpiffWorkflow.spiff.serializer.task_spec_converters import ManualTaskConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import ReceiveTaskConverter
