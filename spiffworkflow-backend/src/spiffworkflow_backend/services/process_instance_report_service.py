@@ -380,7 +380,11 @@ class ProcessInstanceReportService:
                 ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
             )
 
-        if report_filter.with_relation_to_me is True:
+        if (
+            not report_filter.with_tasks_completed_by_me
+            and not report_filter.with_tasks_assigned_to_my_group
+            and report_filter.with_relation_to_me is True
+        ):
             process_instance_query = process_instance_query.outerjoin(
                 HumanTaskModel
             ).outerjoin(
