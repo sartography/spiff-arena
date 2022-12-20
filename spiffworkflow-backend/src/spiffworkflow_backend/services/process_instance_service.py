@@ -210,7 +210,7 @@ class ProcessInstanceService:
         dot_dct = ProcessInstanceService.create_dot_dict(data)
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
-        processor.complete_task(spiff_task, human_task)
+        processor.complete_task(spiff_task, human_task, user=user)
         processor.do_engine_steps(save=True)
 
     @staticmethod

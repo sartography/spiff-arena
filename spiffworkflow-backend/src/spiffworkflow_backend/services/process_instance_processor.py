@@ -573,10 +573,9 @@ class ProcessInstanceProcessor:
         )
         return details_model
 
-    def save_spiff_step_details(self, human_task: HumanTaskModel) -> None:
+    def save_spiff_step_details(self) -> None:
         """SaveSpiffStepDetails."""
         details_model = self.spiff_step_details()
-        # details_model.lane_assignment_id = human_task.lane_assignment_id
         db.session.add(details_model)
         db.session.commit()
 
@@ -1180,11 +1179,16 @@ class ProcessInstanceProcessor:
         )
         return user_tasks  # type: ignore
 
-    def complete_task(self, task: SpiffTask, human_task: HumanTaskModel) -> None:
+    def complete_task(
+        self, task: SpiffTask, human_task: HumanTaskModel, user: UserModel
+    ) -> None:
         """Complete_task."""
         self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
-        self.save_spiff_step_details(human_task)
+        human_task.completed_by_user_id = user.id
+        db.session.add(human_task)
+        db.session.commit()
+        self.save_spiff_step_details()
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""

@@ -179,6 +179,7 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, initiator_user, human_task
         )
+        assert human_task.completed_by_user_id == initiator_user.id
 
         assert len(process_instance.human_tasks) == 1
         human_task = process_instance.human_tasks[0]
@@ -198,6 +199,7 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, finance_user_three, human_task
         )
+        assert human_task.completed_by_user_id == finance_user_three.id
         assert len(process_instance.human_tasks) == 1
         human_task = process_instance.human_tasks[0]
         assert human_task.lane_assignment_id is None
@@ -215,6 +217,7 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, finance_user_four, human_task
         )
+        assert human_task.completed_by_user_id == finance_user_four.id
         assert len(process_instance.human_tasks) == 1
         human_task = process_instance.human_tasks[0]
         assert human_task.lane_assignment_id is None
@@ -250,7 +253,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_sets_permission_correctly_on_human_task_when_using_dict."""
+        """Test_does_not_recreate_human_tasks_on_multiple_saves."""
         self.create_process_group(
             client, with_super_admin_user, "test_group", "test_group"
         )
