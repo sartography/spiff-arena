@@ -705,13 +705,13 @@ class ProcessInstanceProcessor:
             db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> Any:
-        """Get a serialized version of a task spec"""
+        """Get a serialized version of a task spec."""
         # The task spec is NOT actually a SpiffTask, it is the task spec attached to a SpiffTask
         # Not sure why mypy accepts this but whatever.
         return self._serializer.spec_converter.convert(task_spec)
 
     def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
-        """Send an event to the workflow"""
+        """Send an event to the workflow."""
         payload = event_data.pop("payload", None)
         event_definition = self._event_serializer.restore(event_data)
         if payload is not None:
@@ -723,7 +723,7 @@ class ProcessInstanceProcessor:
         self.do_engine_steps(save=True)
 
     def mark_task_complete(self, task_id: str) -> None:
-        """Mark the task complete without executing it"""
+        """Mark the task complete without executing it."""
         spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
         spiff_task._set_state(TaskState.COMPLETED)
         self.bpmn_process_instance.last_task = spiff_task
