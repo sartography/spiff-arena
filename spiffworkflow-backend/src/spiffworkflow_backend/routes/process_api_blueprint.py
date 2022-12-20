@@ -983,6 +983,14 @@ def process_instance_list(
             ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
         )
 
+    if report_filter.initiated_by_me is True:
+        process_instance_query = process_instance_query.filter(
+            ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
+        )
+        process_instance_query = process_instance_query.filter_by(
+            process_initiator=g.user
+        )
+
     if report_filter.with_relation_to_me is True:
         process_instance_query = process_instance_query.outerjoin(
             HumanTaskModel
@@ -998,14 +1006,6 @@ def process_instance_list(
                 HumanTaskUserModel.id.is_not(None),
                 ProcessInstanceModel.process_initiator_id == g.user.id,
             )
-        )
-
-    if report_filter.initiated_by_me is True:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter_by(
-            process_initiator=g.user
         )
 
     # TODO: not sure if this is exactly what is wanted
@@ -1578,6 +1578,7 @@ def process_instance_task_list_without_task_data_for_me(
     all_tasks: bool = False,
     spiff_step: int = 0,
 ) -> flask.wrappers.Response:
+    """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
     print(f"process_instance: {process_instance}")
     return process_instance_task_list(
@@ -2291,8 +2292,11 @@ def commit_and_push_to_git(message: str) -> None:
         current_app.logger.info("Git commit on save is disabled")
 
 
-def _find_process_instance_for_me_or_raise(process_instance_id: int) -> ProcessInstanceModel:
-    process_instance = (
+def _find_process_instance_for_me_or_raise(
+    process_instance_id: int,
+) -> ProcessInstanceModel:
+    """_find_process_instance_for_me_or_raise."""
+    process_instance: ProcessInstanceModel = (
         ProcessInstanceModel.query.filter_by(id=process_instance_id)
         .outerjoin(HumanTaskModel)
         .outerjoin(
