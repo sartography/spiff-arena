@@ -1,8 +1,11 @@
 """Test_process_instance_report_service."""
 from typing import Optional
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from flask import Flask
 from flask.testing import FlaskClient
+from spiffworkflow_backend.models import process_instance_report
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.process_instance_report import (
@@ -122,13 +125,13 @@ class TestProcessInstanceReportService(BaseTest):
             report_metadata=report_metadata,
         )
         return ProcessInstanceReportService.filter_from_metadata_with_overrides(
-            report,
-            process_model_identifier,
-            start_from,
-            start_to,
-            end_from,
-            end_to,
-            process_status,
+            process_instance_report=report,
+            process_model_identifier=process_model_identifier,
+            start_from=start_from,
+            start_to=start_to,
+            end_from=end_from,
+            end_to=end_to,
+            process_status=process_status,
         )
 
     def _filter_by_dict_from_metadata(self, report_metadata: dict) -> dict[str, str]:
@@ -743,3 +746,20 @@ class TestProcessInstanceReportService(BaseTest):
         assert report_filter.end_from is None
         assert report_filter.end_to is None
         assert report_filter.process_status == ["sue"]
+
+    def test_can_filter_by_with_relation_to_me(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model_id = "runs_without_input/sample"
+        bpmn_file_location = "sample"
+        load_test_spec(
+            process_model_id,
+            process_model_source_directory=bpmn_file_location,
+        )
+        user_one = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="user_two")
+
+        process_instance_created_by_user_one_one = ProcessInstanceModel()

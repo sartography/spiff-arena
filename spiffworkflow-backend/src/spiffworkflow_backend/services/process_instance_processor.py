@@ -558,7 +558,7 @@ class ProcessInstanceProcessor:
             "spiff_step": self.process_instance_model.spiff_step or 1,
             "task_json": task_json,
             "timestamp": round(time.time()),
-            "completed_by_user_id": self.current_user().id,
+            # "completed_by_user_id": self.current_user().id,
         }
 
     def spiff_step_details(self) -> SpiffStepDetailsModel:
@@ -569,14 +569,14 @@ class ProcessInstanceProcessor:
             spiff_step=details_mapping["spiff_step"],
             task_json=details_mapping["task_json"],
             timestamp=details_mapping["timestamp"],
-            completed_by_user_id=details_mapping["completed_by_user_id"],
+            # completed_by_user_id=details_mapping["completed_by_user_id"],
         )
         return details_model
 
     def save_spiff_step_details(self, human_task: HumanTaskModel) -> None:
         """SaveSpiffStepDetails."""
         details_model = self.spiff_step_details()
-        details_model.lane_assignment_id = human_task.lane_assignment_id
+        # details_model.lane_assignment_id = human_task.lane_assignment_id
         db.session.add(details_model)
         db.session.commit()
 

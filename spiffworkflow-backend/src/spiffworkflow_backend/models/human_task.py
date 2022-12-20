@@ -31,13 +31,16 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
         db.UniqueConstraint("task_id", "process_instance_id", name="human_task_unique"),
     )
 
-    actual_owner: RelationshipProperty[UserModel] = relationship(UserModel)
     id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(
         ForeignKey(ProcessInstanceModel.id), nullable=False  # type: ignore
     )
-    actual_owner_id: int = db.Column(ForeignKey(UserModel.id))
     lane_assignment_id: int | None = db.Column(ForeignKey(GroupModel.id))
+    completed_by_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True)
+
+    actual_owner_id: int = db.Column(ForeignKey(UserModel.id))
+    # actual_owner: RelationshipProperty[UserModel] = relationship(UserModel)
+
     form_file_name: str | None = db.Column(db.String(50))
     ui_form_file_name: str | None = db.Column(db.String(50))
 
