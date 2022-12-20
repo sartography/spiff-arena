@@ -143,6 +143,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ability,
     targetUris,
     searchParams,
+    taskListPath,
+    variant,
   ]);
 
   const deleteProcessInstance = () => {

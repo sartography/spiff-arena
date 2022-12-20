@@ -555,7 +555,7 @@ export default function ProcessModelShow() {
       return (
         <Grid fullWidth condensed>
           <Column sm={{ span: 3 }} md={{ span: 4 }} lg={{ span: 3 }}>
-            <h2>Process Instances</h2>
+            <h2>My Process Instances</h2>
           </Column>
           <Column
             sm={{ span: 1, offset: 3 }}
@@ -675,6 +675,7 @@ export default function ProcessModelShow() {
           {processInstanceListTableButton()}
           <ProcessInstanceListTable
             filtersEnabled={false}
+            variant="for-me"
             processModelFullIdentifier={processModel.id}
             perPageOptions={[2, 5, 25]}
             showReports={false}

@@ -70,7 +70,6 @@ const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
 
 type OwnProps = {
-  apiPath?: string;
   filtersEnabled?: boolean;
   processModelFullIdentifier?: string;
   paginationQueryParamPrefix?: string;
@@ -89,7 +88,6 @@ interface dateParameters {
 }
 
 export default function ProcessInstanceListTable({
-  apiPath = '/process-instances',
   filtersEnabled = true,
   processModelFullIdentifier,
   paginationQueryParamPrefix,
@@ -102,6 +100,10 @@ export default function ProcessInstanceListTable({
   autoReload = false,
   variant = 'for-me',
 }: OwnProps) {
+  let apiPath = '/process-instances/for-me';
+  if (variant === 'all') {
+    apiPath = '/process-instances';
+  }
   const params = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -336,6 +338,7 @@ export default function ProcessInstanceListTable({
     perPageOptions,
     reportIdentifier,
     additionalParams,
+    apiPath,
   ]);
 
   // This sets the filter data using the saved reports returned from the initial instance_list query.
