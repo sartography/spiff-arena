@@ -172,7 +172,7 @@ def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_group = ProcessGroup(**body)
     ProcessModelService.add_process_group(process_group)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} added process group {process_group.id}"
     )
     return make_response(jsonify(process_group), 201)
@@ -182,7 +182,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
     """Process_group_delete."""
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     ProcessModelService().process_group_delete(process_group_id)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} deleted process group {process_group_id}"
     )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -202,7 +202,7 @@ def process_group_update(
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService.update_process_group(process_group)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} updated process group {process_group_id}"
     )
     return make_response(jsonify(process_group), 200)
@@ -269,7 +269,7 @@ def process_group_move(
     new_process_group = ProcessModelService().process_group_move(
         original_process_group_id, new_location
     )
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
     )
     return make_response(jsonify(new_process_group), 200)
@@ -320,7 +320,7 @@ def process_model_create(
         )
 
     ProcessModelService.add_process_model(process_model_info)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} created process model {process_model_info.id}"
     )
     return Response(
@@ -336,7 +336,7 @@ def process_model_delete(
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     ProcessModelService().process_model_delete(process_model_identifier)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} deleted process model {process_model_identifier}"
     )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -362,7 +362,7 @@ def process_model_update(
 
     process_model = get_process_model(process_model_identifier)
     ProcessModelService.update_process_model(process_model, body_filtered)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} updated process model {process_model_identifier}"
     )
     return ProcessModelInfoSchema().dump(process_model)
@@ -396,7 +396,7 @@ def process_model_move(
     new_process_model = ProcessModelService().process_model_move(
         original_process_model_id, new_location
     )
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
     )
     return make_response(jsonify(new_process_model), 200)
@@ -495,7 +495,7 @@ def process_model_file_update(
         )
 
     SpecFileService.update_file(process_model, file_name, request_file_contents)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
     )
 
@@ -519,7 +519,7 @@ def process_model_file_delete(
             )
         ) from exception
 
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}"
     )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -543,7 +543,7 @@ def add_file(modified_process_model_identifier: str) -> flask.wrappers.Response:
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
     file.process_model_id = process_model.id
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} added process model file {process_model_identifier}/{file.name}"
     )
     return Response(
@@ -1930,6 +1930,57 @@ def delete_secret(key: str) -> Response:
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
+def update_task_data(
+    process_instance_id: str,
+    modified_process_model_identifier: str,
+    task_id: str,
+    body: Dict,
+) -> Response:
+    """Update task data."""
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        if process_instance.status != "suspended":
+            raise ProcessInstanceTaskDataCannotBeUpdatedError(
+                f"The process instance needs to be suspended to udpate the task-data. It is currently: {process_instance.status}"
+            )
+
+        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
+        if "new_task_data" in body:
+            new_task_data_str: str = body["new_task_data"]
+            new_task_data_dict = json.loads(new_task_data_str)
+            if task_id in process_instance_bpmn_json_dict["tasks"]:
+                process_instance_bpmn_json_dict["tasks"][task_id][
+                    "data"
+                ] = new_task_data_dict
+                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
+                db.session.add(process_instance)
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not update the Instance. Original error is {e}",
+                    ) from e
+            else:
+                raise ApiError(
+                    error_code="update_task_data_error",
+                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
+                )
+    else:
+        raise ApiError(
+            error_code="update_task_data_error",
+            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
+
+
 def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) -> Any:
     """Get_required_parameter_or_raise."""
     return_value = None
@@ -2006,58 +2057,7 @@ def _update_form_schema_with_task_data_as_needed(
                     _update_form_schema_with_task_data_as_needed(o, task_data)
 
 
-def update_task_data(
-    process_instance_id: str,
-    modified_process_model_identifier: str,
-    task_id: str,
-    body: Dict,
-) -> Response:
-    """Update task data."""
-    process_instance = ProcessInstanceModel.query.filter(
-        ProcessInstanceModel.id == int(process_instance_id)
-    ).first()
-    if process_instance:
-        if process_instance.status != "suspended":
-            raise ProcessInstanceTaskDataCannotBeUpdatedError(
-                f"The process instance needs to be suspended to udpate the task-data. It is currently: {process_instance.status}"
-            )
-
-        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
-        if "new_task_data" in body:
-            new_task_data_str: str = body["new_task_data"]
-            new_task_data_dict = json.loads(new_task_data_str)
-            if task_id in process_instance_bpmn_json_dict["tasks"]:
-                process_instance_bpmn_json_dict["tasks"][task_id][
-                    "data"
-                ] = new_task_data_dict
-                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
-                db.session.add(process_instance)
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    raise ApiError(
-                        error_code="update_task_data_error",
-                        message=f"Could not update the Instance. Original error is {e}",
-                    ) from e
-            else:
-                raise ApiError(
-                    error_code="update_task_data_error",
-                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
-                )
-    else:
-        raise ApiError(
-            error_code="update_task_data_error",
-            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
-        )
-    return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
-        status=200,
-        mimetype="application/json",
-    )
-
-
-def commit_and_push_to_git(message: str) -> None:
+def _commit_and_push_to_git(message: str) -> None:
     """Commit_and_push_to_git."""
     if current_app.config["GIT_COMMIT_ON_SAVE"]:
         git_output = GitService.commit(message=message)
