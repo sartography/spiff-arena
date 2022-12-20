@@ -6,7 +6,16 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 // @ts-ignore
-import { Button, Modal, Content, Tabs, TabList, Tab, TabPanels, TabPanel } from '@carbon/react';
+import {
+  Button,
+  Modal,
+  Content,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+} from '@carbon/react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
@@ -403,10 +412,10 @@ export default function ProcessModelEditDiagram() {
 
   const jsonEditorOptions = () => {
     return Object.assign(generalEditorOptions(), {
-        minimap: { enabled: false },
-        folding: true
+      minimap: { enabled: false },
+      folding: true,
     });
-  }
+  };
 
   const setPreviousScriptUnitTest = () => {
     resetUnitTextResult();
@@ -472,9 +481,14 @@ export default function ProcessModelEditDiagram() {
       let expectedJson = '';
       try {
         inputJson = JSON.parse(currentScriptUnitTest.inputJson.value);
-        expectedJson = JSON.parse(currentScriptUnitTest.expectedOutputJson.value);
+        expectedJson = JSON.parse(
+          currentScriptUnitTest.expectedOutputJson.value
+        );
       } catch (e) {
-        setScriptUnitTestResult({ result:false, error:"The JSON provided contains a formatting error."})
+        setScriptUnitTestResult({
+          result: false,
+          error: 'The JSON provided contains a formatting error.',
+        });
         return;
       }
 
@@ -487,26 +501,25 @@ export default function ProcessModelEditDiagram() {
           bpmn_task_identifier: (scriptElement as any).id,
           python_script: scriptText,
           input_json: inputJson,
-          expected_output_json: expectedJson
+          expected_output_json: expectedJson,
         },
       });
     }
   };
 
   const unitTestFailureElement = () => {
-    if (
-      scriptUnitTestResult &&
-      scriptUnitTestResult.result === false
-    ) {
+    if (scriptUnitTestResult && scriptUnitTestResult.result === false) {
       let errorMessage = '';
       if (scriptUnitTestResult.context) {
         errorMessage = 'Unexpected result. Please see the comparison below.';
       } else if (scriptUnitTestResult.line_number) {
-        errorMessage = `Error encountered running the script.  Please check the code around line ${  scriptUnitTestResult.line_number}`
+        errorMessage = `Error encountered running the script.  Please check the code around line ${scriptUnitTestResult.line_number}`;
       } else {
-        errorMessage = `Error encountered running the script. ${JSON.stringify(scriptUnitTestResult.error)}`
+        errorMessage = `Error encountered running the script. ${JSON.stringify(
+          scriptUnitTestResult.error
+        )}`;
       }
-      let errorStringElement = <span>{ errorMessage }</span>;
+      let errorStringElement = <span>{errorMessage}</span>;
 
       let errorContextElement = null;
 

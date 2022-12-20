@@ -1,22 +1,15 @@
 """User."""
 from __future__ import annotations
 
-from typing import Any
-
 import jwt
 import marshmallow
 from flask import current_app
-from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from marshmallow import Schema
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.services.authentication_service import (
-    AuthenticationProviderTypes,
-)
 
 
 class UserNotFoundError(Exception):
@@ -29,8 +22,12 @@ class UserModel(SpiffworkflowBaseDBModel):
     __tablename__ = "user"
     __table_args__ = (db.UniqueConstraint("service", "service_id", name="service_key"),)
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), nullable=False, unique=True) # should always be a unique value
-    service = db.Column(db.String(50), nullable=False, unique=False) # not 'openid' -- google, aws
+    username = db.Column(
+        db.String(255), nullable=False, unique=True
+    )  # should always be a unique value
+    service = db.Column(
+        db.String(50), nullable=False, unique=False
+    )  # not 'openid' -- google, aws
     service_id = db.Column(db.String(255), nullable=False, unique=False)
     display_name = db.Column(db.String(255))
     email = db.Column(db.String(255))

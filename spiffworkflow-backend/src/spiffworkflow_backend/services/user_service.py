@@ -13,7 +13,9 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
-from spiffworkflow_backend.models.user_group_assignment_waiting import UserGroupAssignmentWaitingModel
+from spiffworkflow_backend.models.user_group_assignment_waiting import (
+    UserGroupAssignmentWaitingModel,
+)
 
 
 class UserService:
@@ -26,7 +28,7 @@ class UserService:
         service: str,
         service_id: str,
         email: Optional[str] = "",
-        display_name:  Optional[str] = ""
+        display_name: Optional[str] = "",
     ) -> UserModel:
         """Create_user."""
         user_model: Optional[UserModel] = (
@@ -43,7 +45,7 @@ class UserService:
                 service=service,
                 service_id=service_id,
                 email=email,
-                display_name=display_name
+                display_name=display_name,
             )
             db.session.add(user_model)
 
@@ -128,7 +130,12 @@ class UserService:
     @classmethod
     def add_user_to_group(cls, user: UserModel, group: GroupModel) -> None:
         """Add_user_to_group."""
-        exists = UserGroupAssignmentModel().query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
+        exists = (
+            UserGroupAssignmentModel()
+            .query.filter_by(user_id=user.id)
+            .filter_by(group_id=group.id)
+            .count()
+        )
         if not exists:
             ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
             db.session.add(ugam)
@@ -136,9 +143,17 @@ class UserService:
 
     @classmethod
     def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> None:
-        wugam = UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).first()
+        """Add_waiting_group_assignment."""
+        wugam = (
+            UserGroupAssignmentWaitingModel()
+            .query.filter_by(username=username)
+            .filter_by(group_id=group.id)
+            .first()
+        )
         if not wugam:
-            wugam = UserGroupAssignmentWaitingModel(username=username, group_id=group.id)
+            wugam = UserGroupAssignmentWaitingModel(
+                username=username, group_id=group.id
+            )
             db.session.add(wugam)
             db.session.commit()
         if wugam.is_match_all():
@@ -147,13 +162,23 @@ class UserService:
 
     @classmethod
     def apply_waiting_group_assignments(cls, user: UserModel) -> None:
-        waiting = UserGroupAssignmentWaitingModel().query.\
-            filter(UserGroupAssignmentWaitingModel.username == user.username).all()
+        """Apply_waiting_group_assignments."""
+        waiting = (
+            UserGroupAssignmentWaitingModel()
+            .query.filter(UserGroupAssignmentWaitingModel.username == user.username)
+            .all()
+        )
         for assignment in waiting:
             cls.add_user_to_group(user, assignment.group)
             db.session.delete(assignment)
-        wildcard = UserGroupAssignmentWaitingModel().query.\
-            filter(UserGroupAssignmentWaitingModel.username == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS).all()
+        wildcard = (
+            UserGroupAssignmentWaitingModel()
+            .query.filter(
+                UserGroupAssignmentWaitingModel.username
+                == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS
+            )
+            .all()
+        )
         for assignment in wildcard:
             cls.add_user_to_group(user, assignment.group)
         db.session.commit()

@@ -1,6 +1,5 @@
 """Test_authentication."""
 import base64
-import time
 
 import jwt
 from flask import Flask
@@ -48,8 +47,8 @@ class TestFlaskOpenId(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-
-        code = ("testadmin1:1234123412341234")
+        """Test_get_token."""
+        code = "testadmin1:1234123412341234"
 
         """It should be possible to get a token."""
         backend_basic_auth_string = code
@@ -67,11 +66,12 @@ class TestFlaskOpenId(BaseTest):
         response = client.post("/openid/token", data=data, headers=headers)
         assert response
         assert response.is_json
-        assert 'access_token' in response.json
-        assert 'id_token' in response.json
-        assert 'refresh_token' in response.json
+        assert "access_token" in response.json
+        assert "id_token" in response.json
+        assert "refresh_token" in response.json
 
-        decoded_token = jwt.decode(response.json['id_token'], options={"verify_signature": False})
-        assert 'iss' in decoded_token
-        assert 'email' in decoded_token
-
+        decoded_token = jwt.decode(
+            response.json["id_token"], options={"verify_signature": False}
+        )
+        assert "iss" in decoded_token
+        assert "email" in decoded_token

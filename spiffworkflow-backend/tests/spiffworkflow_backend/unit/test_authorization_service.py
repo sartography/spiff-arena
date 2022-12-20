@@ -134,7 +134,12 @@ class TestAuthorizationService(BaseTest):
             human_task.task_name, processor.bpmn_process_instance
         )
         finance_user = AuthorizationService.create_user_from_sign_in(
-            {"username": "testuser2", "sub": "testuser2", "iss": "https://test.stuff", "email": "testuser2"}
+            {
+                "username": "testuser2",
+                "sub": "testuser2",
+                "iss": "https://test.stuff",
+                "email": "testuser2",
+            }
         )
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, finance_user, human_task
