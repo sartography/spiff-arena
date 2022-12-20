@@ -2290,6 +2290,7 @@ def send_bpmn_event(
     process_instance_id: str,
     body: Dict,
 ) -> Response:
+    """Send a bpmn event to a workflow"""
     process_instance = ProcessInstanceModel.query.filter(
         ProcessInstanceModel.id == int(process_instance_id)
     ).first()
@@ -2314,6 +2315,7 @@ def mark_task_complete(
     task_id: str,
     body: Dict,
 ) -> Response:
+    """Mark a task complete without executing it"""
     process_instance = ProcessInstanceModel.query.filter(
         ProcessInstanceModel.id == int(process_instance_id)
     ).first()

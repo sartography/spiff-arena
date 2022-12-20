@@ -44,11 +44,9 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import (
     CallActivityTaskConverter,
 )
 from SpiffWorkflow.spiff.serializer.task_spec_converters import EndEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    IntermediateCatchEventConverter,
-    IntermediateThrowEventConverter,
-    EventBasedGatewayConverter,
-)
+from SpiffWorkflow.spiff.serializer.task_spec_converters import EventBasedGatewayConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import IntermediateCatchEventConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import IntermediateThrowEventConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import ManualTaskConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverter
 from SpiffWorkflow.spiff.serializer.task_spec_converters import ReceiveTaskConverter
@@ -64,7 +62,6 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import UserTaskConverte
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
-
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
@@ -708,11 +705,13 @@ class ProcessInstanceProcessor:
             db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> Any:
+        """Get a serialized version of a task spec"""
         # The task spec is NOT actually a SpiffTask, it is the task spec attached to a SpiffTask
         # Not sure why mypy accepts this but whatever.
         return self._serializer.spec_converter.convert(task_spec)
 
     def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
+        """Send an event to the workflow"""
         payload = event_data.pop("payload", None)
         event_definition = self._event_serializer.restore(event_data)
         if payload is not None:
@@ -724,6 +723,7 @@ class ProcessInstanceProcessor:
         self.do_engine_steps(save=True)
 
     def mark_task_complete(self, task_id: str) -> None:
+        """Mark the task complete without executing it"""
         spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
         spiff_task._set_state(TaskState.COMPLETED)
         self.bpmn_process_instance.last_task = spiff_task
