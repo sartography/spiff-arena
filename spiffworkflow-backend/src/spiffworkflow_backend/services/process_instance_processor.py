@@ -65,11 +65,11 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
-from spiffworkflow_backend.models.active_task import ActiveTaskModel
-from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
 from spiffworkflow_backend.models.message_correlation_message_instance import (
     MessageCorrelationMessageInstanceModel,
@@ -575,10 +575,10 @@ class ProcessInstanceProcessor:
         )
         return details_model
 
-    def save_spiff_step_details(self, active_task: ActiveTaskModel) -> None:
+    def save_spiff_step_details(self, human_task: HumanTaskModel) -> None:
         """SaveSpiffStepDetails."""
         details_model = self.spiff_step_details()
-        details_model.lane_assignment_id = active_task.lane_assignment_id
+        details_model.lane_assignment_id = human_task.lane_assignment_id
         db.session.add(details_model)
         db.session.commit()
 
@@ -639,7 +639,7 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-        active_tasks = ActiveTaskModel.query.filter_by(
+        human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
@@ -670,14 +670,14 @@ class ProcessInstanceProcessor:
                     if "formUiSchemaFilename" in properties:
                         ui_form_file_name = properties["formUiSchemaFilename"]
 
-                active_task = None
-                for at in active_tasks:
+                human_task = None
+                for at in human_tasks:
                     if at.task_id == str(ready_or_waiting_task.id):
-                        active_task = at
-                        active_tasks.remove(at)
+                        human_task = at
+                        human_tasks.remove(at)
 
-                if active_task is None:
-                    active_task = ActiveTaskModel(
+                if human_task is None:
+                    human_task = HumanTaskModel(
                         process_instance_id=self.process_instance_model.id,
                         process_model_display_name=process_model_display_name,
                         form_file_name=form_file_name,
@@ -689,21 +689,22 @@ class ProcessInstanceProcessor:
                         task_status=ready_or_waiting_task.get_state_name(),
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                     )
-                    db.session.add(active_task)
+                    db.session.add(human_task)
                     db.session.commit()
 
                     for potential_owner_id in potential_owner_hash[
                         "potential_owner_ids"
                     ]:
-                        active_task_user = ActiveTaskUserModel(
-                            user_id=potential_owner_id, active_task_id=active_task.id
+                        human_task_user = HumanTaskUserModel(
+                            user_id=potential_owner_id, human_task_id=human_task.id
                         )
-                        db.session.add(active_task_user)
+                        db.session.add(human_task_user)
                     db.session.commit()
 
-        if len(active_tasks) > 0:
-            for at in active_tasks:
-                db.session.delete(at)
+        if len(human_tasks) > 0:
+            for at in human_tasks:
+                at.completed = True
+                db.session.add(at)
             db.session.commit()
 
     def serialize_task_spec(self, task_spec: SpiffTask) -> Any:
@@ -1208,11 +1209,11 @@ class ProcessInstanceProcessor:
         )
         return user_tasks  # type: ignore
 
-    def complete_task(self, task: SpiffTask, active_task: ActiveTaskModel) -> None:
+    def complete_task(self, task: SpiffTask, human_task: HumanTaskModel) -> None:
         """Complete_task."""
         self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
-        self.save_spiff_step_details(active_task)
+        self.save_spiff_step_details(human_task)
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""
