@@ -90,14 +90,14 @@ class TestAuthorizationService(BaseTest):
             users["testuser2"], "read", "/v1.0/process-groups/"
         )
 
-    def test_user_can_be_added_to_active_task_on_first_login(
+    def test_user_can_be_added_to_human_task_on_first_login(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_user_can_be_added_to_active_task_on_first_login."""
+        """Test_user_can_be_added_to_human_task_on_first_login."""
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         # to ensure there is a user that can be assigned to the task
@@ -121,21 +121,21 @@ class TestAuthorizationService(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        active_task = process_instance.active_tasks[0]
+        human_task = process_instance.human_tasks[0]
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user, active_task
+            processor, spiff_task, {}, initiator_user, human_task
         )
 
-        active_task = process_instance.active_tasks[0]
+        human_task = process_instance.human_tasks[0]
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         finance_user = AuthorizationService.create_user_from_sign_in(
             {"username": "testuser2", "sub": "testuser2", "iss": "https://test.stuff", "email": "testuser2"}
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, finance_user, active_task
+            processor, spiff_task, {}, finance_user, human_task
         )

@@ -63,20 +63,24 @@ export default function AdminRoutes() {
           element={<ProcessModelEditDiagram />}
         />
         <Route
-          path="process-models/:process_model_id/process-instances"
-          element={<ProcessInstanceList />}
-        />
-        <Route
           path="process-models/:process_model_id/edit"
           element={<ProcessModelEdit />}
         />
         <Route
+          path="process-instances/for-me/:process_model_id/:process_instance_id"
+          element={<ProcessInstanceShow variant="for-me" />}
+        />
+        <Route
+          path="process-instances/for-me/:process_model_id/:process_instance_id/:spiff_step"
+          element={<ProcessInstanceShow variant="for-me" />}
+        />
+        <Route
           path="process-instances/:process_model_id/:process_instance_id"
-          element={<ProcessInstanceShow />}
+          element={<ProcessInstanceShow variant="all" />}
         />
         <Route
           path="process-instances/:process_model_id/:process_instance_id/:spiff_step"
-          element={<ProcessInstanceShow />}
+          element={<ProcessInstanceShow variant="all" />}
         />
         <Route
           path="process-instances/reports"
@@ -106,7 +110,18 @@ export default function AdminRoutes() {
           path="logs/:process_model_id/:process_instance_id"
           element={<ProcessInstanceLogList />}
         />
-        <Route path="process-instances" element={<ProcessInstanceList />} />
+        <Route
+          path="process-instances"
+          element={<ProcessInstanceList variant="for-me" />}
+        />
+        <Route
+          path="process-instances/for-me"
+          element={<ProcessInstanceList variant="for-me" />}
+        />
+        <Route
+          path="process-instances/all"
+          element={<ProcessInstanceList variant="all" />}
+        />
         <Route path="messages" element={<MessageInstanceList />} />
         <Route path="configuration/*" element={<Configuration />} />
         <Route

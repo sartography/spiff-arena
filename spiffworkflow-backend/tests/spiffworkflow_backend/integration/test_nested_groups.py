@@ -38,7 +38,7 @@ class TestNestedGroups(BaseTest):
             bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
@@ -99,7 +99,7 @@ class TestNestedGroups(BaseTest):
             bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),

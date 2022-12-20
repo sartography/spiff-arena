@@ -15,8 +15,8 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
-from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -284,7 +284,7 @@ class TestProcessApi(BaseTest):
         )
         headers = self.logged_in_headers(with_super_admin_user)
         # create an instance from a model
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
 
@@ -1072,7 +1072,7 @@ class TestProcessApi(BaseTest):
         """Test_process_instance_create."""
         test_process_model_id = "runs_without_input/sample"
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, test_process_model_id, headers
         )
         assert response.json is not None
@@ -1102,7 +1102,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -1144,7 +1144,7 @@ class TestProcessApi(BaseTest):
             self.modify_process_identifier_for_path_param(process_model_identifier)
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        create_response = self.create_process_instance_from_process_model_id(
+        create_response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert create_response.json is not None
@@ -1191,7 +1191,7 @@ class TestProcessApi(BaseTest):
             self.modify_process_identifier_for_path_param(process_model_identifier)
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        create_response = self.create_process_instance_from_process_model_id(
+        create_response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert create_response.json is not None
@@ -1299,7 +1299,7 @@ class TestProcessApi(BaseTest):
                 "andThis": "another_item_non_key",
             }
         }
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
@@ -1359,7 +1359,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
@@ -1375,7 +1375,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
 
         response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/terminate",
+            f"/v1.0/process-instance-terminate/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -1396,20 +1396,18 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_process_instance_delete."""
         process_group_id = "my_process_group"
-        process_model_id = "user_task"
-        bpmn_file_name = "user_task.bpmn"
-        bpmn_file_location = "user_task"
+        process_model_id = "sample"
+        bpmn_file_location = "sample"
         process_model_identifier = self.create_group_and_model_with_bpmn(
             client,
             with_super_admin_user,
             process_group_id=process_group_id,
             process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
             bpmn_file_location=bpmn_file_location,
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -1420,11 +1418,13 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
+        assert response.status_code == 200
 
         delete_response = client.delete(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert delete_response.json["ok"] is True
         assert delete_response.status_code == 200
 
     def test_task_show(
@@ -1448,7 +1448,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -1462,15 +1462,15 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["next_task"] is not None
 
-        active_tasks = (
-            db.session.query(ActiveTaskModel)
-            .filter(ActiveTaskModel.process_instance_id == process_instance_id)
+        human_tasks = (
+            db.session.query(HumanTaskModel)
+            .filter(HumanTaskModel.process_instance_id == process_instance_id)
             .all()
         )
-        assert len(active_tasks) == 1
-        active_task = active_tasks[0]
+        assert len(human_tasks) == 1
+        human_task = human_tasks[0]
         response = client.get(
-            f"/v1.0/tasks/{process_instance_id}/{active_task.task_id}",
+            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.json is not None
@@ -1499,7 +1499,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
 
@@ -1546,19 +1546,19 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
 
@@ -1872,7 +1872,7 @@ class TestProcessApi(BaseTest):
     ) -> Any:
         """Setup_testing_instance."""
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_id, headers
         )
         process_instance = response.json
@@ -2195,7 +2195,7 @@ class TestProcessApi(BaseTest):
         #     process_group_id="finance",
         # )
 
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client,
             # process_model.process_group_id,
             process_model_identifier,
@@ -2404,7 +2404,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -2421,7 +2421,7 @@ class TestProcessApi(BaseTest):
         assert process_instance.status == "user_input_required"
 
         client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/suspend",
+            f"/v1.0/process-instance-suspend/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         process_instance = ProcessInstanceService().get_process_instance(
@@ -2429,15 +2429,25 @@ class TestProcessApi(BaseTest):
         )
         assert process_instance.status == "suspended"
 
-        # TODO: Why can I run a suspended process instance?
         response = client.post(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        process_instance = ProcessInstanceService().get_process_instance(
+            process_instance_id
+        )
+        assert process_instance.status == "suspended"
+        assert response.status_code == 400
 
-        # task = response.json['next_task']
-
-        print("test_process_instance_suspend")
+        response = client.post(
+            f"/v1.0/process-instance-resume/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        process_instance = ProcessInstanceService().get_process_instance(
+            process_instance_id
+        )
+        assert process_instance.status == "waiting"
 
     def test_script_unit_test_run(
         self,

@@ -30,7 +30,7 @@ export default function CompletedInstances() {
             paginationQueryParamPrefix="group_completed_instances"
             paginationClassName="with-large-bottom-margin"
             perPageOptions={[2, 5, 25]}
-            reportIdentifier="system_report_instances_with_tasks_completed_by_my_groups"
+            reportIdentifier="system_report_completed_instances_with_tasks_completed_by_my_groups"
             showReports={false}
             textToShowIfEmpty="This group has no completed instances at this time."
             additionalParams={`group_identifier=${userGroup}`}
@@ -50,7 +50,7 @@ export default function CompletedInstances() {
         filtersEnabled={false}
         paginationQueryParamPrefix="my_completed_instances"
         perPageOptions={[2, 5, 25]}
-        reportIdentifier="system_report_instances_initiated_by_me"
+        reportIdentifier="system_report_completed_instances_initiated_by_me"
         showReports={false}
         textToShowIfEmpty="You have no completed instances at this time."
         paginationClassName="with-large-bottom-margin"
@@ -64,7 +64,7 @@ export default function CompletedInstances() {
         filtersEnabled={false}
         paginationQueryParamPrefix="my_completed_tasks"
         perPageOptions={[2, 5, 25]}
-        reportIdentifier="system_report_instances_with_tasks_completed_by_me"
+        reportIdentifier="system_report_completed_instances_with_tasks_completed_by_me"
         showReports={false}
         textToShowIfEmpty="You have no completed instances at this time."
         paginationClassName="with-large-bottom-margin"
