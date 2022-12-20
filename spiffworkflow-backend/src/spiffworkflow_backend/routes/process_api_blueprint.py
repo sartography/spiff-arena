@@ -2,7 +2,6 @@
 import json
 import os
 import random
-import re
 import string
 import uuid
 from typing import Any
@@ -32,17 +31,15 @@ from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
-from sqlalchemy import func
-from sqlalchemy.orm import aliased
-from sqlalchemy.orm import selectinload
+from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
-from spiffworkflow_backend.models.active_task import ActiveTaskModel
-from spiffworkflow_backend.models.active_task_user import ActiveTaskUserModel
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
@@ -53,9 +50,15 @@ from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
+from spiffworkflow_backend.models.process_instance import (
+    ProcessInstanceCannotBeDeletedError,
+)
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance import (
+    ProcessInstanceTaskDataCannotBeUpdatedError,
+)
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
@@ -72,7 +75,6 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
@@ -170,7 +172,7 @@ def process_group_add(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_group = ProcessGroup(**body)
     ProcessModelService.add_process_group(process_group)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} added process group {process_group.id}"
     )
     return make_response(jsonify(process_group), 201)
@@ -180,7 +182,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
     """Process_group_delete."""
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     ProcessModelService().process_group_delete(process_group_id)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} deleted process group {process_group_id}"
     )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -200,7 +202,7 @@ def process_group_update(
     process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService.update_process_group(process_group)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} updated process group {process_group_id}"
     )
     return make_response(jsonify(process_group), 200)
@@ -267,7 +269,7 @@ def process_group_move(
     new_process_group = ProcessModelService().process_group_move(
         original_process_group_id, new_location
     )
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
     )
     return make_response(jsonify(new_process_group), 200)
@@ -318,7 +320,7 @@ def process_model_create(
         )
 
     ProcessModelService.add_process_model(process_model_info)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} created process model {process_model_info.id}"
     )
     return Response(
@@ -334,7 +336,7 @@ def process_model_delete(
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     ProcessModelService().process_model_delete(process_model_identifier)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} deleted process model {process_model_identifier}"
     )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -360,7 +362,7 @@ def process_model_update(
 
     process_model = get_process_model(process_model_identifier)
     ProcessModelService.update_process_model(process_model, body_filtered)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} updated process model {process_model_identifier}"
     )
     return ProcessModelInfoSchema().dump(process_model)
@@ -394,7 +396,7 @@ def process_model_move(
     new_process_model = ProcessModelService().process_model_move(
         original_process_model_id, new_location
     )
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
     )
     return make_response(jsonify(new_process_model), 200)
@@ -493,7 +495,7 @@ def process_model_file_update(
         )
 
     SpecFileService.update_file(process_model, file_name, request_file_contents)
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
     )
 
@@ -517,7 +519,7 @@ def process_model_file_delete(
             )
         ) from exception
 
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}"
     )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -541,7 +543,7 @@ def add_file(modified_process_model_identifier: str) -> flask.wrappers.Response:
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
     file.process_model_id = process_model.id
-    commit_and_push_to_git(
+    _commit_and_push_to_git(
         f"User: {g.user.username} added process model file {process_model_identifier}/{file.name}"
     )
     return Response(
@@ -577,6 +579,13 @@ def process_instance_run(
     process_instance = ProcessInstanceService().get_process_instance(
         process_instance_id
     )
+    if process_instance.status != "not_started":
+        raise ApiError(
+            error_code="process_instance_not_runnable",
+            message=f"Process Instance ({process_instance.id}) is currently running or has already run.",
+            status_code=400,
+        )
+
     processor = ProcessInstanceProcessor(process_instance)
 
     if do_engine_steps:
@@ -834,6 +843,38 @@ def message_start(
     )
 
 
+def process_instance_list_for_me(
+    process_model_identifier: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 100,
+    start_from: Optional[int] = None,
+    start_to: Optional[int] = None,
+    end_from: Optional[int] = None,
+    end_to: Optional[int] = None,
+    process_status: Optional[str] = None,
+    user_filter: Optional[bool] = False,
+    report_identifier: Optional[str] = None,
+    report_id: Optional[int] = None,
+    user_group_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    """Process_instance_list_for_me."""
+    return process_instance_list(
+        process_model_identifier=process_model_identifier,
+        page=page,
+        per_page=per_page,
+        start_from=start_from,
+        start_to=start_to,
+        end_from=end_from,
+        end_to=end_to,
+        process_status=process_status,
+        user_filter=user_filter,
+        report_identifier=report_identifier,
+        report_id=report_id,
+        user_group_identifier=user_group_identifier,
+        with_relation_to_me=True,
+    )
+
+
 def process_instance_list(
     process_model_identifier: Optional[str] = None,
     page: int = 1,
@@ -843,13 +884,11 @@ def process_instance_list(
     end_from: Optional[int] = None,
     end_to: Optional[int] = None,
     process_status: Optional[str] = None,
-    initiated_by_me: Optional[bool] = None,
-    with_tasks_completed_by_me: Optional[bool] = None,
-    with_tasks_completed_by_my_group: Optional[bool] = None,
+    with_relation_to_me: Optional[bool] = None,
     user_filter: Optional[bool] = False,
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
-    group_identifier: Optional[str] = None,
+    user_group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
@@ -858,235 +897,37 @@ def process_instance_list(
 
     if user_filter:
         report_filter = ProcessInstanceReportFilter(
-            process_model_identifier,
-            start_from,
-            start_to,
-            end_from,
-            end_to,
-            process_status.split(",") if process_status else None,
-            initiated_by_me,
-            with_tasks_completed_by_me,
-            with_tasks_completed_by_my_group,
+            process_model_identifier=process_model_identifier,
+            user_group_identifier=user_group_identifier,
+            start_from=start_from,
+            start_to=start_to,
+            end_from=end_from,
+            end_to=end_to,
+            with_relation_to_me=with_relation_to_me,
+            process_status=process_status.split(",") if process_status else None,
         )
     else:
         report_filter = (
             ProcessInstanceReportService.filter_from_metadata_with_overrides(
-                process_instance_report,
-                process_model_identifier,
-                start_from,
-                start_to,
-                end_from,
-                end_to,
-                process_status,
-                initiated_by_me,
-                with_tasks_completed_by_me,
-                with_tasks_completed_by_my_group,
+                process_instance_report=process_instance_report,
+                process_model_identifier=process_model_identifier,
+                user_group_identifier=user_group_identifier,
+                start_from=start_from,
+                start_to=start_to,
+                end_from=end_from,
+                end_to=end_to,
+                process_status=process_status,
+                with_relation_to_me=with_relation_to_me,
             )
         )
 
-    process_instance_query = ProcessInstanceModel.query
-    # Always join that hot user table for good performance at serialization time.
-    process_instance_query = process_instance_query.options(
-        selectinload(ProcessInstanceModel.process_initiator)
+    response_json = ProcessInstanceReportService.run_process_instance_report(
+        report_filter=report_filter,
+        process_instance_report=process_instance_report,
+        page=page,
+        per_page=per_page,
+        user=g.user,
     )
-
-    if report_filter.process_model_identifier is not None:
-        process_model = get_process_model(
-            f"{report_filter.process_model_identifier}",
-        )
-
-        process_instance_query = process_instance_query.filter_by(
-            process_model_identifier=process_model.id
-        )
-
-    # this can never happen. obviously the class has the columns it defines. this is just to appease mypy.
-    if (
-        ProcessInstanceModel.start_in_seconds is None
-        or ProcessInstanceModel.end_in_seconds is None
-    ):
-        raise (
-            ApiError(
-                error_code="unexpected_condition",
-                message="Something went very wrong",
-                status_code=500,
-            )
-        )
-
-    if report_filter.start_from is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds >= report_filter.start_from
-        )
-    if report_filter.start_to is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.start_in_seconds <= report_filter.start_to
-        )
-    if report_filter.end_from is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds >= report_filter.end_from
-        )
-    if report_filter.end_to is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.end_in_seconds <= report_filter.end_to
-        )
-    if report_filter.process_status is not None:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
-        )
-
-    if report_filter.initiated_by_me is True:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter_by(
-            process_initiator=g.user
-        )
-
-    # TODO: not sure if this is exactly what is wanted
-    if report_filter.with_tasks_completed_by_me is True:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
-        )
-        # process_instance_query = process_instance_query.join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
-        # process_instance_query = process_instance_query.add_columns(UserModel.username)
-        # search for process_instance.UserModel.username in this file for more details about why adding columns is annoying.
-
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.process_initiator_id != g.user.id
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffStepDetailsModel,
-            ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffLoggingModel,
-            ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffStepDetailsModel.completed_by_user_id == g.user.id
-        )
-
-    if report_filter.with_tasks_completed_by_my_group is True:
-        process_instance_query = process_instance_query.filter(
-            ProcessInstanceModel.status.in_(["complete", "error", "terminated"])  # type: ignore
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffStepDetailsModel,
-            ProcessInstanceModel.id == SpiffStepDetailsModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.join(
-            SpiffLoggingModel,
-            ProcessInstanceModel.id == SpiffLoggingModel.process_instance_id,
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.message.contains("COMPLETED")  # type: ignore
-        )
-        process_instance_query = process_instance_query.filter(
-            SpiffLoggingModel.spiff_step == SpiffStepDetailsModel.spiff_step
-        )
-        if group_identifier:
-            process_instance_query = process_instance_query.join(
-                GroupModel,
-                GroupModel.identifier == group_identifier,
-            )
-        else:
-            process_instance_query = process_instance_query.join(
-                GroupModel,
-                GroupModel.id == SpiffStepDetailsModel.lane_assignment_id,
-            )
-        process_instance_query = process_instance_query.join(
-            UserGroupAssignmentModel,
-            UserGroupAssignmentModel.group_id == GroupModel.id,
-        )
-        process_instance_query = process_instance_query.filter(
-            UserGroupAssignmentModel.user_id == g.user.id
-        )
-
-    instance_metadata_aliases = {}
-    stock_columns = ProcessInstanceReportService.get_column_names_for_model(
-        ProcessInstanceModel
-    )
-    for column in process_instance_report.report_metadata["columns"]:
-        if column["accessor"] in stock_columns:
-            continue
-        instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-        instance_metadata_aliases[column["accessor"]] = instance_metadata_alias
-
-        filter_for_column = None
-        if "filter_by" in process_instance_report.report_metadata:
-            filter_for_column = next(
-                (
-                    f
-                    for f in process_instance_report.report_metadata["filter_by"]
-                    if f["field_name"] == column["accessor"]
-                ),
-                None,
-            )
-        isouter = True
-        conditions = [
-            ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
-            instance_metadata_alias.key == column["accessor"],
-        ]
-        if filter_for_column:
-            isouter = False
-            conditions.append(
-                instance_metadata_alias.value == filter_for_column["field_value"]
-            )
-        process_instance_query = process_instance_query.join(
-            instance_metadata_alias, and_(*conditions), isouter=isouter
-        ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
-
-    order_by_query_array = []
-    order_by_array = process_instance_report.report_metadata["order_by"]
-    if len(order_by_array) < 1:
-        order_by_array = ProcessInstanceReportModel.default_order_by()
-    for order_by_option in order_by_array:
-        attribute = re.sub("^-", "", order_by_option)
-        if attribute in stock_columns:
-            if order_by_option.startswith("-"):
-                order_by_query_array.append(
-                    getattr(ProcessInstanceModel, attribute).desc()
-                )
-            else:
-                order_by_query_array.append(
-                    getattr(ProcessInstanceModel, attribute).asc()
-                )
-        elif attribute in instance_metadata_aliases:
-            if order_by_option.startswith("-"):
-                order_by_query_array.append(
-                    func.max(instance_metadata_aliases[attribute].value).desc()
-                )
-            else:
-                order_by_query_array.append(
-                    func.max(instance_metadata_aliases[attribute].value).asc()
-                )
-
-    process_instances = (
-        process_instance_query.group_by(ProcessInstanceModel.id)
-        .add_columns(ProcessInstanceModel.id)
-        .order_by(*order_by_query_array)
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
-
-    results = ProcessInstanceReportService.add_metadata_columns_to_process_instance(
-        process_instances.items, process_instance_report.report_metadata["columns"]
-    )
-
-    response_json = {
-        "report": process_instance_report,
-        "results": results,
-        "filters": report_filter.to_dict(),
-        "pagination": {
-            "count": len(results),
-            "total": process_instances.total,
-            "pages": process_instances.pages,
-        },
-    }
 
     return make_response(jsonify(response_json), 200)
 
@@ -1107,14 +948,41 @@ def process_instance_report_column_list() -> flask.wrappers.Response:
     return make_response(jsonify(table_columns + columns_for_metadata_strings), 200)
 
 
+def process_instance_show_for_me(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    process_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    """Process_instance_show_for_me."""
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    return _get_process_instance(
+        process_instance=process_instance,
+        modified_process_model_identifier=modified_process_model_identifier,
+        process_identifier=process_identifier,
+    )
+
+
 def process_instance_show(
     modified_process_model_identifier: str,
     process_instance_id: int,
     process_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+    return _get_process_instance(
+        process_instance=process_instance,
+        modified_process_model_identifier=modified_process_model_identifier,
+        process_identifier=process_identifier,
+    )
+
+
+def _get_process_instance(
+    modified_process_model_identifier: str,
+    process_instance: ProcessInstanceModel,
+    process_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    """_get_process_instance."""
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
     current_version_control_revision = GitService.get_current_revision()
 
     process_model_with_diagram = None
@@ -1161,6 +1029,12 @@ def process_instance_delete(
 ) -> flask.wrappers.Response:
     """Create_process_instance."""
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+
+    if not process_instance.has_terminal_status():
+        raise ProcessInstanceCannotBeDeletedError(
+            f"Process instance ({process_instance.id}) cannot be deleted since it does not have a terminal status. "
+            f"Current status is {process_instance.status}."
+        )
 
     # (Pdb) db.session.delete
     # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
@@ -1316,35 +1190,36 @@ def process_instance_report_show(
 def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Task_list_my_tasks."""
     principal = find_principal_or_raise()
-    active_tasks = (
-        ActiveTaskModel.query.order_by(desc(ActiveTaskModel.id))  # type: ignore
+    human_tasks = (
+        HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
         .join(ProcessInstanceModel)
-        .join(ActiveTaskUserModel)
+        .join(HumanTaskUserModel)
         .filter_by(user_id=principal.user_id)
+        .filter(HumanTaskModel.completed == False)  # noqa: E712
         # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.process_model_display_name,
             ProcessInstanceModel.status,
-            ActiveTaskModel.task_name,
-            ActiveTaskModel.task_title,
-            ActiveTaskModel.task_type,
-            ActiveTaskModel.task_status,
-            ActiveTaskModel.task_id,
-            ActiveTaskModel.id,
-            ActiveTaskModel.process_model_display_name,
-            ActiveTaskModel.process_instance_id,
+            HumanTaskModel.task_name,
+            HumanTaskModel.task_title,
+            HumanTaskModel.task_type,
+            HumanTaskModel.task_status,
+            HumanTaskModel.task_id,
+            HumanTaskModel.id,
+            HumanTaskModel.process_model_display_name,
+            HumanTaskModel.process_instance_id,
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
-    tasks = [ActiveTaskModel.to_task(active_task) for active_task in active_tasks.items]
+    tasks = [HumanTaskModel.to_task(human_task) for human_task in human_tasks.items]
 
     response_json = {
         "results": tasks,
         "pagination": {
-            "count": len(active_tasks.items),
-            "total": active_tasks.total,
-            "pages": active_tasks.pages,
+            "count": len(human_tasks.items),
+            "total": human_tasks.total,
+            "pages": human_tasks.pages,
         },
     }
 
@@ -1369,11 +1244,11 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
 
 
 def task_list_for_my_groups(
-    group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+    user_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Task_list_for_my_groups."""
     return get_tasks(
-        group_identifier=group_identifier,
+        user_group_identifier=user_group_identifier,
         processes_started_by_user=False,
         page=page,
         per_page=per_page,
@@ -1393,77 +1268,100 @@ def get_tasks(
     has_lane_assignment_id: bool = True,
     page: int = 1,
     per_page: int = 100,
-    group_identifier: Optional[str] = None,
+    user_group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Get_tasks."""
     user_id = g.user.id
 
-    # use distinct to ensure we only get one row per active task otherwise
-    # we can get back multiple for the same active task row which throws off
+    # use distinct to ensure we only get one row per human task otherwise
+    # we can get back multiple for the same human task row which throws off
     # pagination later on
     # https://stackoverflow.com/q/34582014/6090676
-    active_tasks_query = (
-        ActiveTaskModel.query.distinct()
-        .outerjoin(GroupModel, GroupModel.id == ActiveTaskModel.lane_assignment_id)
+    human_tasks_query = (
+        HumanTaskModel.query.distinct()
+        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
+        .filter(HumanTaskModel.completed == False)  # noqa: E712
     )
 
     if processes_started_by_user:
-        active_tasks_query = active_tasks_query.filter(
+        human_tasks_query = human_tasks_query.filter(
             ProcessInstanceModel.process_initiator_id == user_id
         ).outerjoin(
-            ActiveTaskUserModel,
+            HumanTaskUserModel,
             and_(
-                ActiveTaskUserModel.user_id == user_id,
-                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+                HumanTaskUserModel.user_id == user_id,
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
             ),
         )
     else:
-        active_tasks_query = active_tasks_query.filter(
+        human_tasks_query = human_tasks_query.filter(
             ProcessInstanceModel.process_initiator_id != user_id
         ).join(
-            ActiveTaskUserModel,
+            HumanTaskUserModel,
             and_(
-                ActiveTaskUserModel.user_id == user_id,
-                ActiveTaskModel.id == ActiveTaskUserModel.active_task_id,
+                HumanTaskUserModel.user_id == user_id,
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
             ),
         )
         if has_lane_assignment_id:
-            if group_identifier:
-                active_tasks_query = active_tasks_query.filter(
-                    GroupModel.identifier == group_identifier
+            if user_group_identifier:
+                human_tasks_query = human_tasks_query.filter(
+                    GroupModel.identifier == user_group_identifier
                 )
             else:
-                active_tasks_query = active_tasks_query.filter(
-                    ActiveTaskModel.lane_assignment_id.is_not(None)  # type: ignore
+                human_tasks_query = human_tasks_query.filter(
+                    HumanTaskModel.lane_assignment_id.is_not(None)  # type: ignore
                 )
         else:
-            active_tasks_query = active_tasks_query.filter(ActiveTaskModel.lane_assignment_id.is_(None))  # type: ignore
+            human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
-    active_tasks = active_tasks_query.add_columns(
-        ProcessInstanceModel.process_model_identifier,
-        ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-        ProcessInstanceModel.updated_at_in_seconds,
-        ProcessInstanceModel.created_at_in_seconds,
-        UserModel.username,
-        GroupModel.identifier.label("group_identifier"),
-        ActiveTaskModel.task_name,
-        ActiveTaskModel.task_title,
-        ActiveTaskModel.process_model_display_name,
-        ActiveTaskModel.process_instance_id,
-        ActiveTaskUserModel.user_id.label("current_user_is_potential_owner"),
-    ).paginate(page=page, per_page=per_page, error_out=False)
+    human_tasks = (
+        human_tasks_query.add_columns(
+            ProcessInstanceModel.process_model_identifier,
+            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
+            ProcessInstanceModel.updated_at_in_seconds,
+            ProcessInstanceModel.created_at_in_seconds,
+            UserModel.username,
+            GroupModel.identifier.label("user_group_identifier"),
+            HumanTaskModel.task_name,
+            HumanTaskModel.task_title,
+            HumanTaskModel.process_model_display_name,
+            HumanTaskModel.process_instance_id,
+            HumanTaskUserModel.user_id.label("current_user_is_potential_owner"),
+        )
+        .order_by(desc(HumanTaskModel.id))  # type: ignore
+        .paginate(page=page, per_page=per_page, error_out=False)
+    )
 
     response_json = {
-        "results": active_tasks.items,
+        "results": human_tasks.items,
         "pagination": {
-            "count": len(active_tasks.items),
-            "total": active_tasks.total,
-            "pages": active_tasks.pages,
+            "count": len(human_tasks.items),
+            "total": human_tasks.total,
+            "pages": human_tasks.pages,
         },
     }
     return make_response(jsonify(response_json), 200)
+
+
+def process_instance_task_list_without_task_data_for_me(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    all_tasks: bool = False,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_task_list_without_task_data_for_me."""
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    print(f"process_instance: {process_instance}")
+    return process_instance_task_list(
+        modified_process_model_identifier,
+        process_instance,
+        all_tasks,
+        spiff_step,
+        get_task_data=False,
+    )
 
 
 def process_instance_task_list_without_task_data(
@@ -1473,9 +1371,10 @@ def process_instance_task_list_without_task_data(
     spiff_step: int = 0,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data."""
+    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
     return process_instance_task_list(
         modified_process_model_identifier,
-        process_instance_id,
+        process_instance,
         all_tasks,
         spiff_step,
         get_task_data=False,
@@ -1489,9 +1388,10 @@ def process_instance_task_list_with_task_data(
     spiff_step: int = 0,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_with_task_data."""
+    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
     return process_instance_task_list(
         modified_process_model_identifier,
-        process_instance_id,
+        process_instance,
         all_tasks,
         spiff_step,
         get_task_data=True,
@@ -1500,19 +1400,17 @@ def process_instance_task_list_with_task_data(
 
 def process_instance_task_list(
     _modified_process_model_identifier: str,
-    process_instance_id: int,
+    process_instance: ProcessInstanceModel,
     all_tasks: bool = False,
     spiff_step: int = 0,
     get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
-
     if spiff_step > 0:
         step_detail = (
             db.session.query(SpiffStepDetailsModel)
             .filter(
-                SpiffStepDetailsModel.process_instance_id == process_instance.id,
+                SpiffStepDetailsModel.process_instance.id == process_instance.id,
                 SpiffStepDetailsModel.spiff_step == spiff_step,
             )
             .first()
@@ -1651,6 +1549,13 @@ def task_submit(
     """Task_submit_user_data."""
     principal = find_principal_or_raise()
     process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+    if not process_instance.can_submit_task():
+        raise ApiError(
+            error_code="process_instance_not_runnable",
+            message=f"Process Instance ({process_instance.id}) has status "
+            f"{process_instance.status} which does not allow tasks to be submitted.",
+            status_code=400,
+        )
 
     processor = ProcessInstanceProcessor(process_instance)
     spiff_task = get_spiff_task_from_process_instance(
@@ -1672,14 +1577,14 @@ def task_submit(
     if terminate_loop and spiff_task.is_looping():
         spiff_task.terminate_loop()
 
-    active_task = ActiveTaskModel.query.filter_by(
-        process_instance_id=process_instance_id, task_id=task_id
+    human_task = HumanTaskModel.query.filter_by(
+        process_instance_id=process_instance_id, task_id=task_id, completed=False
     ).first()
-    if active_task is None:
+    if human_task is None:
         raise (
             ApiError(
-                error_code="no_active_task",
-                message="Cannot find an active task with task id '{task_id}' for process instance {process_instance_id}.",
+                error_code="no_human_task",
+                message="Cannot find an human task with task id '{task_id}' for process instance {process_instance_id}.",
                 status_code=500,
             )
         )
@@ -1689,7 +1594,7 @@ def task_submit(
         spiff_task=spiff_task,
         data=body,
         user=g.user,
-        active_task=active_task,
+        human_task=human_task,
     )
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
@@ -1702,16 +1607,18 @@ def task_submit(
     #         last_index = next_task.task_info()["mi_index"]
     #         next_task = processor.next_task()
 
-    next_active_task_assigned_to_me = (
-        ActiveTaskModel.query.filter_by(process_instance_id=process_instance_id)
-        .order_by(asc(ActiveTaskModel.id))  # type: ignore
-        .join(ActiveTaskUserModel)
+    next_human_task_assigned_to_me = (
+        HumanTaskModel.query.filter_by(
+            process_instance_id=process_instance_id, completed=False
+        )
+        .order_by(asc(HumanTaskModel.id))  # type: ignore
+        .join(HumanTaskUserModel)
         .filter_by(user_id=principal.user_id)
         .first()
     )
-    if next_active_task_assigned_to_me:
+    if next_human_task_assigned_to_me:
         return make_response(
-            jsonify(ActiveTaskModel.to_task(next_active_task_assigned_to_me)), 200
+            jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200
         )
 
     return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
@@ -2023,6 +1930,57 @@ def delete_secret(key: str) -> Response:
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
+def update_task_data(
+    process_instance_id: str,
+    modified_process_model_identifier: str,
+    task_id: str,
+    body: Dict,
+) -> Response:
+    """Update task data."""
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        if process_instance.status != "suspended":
+            raise ProcessInstanceTaskDataCannotBeUpdatedError(
+                f"The process instance needs to be suspended to udpate the task-data. It is currently: {process_instance.status}"
+            )
+
+        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
+        if "new_task_data" in body:
+            new_task_data_str: str = body["new_task_data"]
+            new_task_data_dict = json.loads(new_task_data_str)
+            if task_id in process_instance_bpmn_json_dict["tasks"]:
+                process_instance_bpmn_json_dict["tasks"][task_id][
+                    "data"
+                ] = new_task_data_dict
+                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
+                db.session.add(process_instance)
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not update the Instance. Original error is {e}",
+                    ) from e
+            else:
+                raise ApiError(
+                    error_code="update_task_data_error",
+                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
+                )
+    else:
+        raise ApiError(
+            error_code="update_task_data_error",
+            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
+
+
 def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) -> Any:
     """Get_required_parameter_or_raise."""
     return_value = None
@@ -2099,56 +2057,45 @@ def _update_form_schema_with_task_data_as_needed(
                     _update_form_schema_with_task_data_as_needed(o, task_data)
 
 
-def update_task_data(
-    process_instance_id: str,
-    modified_process_model_identifier: str,
-    task_id: str,
-    body: Dict,
-) -> Response:
-    """Update task data."""
-    process_instance = ProcessInstanceModel.query.filter(
-        ProcessInstanceModel.id == int(process_instance_id)
-    ).first()
-    if process_instance:
-        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
-        if "new_task_data" in body:
-            new_task_data_str: str = body["new_task_data"]
-            new_task_data_dict = json.loads(new_task_data_str)
-            if task_id in process_instance_bpmn_json_dict["tasks"]:
-                process_instance_bpmn_json_dict["tasks"][task_id][
-                    "data"
-                ] = new_task_data_dict
-                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
-                db.session.add(process_instance)
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    raise ApiError(
-                        error_code="update_task_data_error",
-                        message=f"Could not update the Instance. Original error is {e}",
-                    ) from e
-            else:
-                raise ApiError(
-                    error_code="update_task_data_error",
-                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
-                )
-    else:
-        raise ApiError(
-            error_code="update_task_data_error",
-            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
-        )
-    return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
-        status=200,
-        mimetype="application/json",
-    )
-
-
-def commit_and_push_to_git(message: str) -> None:
+def _commit_and_push_to_git(message: str) -> None:
     """Commit_and_push_to_git."""
     if current_app.config["GIT_COMMIT_ON_SAVE"]:
         git_output = GitService.commit(message=message)
         current_app.logger.info(f"git output: {git_output}")
     else:
         current_app.logger.info("Git commit on save is disabled")
+
+
+def _find_process_instance_for_me_or_raise(
+    process_instance_id: int,
+) -> ProcessInstanceModel:
+    """_find_process_instance_for_me_or_raise."""
+    process_instance: ProcessInstanceModel = (
+        ProcessInstanceModel.query.filter_by(id=process_instance_id)
+        .outerjoin(HumanTaskModel)
+        .outerjoin(
+            HumanTaskUserModel,
+            and_(
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == g.user.id,
+            ),
+        )
+        .filter(
+            or_(
+                HumanTaskUserModel.id.is_not(None),
+                ProcessInstanceModel.process_initiator_id == g.user.id,
+            )
+        )
+        .first()
+    )
+
+    if process_instance is None:
+        raise (
+            ApiError(
+                error_code="process_instance_cannot_be_found",
+                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
+                status_code=400,
+            )
+        )
+
+    return process_instance

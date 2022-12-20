@@ -98,15 +98,15 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-models/*
-  read-all-process-instance:
+  read-all-process-instances-for-me:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-instances/*
-  read-process-instance-reports:
+    uri: /v1.0/process-instances/for-me/*
+  manage-process-instance-reports:
     groups: [everybody]
     users: []
-    allowed_permissions: [read]
+    allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-instances/reports/*
   processes-read:
     groups: [everybody]

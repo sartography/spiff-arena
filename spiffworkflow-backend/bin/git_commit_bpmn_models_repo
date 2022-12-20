@@ -14,21 +14,39 @@ git_commit_message="$2"
 git_branch="$3"
 git_commit_username="$4"
 git_commit_email="$5"
+git_commit_password="$6"
 
-if [[ -z "${5:-}" ]]; then
+if [[ -z "${6:-}" ]]; then
   >&2 echo "usage: $(basename "$0") [bpmn_models_absolute_dir] [git_commit_message] [git_branch] [git_commit_username] [git_commit_email]"
   exit 1
 fi
 
-cd "$bpmn_models_absolute_dir"
-git add .
+function failed_to_get_lock() {
+  >&2 echo "ERROR: Failed to get lock."
+  exit 1
+}
 
-# https://unix.stackexchange.com/a/155077/456630
-if [ -z "$(git status --porcelain)" ]; then
-  echo "No changes to commit"
-else
-  git config --local user.name "$git_commit_username"
-  git config --local user.email "$git_commit_email"
-  git commit -m "$git_commit_message"
-  git push --set-upstream origin "$git_branch"
-fi
+function run() {
+  cd "$bpmn_models_absolute_dir"
+  git add .
+
+  # https://unix.stackexchange.com/a/155077/456630
+  if [ -z "$(git status --porcelain)" ]; then
+    echo "No changes to commit"
+  else
+    PAT="${git_commit_username}:${git_commit_password}"
+    AUTH=$(echo -n "$PAT" | openssl base64 | tr -d '\n')
+
+    git config --local user.name "$git_commit_username"
+    git config --local user.email "$git_commit_email"
+    git config --local http.extraHeader "Authorization: Basic $AUTH"
+    git commit -m "$git_commit_message"
+    git push --set-upstream origin "$git_branch"
+    git config --unset --local http.extraHeader
+  fi
+}
+
+exec {lock_fd}>/var/lock/mylockfile || failed_to_get_lock
+flock --timeout 60 "$lock_fd" || failed_to_get_lock
+run
+flock -u "$lock_fd"

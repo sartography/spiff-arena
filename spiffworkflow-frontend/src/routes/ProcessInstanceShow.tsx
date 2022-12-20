@@ -45,8 +45,13 @@ import {
   ProcessInstanceTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 
-export default function ProcessInstanceShow() {
+type OwnProps = {
+  variant: string;
+};
+
+export default function ProcessInstanceShow({ variant }: OwnProps) {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -67,16 +72,21 @@ export default function ProcessInstanceShow() {
   const modifiedProcessModelId = params.process_model_id;
 
   const { targetUris } = useUriListForPermissions();
+  const taskListPath =
+    variant === 'all'
+      ? targetUris.processInstanceTaskListPath
+      : targetUris.processInstanceTaskListForMePath;
+
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.messageInstanceListPath]: ['GET'],
-    [targetUris.processInstanceTaskListPath]: ['GET'],
+    [taskListPath]: ['GET'],
     [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
     [targetUris.processModelShowPath]: ['PUT'],
-    [`${targetUris.processInstanceActionPath}/suspend`]: ['POST'],
-    [`${targetUris.processInstanceActionPath}/terminate`]: ['POST'],
-    [`${targetUris.processInstanceActionPath}/resume`]: ['POST'],
+    [`${targetUris.processInstanceResumePath}`]: ['POST'],
+    [`${targetUris.processInstanceSuspendPath}`]: ['POST'],
+    [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -98,8 +108,12 @@ export default function ProcessInstanceShow() {
       if (processIdentifier) {
         queryParams = `?process_identifier=${processIdentifier}`;
       }
+      let apiPath = '/process-instances/for-me';
+      if (variant === 'all') {
+        apiPath = '/process-instances';
+      }
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
+        path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
         successCallback: setProcessInstance,
       });
       let taskParams = '?all_tasks=true';
@@ -109,8 +123,8 @@ export default function ProcessInstanceShow() {
       let taskPath = '';
       if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
         taskPath = `${targetUris.processInstanceTaskListDataPath}${taskParams}`;
-      } else if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
-        taskPath = `${targetUris.processInstanceTaskListPath}${taskParams}`;
+      } else if (ability.can('GET', taskListPath)) {
+        taskPath = `${taskListPath}${taskParams}`;
       }
       if (taskPath) {
         HttpService.makeCallToBackend({
@@ -129,6 +143,8 @@ export default function ProcessInstanceShow() {
     ability,
     targetUris,
     searchParams,
+    taskListPath,
+    variant,
   ]);
 
   const deleteProcessInstance = () => {
@@ -146,7 +162,7 @@ export default function ProcessInstanceShow() {
 
   const terminateProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/terminate`,
+      path: `${targetUris.processInstanceTerminatePath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -154,7 +170,7 @@ export default function ProcessInstanceShow() {
 
   const suspendProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/suspend`,
+      path: `${targetUris.processInstanceSuspendPath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -162,7 +178,7 @@ export default function ProcessInstanceShow() {
 
   const resumeProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/resume`,
+      path: `${targetUris.processInstanceResumePath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -183,29 +199,23 @@ export default function ProcessInstanceShow() {
     return taskIds;
   };
 
-  const currentSpiffStep = (processInstanceToUse: any) => {
-    if (typeof params.spiff_step === 'undefined') {
-      return processInstanceToUse.spiff_step;
+  const currentSpiffStep = () => {
+    if (processInstance && typeof params.spiff_step === 'undefined') {
+      return processInstance.spiff_step || 0;
     }
 
     return Number(params.spiff_step);
   };
 
-  const showingFirstSpiffStep = (processInstanceToUse: any) => {
-    return currentSpiffStep(processInstanceToUse) === 1;
+  const showingFirstSpiffStep = () => {
+    return currentSpiffStep() === 1;
   };
 
-  const showingLastSpiffStep = (processInstanceToUse: any) => {
-    return (
-      currentSpiffStep(processInstanceToUse) === processInstanceToUse.spiff_step
-    );
+  const showingLastSpiffStep = () => {
+    return processInstance && currentSpiffStep() === processInstance.spiff_step;
   };
 
-  const spiffStepLink = (
-    processInstanceToUse: any,
-    label: any,
-    distance: number
-  ) => {
+  const spiffStepLink = (label: any, distance: number) => {
     const processIdentifier = searchParams.get('process_identifier');
     let queryParams = '';
     if (processIdentifier) {
@@ -217,32 +227,35 @@ export default function ProcessInstanceShow() {
         data-qa="process-instance-step-link"
         to={`/admin/process-instances/${params.process_model_id}/${
           params.process_instance_id
-        }/${currentSpiffStep(processInstanceToUse) + distance}${queryParams}`}
+        }/${currentSpiffStep() + distance}${queryParams}`}
       >
         {label}
       </Link>
     );
   };
 
-  const previousStepLink = (processInstanceToUse: any) => {
-    if (showingFirstSpiffStep(processInstanceToUse)) {
+  const previousStepLink = () => {
+    if (showingFirstSpiffStep()) {
       return null;
     }
 
-    return spiffStepLink(processInstanceToUse, <CaretLeft />, -1);
+    return spiffStepLink(<CaretLeft />, -1);
   };
 
-  const nextStepLink = (processInstanceToUse: any) => {
-    if (showingLastSpiffStep(processInstanceToUse)) {
+  const nextStepLink = () => {
+    if (showingLastSpiffStep()) {
       return null;
     }
 
-    return spiffStepLink(processInstanceToUse, <CaretRight />, 1);
+    return spiffStepLink(<CaretRight />, 1);
   };
 
-  const getInfoTag = (processInstanceToUse: any) => {
+  const getInfoTag = () => {
+    if (!processInstance) {
+      return null;
+    }
     const currentEndDate = convertSecondsToFormattedDateTime(
-      processInstanceToUse.end_in_seconds
+      processInstance.end_in_seconds || 0
     );
     let currentEndDateTag;
     if (currentEndDate) {
@@ -253,7 +266,7 @@ export default function ProcessInstanceShow() {
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
             {convertSecondsToFormattedDateTime(
-              processInstanceToUse.end_in_seconds
+              processInstance.end_in_seconds || 0
             ) || 'N/A'}
           </Column>
         </Grid>
@@ -261,13 +274,13 @@ export default function ProcessInstanceShow() {
     }
 
     let statusIcon = <InProgress />;
-    if (processInstanceToUse.status === 'suspended') {
+    if (processInstance.status === 'suspended') {
       statusIcon = <PauseOutline />;
-    } else if (processInstanceToUse.status === 'complete') {
+    } else if (processInstance.status === 'complete') {
       statusIcon = <Checkmark />;
-    } else if (processInstanceToUse.status === 'terminated') {
+    } else if (processInstance.status === 'terminated') {
       statusIcon = <StopOutline />;
-    } else if (processInstanceToUse.status === 'error') {
+    } else if (processInstance.status === 'error') {
       statusIcon = <Warning />;
     }
 
@@ -279,7 +292,7 @@ export default function ProcessInstanceShow() {
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
             {convertSecondsToFormattedDateTime(
-              processInstanceToUse.start_in_seconds
+              processInstance.start_in_seconds || 0
             )}
           </Column>
         </Grid>
@@ -290,7 +303,7 @@ export default function ProcessInstanceShow() {
           </Column>
           <Column sm={3} md={3} lg={3}>
             <Tag type="gray" size="sm" className="span-tag">
-              {processInstanceToUse.status} {statusIcon}
+              {processInstance.status} {statusIcon}
             </Tag>
           </Column>
         </Grid>
@@ -333,11 +346,10 @@ export default function ProcessInstanceShow() {
     );
   };
 
-  const terminateButton = (processInstanceToUse: any) => {
+  const terminateButton = () => {
     if (
-      ['complete', 'terminated', 'error'].indexOf(
-        processInstanceToUse.status
-      ) === -1
+      processInstance &&
+      !ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
       return (
         <ButtonWithConfirmation
@@ -345,7 +357,7 @@ export default function ProcessInstanceShow() {
           renderIcon={StopOutline}
           iconDescription="Terminate"
           hasIconOnly
-          description={`Terminate Process Instance: ${processInstanceToUse.id}`}
+          description={`Terminate Process Instance: ${processInstance.id}`}
           onConfirmation={terminateProcessInstance}
           confirmButtonLabel="Terminate"
         />
@@ -354,11 +366,12 @@ export default function ProcessInstanceShow() {
     return <div />;
   };
 
-  const suspendButton = (processInstanceToUse: any) => {
+  const suspendButton = () => {
     if (
-      ['complete', 'terminated', 'error', 'suspended'].indexOf(
-        processInstanceToUse.status
-      ) === -1
+      processInstance &&
+      !ProcessInstanceClass.terminalStatuses()
+        .concat(['suspended'])
+        .includes(processInstance.status)
     ) {
       return (
         <Button
@@ -374,8 +387,8 @@ export default function ProcessInstanceShow() {
     return <div />;
   };
 
-  const resumeButton = (processInstanceToUse: any) => {
-    if (processInstanceToUse.status === 'suspended') {
+  const resumeButton = () => {
+    if (processInstance && processInstance.status === 'suspended') {
       return (
         <Button
           onClick={resumeProcessInstance}
@@ -450,9 +463,11 @@ export default function ProcessInstanceShow() {
 
   const canEditTaskData = (task: any) => {
     return (
+      processInstance &&
       ability.can('PUT', targetUris.processInstanceTaskListDataPath) &&
       task.state === 'READY' &&
-      showingLastSpiffStep(processInstance as any)
+      processInstance.status === 'suspended' &&
+      showingLastSpiffStep()
     );
   };
 
@@ -475,7 +490,7 @@ export default function ProcessInstanceShow() {
   };
 
   const saveTaskDataFailure = (result: any) => {
-    setErrorMessage({ message: result.toString() });
+    setErrorMessage({ message: result.message });
   };
 
   const saveTaskData = () => {
@@ -591,37 +606,41 @@ export default function ProcessInstanceShow() {
     return null;
   };
 
-  const stepsElement = (processInstanceToUse: any) => {
+  const stepsElement = () => {
+    if (!processInstance) {
+      return null;
+    }
     return (
       <Grid condensed fullWidth>
         <Column sm={3} md={3} lg={3}>
           <Stack orientation="horizontal" gap={3} className="smaller-text">
-            {previousStepLink(processInstanceToUse)}
-            Step {currentSpiffStep(processInstanceToUse)} of{' '}
-            {processInstanceToUse.spiff_step}
-            {nextStepLink(processInstanceToUse)}
+            {previousStepLink()}
+            Step {currentSpiffStep()} of {processInstance.spiff_step}
+            {nextStepLink()}
           </Stack>
         </Column>
       </Grid>
     );
   };
 
-  const buttonIcons = (processInstanceToUse: any) => {
+  const buttonIcons = () => {
+    if (!processInstance) {
+      return null;
+    }
     const elements = [];
-    if (
-      ability.can('POST', `${targetUris.processInstanceActionPath}/terminate`)
-    ) {
-      elements.push(terminateButton(processInstanceToUse));
+    if (ability.can('POST', `${targetUris.processInstanceTerminatePath}`)) {
+      elements.push(terminateButton());
+    }
+    if (ability.can('POST', `${targetUris.processInstanceSuspendPath}`)) {
+      elements.push(suspendButton());
+    }
+    if (ability.can('POST', `${targetUris.processInstanceResumePath}`)) {
+      elements.push(resumeButton());
     }
     if (
-      ability.can('POST', `${targetUris.processInstanceActionPath}/suspend`)
+      ability.can('DELETE', targetUris.processInstanceActionPath) &&
+      ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
-      elements.push(suspendButton(processInstanceToUse));
-    }
-    if (ability.can('POST', `${targetUris.processInstanceActionPath}/resume`)) {
-      elements.push(resumeButton(processInstanceToUse));
-    }
-    if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
       elements.push(
         <ButtonWithConfirmation
           data-qa="process-instance-delete"
@@ -629,7 +648,7 @@ export default function ProcessInstanceShow() {
           renderIcon={TrashCan}
           iconDescription="Delete"
           hasIconOnly
-          description={`Delete Process Instance: ${processInstanceToUse.id}`}
+          description={`Delete Process Instance: ${processInstance.id}`}
           onConfirmation={deleteProcessInstance}
           confirmButtonLabel="Delete"
         />
@@ -639,7 +658,6 @@ export default function ProcessInstanceShow() {
   };
 
   if (processInstance && (tasks || tasksCallHadError)) {
-    const processInstanceToUse = processInstance as any;
     const taskIds = getTaskIds();
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
@@ -655,26 +673,26 @@ export default function ProcessInstanceShow() {
               entityType: 'process-model-id',
               linkLastItem: true,
             },
-            [`Process Instance Id: ${processInstanceToUse.id}`],
+            [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
-            Process Instance Id: {processInstanceToUse.id}
+            Process Instance Id: {processInstance.id}
           </h1>
-          {buttonIcons(processInstanceToUse)}
+          {buttonIcons()}
         </Stack>
         <br />
         <br />
-        {getInfoTag(processInstanceToUse)}
+        {getInfoTag()}
         <br />
         {taskDataDisplayArea()}
-        {stepsElement(processInstanceToUse)}
+        {stepsElement()}
         <br />
         <ReactDiagramEditor
           processModelId={processModelId || ''}
-          diagramXML={processInstanceToUse.bpmn_xml_file_contents || ''}
-          fileName={processInstanceToUse.bpmn_xml_file_contents || ''}
+          diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          fileName={processInstance.bpmn_xml_file_contents || ''}
           readyOrWaitingProcessInstanceTasks={taskIds.readyOrWaiting}
           completedProcessInstanceTasks={taskIds.completed}
           diagramType="readonly"

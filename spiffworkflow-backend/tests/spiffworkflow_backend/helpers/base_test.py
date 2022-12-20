@@ -243,7 +243,7 @@ class BaseTest:
         return file
 
     @staticmethod
-    def create_process_instance_from_process_model_id(
+    def create_process_instance_from_process_model_id_with_api(
         client: FlaskClient,
         test_process_model_id: str,
         headers: Dict[str, str],

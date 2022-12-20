@@ -34,6 +34,8 @@ class UserModel(SpiffworkflowBaseDBModel):
     service_id = db.Column(db.String(255), nullable=False, unique=False)
     display_name = db.Column(db.String(255))
     email = db.Column(db.String(255))
+    updated_at_in_seconds: int = db.Column(db.Integer)
+    created_at_in_seconds: int = db.Column(db.Integer)
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")  # type: ignore
     groups = relationship(  # type: ignore
