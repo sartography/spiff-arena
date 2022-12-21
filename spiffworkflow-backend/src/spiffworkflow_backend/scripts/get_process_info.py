@@ -10,6 +10,11 @@ from spiffworkflow_backend.scripts.script import Script
 class GetProcessInfo(Script):
     """GetProcessInfo."""
 
+    @staticmethod
+    def requires_privileged_permissions() -> bool:
+        """We have deemed this function safe to run without elevated permissions."""
+        return False
+
     def get_description(self) -> str:
         """Get_description."""
         return """Returns a dictionary of information about the currently running process."""

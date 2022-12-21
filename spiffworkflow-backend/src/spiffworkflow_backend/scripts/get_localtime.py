@@ -14,6 +14,11 @@ from spiffworkflow_backend.scripts.script import Script
 class GetLocaltime(Script):
     """GetLocaltime."""
 
+    @staticmethod
+    def requires_privileged_permissions() -> bool:
+        """We have deemed this function safe to run without elevated permissions."""
+        return False
+
     def get_description(self) -> str:
         """Get_description."""
         return """Converts a Datetime object into a Datetime object for a specific timezone.

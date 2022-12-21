@@ -51,6 +51,7 @@ class Script:
 
     @staticmethod
     def requires_privileged_permissions() -> bool:
+        """It seems safer to default to True and make safe functions opt in for any user to run them."""
         return True
 
     @staticmethod
@@ -82,7 +83,7 @@ class Script:
             """
             instance = subclass()
 
-            def run_subclass(*ar: Any, **kw: Any) -> Any:
+            def check_script_permission() -> None:
                 if subclass.requires_privileged_permissions():
                     script_function_name = get_script_function_name(subclass)
                     uri = f"/v1.0/can-run-privileged-script/{script_function_name}"
@@ -100,13 +101,16 @@ class Script:
                         raise ScriptUnauthorizedForUserError(
                             f"User {user.username} does not have access to run privileged script '{script_function_name}'"
                         )
+
+            def run_script_if_allowed(*ar: Any, **kw: Any) -> Any:
+                check_script_permission()
                 return subclass.run(
                     instance,
                     script_attributes_context,
                     *ar,
                     **kw,
                 )
-            return run_subclass
+            return run_script_if_allowed
 
         def get_script_function_name(subclass: type[Script]) -> str:
             return subclass.__module__.split(".")[-1]
