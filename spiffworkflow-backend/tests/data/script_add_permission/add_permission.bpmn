@@ -12,7 +12,7 @@
     <bpmn:scriptTask id="add_permission_script" name="Add Permission">
       <bpmn:incoming>Flow_01cweoc</bpmn:incoming>
       <bpmn:outgoing>Flow_1xle2yo</bpmn:outgoing>
-      <bpmn:script>add_permission('read', '/v1.0/test_permission_uri', "test_group")</bpmn:script>
+      <bpmn:script>add_permission('read', '/test_permission_uri', "test_group")</bpmn:script>
     </bpmn:scriptTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
