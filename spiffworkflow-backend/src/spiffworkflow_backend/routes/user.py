@@ -105,7 +105,9 @@ def verify_token(
                     ) from e
 
                 if (
-                    user_info is not None and "error" not in user_info and 'iss' in user_info
+                    user_info is not None
+                    and "error" not in user_info
+                    and "iss" in user_info
                 ):  # not sure what to test yet
                     user_model = (
                         UserModel.query.filter(UserModel.service == user_info["iss"])
