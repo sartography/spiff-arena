@@ -1,4 +1,5 @@
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
+import { miscDisplayName } from '../support/helpers';
 
 describe('process-models', () => {
   beforeEach(() => {
@@ -8,7 +9,6 @@ describe('process-models', () => {
     cy.logout();
   });
 
-  const sharedResourceString = 'Shared Resources';
   const groupDisplayName = 'Acceptance Tests Group One';
   const deleteProcessModelButtonId = 'delete-process-model-button';
 
@@ -19,7 +19,7 @@ describe('process-models', () => {
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     const newModelDisplayName = `${modelDisplayName} edited`;
-    cy.contains(sharedResourceString).click();
+    cy.contains(miscDisplayName).click();
     cy.wait(750);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
@@ -39,6 +39,7 @@ describe('process-models', () => {
     cy.deleteProcessModelAndConfirm(deleteProcessModelButtonId, groupId);
 
     cy.contains(modelId).should('not.exist');
+    cy.contains(modelDisplayName).should('not.exist');
   });
 
   it('can create new bpmn, dmn, and json files', () => {
@@ -55,12 +56,11 @@ describe('process-models', () => {
     const jsonFileName = `json_test_file_${id}`;
     const decision_acceptance_test_id = `decision_acceptance_test_${id}`;
 
-    cy.contains(sharedResourceString).click();
+    cy.contains(miscDisplayName).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
-    cy.contains(directParentGroupName).click();
-    cy.wait(500);
+    cy.contains(groupDisplayName).click();
     cy.contains(modelDisplayName).click();
     cy.url().should(
       'include',
@@ -137,7 +137,7 @@ describe('process-models', () => {
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     cy.contains('Add a process group');
-    cy.contains(sharedResourceString).click();
+    cy.contains(miscDisplayName).click();
     cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
@@ -172,7 +172,7 @@ describe('process-models', () => {
       .click();
 
     // in breadcrumb
-    cy.contains(modelId).click();
+    cy.contains(modelDisplayName).click();
 
     cy.getBySel(deleteProcessModelButtonId).click();
     cy.contains('Are you sure');

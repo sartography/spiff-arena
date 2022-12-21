@@ -68,9 +68,9 @@ class TestGetLocaltime(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
 
         processor.do_engine_steps(save=True)
-        active_task = process_instance.active_tasks[0]
+        human_task = process_instance.human_tasks[0]
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
 
         ProcessInstanceService.complete_form_task(
@@ -78,12 +78,12 @@ class TestGetLocaltime(BaseTest):
             spiff_task,
             {"timezone": "US/Pacific"},
             initiator_user,
-            active_task,
+            human_task,
         )
 
-        active_task = process_instance.active_tasks[0]
+        human_task = process_instance.human_tasks[0]
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
 
         assert spiff_task

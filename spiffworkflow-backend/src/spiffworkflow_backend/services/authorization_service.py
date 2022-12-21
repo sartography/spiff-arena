@@ -19,8 +19,8 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
 
-from spiffworkflow_backend.models.active_task import ActiveTaskModel
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
@@ -37,8 +37,8 @@ class PermissionsFileNotSetError(Exception):
     """PermissionsFileNotSetError."""
 
 
-class ActiveTaskNotFoundError(Exception):
-    """ActiveTaskNotFoundError."""
+class HumanTaskNotFoundError(Exception):
+    """HumanTaskNotFoundError."""
 
 
 class UserDoesNotHaveAccessToTaskError(Exception):
@@ -429,17 +429,17 @@ class AuthorizationService:
         user: UserModel,
     ) -> bool:
         """Assert_user_can_complete_spiff_task."""
-        active_task = ActiveTaskModel.query.filter_by(
+        human_task = HumanTaskModel.query.filter_by(
             task_name=spiff_task.task_spec.name,
             process_instance_id=process_instance_id,
         ).first()
-        if active_task is None:
-            raise ActiveTaskNotFoundError(
-                f"Could find an active task with task name '{spiff_task.task_spec.name}'"
+        if human_task is None:
+            raise HumanTaskNotFoundError(
+                f"Could find an human task with task name '{spiff_task.task_spec.name}'"
                 f" for process instance '{process_instance_id}'"
             )
 
-        if user not in active_task.potential_owners:
+        if user not in human_task.potential_owners:
             raise UserDoesNotHaveAccessToTaskError(
                 f"User {user.username} does not have access to update task'{spiff_task.task_spec.name}'"
                 f" for process instance '{process_instance_id}'"
@@ -485,7 +485,7 @@ class AuthorizationService:
         cls.import_permissions_from_yaml_file()
 
         if is_new_user:
-            UserService.add_user_to_active_tasks_if_appropriate(user_model)
+            UserService.add_user_to_human_tasks_if_appropriate(user_model)
 
         # this cannot be None so ignore mypy
         return user_model  # type: ignore

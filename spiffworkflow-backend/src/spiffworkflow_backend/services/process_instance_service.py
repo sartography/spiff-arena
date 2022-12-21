@@ -8,7 +8,7 @@ from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
-from spiffworkflow_backend.models.active_task import ActiveTaskModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -196,7 +196,7 @@ class ProcessInstanceService:
         spiff_task: SpiffTask,
         data: dict[str, Any],
         user: UserModel,
-        active_task: ActiveTaskModel,
+        human_task: HumanTaskModel,
     ) -> None:
         """All the things that need to happen when we complete a form.
 
@@ -210,7 +210,7 @@ class ProcessInstanceService:
         dot_dct = ProcessInstanceService.create_dot_dict(data)
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
-        processor.complete_task(spiff_task, active_task)
+        processor.complete_task(spiff_task, human_task, user=user)
         processor.do_engine_steps(save=True)
 
     @staticmethod
