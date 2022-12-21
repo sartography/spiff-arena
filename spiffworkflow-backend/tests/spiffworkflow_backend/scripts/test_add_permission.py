@@ -76,7 +76,7 @@ class TestAddPermission(BaseTest):
         privileged_user = self.find_or_create_user("privileged_user")
         self.add_permissions_to_user(
             privileged_user,
-            target_uri="/v1.0/can-run-privileged-script/add_permission",
+            target_uri="/can-run-privileged-script/add_permission",
             permission_names=["create"],
         )
         process_model = load_test_spec(

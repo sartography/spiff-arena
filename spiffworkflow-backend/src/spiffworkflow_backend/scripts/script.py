@@ -52,7 +52,11 @@ class Script:
 
     @staticmethod
     def requires_privileged_permissions() -> bool:
-        """It seems safer to default to True and make safe functions opt in for any user to run them."""
+        """It seems safer to default to True and make safe functions opt in for any user to run them.
+
+        To give access to script for a given user, add a 'create' permission with following target-uri:
+            '/can-run-privileged-script/{script_name}'
+        """
         return True
 
     @staticmethod
@@ -88,7 +92,7 @@ class Script:
                 """Check_script_permission."""
                 if subclass.requires_privileged_permissions():
                     script_function_name = get_script_function_name(subclass)
-                    uri = f"/v1.0/can-run-privileged-script/{script_function_name}"
+                    uri = f"/can-run-privileged-script/{script_function_name}"
                     process_instance = ProcessInstanceModel.query.filter_by(
                         id=script_attributes_context.process_instance_id
                     ).first()

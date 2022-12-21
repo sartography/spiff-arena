@@ -18,6 +18,7 @@ from werkzeug.exceptions import NotFound
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.config import setup_config
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_blueprint
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
     openid_blueprint,
@@ -117,7 +118,7 @@ def create_app() -> flask.app.Flask:
     ]
     CORS(app, origins=origins_re, max_age=3600)
 
-    connexion_app.add_api("api.yml", base_path="/v1.0")
+    connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)
 
     mail = Mail(app)
     app.config["MAIL_APP"] = mail

@@ -68,18 +68,18 @@ permissions:
     groups: [everybody]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/tasks/*
+    uri: /tasks/*
 
   service-tasks:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/service-tasks
+    uri: /service-tasks
   user-groups-for-current-user:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/user-groups/for-current-user
+    uri: /user-groups/for-current-user
 
 
   # read all for everybody
@@ -87,86 +87,86 @@ permissions:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-groups/*
+    uri: /process-groups/*
   read-all-process-models:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-models/*
+    uri: /process-models/*
   read-all-process-instances-for-me:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-instances/for-me/*
+    uri: /process-instances/for-me/*
   read-process-instance-reports:
     groups: [everybody]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/reports/*
+    uri: /process-instances/reports/*
   processes-read:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/processes
+    uri: /processes
 
 
   manage-procurement-admin:
     groups: ["Project Lead"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement:*
+    uri: /process-groups/manage-procurement:*
   manage-procurement-admin-slash:
     groups: ["Project Lead"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement/*
+    uri: /process-groups/manage-procurement/*
   manage-procurement-admin-models:
     groups: ["Project Lead"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/manage-procurement:*
+    uri: /process-models/manage-procurement:*
   manage-procurement-admin-models-slash:
     groups: ["Project Lead"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/manage-procurement/*
+    uri: /process-models/manage-procurement/*
   manage-procurement-admin-instances:
     groups: ["Project Lead"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/manage-procurement:*
+    uri: /process-instances/manage-procurement:*
   manage-procurement-admin-instances-slash:
     groups: ["Project Lead"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/manage-procurement/*
+    uri: /process-instances/manage-procurement/*
 
   finance-admin:
     groups: ["Finance Team"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/manage-procurement:procurement:*
+    uri: /process-groups/manage-procurement:procurement:*
 
   manage-revenue-streams-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+    uri: /process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
 
   manage-procurement-invoice-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
+    uri: /process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
 
   manage-procurement-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-procurement:vendor-lifecycle-management:*
+    uri: /process-instances/manage-procurement:vendor-lifecycle-management:*
 
   create-test-instances:
     groups: ["test"]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/misc:test:*
+    uri: /process-instances/misc:test:*
