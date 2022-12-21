@@ -1,7 +1,5 @@
 """Script."""
 from __future__ import annotations
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel, ProcessInstanceNotFoundError
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 
 import importlib
 import os
@@ -12,9 +10,12 @@ from typing import Callable
 
 from flask_bpmn.api.api_error import ApiError
 
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceNotFoundError
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 
 # Generally speaking, having some global in a flask app is TERRIBLE.
 # This is here, because after loading the application this will never change under
@@ -23,7 +24,7 @@ SCRIPT_SUB_CLASSES = None
 
 
 class ScriptUnauthorizedForUserError(Exception):
-    pass
+    """ScriptUnauthorizedForUserError."""
 
 
 class Script:
@@ -84,10 +85,13 @@ class Script:
             instance = subclass()
 
             def check_script_permission() -> None:
+                """Check_script_permission."""
                 if subclass.requires_privileged_permissions():
                     script_function_name = get_script_function_name(subclass)
                     uri = f"/v1.0/can-run-privileged-script/{script_function_name}"
-                    process_instance = ProcessInstanceModel.query.filter_by(id=script_attributes_context.process_instance_id).first()
+                    process_instance = ProcessInstanceModel.query.filter_by(
+                        id=script_attributes_context.process_instance_id
+                    ).first()
                     if process_instance is None:
                         raise ProcessInstanceNotFoundError(
                             f"Could not find a process instance with id '{script_attributes_context.process_instance_id}' "
@@ -103,6 +107,7 @@ class Script:
                         )
 
             def run_script_if_allowed(*ar: Any, **kw: Any) -> Any:
+                """Run_script_if_allowed."""
                 check_script_permission()
                 return subclass.run(
                     instance,
@@ -110,9 +115,11 @@ class Script:
                     *ar,
                     **kw,
                 )
+
             return run_script_if_allowed
 
         def get_script_function_name(subclass: type[Script]) -> str:
+            """Get_script_function_name."""
             return subclass.__module__.split(".")[-1]
 
         execlist = {}

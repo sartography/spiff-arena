@@ -1,12 +1,10 @@
 """Test_get_localtime."""
-from flask.app import Flask
-from flask_bpmn.api.api_error import ApiError
 import pytest
-from spiffworkflow_backend.scripts.script import ScriptUnauthorizedForUserError
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+from flask.app import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from flask_bpmn.api.api_error import ApiError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
@@ -16,6 +14,9 @@ from spiffworkflow_backend.models.script_attributes_context import (
 )
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.add_permission import AddPermission
+from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceProcessor,
+)
 
 
 class TestAddPermission(BaseTest):
@@ -70,11 +71,12 @@ class TestAddPermission(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_add_permission_script_through_bpmn."""
         basic_user = self.find_or_create_user("basic_user")
         privileged_user = self.find_or_create_user("privileged_user")
         self.add_permissions_to_user(
             privileged_user,
-            target_uri="/v1.0/can-run-privileged-script/*",
+            target_uri="/v1.0/can-run-privileged-script/add_permission",
             permission_names=["create"],
         )
         process_model = load_test_spec(
