@@ -9,7 +9,7 @@ import { Tabs, TabList, Tab } from '@carbon/react';
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import ProcessInstanceListTable from '../components/ProcessInstanceListTable';
-import {getProcessModelFullIdentifierFromSearchParams, modifyProcessIdentifierForPathParam} from '../helpers';
+import { getProcessModelFullIdentifierFromSearchParams } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -34,9 +34,6 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
     if (processModelFullIdentifier === null) {
       return null;
     }
-    const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-      processModelFullIdentifier
-    );
 
     return (
       <ProcessBreadcrumb
