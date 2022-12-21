@@ -575,21 +575,21 @@ class AuthorizationService:
         """
         permissions_to_assign: list[PermissionToAssign] = []
         if target.startswith("PG:"):
-            process_group_identifier = target.removeprefix("PG:").replace(":", "/")
+            process_group_identifier = target.removeprefix("PG:").replace(":", "/").removeprefix('/')
             process_related_path_segment = f"{process_group_identifier}/*"
-            target_uris = []
             if process_group_identifier == "ALL":
                 process_related_path_segment = "*"
-                target_uris = [f"/process-groups/{process_related_path_segment}", f"/process-models/{process_related_path_segment}"]
+            target_uris = [f"/process-groups/{process_related_path_segment}", f"/process-models/{process_related_path_segment}"]
             permissions_to_assign = permissions_to_assign + cls.get_permissions_to_assign(permission, process_related_path_segment, target_uris)
 
         elif target.startswith("PM:"):
-            process_model_identifier = target.removeprefix("PM:").replace(":", "/")
+            process_model_identifier = target.removeprefix("PM:").replace(":", "/").removeprefix('/')
             process_related_path_segment = f"{process_model_identifier}/*"
-            target_uris = []
+
             if process_model_identifier == "ALL":
                 process_related_path_segment = "*"
-                target_uris = [f"/process-models/{process_related_path_segment}"]
+
+            target_uris = [f"/process-models/{process_related_path_segment}"]
             permissions_to_assign = permissions_to_assign + cls.get_permissions_to_assign(permission, process_related_path_segment, target_uris)
 
         elif target.startswith("BASIC"):
