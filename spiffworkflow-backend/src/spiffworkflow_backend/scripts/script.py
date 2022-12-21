@@ -1,5 +1,7 @@
 """Script."""
 from __future__ import annotations
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel, ProcessInstanceNotFoundError
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 
 import importlib
 import os
@@ -18,6 +20,10 @@ from spiffworkflow_backend.models.script_attributes_context import (
 # This is here, because after loading the application this will never change under
 # any known condition, and it is expensive to calculate it everytime.
 SCRIPT_SUB_CLASSES = None
+
+
+class ScriptUnauthorizedForUserError(Exception):
+    pass
 
 
 class Script:
@@ -42,6 +48,10 @@ class Script:
             % self.__class__.__name__
             + "does not properly implement the run function.",
         )
+
+    @staticmethod
+    def requires_privileged_permissions() -> bool:
+        return True
 
     @staticmethod
     def generate_augmented_list(
@@ -71,18 +81,41 @@ class Script:
             that we created.
             """
             instance = subclass()
-            return lambda *ar, **kw: subclass.run(
-                instance,
-                script_attributes_context,
-                *ar,
-                **kw,
-            )
+
+            def run_subclass(*ar: Any, **kw: Any) -> Any:
+                if subclass.requires_privileged_permissions():
+                    script_function_name = get_script_function_name(subclass)
+                    uri = f"/v1.0/can-run-privileged-script/{script_function_name}"
+                    process_instance = ProcessInstanceModel.query.filter_by(id=script_attributes_context.process_instance_id).first()
+                    if process_instance is None:
+                        raise ProcessInstanceNotFoundError(
+                            f"Could not find a process instance with id '{script_attributes_context.process_instance_id}' "
+                            f"when running script '{script_function_name}'"
+                        )
+                    user = process_instance.process_initiator
+                    has_permission = AuthorizationService.user_has_permission(
+                        user=user, permission="create", target_uri=uri
+                    )
+                    if not has_permission:
+                        raise ScriptUnauthorizedForUserError(
+                            f"User {user.username} does not have access to run privileged script '{script_function_name}'"
+                        )
+                return subclass.run(
+                    instance,
+                    script_attributes_context,
+                    *ar,
+                    **kw,
+                )
+            return run_subclass
+
+        def get_script_function_name(subclass: type[Script]) -> str:
+            return subclass.__module__.split(".")[-1]
 
         execlist = {}
         subclasses = Script.get_all_subclasses()
         for x in range(len(subclasses)):
             subclass = subclasses[x]
-            execlist[subclass.__module__.split(".")[-1]] = make_closure(
+            execlist[get_script_function_name(subclass)] = make_closure(
                 subclass, script_attributes_context=script_attributes_context
             )
         return execlist

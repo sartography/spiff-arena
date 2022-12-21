@@ -5,7 +5,6 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-// @ts-ignore
 import {
   Button,
   Modal,
@@ -15,6 +14,7 @@ import {
   Tab,
   TabPanels,
   TabPanel,
+// @ts-ignore
 } from '@carbon/react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
