@@ -14,10 +14,6 @@ from spiffworkflow_backend.services.group_service import GroupService
 class AddPermission(Script):
     """AddUserToGroup."""
 
-    @staticmethod
-    def requires_privileged_permissions() -> bool:
-        return True
-
     def get_description(self) -> str:
         """Get_description."""
         return """Add a permission to a group. ex: add_permission("read", "test/*", "Editors") """
