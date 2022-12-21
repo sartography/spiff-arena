@@ -56,6 +56,8 @@ export default function ProcessModelEditDiagram() {
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
   const [processes, setProcesses] = useState<ProcessReference[]>([]);
+  const [displaySaveFileMessage, setDisplaySaveFileMessage] =
+    useState<boolean>(false);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -157,6 +159,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const navigateToProcessModelFile = (_result: any) => {
+    setDisplaySaveFileMessage(true);
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${searchParams.get(
         'file_type'
@@ -167,9 +170,8 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
-  const [displaySaveFileMessage, setDisplaySaveFileMessage] =
-    useState<boolean>(false);
   const saveDiagram = (bpmnXML: any, fileName = params.file_name) => {
+    setDisplaySaveFileMessage(false);
     setErrorMessage(null);
     setBpmnXmlForDiagramRendering(bpmnXML);
 
@@ -204,7 +206,6 @@ export default function ProcessModelEditDiagram() {
     // after saving the file, make sure we null out newFileName
     // so it does not get used over the params
     setNewFileName('');
-    setDisplaySaveFileMessage(true);
   };
 
   const onDeleteFile = (fileName = params.file_name) => {
