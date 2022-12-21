@@ -144,3 +144,44 @@ class TestAuthorizationService(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, finance_user, human_task
         )
+
+    def test_explode_permissions_all_on_process_model(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        expected_permissions = [
+            ('/logs/some-process-group/some-process-model/*', 'create'),
+            ('/logs/some-process-group/some-process-model/*', 'delete'),
+            ('/logs/some-process-group/some-process-model/*', 'read'),
+            ('/logs/some-process-group/some-process-model/*', 'update'),
+            ('/process-groups/some-process-group/some-process-model/*', 'create'),
+            ('/process-groups/some-process-group/some-process-model/*', 'delete'),
+            ('/process-groups/some-process-group/some-process-model/*', 'read'),
+            ('/process-groups/some-process-group/some-process-model/*', 'update'),
+            ('/process-instance-suspend/some-process-group/some-process-model/*', 'create'),
+            ('/process-instance-suspend/some-process-group/some-process-model/*', 'delete'),
+            ('/process-instance-suspend/some-process-group/some-process-model/*', 'read'),
+            ('/process-instance-suspend/some-process-group/some-process-model/*', 'update'),
+            ('/process-instance-terminate/some-process-group/some-process-model/*', 'create'),
+            ('/process-instance-terminate/some-process-group/some-process-model/*', 'delete'),
+            ('/process-instance-terminate/some-process-group/some-process-model/*', 'read'),
+            ('/process-instance-terminate/some-process-group/some-process-model/*', 'update'),
+            ('/process-instances/some-process-group/some-process-model/*', 'create'),
+            ('/process-instances/some-process-group/some-process-model/*', 'delete'),
+            ('/process-instances/some-process-group/some-process-model/*', 'read'),
+            ('/process-instances/some-process-group/some-process-model/*', 'update'),
+            ('/process-models/some-process-group/some-process-model/*', 'create'),
+            ('/process-models/some-process-group/some-process-model/*', 'delete'),
+            ('/process-models/some-process-group/some-process-model/*', 'read'),
+            ('/process-models/some-process-group/some-process-model/*', 'update'),
+            ('/task-data/some-process-group/some-process-model/*', 'create'),
+            ('/task-data/some-process-group/some-process-model/*', 'delete'),
+            ('/task-data/some-process-group/some-process-model/*', 'read'),
+            ('/task-data/some-process-group/some-process-model/*', 'update'),
+        ]
+        permissions_to_assign = AuthorizationService.explode_permissions('all', 'PG:/some-process-group/some-process-model')
+        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        assert permissions_to_assign_tuples == expected_permissions
