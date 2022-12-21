@@ -17,7 +17,7 @@ from spiffworkflow_backend.models.task import MultiInstanceType
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.git_service import GitService, GitCommandError
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -36,7 +36,10 @@ class ProcessInstanceService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
-        current_git_revision = GitService.get_current_revision()
+        try:
+            current_git_revision = GitService.get_current_revision()
+        except GitCommandError as ge:
+            current_git_revision = ""
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
             process_initiator=user,
