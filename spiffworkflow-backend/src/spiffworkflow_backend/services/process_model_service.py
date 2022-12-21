@@ -224,10 +224,10 @@ class ProcessModelService(FileSystemService):
             new_process_model_list = []
             for process_model in process_models:
                 uri = f"/v1.0/process-instances/{process_model.id.replace('/', ':')}"
-                result = AuthorizationService.user_has_permission(
+                has_permission = AuthorizationService.user_has_permission(
                     user=user, permission="create", target_uri=uri
                 )
-                if result:
+                if has_permission:
                     new_process_model_list.append(process_model)
             return new_process_model_list
 
