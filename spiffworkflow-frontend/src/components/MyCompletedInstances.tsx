@@ -8,7 +8,7 @@ export default function MyCompletedInstances() {
       filtersEnabled={false}
       paginationQueryParamPrefix={paginationQueryParamPrefix}
       perPageOptions={[2, 5, 25]}
-      reportIdentifier="system_report_instances_initiated_by_me"
+      reportIdentifier="system_report_completed_instances_initiated_by_me"
       showReports={false}
     />
   );
