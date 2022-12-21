@@ -324,13 +324,9 @@ class BaseTest:
         permission_names: Optional[list[str]] = None,
     ) -> UserModel:
         """Add_permissions_to_user."""
-        permission_target = PermissionTargetModel.query.filter_by(
-            uri=target_uri
-        ).first()
-        if permission_target is None:
-            permission_target = PermissionTargetModel(uri=target_uri)
-            db.session.add(permission_target)
-            db.session.commit()
+        permission_target = AuthorizationService.find_or_create_permission_target(
+            target_uri
+        )
 
         if permission_names is None:
             permission_names = [member.name for member in Permission]

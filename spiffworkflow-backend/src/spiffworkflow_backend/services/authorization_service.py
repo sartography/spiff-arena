@@ -19,6 +19,7 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
 
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
@@ -75,6 +76,7 @@ class AuthorizationService:
     ) -> bool:
         """Has_permission."""
         principal_ids = [p.id for p in principals]
+        target_uri_normalized = target_uri.removeprefix(V1_API_PATH_PREFIX)
 
         permission_assignments = (
             PermissionAssignmentModel.query.filter(
@@ -84,10 +86,12 @@ class AuthorizationService:
             .join(PermissionTargetModel)
             .filter(
                 or_(
-                    text(f"'{target_uri}' LIKE permission_target.uri"),
+                    text(f"'{target_uri_normalized}' LIKE permission_target.uri"),
                     # to check for exact matches as well
                     # see test_user_can_access_base_path_when_given_wildcard_permission unit test
-                    text(f"'{target_uri}' = replace(permission_target.uri, '/%', '')"),
+                    text(
+                        f"'{target_uri_normalized}' = replace(permission_target.uri, '/%', '')"
+                    ),
                 )
             )
             .all()
@@ -221,11 +225,12 @@ class AuthorizationService:
     def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
         """Find_or_create_permission_target."""
         uri_with_percent = re.sub(r"\*", "%", uri)
+        target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
         permission_target: Optional[
             PermissionTargetModel
-        ] = PermissionTargetModel.query.filter_by(uri=uri_with_percent).first()
+        ] = PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
         if permission_target is None:
-            permission_target = PermissionTargetModel(uri=uri_with_percent)
+            permission_target = PermissionTargetModel(uri=target_uri_normalized)
             db.session.add(permission_target)
             db.session.commit()
         return permission_target
