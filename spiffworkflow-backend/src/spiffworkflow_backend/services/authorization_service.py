@@ -1,4 +1,5 @@
 """Authorization_service."""
+from dataclasses import dataclass
 import inspect
 import re
 from hashlib import sha256
@@ -44,6 +45,21 @@ class HumanTaskNotFoundError(Exception):
 
 class UserDoesNotHaveAccessToTaskError(Exception):
     """UserDoesNotHaveAccessToTaskError."""
+
+
+@dataclass
+class PermissionToAssign:
+    permission: str
+    target_uri: str
+
+
+PATH_SEGMENTS_FOR_PERMISSION_ALL = [
+    '/logs',
+    '/process-instances',
+    '/process-instance-suspend',
+    '/process-instance-terminate',
+    '/task-data',
+]
 
 
 class AuthorizationService:
@@ -513,6 +529,93 @@ class AuthorizationService:
 
         # this cannot be None so ignore mypy
         return user_model  # type: ignore
+
+    @classmethod
+    def get_permissions_to_assign(cls, permission: str, process_related_path_segment: str, target_uris: list[str]) -> list[PermissionToAssign]:
+        permissions = [permission]
+        if permission == "all":
+            permissions = ['create', 'read', 'update', 'delete']
+
+        permissions_to_assign: list[PermissionToAssign] = []
+
+        # we were thinking that if you can start an instance, you ought to be able to view your own instances.
+        if permission == "start":
+            target_uri = f"/process-instances/{process_related_path_segment}"
+            permissions_to_assign.append(PermissionToAssign(permission='create', target_uri=target_uri))
+            target_uri = f"/process-instances/for-me/{process_related_path_segment}"
+            permissions_to_assign.append(PermissionToAssign(permission='read', target_uri=target_uri))
+
+        else:
+            if permission == 'all':
+                for path_segment in PATH_SEGMENTS_FOR_PERMISSION_ALL:
+                    target_uris.append(f"{path_segment}/{process_related_path_segment}")
+
+            for target_uri in target_uris:
+                for permission in permissions:
+                    permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri=target_uri))
+
+        return permissions_to_assign
+
+    @classmethod
+    def explode_permissions(cls, permission: str, target: str) -> list[PermissionToAssign]:
+        """Explodes given permissions to and returns list of PermissionToAssign objects.
+
+        These can be used to then iterate through and inserted into the database.
+        Target Macros:
+            PG:[process_group_identifier]
+                * affects given process-group and all sub process-groups and process-models
+            PM:[process_model_identifier]
+                * affects given process-model
+            BASIC
+                * Basic access to complete tasks and use the site
+
+        Permission Macros:
+            all - create, read, update, delete
+            start - create process-instances (aka instantiate or start a process-model)
+        """
+        permissions_to_assign: list[PermissionToAssign] = []
+        if target.startswith("PG:"):
+            process_group_identifier = target.removeprefix("PG:").replace(":", "/")
+            process_related_path_segment = f"{process_group_identifier}/*"
+            target_uris = []
+            if process_group_identifier == "ALL":
+                process_related_path_segment = "*"
+                target_uris = [f"/process-groups/{process_related_path_segment}", f"/process-models/{process_related_path_segment}"]
+            permissions_to_assign = permissions_to_assign + cls.get_permissions_to_assign(permission, process_related_path_segment, target_uris)
+
+        elif target.startswith("PM:"):
+            process_model_identifier = target.removeprefix("PM:").replace(":", "/")
+            process_related_path_segment = f"{process_model_identifier}/*"
+            target_uris = []
+            if process_model_identifier == "ALL":
+                process_related_path_segment = "*"
+                target_uris = [f"/process-models/{process_related_path_segment}"]
+            permissions_to_assign = permissions_to_assign + cls.get_permissions_to_assign(permission, process_related_path_segment, target_uris)
+
+        elif target.startswith("BASIC"):
+            permissions_to_assign.append(PermissionToAssign(permission='read', target_uri="/process-instances/for-me"))
+            permissions_to_assign.append(PermissionToAssign(permission='read', target_uri="/processes"))
+            permissions_to_assign.append(PermissionToAssign(permission='read', target_uri="/service-tasks"))
+            permissions_to_assign.append(PermissionToAssign(permission='read', target_uri="/user-groups/for-current-user"))
+
+            for permission in ['create', 'read', 'update', 'delete']:
+                permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*"))
+                permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/tasks/*"))
+        else:
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri=target))
+
+        return permissions_to_assign
+
+    @classmethod
+    def add_permission_from_uri_or_macro(cls, group_identifier: str, permission: str, target: str) -> None:
+        """Add_permission_from_uri_or_macro."""
+        group = GroupService.find_or_create_group(group_identifier)
+        permissions_to_assign = cls.explode_permissions(permission, target)
+        for permission_to_assign in permissions_to_assign:
+            permission_target = AuthorizationService.find_or_create_permission_target(permission_to_assign.target_uri)
+            AuthorizationService.create_permission_for_principal(
+                group.principal, permission_target, permission_to_assign.permission
+            )
 
 
 class KeycloakAuthorization:

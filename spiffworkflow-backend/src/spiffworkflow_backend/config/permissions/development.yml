@@ -129,37 +129,6 @@ permissions:
     uri: /processes
 
 
-  manage-procurement-admin:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-groups/manage-procurement:*
-  manage-procurement-admin-slash:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-groups/manage-procurement/*
-  manage-procurement-admin-models:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-models/manage-procurement:*
-  manage-procurement-admin-models-slash:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-models/manage-procurement/*
-  manage-procurement-admin-instances:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-instances/manage-procurement:*
-  manage-procurement-admin-instances-slash:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-instances/manage-procurement/*
-
   finance-admin:
     groups: ["Finance Team"]
     users: []
