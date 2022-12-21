@@ -13,6 +13,12 @@ export interface RecentProcessModel {
 
 export interface ProcessInstanceTask {
   id: string;
+  process_model_display_name: string;
+  process_model_identifier: string;
+  task_title: string;
+  lane_assignment_id: string;
+  process_instance_status: number;
+  updated_at_in_seconds: number;
   state: string;
   process_identifier: string;
   name: string;
@@ -46,6 +52,10 @@ export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
   process_model_display_name: string;
+  status: string;
+  start_in_seconds: number | null;
+  end_in_seconds: number | null;
+  bpmn_xml_file_contents?: string;
   spiff_step?: number;
 }
 

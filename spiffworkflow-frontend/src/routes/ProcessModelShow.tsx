@@ -264,25 +264,27 @@ export default function ProcessModelShow() {
       </Can>
     );
 
-    elements.push(
-      <Can
-        I="DELETE"
-        a={targetUris.processModelFileCreatePath}
-        ability={ability}
-      >
-        <ButtonWithConfirmation
-          kind="ghost"
-          renderIcon={TrashCan}
-          iconDescription="Delete File"
-          hasIconOnly
-          description={`Delete file: ${processModelFile.name}`}
-          onConfirmation={() => {
-            onDeleteFile(processModelFile.name);
-          }}
-          confirmButtonLabel="Delete"
-        />
-      </Can>
-    );
+    if (!isPrimaryBpmnFile) {
+      elements.push(
+        <Can
+          I="DELETE"
+          a={targetUris.processModelFileCreatePath}
+          ability={ability}
+        >
+          <ButtonWithConfirmation
+            kind="ghost"
+            renderIcon={TrashCan}
+            iconDescription="Delete File"
+            hasIconOnly
+            description={`Delete file: ${processModelFile.name}`}
+            onConfirmation={() => {
+              onDeleteFile(processModelFile.name);
+            }}
+            confirmButtonLabel="Delete"
+          />
+        </Can>
+      );
+    }
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
       elements.push(
         <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
@@ -360,27 +362,83 @@ export default function ProcessModelShow() {
     );
   };
 
+  const [fileUploadEvent, setFileUploadEvent] = useState(null);
+  const [duplicateFilename, setDuplicateFilename] = useState<String>('');
+  const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
+    useState(false);
+
+  const doFileUpload = (event: any) => {
+    event.preventDefault();
+    const url = `/process-models/${modifiedProcessModelId}/files`;
+    const formData = new FormData();
+    formData.append('file', filesToUpload[0]);
+    formData.append('fileName', filesToUpload[0].name);
+    HttpService.makeCallToBackend({
+      path: url,
+      successCallback: onUploadedCallback,
+      httpMethod: 'POST',
+      postBody: formData,
+    });
+    setFilesToUpload(null);
+  };
+
   const handleFileUploadCancel = () => {
     setShowFileUploadModal(false);
     setFilesToUpload(null);
   };
+  const handleOverwriteFileConfirm = () => {
+    setShowOverwriteConfirmationPrompt(false);
+    doFileUpload(fileUploadEvent);
+  };
+  const handleOverwriteFileCancel = () => {
+    setShowOverwriteConfirmationPrompt(false);
+    setFilesToUpload(null);
+  };
+
+  const confirmOverwriteFileDialog = () => {
+    return (
+      <Modal
+        danger
+        open={showOverwriteConfirmationPrompt}
+        data-qa="file-overwrite-modal-confirmation-dialog"
+        modalHeading={`Overwrite the file: ${duplicateFilename}`}
+        modalLabel="Overwrite file?"
+        primaryButtonText="Yes"
+        secondaryButtonText="Cancel"
+        onSecondarySubmit={handleOverwriteFileCancel}
+        onRequestSubmit={handleOverwriteFileConfirm}
+        onRequestClose={handleOverwriteFileCancel}
+      />
+    );
+  };
+  const displayOverwriteConfirmation = (filename: String) => {
+    setDuplicateFilename(filename);
+    setShowOverwriteConfirmationPrompt(true);
+  };
+
+  const checkDuplicateFile = (event: any) => {
+    if (processModel) {
+      let foundExistingFile = false;
+      if (processModel.files.length > 0) {
+        processModel.files.forEach((file) => {
+          if (file.name === filesToUpload[0].name) {
+            foundExistingFile = true;
+          }
+        });
+      }
+      if (foundExistingFile) {
+        displayOverwriteConfirmation(filesToUpload[0].name);
+        setFileUploadEvent(event);
+      } else {
+        doFileUpload(event);
+      }
+    }
+    return null;
+  };
 
   const handleFileUpload = (event: any) => {
-    if (processModel) {
-      event.preventDefault();
-      const url = `/process-models/${modifiedProcessModelId}/files`;
-      const formData = new FormData();
-      formData.append('file', filesToUpload[0]);
-      formData.append('fileName', filesToUpload[0].name);
-      HttpService.makeCallToBackend({
-        path: url,
-        successCallback: onUploadedCallback,
-        httpMethod: 'POST',
-        postBody: formData,
-      });
-    }
+    checkDuplicateFile(event);
     setShowFileUploadModal(false);
-    setFilesToUpload(null);
   };
 
   const fileUploadModal = () => {
@@ -416,9 +474,6 @@ export default function ProcessModelShow() {
   };
 
   const processModelFilesSection = () => {
-    if (!processModel) {
-      return null;
-    }
     return (
       <Grid
         condensed
@@ -500,7 +555,7 @@ export default function ProcessModelShow() {
       return (
         <Grid fullWidth condensed>
           <Column sm={{ span: 3 }} md={{ span: 4 }} lg={{ span: 3 }}>
-            <h2>Process Instances</h2>
+            <h2>My Process Instances</h2>
           </Column>
           <Column
             sm={{ span: 1, offset: 3 }}
@@ -548,6 +603,7 @@ export default function ProcessModelShow() {
     return (
       <>
         {fileUploadModal()}
+        {confirmOverwriteFileDialog()}
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
@@ -619,6 +675,7 @@ export default function ProcessModelShow() {
           {processInstanceListTableButton()}
           <ProcessInstanceListTable
             filtersEnabled={false}
+            variant="for-me"
             processModelFullIdentifier={processModel.id}
             perPageOptions={[2, 5, 25]}
             showReports={false}

@@ -79,6 +79,8 @@ type OwnProps = {
   textToShowIfEmpty?: string;
   paginationClassName?: string;
   autoReload?: boolean;
+  additionalParams?: string;
+  variant?: string;
 };
 
 interface dateParameters {
@@ -90,12 +92,18 @@ export default function ProcessInstanceListTable({
   processModelFullIdentifier,
   paginationQueryParamPrefix,
   perPageOptions,
+  additionalParams,
   showReports = true,
   reportIdentifier,
   textToShowIfEmpty,
   paginationClassName,
   autoReload = false,
+  variant = 'for-me',
 }: OwnProps) {
+  let apiPath = '/process-instances/for-me';
+  if (variant === 'all') {
+    apiPath = '/process-instances';
+  }
   const params = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -123,6 +131,11 @@ export default function ProcessInstanceListTable({
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
+
+  const processInstancePathPrefix =
+    variant === 'all'
+      ? '/admin/process-instances'
+      : '/admin/process-instances/for-me';
 
   const [processStatusAllOptions, setProcessStatusAllOptions] = useState<any[]>(
     []
@@ -253,8 +266,12 @@ export default function ProcessInstanceListTable({
         }
       );
 
+      if (additionalParams) {
+        queryParamString += `&${additionalParams}`;
+      }
+
       HttpService.makeCallToBackend({
-        path: `/process-instances?${queryParamString}`,
+        path: `${apiPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
       });
     }
@@ -320,6 +337,8 @@ export default function ProcessInstanceListTable({
     processModelFullIdentifier,
     perPageOptions,
     reportIdentifier,
+    additionalParams,
+    apiPath,
   ]);
 
   // This sets the filter data using the saved reports returned from the initial instance_list query.
@@ -509,7 +528,7 @@ export default function ProcessInstanceListTable({
 
     setErrorMessage(null);
     setProcessInstanceReportJustSaved(null);
-    navigate(`/admin/process-instances?${queryParamString}`);
+    navigate(`${processInstancePathPrefix}?${queryParamString}`);
   };
 
   const dateComponent = (
@@ -608,7 +627,7 @@ export default function ProcessInstanceListTable({
 
     setErrorMessage(null);
     setProcessInstanceReportJustSaved(mode || null);
-    navigate(`/admin/process-instances${queryParamString}`);
+    navigate(`${processInstancePathPrefix}${queryParamString}`);
   };
 
   const reportColumns = () => {
@@ -843,8 +862,8 @@ export default function ProcessInstanceListTable({
             return null;
           }}
           shouldFilterItem={shouldFilterReportColumn}
-          placeholder="Choose a report column"
-          titleText="Report Column"
+          placeholder="Choose a column to show"
+          titleText="Column"
         />
       );
     }
@@ -893,7 +912,7 @@ export default function ProcessInstanceListTable({
               kind="ghost"
               size="sm"
               className={`button-tag-icon ${tagTypeClass}`}
-              title={`Edit ${reportColumnForEditing.accessor}`}
+              title={`Edit ${reportColumnForEditing.accessor} column`}
               onClick={() => {
                 setReportColumnToOperateOn(reportColumnForEditing);
                 setShowReportColumnForm(true);
@@ -921,7 +940,7 @@ export default function ProcessInstanceListTable({
           <Button
             data-qa="add-column-button"
             renderIcon={AddAlt}
-            iconDescription="Filter Options"
+            iconDescription="Column options"
             className="with-tiny-top-margin"
             kind="ghost"
             hasIconOnly
@@ -1074,7 +1093,7 @@ export default function ProcessInstanceListTable({
       return (
         <Link
           data-qa="process-instance-show-link"
-          to={`/admin/process-instances/${modifiedProcessModelId}/${id}`}
+          to={`${processInstancePathPrefix}/${modifiedProcessModelId}/${id}`}
           title={`View process instance ${id}`}
         >
           {id}

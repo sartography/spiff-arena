@@ -15,7 +15,6 @@ groups:
         jarrad,
         elizabeth,
         jon,
-        natalia,
       ]
 
   Finance Team:
@@ -31,7 +30,6 @@ groups:
         jarrad,
         elizabeth,
         jon,
-        natalia,
         sasha,
         fin,
         fin1,
@@ -56,6 +54,8 @@ groups:
         core,
         harmeet,
       ]
+  test:
+    users: [natalia]
 
 permissions:
   admin:
@@ -75,6 +75,11 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/service-tasks
+  user-groups-for-current-user:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /v1.0/user-groups/for-current-user
 
 
   # read all for everybody
@@ -88,27 +93,21 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /v1.0/process-models/*
-  read-all-process-instance:
+  read-all-process-instances-for-me:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-instances/*
+    uri: /v1.0/process-instances/for-me/*
   read-process-instance-reports:
     groups: [everybody]
     users: []
-    allowed_permissions: [read]
+    allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-instances/reports/*
   processes-read:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
     uri: /v1.0/processes
-
-  task-data-read:
-    groups: [demo]
-    users: []
-    allowed_permissions: [read]
-    uri: /v1.0/task-data/*
 
 
   manage-procurement-admin:
@@ -148,35 +147,26 @@ permissions:
     allowed_permissions: [create, read, update, delete]
     uri: /v1.0/process-groups/manage-procurement:procurement:*
 
-  manage-revenue-streams-instantiate:
-    groups: ["core-contributor", "demo"]
-    users: []
-    allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
   manage-revenue-streams-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
     uri: /v1.0/process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
 
-  manage-procurement-invoice-instantiate:
-    groups: ["core-contributor", "demo"]
-    users: []
-    allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-procurement:procurement:core-contributor-invoice-management:*
   manage-procurement-invoice-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
     uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
 
-  manage-procurement-instantiate:
-    groups: ["core-contributor", "demo"]
-    users: []
-    allowed_permissions: [create]
-    uri: /v1.0/process-models/manage-procurement:vendor-lifecycle-management:*
   manage-procurement-instances:
     groups: ["core-contributor", "demo"]
     users: []
     allowed_permissions: [create, read]
     uri: /v1.0/process-instances/manage-procurement:vendor-lifecycle-management:*
+
+  create-test-instances:
+    groups: ["test"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /v1.0/process-instances/misc:test:*

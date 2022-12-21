@@ -49,14 +49,14 @@ class TestProcessInstanceProcessor(BaseTest):
             == "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
         )
 
-    def test_sets_permission_correctly_on_active_task(
+    def test_sets_permission_correctly_on_human_task(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_sets_permission_correctly_on_active_task."""
+        """Test_sets_permission_correctly_on_human_task."""
         self.create_process_group(
             client, with_super_admin_user, "test_group", "test_group"
         )
@@ -80,63 +80,63 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
-        assert len(process_instance.active_tasks) == 1
-        active_task = process_instance.active_tasks[0]
-        assert active_task.lane_assignment_id is None
-        assert len(active_task.potential_owners) == 1
-        assert active_task.potential_owners[0] == initiator_user
+        assert len(process_instance.human_tasks) == 1
+        human_task = process_instance.human_tasks[0]
+        assert human_task.lane_assignment_id is None
+        assert len(human_task.potential_owners) == 1
+        assert human_task.potential_owners[0] == initiator_user
 
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, finance_user, active_task
+                processor, spiff_task, {}, finance_user, human_task
             )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user, active_task
+            processor, spiff_task, {}, initiator_user, human_task
         )
 
-        assert len(process_instance.active_tasks) == 1
-        active_task = process_instance.active_tasks[0]
-        assert active_task.lane_assignment_id == finance_group.id
-        assert len(active_task.potential_owners) == 1
-        assert active_task.potential_owners[0] == finance_user
+        assert len(process_instance.human_tasks) == 1
+        human_task = process_instance.human_tasks[0]
+        assert human_task.lane_assignment_id == finance_group.id
+        assert len(human_task.potential_owners) == 1
+        assert human_task.potential_owners[0] == finance_user
 
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, initiator_user, active_task
+                processor, spiff_task, {}, initiator_user, human_task
             )
 
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, finance_user, active_task
+            processor, spiff_task, {}, finance_user, human_task
         )
-        assert len(process_instance.active_tasks) == 1
-        active_task = process_instance.active_tasks[0]
-        assert active_task.lane_assignment_id is None
-        assert len(active_task.potential_owners) == 1
-        assert active_task.potential_owners[0] == initiator_user
+        assert len(process_instance.human_tasks) == 1
+        human_task = process_instance.human_tasks[0]
+        assert human_task.lane_assignment_id is None
+        assert len(human_task.potential_owners) == 1
+        assert human_task.potential_owners[0] == initiator_user
 
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user, active_task
+            processor, spiff_task, {}, initiator_user, human_task
         )
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
-    def test_sets_permission_correctly_on_active_task_when_using_dict(
+    def test_sets_permission_correctly_on_human_task_when_using_dict(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_sets_permission_correctly_on_active_task_when_using_dict."""
+        """Test_sets_permission_correctly_on_human_task_when_using_dict."""
         self.create_process_group(
             client, with_super_admin_user, "test_group", "test_group"
         )
@@ -163,94 +163,97 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True)
         processor.save()
 
-        assert len(process_instance.active_tasks) == 1
-        active_task = process_instance.active_tasks[0]
-        assert active_task.lane_assignment_id is None
-        assert len(active_task.potential_owners) == 1
-        assert active_task.potential_owners[0] == initiator_user
+        assert len(process_instance.human_tasks) == 1
+        human_task = process_instance.human_tasks[0]
+        assert human_task.lane_assignment_id is None
+        assert len(human_task.potential_owners) == 1
+        assert human_task.potential_owners[0] == initiator_user
 
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, finance_user_three, active_task
+                processor, spiff_task, {}, finance_user_three, human_task
             )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user, active_task
+            processor, spiff_task, {}, initiator_user, human_task
         )
+        assert human_task.completed_by_user_id == initiator_user.id
 
-        assert len(process_instance.active_tasks) == 1
-        active_task = process_instance.active_tasks[0]
-        assert active_task.lane_assignment_id is None
-        assert len(active_task.potential_owners) == 2
-        assert active_task.potential_owners == [finance_user_three, finance_user_four]
+        assert len(process_instance.human_tasks) == 1
+        human_task = process_instance.human_tasks[0]
+        assert human_task.lane_assignment_id is None
+        assert len(human_task.potential_owners) == 2
+        assert human_task.potential_owners == [finance_user_three, finance_user_four]
 
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, initiator_user, active_task
+                processor, spiff_task, {}, initiator_user, human_task
             )
 
         g.user = finance_user_three
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, finance_user_three, active_task
+            processor, spiff_task, {}, finance_user_three, human_task
         )
-        assert len(process_instance.active_tasks) == 1
-        active_task = process_instance.active_tasks[0]
-        assert active_task.lane_assignment_id is None
-        assert len(active_task.potential_owners) == 1
-        assert active_task.potential_owners[0] == finance_user_four
+        assert human_task.completed_by_user_id == finance_user_three.id
+        assert len(process_instance.human_tasks) == 1
+        human_task = process_instance.human_tasks[0]
+        assert human_task.lane_assignment_id is None
+        assert len(human_task.potential_owners) == 1
+        assert human_task.potential_owners[0] == finance_user_four
 
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, initiator_user, active_task
+                processor, spiff_task, {}, initiator_user, human_task
             )
 
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, finance_user_four, active_task
+            processor, spiff_task, {}, finance_user_four, human_task
         )
-        assert len(process_instance.active_tasks) == 1
-        active_task = process_instance.active_tasks[0]
-        assert active_task.lane_assignment_id is None
-        assert len(active_task.potential_owners) == 1
-        assert active_task.potential_owners[0] == initiator_user
+        assert human_task.completed_by_user_id == finance_user_four.id
+        assert len(process_instance.human_tasks) == 1
+        human_task = process_instance.human_tasks[0]
+        assert human_task.lane_assignment_id is None
+        assert len(human_task.potential_owners) == 1
+        assert human_task.potential_owners[0] == initiator_user
 
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user, active_task
+            processor, spiff_task, {}, initiator_user, human_task
         )
 
-        assert len(process_instance.active_tasks) == 1
-        active_task = process_instance.active_tasks[0]
+        assert len(process_instance.human_tasks) == 1
+        human_task = process_instance.human_tasks[0]
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            active_task.task_name, processor.bpmn_process_instance
+            human_task.task_name, processor.bpmn_process_instance
         )
         with pytest.raises(UserDoesNotHaveAccessToTaskError):
             ProcessInstanceService.complete_form_task(
-                processor, spiff_task, {}, initiator_user, active_task
+                processor, spiff_task, {}, initiator_user, human_task
             )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, testadmin1, active_task
+            processor, spiff_task, {}, testadmin1, human_task
         )
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
 
-    def test_does_not_recreate_active_tasks_on_multiple_saves(
+    def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_sets_permission_correctly_on_active_task_when_using_dict."""
+        """Test_does_not_recreate_human_tasks_on_multiple_saves."""
         self.create_process_group(
             client, with_super_admin_user, "test_group", "test_group"
         )
@@ -273,11 +276,11 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        assert len(process_instance.active_tasks) == 1
-        initial_active_task_id = process_instance.active_tasks[0].id
+        assert len(process_instance.human_tasks) == 1
+        initial_human_task_id = process_instance.human_tasks[0].id
 
-        # save again to ensure we go attempt to process the active tasks again
+        # save again to ensure we go attempt to process the human tasks again
         processor.save()
 
-        assert len(process_instance.active_tasks) == 1
-        assert initial_active_task_id == process_instance.active_tasks[0].id
+        assert len(process_instance.human_tasks) == 1
+        assert initial_human_task_id == process_instance.human_tasks[0].id

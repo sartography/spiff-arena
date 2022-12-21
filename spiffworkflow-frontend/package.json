@@ -104,7 +104,7 @@
     "@cypress/grep": "^3.1.0",
     "@typescript-eslint/eslint-plugin": "^5.30.5",
     "@typescript-eslint/parser": "^5.30.6",
-    "cypress": "^10.8.0",
+    "cypress": "^12",
     "eslint": "^8.19.0",
     "eslint_d": "^12.2.0",
     "eslint-config-airbnb": "^19.0.4",
