@@ -69,7 +69,7 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /process-models/*
-  
+
   # basic perms for everybody
   read-all-process-instances-for-me:
     groups: [everybody]
