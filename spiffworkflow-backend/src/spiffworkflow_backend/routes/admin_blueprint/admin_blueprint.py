@@ -141,7 +141,7 @@ def process_model_save(process_model_id: str, file_name: str) -> Union[str, Resp
 @admin_blueprint.route("/process-models/<process_model_id>/run", methods=["GET"])
 def process_model_run(process_model_id: str) -> Union[str, Response]:
     """Process_model_run."""
-    user = UserService.create_user("internal", "Mr. Test", username="Mr. Test")
+    user = UserService.create_user("Mr. Test", "internal", "Mr. Test")
     process_instance = (
         ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model_id, user

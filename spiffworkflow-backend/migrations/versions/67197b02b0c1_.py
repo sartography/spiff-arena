@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: b99a4cb94b5b
+Revision ID: 67197b02b0c1
 Revises: 
-Create Date: 2022-12-20 10:45:08.295317
+Create Date: 2022-12-20 15:05:31.545567
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b99a4cb94b5b'
+revision = '67197b02b0c1'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -72,16 +72,15 @@ def upgrade():
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=255), nullable=False),
-    sa.Column('uid', sa.String(length=50), nullable=True),
     sa.Column('service', sa.String(length=50), nullable=False),
     sa.Column('service_id', sa.String(length=255), nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=True),
+    sa.Column('display_name', sa.String(length=255), nullable=True),
     sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('service', 'service_id', name='service_key'),
-    sa.UniqueConstraint('uid')
+    sa.UniqueConstraint('username')
     )
     op.create_table('message_correlation_property',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -175,6 +174,14 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id', 'group_id', name='user_group_assignment_unique')
+    )
+    op.create_table('user_group_assignment_waiting',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('username', sa.String(length=255), nullable=False),
+    sa.Column('group_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['group_id'], ['group.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('username', 'group_id', name='user_group_assignment_staged_unique')
     )
     op.create_table('human_task',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -309,6 +316,7 @@ def downgrade():
     op.drop_table('message_correlation')
     op.drop_index(op.f('ix_human_task_completed'), table_name='human_task')
     op.drop_table('human_task')
+    op.drop_table('user_group_assignment_waiting')
     op.drop_table('user_group_assignment')
     op.drop_table('secret')
     op.drop_table('refresh_token')

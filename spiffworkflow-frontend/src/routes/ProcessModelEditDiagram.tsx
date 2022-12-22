@@ -56,6 +56,8 @@ export default function ProcessModelEditDiagram() {
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
   const [processes, setProcesses] = useState<ProcessReference[]>([]);
+  const [displaySaveFileMessage, setDisplaySaveFileMessage] =
+    useState<boolean>(false);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -79,10 +81,10 @@ export default function ProcessModelEditDiagram() {
 
   interface ScriptUnitTestResult {
     result: boolean;
-    context: object;
-    error: string;
-    line_number: number;
-    offset: number;
+    context?: object;
+    error?: string;
+    line_number?: number;
+    offset?: number;
   }
 
   const [currentScriptUnitTest, setCurrentScriptUnitTest] =
@@ -157,6 +159,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const navigateToProcessModelFile = (_result: any) => {
+    setDisplaySaveFileMessage(true);
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${searchParams.get(
         'file_type'
@@ -167,9 +170,8 @@ export default function ProcessModelEditDiagram() {
     }
   };
 
-  const [displaySaveFileMessage, setDisplaySaveFileMessage] =
-    useState<boolean>(false);
   const saveDiagram = (bpmnXML: any, fileName = params.file_name) => {
+    setDisplaySaveFileMessage(false);
     setErrorMessage(null);
     setBpmnXmlForDiagramRendering(bpmnXML);
 
@@ -204,7 +206,6 @@ export default function ProcessModelEditDiagram() {
     // after saving the file, make sure we null out newFileName
     // so it does not get used over the params
     setNewFileName('');
-    setDisplaySaveFileMessage(true);
   };
 
   const onDeleteFile = (fileName = params.file_name) => {
@@ -477,6 +478,21 @@ export default function ProcessModelEditDiagram() {
 
   const runCurrentUnitTest = () => {
     if (currentScriptUnitTest && scriptElement) {
+      let inputJson = '';
+      let expectedJson = '';
+      try {
+        inputJson = JSON.parse(currentScriptUnitTest.inputJson.value);
+        expectedJson = JSON.parse(
+          currentScriptUnitTest.expectedOutputJson.value
+        );
+      } catch (e) {
+        setScriptUnitTestResult({
+          result: false,
+          error: 'The JSON provided contains a formatting error.',
+        });
+        return;
+      }
+
       resetUnitTextResult();
       HttpService.makeCallToBackend({
         path: `/process-models/${modifiedProcessModelId}/script-unit-tests/run`,
@@ -485,31 +501,29 @@ export default function ProcessModelEditDiagram() {
         postBody: {
           bpmn_task_identifier: (scriptElement as any).id,
           python_script: scriptText,
-          input_json: JSON.parse(currentScriptUnitTest.inputJson.value),
-          expected_output_json: JSON.parse(
-            currentScriptUnitTest.expectedOutputJson.value
-          ),
+          input_json: inputJson,
+          expected_output_json: expectedJson,
         },
       });
     }
   };
 
   const unitTestFailureElement = () => {
-    if (
-      scriptUnitTestResult &&
-      scriptUnitTestResult.result === false &&
-      !scriptUnitTestResult.line_number
-    ) {
-      let errorStringElement = null;
-      if (scriptUnitTestResult.error) {
-        errorStringElement = (
-          <span>
-            Received error when running script:{' '}
-            {JSON.stringify(scriptUnitTestResult.error)}
-          </span>
-        );
+    if (scriptUnitTestResult && scriptUnitTestResult.result === false) {
+      let errorMessage = '';
+      if (scriptUnitTestResult.context) {
+        errorMessage = 'Unexpected result. Please see the comparison below.';
+      } else if (scriptUnitTestResult.line_number) {
+        errorMessage = `Error encountered running the script.  Please check the code around line ${scriptUnitTestResult.line_number}`;
+      } else {
+        errorMessage = `Error encountered running the script. ${JSON.stringify(
+          scriptUnitTestResult.error
+        )}`;
       }
+      let errorStringElement = <span>{errorMessage}</span>;
+
       let errorContextElement = null;
+
       if (scriptUnitTestResult.context) {
         errorStringElement = (
           <span>Unexpected result. Please see the comparison below.</span>
@@ -580,16 +594,22 @@ export default function ProcessModelEditDiagram() {
           </Col>
         );
       }
-      const inputJson = JSON.stringify(
-        JSON.parse(currentScriptUnitTest.inputJson.value),
-        null,
-        '  '
-      );
-      const outputJson = JSON.stringify(
-        JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
-        null,
-        '  '
-      );
+      let inputJson = currentScriptUnitTest.inputJson.value;
+      let outputJson = currentScriptUnitTest.expectedOutputJson.value;
+      try {
+        inputJson = JSON.stringify(
+          JSON.parse(currentScriptUnitTest.inputJson.value),
+          null,
+          '  '
+        );
+        outputJson = JSON.stringify(
+          JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
+          null,
+          '  '
+        );
+      } catch (e) {
+        // Attemping to format the json failed -- it's invalid.
+      }
 
       return (
         <main>
