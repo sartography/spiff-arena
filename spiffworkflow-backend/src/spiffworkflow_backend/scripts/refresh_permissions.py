@@ -7,10 +7,9 @@ from spiffworkflow_backend.models.script_attributes_context import (
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 
-# add_permission("read", "test/*", "Editors")
-
 
 class RecreatePermissions(Script):
+    """RecreatePermissions."""
 
     def get_description(self) -> str:
         """Get_description."""

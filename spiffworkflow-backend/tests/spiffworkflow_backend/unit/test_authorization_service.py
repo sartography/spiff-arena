@@ -1,10 +1,10 @@
 """Test_message_service."""
 import pytest
-from spiffworkflow_backend.models.group import GroupModel
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
+from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -436,6 +436,7 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_can_refresh_permissions."""
         user = self.find_or_create_user(username="user_one")
         admin_user = self.find_or_create_user(username="testadmin1")
 
@@ -443,14 +444,13 @@ class TestAuthorizationService(BaseTest):
         GroupService.find_or_create_group("group_two")
         assert GroupModel.query.filter_by(identifier="group_two").first() is not None
 
-        group_info = [{
-            'users': ['user_one'],
-            'name': 'group_one',
-            'permissions': [{
-                'actions': ['create', 'read'],
-                'uri': 'PG:hey'
-            }]
-        }]
+        group_info = [
+            {
+                "users": ["user_one"],
+                "name": "group_one",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
+            }
+        ]
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_two").first() is None
         assert GroupModel.query.filter_by(identifier="group_one").first() is not None
@@ -459,17 +459,18 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
         self.assert_user_has_permission(user, "create", "/v1.0/process-groups/hey:yo")
 
-        group_info = [{
-            'users': ['user_one'],
-            'name': 'group_one',
-            'permissions': [{
-                'actions': ['read'],
-                'uri': 'PG:hey'
-            }]
-        }]
+        group_info = [
+            {
+                "users": ["user_one"],
+                "name": "group_one",
+                "permissions": [{"actions": ["read"], "uri": "PG:hey"}],
+            }
+        ]
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_one").first() is not None
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
-        self.assert_user_has_permission(user, "create", "/v1.0/process-groups/hey:yo", expected_result=False)
+        self.assert_user_has_permission(
+            user, "create", "/v1.0/process-groups/hey:yo", expected_result=False
+        )
         self.assert_user_has_permission(admin_user, "create", "/anything-they-want")

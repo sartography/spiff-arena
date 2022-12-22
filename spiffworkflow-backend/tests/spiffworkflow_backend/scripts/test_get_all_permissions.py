@@ -7,8 +7,8 @@ from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.scripts.add_permission import AddPermission
 from spiffworkflow_backend.scripts.get_all_permissions import GetAllPermissions
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 
 
 class TestGetAllPermissions(BaseTest):
@@ -31,10 +31,12 @@ class TestGetAllPermissions(BaseTest):
             process_instance_id=1,
             process_model_identifier="my_test_user",
         )
-        AddPermission().run(
-            script_attributes_context, "start", "PG:hey:group", "my_test_group"
+        AuthorizationService.add_permission_from_uri_or_macro(
+            permission="start", target="PG:hey:group", group_identifier="my_test_group"
         )
-        AddPermission().run(script_attributes_context, "all", "/tasks", "my_test_group")
+        AuthorizationService.add_permission_from_uri_or_macro(
+            permission="all", target="/tasks", group_identifier="my_test_group"
+        )
 
         expected_permissions = [
             {
