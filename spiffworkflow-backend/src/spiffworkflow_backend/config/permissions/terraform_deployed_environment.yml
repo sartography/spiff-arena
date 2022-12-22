@@ -4,52 +4,52 @@ groups:
   admin:
     users:
       [
-        admin,
-        jakub,
-        kb,
-        alex,
-        dan,
-        mike,
-        jason,
-        j,
-        jarrad,
-        elizabeth,
-        jon,
+        admin@status.im,
+        jakub@status.im,
+        jarrad@status.im,
+        kb@sartography.com,
+        alex@sartography.com,
+        dan@sartography.com,
+        mike@sartography.com,
+        jason@sartography.com,
+        j@sartography.com,
+        elizabeth@sartography.com,
+        jon@sartography.com,
       ]
 
   Finance Team:
     users:
       [
-        jakub,
-        alex,
-        dan,
-        mike,
-        jason,
-        j,
-        amir,
-        jarrad,
-        elizabeth,
-        jon,
-        sasha,
-        fin,
-        fin1,
+        jakub@status.im,
+        amir@status.im,
+        jarrad@status.im,
+        sasha@status.im,
+        fin@sartography.com,
+        fin1@sartography.com,
+        alex@sartography.com,
+        dan@sartography.com,
+        mike@sartography.com,
+        jason@sartography.com,
+        j@sartography.com,
+        elizabeth@sartography.com,
+        jon@sartography.com,
       ]
 
   demo:
     users:
       [
-        core,
-        fin,
-        fin1,
-        harmeet,
-        sasha,
-        manuchehr,
-        lead,
-        lead1
+        harmeet@status.im,
+        sasha@status.im,
+        manuchehr@status.im,
+        core@status.im,
+        fin@status.im,
+        fin1@status.im,
+        lead@status.im,
+        lead1@status.im
       ]
 
   test:
-    users: [natalia]
+    users: [natalia@sartography.com]
 
 permissions:
   admin:
