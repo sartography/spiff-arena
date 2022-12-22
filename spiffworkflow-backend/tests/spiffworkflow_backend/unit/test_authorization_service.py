@@ -6,7 +6,8 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
-from spiffworkflow_backend.services.authorization_service import AuthorizationService, InvalidPermissionError
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -151,38 +152,67 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_all_on_process_group."""
         expected_permissions = [
-            ('/logs/some-process-group/some-process-model/*', 'create'),
-            ('/logs/some-process-group/some-process-model/*', 'delete'),
-            ('/logs/some-process-group/some-process-model/*', 'read'),
-            ('/logs/some-process-group/some-process-model/*', 'update'),
-            ('/process-groups/some-process-group/some-process-model/*', 'create'),
-            ('/process-groups/some-process-group/some-process-model/*', 'delete'),
-            ('/process-groups/some-process-group/some-process-model/*', 'read'),
-            ('/process-groups/some-process-group/some-process-model/*', 'update'),
-            ('/process-instance-suspend/some-process-group/some-process-model/*', 'create'),
-            ('/process-instance-suspend/some-process-group/some-process-model/*', 'delete'),
-            ('/process-instance-suspend/some-process-group/some-process-model/*', 'read'),
-            ('/process-instance-suspend/some-process-group/some-process-model/*', 'update'),
-            ('/process-instance-terminate/some-process-group/some-process-model/*', 'create'),
-            ('/process-instance-terminate/some-process-group/some-process-model/*', 'delete'),
-            ('/process-instance-terminate/some-process-group/some-process-model/*', 'read'),
-            ('/process-instance-terminate/some-process-group/some-process-model/*', 'update'),
-            ('/process-instances/some-process-group/some-process-model/*', 'create'),
-            ('/process-instances/some-process-group/some-process-model/*', 'delete'),
-            ('/process-instances/some-process-group/some-process-model/*', 'read'),
-            ('/process-instances/some-process-group/some-process-model/*', 'update'),
-            ('/process-models/some-process-group/some-process-model/*', 'create'),
-            ('/process-models/some-process-group/some-process-model/*', 'delete'),
-            ('/process-models/some-process-group/some-process-model/*', 'read'),
-            ('/process-models/some-process-group/some-process-model/*', 'update'),
-            ('/task-data/some-process-group/some-process-model/*', 'create'),
-            ('/task-data/some-process-group/some-process-model/*', 'delete'),
-            ('/task-data/some-process-group/some-process-model/*', 'read'),
-            ('/task-data/some-process-group/some-process-model/*', 'update'),
+            ("/logs/some-process-group/some-process-model/*", "create"),
+            ("/logs/some-process-group/some-process-model/*", "delete"),
+            ("/logs/some-process-group/some-process-model/*", "read"),
+            ("/logs/some-process-group/some-process-model/*", "update"),
+            ("/process-groups/some-process-group/some-process-model/*", "create"),
+            ("/process-groups/some-process-group/some-process-model/*", "delete"),
+            ("/process-groups/some-process-group/some-process-model/*", "read"),
+            ("/process-groups/some-process-group/some-process-model/*", "update"),
+            (
+                "/process-instance-suspend/some-process-group/some-process-model/*",
+                "create",
+            ),
+            (
+                "/process-instance-suspend/some-process-group/some-process-model/*",
+                "delete",
+            ),
+            (
+                "/process-instance-suspend/some-process-group/some-process-model/*",
+                "read",
+            ),
+            (
+                "/process-instance-suspend/some-process-group/some-process-model/*",
+                "update",
+            ),
+            (
+                "/process-instance-terminate/some-process-group/some-process-model/*",
+                "create",
+            ),
+            (
+                "/process-instance-terminate/some-process-group/some-process-model/*",
+                "delete",
+            ),
+            (
+                "/process-instance-terminate/some-process-group/some-process-model/*",
+                "read",
+            ),
+            (
+                "/process-instance-terminate/some-process-group/some-process-model/*",
+                "update",
+            ),
+            ("/process-instances/some-process-group/some-process-model/*", "create"),
+            ("/process-instances/some-process-group/some-process-model/*", "delete"),
+            ("/process-instances/some-process-group/some-process-model/*", "read"),
+            ("/process-instances/some-process-group/some-process-model/*", "update"),
+            ("/process-models/some-process-group/some-process-model/*", "create"),
+            ("/process-models/some-process-group/some-process-model/*", "delete"),
+            ("/process-models/some-process-group/some-process-model/*", "read"),
+            ("/process-models/some-process-group/some-process-model/*", "update"),
+            ("/task-data/some-process-group/some-process-model/*", "create"),
+            ("/task-data/some-process-group/some-process-model/*", "delete"),
+            ("/task-data/some-process-group/some-process-model/*", "read"),
+            ("/task-data/some-process-group/some-process-model/*", "update"),
         ]
-        permissions_to_assign = AuthorizationService.explode_permissions('all', 'PG:/some-process-group/some-process-model')
-        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        permissions_to_assign = AuthorizationService.explode_permissions(
+            "all", "PG:/some-process-group/some-process-model"
+        )
+        permissions_to_assign_tuples = sorted(
+            [(p.target_uri, p.permission) for p in permissions_to_assign]
+        )
         assert permissions_to_assign_tuples == expected_permissions
 
     def test_explode_permissions_start_on_process_group(
@@ -191,12 +221,20 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_start_on_process_group."""
         expected_permissions = [
-            ('/process-instances/for-me/some-process-group/some-process-model/*', 'read'),
-            ('/process-instances/some-process-group/some-process-model/*', 'create'),
+            (
+                "/process-instances/for-me/some-process-group/some-process-model/*",
+                "read",
+            ),
+            ("/process-instances/some-process-group/some-process-model/*", "create"),
         ]
-        permissions_to_assign = AuthorizationService.explode_permissions('start', 'PG:/some-process-group/some-process-model')
-        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        permissions_to_assign = AuthorizationService.explode_permissions(
+            "start", "PG:/some-process-group/some-process-model"
+        )
+        permissions_to_assign_tuples = sorted(
+            [(p.target_uri, p.permission) for p in permissions_to_assign]
+        )
         assert permissions_to_assign_tuples == expected_permissions
 
     def test_explode_permissions_all_on_process_model(
@@ -205,34 +243,63 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_all_on_process_model."""
         expected_permissions = [
-            ('/logs/some-process-group/some-process-model/*', 'create'),
-            ('/logs/some-process-group/some-process-model/*', 'delete'),
-            ('/logs/some-process-group/some-process-model/*', 'read'),
-            ('/logs/some-process-group/some-process-model/*', 'update'),
-            ('/process-instance-suspend/some-process-group/some-process-model/*', 'create'),
-            ('/process-instance-suspend/some-process-group/some-process-model/*', 'delete'),
-            ('/process-instance-suspend/some-process-group/some-process-model/*', 'read'),
-            ('/process-instance-suspend/some-process-group/some-process-model/*', 'update'),
-            ('/process-instance-terminate/some-process-group/some-process-model/*', 'create'),
-            ('/process-instance-terminate/some-process-group/some-process-model/*', 'delete'),
-            ('/process-instance-terminate/some-process-group/some-process-model/*', 'read'),
-            ('/process-instance-terminate/some-process-group/some-process-model/*', 'update'),
-            ('/process-instances/some-process-group/some-process-model/*', 'create'),
-            ('/process-instances/some-process-group/some-process-model/*', 'delete'),
-            ('/process-instances/some-process-group/some-process-model/*', 'read'),
-            ('/process-instances/some-process-group/some-process-model/*', 'update'),
-            ('/process-models/some-process-group/some-process-model/*', 'create'),
-            ('/process-models/some-process-group/some-process-model/*', 'delete'),
-            ('/process-models/some-process-group/some-process-model/*', 'read'),
-            ('/process-models/some-process-group/some-process-model/*', 'update'),
-            ('/task-data/some-process-group/some-process-model/*', 'create'),
-            ('/task-data/some-process-group/some-process-model/*', 'delete'),
-            ('/task-data/some-process-group/some-process-model/*', 'read'),
-            ('/task-data/some-process-group/some-process-model/*', 'update'),
+            ("/logs/some-process-group/some-process-model/*", "create"),
+            ("/logs/some-process-group/some-process-model/*", "delete"),
+            ("/logs/some-process-group/some-process-model/*", "read"),
+            ("/logs/some-process-group/some-process-model/*", "update"),
+            (
+                "/process-instance-suspend/some-process-group/some-process-model/*",
+                "create",
+            ),
+            (
+                "/process-instance-suspend/some-process-group/some-process-model/*",
+                "delete",
+            ),
+            (
+                "/process-instance-suspend/some-process-group/some-process-model/*",
+                "read",
+            ),
+            (
+                "/process-instance-suspend/some-process-group/some-process-model/*",
+                "update",
+            ),
+            (
+                "/process-instance-terminate/some-process-group/some-process-model/*",
+                "create",
+            ),
+            (
+                "/process-instance-terminate/some-process-group/some-process-model/*",
+                "delete",
+            ),
+            (
+                "/process-instance-terminate/some-process-group/some-process-model/*",
+                "read",
+            ),
+            (
+                "/process-instance-terminate/some-process-group/some-process-model/*",
+                "update",
+            ),
+            ("/process-instances/some-process-group/some-process-model/*", "create"),
+            ("/process-instances/some-process-group/some-process-model/*", "delete"),
+            ("/process-instances/some-process-group/some-process-model/*", "read"),
+            ("/process-instances/some-process-group/some-process-model/*", "update"),
+            ("/process-models/some-process-group/some-process-model/*", "create"),
+            ("/process-models/some-process-group/some-process-model/*", "delete"),
+            ("/process-models/some-process-group/some-process-model/*", "read"),
+            ("/process-models/some-process-group/some-process-model/*", "update"),
+            ("/task-data/some-process-group/some-process-model/*", "create"),
+            ("/task-data/some-process-group/some-process-model/*", "delete"),
+            ("/task-data/some-process-group/some-process-model/*", "read"),
+            ("/task-data/some-process-group/some-process-model/*", "update"),
         ]
-        permissions_to_assign = AuthorizationService.explode_permissions('all', 'PM:/some-process-group/some-process-model')
-        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        permissions_to_assign = AuthorizationService.explode_permissions(
+            "all", "PM:/some-process-group/some-process-model"
+        )
+        permissions_to_assign_tuples = sorted(
+            [(p.target_uri, p.permission) for p in permissions_to_assign]
+        )
         assert permissions_to_assign_tuples == expected_permissions
 
     def test_explode_permissions_start_on_process_model(
@@ -241,12 +308,20 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_start_on_process_model."""
         expected_permissions = [
-            ('/process-instances/for-me/some-process-group/some-process-model/*', 'read'),
-            ('/process-instances/some-process-group/some-process-model/*', 'create'),
+            (
+                "/process-instances/for-me/some-process-group/some-process-model/*",
+                "read",
+            ),
+            ("/process-instances/some-process-group/some-process-model/*", "create"),
         ]
-        permissions_to_assign = AuthorizationService.explode_permissions('start', 'PM:/some-process-group/some-process-model')
-        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        permissions_to_assign = AuthorizationService.explode_permissions(
+            "start", "PM:/some-process-group/some-process-model"
+        )
+        permissions_to_assign_tuples = sorted(
+            [(p.target_uri, p.permission) for p in permissions_to_assign]
+        )
         assert permissions_to_assign_tuples == expected_permissions
 
     def test_explode_permissions_basic(
@@ -255,22 +330,25 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_basic."""
         expected_permissions = [
-            ('/process-instances/for-me', 'read'),
-            ('/process-instances/reports/*', 'create'),
-            ('/process-instances/reports/*', 'delete'),
-            ('/process-instances/reports/*', 'read'),
-            ('/process-instances/reports/*', 'update'),
-            ('/processes', 'read'),
-            ('/service-tasks', 'read'),
-            ('/tasks/*', 'create'),
-            ('/tasks/*', 'delete'),
-            ('/tasks/*', 'read'),
-            ('/tasks/*', 'update'),
-            ('/user-groups/for-current-user', 'read'),
+            ("/process-instances/for-me", "read"),
+            ("/process-instances/reports/*", "create"),
+            ("/process-instances/reports/*", "delete"),
+            ("/process-instances/reports/*", "read"),
+            ("/process-instances/reports/*", "update"),
+            ("/processes", "read"),
+            ("/service-tasks", "read"),
+            ("/tasks/*", "create"),
+            ("/tasks/*", "delete"),
+            ("/tasks/*", "read"),
+            ("/tasks/*", "update"),
+            ("/user-groups/for-current-user", "read"),
         ]
-        permissions_to_assign = AuthorizationService.explode_permissions('all', 'BASIC')
-        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        permissions_to_assign = AuthorizationService.explode_permissions("all", "BASIC")
+        permissions_to_assign_tuples = sorted(
+            [(p.target_uri, p.permission) for p in permissions_to_assign]
+        )
         assert permissions_to_assign_tuples == expected_permissions
 
     def test_explode_permissions_all(
@@ -279,14 +357,17 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_all."""
         expected_permissions = [
-            ('/*', 'create'),
-            ('/*', 'delete'),
-            ('/*', 'read'),
-            ('/*', 'update'),
+            ("/*", "create"),
+            ("/*", "delete"),
+            ("/*", "read"),
+            ("/*", "update"),
         ]
-        permissions_to_assign = AuthorizationService.explode_permissions('all', 'ALL')
-        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        permissions_to_assign = AuthorizationService.explode_permissions("all", "ALL")
+        permissions_to_assign_tuples = sorted(
+            [(p.target_uri, p.permission) for p in permissions_to_assign]
+        )
         assert permissions_to_assign_tuples == expected_permissions
 
     def test_explode_permissions_with_target_uri(
@@ -295,14 +376,19 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_with_target_uri."""
         expected_permissions = [
-            ('/hey/model', 'create'),
-            ('/hey/model', 'delete'),
-            ('/hey/model', 'read'),
-            ('/hey/model', 'update'),
+            ("/hey/model", "create"),
+            ("/hey/model", "delete"),
+            ("/hey/model", "read"),
+            ("/hey/model", "update"),
         ]
-        permissions_to_assign = AuthorizationService.explode_permissions('all', '/hey/model')
-        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        permissions_to_assign = AuthorizationService.explode_permissions(
+            "all", "/hey/model"
+        )
+        permissions_to_assign_tuples = sorted(
+            [(p.target_uri, p.permission) for p in permissions_to_assign]
+        )
         assert permissions_to_assign_tuples == expected_permissions
 
     def test_explode_permissions_with_invalid_target_uri(
@@ -311,8 +397,9 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_with_invalid_target_uri."""
         with pytest.raises(InvalidPermissionError):
-            AuthorizationService.explode_permissions('all', 'BAD_MACRO')
+            AuthorizationService.explode_permissions("all", "BAD_MACRO")
 
     def test_explode_permissions_with_start_to_incorrect_target(
         self,
@@ -320,5 +407,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_explode_permissions_with_start_to_incorrect_target."""
         with pytest.raises(InvalidPermissionError):
-            AuthorizationService.explode_permissions('start', '/hey/model')
+            AuthorizationService.explode_permissions("start", "/hey/model")
