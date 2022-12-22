@@ -1,7 +1,5 @@
 """Test_message_service."""
 import pytest
-from spiffworkflow_backend.services.group_service import GroupService
-from spiffworkflow_backend.services.user_service import UserService
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -10,6 +8,7 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
+from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -17,6 +16,7 @@ from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.user_service import UserService
 
 
 class TestAuthorizationService(BaseTest):
@@ -400,16 +400,14 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_granting_access_to_group_gives_access_to_group_and_subgroups."""
-        user = self.find_or_create_user(username='user_one')
-        user_group = GroupService.find_or_create_group('group_one')
+        user = self.find_or_create_user(username="user_one")
+        user_group = GroupService.find_or_create_group("group_one")
         UserService.add_user_to_group(user, user_group)
-        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
-        self.assert_user_has_permission(
-            user, "read", "/v1.0/process-groups/hey"
+        AuthorizationService.add_permission_from_uri_or_macro(
+            user_group.identifier, "read", "PG:hey"
         )
-        self.assert_user_has_permission(
-            user, "read", "/v1.0/process-groups/hey:yo"
-        )
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
 
     def test_explode_permissions_with_invalid_target_uri(
         self,
