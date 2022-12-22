@@ -8,8 +8,8 @@ from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 
 
-class RecreatePermissions(Script):
-    """RecreatePermissions."""
+class RefreshPermissions(Script):
+    """RefreshPermissions."""
 
     def get_description(self) -> str:
         """Get_description."""
