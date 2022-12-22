@@ -6,7 +6,6 @@ from spiffworkflow_backend.models.script_attributes_context import (
 )
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.group_service import GroupService
 
 # add_permission("read", "test/*", "Editors")
 
