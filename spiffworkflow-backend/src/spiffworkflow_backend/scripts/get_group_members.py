@@ -12,6 +12,11 @@ from spiffworkflow_backend.scripts.script import Script
 class GetGroupMembers(Script):
     """GetGroupMembers."""
 
+    @staticmethod
+    def requires_privileged_permissions() -> bool:
+        """We have deemed this function safe to run without elevated permissions."""
+        return False
+
     def get_description(self) -> str:
         """Get_description."""
         return """Return the list of usernames of the users in the given group."""

@@ -1,4 +1,7 @@
 """Test_authentication."""
+import base64
+
+import jwt
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -44,13 +47,16 @@ class TestFlaskOpenId(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
+        """Test_get_token."""
+        code = "testadmin1:1234123412341234"
+
         """It should be possible to get a token."""
-        code = (
-            "c3BpZmZ3b3JrZmxvdy1iYWNrZW5kOkpYZVFFeG0wSmhRUEx1bWdIdElJcWY1MmJEYWxIejBx"
-        )
+        backend_basic_auth_string = code
+        backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
+        backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "Authorization": f"Basic {code}",
+            "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
         }
         data = {
             "grant_type": "authorization_code",
@@ -59,3 +65,13 @@ class TestFlaskOpenId(BaseTest):
         }
         response = client.post("/openid/token", data=data, headers=headers)
         assert response
+        assert response.is_json
+        assert "access_token" in response.json
+        assert "id_token" in response.json
+        assert "refresh_token" in response.json
+
+        decoded_token = jwt.decode(
+            response.json["id_token"], options={"verify_signature": False}
+        )
+        assert "iss" in decoded_token
+        assert "email" in decoded_token
