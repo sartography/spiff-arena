@@ -12,9 +12,6 @@ from spiffworkflow_backend.models.script_attributes_context import (
 from spiffworkflow_backend.scripts.script import Script
 
 
-# add_permission("read", "test/*", "Editors")
-
-
 class GetAllPermissions(Script):
     """GetAllPermissions."""
 

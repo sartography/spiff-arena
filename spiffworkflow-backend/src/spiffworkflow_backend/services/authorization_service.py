@@ -1,13 +1,14 @@
 """Authorization_service."""
 import inspect
-from typing import TypedDict
-from typing import Any, Set
 import re
 from dataclasses import dataclass
 from hashlib import sha256
 from hmac import compare_digest
 from hmac import HMAC
+from typing import Any
 from typing import Optional
+from typing import Set
+from typing import TypedDict
 from typing import Union
 
 import jwt
@@ -23,7 +24,6 @@ from sqlalchemy import or_
 from sqlalchemy import text
 
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
-from spiffworkflow_backend.models import permission_assignment
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
@@ -72,6 +72,8 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
 
 
 class DesiredPermissionDict(TypedDict):
+    """DesiredPermissionDict."""
+
     group_identifiers: Set[str]
     permission_assignments: list[PermissionAssignmentModel]
 
@@ -236,9 +238,13 @@ class AuthorizationService:
                         for group_identifier in permission_config["groups"]:
                             group = GroupService.find_or_create_group(group_identifier)
                             unique_user_group_identifiers.add(group_identifier)
-                            permission_assignments.append(cls.create_permission_for_principal(
-                                group.principal, permission_target, allowed_permission
-                            ))
+                            permission_assignments.append(
+                                cls.create_permission_for_principal(
+                                    group.principal,
+                                    permission_target,
+                                    allowed_permission,
+                                )
+                            )
                     if "users" in permission_config:
                         for username in permission_config["users"]:
                             user = UserModel.query.filter_by(username=username).first()
@@ -248,15 +254,20 @@ class AuthorizationService:
                                     .filter(UserModel.username == username)
                                     .first()
                                 )
-                                permission_assignments.append(cls.create_permission_for_principal(
-                                    principal, permission_target, allowed_permission
-                                ))
+                                permission_assignments.append(
+                                    cls.create_permission_for_principal(
+                                        principal, permission_target, allowed_permission
+                                    )
+                                )
 
         if default_group is not None:
             for user in UserModel.query.all():
                 cls.associate_user_with_group(user, default_group)
 
-        return { 'group_identifiers': unique_user_group_identifiers, 'permission_assignments': permission_assignments }
+        return {
+            "group_identifiers": unique_user_group_identifiers,
+            "permission_assignments": permission_assignments,
+        }
 
     @classmethod
     def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
@@ -715,9 +726,11 @@ class AuthorizationService:
             permission_target = cls.find_or_create_permission_target(
                 permission_to_assign.target_uri
             )
-            permission_assignments.append(cls.create_permission_for_principal(
-                group.principal, permission_target, permission_to_assign.permission
-            ))
+            permission_assignments.append(
+                cls.create_permission_for_principal(
+                    group.principal, permission_target, permission_to_assign.permission
+                )
+            )
         return permission_assignments
 
     @classmethod
@@ -725,24 +738,32 @@ class AuthorizationService:
         """Adds new permission assignments and deletes old ones."""
         initial_permission_assignments = PermissionAssignmentModel.query.all()
         result = cls.import_permissions_from_yaml_file()
-        desired_permission_assignments = result['permission_assignments']
-        desired_group_identifiers = result['group_identifiers']
+        desired_permission_assignments = result["permission_assignments"]
+        desired_group_identifiers = result["group_identifiers"]
 
         for group in group_info:
-            for username in group['users']:
-                GroupService.add_user_to_group_or_add_to_waiting(username, group['name'])
-            for permission in group['permissions']:
-                for crud_op in permission['actions']:
-                    desired_permission_assignments.extend(cls.add_permission_from_uri_or_macro(
-                        group_identifier=group['name'], target=permission['uri'], permission=crud_op
-                    ))
-                    desired_group_identifiers.add(group['name'])
+            for username in group["users"]:
+                GroupService.add_user_to_group_or_add_to_waiting(
+                    username, group["name"]
+                )
+            for permission in group["permissions"]:
+                for crud_op in permission["actions"]:
+                    desired_permission_assignments.extend(
+                        cls.add_permission_from_uri_or_macro(
+                            group_identifier=group["name"],
+                            target=permission["uri"],
+                            permission=crud_op,
+                        )
+                    )
+                    desired_group_identifiers.add(group["name"])
 
         for ipa in initial_permission_assignments:
             if ipa not in desired_permission_assignments:
                 db.session.delete(ipa)
 
-        groups_to_delete = GroupModel.query.filter(GroupModel.identifier.not_in(desired_group_identifiers)).all()
+        groups_to_delete = GroupModel.query.filter(
+            GroupModel.identifier.not_in(desired_group_identifiers)
+        ).all()
         for gtd in groups_to_delete:
             db.session.delete(gtd)
         db.session.commit()
