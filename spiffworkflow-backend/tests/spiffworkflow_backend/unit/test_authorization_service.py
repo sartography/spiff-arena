@@ -1,5 +1,7 @@
 """Test_message_service."""
 import pytest
+from spiffworkflow_backend.services.group_service import GroupService
+from spiffworkflow_backend.services.user_service import UserService
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -390,6 +392,24 @@ class TestAuthorizationService(BaseTest):
             [(p.target_uri, p.permission) for p in permissions_to_assign]
         )
         assert permissions_to_assign_tuples == expected_permissions
+
+    def test_granting_access_to_group_gives_access_to_group_and_subgroups(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test_granting_access_to_group_gives_access_to_group_and_subgroups."""
+        user = self.find_or_create_user(username='user_one')
+        user_group = GroupService.find_or_create_group('group_one')
+        UserService.add_user_to_group(user, user_group)
+        AuthorizationService.add_permission_from_uri_or_macro(user_group.identifier, "read", "PG:hey")
+        self.assert_user_has_permission(
+            user, "read", "/v1.0/process-groups/hey"
+        )
+        self.assert_user_has_permission(
+            user, "read", "/v1.0/process-groups/hey:yo"
+        )
 
     def test_explode_permissions_with_invalid_target_uri(
         self,
