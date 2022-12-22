@@ -6,7 +6,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import AuthorizationService, InvalidPermissionError
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -272,3 +272,53 @@ class TestAuthorizationService(BaseTest):
         permissions_to_assign = AuthorizationService.explode_permissions('all', 'BASIC')
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
+
+    def test_explode_permissions_all(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        expected_permissions = [
+            ('/*', 'create'),
+            ('/*', 'delete'),
+            ('/*', 'read'),
+            ('/*', 'update'),
+        ]
+        permissions_to_assign = AuthorizationService.explode_permissions('all', 'ALL')
+        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        assert permissions_to_assign_tuples == expected_permissions
+
+    def test_explode_permissions_with_target_uri(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        expected_permissions = [
+            ('/hey/model', 'create'),
+            ('/hey/model', 'delete'),
+            ('/hey/model', 'read'),
+            ('/hey/model', 'update'),
+        ]
+        permissions_to_assign = AuthorizationService.explode_permissions('all', '/hey/model')
+        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        assert permissions_to_assign_tuples == expected_permissions
+
+    def test_explode_permissions_with_invalid_target_uri(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with pytest.raises(InvalidPermissionError):
+            AuthorizationService.explode_permissions('all', 'BAD_MACRO')
+
+    def test_explode_permissions_with_start_to_incorrect_target(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with pytest.raises(InvalidPermissionError):
+            AuthorizationService.explode_permissions('start', '/hey/model')
