@@ -28,8 +28,6 @@ class AddPermission(Script):
         allowed_permission = args[0]
         uri = args[1]
         group_identifier = args[2]
-        group = GroupService.find_or_create_group(group_identifier)
-        target = AuthorizationService.find_or_create_permission_target(uri)
-        AuthorizationService.create_permission_for_principal(
-            group.principal, target, allowed_permission
+        AuthorizationService.add_permission_from_uri_or_macro(
+            group_identifier=group_identifier, target=uri, permission=allowed_permission
         )
