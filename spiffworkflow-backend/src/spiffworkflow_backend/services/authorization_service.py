@@ -112,7 +112,7 @@ class AuthorizationService:
                     # to check for exact matches as well
                     # see test_user_can_access_base_path_when_given_wildcard_permission unit test
                     text(
-                        f"'{target_uri_normalized}' = replace(permission_target.uri, '/%', '')"
+                        f"'{target_uri_normalized}' = replace(replace(permission_target.uri, '/%', ''), ':%', '')"
                     ),
                 )
             )
@@ -605,9 +605,9 @@ class AuthorizationService:
 
         if target.startswith("PG:"):
             process_group_identifier = (
-                target.removeprefix("PG:").replace(":", "/").removeprefix("/")
+                target.removeprefix("PG:").replace("/", ":").removeprefix(":")
             )
-            process_related_path_segment = f"{process_group_identifier}/*"
+            process_related_path_segment = f"{process_group_identifier}:*"
             if process_group_identifier == "ALL":
                 process_related_path_segment = "*"
             target_uris = [
@@ -623,7 +623,7 @@ class AuthorizationService:
 
         elif target.startswith("PM:"):
             process_model_identifier = (
-                target.removeprefix("PM:").replace(":", "/").removeprefix("/")
+                target.removeprefix("PM:").replace("/", ":").removeprefix(":")
             )
             process_related_path_segment = f"{process_model_identifier}/*"
 

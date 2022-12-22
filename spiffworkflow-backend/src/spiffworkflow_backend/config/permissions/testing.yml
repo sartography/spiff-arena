@@ -21,7 +21,7 @@ permissions:
   admin:
     groups: [admin]
     users: []
-    allowed_permissions: [create, read, update, delete, list, instantiate]
+    allowed_permissions: [create, read, update, delete]
     uri: /*
 
   read-all:
