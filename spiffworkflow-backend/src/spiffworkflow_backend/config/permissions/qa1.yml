@@ -2,7 +2,7 @@ default_group: everybody
 
 groups:
   admin:
-    users: [admin]
+    users: [admin@status.im]
 
 permissions:
   admin:
