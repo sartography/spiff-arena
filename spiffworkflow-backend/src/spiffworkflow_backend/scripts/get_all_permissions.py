@@ -50,7 +50,22 @@ class GetAllPermissions(Script):
                 pa.permission
             )
 
+        def replace_suffix(string: str, old: str, new: str) -> str:
+            """Replace_suffix."""
+            if string.endswith(old):
+                return string[: -len(old)] + new
+            return string
+
+        # sort list of strings based on a specific order
+        def sort_by_order(string_list: list, order: list) -> list:
+            """Sort_by_order."""
+            return sorted(string_list, key=lambda x: order.index(x))
+
         return [
-            {"group_identifier": k[0], "uri": k[1], "permissions": sorted(v)}
+            {
+                "group_identifier": k[0],
+                "uri": replace_suffix(k[1], "%", "*"),
+                "permissions": sort_by_order(v, ["create", "read", "update", "delete"]),
+            }
             for k, v in permissions.items()
         ]

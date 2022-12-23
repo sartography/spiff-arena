@@ -157,10 +157,7 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_explode_permissions_all_on_process_group."""
         expected_permissions = [
-            ("/logs/some-process-group:some-process-model:*", "create"),
-            ("/logs/some-process-group:some-process-model:*", "delete"),
             ("/logs/some-process-group:some-process-model:*", "read"),
-            ("/logs/some-process-group:some-process-model:*", "update"),
             ("/process-groups/some-process-group:some-process-model:*", "create"),
             ("/process-groups/some-process-group:some-process-model:*", "delete"),
             ("/process-groups/some-process-group:some-process-model:*", "read"),
@@ -170,43 +167,16 @@ class TestAuthorizationService(BaseTest):
                 "create",
             ),
             (
-                "/process-instance-suspend/some-process-group:some-process-model:*",
-                "delete",
-            ),
-            (
-                "/process-instance-suspend/some-process-group:some-process-model:*",
-                "read",
-            ),
-            (
-                "/process-instance-suspend/some-process-group:some-process-model:*",
-                "update",
-            ),
-            (
                 "/process-instance-terminate/some-process-group:some-process-model:*",
                 "create",
-            ),
-            (
-                "/process-instance-terminate/some-process-group:some-process-model:*",
-                "delete",
-            ),
-            (
-                "/process-instance-terminate/some-process-group:some-process-model:*",
-                "read",
-            ),
-            (
-                "/process-instance-terminate/some-process-group:some-process-model:*",
-                "update",
             ),
             ("/process-instances/some-process-group:some-process-model:*", "create"),
             ("/process-instances/some-process-group:some-process-model:*", "delete"),
             ("/process-instances/some-process-group:some-process-model:*", "read"),
-            ("/process-instances/some-process-group:some-process-model:*", "update"),
             ("/process-models/some-process-group:some-process-model:*", "create"),
             ("/process-models/some-process-group:some-process-model:*", "delete"),
             ("/process-models/some-process-group:some-process-model:*", "read"),
             ("/process-models/some-process-group:some-process-model:*", "update"),
-            ("/task-data/some-process-group:some-process-model:*", "create"),
-            ("/task-data/some-process-group:some-process-model:*", "delete"),
             ("/task-data/some-process-group:some-process-model:*", "read"),
             ("/task-data/some-process-group:some-process-model:*", "update"),
         ]
@@ -248,52 +218,22 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_explode_permissions_all_on_process_model."""
         expected_permissions = [
-            ("/logs/some-process-group:some-process-model/*", "create"),
-            ("/logs/some-process-group:some-process-model/*", "delete"),
             ("/logs/some-process-group:some-process-model/*", "read"),
-            ("/logs/some-process-group:some-process-model/*", "update"),
             (
                 "/process-instance-suspend/some-process-group:some-process-model/*",
                 "create",
             ),
             (
-                "/process-instance-suspend/some-process-group:some-process-model/*",
-                "delete",
-            ),
-            (
-                "/process-instance-suspend/some-process-group:some-process-model/*",
-                "read",
-            ),
-            (
-                "/process-instance-suspend/some-process-group:some-process-model/*",
-                "update",
-            ),
-            (
                 "/process-instance-terminate/some-process-group:some-process-model/*",
                 "create",
-            ),
-            (
-                "/process-instance-terminate/some-process-group:some-process-model/*",
-                "delete",
-            ),
-            (
-                "/process-instance-terminate/some-process-group:some-process-model/*",
-                "read",
-            ),
-            (
-                "/process-instance-terminate/some-process-group:some-process-model/*",
-                "update",
             ),
             ("/process-instances/some-process-group:some-process-model/*", "create"),
             ("/process-instances/some-process-group:some-process-model/*", "delete"),
             ("/process-instances/some-process-group:some-process-model/*", "read"),
-            ("/process-instances/some-process-group:some-process-model/*", "update"),
             ("/process-models/some-process-group:some-process-model/*", "create"),
             ("/process-models/some-process-group:some-process-model/*", "delete"),
             ("/process-models/some-process-group:some-process-model/*", "read"),
             ("/process-models/some-process-group:some-process-model/*", "update"),
-            ("/task-data/some-process-group:some-process-model/*", "create"),
-            ("/task-data/some-process-group:some-process-model/*", "delete"),
             ("/task-data/some-process-group:some-process-model/*", "read"),
             ("/task-data/some-process-group:some-process-model/*", "update"),
         ]
