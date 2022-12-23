@@ -4,7 +4,7 @@ groups:
   admin:
     users:
       [
-        admin@status.im,
+        admin@spiffworkflow.org,
         jakub@status.im,
         jarrad@status.im,
         kb@sartography.com,
@@ -45,7 +45,12 @@ groups:
         fin@status.im,
         fin1@status.im,
         lead@status.im,
-        lead1@status.im
+        lead1@status.im,
+      ]
+  test:
+    users:
+      [
+        natalia@sartography.com,
       ]
 
 permissions:
