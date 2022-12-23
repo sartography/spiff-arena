@@ -62,12 +62,17 @@ class PermissionToAssign:
     target_uri: str
 
 
+# the relevant permissions are the only API methods that are currently available for each path prefix.
+# if we add further API methods, we'll need to evaluate whether they should be added here.
 PATH_SEGMENTS_FOR_PERMISSION_ALL = [
-    "/logs",
-    "/process-instances",
-    "/process-instance-suspend",
-    "/process-instance-terminate",
-    "/task-data",
+    {"path": "/logs", "relevant_permissions": ["read"]},
+    {
+        "path": "/process-instances",
+        "relevant_permissions": ["create", "read", "delete"],
+    },
+    {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
+    {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
+    {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
 
@@ -589,8 +594,17 @@ class AuthorizationService:
 
         else:
             if permission_set == "all":
-                for path_segment in PATH_SEGMENTS_FOR_PERMISSION_ALL:
-                    target_uris.append(f"{path_segment}/{process_related_path_segment}")
+                for path_segment_dict in PATH_SEGMENTS_FOR_PERMISSION_ALL:
+                    target_uri = (
+                        f"{path_segment_dict['path']}/{process_related_path_segment}"
+                    )
+                    relevant_permissions = path_segment_dict["relevant_permissions"]
+                    for permission in relevant_permissions:
+                        permissions_to_assign.append(
+                            PermissionToAssign(
+                                permission=permission, target_uri=target_uri
+                            )
+                        )
 
             for target_uri in target_uris:
                 for permission in permissions:
