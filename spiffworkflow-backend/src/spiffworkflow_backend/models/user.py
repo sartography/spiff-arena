@@ -26,7 +26,7 @@ class UserModel(SpiffworkflowBaseDBModel):
         db.String(255), nullable=False, unique=True
     )  # should always be a unique value
     service = db.Column(
-        db.String(50), nullable=False, unique=False
+        db.String(255), nullable=False, unique=False
     )  # not 'openid' -- google, aws
     service_id = db.Column(db.String(255), nullable=False, unique=False)
     display_name = db.Column(db.String(255))
