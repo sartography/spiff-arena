@@ -94,7 +94,7 @@ export default function TaskListTable({
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-instances/${modifiedProcessModelIdentifier}/${rowToUse.process_instance_id}`}
+              to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${rowToUse.process_instance_id}`}
               title={`View process instance ${rowToUse.process_instance_id}`}
             >
               {rowToUse.process_instance_id}
