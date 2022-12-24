@@ -1,0 +1,151 @@
+default_group: everybody
+
+groups:
+  admin:
+    users:
+      [
+        admin@spiffworkflow.org,
+        jakub@status.im,
+        jarrad@status.im,
+        kb@sartography.com,
+        alex@sartography.com,
+        dan@sartography.com,
+        mike@sartography.com,
+        jason@sartography.com,
+        j@sartography.com,
+        elizabeth@sartography.com,
+        jon@sartography.com,
+      ]
+
+  Finance Team:
+    users:
+      [
+        jakub@status.im,
+        amir@status.im,
+        jarrad@status.im,
+        sasha@status.im,
+        fin@status.im,
+        fin1@status.im,
+        alex@sartography.com,
+        dan@sartography.com,
+        mike@sartography.com,
+        jason@sartography.com,
+        j@sartography.com,
+        elizabeth@sartography.com,
+        jon@sartography.com,
+      ]
+
+  demo:
+    users:
+      [
+        harmeet@status.im,
+        sasha@status.im,
+        manuchehr@status.im,
+        core@status.im,
+        fin@status.im,
+        fin1@status.im,
+        lead@status.im,
+        lead1@status.im,
+      ]
+
+  test:
+    users:
+      [
+        natalia@sartography.com,
+      ]
+
+permissions:
+  admin:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /*
+
+  # open system defaults for everybody
+  read-all-process-groups:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-groups/*
+  read-all-process-models:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-models/*
+
+  # basic perms for everybody
+  read-all-process-instances-for-me:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-instances/for-me/*
+  read-process-instance-reports:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /process-instances/reports/*
+  processes-read:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /processes
+  service-tasks:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /service-tasks
+  tasks-crud:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /tasks/*
+  user-groups-for-current-user:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /user-groups/for-current-user
+
+
+  finance-admin:
+    groups: ["Finance Team"]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /process-groups/manage-procurement:procurement:*
+
+  manage-revenue-streams-instances:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [create]
+    uri: /process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+  manage-procurement-invoice-instances:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [create]
+    uri: /process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
+  manage-procurement-instances:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [create]
+    uri: /process-instances/manage-procurement:vendor-lifecycle-management:*
+
+  manage-revenue-streams-instances-for-me:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-instances/for-me/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+  manage-procurement-invoice-instances-for-me:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-instances/for-me/manage-procurement:procurement:core-contributor-invoice-management:*
+  manage-procurement-instances-for-me:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-instances/for-me/manage-procurement:vendor-lifecycle-management:*
+
+  create-test-instances:
+    groups: ["test"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /process-instances/misc:test:*
