@@ -95,6 +95,7 @@ Cypress.Commands.add(
     } else {
       cy.contains(/Process Instance.*[kK]icked [oO]ff/);
       cy.reload(true);
+      cy.contains('Process Model:').should('exist');
       cy.contains(/Process Instance.*[kK]icked [oO]ff/).should('not.exist');
     }
   }
@@ -102,7 +103,7 @@ Cypress.Commands.add(
 
 Cypress.Commands.add(
   'navigateToProcessModel',
-  (groupDisplayName, modelDisplayName, modelIdentifier) => {
+  (groupDisplayName, modelDisplayName) => {
     cy.navigateToAdmin();
     cy.contains(miscDisplayName).click();
     cy.contains(`Process Group: ${miscDisplayName}`, { timeout: 10000 });
