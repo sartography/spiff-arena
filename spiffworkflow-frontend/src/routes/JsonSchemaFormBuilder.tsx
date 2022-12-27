@@ -3,7 +3,11 @@ import { useEffect, useState } from 'react';
 import { Button, Select, SelectItem, TextInput } from '@carbon/react';
 import { useParams } from 'react-router-dom';
 import { FormField } from '../interfaces';
-import { modifyProcessIdentifierForPathParam, slugifyString } from '../helpers';
+import {
+  modifyProcessIdentifierForPathParam,
+  slugifyString,
+  underscorizeString,
+} from '../helpers';
 import HttpService from '../services/HttpService';
 
 export default function JsonSchemaFormBuilder() {
@@ -75,7 +79,7 @@ export default function JsonSchemaFormBuilder() {
       formFieldIdHasBeenUpdatedByUser
     );
     if (!formFieldIdHasBeenUpdatedByUser) {
-      setFormFieldId(slugifyString(newFormFieldTitle));
+      setFormFieldId(underscorizeString(newFormFieldTitle));
     }
     setFormFieldTitle(newFormFieldTitle);
   };
