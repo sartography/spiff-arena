@@ -41,6 +41,7 @@ import ErrorContext from '../contexts/ErrorContext';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   PermissionsToCheck,
+  ProcessData,
   ProcessInstance,
   ProcessInstanceTask,
 } from '../interfaces';
@@ -62,6 +63,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
+  const [processDataToDisplay, setProcessDataToDisplay] =
+    useState<ProcessData | null>(null);
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
 
   const setErrorMessage = (useContext as any)(ErrorContext)[1];
@@ -78,15 +81,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       : targetUris.processInstanceTaskListForMePath;
 
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.messageInstanceListPath]: ['GET'],
-    [taskListPath]: ['GET'],
-    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
-    [targetUris.processInstanceActionPath]: ['DELETE'],
-    [targetUris.processInstanceLogListPath]: ['GET'],
-    [targetUris.processModelShowPath]: ['PUT'],
     [`${targetUris.processInstanceResumePath}`]: ['POST'],
     [`${targetUris.processInstanceSuspendPath}`]: ['POST'],
     [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
+    [targetUris.messageInstanceListPath]: ['GET'],
+    [targetUris.processInstanceActionPath]: ['DELETE'],
+    [targetUris.processInstanceLogListPath]: ['GET'],
+    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
+    [targetUris.processModelShowPath]: ['PUT'],
+    [taskListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -411,16 +414,50 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const handleProcessDataDisplayClose = () => {
+    setProcessDataToDisplay(null);
+  };
+
+  const processDataDisplayArea = () => {
+    if (processDataToDisplay) {
+      return (
+        <Modal
+          open={!!processDataToDisplay}
+          passiveModal
+          onRequestClose={handleProcessDataDisplayClose}
+        >
+          <h2>Data Object: {processDataToDisplay.process_data_identifier}</h2>
+          <br />
+          <p>Value:</p>
+          <pre>{JSON.stringify(processDataToDisplay.process_data_value)}</pre>
+        </Modal>
+      );
+    }
+    return null;
+  };
+
+  const handleProcessDataShowResponse = (processData: ProcessData) => {
+    setProcessDataToDisplay(processData);
+  };
+
   const handleClickedDiagramTask = (
     shapeElement: any,
     bpmnProcessIdentifiers: any
   ) => {
-    if (tasks) {
-      const matchingTask: any = tasks.find(
-        (task: any) =>
+    if (shapeElement.type === 'bpmn:DataObjectReference') {
+      const dataObjectIdentifer = shapeElement.businessObject.dataObjectRef.id;
+      HttpService.makeCallToBackend({
+        path: `/process-data/${params.process_model_id}/${params.process_instance_id}/${dataObjectIdentifer}`,
+        httpMethod: 'GET',
+        successCallback: handleProcessDataShowResponse,
+      });
+    } else if (tasks) {
+      const matchingTask: any = tasks.find((task: any) => {
+        return (
           task.name === shapeElement.id &&
           bpmnProcessIdentifiers.includes(task.process_identifier)
-      );
+        );
+      });
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
         initializeTaskDataToDisplay(matchingTask);
@@ -503,7 +540,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
-      path: `/task-data/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
+      path: `${targetUris.processInstanceTaskListDataPath}/${taskToUse.id}`,
       httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,
@@ -687,6 +724,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {getInfoTag()}
         <br />
         {taskDataDisplayArea()}
+        {processDataDisplayArea()}
         {stepsElement()}
         <br />
         <ReactDiagramEditor

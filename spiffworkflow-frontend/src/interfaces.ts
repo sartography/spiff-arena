@@ -5,6 +5,11 @@ export interface Secret {
   creator_user_id: string;
 }
 
+export interface ProcessData {
+  process_data_identifier: string;
+  process_data_value: any;
+}
+
 export interface RecentProcessModel {
   processGroupIdentifier?: string;
   processModelIdentifier: string;

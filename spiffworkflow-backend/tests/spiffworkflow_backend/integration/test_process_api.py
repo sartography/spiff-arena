@@ -2928,3 +2928,31 @@ class TestProcessApi(BaseTest):
         assert len(response.json["results"]) == 2
         assert response.json["results"][1]["id"] == process_instance_one.id
         assert response.json["results"][0]["id"] == process_instance_two.id
+
+    def test_process_data_show(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_process_data_show."""
+        process_model = load_test_spec(
+            "test_group/data_object_test",
+            process_model_source_directory="data_object_test",
+        )
+        process_instance_one = self.create_process_instance_from_process_model(
+            process_model
+        )
+        processor = ProcessInstanceProcessor(process_instance_one)
+        processor.do_engine_steps(save=True)
+        assert process_instance_one.status == "user_input_required"
+
+        response = client.get(
+            f"/v1.0/process-data/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_one.id}/the_data_object_var",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["process_data_value"] == "hey"
