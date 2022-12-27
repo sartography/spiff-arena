@@ -176,7 +176,7 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
         id = capture_exception(exception)
 
         if isinstance(exception, ApiError):
-            current_app.logger.error(f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}")
+            current_app.logger.info(f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}")
 
         organization_slug = current_app.config.get("SENTRY_ORGANIZATION_SLUG")
         project_slug = current_app.config.get("SENTRY_PROJECT_SLUG")
