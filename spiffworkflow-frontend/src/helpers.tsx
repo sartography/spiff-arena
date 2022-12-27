@@ -20,6 +20,10 @@ export const slugifyString = (str: any) => {
     .replace(/-+$/g, '');
 };
 
+export const underscorizeString = (inputString: string) => {
+  return slugifyString(inputString).replace(/-/g, '_');
+};
+
 export const capitalizeFirstLetter = (string: any) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
