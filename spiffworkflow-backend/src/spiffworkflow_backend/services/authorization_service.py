@@ -757,20 +757,22 @@ class AuthorizationService:
         desired_group_identifiers = result["group_identifiers"]
 
         for group in group_info:
+            group_identifier = group["name"]
             for username in group["users"]:
                 GroupService.add_user_to_group_or_add_to_waiting(
-                    username, group["name"]
+                    username, group_identifier
                 )
+                desired_group_identifiers.add(group_identifier)
             for permission in group["permissions"]:
                 for crud_op in permission["actions"]:
                     desired_permission_assignments.extend(
                         cls.add_permission_from_uri_or_macro(
-                            group_identifier=group["name"],
+                            group_identifier=group_identifier,
                             target=permission["uri"],
                             permission=crud_op,
                         )
                     )
-                    desired_group_identifiers.add(group["name"])
+                    desired_group_identifiers.add(group_identifier)
 
         for ipa in initial_permission_assignments:
             if ipa not in desired_permission_assignments:
