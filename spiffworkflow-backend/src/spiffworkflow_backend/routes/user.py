@@ -295,7 +295,6 @@ def get_decoded_token(token: str) -> Optional[Dict]:
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
     except Exception as e:
-        print(f"Exception in get_token_type: {e}")
         raise ApiError(
             error_code="invalid_token", message="Cannot decode token."
         ) from e
