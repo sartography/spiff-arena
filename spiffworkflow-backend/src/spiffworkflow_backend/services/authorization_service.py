@@ -73,6 +73,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
+    {"path": "/process-data", "relevant_permissions": ["read"]},
 ]
 
 
