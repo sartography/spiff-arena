@@ -7,7 +7,7 @@ import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
 
 export default function AuthenticationList() {
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   const [authenticationList, setAuthenticationList] = useState<
     AuthenticationItem[] | null
@@ -26,9 +26,9 @@ export default function AuthenticationList() {
     HttpService.makeCallToBackend({
       path: `/authentications`,
       successCallback: processResult,
-      failureCallback: setErrorMessage,
+      failureCallback: setErrorObject,
     });
-  }, [setErrorMessage]);
+  }, [setErrorObject]);
 
   const buildTable = () => {
     if (authenticationList) {

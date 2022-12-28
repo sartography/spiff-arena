@@ -17,13 +17,11 @@ import UserService from './services/UserService';
 import { Notification } from './components/Notification';
 
 export default function App() {
-  const [errorMessage, setErrorMessage] = useState<ErrorForDisplay | null>(
-    null
-  );
+  const [errorObject, setErrorObject] = useState<ErrorForDisplay | null>(null);
 
   const errorContextValueArray = useMemo(
-    () => [errorMessage, setErrorMessage],
-    [errorMessage]
+    () => [errorObject, setErrorObject],
+    [errorObject]
   );
 
   if (!UserService.isLoggedIn()) {
@@ -34,27 +32,46 @@ export default function App() {
   const ability = defineAbility(() => {});
 
   let errorTag = null;
-  if (errorMessage) {
+  if (errorObject) {
     let sentryLinkTag = null;
-    if (errorMessage.sentry_link) {
+    if (errorObject.sentry_link) {
       sentryLinkTag = (
         <span>
           {
             ': Find details about this error here (it may take a moment to become available): '
           }
-          <a href={errorMessage.sentry_link} target="_blank" rel="noreferrer">
-            {errorMessage.sentry_link}
+          <a href={errorObject.sentry_link} target="_blank" rel="noreferrer">
+            {errorObject.sentry_link}
           </a>
         </span>
       );
     }
+
+    let message = <div>{errorObject.message}</div>;
+    let title = 'Error:';
+    if ('task_name' in errorObject) {
+      title = `Error in python script:`;
+      message = (
+        <>
+          <br />
+          <div>
+            Task: {errorObject.task_name} ({errorObject.task_id})
+          </div>
+          <div>File name: {errorObject.file_name}</div>
+          <div>Line number in script task: {errorObject.line_number}</div>
+          <br />
+          <div>{errorObject.message}</div>
+        </>
+      );
+    }
+
     errorTag = (
       <Notification
-        title="Error:"
-        onClose={() => setErrorMessage(null)}
+        title={title}
+        onClose={() => setErrorObject(null)}
         type="error"
       >
-        {errorMessage.message}
+        {message}
         {sentryLinkTag}
       </Notification>
     );

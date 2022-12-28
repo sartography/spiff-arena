@@ -52,7 +52,7 @@ import { Notification } from '../components/Notification';
 
 export default function ProcessModelShow() {
   const params = useParams();
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [processInstance, setProcessInstance] =
@@ -148,7 +148,7 @@ export default function ProcessModelShow() {
       !('file_contents' in processModelFile) ||
       processModelFile.file_contents === undefined
     ) {
-      setErrorMessage({
+      setErrorObject({
         message: `Could not file file contents for file: ${processModelFile.name}`,
       });
       return;
@@ -169,7 +169,7 @@ export default function ProcessModelShow() {
   };
 
   const downloadFile = (fileName: string) => {
-    setErrorMessage(null);
+    setErrorObject(null);
     const processModelPath = `process-models/${modifiedProcessModelId}`;
     HttpService.makeCallToBackend({
       path: `/${processModelPath}/files/${fileName}`,

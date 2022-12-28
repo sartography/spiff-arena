@@ -67,7 +67,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     useState<ProcessData | null>(null);
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
 
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -511,7 +511,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const cancelEditingTaskData = () => {
     setEditingTaskData(false);
     initializeTaskDataToDisplay(taskToDisplay);
-    setErrorMessage(null);
+    setErrorObject(null);
   };
 
   const taskDataStringToObject = (dataString: string) => {
@@ -527,7 +527,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const saveTaskDataFailure = (result: any) => {
-    setErrorMessage({ message: result.message });
+    setErrorObject({ message: result.message });
   };
 
   const saveTaskData = () => {
@@ -535,7 +535,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return;
     }
 
-    setErrorMessage(null);
+    setErrorObject(null);
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };

@@ -158,6 +158,10 @@ export type HotCrumbItem = HotCrumbItemArray | HotCrumbItemObject;
 export interface ErrorForDisplay {
   message: string;
   sentry_link?: string;
+  task_name?: string;
+  task_id?: string;
+  line_number?: number;
+  file_name?: string;
 }
 
 export interface AuthenticationParam {
