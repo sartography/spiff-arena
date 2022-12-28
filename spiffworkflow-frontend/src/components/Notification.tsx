@@ -1,6 +1,10 @@
 import React from 'react';
-// @ts-ignore
-import { Close, CheckmarkFilled } from '@carbon/icons-react';
+import {
+  Close,
+  Checkmark,
+  Error,
+  // @ts-ignore
+} from '@carbon/icons-react';
 // @ts-ignore
 import { Button } from '@carbon/react';
 
@@ -17,9 +21,9 @@ export function Notification({
   onClose,
   type = 'success',
 }: OwnProps) {
-  let iconClassName = 'green-icon';
+  let iconComponent = <Checkmark />;
   if (type === 'error') {
-    iconClassName = 'red-icon';
+    iconComponent = <Error />;
   }
   return (
     <div
@@ -28,7 +32,7 @@ export function Notification({
     >
       <div className="cds--inline-notification__details">
         <div className="cds--inline-notification__text-wrapper">
-          <CheckmarkFilled className={`${iconClassName} notification-icon`} />
+          {iconComponent}
           <div className="cds--inline-notification__title">{title}</div>
           <div className="cds--inline-notification__subtitle">{children}</div>
         </div>
