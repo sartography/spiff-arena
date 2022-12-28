@@ -68,8 +68,7 @@ describe('process-instances', () => {
     cy.login();
     cy.navigateToProcessModel(
       'Acceptance Tests Group One',
-      'Acceptance Tests Model 1',
-      'acceptance-tests-model-1'
+      'Acceptance Tests Model 1'
     );
   });
   afterEach(() => {
@@ -80,6 +79,7 @@ describe('process-instances', () => {
     const originalDmnOutputForKevin = 'Very wonderful';
     const newDmnOutputForKevin = 'The new wonderful';
     const dmnOutputForDan = 'pretty wonderful';
+    const acceptanceTestOneDisplayName = 'Acceptance Tests Model 1';
 
     const originalPythonScript = 'person = "Kevin"';
     const newPythonScript = 'person = "Dan"';
@@ -95,13 +95,13 @@ describe('process-instances', () => {
     cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(originalDmnOutputForKevin, newDmnOutputForKevin);
 
-    cy.contains('acceptance-tests-model-1').click();
+    cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
     cy.getBySel('files-accordion').click();
     cy.getBySel(`edit-file-${dmnFile.replace('.', '-')}`).click();
     updateDmnText(newDmnOutputForKevin, originalDmnOutputForKevin);
-    cy.contains('acceptance-tests-model-1').click();
+    cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
     // Change bpmn
@@ -109,13 +109,13 @@ describe('process-instances', () => {
     cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     cy.contains(`Process Model File: ${bpmnFile}`);
     updateBpmnPythonScript(newPythonScript);
-    cy.contains('acceptance-tests-model-1').click();
+    cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
 
     cy.getBySel('files-accordion').click();
     cy.getBySel(`edit-file-${bpmnFile.replace('.', '-')}`).click();
     updateBpmnPythonScript(originalPythonScript);
-    cy.contains('acceptance-tests-model-1').click();
+    cy.contains(acceptanceTestOneDisplayName).click();
     cy.runPrimaryBpmnFile();
   });
 
@@ -160,6 +160,7 @@ describe('process-instances', () => {
     cy.getBySel('process-instance-list-link').click();
     cy.getBySel('process-instance-show-link').first().click();
     cy.getBySel('process-instance-log-list-link').click();
+    cy.getBySel('process-instance-log-detailed').click();
     cy.contains('process_model_one');
     cy.contains('State change to COMPLETED');
     cy.basicPaginationTest();

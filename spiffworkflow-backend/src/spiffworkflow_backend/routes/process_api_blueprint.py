@@ -158,17 +158,12 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
     return make_response(jsonify({"results": response_dict}), 200)
 
 
-def modify_process_model_id(process_model_id: str) -> str:
-    """Modify_process_model_id."""
-    return process_model_id.replace("/", ":")
-
-
 def un_modify_modified_process_model_id(modified_process_model_identifier: str) -> str:
     """Un_modify_modified_process_model_id."""
     return modified_process_model_identifier.replace(":", "/")
 
 
-def process_group_add(body: dict) -> flask.wrappers.Response:
+def process_group_create(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_group = ProcessGroup(**body)
     ProcessModelService.add_process_group(process_group)
@@ -1354,7 +1349,6 @@ def process_instance_task_list_without_task_data_for_me(
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
-    print(f"process_instance: {process_instance}")
     return process_instance_task_list(
         modified_process_model_identifier,
         process_instance,
@@ -1538,6 +1532,30 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 task.properties["instructionsForEndUser"], task.data
             )
     return make_response(jsonify(task), 200)
+
+
+def process_data_show(
+    process_instance_id: int,
+    process_data_identifier: str,
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    """Process_data_show."""
+    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance)
+    all_process_data = processor.get_data()
+    process_data_value = None
+    if process_data_identifier in all_process_data:
+        process_data_value = all_process_data[process_data_identifier]
+
+    return make_response(
+        jsonify(
+            {
+                "process_data_identifier": process_data_identifier,
+                "process_data_value": process_data_value,
+            }
+        ),
+        200,
+    )
 
 
 def task_submit(
@@ -1907,7 +1925,7 @@ def secret_list(
     return make_response(jsonify(response_json), 200)
 
 
-def add_secret(body: Dict) -> Response:
+def secret_create(body: Dict) -> Response:
     """Add secret."""
     secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
     return Response(
@@ -1917,20 +1935,20 @@ def add_secret(body: Dict) -> Response:
     )
 
 
-def update_secret(key: str, body: dict) -> Response:
+def secret_update(key: str, body: dict) -> Response:
     """Update secret."""
     SecretService().update_secret(key, body["value"], g.user.id)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def delete_secret(key: str) -> Response:
+def secret_delete(key: str) -> Response:
     """Delete secret."""
     current_user = UserService.current_user()
     SecretService.delete_secret(key, current_user.id)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def update_task_data(
+def task_data_update(
     process_instance_id: str,
     modified_process_model_identifier: str,
     task_id: str,
