@@ -62,6 +62,7 @@ import {
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
+import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
 import { FormatProcessModelDisplayName } from './MiniComponents';
 import { Notification } from './Notification';
@@ -681,6 +682,14 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const deleteReportComponent = () => {
+    return processInstanceReportSelection ? (
+      <ProcessInstanceListDeleteReport
+        processInstanceReportSelection={processInstanceReportSelection}
+      />
+    ) : null;
+  };
+
   const removeColumn = (reportColumn: ReportColumn) => {
     if (reportMetadata) {
       const reportMetadataCopy = { ...reportMetadata };
@@ -1062,6 +1071,7 @@ export default function ProcessInstanceListTable({
           </Column>
           <Column sm={4} md={4} lg={8}>
             {saveAsReportComponent()}
+            {deleteReportComponent()}
           </Column>
         </Grid>
       </>
