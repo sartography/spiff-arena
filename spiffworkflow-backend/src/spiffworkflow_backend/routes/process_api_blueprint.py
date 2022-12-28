@@ -135,7 +135,6 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
                 status_code=400,
             )
         )
-
     response_dict: dict[str, dict[str, bool]] = {}
     requests_to_check = body["requests_to_check"]
 

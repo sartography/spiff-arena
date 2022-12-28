@@ -67,6 +67,7 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
         <TabList aria-label="List of tabs">
           <Tab
             title="Only show process instances for the current user."
+            data-qa="process-instance-list-for-me"
             onClick={() => {
               navigate('/admin/process-instances/for-me');
             }}
@@ -76,6 +77,7 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
           <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
             <Tab
               title="Show all process instances for all users."
+              data-qa="process-instance-list-all"
               onClick={() => {
                 navigate('/admin/process-instances/all');
               }}

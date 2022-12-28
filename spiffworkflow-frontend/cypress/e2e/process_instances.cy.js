@@ -168,6 +168,8 @@ describe('process-instances', () => {
 
   it('can filter', () => {
     cy.getBySel('process-instance-list-link').click();
+    cy.getBySel('process-instance-list-all').click();
+    cy.contains('All Process Instances');
     cy.assertAtLeastOneItemInPaginatedResults();
 
     const statusSelect = '#process-instance-status-select';
@@ -175,6 +177,7 @@ describe('process-instances', () => {
       if (!['all', 'waiting'].includes(processStatus)) {
         cy.get(statusSelect).click();
         cy.get(statusSelect).contains(processStatus).click();
+        cy.get(statusSelect).click();
         cy.getBySel('filter-button').click();
         // FIXME: wait a little bit for the useEffects to be able to fully set processInstanceFilters
         cy.wait(1000);

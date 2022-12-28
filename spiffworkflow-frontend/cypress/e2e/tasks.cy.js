@@ -92,7 +92,7 @@ describe('tasks', () => {
     cy.contains('Tasks').should('exist');
 
     // FIXME: this will probably need a better way to link to the proper form that we want
-    cy.contains('Complete Task').click();
+    cy.contains('Go').click();
 
     submitInputIntoFormField(
       'get_user_generated_number_four',
