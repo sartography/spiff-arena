@@ -21,9 +21,9 @@ export function Notification({
   onClose,
   type = 'success',
 }: OwnProps) {
-  let iconComponent = <Checkmark />;
+  let iconComponent = <Checkmark className="notification-icon" />;
   if (type === 'error') {
-    iconComponent = <Error />;
+    iconComponent = <Error className="notification-icon" />;
   }
   return (
     <div

@@ -98,7 +98,7 @@ export default function ProcessModelEditDiagram() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
     null
   );
@@ -172,7 +172,7 @@ export default function ProcessModelEditDiagram() {
 
   const saveDiagram = (bpmnXML: any, fileName = params.file_name) => {
     setDisplaySaveFileMessage(false);
-    setErrorMessage(null);
+    setErrorObject(null);
     setBpmnXmlForDiagramRendering(bpmnXML);
 
     let url = `/process-models/${modifiedProcessModelId}/files`;
@@ -198,7 +198,7 @@ export default function ProcessModelEditDiagram() {
     HttpService.makeCallToBackend({
       path: url,
       successCallback: navigateToProcessModelFile,
-      failureCallback: setErrorMessage,
+      failureCallback: setErrorObject,
       httpMethod,
       postBody: formData,
     });
@@ -510,17 +510,17 @@ export default function ProcessModelEditDiagram() {
 
   const unitTestFailureElement = () => {
     if (scriptUnitTestResult && scriptUnitTestResult.result === false) {
-      let errorMessage = '';
+      let errorObject = '';
       if (scriptUnitTestResult.context) {
-        errorMessage = 'Unexpected result. Please see the comparison below.';
+        errorObject = 'Unexpected result. Please see the comparison below.';
       } else if (scriptUnitTestResult.line_number) {
-        errorMessage = `Error encountered running the script.  Please check the code around line ${scriptUnitTestResult.line_number}`;
+        errorObject = `Error encountered running the script.  Please check the code around line ${scriptUnitTestResult.line_number}`;
       } else {
-        errorMessage = `Error encountered running the script. ${JSON.stringify(
+        errorObject = `Error encountered running the script. ${JSON.stringify(
           scriptUnitTestResult.error
         )}`;
       }
-      let errorStringElement = <span>{errorMessage}</span>;
+      let errorStringElement = <span>{errorObject}</span>;
 
       let errorContextElement = null;
 

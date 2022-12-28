@@ -132,7 +132,7 @@ export default function ProcessInstanceListTable({
   const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
 
-  const [errorMessage, setErrorMessage] = (useContext as any)(ErrorContext);
+  const [errorObject, setErrorObject] = (useContext as any)(ErrorContext);
 
   const processInstancePathPrefix =
     variant === 'all'
@@ -469,7 +469,7 @@ export default function ProcessInstanceListTable({
       }
       if (message !== '') {
         valid = false;
-        setErrorMessageSafely(message, errorMessage, setErrorMessage);
+        setErrorMessageSafely(message, errorObject, setErrorObject);
       }
     }
 
@@ -527,7 +527,7 @@ export default function ProcessInstanceListTable({
       queryParamString += `&report_id=${processInstanceReportSelection.id}`;
     }
 
-    setErrorMessage(null);
+    setErrorObject(null);
     setProcessInstanceReportJustSaved(null);
     navigate(`${processInstancePathPrefix}?${queryParamString}`);
   };
@@ -626,7 +626,7 @@ export default function ProcessInstanceListTable({
       queryParamString = `?report_id=${selectedReport.id}`;
     }
 
-    setErrorMessage(null);
+    setErrorObject(null);
     setProcessInstanceReportJustSaved(mode || null);
     navigate(`${processInstancePathPrefix}${queryParamString}`);
   };
