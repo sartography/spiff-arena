@@ -40,6 +40,7 @@ import {
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
+  setErrorMessageSafely,
 } from '../helpers';
 
 import PaginationForTable from './PaginationForTable';
@@ -130,11 +131,11 @@ export default function ProcessInstanceListTable({
   const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
 
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const [errorMessage, setErrorMessage] = (useContext as any)(ErrorContext);
 
   const processInstancePathPrefix =
     variant === 'all'
-      ? '/admin/process-instances'
+      ? '/admin/process-instances/all'
       : '/admin/process-instances/for-me';
 
   const [processStatusAllOptions, setProcessStatusAllOptions] = useState<any[]>(
@@ -428,8 +429,11 @@ export default function ProcessInstanceListTable({
     }
   };
 
-  // TODO: after factoring this out page hangs when invalid date ranges and applying the filter
-  const calculateStartAndEndSeconds = () => {
+  // jasquat/burnettk - 2022-12-28 do not check the validity of the dates when rendering components to avoid the page being
+  // re-rendered while the user is still typing. NOTE that we also prevented rerendering
+  // with the use of the setErrorMessageSafely function. we are not sure why the context not
+  // changing still causes things to rerender when we call its setter without our extra check.
+  const calculateStartAndEndSeconds = (validate: boolean = true) => {
     const startFromSeconds = convertDateAndTimeStringsToSeconds(
       startFromDate,
       startFromTime || '00:00:00'
@@ -447,29 +451,25 @@ export default function ProcessInstanceListTable({
       endToTime || '00:00:00'
     );
     let valid = true;
-    if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
-      setErrorMessage({
-        message: '"Start date from" cannot be after "start date to"',
-      });
-      valid = false;
-    }
-    if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
-      setErrorMessage({
-        message: '"End date from" cannot be after "end date to"',
-      });
-      valid = false;
-    }
-    if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
-      setErrorMessage({
-        message: '"Start date from" cannot be after "end date from"',
-      });
-      valid = false;
-    }
-    if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
-      setErrorMessage({
-        message: '"Start date to" cannot be after "end date to"',
-      });
-      valid = false;
+
+    if (validate) {
+      let message = '';
+      if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
+        message = '"Start date from" cannot be after "start date to"';
+      }
+      if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
+        message = '"End date from" cannot be after "end date to"';
+      }
+      if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
+        message = '"Start date from" cannot be after "end date from"';
+      }
+      if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
+        message = '"Start date to" cannot be after "end date to"';
+      }
+      if (message !== '') {
+        valid = false;
+        setErrorMessageSafely(message, errorMessage, setErrorMessage);
+      }
     }
 
     return {
@@ -657,7 +657,7 @@ export default function ProcessInstanceListTable({
       startToSeconds,
       endFromSeconds,
       endToSeconds,
-    } = calculateStartAndEndSeconds();
+    } = calculateStartAndEndSeconds(false);
 
     if (!valid || !reportMetadata) {
       return null;
