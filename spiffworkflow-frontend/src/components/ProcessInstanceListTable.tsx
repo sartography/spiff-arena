@@ -682,9 +682,14 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const onDeleteReportSuccess = () => {
+    processInstanceReportDidChange({ selectedItem: null });
+  };
+
   const deleteReportComponent = () => {
     return processInstanceReportSelection ? (
       <ProcessInstanceListDeleteReport
+        onSuccess={onDeleteReportSuccess}
         processInstanceReportSelection={processInstanceReportSelection}
       />
     ) : null;
