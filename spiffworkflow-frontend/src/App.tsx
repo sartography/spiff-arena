@@ -14,6 +14,7 @@ import { ErrorForDisplay } from './interfaces';
 
 import { AbilityContext } from './contexts/Can';
 import UserService from './services/UserService';
+import { Notification } from './components/Notification';
 
 export default function App() {
   const [errorMessage, setErrorMessage] = useState<ErrorForDisplay | null>(
@@ -48,10 +49,14 @@ export default function App() {
       );
     }
     errorTag = (
-      <div id="filter-errors" className="mt-4 alert alert-danger" role="alert">
+      <Notification
+        title="Error:"
+        onClose={() => setErrorMessage(null)}
+        type="error"
+      >
         {errorMessage.message}
         {sentryLinkTag}
-      </div>
+      </Notification>
     );
   }
 
