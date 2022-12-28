@@ -31,9 +31,7 @@ export default function ProcessInstanceReportList() {
       return (
         <tr key={(row as any).id}>
           <td>
-            <Link
-              to={`/admin/process-instances/reports/${rowToUse.identifier}`}
-            >
+            <Link to={`/admin/process-instances?report_id=${rowToUse.id}`}>
               {rowToUse.identifier}
             </Link>
           </td>
