@@ -31,7 +31,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_script_engine_takes_data_and_returns_expected_results."""
-        app.config["THREAD_LOCAL_DATA"].process_model_identifier = 'hey'
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
         script_engine = ProcessInstanceProcessor._script_engine
 
@@ -46,7 +46,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_script_engine_takes_data_and_returns_expected_results."""
-        app.config["THREAD_LOCAL_DATA"].process_model_identifier = 'hey'
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
         script_engine = ProcessInstanceProcessor._script_engine
         result = script_engine._evaluate("fact_service(type='norris')", {})
