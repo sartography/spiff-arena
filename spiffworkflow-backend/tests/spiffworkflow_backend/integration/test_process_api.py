@@ -1,5 +1,6 @@
 """Test Process Api Blueprint."""
 import io
+from flask_bpmn.api.api_error import ApiError
 import json
 import os
 import time
@@ -2040,6 +2041,33 @@ class TestProcessApi(BaseTest):
         )
         assert process is not None
         assert process.status == "error"
+
+    def test_task_data_is_set_even_if_process_instance_errors(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model = load_test_spec(
+            process_model_id="group/error_with_task_data",
+            bpmn_file_name="script_error_with_task_data.bpmn",
+            process_model_source_directory="error",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 400
+        assert process_instance.status == 'error'
+        processor = ProcessInstanceProcessor(process_instance)
+        spiff_task = processor.get_task_by_bpmn_identifier('script_task_one', processor.bpmn_process_instance)
+        assert spiff_task is not None
+        assert spiff_task.data != {}
 
     def test_process_model_file_create(
         self,
