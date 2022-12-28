@@ -584,7 +584,7 @@ def process_instance_run(
 
     if do_engine_steps:
         try:
-            processor.do_engine_steps()
+            processor.do_engine_steps(save=True)
         except ApiError as e:
             ErrorHandlingService().handle_error(processor, e)
             raise e
@@ -597,7 +597,6 @@ def process_instance_run(
                 status_code=400,
                 task=task,
             ) from e
-        processor.save()
 
         if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
