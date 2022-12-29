@@ -90,6 +90,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [`${targetUris.processInstanceResumePath}`]: ['POST'],
     [`${targetUris.processInstanceSuspendPath}`]: ['POST'],
     [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
+    [targetUris.processInstanceResetPath]: ['POST'],
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
@@ -259,6 +260,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     return spiffStepLink(<CaretRight />, 1);
+  };
+
+  const resetProcessInstance = () => {
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceResetPath}/${currentSpiffStep()}`,
+      successCallback: refreshPage,
+      httpMethod: 'POST',
+    });
   };
 
   const getInfoTag = () => {
@@ -535,6 +544,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const canResetProcess = (task: any) => {
+    return (
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      task.state === 'READY' &&
+      !showingLastSpiffStep()
+    );
+  };
+
   const getEvents = (task: any) => {
     const handleMessage = (eventDefinition: any) => {
       if (eventDefinition.typename === 'MessageEventDefinition') {
@@ -619,7 +637,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
-  const taskDataButtons = (task: any) => {
+  const taskDisplayButtons = (task: any) => {
     const buttons = [];
 
     if (
@@ -707,6 +725,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </Button>
         );
       }
+      if (canResetProcess(task)) {
+        buttons.push(
+          <Button
+            data-qa="reset-process-button"
+            onClick={() => resetProcessInstance()}
+          >
+            Resume Process Here
+          </Button>
+        );
+      }
     }
 
     return buttons;
@@ -771,7 +799,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         >
           <Stack orientation="horizontal" gap={2}>
             {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-            {taskDataButtons(taskToUse)}
+            {taskDisplayButtons(taskToUse)}
           </Stack>
           {selectingEvent
             ? eventSelector(candidateEvents)
