@@ -79,7 +79,8 @@ from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.git_service import GitService, GitCommandError
+from spiffworkflow_backend.services.git_service import GitCommandError
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -985,7 +986,7 @@ def _get_process_instance(
     name_of_file_with_diagram = None
     if process_identifier:
         spec_reference = SpecReferenceCache.query.filter_by(
-            identifier=process_identifier
+            identifier=process_identifier, type="process"
         ).first()
         if spec_reference is None:
             raise SpecReferenceNotFoundError(
