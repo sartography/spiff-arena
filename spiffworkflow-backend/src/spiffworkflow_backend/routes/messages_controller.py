@@ -19,6 +19,9 @@ from spiffworkflow_backend.models.message_triggerable_process_model import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
+from spiffworkflow_backend.routes.process_api_blueprint import (
+    _find_process_instance_by_id_or_raise,
+)
 from spiffworkflow_backend.services.message_service import MessageService
 
 

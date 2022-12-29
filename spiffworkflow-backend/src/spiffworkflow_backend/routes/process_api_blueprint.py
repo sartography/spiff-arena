@@ -1,11 +1,8 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-import uuid
 from typing import Any
 from typing import Dict
 from typing import Optional
-from typing import TypedDict
-from typing import Union
 
 import connexion  # type: ignore
 import flask.wrappers
@@ -20,9 +17,6 @@ from flask import request
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
-from lxml import etree  # type: ignore
-from lxml.builder import ElementMaker  # type: ignore
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
 
@@ -52,21 +46,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-
-
-class TaskDataSelectOption(TypedDict):
-    """TaskDataSelectOption."""
-
-    value: str
-    label: str
-
-
-class ReactJsonSchemaSelectOption(TypedDict):
-    """ReactJsonSchemaSelectOption."""
-
-    type: str
-    title: str
-    enum: list[str]
 
 
 process_api_blueprint = Blueprint("process_api", __name__)
@@ -285,64 +264,6 @@ def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) 
     return return_value
 
 
-# originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
-def _update_form_schema_with_task_data_as_needed(
-    in_dict: dict, task_data: dict
-) -> None:
-    """Update_nested."""
-    for k, value in in_dict.items():
-        if "anyOf" == k:
-            # value will look like the array on the right of "anyOf": ["options_from_task_data_var:awesome_options"]
-            if isinstance(value, list):
-                if len(value) == 1:
-                    first_element_in_value_list = value[0]
-                    if isinstance(first_element_in_value_list, str):
-                        if first_element_in_value_list.startswith(
-                            "options_from_task_data_var:"
-                        ):
-                            task_data_var = first_element_in_value_list.replace(
-                                "options_from_task_data_var:", ""
-                            )
-
-                            if task_data_var not in task_data:
-                                raise (
-                                    ApiError(
-                                        error_code="missing_task_data_var",
-                                        message=f"Task data is missing variable: {task_data_var}",
-                                        status_code=500,
-                                    )
-                                )
-
-                            select_options_from_task_data = task_data.get(task_data_var)
-                            if isinstance(select_options_from_task_data, list):
-                                if all(
-                                    "value" in d and "label" in d
-                                    for d in select_options_from_task_data
-                                ):
-
-                                    def map_function(
-                                        task_data_select_option: TaskDataSelectOption,
-                                    ) -> ReactJsonSchemaSelectOption:
-                                        """Map_function."""
-                                        return {
-                                            "type": "string",
-                                            "enum": [task_data_select_option["value"]],
-                                            "title": task_data_select_option["label"],
-                                        }
-
-                                    options_for_react_json_schema_form = list(
-                                        map(map_function, select_options_from_task_data)
-                                    )
-
-                                    in_dict[k] = options_for_react_json_schema_form
-        elif isinstance(value, dict):
-            _update_form_schema_with_task_data_as_needed(value, task_data)
-        elif isinstance(value, list):
-            for o in value:
-                if isinstance(o, dict):
-                    _update_form_schema_with_task_data_as_needed(o, task_data)
-
-
 def _commit_and_push_to_git(message: str) -> None:
     """Commit_and_push_to_git."""
     if current_app.config["GIT_COMMIT_ON_SAVE"]:
@@ -499,25 +420,3 @@ def _get_process_model(process_model_id: str) -> ProcessModelInfo:
         ) from exception
 
     return process_model
-
-
-def _get_spiff_task_from_process_instance(
-    task_id: str,
-    process_instance: ProcessInstanceModel,
-    processor: Union[ProcessInstanceProcessor, None] = None,
-) -> SpiffTask:
-    """Get_spiff_task_from_process_instance."""
-    if processor is None:
-        processor = ProcessInstanceProcessor(process_instance)
-    task_uuid = uuid.UUID(task_id)
-    spiff_task = processor.bpmn_process_instance.get_task(task_uuid)
-
-    if spiff_task is None:
-        raise (
-            ApiError(
-                error_code="empty_task",
-                message="Processor failed to obtain task.",
-                status_code=500,
-            )
-        )
-    return spiff_task

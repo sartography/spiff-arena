@@ -1,10 +1,11 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model, _get_required_parameter_or_raise
 import os
+import uuid
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import TypedDict
 from typing import Union
 
 import flask.wrappers
@@ -14,6 +15,7 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
@@ -26,6 +28,13 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.routes.process_api_blueprint import (
+    _find_principal_or_raise,
+)
+from spiffworkflow_backend.routes.process_api_blueprint import (
+    _find_process_instance_by_id_or_raise,
+)
+from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -36,6 +45,21 @@ from spiffworkflow_backend.services.process_instance_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+
+
+class TaskDataSelectOption(TypedDict):
+    """TaskDataSelectOption."""
+
+    value: str
+    label: str
+
+
+class ReactJsonSchemaSelectOption(TypedDict):
+    """ReactJsonSchemaSelectOption."""
+
+    type: str
+    title: str
+    enum: list[str]
 
 
 # TODO: see comment for before_request
@@ -418,3 +442,83 @@ def _render_jinja_template(unprocessed_template: str, data: dict[str, Any]) -> s
     )
     template = jinja_environment.from_string(unprocessed_template)
     return template.render(**data)
+
+
+def _get_spiff_task_from_process_instance(
+    task_id: str,
+    process_instance: ProcessInstanceModel,
+    processor: Union[ProcessInstanceProcessor, None] = None,
+) -> SpiffTask:
+    """Get_spiff_task_from_process_instance."""
+    if processor is None:
+        processor = ProcessInstanceProcessor(process_instance)
+    task_uuid = uuid.UUID(task_id)
+    spiff_task = processor.bpmn_process_instance.get_task(task_uuid)
+
+    if spiff_task is None:
+        raise (
+            ApiError(
+                error_code="empty_task",
+                message="Processor failed to obtain task.",
+                status_code=500,
+            )
+        )
+    return spiff_task
+
+
+# originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
+def _update_form_schema_with_task_data_as_needed(
+    in_dict: dict, task_data: dict
+) -> None:
+    """Update_nested."""
+    for k, value in in_dict.items():
+        if "anyOf" == k:
+            # value will look like the array on the right of "anyOf": ["options_from_task_data_var:awesome_options"]
+            if isinstance(value, list):
+                if len(value) == 1:
+                    first_element_in_value_list = value[0]
+                    if isinstance(first_element_in_value_list, str):
+                        if first_element_in_value_list.startswith(
+                            "options_from_task_data_var:"
+                        ):
+                            task_data_var = first_element_in_value_list.replace(
+                                "options_from_task_data_var:", ""
+                            )
+
+                            if task_data_var not in task_data:
+                                raise (
+                                    ApiError(
+                                        error_code="missing_task_data_var",
+                                        message=f"Task data is missing variable: {task_data_var}",
+                                        status_code=500,
+                                    )
+                                )
+
+                            select_options_from_task_data = task_data.get(task_data_var)
+                            if isinstance(select_options_from_task_data, list):
+                                if all(
+                                    "value" in d and "label" in d
+                                    for d in select_options_from_task_data
+                                ):
+
+                                    def map_function(
+                                        task_data_select_option: TaskDataSelectOption,
+                                    ) -> ReactJsonSchemaSelectOption:
+                                        """Map_function."""
+                                        return {
+                                            "type": "string",
+                                            "enum": [task_data_select_option["value"]],
+                                            "title": task_data_select_option["label"],
+                                        }
+
+                                    options_for_react_json_schema_form = list(
+                                        map(map_function, select_options_from_task_data)
+                                    )
+
+                                    in_dict[k] = options_for_react_json_schema_form
+        elif isinstance(value, dict):
+            _update_form_schema_with_task_data_as_needed(value, task_data)
+        elif isinstance(value, list):
+            for o in value:
+                if isinstance(o, dict):
+                    _update_form_schema_with_task_data_as_needed(o, task_data)

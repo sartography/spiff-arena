@@ -13,7 +13,7 @@ from flask import request
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
-from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.task import TaskState  # type: ignore
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import (
