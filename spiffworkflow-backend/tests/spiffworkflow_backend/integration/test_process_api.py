@@ -2677,7 +2677,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
         )
-        assert response.json["status"] == "complete"
+        assert response.json["status"] == "suspended"
 
     def setup_initial_groups_for_move_tests(
         self, client: FlaskClient, with_super_admin_user: UserModel
