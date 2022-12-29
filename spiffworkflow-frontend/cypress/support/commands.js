@@ -97,6 +97,7 @@ Cypress.Commands.add(
       cy.reload(true);
       cy.contains('Process Model:').should('exist');
       cy.contains(/Process Instance.*[kK]icked [oO]ff/).should('not.exist');
+      cy.contains('[data-qa=process-model-show-permissions-loaded]', 'true');
     }
   }
 );
