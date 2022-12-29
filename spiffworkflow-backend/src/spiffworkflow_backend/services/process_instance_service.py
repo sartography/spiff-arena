@@ -17,6 +17,7 @@ from spiffworkflow_backend.models.task import MultiInstanceType
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -36,7 +37,10 @@ class ProcessInstanceService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
-        current_git_revision = GitService.get_current_revision()
+        try:
+            current_git_revision = GitService.get_current_revision()
+        except GitCommandError:
+            current_git_revision = ""
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
             process_initiator=user,
@@ -210,7 +214,7 @@ class ProcessInstanceService:
         dot_dct = ProcessInstanceService.create_dot_dict(data)
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
-        processor.complete_task(spiff_task, human_task)
+        processor.complete_task(spiff_task, human_task, user=user)
         processor.do_engine_steps(save=True)
 
     @staticmethod

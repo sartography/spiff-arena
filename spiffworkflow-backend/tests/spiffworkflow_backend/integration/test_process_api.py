@@ -285,7 +285,7 @@ class TestProcessApi(BaseTest):
         )
         headers = self.logged_in_headers(with_super_admin_user)
         # create an instance from a model
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
 
@@ -1073,7 +1073,7 @@ class TestProcessApi(BaseTest):
         """Test_process_instance_create."""
         test_process_model_id = "runs_without_input/sample"
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, test_process_model_id, headers
         )
         assert response.json is not None
@@ -1103,7 +1103,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -1145,7 +1145,7 @@ class TestProcessApi(BaseTest):
             self.modify_process_identifier_for_path_param(process_model_identifier)
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        create_response = self.create_process_instance_from_process_model_id(
+        create_response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert create_response.json is not None
@@ -1192,7 +1192,7 @@ class TestProcessApi(BaseTest):
             self.modify_process_identifier_for_path_param(process_model_identifier)
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        create_response = self.create_process_instance_from_process_model_id(
+        create_response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert create_response.json is not None
@@ -1300,7 +1300,7 @@ class TestProcessApi(BaseTest):
                 "andThis": "another_item_non_key",
             }
         }
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
@@ -1360,7 +1360,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client,
             process_model_identifier,
             self.logged_in_headers(with_super_admin_user),
@@ -1408,7 +1408,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -1449,7 +1449,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -1500,7 +1500,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
 
@@ -1547,19 +1547,19 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
         headers = self.logged_in_headers(with_super_admin_user)
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
-        self.create_process_instance_from_process_model_id(
+        self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
 
@@ -1873,7 +1873,7 @@ class TestProcessApi(BaseTest):
     ) -> Any:
         """Setup_testing_instance."""
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_id, headers
         )
         process_instance = response.json
@@ -2042,6 +2042,36 @@ class TestProcessApi(BaseTest):
         assert process is not None
         assert process.status == "error"
 
+    def test_task_data_is_set_even_if_process_instance_errors(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_task_data_is_set_even_if_process_instance_errors."""
+        process_model = load_test_spec(
+            process_model_id="group/error_with_task_data",
+            bpmn_file_name="script_error_with_task_data.bpmn",
+            process_model_source_directory="error",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 400
+        assert process_instance.status == "error"
+        processor = ProcessInstanceProcessor(process_instance)
+        spiff_task = processor.get_task_by_bpmn_identifier(
+            "script_task_one", processor.bpmn_process_instance
+        )
+        assert spiff_task is not None
+        assert spiff_task.data != {}
+
     def test_process_model_file_create(
         self,
         app: Flask,
@@ -2196,7 +2226,7 @@ class TestProcessApi(BaseTest):
         #     process_group_id="finance",
         # )
 
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client,
             # process_model.process_group_id,
             process_model_identifier,
@@ -2405,7 +2435,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         assert response.json is not None
@@ -2542,7 +2572,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         process_instance_id = response.json["id"]
@@ -2611,7 +2641,7 @@ class TestProcessApi(BaseTest):
         )
 
         headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id(
+        response = self.create_process_instance_from_process_model_id_with_api(
             client, process_model_identifier, headers
         )
         process_instance_id = response.json["id"]
@@ -3070,3 +3100,31 @@ class TestProcessApi(BaseTest):
         assert len(response.json["results"]) == 2
         assert response.json["results"][1]["id"] == process_instance_one.id
         assert response.json["results"][0]["id"] == process_instance_two.id
+
+    def test_process_data_show(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_process_data_show."""
+        process_model = load_test_spec(
+            "test_group/data_object_test",
+            process_model_source_directory="data_object_test",
+        )
+        process_instance_one = self.create_process_instance_from_process_model(
+            process_model
+        )
+        processor = ProcessInstanceProcessor(process_instance_one)
+        processor.do_engine_steps(save=True)
+        assert process_instance_one.status == "user_input_required"
+
+        response = client.get(
+            f"/v1.0/process-data/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_one.id}/the_data_object_var",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["process_data_value"] == "hey"

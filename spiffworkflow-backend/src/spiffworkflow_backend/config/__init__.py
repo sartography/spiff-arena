@@ -42,6 +42,7 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
     """Load_config_file."""
     try:
         app.config.from_object(env_config_module)
+        print(f"loaded config: {env_config_module}")
     except ImportStringError as exception:
         if os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") != "true":
             raise ModuleNotFoundError(
@@ -62,6 +63,7 @@ def setup_config(app: Flask) -> None:
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config.from_object("spiffworkflow_backend.config.default")
+    print("loaded config: default")
 
     env_config_prefix = "spiffworkflow_backend.config."
     if (
@@ -69,6 +71,7 @@ def setup_config(app: Flask) -> None:
         and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
     ):
         load_config_file(app, f"{env_config_prefix}terraform_deployed_environment")
+        print("loaded config: terraform_deployed_environment")
 
     env_config_module = env_config_prefix + app.config["ENV_IDENTIFIER"]
     load_config_file(app, env_config_module)
@@ -86,6 +89,12 @@ def setup_config(app: Flask) -> None:
             "config",
             "permissions",
             app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME"],
+        )
+        print(
+            f"set permissions file name config: {app.config['SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME']}"
+        )
+        print(
+            f"set permissions file name full path: {app.config['PERMISSIONS_FILE_FULLPATH']}"
         )
 
     # unversioned (see .gitignore) config that can override everything and include secrets.
