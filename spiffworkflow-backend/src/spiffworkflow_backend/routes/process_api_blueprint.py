@@ -1,8 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-import os
-import random
-import string
 import uuid
 from typing import Any
 from typing import Dict
@@ -12,7 +9,6 @@ from typing import Union
 
 import connexion  # type: ignore
 import flask.wrappers
-import jinja2
 import werkzeug
 from flask import Blueprint
 from flask import current_app
@@ -27,79 +23,35 @@ from flask_bpmn.models.db import db
 from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
-from sqlalchemy import asc
-from sqlalchemy import desc
 from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
-from spiffworkflow_backend.models.file import FileSchema
-from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_model import MessageModel
-from spiffworkflow_backend.models.message_triggerable_process_model import (
-    MessageTriggerableProcessModel,
-)
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.process_group import ProcessGroup
-from spiffworkflow_backend.models.process_group import ProcessGroupSchema
-from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
-from spiffworkflow_backend.models.process_instance import (
-    ProcessInstanceCannotBeDeletedError,
-)
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
-from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceTaskDataCannotBeUpdatedError,
 )
-from spiffworkflow_backend.models.process_instance_metadata import (
-    ProcessInstanceMetadataModel,
-)
-from spiffworkflow_backend.models.process_instance_report import (
-    ProcessInstanceReportModel,
-)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
-from spiffworkflow_backend.models.secret_model import SecretModel
-from spiffworkflow_backend.models.secret_model import SecretModelSchema
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
-from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
-from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
-from spiffworkflow_backend.services.process_instance_report_service import (
-    ProcessInstanceReportFilter,
-)
-from spiffworkflow_backend.services.process_instance_report_service import (
-    ProcessInstanceReportService,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.script_unit_test_runner import ScriptUnitTestRunner
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.services.user_service import UserService
 
 
 class TaskDataSelectOption(TypedDict):
@@ -235,115 +187,6 @@ def process_data_show(
     )
 
 
-def script_unit_test_create(
-    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
-) -> flask.wrappers.Response:
-    """Script_unit_test_create."""
-    bpmn_task_identifier = _get_required_parameter_or_raise(
-        "bpmn_task_identifier", body
-    )
-    input_json = _get_required_parameter_or_raise("input_json", body)
-    expected_output_json = _get_required_parameter_or_raise(
-        "expected_output_json", body
-    )
-
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = _get_process_model(process_model_identifier)
-    file = SpecFileService.get_files(process_model, process_model.primary_file_name)[0]
-    if file is None:
-        raise ApiError(
-            error_code="cannot_find_file",
-            message=f"Could not find the primary bpmn file for process_model: {process_model.id}",
-            status_code=404,
-        )
-
-    # TODO: move this to an xml service or something
-    file_contents = SpecFileService.get_data(process_model, file.name)
-    bpmn_etree_element = etree.fromstring(file_contents)
-
-    nsmap = bpmn_etree_element.nsmap
-    spiff_element_maker = ElementMaker(
-        namespace="http://spiffworkflow.org/bpmn/schema/1.0/core", nsmap=nsmap
-    )
-
-    script_task_elements = bpmn_etree_element.xpath(
-        f"//bpmn:scriptTask[@id='{bpmn_task_identifier}']",
-        namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"},
-    )
-    if len(script_task_elements) == 0:
-        raise ApiError(
-            error_code="missing_script_task",
-            message=f"Cannot find a script task with id: {bpmn_task_identifier}",
-            status_code=404,
-        )
-    script_task_element = script_task_elements[0]
-
-    extension_elements = None
-    extension_elements_array = script_task_element.xpath(
-        ".//bpmn:extensionElements",
-        namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"},
-    )
-    if len(extension_elements_array) == 0:
-        bpmn_element_maker = ElementMaker(
-            namespace="http://www.omg.org/spec/BPMN/20100524/MODEL", nsmap=nsmap
-        )
-        extension_elements = bpmn_element_maker("extensionElements")
-        script_task_element.append(extension_elements)
-    else:
-        extension_elements = extension_elements_array[0]
-
-    unit_test_elements = None
-    unit_test_elements_array = extension_elements.xpath(
-        "//spiffworkflow:unitTests",
-        namespaces={"spiffworkflow": "http://spiffworkflow.org/bpmn/schema/1.0/core"},
-    )
-    if len(unit_test_elements_array) == 0:
-        unit_test_elements = spiff_element_maker("unitTests")
-        extension_elements.append(unit_test_elements)
-    else:
-        unit_test_elements = unit_test_elements_array[0]
-
-    fuzz = "".join(
-        random.choice(string.ascii_uppercase + string.digits)  # noqa: S311
-        for _ in range(7)
-    )
-    unit_test_id = f"unit_test_{fuzz}"
-
-    input_json_element = spiff_element_maker("inputJson", json.dumps(input_json))
-    expected_output_json_element = spiff_element_maker(
-        "expectedOutputJson", json.dumps(expected_output_json)
-    )
-    unit_test_element = spiff_element_maker("unitTest", id=unit_test_id)
-    unit_test_element.append(input_json_element)
-    unit_test_element.append(expected_output_json_element)
-    unit_test_elements.append(unit_test_element)
-    SpecFileService.update_file(
-        process_model, file.name, etree.tostring(bpmn_etree_element)
-    )
-
-    return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
-
-
-def script_unit_test_run(
-    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
-) -> flask.wrappers.Response:
-    """Script_unit_test_run."""
-    # FIXME: We should probably clear this somewhere else but this works
-    current_app.config["THREAD_LOCAL_DATA"].process_instance_id = None
-    current_app.config["THREAD_LOCAL_DATA"].spiff_step = None
-
-    python_script = _get_required_parameter_or_raise("python_script", body)
-    input_json = _get_required_parameter_or_raise("input_json", body)
-    expected_output_json = _get_required_parameter_or_raise(
-        "expected_output_json", body
-    )
-
-    result = ScriptUnitTestRunner.run_with_script_and_pre_post_contexts(
-        python_script, input_json, expected_output_json
-    )
-    return make_response(jsonify(result), 200)
-
-
 def _find_principal_or_raise() -> PrincipalModel:
     """Find_principal_or_raise."""
     principal = PrincipalModel.query.filter_by(user_id=g.user.id).first()
@@ -356,37 +199,6 @@ def _find_principal_or_raise() -> PrincipalModel:
             )
         )
     return principal  # type: ignore
-
-
-def get_value_from_array_with_index(array: list, index: int) -> Any:
-    """Get_value_from_array_with_index."""
-    if index < 0:
-        return None
-
-    if index >= len(array):
-        return None
-
-    return array[index]
-
-
-def prepare_form_data(
-    form_file: str, task_data: Union[dict, None], process_model: ProcessModelInfo
-) -> str:
-    """Prepare_form_data."""
-    if task_data is None:
-        return ""
-
-    file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
-    return render_jinja_template(file_contents, task_data)
-
-
-def render_jinja_template(unprocessed_template: str, data: dict[str, Any]) -> str:
-    """Render_jinja_template."""
-    jinja_environment = jinja2.Environment(
-        autoescape=True, lstrip_blocks=True, trim_blocks=True
-    )
-    template = jinja_environment.from_string(unprocessed_template)
-    return template.render(**data)
 
 
 # sample body:

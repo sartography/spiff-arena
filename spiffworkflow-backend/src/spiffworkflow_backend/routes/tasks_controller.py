@@ -1,11 +1,14 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model, _get_required_parameter_or_raise
 import os
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import Union
 
 import flask.wrappers
+import jinja2
 from flask import g
 from flask import jsonify
 from flask import make_response
@@ -21,6 +24,7 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -164,7 +168,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 )
             )
 
-        form_contents = prepare_form_data(
+        form_contents = _prepare_form_data(
             form_schema_file_name,
             task.data,
             process_model_with_form,
@@ -189,7 +193,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             task.form_schema = form_dict
 
         if form_ui_schema_file_name:
-            ui_form_contents = prepare_form_data(
+            ui_form_contents = _prepare_form_data(
                 form_ui_schema_file_name,
                 task.data,
                 process_model_with_form,
@@ -199,7 +203,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
 
     if task.properties and task.data and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
-            task.properties["instructionsForEndUser"] = render_jinja_template(
+            task.properties["instructionsForEndUser"] = _render_jinja_template(
                 task.properties["instructionsForEndUser"], task.data
             )
     return make_response(jsonify(task), 200)
@@ -394,3 +398,23 @@ def _get_tasks(
         },
     }
     return make_response(jsonify(response_json), 200)
+
+
+def _prepare_form_data(
+    form_file: str, task_data: Union[dict, None], process_model: ProcessModelInfo
+) -> str:
+    """Prepare_form_data."""
+    if task_data is None:
+        return ""
+
+    file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
+    return _render_jinja_template(file_contents, task_data)
+
+
+def _render_jinja_template(unprocessed_template: str, data: dict[str, Any]) -> str:
+    """Render_jinja_template."""
+    jinja_environment = jinja2.Environment(
+        autoescape=True, lstrip_blocks=True, trim_blocks=True
+    )
+    template = jinja_environment.from_string(unprocessed_template)
+    return template.render(**data)

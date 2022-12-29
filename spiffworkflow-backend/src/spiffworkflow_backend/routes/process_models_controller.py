@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git, _un_modify_modified_process_model_id, _get_process_model, _get_file_from_request
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -17,8 +16,14 @@ from flask_bpmn.api.api_error import ApiError
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
-from spiffworkflow_backend.services.git_service import MissingGitConfigsError
+from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
+from spiffworkflow_backend.routes.process_api_blueprint import _get_file_from_request
+from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
+from spiffworkflow_backend.routes.process_api_blueprint import (
+    _un_modify_modified_process_model_id,
+)
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.git_service import MissingGitConfigsError
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -247,7 +252,10 @@ def process_model_file_delete(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_model_file_create(modified_process_model_identifier: str) -> flask.wrappers.Response:
+def process_model_file_create(
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    """Process_model_file_create."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
     request_file = _get_file_from_request()
@@ -272,7 +280,10 @@ def process_model_file_create(modified_process_model_identifier: str) -> flask.w
     )
 
 
-def process_model_file_show(modified_process_model_identifier: str, file_name: str) -> Any:
+def process_model_file_show(
+    modified_process_model_identifier: str, file_name: str
+) -> Any:
+    """Process_model_file_show."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
     files = SpecFileService.get_files(process_model, file_name)
