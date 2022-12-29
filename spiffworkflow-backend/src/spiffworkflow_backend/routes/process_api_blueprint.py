@@ -158,6 +158,14 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
     return make_response(jsonify({"results": response_dict}), 200)
 
 
+def user_group_list_for_current_user() -> flask.wrappers.Response:
+    """User_group_list_for_current_user."""
+    groups = g.user.groups
+    # TODO: filter out the default group and have a way to know what is the default group
+    group_identifiers = [i.identifier for i in groups if i.identifier != "everybody"]
+    return make_response(jsonify(sorted(group_identifiers)), 200)
+
+
 def process_list() -> Any:
     """Returns a list of all known processes.
 
@@ -166,202 +174,6 @@ def process_list() -> Any:
     """
     references = SpecReferenceCache.query.filter_by(type="process").all()
     return SpecReferenceSchema(many=True).dump(references)
-
-
-def message_instance_list(
-    process_instance_id: Optional[int] = None,
-    page: int = 1,
-    per_page: int = 100,
-) -> flask.wrappers.Response:
-    """Message_instance_list."""
-    # to make sure the process instance exists
-    message_instances_query = MessageInstanceModel.query
-
-    if process_instance_id:
-        message_instances_query = message_instances_query.filter_by(
-            process_instance_id=process_instance_id
-        )
-
-    message_instances = (
-        message_instances_query.order_by(
-            MessageInstanceModel.created_at_in_seconds.desc(),  # type: ignore
-            MessageInstanceModel.id.desc(),  # type: ignore
-        )
-        .join(MessageModel, MessageModel.id == MessageInstanceModel.message_model_id)
-        .join(ProcessInstanceModel)
-        .add_columns(
-            MessageModel.identifier.label("message_identifier"),
-            ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.process_model_display_name,
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
-
-    for message_instance in message_instances:
-        message_correlations: dict = {}
-        for (
-            mcmi
-        ) in (
-            message_instance.MessageInstanceModel.message_correlations_message_instances
-        ):
-            mc = MessageCorrelationModel.query.filter_by(
-                id=mcmi.message_correlation_id
-            ).all()
-            for m in mc:
-                if m.name not in message_correlations:
-                    message_correlations[m.name] = {}
-                message_correlations[m.name][
-                    m.message_correlation_property.identifier
-                ] = m.value
-        message_instance.MessageInstanceModel.message_correlations = (
-            message_correlations
-        )
-
-    response_json = {
-        "results": message_instances.items,
-        "pagination": {
-            "count": len(message_instances.items),
-            "total": message_instances.total,
-            "pages": message_instances.pages,
-        },
-    }
-
-    return make_response(jsonify(response_json), 200)
-
-
-# body: {
-#   payload: dict,
-#   process_instance_id: Optional[int],
-# }
-def message_start(
-    message_identifier: str,
-    body: Dict[str, Any],
-) -> flask.wrappers.Response:
-    """Message_start."""
-    message_model = MessageModel.query.filter_by(identifier=message_identifier).first()
-    if message_model is None:
-        raise (
-            ApiError(
-                error_code="unknown_message",
-                message=f"Could not find message with identifier: {message_identifier}",
-                status_code=404,
-            )
-        )
-
-    if "payload" not in body:
-        raise (
-            ApiError(
-                error_code="missing_payload",
-                message="Body is missing payload.",
-                status_code=400,
-            )
-        )
-
-    process_instance = None
-    if "process_instance_id" in body:
-        # to make sure we have a valid process_instance_id
-        process_instance = _find_process_instance_by_id_or_raise(
-            body["process_instance_id"]
-        )
-
-        message_instance = MessageInstanceModel.query.filter_by(
-            process_instance_id=process_instance.id,
-            message_model_id=message_model.id,
-            message_type="receive",
-            status="ready",
-        ).first()
-        if message_instance is None:
-            raise (
-                ApiError(
-                    error_code="cannot_find_waiting_message",
-                    message=f"Could not find waiting message for identifier {message_identifier} "
-                    f"and process instance {process_instance.id}",
-                    status_code=400,
-                )
-            )
-        MessageService.process_message_receive(
-            message_instance, message_model.name, body["payload"]
-        )
-
-    else:
-        message_triggerable_process_model = (
-            MessageTriggerableProcessModel.query.filter_by(
-                message_model_id=message_model.id
-            ).first()
-        )
-
-        if message_triggerable_process_model is None:
-            raise (
-                ApiError(
-                    error_code="cannot_start_message",
-                    message=f"Message with identifier cannot be start with message: {message_identifier}",
-                    status_code=400,
-                )
-            )
-
-        process_instance = MessageService.process_message_triggerable_process_model(
-            message_triggerable_process_model,
-            message_model.name,
-            body["payload"],
-            g.user,
-        )
-
-    return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
-        status=200,
-        mimetype="application/json",
-    )
-
-
-def _get_process_instance(
-    modified_process_model_identifier: str,
-    process_instance: ProcessInstanceModel,
-    process_identifier: Optional[str] = None,
-) -> flask.wrappers.Response:
-    """_get_process_instance."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    try:
-        current_version_control_revision = GitService.get_current_revision()
-    except GitCommandError:
-        current_version_control_revision = ""
-
-    process_model_with_diagram = None
-    name_of_file_with_diagram = None
-    if process_identifier:
-        spec_reference = SpecReferenceCache.query.filter_by(
-            identifier=process_identifier, type="process"
-        ).first()
-        if spec_reference is None:
-            raise SpecReferenceNotFoundError(
-                f"Could not find given process identifier in the cache: {process_identifier}"
-            )
-
-        process_model_with_diagram = ProcessModelService.get_process_model(
-            spec_reference.process_model_id
-        )
-        name_of_file_with_diagram = spec_reference.file_name
-    else:
-        process_model_with_diagram = _get_process_model(process_model_identifier)
-        if process_model_with_diagram.primary_file_name:
-            name_of_file_with_diagram = process_model_with_diagram.primary_file_name
-
-    if process_model_with_diagram and name_of_file_with_diagram:
-        if (
-            process_instance.bpmn_version_control_identifier
-            == current_version_control_revision
-        ):
-            bpmn_xml_file_contents = SpecFileService.get_data(
-                process_model_with_diagram, name_of_file_with_diagram
-            ).decode("utf-8")
-        else:
-            bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
-                process_model_with_diagram,
-                process_instance.bpmn_version_control_identifier,
-                file_name=name_of_file_with_diagram,
-            )
-        process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
-
-    return make_response(jsonify(process_instance), 200)
 
 
 def service_task_list() -> flask.wrappers.Response:
@@ -399,268 +211,6 @@ def authentication_callback(
     )
 
 
-# TODO: see comment for before_request
-# @process_api_blueprint.route("/v1.0/tasks", methods=["GET"])
-def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Task_list_my_tasks."""
-    principal = find_principal_or_raise()
-    human_tasks = (
-        HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
-        .join(ProcessInstanceModel)
-        .join(HumanTaskUserModel)
-        .filter_by(user_id=principal.user_id)
-        .filter(HumanTaskModel.completed == False)  # noqa: E712
-        # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
-        .add_columns(
-            ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.process_model_display_name,
-            ProcessInstanceModel.status,
-            HumanTaskModel.task_name,
-            HumanTaskModel.task_title,
-            HumanTaskModel.task_type,
-            HumanTaskModel.task_status,
-            HumanTaskModel.task_id,
-            HumanTaskModel.id,
-            HumanTaskModel.process_model_display_name,
-            HumanTaskModel.process_instance_id,
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
-    tasks = [HumanTaskModel.to_task(human_task) for human_task in human_tasks.items]
-
-    response_json = {
-        "results": tasks,
-        "pagination": {
-            "count": len(human_tasks.items),
-            "total": human_tasks.total,
-            "pages": human_tasks.pages,
-        },
-    }
-
-    return make_response(jsonify(response_json), 200)
-
-
-def task_list_for_my_open_processes(
-    page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
-    """Task_list_for_my_open_processes."""
-    return get_tasks(page=page, per_page=per_page)
-
-
-def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Task_list_for_me."""
-    return get_tasks(
-        processes_started_by_user=False,
-        has_lane_assignment_id=False,
-        page=page,
-        per_page=per_page,
-    )
-
-
-def task_list_for_my_groups(
-    user_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
-    """Task_list_for_my_groups."""
-    return get_tasks(
-        user_group_identifier=user_group_identifier,
-        processes_started_by_user=False,
-        page=page,
-        per_page=per_page,
-    )
-
-
-def user_group_list_for_current_user() -> flask.wrappers.Response:
-    """User_group_list_for_current_user."""
-    groups = g.user.groups
-    # TODO: filter out the default group and have a way to know what is the default group
-    group_identifiers = [i.identifier for i in groups if i.identifier != "everybody"]
-    return make_response(jsonify(sorted(group_identifiers)), 200)
-
-
-def get_tasks(
-    processes_started_by_user: bool = True,
-    has_lane_assignment_id: bool = True,
-    page: int = 1,
-    per_page: int = 100,
-    user_group_identifier: Optional[str] = None,
-) -> flask.wrappers.Response:
-    """Get_tasks."""
-    user_id = g.user.id
-
-    # use distinct to ensure we only get one row per human task otherwise
-    # we can get back multiple for the same human task row which throws off
-    # pagination later on
-    # https://stackoverflow.com/q/34582014/6090676
-    human_tasks_query = (
-        HumanTaskModel.query.distinct()
-        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
-        .join(ProcessInstanceModel)
-        .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
-        .filter(HumanTaskModel.completed == False)  # noqa: E712
-    )
-
-    if processes_started_by_user:
-        human_tasks_query = human_tasks_query.filter(
-            ProcessInstanceModel.process_initiator_id == user_id
-        ).outerjoin(
-            HumanTaskUserModel,
-            and_(
-                HumanTaskUserModel.user_id == user_id,
-                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-            ),
-        )
-    else:
-        human_tasks_query = human_tasks_query.filter(
-            ProcessInstanceModel.process_initiator_id != user_id
-        ).join(
-            HumanTaskUserModel,
-            and_(
-                HumanTaskUserModel.user_id == user_id,
-                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-            ),
-        )
-        if has_lane_assignment_id:
-            if user_group_identifier:
-                human_tasks_query = human_tasks_query.filter(
-                    GroupModel.identifier == user_group_identifier
-                )
-            else:
-                human_tasks_query = human_tasks_query.filter(
-                    HumanTaskModel.lane_assignment_id.is_not(None)  # type: ignore
-                )
-        else:
-            human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
-
-    human_tasks = (
-        human_tasks_query.add_columns(
-            ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-            ProcessInstanceModel.updated_at_in_seconds,
-            ProcessInstanceModel.created_at_in_seconds,
-            UserModel.username,
-            GroupModel.identifier.label("user_group_identifier"),
-            HumanTaskModel.task_name,
-            HumanTaskModel.task_title,
-            HumanTaskModel.process_model_display_name,
-            HumanTaskModel.process_instance_id,
-            HumanTaskUserModel.user_id.label("current_user_is_potential_owner"),
-        )
-        .order_by(desc(HumanTaskModel.id))  # type: ignore
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
-
-    response_json = {
-        "results": human_tasks.items,
-        "pagination": {
-            "count": len(human_tasks.items),
-            "total": human_tasks.total,
-            "pages": human_tasks.pages,
-        },
-    }
-    return make_response(jsonify(response_json), 200)
-
-
-def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response:
-    """Task_show."""
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-
-    if process_instance.status == ProcessInstanceStatus.suspended.value:
-        raise ApiError(
-            error_code="error_suspended",
-            message="The process instance is suspended",
-            status_code=400,
-        )
-
-    process_model = _get_process_model(
-        process_instance.process_model_identifier,
-    )
-
-    form_schema_file_name = ""
-    form_ui_schema_file_name = ""
-    spiff_task = get_spiff_task_from_process_instance(task_id, process_instance)
-    extensions = spiff_task.task_spec.extensions
-
-    if "properties" in extensions:
-        properties = extensions["properties"]
-        if "formJsonSchemaFilename" in properties:
-            form_schema_file_name = properties["formJsonSchemaFilename"]
-        if "formUiSchemaFilename" in properties:
-            form_ui_schema_file_name = properties["formUiSchemaFilename"]
-    task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
-    task.data = spiff_task.data
-    task.process_model_display_name = process_model.display_name
-    task.process_model_identifier = process_model.id
-
-    process_model_with_form = process_model
-    refs = SpecFileService.get_references_for_process(process_model_with_form)
-    all_processes = [i.identifier for i in refs]
-    if task.process_identifier not in all_processes:
-        bpmn_file_full_path = (
-            ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
-                task.process_identifier
-            )
-        )
-        relative_path = os.path.relpath(
-            bpmn_file_full_path, start=FileSystemService.root_path()
-        )
-        process_model_relative_path = os.path.dirname(relative_path)
-        process_model_with_form = (
-            ProcessModelService.get_process_model_from_relative_path(
-                process_model_relative_path
-            )
-        )
-
-    if task.type == "User Task":
-        if not form_schema_file_name:
-            raise (
-                ApiError(
-                    error_code="missing_form_file",
-                    message=f"Cannot find a form file for process_instance_id: {process_instance_id}, task_id: {task_id}",
-                    status_code=400,
-                )
-            )
-
-        form_contents = prepare_form_data(
-            form_schema_file_name,
-            task.data,
-            process_model_with_form,
-        )
-
-        try:
-            # form_contents is a str
-            form_dict = json.loads(form_contents)
-        except Exception as exception:
-            raise (
-                ApiError(
-                    error_code="error_loading_form",
-                    message=f"Could not load form schema from: {form_schema_file_name}. Error was: {str(exception)}",
-                    status_code=400,
-                )
-            ) from exception
-
-        if task.data:
-            _update_form_schema_with_task_data_as_needed(form_dict, task.data)
-
-        if form_contents:
-            task.form_schema = form_dict
-
-        if form_ui_schema_file_name:
-            ui_form_contents = prepare_form_data(
-                form_ui_schema_file_name,
-                task.data,
-                process_model_with_form,
-            )
-            if ui_form_contents:
-                task.form_ui_schema = ui_form_contents
-
-    if task.properties and task.data and "instructionsForEndUser" in task.properties:
-        if task.properties["instructionsForEndUser"]:
-            task.properties["instructionsForEndUser"] = render_jinja_template(
-                task.properties["instructionsForEndUser"], task.data
-            )
-    return make_response(jsonify(task), 200)
-
-
 def process_data_show(
     process_instance_id: int,
     process_data_identifier: str,
@@ -683,90 +233,6 @@ def process_data_show(
         ),
         200,
     )
-
-
-def task_submit(
-    process_instance_id: int,
-    task_id: str,
-    body: Dict[str, Any],
-    terminate_loop: bool = False,
-) -> flask.wrappers.Response:
-    """Task_submit_user_data."""
-    principal = find_principal_or_raise()
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    if not process_instance.can_submit_task():
-        raise ApiError(
-            error_code="process_instance_not_runnable",
-            message=f"Process Instance ({process_instance.id}) has status "
-            f"{process_instance.status} which does not allow tasks to be submitted.",
-            status_code=400,
-        )
-
-    processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = get_spiff_task_from_process_instance(
-        task_id, process_instance, processor=processor
-    )
-    AuthorizationService.assert_user_can_complete_spiff_task(
-        process_instance.id, spiff_task, principal.user
-    )
-
-    if spiff_task.state != TaskState.READY:
-        raise (
-            ApiError(
-                error_code="invalid_state",
-                message="You may not update a task unless it is in the READY state.",
-                status_code=400,
-            )
-        )
-
-    if terminate_loop and spiff_task.is_looping():
-        spiff_task.terminate_loop()
-
-    human_task = HumanTaskModel.query.filter_by(
-        process_instance_id=process_instance_id, task_id=task_id, completed=False
-    ).first()
-    if human_task is None:
-        raise (
-            ApiError(
-                error_code="no_human_task",
-                message="Cannot find an human task with task id '{task_id}' for process instance {process_instance_id}.",
-                status_code=500,
-            )
-        )
-
-    ProcessInstanceService.complete_form_task(
-        processor=processor,
-        spiff_task=spiff_task,
-        data=body,
-        user=g.user,
-        human_task=human_task,
-    )
-
-    # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
-    # task spec, complete that form as well.
-    # if update_all:
-    #     last_index = spiff_task.task_info()["mi_index"]
-    #     next_task = processor.next_task()
-    #     while next_task and next_task.task_info()["mi_index"] > last_index:
-    #         __update_task(processor, next_task, form_data, user)
-    #         last_index = next_task.task_info()["mi_index"]
-    #         next_task = processor.next_task()
-
-    next_human_task_assigned_to_me = (
-        HumanTaskModel.query.filter_by(
-            process_instance_id=process_instance_id, completed=False
-        )
-        .order_by(asc(HumanTaskModel.id))  # type: ignore
-        .join(HumanTaskUserModel)
-        .filter_by(user_id=principal.user_id)
-        .first()
-    )
-    if next_human_task_assigned_to_me:
-        return make_response(
-            jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200
-        )
-
-    return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
 
 
 def script_unit_test_create(
@@ -878,38 +344,7 @@ def script_unit_test_run(
     return make_response(jsonify(result), 200)
 
 
-def _get_file_from_request() -> Any:
-    """Get_file_from_request."""
-    request_file = connexion.request.files.get("file")
-    if not request_file:
-        raise ApiError(
-            error_code="no_file_given",
-            message="Given request does not contain a file",
-            status_code=400,
-        )
-    return request_file
-
-
-# process_model_id uses forward slashes on all OSes
-# this seems to return an object where process_model.id has backslashes on windows
-def _get_process_model(process_model_id: str) -> ProcessModelInfo:
-    """Get_process_model."""
-    process_model = None
-    try:
-        process_model = ProcessModelService.get_process_model(process_model_id)
-    except ProcessEntityNotFoundError as exception:
-        raise (
-            ApiError(
-                error_code="process_model_cannot_be_found",
-                message=f"Process model cannot be found: {process_model_id}",
-                status_code=400,
-            )
-        ) from exception
-
-    return process_model
-
-
-def find_principal_or_raise() -> PrincipalModel:
+def _find_principal_or_raise() -> PrincipalModel:
     """Find_principal_or_raise."""
     principal = PrincipalModel.query.filter_by(user_id=g.user.id).first()
     if principal is None:
@@ -921,33 +356,6 @@ def find_principal_or_raise() -> PrincipalModel:
             )
         )
     return principal  # type: ignore
-
-
-def _find_process_instance_by_id_or_raise(
-    process_instance_id: int,
-) -> ProcessInstanceModel:
-    """Find_process_instance_by_id_or_raise."""
-    process_instance_query = ProcessInstanceModel.query.filter_by(
-        id=process_instance_id
-    )
-
-    # we had a frustrating session trying to do joins and access columns from two tables. here's some notes for our future selves:
-    # this returns an object that allows you to do: process_instance.UserModel.username
-    # process_instance = db.session.query(ProcessInstanceModel, UserModel).filter_by(id=process_instance_id).first()
-    # you can also use splat with add_columns, but it still didn't ultimately give us access to the process instance
-    # attributes or username like we wanted:
-    # process_instance_query.join(UserModel).add_columns(*ProcessInstanceModel.__table__.columns, UserModel.username)
-
-    process_instance = process_instance_query.first()
-    if process_instance is None:
-        raise (
-            ApiError(
-                error_code="process_instance_cannot_be_found",
-                message=f"Process instance cannot be found: {process_instance_id}",
-                status_code=400,
-            )
-        )
-    return process_instance  # type: ignore
 
 
 def get_value_from_array_with_index(array: list, index: int) -> Any:
@@ -981,28 +389,6 @@ def render_jinja_template(unprocessed_template: str, data: dict[str, Any]) -> st
     return template.render(**data)
 
 
-def get_spiff_task_from_process_instance(
-    task_id: str,
-    process_instance: ProcessInstanceModel,
-    processor: Union[ProcessInstanceProcessor, None] = None,
-) -> SpiffTask:
-    """Get_spiff_task_from_process_instance."""
-    if processor is None:
-        processor = ProcessInstanceProcessor(process_instance)
-    task_uuid = uuid.UUID(task_id)
-    spiff_task = processor.bpmn_process_instance.get_task(task_uuid)
-
-    if spiff_task is None:
-        raise (
-            ApiError(
-                error_code="empty_task",
-                message="Processor failed to obtain task.",
-                status_code=500,
-            )
-        )
-    return spiff_task
-
-
 # sample body:
 # {"ref": "refs/heads/main", "repository": {"name": "sample-process-models",
 # "full_name": "sartography/sample-process-models", "private": False .... }}
@@ -1016,63 +402,6 @@ def github_webhook_receive(body: Dict) -> Response:
     return Response(
         json.dumps({"git_pull": result}), status=200, mimetype="application/json"
     )
-
-
-#
-# Methods for secrets CRUD - maybe move somewhere else:
-#
-
-
-def get_secret(key: str) -> Optional[str]:
-    """Get_secret."""
-    return SecretService.get_secret(key)
-
-
-def secret_list(
-    page: int = 1,
-    per_page: int = 100,
-) -> Response:
-    """Secret_list."""
-    secrets = (
-        SecretModel.query.order_by(SecretModel.key)
-        .join(UserModel)
-        .add_columns(
-            UserModel.username,
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
-    response_json = {
-        "results": secrets.items,
-        "pagination": {
-            "count": len(secrets.items),
-            "total": secrets.total,
-            "pages": secrets.pages,
-        },
-    }
-    return make_response(jsonify(response_json), 200)
-
-
-def secret_create(body: Dict) -> Response:
-    """Add secret."""
-    secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
-    return Response(
-        json.dumps(SecretModelSchema().dump(secret_model)),
-        status=201,
-        mimetype="application/json",
-    )
-
-
-def secret_update(key: str, body: dict) -> Response:
-    """Update secret."""
-    SecretService().update_secret(key, body["value"], g.user.id)
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def secret_delete(key: str) -> Response:
-    """Delete secret."""
-    current_user = UserService.current_user()
-    SecretService.delete_secret(key, current_user.id)
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
 def task_data_update(
@@ -1249,3 +578,134 @@ def _find_process_instance_for_me_or_raise(
 def _un_modify_modified_process_model_id(modified_process_model_identifier: str) -> str:
     """Un_modify_modified_process_model_id."""
     return modified_process_model_identifier.replace(":", "/")
+
+
+def _find_process_instance_by_id_or_raise(
+    process_instance_id: int,
+) -> ProcessInstanceModel:
+    """Find_process_instance_by_id_or_raise."""
+    process_instance_query = ProcessInstanceModel.query.filter_by(
+        id=process_instance_id
+    )
+
+    # we had a frustrating session trying to do joins and access columns from two tables. here's some notes for our future selves:
+    # this returns an object that allows you to do: process_instance.UserModel.username
+    # process_instance = db.session.query(ProcessInstanceModel, UserModel).filter_by(id=process_instance_id).first()
+    # you can also use splat with add_columns, but it still didn't ultimately give us access to the process instance
+    # attributes or username like we wanted:
+    # process_instance_query.join(UserModel).add_columns(*ProcessInstanceModel.__table__.columns, UserModel.username)
+
+    process_instance = process_instance_query.first()
+    if process_instance is None:
+        raise (
+            ApiError(
+                error_code="process_instance_cannot_be_found",
+                message=f"Process instance cannot be found: {process_instance_id}",
+                status_code=400,
+            )
+        )
+    return process_instance  # type: ignore
+
+
+def _get_process_instance(
+    modified_process_model_identifier: str,
+    process_instance: ProcessInstanceModel,
+    process_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    """_get_process_instance."""
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    try:
+        current_version_control_revision = GitService.get_current_revision()
+    except GitCommandError:
+        current_version_control_revision = ""
+
+    process_model_with_diagram = None
+    name_of_file_with_diagram = None
+    if process_identifier:
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier=process_identifier, type="process"
+        ).first()
+        if spec_reference is None:
+            raise SpecReferenceNotFoundError(
+                f"Could not find given process identifier in the cache: {process_identifier}"
+            )
+
+        process_model_with_diagram = ProcessModelService.get_process_model(
+            spec_reference.process_model_id
+        )
+        name_of_file_with_diagram = spec_reference.file_name
+    else:
+        process_model_with_diagram = _get_process_model(process_model_identifier)
+        if process_model_with_diagram.primary_file_name:
+            name_of_file_with_diagram = process_model_with_diagram.primary_file_name
+
+    if process_model_with_diagram and name_of_file_with_diagram:
+        if (
+            process_instance.bpmn_version_control_identifier
+            == current_version_control_revision
+        ):
+            bpmn_xml_file_contents = SpecFileService.get_data(
+                process_model_with_diagram, name_of_file_with_diagram
+            ).decode("utf-8")
+        else:
+            bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
+                process_model_with_diagram,
+                process_instance.bpmn_version_control_identifier,
+                file_name=name_of_file_with_diagram,
+            )
+        process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
+
+    return make_response(jsonify(process_instance), 200)
+
+
+def _get_file_from_request() -> Any:
+    """Get_file_from_request."""
+    request_file = connexion.request.files.get("file")
+    if not request_file:
+        raise ApiError(
+            error_code="no_file_given",
+            message="Given request does not contain a file",
+            status_code=400,
+        )
+    return request_file
+
+
+# process_model_id uses forward slashes on all OSes
+# this seems to return an object where process_model.id has backslashes on windows
+def _get_process_model(process_model_id: str) -> ProcessModelInfo:
+    """Get_process_model."""
+    process_model = None
+    try:
+        process_model = ProcessModelService.get_process_model(process_model_id)
+    except ProcessEntityNotFoundError as exception:
+        raise (
+            ApiError(
+                error_code="process_model_cannot_be_found",
+                message=f"Process model cannot be found: {process_model_id}",
+                status_code=400,
+            )
+        ) from exception
+
+    return process_model
+
+
+def _get_spiff_task_from_process_instance(
+    task_id: str,
+    process_instance: ProcessInstanceModel,
+    processor: Union[ProcessInstanceProcessor, None] = None,
+) -> SpiffTask:
+    """Get_spiff_task_from_process_instance."""
+    if processor is None:
+        processor = ProcessInstanceProcessor(process_instance)
+    task_uuid = uuid.UUID(task_id)
+    spiff_task = processor.bpmn_process_instance.get_task(task_uuid)
+
+    if spiff_task is None:
+        raise (
+            ApiError(
+                error_code="empty_task",
+                message="Processor failed to obtain task.",
+                status_code=500,
+            )
+        )
+    return spiff_task
