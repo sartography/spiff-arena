@@ -426,6 +426,7 @@
     "emailVerified" : false,
     "firstName" : "",
     "lastName" : "",
+    "email" : "admin@spiffworkflow.org",
     "credentials" : [ {
       "id" : "ef435043-ef0c-407a-af5b-ced13182a408",
       "type" : "password",
@@ -446,6 +447,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "alex@sartography.com",
     "credentials" : [ {
       "id" : "81a61a3b-228d-42b3-b39a-f62d8e7f57ca",
       "type" : "password",
@@ -465,6 +467,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "amir@status.im",
     "credentials" : [ {
       "id" : "e589f3ad-bf7b-4756-89f7-7894c03c2831",
       "type" : "password",
@@ -484,6 +487,9 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "firstName" : "",
+    "lastName" : "",
+    "email" : "ciadmin1@spiffworkflow.org",
     "credentials" : [ {
       "id" : "111b5ea1-c2ab-470a-a16b-2373bc94de7a",
       "type" : "password",
@@ -500,28 +506,6 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
-    "id" : "56457e8f-47c6-4f9f-a72b-473dea5edfeb",
-    "createdTimestamp" : 1657139955336,
-    "username" : "ciuser1",
-    "enabled" : true,
-    "totp" : false,
-    "emailVerified" : false,
-    "credentials" : [ {
-      "id" : "762f36e9-47af-44da-8520-cf09d752497a",
-      "type" : "password",
-      "createdDate" : 1657139966468,
-      "secretData" : "{\"value\":\"Dpn9QBJSxvl54b0Fu+OKrKRwmDJbk28FQ3xhlOdJPvZVJU/SpdrcsH7ktYAIkVLkRC5qILSZuNPQ3vDGzE2r1Q==\",\"salt\":\"yXd7N8XIQBkJ7swHDeRzXw==\",\"additionalParameters\":{}}",
-      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
-    } ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-spiffworkflow" ],
-    "clientRoles" : {
-      "spiffworkflow-backend" : [ "uma_protection" ]
-    },
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
     "id" : "d58b61cc-a77e-488f-a427-05f4e0572e20",
     "createdTimestamp" : 1669132945413,
     "username" : "core",
@@ -530,6 +514,7 @@
     "emailVerified" : false,
     "firstName" : "",
     "lastName" : "",
+    "email" : "core@status.im",
     "credentials" : [ {
       "id" : "ee80092b-8ee6-4699-8492-566e088b48f5",
       "type" : "password",
@@ -550,6 +535,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "dan@sartography.com",
     "credentials" : [ {
       "id" : "d517c520-f500-4542-80e5-7144daef1e32",
       "type" : "password",
@@ -569,6 +555,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "daniel@sartography.com",
     "credentials" : [ {
       "id" : "f240495c-265b-42fc-99db-46928580d07d",
       "type" : "password",
@@ -588,6 +575,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "elizabeth@sartography.com",
     "credentials" : [ {
       "id" : "ae951ec8-9fc9-4f1b-b340-bbbe463ae5c2",
       "type" : "password",
@@ -609,6 +597,7 @@
     "emailVerified" : false,
     "firstName" : "",
     "lastName" : "",
+    "email" : "fin@status.im",
     "credentials" : [ {
       "id" : "2379940c-98b4-481a-b629-0bd1a4e91acf",
       "type" : "password",
@@ -631,6 +620,7 @@
     "emailVerified" : false,
     "firstName" : "",
     "lastName" : "",
+    "email" : "fin1@status.im",
     "credentials" : [ {
       "id" : "96216746-ff72-454e-8288-232428d10b42",
       "type" : "password",
@@ -651,6 +641,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "finance_user1@status.im",
     "credentials" : [ {
       "id" : "f14722ec-13a7-4d35-a4ec-0475d405ae58",
       "type" : "password",
@@ -670,6 +661,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "harmeet@status.im",
     "credentials" : [ {
       "id" : "89c26090-9bd3-46ac-b038-883d02e3f125",
       "type" : "password",
@@ -691,6 +683,7 @@
     "emailVerified" : false,
     "firstName" : "",
     "lastName" : "",
+    "email" : "j@status.im",
     "credentials" : [ {
       "id" : "e71ec785-9133-4b7d-8015-1978379af0bb",
       "type" : "password",
@@ -711,6 +704,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "jakub@status.im",
     "credentials" : [ {
       "id" : "ce141fa5-b8d5-4bbe-93e7-22e7119f97c2",
       "type" : "password",
@@ -730,6 +724,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "jarrad@status.im",
     "credentials" : [ {
       "id" : "113e0343-1069-476d-83f9-21d98edb9cfa",
       "type" : "password",
@@ -749,6 +744,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "jason@sartography.com",
     "credentials" : [ {
       "id" : "40abf32e-f0cc-4a17-8231-1a69a02c1b0b",
       "type" : "password",
@@ -768,6 +764,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "jon@sartography.com",
     "credentials" : [ {
       "id" : "8b520e01-5b9b-44ab-9ee8-505bd0831a45",
       "type" : "password",
@@ -787,6 +784,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "kb@sartography.com",
     "credentials" : [ {
       "id" : "2c0be363-038f-48f1-86d6-91fdd28657cf",
       "type" : "password",
@@ -808,6 +806,7 @@
     "emailVerified" : false,
     "firstName" : "",
     "lastName" : "",
+    "email" : "lead@status.im",
     "credentials" : [ {
       "id" : "96e836a4-1a84-45c5-a9ed-651b0c90195e",
       "type" : "password",
@@ -830,6 +829,7 @@
     "emailVerified" : false,
     "firstName" : "",
     "lastName" : "",
+    "email" : "lead1@status.im",
     "credentials" : [ {
       "id" : "4e17388b-6c44-44e1-b20a-a873c0feb9a8",
       "type" : "password",
@@ -850,6 +850,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "manuchehr@status.im",
     "credentials" : [ {
       "id" : "07dabf55-b5d3-4f98-abba-3334086ecf5e",
       "type" : "password",
@@ -869,6 +870,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "mike@sartography.com",
     "credentials" : [ {
       "id" : "1ed375fb-0f1a-4c2a-9243-2477242cf7bd",
       "type" : "password",
@@ -887,7 +889,10 @@
     "username" : "natalia",
     "enabled" : true,
     "totp" : false,
-    "emailVerified" : false,
+    "emailVerified" : true,
+    "firstName" : "",
+    "lastName" : "",
+    "email" : "natalia@sartography.com",
     "credentials" : [ {
       "id" : "b6aa9936-39cc-4931-bfeb-60e6753de5ba",
       "type" : "password",
@@ -907,6 +912,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "sasha@status.im",
     "credentials" : [ {
       "id" : "4a170af4-6f0c-4e7b-b70c-e674edf619df",
       "type" : "password",
@@ -926,6 +932,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "service-account@status.im",
     "serviceAccountClientId" : "spiffworkflow-backend",
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
@@ -943,6 +950,7 @@
     "enabled" : true,
     "totp" : false,
     "emailVerified" : false,
+    "email" : "service-account-withauth@status.im",
     "serviceAccountClientId" : "withAuth",
     "credentials" : [ ],
     "disableableCredentialTypes" : [ ],
@@ -2166,7 +2174,7 @@
       "subType" : "authenticated",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-usermodel-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "saml-user-property-mapper", "oidc-usermodel-property-mapper", "saml-role-list-mapper", "saml-user-attribute-mapper", "oidc-full-name-mapper", "oidc-address-mapper" ]
+        "allowed-protocol-mapper-types" : [ "saml-user-property-mapper", "oidc-full-name-mapper", "saml-user-attribute-mapper", "oidc-usermodel-property-mapper", "oidc-address-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper" ]
       }
     }, {
       "id" : "d68e938d-dde6-47d9-bdc8-8e8523eb08cd",
@@ -2184,7 +2192,7 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : {
-        "allowed-protocol-mapper-types" : [ "oidc-address-mapper", "oidc-full-name-mapper", "oidc-usermodel-attribute-mapper", "saml-user-property-mapper", "saml-user-attribute-mapper", "oidc-sha256-pairwise-sub-mapper", "oidc-usermodel-property-mapper", "saml-role-list-mapper" ]
+        "allowed-protocol-mapper-types" : [ "oidc-sha256-pairwise-sub-mapper", "oidc-full-name-mapper", "saml-user-property-mapper", "oidc-usermodel-property-mapper", "oidc-usermodel-attribute-mapper", "saml-role-list-mapper", "oidc-address-mapper", "saml-user-attribute-mapper" ]
       }
     }, {
       "id" : "3854361d-3fe5-47fb-9417-a99592e3dc5c",
@@ -2274,7 +2282,7 @@
   "internationalizationEnabled" : false,
   "supportedLocales" : [ ],
   "authenticationFlows" : [ {
-    "id" : "b896c673-57ab-4f24-bbb1-334bdadbecd3",
+    "id" : "76ae522e-7ab3-48dc-af76-9cb8069368a2",
     "alias" : "Account verification options",
     "description" : "Method with which to verity the existing account",
     "providerId" : "basic-flow",
@@ -2296,7 +2304,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "4da99e29-371e-4f4b-a863-e5079f30a714",
+    "id" : "ddf80243-ec40-4c21-ae94-2967d841f84c",
     "alias" : "Authentication Options",
     "description" : "Authentication options.",
     "providerId" : "basic-flow",
@@ -2325,7 +2333,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "d398c928-e201-4e8b-ab09-289bb351cd2e",
+    "id" : "4f075680-46b7-49eb-b94c-d7425f105cb9",
     "alias" : "Browser - Conditional OTP",
     "description" : "Flow to determine if the OTP is required for the authentication",
     "providerId" : "basic-flow",
@@ -2347,7 +2355,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "663b7aa3-84f6-4347-8ed4-588c2464b75d",
+    "id" : "a0467c77-c3dc-4df6-acd2-c05ca13601ed",
     "alias" : "Direct Grant - Conditional OTP",
     "description" : "Flow to determine if the OTP is required for the authentication",
     "providerId" : "basic-flow",
@@ -2369,7 +2377,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "98013bc1-e4dd-41f7-9849-1f898143b944",
+    "id" : "07536fec-8d41-4c73-845f-ca85002022e0",
     "alias" : "First broker login - Conditional OTP",
     "description" : "Flow to determine if the OTP is required for the authentication",
     "providerId" : "basic-flow",
@@ -2391,7 +2399,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "b77e7545-9e39-4d72-93f8-1b38c954c2e2",
+    "id" : "f123f912-71fb-4596-97f9-c0628a59413d",
     "alias" : "Handle Existing Account",
     "description" : "Handle what to do if there is existing account with same email/username like authenticated identity provider",
     "providerId" : "basic-flow",
@@ -2413,7 +2421,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "2470e6f4-9a01-476a-9057-75d78e577182",
+    "id" : "03c26cc5-366b-462d-9297-b4016f8d7c57",
     "alias" : "Reset - Conditional OTP",
     "description" : "Flow to determine if the OTP should be reset or not. Set to REQUIRED to force.",
     "providerId" : "basic-flow",
@@ -2435,7 +2443,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "8e7dad0b-f4e1-4534-b618-b635b0a0e4f9",
+    "id" : "1b4f474e-aa64-45cc-90f1-63504585d89c",
     "alias" : "User creation or linking",
     "description" : "Flow for the existing/non-existing user alternatives",
     "providerId" : "basic-flow",
@@ -2458,7 +2466,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "97c83e43-cba8-4d92-b108-9181bca07a1e",
+    "id" : "38024dd6-daff-45de-8782-06b07b7bfa56",
     "alias" : "Verify Existing Account by Re-authentication",
     "description" : "Reauthentication of existing account",
     "providerId" : "basic-flow",
@@ -2480,7 +2488,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "fbabd64c-20de-4b8c-bfd2-be6822572278",
+    "id" : "b7e30fca-e4ac-4886-a2e7-642fe2a27ee7",
     "alias" : "browser",
     "description" : "browser based authentication",
     "providerId" : "basic-flow",
@@ -2516,7 +2524,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "0628a99f-b194-495d-8e54-cc4ca8684956",
+    "id" : "92e3571d-ac3e-4e79-a391-5315954e866f",
     "alias" : "clients",
     "description" : "Base authentication for clients",
     "providerId" : "client-flow",
@@ -2552,7 +2560,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "ce6bf7af-3bff-48ce-b214-7fed08503a2a",
+    "id" : "5093dd2d-fe5d-4f41-a54d-03cd648d9b7f",
     "alias" : "direct grant",
     "description" : "OpenID Connect Resource Owner Grant",
     "providerId" : "basic-flow",
@@ -2581,7 +2589,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "60ce729b-d055-4ae7-83cb-85dbcf8cfdaa",
+    "id" : "95d2f1ff-6907-47ce-a93c-db462fe04844",
     "alias" : "docker auth",
     "description" : "Used by Docker clients to authenticate against the IDP",
     "providerId" : "basic-flow",
@@ -2596,7 +2604,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "0bd3cf93-7f33-46b2-ad1f-85cdfb0a87f9",
+    "id" : "27405ee8-5730-419c-944c-a7c67edd91ce",
     "alias" : "first broker login",
     "description" : "Actions taken after first broker login with identity provider account, which is not yet linked to any Keycloak account",
     "providerId" : "basic-flow",
@@ -2619,7 +2627,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "3e52f178-9b9d-4a62-97d5-f9f3f872bcd9",
+    "id" : "fce6d926-3a99-40ee-b79e-cae84493dbd8",
     "alias" : "forms",
     "description" : "Username, password, otp and other auth forms.",
     "providerId" : "basic-flow",
@@ -2641,7 +2649,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "3f5fd6cc-2935-45d8-9bef-6857bba3657a",
+    "id" : "75d93596-b7fb-4a2c-a780-e6a038e66fe9",
     "alias" : "http challenge",
     "description" : "An authentication flow based on challenge-response HTTP Authentication Schemes",
     "providerId" : "basic-flow",
@@ -2663,7 +2671,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "2c2b32dd-57dc-45d7-9a24-b4a253cb6a03",
+    "id" : "04cdc1ac-c58d-4f8c-bc10-7d5e2bb99485",
     "alias" : "registration",
     "description" : "registration flow",
     "providerId" : "basic-flow",
@@ -2679,7 +2687,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "dbc28b13-dba7-42a0-a8ab-faa8762979c3",
+    "id" : "99593c1e-f2a5-4198-ad41-634694259110",
     "alias" : "registration form",
     "description" : "registration form",
     "providerId" : "form-flow",
@@ -2715,7 +2723,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "b4a901d5-e7b9-4eb6-9f8e-1d3305846828",
+    "id" : "7d53f026-b05e-4a9c-aba6-23b17826a4d4",
     "alias" : "reset credentials",
     "description" : "Reset credentials for a user if they forgot their password or something",
     "providerId" : "basic-flow",
@@ -2751,7 +2759,7 @@
       "userSetupAllowed" : false
     } ]
   }, {
-    "id" : "824fe757-cc5c-4e13-ab98-9a2132e10f5c",
+    "id" : "7ca17e64-f916-4d6c-91f0-815ec66f50e8",
     "alias" : "saml ecp",
     "description" : "SAML ECP Profile Authentication Flow",
     "providerId" : "basic-flow",
@@ -2767,13 +2775,13 @@
     } ]
   } ],
   "authenticatorConfig" : [ {
-    "id" : "817a93da-29df-447f-ab05-cd9557e66745",
+    "id" : "9b71d817-b999-479d-97f8-07e39dd9e9fa",
     "alias" : "create unique user config",
     "config" : {
       "require.password.update.after.registration" : "false"
     }
   }, {
-    "id" : "4a8a9659-fa0d-4da8-907b-3b6daec1c878",
+    "id" : "f9f13ba1-6a17-436b-a80b-6ccc042f9fc2",
     "alias" : "review profile config",
     "config" : {
       "update.profile.on.first.login" : "missing"

@@ -31,10 +31,14 @@ class TestProcessInstanceProcessor(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_script_engine_takes_data_and_returns_expected_results."""
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
+        app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
         script_engine = ProcessInstanceProcessor._script_engine
 
         result = script_engine._evaluate("a", {"a": 1})
         assert result == 1
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = None
+        app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
     def test_script_engine_can_use_custom_scripts(
         self,
@@ -42,12 +46,16 @@ class TestProcessInstanceProcessor(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_script_engine_takes_data_and_returns_expected_results."""
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
+        app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
         script_engine = ProcessInstanceProcessor._script_engine
         result = script_engine._evaluate("fact_service(type='norris')", {})
         assert (
             result
             == "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
         )
+        app.config["THREAD_LOCAL_DATA"].process_model_identifier = None
+        app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
     def test_sets_permission_correctly_on_human_task(
         self,
@@ -80,8 +88,8 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
-        assert len(process_instance.human_tasks) == 1
-        human_task = process_instance.human_tasks[0]
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
         assert human_task.lane_assignment_id is None
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
@@ -97,8 +105,8 @@ class TestProcessInstanceProcessor(BaseTest):
             processor, spiff_task, {}, initiator_user, human_task
         )
 
-        assert len(process_instance.human_tasks) == 1
-        human_task = process_instance.human_tasks[0]
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
         assert human_task.lane_assignment_id == finance_group.id
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user
@@ -114,8 +122,8 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, finance_user, human_task
         )
-        assert len(process_instance.human_tasks) == 1
-        human_task = process_instance.human_tasks[0]
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
         assert human_task.lane_assignment_id is None
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
@@ -163,8 +171,8 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True)
         processor.save()
 
-        assert len(process_instance.human_tasks) == 1
-        human_task = process_instance.human_tasks[0]
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
         assert human_task.lane_assignment_id is None
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
@@ -179,9 +187,10 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, initiator_user, human_task
         )
+        assert human_task.completed_by_user_id == initiator_user.id
 
-        assert len(process_instance.human_tasks) == 1
-        human_task = process_instance.human_tasks[0]
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
         assert human_task.lane_assignment_id is None
         assert len(human_task.potential_owners) == 2
         assert human_task.potential_owners == [finance_user_three, finance_user_four]
@@ -198,8 +207,9 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, finance_user_three, human_task
         )
-        assert len(process_instance.human_tasks) == 1
-        human_task = process_instance.human_tasks[0]
+        assert human_task.completed_by_user_id == finance_user_three.id
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
         assert human_task.lane_assignment_id is None
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == finance_user_four
@@ -215,8 +225,9 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(
             processor, spiff_task, {}, finance_user_four, human_task
         )
-        assert len(process_instance.human_tasks) == 1
-        human_task = process_instance.human_tasks[0]
+        assert human_task.completed_by_user_id == finance_user_four.id
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
         assert human_task.lane_assignment_id is None
         assert len(human_task.potential_owners) == 1
         assert human_task.potential_owners[0] == initiator_user
@@ -228,8 +239,8 @@ class TestProcessInstanceProcessor(BaseTest):
             processor, spiff_task, {}, initiator_user, human_task
         )
 
-        assert len(process_instance.human_tasks) == 1
-        human_task = process_instance.human_tasks[0]
+        assert len(process_instance.active_human_tasks) == 1
+        human_task = process_instance.active_human_tasks[0]
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
             human_task.task_name, processor.bpmn_process_instance
         )
@@ -250,7 +261,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_sets_permission_correctly_on_human_task_when_using_dict."""
+        """Test_does_not_recreate_human_tasks_on_multiple_saves."""
         self.create_process_group(
             client, with_super_admin_user, "test_group", "test_group"
         )
@@ -273,11 +284,11 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        assert len(process_instance.human_tasks) == 1
-        initial_human_task_id = process_instance.human_tasks[0].id
+        assert len(process_instance.active_human_tasks) == 1
+        initial_human_task_id = process_instance.active_human_tasks[0].id
 
         # save again to ensure we go attempt to process the human tasks again
         processor.save()
 
-        assert len(process_instance.human_tasks) == 1
-        assert initial_human_task_id == process_instance.human_tasks[0].id
+        assert len(process_instance.active_human_tasks) == 1
+        assert initial_human_task_id == process_instance.active_human_tasks[0].id

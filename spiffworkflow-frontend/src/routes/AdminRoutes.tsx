@@ -25,11 +25,11 @@ import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 
 export default function AdminRoutes() {
   const location = useLocation();
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   useEffect(() => {
-    setErrorMessage(null);
-  }, [location, setErrorMessage]);
+    setErrorObject(null);
+  }, [location, setErrorObject]);
 
   if (UserService.hasRole(['admin'])) {
     return (

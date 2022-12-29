@@ -12,6 +12,11 @@ from spiffworkflow_backend.scripts.script import Script
 class GetCurrentUser(Script):
     """GetCurrentUser."""
 
+    @staticmethod
+    def requires_privileged_permissions() -> bool:
+        """We have deemed this function safe to run without elevated permissions."""
+        return False
+
     def get_description(self) -> str:
         """Get_description."""
         return """Return the current user."""

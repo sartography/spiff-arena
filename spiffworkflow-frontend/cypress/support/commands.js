@@ -95,14 +95,16 @@ Cypress.Commands.add(
     } else {
       cy.contains(/Process Instance.*[kK]icked [oO]ff/);
       cy.reload(true);
+      cy.contains('Process Model:').should('exist');
       cy.contains(/Process Instance.*[kK]icked [oO]ff/).should('not.exist');
+      cy.contains('[data-qa=process-model-show-permissions-loaded]', 'true');
     }
   }
 );
 
 Cypress.Commands.add(
   'navigateToProcessModel',
-  (groupDisplayName, modelDisplayName, modelIdentifier) => {
+  (groupDisplayName, modelDisplayName) => {
     cy.navigateToAdmin();
     cy.contains(miscDisplayName).click();
     cy.contains(`Process Group: ${miscDisplayName}`, { timeout: 10000 });
@@ -120,10 +122,23 @@ Cypress.Commands.add('basicPaginationTest', () => {
 
   // NOTE: this is a em dash instead of en dash
   cy.contains(/\b1–2 of \d+/);
-  cy.get('.cds--pagination__button--forward').click();
-  cy.contains(/\b3–4 of \d+/);
-  cy.get('.cds--pagination__button--backward').click();
-  cy.contains(/\b1–2 of \d+/);
+
+  // ok, trying to ensure that we have everything loaded before we leave this
+  // function and try to sign out. Just showing results 1-2 of blah is not good enough,
+  // since the ajax request may not have finished yet.
+  // to be sure it's finished, grab the log id from page 1. remember it.
+  // then use the magical contains command that waits for the element to exist AND
+  // for that element to contain the text we're looking for.
+  cy.getBySel('paginated-entity-id')
+    .first()
+    .then(($element) => {
+      const oldId = $element.text().trim();
+      cy.get('.cds--pagination__button--forward').click();
+      cy.contains(/\b3–4 of \d+/);
+      cy.get('.cds--pagination__button--backward').click();
+      cy.contains(/\b1–2 of \d+/);
+      cy.contains('[data-qa=paginated-entity-id]', oldId);
+    });
 });
 
 Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
