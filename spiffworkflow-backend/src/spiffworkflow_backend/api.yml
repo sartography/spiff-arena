@@ -733,7 +733,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.script_unit_test_create
+      operationId: spiffworkflow_backend.routes.script_unit_tests_controller.script_unit_test_create
       summary: Create script unit test based on given criteria
       tags:
         - Script Unit Test
@@ -754,7 +754,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.script_unit_test_run
+      operationId: spiffworkflow_backend.routes.script_unit_tests_controller.script_unit_test_run
       summary: Run a given script unit test.
       tags:
         - Script Unit Test
