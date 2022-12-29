@@ -1565,7 +1565,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.mark_task_complete
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.manual_complete_task
       summary: Mark a task complete without executing it
       tags:
         - Process Instances

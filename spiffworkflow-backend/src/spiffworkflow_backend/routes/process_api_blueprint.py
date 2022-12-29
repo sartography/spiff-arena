@@ -28,11 +28,6 @@ from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
-from sqlalchemy import and_
-from sqlalchemy import asc
-from sqlalchemy import desc
-from sqlalchemy import or_
-
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -99,6 +94,10 @@ from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
+from sqlalchemy import and_
+from sqlalchemy import asc
+from sqlalchemy import desc
+from sqlalchemy import or_
 
 
 class TaskDataSelectOption(TypedDict):
@@ -2189,23 +2188,24 @@ def send_bpmn_event(
     )
 
 
-def mark_task_complete(
+def manual_complete_task(
     modified_process_model_identifier: str,
     process_instance_id: str,
     task_id: str,
     body: Dict,
 ) -> Response:
     """Mark a task complete without executing it."""
+    execute = body.get("execute", True)
     process_instance = ProcessInstanceModel.query.filter(
         ProcessInstanceModel.id == int(process_instance_id)
     ).first()
     if process_instance:
         processor = ProcessInstanceProcessor(process_instance)
-        processor.mark_task_complete(task_id)
+        processor.manual_complete_task(task_id, execute)
     else:
         raise ApiError(
-            error_code="send_bpmn_event_error",
-            message=f"Could not skip Task {task_id} in Instance {process_instance_id}",
+            error_code="complete_task",
+            message=f"Could not complete Task {task_id} in Instance {process_instance_id}",
         )
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),

@@ -529,6 +529,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     // We actually could allow this for any waiting events
     const taskTypes = ['Event Based Gateway'];
     return (
+      processInstance &&
+      processInstance.status === 'waiting' &&
       ability.can('POST', targetUris.processInstanceSendEventPath) &&
       taskTypes.filter((t) => t === task.type).length > 0 &&
       task.state === 'WAITING' &&
@@ -536,8 +538,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canMarkTaskComplete = (task: any) => {
+  const canCompleteTask = (task: any) => {
     return (
+      processInstance &&
+      processInstance.status === 'suspended' &&
       ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
       task.state === 'READY' &&
       showingLastSpiffStep()
@@ -546,6 +550,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const canResetProcess = (task: any) => {
     return (
+      ability.can('POST', targetUris.processInstanceResetPath) &&
       processInstance &&
       processInstance.status === 'suspended' &&
       task.state === 'READY' &&
@@ -627,13 +632,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
-  const markTaskComplete = () => {
+  const completeTask = (execute: boolean) => {
     const taskToUse: any = taskToDisplay;
     HttpService.makeCallToBackend({
       path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
       httpMethod: 'POST',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,
+      postBody: { execute },
     });
   };
 
@@ -705,13 +711,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </Button>
         );
       }
-      if (canMarkTaskComplete(task)) {
+      if (canCompleteTask(task)) {
         buttons.push(
           <Button
             data-qa="mark-task-complete-button"
-            onClick={() => markTaskComplete()}
+            onClick={() => completeTask(false)}
           >
             Mark Complete
+          </Button>
+        );
+        buttons.push(
+          <Button
+            data-qa="execute-task-complete-button"
+            onClick={() => completeTask(true)}
+          >
+            Execute Task
           </Button>
         );
       }
