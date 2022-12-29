@@ -16,6 +16,7 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 def secret_show(key: str) -> Optional[str]:
+    """Secret_show."""
     return SecretService.get_secret(key)
 
 
