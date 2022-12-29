@@ -1402,7 +1402,7 @@ def process_instance_task_list(
         step_detail = (
             db.session.query(SpiffStepDetailsModel)
             .filter(
-                SpiffStepDetailsModel.process_instance.id == process_instance.id,
+                SpiffStepDetailsModel.process_instance_id == process_instance.id,
                 SpiffStepDetailsModel.spiff_step == spiff_step,
             )
             .first()
