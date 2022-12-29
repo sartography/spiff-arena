@@ -115,7 +115,7 @@ paths:
 
   /status:
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.status
+      operationId: spiffworkflow_backend.routes.health_controller.status
       summary: Returns 200 if the server is Responding
       tags:
         - Liveness

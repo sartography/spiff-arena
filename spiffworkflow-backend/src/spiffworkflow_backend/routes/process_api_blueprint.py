@@ -3,7 +3,6 @@ import json
 from typing import Any
 from typing import Dict
 
-import connexion  # type: ignore
 import flask.wrappers
 import werkzeug
 from flask import Blueprint
@@ -45,12 +44,6 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskServi
 
 
 process_api_blueprint = Blueprint("process_api", __name__)
-
-
-def status() -> flask.wrappers.Response:
-    """Status."""
-    ProcessInstanceModel.query.filter().first()
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
 def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.Response:
