@@ -2,7 +2,6 @@
 import json
 from typing import Any
 from typing import Dict
-from typing import Optional
 
 import connexion  # type: ignore
 import flask.wrappers
@@ -33,11 +32,9 @@ from spiffworkflow_backend.models.process_instance import (
 )
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
-from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -45,7 +42,6 @@ from spiffworkflow_backend.services.process_instance_processor import (
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskService
-from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 process_api_blueprint = Blueprint("process_api", __name__)
@@ -164,20 +160,6 @@ def process_data_show(
         ),
         200,
     )
-
-
-def _find_principal_or_raise() -> PrincipalModel:
-    """Find_principal_or_raise."""
-    principal = PrincipalModel.query.filter_by(user_id=g.user.id).first()
-    if principal is None:
-        raise (
-            ApiError(
-                error_code="principal_not_found",
-                message=f"Principal not found from user id: {g.user.id}",
-                status_code=400,
-            )
-        )
-    return principal  # type: ignore
 
 
 # sample body:
@@ -340,69 +322,6 @@ def _find_process_instance_by_id_or_raise(
     return process_instance  # type: ignore
 
 
-def _get_process_instance(
-    modified_process_model_identifier: str,
-    process_instance: ProcessInstanceModel,
-    process_identifier: Optional[str] = None,
-) -> flask.wrappers.Response:
-    """_get_process_instance."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    try:
-        current_version_control_revision = GitService.get_current_revision()
-    except GitCommandError:
-        current_version_control_revision = ""
-
-    process_model_with_diagram = None
-    name_of_file_with_diagram = None
-    if process_identifier:
-        spec_reference = SpecReferenceCache.query.filter_by(
-            identifier=process_identifier, type="process"
-        ).first()
-        if spec_reference is None:
-            raise SpecReferenceNotFoundError(
-                f"Could not find given process identifier in the cache: {process_identifier}"
-            )
-
-        process_model_with_diagram = ProcessModelService.get_process_model(
-            spec_reference.process_model_id
-        )
-        name_of_file_with_diagram = spec_reference.file_name
-    else:
-        process_model_with_diagram = _get_process_model(process_model_identifier)
-        if process_model_with_diagram.primary_file_name:
-            name_of_file_with_diagram = process_model_with_diagram.primary_file_name
-
-    if process_model_with_diagram and name_of_file_with_diagram:
-        if (
-            process_instance.bpmn_version_control_identifier
-            == current_version_control_revision
-        ):
-            bpmn_xml_file_contents = SpecFileService.get_data(
-                process_model_with_diagram, name_of_file_with_diagram
-            ).decode("utf-8")
-        else:
-            bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
-                process_model_with_diagram,
-                process_instance.bpmn_version_control_identifier,
-                file_name=name_of_file_with_diagram,
-            )
-        process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
-
-    return make_response(jsonify(process_instance), 200)
-
-
-def _get_file_from_request() -> Any:
-    """Get_file_from_request."""
-    request_file = connexion.request.files.get("file")
-    if not request_file:
-        raise ApiError(
-            error_code="no_file_given",
-            message="Given request does not contain a file",
-            status_code=400,
-        )
-    return request_file
-
-
 # process_model_id uses forward slashes on all OSes
 # this seems to return an object where process_model.id has backslashes on windows
 def _get_process_model(process_model_id: str) -> ProcessModelInfo:
@@ -420,3 +339,17 @@ def _get_process_model(process_model_id: str) -> ProcessModelInfo:
         ) from exception
 
     return process_model
+
+
+def _find_principal_or_raise() -> PrincipalModel:
+    """Find_principal_or_raise."""
+    principal = PrincipalModel.query.filter_by(user_id=g.user.id).first()
+    if principal is None:
+        raise (
+            ApiError(
+                error_code="principal_not_found",
+                message=f"Principal not found from user id: {g.user.id}",
+                status_code=400,
+            )
+        )
+    return principal  # type: ignore

@@ -27,6 +27,8 @@ from spiffworkflow_backend.models.process_instance_metadata import (
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
@@ -36,11 +38,13 @@ from spiffworkflow_backend.routes.process_api_blueprint import (
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_for_me_or_raise,
 )
-from spiffworkflow_backend.routes.process_api_blueprint import _get_process_instance
+from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _un_modify_modified_process_model_id,
 )
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
+from spiffworkflow_backend.services.git_service import GitCommandError
+from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -54,6 +58,8 @@ from spiffworkflow_backend.services.process_instance_report_service import (
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 def process_instance_create(
@@ -551,3 +557,54 @@ def process_instance_task_list(
         tasks.append(task)
 
     return make_response(jsonify(tasks), 200)
+
+
+def _get_process_instance(
+    modified_process_model_identifier: str,
+    process_instance: ProcessInstanceModel,
+    process_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    """_get_process_instance."""
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    try:
+        current_version_control_revision = GitService.get_current_revision()
+    except GitCommandError:
+        current_version_control_revision = ""
+
+    process_model_with_diagram = None
+    name_of_file_with_diagram = None
+    if process_identifier:
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier=process_identifier, type="process"
+        ).first()
+        if spec_reference is None:
+            raise SpecReferenceNotFoundError(
+                f"Could not find given process identifier in the cache: {process_identifier}"
+            )
+
+        process_model_with_diagram = ProcessModelService.get_process_model(
+            spec_reference.process_model_id
+        )
+        name_of_file_with_diagram = spec_reference.file_name
+    else:
+        process_model_with_diagram = _get_process_model(process_model_identifier)
+        if process_model_with_diagram.primary_file_name:
+            name_of_file_with_diagram = process_model_with_diagram.primary_file_name
+
+    if process_model_with_diagram and name_of_file_with_diagram:
+        if (
+            process_instance.bpmn_version_control_identifier
+            == current_version_control_revision
+        ):
+            bpmn_xml_file_contents = SpecFileService.get_data(
+                process_model_with_diagram, name_of_file_with_diagram
+            ).decode("utf-8")
+        else:
+            bpmn_xml_file_contents = GitService.get_instance_file_contents_for_revision(
+                process_model_with_diagram,
+                process_instance.bpmn_version_control_identifier,
+                file_name=name_of_file_with_diagram,
+            )
+        process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
+
+    return make_response(jsonify(process_instance), 200)

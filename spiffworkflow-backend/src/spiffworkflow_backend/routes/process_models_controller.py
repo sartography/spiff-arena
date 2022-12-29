@@ -5,6 +5,7 @@ from typing import Dict
 from typing import Optional
 from typing import Union
 
+import connexion  # type: ignore
 import flask.wrappers
 from flask import current_app
 from flask import g
@@ -17,7 +18,6 @@ from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
-from spiffworkflow_backend.routes.process_api_blueprint import _get_file_from_request
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _un_modify_modified_process_model_id,
@@ -301,3 +301,15 @@ def process_model_file_show(
     file.process_model_id = process_model.id
     # file.process_group_id = process_model.process_group_id
     return FileSchema().dump(file)
+
+
+def _get_file_from_request() -> Any:
+    """Get_file_from_request."""
+    request_file = connexion.request.files.get("file")
+    if not request_file:
+        raise ApiError(
+            error_code="no_file_given",
+            message="Given request does not contain a file",
+            status_code=400,
+        )
+    return request_file
