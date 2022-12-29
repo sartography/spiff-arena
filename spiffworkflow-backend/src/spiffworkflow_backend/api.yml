@@ -1476,7 +1476,7 @@ paths:
     get:
       tags:
         - Service Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.service_task_list
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.service_task_list
       summary: Gets all available service task connectors
       responses:
         "200":
@@ -1490,7 +1490,7 @@ paths:
     get:
       tags:
         - Authentications
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.authentication_list
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_list
       summary: Gets all available authentications from connector proxy
       responses:
         "200":
@@ -1529,7 +1529,7 @@ paths:
     get:
       tags:
         - Authentications
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.authentication_callback
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_callback
       summary: Callback to backend
       responses:
         "200":
