@@ -621,7 +621,7 @@ class ProcessInstanceProcessor:
                 db.session.add(pim)
                 db.session.commit()
 
-    def save(self) -> None:
+    def _save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
 
@@ -643,6 +643,9 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+    def save(self) -> None:
+        """Saves the current state and moves on to the next state."""
+        self._save()
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id
         ).all()
@@ -729,17 +732,25 @@ class ProcessInstanceProcessor:
         self.bpmn_process_instance.catch(event_definition)
         self.do_engine_steps(save=True)
 
-    def mark_task_complete(self, task_id: str) -> None:
-        """Mark the task complete without executing it."""
+    def manual_complete_task(self, task_id: str, execute: bool) -> None:
+        """Mark the task complete optionally executing it."""
         spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
-        spiff_task._set_state(TaskState.COMPLETED)
+        if execute:
+            current_app.logger.info(
+                f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
+            )
+            spiff_task.complete()
+        else:
+            current_app.logger.info(
+                f"Skipping Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
+            )
+            spiff_task._set_state(TaskState.COMPLETED)
+            for child in spiff_task.children:
+                child.task_spec._update(child)
         self.bpmn_process_instance.last_task = spiff_task
-        for child in spiff_task.children:
-            child.task_spec._update(child)
-        current_app.logger.info(
-            f"Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id} skipped"
-        )
-        self.do_engine_steps(save=True)
+        self._save()
+        # Saving the workflow seems to reset the status
+        self.suspend()
 
     @staticmethod
     def get_parser() -> MyCustomParser:
