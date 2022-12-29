@@ -1244,7 +1244,7 @@ paths:
     get:
       tags:
         - Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_my_tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_my_tasks
       summary: returns the list of ready or waiting tasks for a user
       responses:
         "200":
@@ -1273,7 +1273,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_for_my_open_processes
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_for_my_open_processes
       summary: returns the list of tasks for given user's open process instances
       responses:
         "200":
@@ -1302,7 +1302,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_for_me
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_for_me
       summary: returns the list of tasks for given user's open process instances
       responses:
         "200":
@@ -1337,7 +1337,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_for_my_groups
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_for_my_groups
       summary: returns the list of tasks for given user's open process instances
       responses:
         "200":
@@ -1562,7 +1562,7 @@ paths:
     get:
       tags:
         - Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_show
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_show
       summary: Gets one task that a user wants to complete
       responses:
         "200":
@@ -1574,7 +1574,7 @@ paths:
     put:
       tags:
         - Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_submit
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_submit
       summary: Update the form data for a tasks
       requestBody:
         content:
@@ -1618,7 +1618,7 @@ paths:
     get:
       tags:
         - Messages
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.message_instance_list
+      operationId: spiffworkflow_backend.routes.messages_controller.message_instance_list
       summary: Get a list of message instances
       responses:
         "200":
@@ -1639,7 +1639,7 @@ paths:
     post:
       tags:
         - Messages
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.message_start
+      operationId: spiffworkflow_backend.routes.messages_controller.message_start
       summary: Instantiate and run a given process model with a message start event matching given identifier
       requestBody:
         content:
@@ -1708,7 +1708,7 @@ paths:
         schema:
           type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_create
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_create
       summary: Create a secret for a key and value
       tags:
         - Secrets
@@ -1725,7 +1725,7 @@ paths:
               schema:
                 type: number
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_list
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_list
       summary: Return list of all secrets
       tags:
         - Secrets
@@ -1746,7 +1746,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.get_secret
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_show
       summary: Return a secret value for a key
       tags:
         - Secrets
@@ -1758,7 +1758,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Secret"
     delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_delete
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_delete
       summary: Delete an existing secret
       tags:
         - Secrets
@@ -1770,7 +1770,7 @@ paths:
         "404":
           description: Secret does not exist
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_update
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_update
       summary: Modify an existing secret
       tags:
         - Secrets
