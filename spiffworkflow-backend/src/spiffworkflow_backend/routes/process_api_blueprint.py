@@ -158,290 +158,6 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
     return make_response(jsonify({"results": response_dict}), 200)
 
 
-def un_modify_modified_process_model_id(modified_process_model_identifier: str) -> str:
-    """Un_modify_modified_process_model_id."""
-    return modified_process_model_identifier.replace(":", "/")
-
-
-def process_group_create(body: dict) -> flask.wrappers.Response:
-    """Add_process_group."""
-    process_group = ProcessGroup(**body)
-    ProcessModelService.add_process_group(process_group)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} added process group {process_group.id}"
-    )
-    return make_response(jsonify(process_group), 201)
-
-
-def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Response:
-    """Process_group_delete."""
-    process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
-    ProcessModelService().process_group_delete(process_group_id)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} deleted process group {process_group_id}"
-    )
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def process_group_update(
-    modified_process_group_id: str, body: dict
-) -> flask.wrappers.Response:
-    """Process Group Update."""
-    body_include_list = ["display_name", "description"]
-    body_filtered = {
-        include_item: body[include_item]
-        for include_item in body_include_list
-        if include_item in body
-    }
-
-    process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
-    process_group = ProcessGroup(id=process_group_id, **body_filtered)
-    ProcessModelService.update_process_group(process_group)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} updated process group {process_group_id}"
-    )
-    return make_response(jsonify(process_group), 200)
-
-
-def process_group_list(
-    process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
-    """Process_group_list."""
-    if process_group_identifier is not None:
-        process_groups = ProcessModelService.get_process_groups(
-            process_group_identifier
-        )
-    else:
-        process_groups = ProcessModelService.get_process_groups()
-    batch = ProcessModelService().get_batch(
-        items=process_groups, page=page, per_page=per_page
-    )
-    pages = len(process_groups) // per_page
-    remainder = len(process_groups) % per_page
-    if remainder > 0:
-        pages += 1
-
-    response_json = {
-        "results": ProcessGroupSchema(many=True).dump(batch),
-        "pagination": {
-            "count": len(batch),
-            "total": len(process_groups),
-            "pages": pages,
-        },
-    }
-    return Response(json.dumps(response_json), status=200, mimetype="application/json")
-
-
-def process_group_show(
-    modified_process_group_id: str,
-) -> Any:
-    """Process_group_show."""
-    process_group_id = un_modify_modified_process_model_id(modified_process_group_id)
-    try:
-        process_group = ProcessModelService.get_process_group(process_group_id)
-    except ProcessEntityNotFoundError as exception:
-        raise (
-            ApiError(
-                error_code="process_group_cannot_be_found",
-                message=f"Process group cannot be found: {process_group_id}",
-                status_code=400,
-            )
-        ) from exception
-
-    process_group.parent_groups = ProcessModelService.get_parent_group_array(
-        process_group.id
-    )
-    return make_response(jsonify(process_group), 200)
-
-
-def process_group_move(
-    modified_process_group_identifier: str, new_location: str
-) -> flask.wrappers.Response:
-    """Process_group_move."""
-    original_process_group_id = un_modify_modified_process_model_id(
-        modified_process_group_identifier
-    )
-    new_process_group = ProcessModelService().process_group_move(
-        original_process_group_id, new_location
-    )
-    _commit_and_push_to_git(
-        f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
-    )
-    return make_response(jsonify(new_process_group), 200)
-
-
-def process_model_create(
-    modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
-) -> flask.wrappers.Response:
-    """Process_model_create."""
-    body_include_list = [
-        "id",
-        "display_name",
-        "primary_file_name",
-        "primary_process_id",
-        "description",
-        "metadata_extraction_paths",
-    ]
-    body_filtered = {
-        include_item: body[include_item]
-        for include_item in body_include_list
-        if include_item in body
-    }
-
-    if modified_process_group_id is None:
-        raise ApiError(
-            error_code="process_group_id_not_specified",
-            message="Process Model could not be created when process_group_id path param is unspecified",
-            status_code=400,
-        )
-
-    unmodified_process_group_id = un_modify_modified_process_model_id(
-        modified_process_group_id
-    )
-    process_group = ProcessModelService.get_process_group(unmodified_process_group_id)
-    if process_group is None:
-        raise ApiError(
-            error_code="process_model_could_not_be_created",
-            message=f"Process Model could not be created from given body because Process Group could not be found: {body}",
-            status_code=400,
-        )
-
-    process_model_info = ProcessModelInfo(**body_filtered)  # type: ignore
-    if process_model_info is None:
-        raise ApiError(
-            error_code="process_model_could_not_be_created",
-            message=f"Process Model could not be created from given body: {body}",
-            status_code=400,
-        )
-
-    ProcessModelService.add_process_model(process_model_info)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} created process model {process_model_info.id}"
-    )
-    return Response(
-        json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
-        status=201,
-        mimetype="application/json",
-    )
-
-
-def process_model_delete(
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    """Process_model_delete."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    ProcessModelService().process_model_delete(process_model_identifier)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} deleted process model {process_model_identifier}"
-    )
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def process_model_update(
-    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
-) -> Any:
-    """Process_model_update."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    body_include_list = [
-        "display_name",
-        "primary_file_name",
-        "primary_process_id",
-        "description",
-        "metadata_extraction_paths",
-    ]
-    body_filtered = {
-        include_item: body[include_item]
-        for include_item in body_include_list
-        if include_item in body
-    }
-
-    process_model = get_process_model(process_model_identifier)
-    ProcessModelService.update_process_model(process_model, body_filtered)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} updated process model {process_model_identifier}"
-    )
-    return ProcessModelInfoSchema().dump(process_model)
-
-
-def process_model_show(modified_process_model_identifier: str) -> Any:
-    """Process_model_show."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = get_process_model(process_model_identifier)
-    files = sorted(
-        SpecFileService.get_files(process_model),
-        key=lambda f: "" if f.name == process_model.primary_file_name else f.sort_index,
-    )
-    process_model.files = files
-    for file in process_model.files:
-        file.references = SpecFileService.get_references_for_file(file, process_model)
-
-    process_model.parent_groups = ProcessModelService.get_parent_group_array(
-        process_model.id
-    )
-    return make_response(jsonify(process_model), 200)
-
-
-def process_model_move(
-    modified_process_model_identifier: str, new_location: str
-) -> flask.wrappers.Response:
-    """Process_model_move."""
-    original_process_model_id = un_modify_modified_process_model_id(
-        modified_process_model_identifier
-    )
-    new_process_model = ProcessModelService().process_model_move(
-        original_process_model_id, new_location
-    )
-    _commit_and_push_to_git(
-        f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
-    )
-    return make_response(jsonify(new_process_model), 200)
-
-
-def process_model_publish(
-    modified_process_model_identifier: str, branch_to_update: Optional[str] = None
-) -> flask.wrappers.Response:
-    """Process_model_publish."""
-    if branch_to_update is None:
-        branch_to_update = current_app.config["GIT_BRANCH_TO_PUBLISH_TO"]
-    process_model_identifier = un_modify_modified_process_model_id(
-        modified_process_model_identifier
-    )
-    pr_url = GitService().publish(process_model_identifier, branch_to_update)
-    data = {"ok": True, "pr_url": pr_url}
-    return Response(json.dumps(data), status=200, mimetype="application/json")
-
-
-def process_model_list(
-    process_group_identifier: Optional[str] = None,
-    recursive: Optional[bool] = False,
-    filter_runnable_by_user: Optional[bool] = False,
-    page: int = 1,
-    per_page: int = 100,
-) -> flask.wrappers.Response:
-    """Process model list!"""
-    process_models = ProcessModelService.get_process_models(
-        process_group_id=process_group_identifier,
-        recursive=recursive,
-        filter_runnable_by_user=filter_runnable_by_user,
-    )
-    batch = ProcessModelService().get_batch(
-        process_models, page=page, per_page=per_page
-    )
-    pages = len(process_models) // per_page
-    remainder = len(process_models) % per_page
-    if remainder > 0:
-        pages += 1
-    response_json = {
-        "results": ProcessModelInfoSchema(many=True).dump(batch),
-        "pagination": {
-            "count": len(batch),
-            "total": len(process_models),
-            "pages": pages,
-        },
-    }
-    return Response(json.dumps(response_json), status=200, mimetype="application/json")
-
-
 def process_list() -> Any:
     """Returns a list of all known processes.
 
@@ -450,246 +166,6 @@ def process_list() -> Any:
     """
     references = SpecReferenceCache.query.filter_by(type="process").all()
     return SpecReferenceSchema(many=True).dump(references)
-
-
-def get_file(modified_process_model_identifier: str, file_name: str) -> Any:
-    """Get_file."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = get_process_model(process_model_identifier)
-    files = SpecFileService.get_files(process_model, file_name)
-    if len(files) == 0:
-        raise ApiError(
-            error_code="unknown file",
-            message=f"No information exists for file {file_name}"
-            f" it does not exist in workflow {process_model_identifier}.",
-            status_code=404,
-        )
-
-    file = files[0]
-    file_contents = SpecFileService.get_data(process_model, file.name)
-    file.file_contents = file_contents
-    file.process_model_id = process_model.id
-    # file.process_group_id = process_model.process_group_id
-    return FileSchema().dump(file)
-
-
-def process_model_file_update(
-    modified_process_model_identifier: str, file_name: str
-) -> flask.wrappers.Response:
-    """Process_model_file_update."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = get_process_model(process_model_identifier)
-
-    request_file = get_file_from_request()
-    request_file_contents = request_file.stream.read()
-    if not request_file_contents:
-        raise ApiError(
-            error_code="file_contents_empty",
-            message="Given request file does not have any content",
-            status_code=400,
-        )
-
-    SpecFileService.update_file(process_model, file_name, request_file_contents)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
-    )
-
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def process_model_file_delete(
-    modified_process_model_identifier: str, file_name: str
-) -> flask.wrappers.Response:
-    """Process_model_file_delete."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = get_process_model(process_model_identifier)
-    try:
-        SpecFileService.delete_file(process_model, file_name)
-    except FileNotFoundError as exception:
-        raise (
-            ApiError(
-                error_code="process_model_file_cannot_be_found",
-                message=f"Process model file cannot be found: {file_name}",
-                status_code=400,
-            )
-        ) from exception
-
-    _commit_and_push_to_git(
-        f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}"
-    )
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def add_file(modified_process_model_identifier: str) -> flask.wrappers.Response:
-    """Add_file."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = get_process_model(process_model_identifier)
-    request_file = get_file_from_request()
-    if not request_file.filename:
-        raise ApiError(
-            error_code="could_not_get_filename",
-            message="Could not get filename from request",
-            status_code=400,
-        )
-
-    file = SpecFileService.add_file(
-        process_model, request_file.filename, request_file.stream.read()
-    )
-    file_contents = SpecFileService.get_data(process_model, file.name)
-    file.file_contents = file_contents
-    file.process_model_id = process_model.id
-    _commit_and_push_to_git(
-        f"User: {g.user.username} added process model file {process_model_identifier}/{file.name}"
-    )
-    return Response(
-        json.dumps(FileSchema().dump(file)), status=201, mimetype="application/json"
-    )
-
-
-def process_instance_create(
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    """Create_process_instance."""
-    process_model_identifier = un_modify_modified_process_model_id(
-        modified_process_model_identifier
-    )
-    process_instance = (
-        ProcessInstanceService.create_process_instance_from_process_model_identifier(
-            process_model_identifier, g.user
-        )
-    )
-    return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
-        status=201,
-        mimetype="application/json",
-    )
-
-
-def process_instance_run(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    do_engine_steps: bool = True,
-) -> flask.wrappers.Response:
-    """Process_instance_run."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
-    if process_instance.status != "not_started":
-        raise ApiError(
-            error_code="process_instance_not_runnable",
-            message=f"Process Instance ({process_instance.id}) is currently running or has already run.",
-            status_code=400,
-        )
-
-    processor = ProcessInstanceProcessor(process_instance)
-
-    if do_engine_steps:
-        try:
-            processor.do_engine_steps(save=True)
-        except ApiError as e:
-            ErrorHandlingService().handle_error(processor, e)
-            raise e
-        except Exception as e:
-            ErrorHandlingService().handle_error(processor, e)
-            task = processor.bpmn_process_instance.last_task
-            raise ApiError.from_task(
-                error_code="unknown_exception",
-                message=f"An unknown error occurred. Original error: {e}",
-                status_code=400,
-                task=task,
-            ) from e
-
-        if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
-            MessageService.process_message_instances()
-
-    process_instance_api = ProcessInstanceService.processor_to_process_instance_api(
-        processor
-    )
-    process_instance_data = processor.get_data()
-    process_instance_metadata = ProcessInstanceApiSchema().dump(process_instance_api)
-    process_instance_metadata["data"] = process_instance_data
-    return Response(
-        json.dumps(process_instance_metadata), status=200, mimetype="application/json"
-    )
-
-
-def process_instance_terminate(
-    process_instance_id: int,
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    """Process_instance_run."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
-    processor = ProcessInstanceProcessor(process_instance)
-    processor.terminate()
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def process_instance_suspend(
-    process_instance_id: int,
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    """Process_instance_suspend."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
-    processor = ProcessInstanceProcessor(process_instance)
-    processor.suspend()
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def process_instance_resume(
-    process_instance_id: int,
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    """Process_instance_resume."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
-    processor = ProcessInstanceProcessor(process_instance)
-    processor.resume()
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def process_instance_log_list(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    page: int = 1,
-    per_page: int = 100,
-    detailed: bool = False,
-) -> flask.wrappers.Response:
-    """Process_instance_log_list."""
-    # to make sure the process instance exists
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
-
-    log_query = SpiffLoggingModel.query.filter(
-        SpiffLoggingModel.process_instance_id == process_instance.id
-    )
-    if not detailed:
-        log_query = log_query.filter(SpiffLoggingModel.message.in_(["State change to COMPLETED"]))  # type: ignore
-
-    logs = (
-        log_query.order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
-        .join(
-            UserModel, UserModel.id == SpiffLoggingModel.current_user_id, isouter=True
-        )  # isouter since if we don't have a user, we still want the log
-        .add_columns(
-            UserModel.username,
-        )
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
-
-    response_json = {
-        "results": logs.items,
-        "pagination": {
-            "count": len(logs.items),
-            "total": logs.total,
-            "pages": logs.pages,
-        },
-    }
-
-    return make_response(jsonify(response_json), 200)
 
 
 def message_instance_list(
@@ -784,7 +260,7 @@ def message_start(
     process_instance = None
     if "process_instance_id" in body:
         # to make sure we have a valid process_instance_id
-        process_instance = find_process_instance_by_id_or_raise(
+        process_instance = _find_process_instance_by_id_or_raise(
             body["process_instance_id"]
         )
 
@@ -837,139 +313,6 @@ def message_start(
     )
 
 
-def process_instance_list_for_me(
-    process_model_identifier: Optional[str] = None,
-    page: int = 1,
-    per_page: int = 100,
-    start_from: Optional[int] = None,
-    start_to: Optional[int] = None,
-    end_from: Optional[int] = None,
-    end_to: Optional[int] = None,
-    process_status: Optional[str] = None,
-    user_filter: Optional[bool] = False,
-    report_identifier: Optional[str] = None,
-    report_id: Optional[int] = None,
-    user_group_identifier: Optional[str] = None,
-) -> flask.wrappers.Response:
-    """Process_instance_list_for_me."""
-    return process_instance_list(
-        process_model_identifier=process_model_identifier,
-        page=page,
-        per_page=per_page,
-        start_from=start_from,
-        start_to=start_to,
-        end_from=end_from,
-        end_to=end_to,
-        process_status=process_status,
-        user_filter=user_filter,
-        report_identifier=report_identifier,
-        report_id=report_id,
-        user_group_identifier=user_group_identifier,
-        with_relation_to_me=True,
-    )
-
-
-def process_instance_list(
-    process_model_identifier: Optional[str] = None,
-    page: int = 1,
-    per_page: int = 100,
-    start_from: Optional[int] = None,
-    start_to: Optional[int] = None,
-    end_from: Optional[int] = None,
-    end_to: Optional[int] = None,
-    process_status: Optional[str] = None,
-    with_relation_to_me: Optional[bool] = None,
-    user_filter: Optional[bool] = False,
-    report_identifier: Optional[str] = None,
-    report_id: Optional[int] = None,
-    user_group_identifier: Optional[str] = None,
-) -> flask.wrappers.Response:
-    """Process_instance_list."""
-    process_instance_report = ProcessInstanceReportService.report_with_identifier(
-        g.user, report_id, report_identifier
-    )
-
-    if user_filter:
-        report_filter = ProcessInstanceReportFilter(
-            process_model_identifier=process_model_identifier,
-            user_group_identifier=user_group_identifier,
-            start_from=start_from,
-            start_to=start_to,
-            end_from=end_from,
-            end_to=end_to,
-            with_relation_to_me=with_relation_to_me,
-            process_status=process_status.split(",") if process_status else None,
-        )
-    else:
-        report_filter = (
-            ProcessInstanceReportService.filter_from_metadata_with_overrides(
-                process_instance_report=process_instance_report,
-                process_model_identifier=process_model_identifier,
-                user_group_identifier=user_group_identifier,
-                start_from=start_from,
-                start_to=start_to,
-                end_from=end_from,
-                end_to=end_to,
-                process_status=process_status,
-                with_relation_to_me=with_relation_to_me,
-            )
-        )
-
-    response_json = ProcessInstanceReportService.run_process_instance_report(
-        report_filter=report_filter,
-        process_instance_report=process_instance_report,
-        page=page,
-        per_page=per_page,
-        user=g.user,
-    )
-
-    return make_response(jsonify(response_json), 200)
-
-
-def process_instance_report_column_list() -> flask.wrappers.Response:
-    """Process_instance_report_column_list."""
-    table_columns = ProcessInstanceReportService.builtin_column_options()
-    columns_for_metadata = (
-        db.session.query(ProcessInstanceMetadataModel.key)
-        .order_by(ProcessInstanceMetadataModel.key)
-        .distinct()  # type: ignore
-        .all()
-    )
-    columns_for_metadata_strings = [
-        {"Header": i[0], "accessor": i[0], "filterable": True}
-        for i in columns_for_metadata
-    ]
-    return make_response(jsonify(table_columns + columns_for_metadata_strings), 200)
-
-
-def process_instance_show_for_me(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    process_identifier: Optional[str] = None,
-) -> flask.wrappers.Response:
-    """Process_instance_show_for_me."""
-    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
-    return _get_process_instance(
-        process_instance=process_instance,
-        modified_process_model_identifier=modified_process_model_identifier,
-        process_identifier=process_identifier,
-    )
-
-
-def process_instance_show(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    process_identifier: Optional[str] = None,
-) -> flask.wrappers.Response:
-    """Create_process_instance."""
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
-    return _get_process_instance(
-        process_instance=process_instance,
-        modified_process_model_identifier=modified_process_model_identifier,
-        process_identifier=process_identifier,
-    )
-
-
 def _get_process_instance(
     modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,
@@ -998,7 +341,7 @@ def _get_process_instance(
         )
         name_of_file_with_diagram = spec_reference.file_name
     else:
-        process_model_with_diagram = get_process_model(process_model_identifier)
+        process_model_with_diagram = _get_process_model(process_model_identifier)
         if process_model_with_diagram.primary_file_name:
             name_of_file_with_diagram = process_model_with_diagram.primary_file_name
 
@@ -1019,96 +362,6 @@ def _get_process_instance(
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
     return make_response(jsonify(process_instance), 200)
-
-
-def process_instance_delete(
-    process_instance_id: int, modified_process_model_identifier: str
-) -> flask.wrappers.Response:
-    """Create_process_instance."""
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
-
-    if not process_instance.has_terminal_status():
-        raise ProcessInstanceCannotBeDeletedError(
-            f"Process instance ({process_instance.id}) cannot be deleted since it does not have a terminal status. "
-            f"Current status is {process_instance.status}."
-        )
-
-    # (Pdb) db.session.delete
-    # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
-    db.session.query(SpiffLoggingModel).filter_by(
-        process_instance_id=process_instance.id
-    ).delete()
-    db.session.query(SpiffStepDetailsModel).filter_by(
-        process_instance_id=process_instance.id
-    ).delete()
-    db.session.delete(process_instance)
-    db.session.commit()
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def process_instance_report_list(
-    page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
-    """Process_instance_report_list."""
-    process_instance_reports = ProcessInstanceReportModel.query.filter_by(
-        created_by_id=g.user.id,
-    ).all()
-
-    return make_response(jsonify(process_instance_reports), 200)
-
-
-def process_instance_report_create(body: Dict[str, Any]) -> flask.wrappers.Response:
-    """Process_instance_report_create."""
-    process_instance_report = ProcessInstanceReportModel.create_report(
-        identifier=body["identifier"],
-        user=g.user,
-        report_metadata=body["report_metadata"],
-    )
-
-    return make_response(jsonify(process_instance_report), 201)
-
-
-def process_instance_report_update(
-    report_id: int,
-    body: Dict[str, Any],
-) -> flask.wrappers.Response:
-    """Process_instance_report_create."""
-    process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        id=report_id,
-        created_by_id=g.user.id,
-    ).first()
-    if process_instance_report is None:
-        raise ApiError(
-            error_code="unknown_process_instance_report",
-            message="Unknown process instance report",
-            status_code=404,
-        )
-
-    process_instance_report.report_metadata = body["report_metadata"]
-    db.session.commit()
-
-    return make_response(jsonify(process_instance_report), 201)
-
-
-def process_instance_report_delete(
-    report_id: int,
-) -> flask.wrappers.Response:
-    """Process_instance_report_create."""
-    process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        id=report_id,
-        created_by_id=g.user.id,
-    ).first()
-    if process_instance_report is None:
-        raise ApiError(
-            error_code="unknown_process_instance_report",
-            message="Unknown process instance report",
-            status_code=404,
-        )
-
-    db.session.delete(process_instance_report)
-    db.session.commit()
-
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
 def service_task_list() -> flask.wrappers.Response:
@@ -1144,42 +397,6 @@ def authentication_callback(
     return redirect(
         f"{current_app.config['SPIFFWORKFLOW_FRONTEND_URL']}/admin/configuration"
     )
-
-
-def process_instance_report_show(
-    report_id: int,
-    page: int = 1,
-    per_page: int = 100,
-) -> flask.wrappers.Response:
-    """Process_instance_report_show."""
-    process_instances = ProcessInstanceModel.query.order_by(
-        ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-    ).paginate(page=page, per_page=per_page, error_out=False)
-
-    process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        id=report_id,
-        created_by_id=g.user.id,
-    ).first()
-    if process_instance_report is None:
-        raise ApiError(
-            error_code="unknown_process_instance_report",
-            message="Unknown process instance report",
-            status_code=404,
-        )
-
-    substitution_variables = request.args.to_dict()
-    result_dict = process_instance_report.generate_report(
-        process_instances.items, substitution_variables
-    )
-
-    # update this if we go back to a database query instead of filtering in memory
-    result_dict["pagination"] = {
-        "count": len(result_dict["results"]),
-        "total": len(result_dict["results"]),
-        "pages": 1,
-    }
-
-    return Response(json.dumps(result_dict), status=200, mimetype="application/json")
 
 
 # TODO: see comment for before_request
@@ -1343,101 +560,9 @@ def get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def process_instance_task_list_without_task_data_for_me(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
-) -> flask.wrappers.Response:
-    """Process_instance_task_list_without_task_data_for_me."""
-    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
-    return process_instance_task_list(
-        modified_process_model_identifier,
-        process_instance,
-        all_tasks,
-        spiff_step,
-        get_task_data=False,
-    )
-
-
-def process_instance_task_list_without_task_data(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
-) -> flask.wrappers.Response:
-    """Process_instance_task_list_without_task_data."""
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
-    return process_instance_task_list(
-        modified_process_model_identifier,
-        process_instance,
-        all_tasks,
-        spiff_step,
-        get_task_data=False,
-    )
-
-
-def process_instance_task_list_with_task_data(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
-) -> flask.wrappers.Response:
-    """Process_instance_task_list_with_task_data."""
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
-    return process_instance_task_list(
-        modified_process_model_identifier,
-        process_instance,
-        all_tasks,
-        spiff_step,
-        get_task_data=True,
-    )
-
-
-def process_instance_task_list(
-    _modified_process_model_identifier: str,
-    process_instance: ProcessInstanceModel,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
-    get_task_data: bool = False,
-) -> flask.wrappers.Response:
-    """Process_instance_task_list."""
-    if spiff_step > 0:
-        step_detail = (
-            db.session.query(SpiffStepDetailsModel)
-            .filter(
-                SpiffStepDetailsModel.process_instance.id == process_instance.id,
-                SpiffStepDetailsModel.spiff_step == spiff_step,
-            )
-            .first()
-        )
-        if step_detail is not None and process_instance.bpmn_json is not None:
-            bpmn_json = json.loads(process_instance.bpmn_json)
-            bpmn_json["tasks"] = step_detail.task_json["tasks"]
-            bpmn_json["subprocesses"] = step_detail.task_json["subprocesses"]
-            process_instance.bpmn_json = json.dumps(bpmn_json)
-
-    processor = ProcessInstanceProcessor(process_instance)
-
-    spiff_tasks = None
-    if all_tasks:
-        spiff_tasks = processor.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
-    else:
-        spiff_tasks = processor.get_all_user_tasks()
-
-    tasks = []
-    for spiff_task in spiff_tasks:
-        task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
-        if get_task_data:
-            task.data = spiff_task.data
-        tasks.append(task)
-
-    return make_response(jsonify(tasks), 200)
-
-
 def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response:
     """Task_show."""
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     if process_instance.status == ProcessInstanceStatus.suspended.value:
         raise ApiError(
@@ -1446,7 +571,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             status_code=400,
         )
 
-    process_model = get_process_model(
+    process_model = _get_process_model(
         process_instance.process_model_identifier,
     )
 
@@ -1542,7 +667,7 @@ def process_data_show(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_data_show."""
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     all_process_data = processor.get_data()
     process_data_value = None
@@ -1568,7 +693,7 @@ def task_submit(
 ) -> flask.wrappers.Response:
     """Task_submit_user_data."""
     principal = find_principal_or_raise()
-    process_instance = find_process_instance_by_id_or_raise(process_instance_id)
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if not process_instance.can_submit_task():
         raise ApiError(
             error_code="process_instance_not_runnable",
@@ -1657,7 +782,7 @@ def script_unit_test_create(
     )
 
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = get_process_model(process_model_identifier)
+    process_model = _get_process_model(process_model_identifier)
     file = SpecFileService.get_files(process_model, process_model.primary_file_name)[0]
     if file is None:
         raise ApiError(
@@ -1753,7 +878,7 @@ def script_unit_test_run(
     return make_response(jsonify(result), 200)
 
 
-def get_file_from_request() -> Any:
+def _get_file_from_request() -> Any:
     """Get_file_from_request."""
     request_file = connexion.request.files.get("file")
     if not request_file:
@@ -1767,7 +892,7 @@ def get_file_from_request() -> Any:
 
 # process_model_id uses forward slashes on all OSes
 # this seems to return an object where process_model.id has backslashes on windows
-def get_process_model(process_model_id: str) -> ProcessModelInfo:
+def _get_process_model(process_model_id: str) -> ProcessModelInfo:
     """Get_process_model."""
     process_model = None
     try:
@@ -1798,7 +923,7 @@ def find_principal_or_raise() -> PrincipalModel:
     return principal  # type: ignore
 
 
-def find_process_instance_by_id_or_raise(
+def _find_process_instance_by_id_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:
     """Find_process_instance_by_id_or_raise."""
@@ -2119,3 +1244,8 @@ def _find_process_instance_for_me_or_raise(
         )
 
     return process_instance
+
+
+def _un_modify_modified_process_model_id(modified_process_model_identifier: str) -> str:
+    """Un_modify_modified_process_model_id."""
+    return modified_process_model_identifier.replace(":", "/")
