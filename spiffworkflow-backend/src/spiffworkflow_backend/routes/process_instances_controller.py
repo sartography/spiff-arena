@@ -14,7 +14,11 @@ from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import TaskState  # type: ignore
+from sqlalchemy import and_
+from sqlalchemy import or_
 
+from spiffworkflow_backend.models.human_task import HumanTaskModel
+from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceCannotBeDeletedError,
@@ -34,9 +38,6 @@ from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsMode
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_by_id_or_raise,
-)
-from spiffworkflow_backend.routes.process_api_blueprint import (
-    _find_process_instance_for_me_or_raise,
 )
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import (
@@ -608,3 +609,38 @@ def _get_process_instance(
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
     return make_response(jsonify(process_instance), 200)
+
+
+def _find_process_instance_for_me_or_raise(
+    process_instance_id: int,
+) -> ProcessInstanceModel:
+    """_find_process_instance_for_me_or_raise."""
+    process_instance: ProcessInstanceModel = (
+        ProcessInstanceModel.query.filter_by(id=process_instance_id)
+        .outerjoin(HumanTaskModel)
+        .outerjoin(
+            HumanTaskUserModel,
+            and_(
+                HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+                HumanTaskUserModel.user_id == g.user.id,
+            ),
+        )
+        .filter(
+            or_(
+                HumanTaskUserModel.id.is_not(None),
+                ProcessInstanceModel.process_initiator_id == g.user.id,
+            )
+        )
+        .first()
+    )
+
+    if process_instance is None:
+        raise (
+            ApiError(
+                error_code="process_instance_cannot_be_found",
+                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
+                status_code=400,
+            )
+        )
+
+    return process_instance
