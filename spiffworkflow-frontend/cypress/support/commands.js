@@ -121,10 +121,23 @@ Cypress.Commands.add('basicPaginationTest', () => {
 
   // NOTE: this is a em dash instead of en dash
   cy.contains(/\b1–2 of \d+/);
-  cy.get('.cds--pagination__button--forward').click();
-  cy.contains(/\b3–4 of \d+/);
-  cy.get('.cds--pagination__button--backward').click();
-  cy.contains(/\b1–2 of \d+/);
+
+  // ok, trying to ensure that we have everything loaded before we leave this
+  // function and try to sign out. Just showing results 1-2 of blah is not good enough,
+  // since the ajax request may not have finished yet.
+  // to be sure it's finished, grab the log id from page 1. remember it.
+  // then use the magical contains command that waits for the element to exist AND
+  // for that element to contain the text we're looking for.
+  cy.getBySel('process-instance-log-id')
+    .first()
+    .then(($element) => {
+      const oldId = $element.text().trim();
+      cy.get('.cds--pagination__button--forward').click();
+      cy.contains(/\b3–4 of \d+/);
+      cy.get('.cds--pagination__button--backward').click();
+      cy.contains(/\b1–2 of \d+/);
+      cy.contains('[data-qa=process-instance-log-id]', oldId);
+    });
 });
 
 Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
