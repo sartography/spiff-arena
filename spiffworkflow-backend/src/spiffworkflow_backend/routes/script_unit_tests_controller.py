@@ -7,7 +7,6 @@ from typing import Union
 
 import flask.wrappers
 from flask import current_app
-from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
@@ -15,7 +14,6 @@ from flask_bpmn.api.api_error import ApiError
 from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 
-from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _get_required_parameter_or_raise,
@@ -131,17 +129,3 @@ def script_unit_test_run(
         python_script, input_json, expected_output_json
     )
     return make_response(jsonify(result), 200)
-
-
-def _find_principal_or_raise() -> PrincipalModel:
-    """Find_principal_or_raise."""
-    principal = PrincipalModel.query.filter_by(user_id=g.user.id).first()
-    if principal is None:
-        raise (
-            ApiError(
-                error_code="principal_not_found",
-                message=f"Principal not found from user id: {g.user.id}",
-                status_code=400,
-            )
-        )
-    return principal  # type: ignore

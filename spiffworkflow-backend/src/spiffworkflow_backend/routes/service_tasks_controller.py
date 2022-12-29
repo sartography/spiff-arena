@@ -1,17 +1,17 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from spiffworkflow_backend.routes.user import verify_token
-from flask import redirect
-from flask import request
+
+import flask.wrappers
 import werkzeug
 from flask import current_app
-import flask.wrappers
-from spiffworkflow_backend.services.service_task_service import ServiceTaskService
-
 from flask import g
+from flask import redirect
+from flask import request
 from flask.wrappers import Response
 
+from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.services.secret_service import SecretService
+from spiffworkflow_backend.services.service_task_service import ServiceTaskService
 
 
 def service_task_list() -> flask.wrappers.Response:
