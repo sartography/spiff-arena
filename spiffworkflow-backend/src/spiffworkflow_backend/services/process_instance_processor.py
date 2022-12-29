@@ -743,11 +743,9 @@ class ProcessInstanceProcessor:
                 "bpmn_file_full_path_from_bpmn_process_identifier: bpmn_process_identifier is unexpectedly None"
             )
 
-        spec_reference = (
-            SpecReferenceCache.query.filter_by(identifier=bpmn_process_identifier)
-            .filter_by(type="process")
-            .first()
-        )
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier=bpmn_process_identifier, type="process"
+        ).first()
         bpmn_file_full_path = None
         if spec_reference is None:
             bpmn_file_full_path = (
