@@ -45,7 +45,7 @@ export default function ProcessInstanceLogList() {
       const rowToUse = row as any;
       return (
         <tr key={rowToUse.id}>
-          <td data-qa="process-instance-log-id">{rowToUse.id}</td>
+          <td data-qa="paginated-entity-id">{rowToUse.id}</td>
           <td>{rowToUse.message}</td>
           <td>{rowToUse.bpmn_task_name}</td>
           {isDetailedView && (

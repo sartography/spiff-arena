@@ -129,7 +129,7 @@ Cypress.Commands.add('basicPaginationTest', () => {
   // to be sure it's finished, grab the log id from page 1. remember it.
   // then use the magical contains command that waits for the element to exist AND
   // for that element to contain the text we're looking for.
-  cy.getBySel('process-instance-log-id')
+  cy.getBySel('paginated-entity-id')
     .first()
     .then(($element) => {
       const oldId = $element.text().trim();
@@ -137,7 +137,7 @@ Cypress.Commands.add('basicPaginationTest', () => {
       cy.contains(/\b3–4 of \d+/);
       cy.get('.cds--pagination__button--backward').click();
       cy.contains(/\b1–2 of \d+/);
-      cy.contains('[data-qa=process-instance-log-id]', oldId);
+      cy.contains('[data-qa=paginated-entity-id]', oldId);
     });
 });
 

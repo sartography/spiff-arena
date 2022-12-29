@@ -1111,7 +1111,7 @@ export default function ProcessInstanceListTable({
           to={`${processInstancePathPrefix}/${modifiedProcessModelId}/${id}`}
           title={`View process instance ${id}`}
         >
-          {id}
+          <span data-qa="paginated-entity-id">{id}</span>
         </Link>
       );
     };
