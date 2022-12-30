@@ -732,7 +732,6 @@ class ProcessInstanceProcessor:
 
     def add_step(self, step: Union[dict, None] = None) -> None:
         """Add a spiff step."""
-        self.increment_spiff_step()
         if step is None:
             step = self.spiff_step_details_mapping()
         db.session.add(SpiffStepDetailsModel(**step))
@@ -748,11 +747,12 @@ class ProcessInstanceProcessor:
             spiff_task.complete()
         else:
             spiff_logger = logging.getLogger("spiff")
-            spiff_logger.info(f"Skipped task", extra=spiff_task.log_info())
+            spiff_logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
             spiff_task._set_state(TaskState.COMPLETED)
             for child in spiff_task.children:
                 child.task_spec._update(child)
         self.bpmn_process_instance.last_task = spiff_task
+        self.increment_spiff_step()
         self.add_step()
         self.save()
         # Saving the workflow seems to reset the status
@@ -760,7 +760,6 @@ class ProcessInstanceProcessor:
 
     def reset_process(self, spiff_step: int) -> None:
         """Reset a process to an earlier state."""
-
         spiff_logger = logging.getLogger("spiff")
         spiff_logger.info(
             f"Process reset from step {spiff_step}",
@@ -777,6 +776,7 @@ class ProcessInstanceProcessor:
             .first()
         )
         if step_detail is not None:
+            self.increment_spiff_step()
             self.add_step(
                 {
                     "process_instance_id": self.process_instance_model.id,
@@ -790,6 +790,15 @@ class ProcessInstanceProcessor:
             dct["tasks"] = step_detail.task_json["tasks"]
             dct["subprocesses"] = step_detail.task_json["subprocesses"]
             self.bpmn_process_instance = self._serializer.workflow_from_dict(dct)
+
+            # Cascade does not seems to work on filters, only directly through the session
+            tasks = self.bpmn_process_instance.get_tasks(TaskState.NOT_FINISHED_MASK)
+            rows = HumanTaskModel.query.filter(
+                HumanTaskModel.task_id.in_(str(t.id) for t in tasks)  # type: ignore
+            ).all()
+            for row in rows:
+                db.session.delete(row)
+
             self.save()
             self.suspend()
 
