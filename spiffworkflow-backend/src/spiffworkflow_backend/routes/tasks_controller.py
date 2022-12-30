@@ -15,11 +15,14 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
+from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
+from sqlalchemy import func
+from sqlalchemy.orm import aliased
 
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -146,6 +149,18 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     process_model = _get_process_model(
         process_instance.process_model_identifier,
     )
+
+    human_task = HumanTaskModel.query.filter_by(
+        process_instance_id=process_instance_id, task_id=task_id
+    ).first()
+    if human_task is None:
+        raise (
+            ApiError(
+                error_code="no_human_task",
+                message=f"Cannot find a task to complete for task id '{task_id}' and process instance {process_instance_id}.",
+                status_code=500,
+            )
+        )
 
     form_schema_file_name = ""
     form_ui_schema_file_name = ""
@@ -302,7 +317,7 @@ def task_submit(
         raise (
             ApiError(
                 error_code="no_human_task",
-                message="Cannot find an human task with task id '{task_id}' for process instance {process_instance_id}.",
+                message=f"Cannot find a task to complete for task id '{task_id}' and process instance {process_instance_id}.",
                 status_code=500,
             )
         )
@@ -357,22 +372,25 @@ def _get_tasks(
     # pagination later on
     # https://stackoverflow.com/q/34582014/6090676
     human_tasks_query = (
-        HumanTaskModel.query.distinct()
+        db.session.query(HumanTaskModel)
+        .group_by(HumanTaskModel.id)  # type: ignore
         .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
         .filter(HumanTaskModel.completed == False)  # noqa: E712
     )
 
+    assigned_user = aliased(UserModel)
     if processes_started_by_user:
-        human_tasks_query = human_tasks_query.filter(
-            ProcessInstanceModel.process_initiator_id == user_id
-        ).outerjoin(
-            HumanTaskUserModel,
-            and_(
-                HumanTaskUserModel.user_id == user_id,
+        human_tasks_query = (
+            human_tasks_query.filter(
+                ProcessInstanceModel.process_initiator_id == user_id
+            )
+            .outerjoin(
+                HumanTaskUserModel,
                 HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-            ),
+            )
+            .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
         )
     else:
         human_tasks_query = human_tasks_query.filter(
@@ -402,13 +420,15 @@ def _get_tasks(
             ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
             ProcessInstanceModel.updated_at_in_seconds,
             ProcessInstanceModel.created_at_in_seconds,
-            UserModel.username,
-            GroupModel.identifier.label("user_group_identifier"),
+            UserModel.username.label("process_initiator_username"),
+            GroupModel.identifier.label("assigned_user_group_identifier"),
             HumanTaskModel.task_name,
             HumanTaskModel.task_title,
             HumanTaskModel.process_model_display_name,
             HumanTaskModel.process_instance_id,
-            HumanTaskUserModel.user_id.label("current_user_is_potential_owner"),
+            func.group_concat(assigned_user.username.distinct()).label(
+                "potential_owner_usernames"
+            ),
         )
         .order_by(desc(HumanTaskModel.id))  # type: ignore
         .paginate(page=page, per_page=per_page, error_out=False)
@@ -422,6 +442,7 @@ def _get_tasks(
             "pages": human_tasks.pages,
         },
     }
+
     return make_response(jsonify(response_json), 200)
 
 
