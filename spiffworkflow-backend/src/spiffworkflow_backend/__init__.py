@@ -23,7 +23,6 @@ from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_b
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
     openid_blueprint,
 )
-from spiffworkflow_backend.routes.process_api_blueprint import process_api_blueprint
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -104,7 +103,6 @@ def create_app() -> flask.app.Flask:
     migrate.init_app(app, db)
 
     app.register_blueprint(user_blueprint)
-    app.register_blueprint(process_api_blueprint)
     app.register_blueprint(api_error_blueprint)
     app.register_blueprint(admin_blueprint, url_prefix="/admin")
     app.register_blueprint(openid_blueprint, url_prefix="/openid")
