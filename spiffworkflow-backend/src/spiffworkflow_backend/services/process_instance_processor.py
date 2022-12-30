@@ -747,7 +747,9 @@ class ProcessInstanceProcessor:
             spiff_task.complete()
         else:
             spiff_logger = logging.getLogger("spiff")
-            spiff_logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
+            spiff_logger.info(
+                f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info()
+            )
             spiff_task._set_state(TaskState.COMPLETED)
             for child in spiff_task.children:
                 child.task_spec._update(child)
