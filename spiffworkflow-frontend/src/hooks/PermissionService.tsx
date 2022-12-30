@@ -35,14 +35,6 @@ export const usePermissionFetcher = (
         }
       });
       ability.update(rules);
-      console.log('SETTING PERMISSIONS');
-      const thePERMMap = (ability as any).j;
-      console.log(
-        'thePERMMAP',
-        thePERMMap.get(
-          '/v1.0/process-models/misc:category_number_one:workflow_one/files'
-        )
-      );
       setPermissionsLoaded(true);
     };
     if (Object.keys(permissionsToCheck).length !== 0) {
@@ -55,5 +47,5 @@ export const usePermissionFetcher = (
     }
   });
 
-  return { ability, permissionsLoaded, setPermissionsLoaded };
+  return { ability, permissionsLoaded };
 };
