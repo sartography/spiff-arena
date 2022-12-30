@@ -163,6 +163,37 @@ class TestProcessApi(BaseTest):
         assert process_model.primary_file_name == bpmn_file_name
         assert process_model.primary_process_id == "sample"
 
+    def test_process_model_create_with_natural_language(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_group_id = "test_process_group"
+        process_group_description = "Test Process Group"
+        process_model_id = "sample"
+        process_model_identifier = f"{process_group_id}/{process_model_id}"
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_description
+        )
+
+        body = {
+            "natural_language_text": "Create a Bug Tracker process model with a Bug Details form that collects summary, description, and priority"
+        }
+        self.create_process_model_with_api(
+            client,
+            process_model_id=process_model_identifier,
+            user=with_super_admin_user,
+        )
+        response = client.post(
+            f"/v1.0/process-models-natural-language/{process_group_id}",
+            content_type="application/json",
+            data=json.dumps(body),
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 201
+
     def test_primary_process_id_updates_via_xml(
         self,
         app: Flask,
@@ -250,9 +281,6 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["ok"] is True
 
-        # assert we no longer have a model
-        with pytest.raises(ProcessEntityNotFoundError):
-            ProcessModelService.get_process_model(process_model_identifier)
 
     def test_process_model_delete_with_instances(
         self,
