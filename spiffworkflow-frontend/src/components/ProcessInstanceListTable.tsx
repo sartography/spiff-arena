@@ -774,7 +774,6 @@ export default function ProcessInstanceListTable({
       setReportMetadata(reportMetadataCopy);
       setReportColumnToOperateOn(null);
       setShowReportColumnForm(false);
-      setShowReportColumnForm(false);
     }
   };
 
@@ -795,9 +794,12 @@ export default function ProcessInstanceListTable({
   };
 
   const updateReportColumn = (event: any) => {
-    const reportColumnForEditing = reportColumnToReportColumnForEditing(
-      event.selectedItem
-    );
+    let reportColumnForEditing = null;
+    if (event.selectedItem) {
+      reportColumnForEditing = reportColumnToReportColumnForEditing(
+        event.selectedItem
+      );
+    }
     setReportColumnToOperateOn(reportColumnForEditing);
   };
 
@@ -827,7 +829,29 @@ export default function ProcessInstanceListTable({
     if (reportColumnFormMode === '') {
       return null;
     }
-    const formElements = [
+    const formElements = [];
+    if (reportColumnFormMode === 'new') {
+      formElements.push(
+        <ComboBox
+          onChange={updateReportColumn}
+          id="report-column-selection"
+          data-qa="report-column-selection"
+          data-modal-primary-focus
+          items={availableReportColumns}
+          itemToString={(reportColumn: ReportColumn) => {
+            if (reportColumn) {
+              return reportColumn.accessor;
+            }
+            return null;
+          }}
+          shouldFilterItem={shouldFilterReportColumn}
+          placeholder="Choose a column to show"
+          titleText="Column"
+          selectedItem={reportColumnToOperateOn}
+        />
+      );
+    }
+    formElements.push([
       <TextInput
         id="report-column-display-name"
         name="report-column-display-name"
@@ -844,7 +868,7 @@ export default function ProcessInstanceListTable({
           }
         }}
       />,
-    ];
+    ]);
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
       formElements.push(
         <TextInput
@@ -860,27 +884,9 @@ export default function ProcessInstanceListTable({
         />
       );
     }
-    if (reportColumnFormMode === 'new') {
-      formElements.push(
-        <ComboBox
-          onChange={updateReportColumn}
-          className="combo-box-in-modal"
-          id="report-column-selection"
-          data-qa="report-column-selection"
-          data-modal-primary-focus
-          items={availableReportColumns}
-          itemToString={(reportColumn: ReportColumn) => {
-            if (reportColumn) {
-              return reportColumn.accessor;
-            }
-            return null;
-          }}
-          shouldFilterItem={shouldFilterReportColumn}
-          placeholder="Choose a column to show"
-          titleText="Column"
-        />
-      );
-    }
+    formElements.push(
+      <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
+    );
     const modalHeading =
       reportColumnFormMode === 'new'
         ? 'Add Column'

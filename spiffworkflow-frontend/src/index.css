@@ -355,8 +355,8 @@ svg.notification-icon {
   word-break: normal;
 }
 
-.combo-box-in-modal {
-  height: 300px;
+.vertical-spacer-to-allow-combo-box-to-expand-in-modal {
+  height: 250px;
 }
 
 .cds--btn.narrow-button {
