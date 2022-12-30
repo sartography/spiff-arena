@@ -10,6 +10,8 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # see also: npx cypress run --env grep="can filter",grepFilterSpecs=true
 # https://github.com/cypress-io/cypress/tree/develop/npm/grep#pre-filter-specs-grepfilterspecs
 
+iterations="${1:-10}"
+
 test_case_matches="$(rg '^  it\(')"
 
 stats_file="/var/tmp/cypress_stats.txt"
@@ -37,7 +39,8 @@ function run_all_test_cases() {
 # clear the stats file
 echo > "$stats_file"
 
-for global_stat_index in {1..100}; do
+for ((global_stat_index=1;global_stat_index<=$iterations;global_stat_index++)); do
+# for global_stat_index in {1..$iterations}; do
   run_all_test_cases "$global_stat_index"
 done
 
