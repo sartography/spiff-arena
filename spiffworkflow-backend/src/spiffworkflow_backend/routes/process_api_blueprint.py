@@ -26,14 +26,10 @@ from spiffworkflow_backend.models.process_instance import (
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
@@ -89,46 +85,6 @@ def process_list() -> Any:
     """
     references = SpecReferenceCache.query.filter_by(type="process").all()
     return SpecReferenceSchema(many=True).dump(references)
-
-
-def process_instance_reset(
-    process_instance_id: int,
-    modified_process_model_identifier: str,
-    spiff_step: int = 0,
-) -> flask.wrappers.Response:
-    """Process_instance_reset."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
-    step_detail = (
-        db.session.query(SpiffStepDetailsModel)
-        .filter(
-            SpiffStepDetailsModel.process_instance_id == process_instance.id,
-            SpiffStepDetailsModel.spiff_step == spiff_step,
-        )
-        .first()
-    )
-    if step_detail is not None and process_instance.bpmn_json is not None:
-        bpmn_json = json.loads(process_instance.bpmn_json)
-        bpmn_json["tasks"] = step_detail.task_json["tasks"]
-        bpmn_json["subprocesses"] = step_detail.task_json["subprocesses"]
-        process_instance.bpmn_json = json.dumps(bpmn_json)
-
-    db.session.add(process_instance)
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        raise ApiError(
-            error_code="reset_process_instance_error",
-            message=f"Could not update the Instance. Original error is {e}",
-        ) from e
-
-    return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
-        status=200,
-        mimetype="application/json",
-    )
 
 
 def process_data_show(
