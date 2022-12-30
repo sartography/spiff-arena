@@ -118,6 +118,7 @@ class Task:
         form_schema: Union[str, None] = None,
         form_ui_schema: Union[str, None] = None,
         parent: Optional[str] = None,
+        event_definition: Union[dict[str, Any], None] = None,
         call_activity_process_identifier: Optional[str] = None,
     ):
         """__init__."""
@@ -130,6 +131,7 @@ class Task:
         self.documentation = documentation
         self.lane = lane
         self.parent = parent
+        self.event_definition = event_definition
         self.call_activity_process_identifier = call_activity_process_identifier
 
         self.data = data
@@ -189,6 +191,7 @@ class Task:
             "form_schema": self.form_schema,
             "form_ui_schema": self.form_ui_schema,
             "parent": self.parent,
+            "event_definition": self.event_definition,
             "call_activity_process_identifier": self.call_activity_process_identifier,
         }
 
@@ -290,6 +293,7 @@ class TaskSchema(Schema):
             "process_instance_id",
             "form_schema",
             "form_ui_schema",
+            "event_definition",
         ]
 
     multi_instance_type = EnumField(MultiInstanceType)
