@@ -125,7 +125,7 @@ class ProcessInstanceService:
         if next_task_trying_again is not None:
             process_instance_api.next_task = (
                 ProcessInstanceService.spiff_task_to_api_task(
-                    next_task_trying_again, add_docs_and_forms=True
+                    processor, next_task_trying_again, add_docs_and_forms=True
                 )
             )
 
@@ -281,7 +281,9 @@ class ProcessInstanceService:
 
     @staticmethod
     def spiff_task_to_api_task(
-        spiff_task: SpiffTask, add_docs_and_forms: bool = False
+        processor: ProcessInstanceProcessor,
+        spiff_task: SpiffTask,
+        add_docs_and_forms: bool = False,
     ) -> Task:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.spec_type
@@ -315,6 +317,8 @@ class ProcessInstanceService:
         if spiff_task.parent:
             parent_id = spiff_task.parent.id
 
+        serialized_task_spec = processor.serialize_task_spec(spiff_task.task_spec)
+
         task = Task(
             spiff_task.id,
             spiff_task.task_spec.name,
@@ -328,6 +332,7 @@ class ProcessInstanceService:
             process_identifier=spiff_task.task_spec._wf_spec.name,
             properties=props,
             parent=parent_id,
+            event_definition=serialized_task_spec.get("event_definition"),
             call_activity_process_identifier=call_activity_process_identifier,
         )
 

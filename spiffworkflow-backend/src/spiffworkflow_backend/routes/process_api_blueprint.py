@@ -652,6 +652,46 @@ def process_instance_resume(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
+def process_instance_reset(
+    process_instance_id: int,
+    modified_process_model_identifier: str,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_reset."""
+    process_instance = ProcessInstanceService().get_process_instance(
+        process_instance_id
+    )
+    step_detail = (
+        db.session.query(SpiffStepDetailsModel)
+        .filter(
+            SpiffStepDetailsModel.process_instance_id == process_instance.id,
+            SpiffStepDetailsModel.spiff_step == spiff_step,
+        )
+        .first()
+    )
+    if step_detail is not None and process_instance.bpmn_json is not None:
+        bpmn_json = json.loads(process_instance.bpmn_json)
+        bpmn_json["tasks"] = step_detail.task_json["tasks"]
+        bpmn_json["subprocesses"] = step_detail.task_json["subprocesses"]
+        process_instance.bpmn_json = json.dumps(bpmn_json)
+
+    db.session.add(process_instance)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise ApiError(
+            error_code="reset_process_instance_error",
+            message=f"Could not update the Instance. Original error is {e}",
+        ) from e
+
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
+
+
 def process_instance_log_list(
     modified_process_model_identifier: str,
     process_instance_id: int,
@@ -1406,7 +1446,7 @@ def process_instance_task_list(
         step_detail = (
             db.session.query(SpiffStepDetailsModel)
             .filter(
-                SpiffStepDetailsModel.process_instance.id == process_instance.id,
+                SpiffStepDetailsModel.process_instance_id == process_instance.id,
                 SpiffStepDetailsModel.spiff_step == spiff_step,
             )
             .first()
@@ -1427,7 +1467,7 @@ def process_instance_task_list(
 
     tasks = []
     for spiff_task in spiff_tasks:
-        task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
         if get_task_data:
             task.data = spiff_task.data
         tasks.append(task)
@@ -1461,7 +1501,9 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             form_schema_file_name = properties["formJsonSchemaFilename"]
         if "formUiSchemaFilename" in properties:
             form_ui_schema_file_name = properties["formUiSchemaFilename"]
-    task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
+
+    processor = ProcessInstanceProcessor(process_instance)
+    task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
     task.process_model_identifier = process_model.id
@@ -2075,6 +2117,107 @@ def _update_form_schema_with_task_data_as_needed(
             for o in value:
                 if isinstance(o, dict):
                     _update_form_schema_with_task_data_as_needed(o, task_data)
+
+
+def update_task_data(
+    process_instance_id: str,
+    modified_process_model_identifier: str,
+    task_id: str,
+    body: Dict,
+) -> Response:
+    """Update task data."""
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        if process_instance.status != "suspended":
+            raise ProcessInstanceTaskDataCannotBeUpdatedError(
+                f"The process instance needs to be suspended to udpate the task-data. It is currently: {process_instance.status}"
+            )
+
+        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
+        if "new_task_data" in body:
+            new_task_data_str: str = body["new_task_data"]
+            new_task_data_dict = json.loads(new_task_data_str)
+            if task_id in process_instance_bpmn_json_dict["tasks"]:
+                process_instance_bpmn_json_dict["tasks"][task_id][
+                    "data"
+                ] = new_task_data_dict
+                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
+                db.session.add(process_instance)
+                try:
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    raise ApiError(
+                        error_code="update_task_data_error",
+                        message=f"Could not update the Instance. Original error is {e}",
+                    ) from e
+            else:
+                raise ApiError(
+                    error_code="update_task_data_error",
+                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
+                )
+    else:
+        raise ApiError(
+            error_code="update_task_data_error",
+            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
+
+
+def send_bpmn_event(
+    modified_process_model_identifier: str,
+    process_instance_id: str,
+    body: Dict,
+) -> Response:
+    """Send a bpmn event to a workflow."""
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.send_bpmn_event(body)
+    else:
+        raise ApiError(
+            error_code="send_bpmn_event_error",
+            message=f"Could not send event to Instance: {process_instance_id}",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
+
+
+def manual_complete_task(
+    modified_process_model_identifier: str,
+    process_instance_id: str,
+    task_id: str,
+    body: Dict,
+) -> Response:
+    """Mark a task complete without executing it."""
+    execute = body.get("execute", True)
+    process_instance = ProcessInstanceModel.query.filter(
+        ProcessInstanceModel.id == int(process_instance_id)
+    ).first()
+    if process_instance:
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.manual_complete_task(task_id, execute)
+    else:
+        raise ApiError(
+            error_code="complete_task",
+            message=f"Could not complete Task {task_id} in Instance {process_instance_id}",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
 
 
 def _commit_and_push_to_git(message: str) -> None:
