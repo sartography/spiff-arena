@@ -8,10 +8,6 @@ servers:
   - url: http://localhost:5000/v1.0
 # this is handled in flask now
 security: []
-#  - jwt: ["secret"]
-#  - oAuth2AuthCode:
-#      - read_email
-#      - uid
 
 paths:
   /login:
@@ -22,7 +18,6 @@ paths:
         schema:
           type: string
     get:
-      security: []
       summary: redirect to open id authentication server
       operationId: spiffworkflow_backend.routes.user.login
       tags:
@@ -48,7 +43,6 @@ paths:
         schema:
           type: string
     get:
-      security: []
       operationId: spiffworkflow_backend.routes.user.login_return
       tags:
         - Authentication
@@ -68,7 +62,6 @@ paths:
         schema:
           type: string
     get:
-      security: []
       operationId: spiffworkflow_backend.routes.user.logout
       summary: Logout authenticated user
       tags:
@@ -78,7 +71,6 @@ paths:
           description: Logout Authenticated User
   /logout_return:
     get:
-      security: []
       operationId: spiffworkflow_backend.routes.user.logout_return
       summary: Logout authenticated user
       tags:
@@ -89,7 +81,6 @@ paths:
 
   /login_api:
     get:
-      security: []
       operationId: spiffworkflow_backend.routes.user.login_api
       summary: Authenticate user for API access
       tags:
@@ -115,7 +106,6 @@ paths:
         schema:
           type: string
     get:
-      security: []
       operationId: spiffworkflow_backend.routes.user.login_api_return
       tags:
         - Authentication
@@ -125,8 +115,7 @@ paths:
 
   /status:
     get:
-      security: []
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.status
+      operationId: spiffworkflow_backend.routes.health_controller.status
       summary: Returns 200 if the server is Responding
       tags:
         - Liveness
@@ -160,7 +149,7 @@ paths:
         schema:
           type: integer
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_list
+      operationId: spiffworkflow_backend.routes.process_groups_controller.process_group_list
       summary: get list
       tags:
         - Process Groups
@@ -174,7 +163,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/ProcessModelCategory"
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_create
+      operationId: spiffworkflow_backend.routes.process_groups_controller.process_group_create
       summary: Add process group
       tags:
         - Process Groups
@@ -201,7 +190,7 @@ paths:
           type: string
     # process_group_show
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_show
+      operationId: spiffworkflow_backend.routes.process_groups_controller.process_group_show
       summary: Returns a single process group
       tags:
         - Process Groups
@@ -213,7 +202,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModelCategory"
     delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_delete
+      operationId: spiffworkflow_backend.routes.process_groups_controller.process_group_delete
       summary: Deletes a single process group
       tags:
         - Process Groups
@@ -221,7 +210,7 @@ paths:
         "200":
           description: The process group was deleted.
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_update
+      operationId: spiffworkflow_backend.routes.process_groups_controller.process_group_update
       summary: Updates a single process group
       tags:
         - Process Groups
@@ -253,7 +242,7 @@ paths:
         schema:
           type: string
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_group_move
+      operationId: spiffworkflow_backend.routes.process_groups_controller.process_group_move
       summary: returns the new group
       tags:
         - Process Groups
@@ -298,7 +287,7 @@ paths:
         schema:
           type: integer
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_list
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_list
       summary: Return a list of process models for a given process group
       tags:
         - Process Models
@@ -321,7 +310,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_create
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_create
       summary: Creates a new process model with the given parameters.
       tags:
         - Process Models
@@ -347,7 +336,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.add_file
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_create
       summary: Add a new workflow spec file
       tags:
         - Process Model Files
@@ -377,7 +366,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_show
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_show
       summary: Returns a single process model
       tags:
         - Process Models
@@ -389,7 +378,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_update
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_update
       summary: Modifies an existing process model with the given parameters.
       tags:
         - Process Models
@@ -406,7 +395,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ProcessModel"
     delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_delete
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_delete
       summary: Removes an existing process model
       tags:
         - Process Models
@@ -433,7 +422,7 @@ paths:
         schema:
           type: string
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_move
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_move
       summary: returns the new model
       tags:
         - Process Models
@@ -460,7 +449,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_publish
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_publish
       summary: Merge changes from this model to another branch.
       tags:
         - Process Models
@@ -608,7 +597,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list_for_me
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list_for_me
       summary: Returns a list of process instances that are associated with me.
       tags:
         - Process Instances
@@ -721,7 +710,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_list
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list
       summary: Returns a list of process instances.
       tags:
         - Process Instances
@@ -744,7 +733,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.script_unit_test_create
+      operationId: spiffworkflow_backend.routes.script_unit_tests_controller.script_unit_test_create
       summary: Create script unit test based on given criteria
       tags:
         - Script Unit Test
@@ -765,7 +754,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.script_unit_test_run
+      operationId: spiffworkflow_backend.routes.script_unit_tests_controller.script_unit_test_run
       summary: Run a given script unit test.
       tags:
         - Script Unit Test
@@ -786,7 +775,7 @@ paths:
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_create
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_create
       summary: Creates an process instance from a process model and returns the instance
       tags:
         - Process Instances
@@ -833,7 +822,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_task_list_without_task_data_for_me
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_task_list_without_task_data_for_me
       summary: returns the list of all user tasks associated with process instance without the task data
       responses:
         "200":
@@ -880,7 +869,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_task_list_without_task_data
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_task_list_without_task_data
       summary: returns the list of all user tasks associated with process instance without the task data
       responses:
         "200":
@@ -915,7 +904,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_show_for_me
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_show_for_me
       summary: Show information about a process instance that is associated with me
       responses:
         "200":
@@ -948,7 +937,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_show
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_show
       summary: Show information about a process instance
       responses:
         "200":
@@ -958,7 +947,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
     delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_delete
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_delete
       summary: Deletes a single process instance
       tags:
         - Process Instances
@@ -985,7 +974,7 @@ paths:
         schema:
           type: boolean
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_run
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_run
       summary: Run a process instance
       tags:
         - Process Instances
@@ -1006,7 +995,7 @@ paths:
         schema:
           type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_terminate
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_terminate
       summary: Terminate a process instance
       tags:
         - Process Instances
@@ -1027,7 +1016,7 @@ paths:
         schema:
           type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_suspend
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_suspend
       summary: Suspend a process instance
       tags:
         - Process Instances
@@ -1048,7 +1037,7 @@ paths:
         schema:
           type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_resume
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_resume
       summary: Resume a process instance
       tags:
         - Process Instances
@@ -1081,7 +1070,7 @@ paths:
         schema:
           type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_reset
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_reset
       summary: Reset a process instance to an earlier step
       tags:
         - Process Instances
@@ -1108,7 +1097,7 @@ paths:
         schema:
           type: integer
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_list
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_list
       summary: Returns all process instance reports for process model
       tags:
         - Process Instances
@@ -1122,7 +1111,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_create
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_create
       summary: Returns all process instance reports for process model
       tags:
         - Process Instances
@@ -1136,7 +1125,7 @@ paths:
 
   /process-instances/reports/columns:
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_column_list
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_column_list
       summary: Returns all available columns for a process instance report.
       tags:
         - Process Instances
@@ -1171,7 +1160,7 @@ paths:
         schema:
           type: integer
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_show
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_show
       summary: Returns a report of process instances for a given process model
       tags:
         - Process Instances
@@ -1185,7 +1174,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_update
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_update
       summary: Updates a process instance report
       tags:
         - Process Instances
@@ -1197,7 +1186,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
     delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_report_delete
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_delete
       summary: Delete a process instance report
       tags:
         - Process Instances
@@ -1224,7 +1213,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.get_file
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_show
       summary: Returns metadata about the file
       tags:
         - Process Model Files
@@ -1236,7 +1225,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/File"
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_file_update
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_update
       summary: save the contents to the given file
       tags:
         - Process Model Files
@@ -1259,7 +1248,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
     delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_model_file_delete
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_file_delete
       summary: Removes an existing process model file
       tags:
         - Process Model Files
@@ -1288,8 +1277,7 @@ paths:
     get:
       tags:
         - Tasks
-      #      security: []
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_my_tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_my_tasks
       summary: returns the list of ready or waiting tasks for a user
       responses:
         "200":
@@ -1318,7 +1306,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_for_my_open_processes
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_for_my_open_processes
       summary: returns the list of tasks for given user's open process instances
       responses:
         "200":
@@ -1347,7 +1335,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_for_me
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_for_me
       summary: returns the list of tasks for given user's open process instances
       responses:
         "200":
@@ -1382,7 +1370,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_list_for_my_groups
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_list_for_my_groups
       summary: returns the list of tasks for given user's open process instances
       responses:
         "200":
@@ -1439,7 +1427,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_task_list_with_task_data
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_task_list_with_task_data
       summary: returns the list of all user tasks associated with process instance with the task data
       responses:
         "200":
@@ -1581,7 +1569,7 @@ paths:
     get:
       tags:
         - Service Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.service_task_list
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.service_task_list
       summary: Gets all available service task connectors
       responses:
         "200":
@@ -1595,7 +1583,7 @@ paths:
     get:
       tags:
         - Authentications
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.authentication_list
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_list
       summary: Gets all available authentications from connector proxy
       responses:
         "200":
@@ -1632,11 +1620,9 @@ paths:
         schema:
           type: string
     get:
-      # disable security so we can get the token from query params instead
-      security: []
       tags:
         - Authentications
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.authentication_callback
+      operationId: spiffworkflow_backend.routes.service_tasks_controller.authentication_callback
       summary: Callback to backend
       responses:
         "200":
@@ -1669,7 +1655,7 @@ paths:
     get:
       tags:
         - Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_show
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_show
       summary: Gets one task that a user wants to complete
       responses:
         "200":
@@ -1681,7 +1667,7 @@ paths:
     put:
       tags:
         - Tasks
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_submit
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_submit
       summary: Update the form data for a tasks
       requestBody:
         content:
@@ -1725,7 +1711,7 @@ paths:
     get:
       tags:
         - Messages
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.message_instance_list
+      operationId: spiffworkflow_backend.routes.messages_controller.message_instance_list
       summary: Get a list of message instances
       responses:
         "200":
@@ -1746,7 +1732,7 @@ paths:
     post:
       tags:
         - Messages
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.message_start
+      operationId: spiffworkflow_backend.routes.messages_controller.message_start
       summary: Instantiate and run a given process model with a message start event matching given identifier
       requestBody:
         content:
@@ -1790,7 +1776,7 @@ paths:
     get:
       tags:
         - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_log_list
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_log_list
       summary: returns a list of logs associated with the process instance
       responses:
         "200":
@@ -1815,7 +1801,7 @@ paths:
         schema:
           type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_create
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_create
       summary: Create a secret for a key and value
       tags:
         - Secrets
@@ -1832,7 +1818,7 @@ paths:
               schema:
                 type: number
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_list
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_list
       summary: Return list of all secrets
       tags:
         - Secrets
@@ -1853,7 +1839,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.get_secret
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_show
       summary: Return a secret value for a key
       tags:
         - Secrets
@@ -1865,7 +1851,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Secret"
     delete:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_delete
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_delete
       summary: Delete an existing secret
       tags:
         - Secrets
@@ -1877,7 +1863,7 @@ paths:
         "404":
           description: Secret does not exist
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.secret_update
+      operationId: spiffworkflow_backend.routes.secrets_controller.secret_update
       summary: Modify an existing secret
       tags:
         - Secrets
@@ -1936,16 +1922,6 @@ components:
           scopes:
             read_email: read email
       x-tokenInfoFunc: spiffworkflow_backend.routes.user.get_scope
-  #    oAuth2AuthCode:
-  #      type: oauth2
-  #      description: authenticate with openid server
-  #      flows:
-  #        implicit:
-  #          authorizationUrl: /v1.0/login_api
-  #          scopes:
-  #            uid: uid
-  #      x-tokenInfoUrl: localhost:7000/v1.0/login_api_return
-  #      x-tokenInfoFunc: spiffworkflow_backend.routes.user.get_scope
 
   schemas:
     OkTrue:

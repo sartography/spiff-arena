@@ -2604,6 +2604,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}?all_tasks=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         end = next(task for task in response.json if task["name"] == "End")
         assert end["data"]["result"] == {"message": "message 1"}
 
