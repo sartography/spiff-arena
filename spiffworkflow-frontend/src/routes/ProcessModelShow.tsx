@@ -232,6 +232,15 @@ export default function ProcessModelShow() {
     isPrimaryBpmnFile: boolean
   ) => {
     const elements = [];
+
+    // So there is a bug in here. Since we use a react context for error messages, and since
+    // its provider wraps the entire app, child components will re-render when there is an
+    // error displayed. This is normally fine, but it interacts badly with the casl ability.can
+    // functionality. We have observed that permissionsLoaded is never set to false. So when
+    // you run a process and it fails, for example, process model show will re-render, the ability
+    // will be cleared out and it will start fetching permissions from the server, but this
+    // component still thinks permissionsLoaded is telling the truth (it says true, but it's actually false).
+    // The only bad effect that we know of is that the Edit icon becomes an eye icon even for admins.
     let icon = View;
     let actionWord = 'View';
     if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
@@ -327,11 +336,7 @@ export default function ProcessModelShow() {
       let fileLink = null;
       const fileUrl = profileModelFileEditUrl(processModelFile);
       if (fileUrl) {
-        if (ability.can('GET', targetUris.processModelFileCreatePath)) {
-          fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
-        } else {
-          fileLink = <span>{processModelFile.name}</span>;
-        }
+        fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
       }
       constructedTag = (
         <TableRow key={processModelFile.name}>
