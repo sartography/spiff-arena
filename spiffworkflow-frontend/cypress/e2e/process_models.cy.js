@@ -50,7 +50,7 @@ describe('process-models', () => {
     cy.contains(modelDisplayName).should('not.exist');
   });
 
-  it('can create new bpmn, dmn, and json files', () => {
+  it('can create new bpmn and dmn and json files', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const directParentGroupId = 'acceptance-tests-group-one';
@@ -142,6 +142,9 @@ describe('process-models', () => {
     );
     cy.contains(modelId).should('not.exist');
     cy.contains(modelDisplayName).should('not.exist');
+
+    // we go back to the parent process group after deleting the model
+    cy.get('.tile-process-group-content-container').should('exist');
   });
 
   it('can upload and run a bpmn file', () => {
