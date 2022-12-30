@@ -7,4 +7,5 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-docker compose logs "$@"
+# "docker compose logs" is only getting the db logs so specify them both
+docker compose logs db spiffworkflow-backend
