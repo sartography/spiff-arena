@@ -717,7 +717,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             data-qa="mark-task-complete-button"
             onClick={() => completeTask(false)}
           >
-            Mark Complete
+            Skip Task
           </Button>
         );
         buttons.push(
@@ -745,7 +745,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             data-qa="reset-process-button"
             onClick={() => resetProcessInstance()}
           >
-            Resume Process Here
+            Reset Process Here
           </Button>
         );
       }
