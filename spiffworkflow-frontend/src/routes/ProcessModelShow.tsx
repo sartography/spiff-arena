@@ -485,7 +485,7 @@ export default function ProcessModelShow() {
         fullWidth
         className="megacondensed process-model-files-section"
       >
-        <Column md={5} lg={9} sm={3}>
+        <Column md={8} lg={14} sm={4}>
           <Accordion align="end" open>
             <AccordionItem
               open
