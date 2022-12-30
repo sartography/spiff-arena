@@ -581,12 +581,6 @@ class ProcessInstanceProcessor:
         )
         return details_model
 
-    def save_spiff_step_details(self) -> None:
-        """SaveSpiffStepDetails."""
-        details_model = self.spiff_step_details()
-        db.session.add(details_model)
-        db.session.commit()
-
     def extract_metadata(self, process_model_info: ProcessModelInfo) -> None:
         """Extract_metadata."""
         metadata_extraction_paths = process_model_info.metadata_extraction_paths
@@ -1233,9 +1227,13 @@ class ProcessInstanceProcessor:
         self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
         human_task.completed_by_user_id = user.id
+        human_task.completed = True
         db.session.add(human_task)
-        db.session.commit()
-        self.save_spiff_step_details()
+        details_model = self.spiff_step_details()
+        db.session.add(details_model)
+
+        # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
+        self.save()
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""

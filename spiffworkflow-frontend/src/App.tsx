@@ -49,7 +49,7 @@ export default function App() {
 
     let message = <div>{errorObject.message}</div>;
     let title = 'Error:';
-    if ('task_name' in errorObject) {
+    if ('task_name' in errorObject && errorObject.task_name) {
       title = `Error in python script:`;
       message = (
         <>
