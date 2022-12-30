@@ -4,6 +4,7 @@ import json
 import os
 import time
 from typing import Any
+from typing import Dict
 
 import pytest
 from flask.app import Flask
@@ -2536,6 +2537,148 @@ class TestProcessApi(BaseTest):
         )
 
         print("test_script_unit_test_run")
+
+    def test_send_event(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_script_unit_test_run."""
+        process_group_id = "test_group"
+        process_model_id = "process_navigation"
+        bpmn_file_name = "process_navigation.bpmn"
+        bpmn_file_location = "process_navigation"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        bpmn_file_data_bytes = self.get_test_data_file_contents(
+            bpmn_file_name, bpmn_file_location
+        )
+        self.create_spec_file(
+            client=client,
+            process_model_id=process_model_identifier,
+            process_model_location=process_model_identifier,
+            file_name=bpmn_file_name,
+            file_data=bpmn_file_data_bytes,
+            user=with_super_admin_user,
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client, process_model_identifier, headers
+        )
+        process_instance_id = response.json["id"]
+
+        client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        # This is exactly the same the test above, but some reason I to a totally irrelevant type.
+        data: Dict = {
+            "correlation_properties": [],
+            "expression": None,
+            "external": True,
+            "internal": False,
+            "payload": {"message": "message 1"},
+            "name": "Message 1",
+            "typename": "MessageEventDefinition",
+        }
+        response = client.post(
+            f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(data),
+        )
+        assert response.json["status"] == "complete"
+
+        response = client.get(
+            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}?all_tasks=true",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        end = next(task for task in response.json if task["name"] == "End")
+        assert end["data"]["result"] == {"message": "message 1"}
+
+    def test_manual_complete_task(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_script_unit_test_run."""
+        process_group_id = "test_group"
+        process_model_id = "process_navigation"
+        bpmn_file_name = "process_navigation.bpmn"
+        bpmn_file_location = "process_navigation"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        bpmn_file_data_bytes = self.get_test_data_file_contents(
+            bpmn_file_name, bpmn_file_location
+        )
+        self.create_spec_file(
+            client=client,
+            process_model_id=process_model_identifier,
+            process_model_location=process_model_identifier,
+            file_name=bpmn_file_name,
+            file_data=bpmn_file_data_bytes,
+            user=with_super_admin_user,
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client, process_model_identifier, headers
+        )
+        process_instance_id = response.json["id"]
+
+        client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        data = {
+            "dateTime": "timedelta(hours=1)",
+            "external": True,
+            "internal": True,
+            "label": "Event_0e4owa3",
+            "typename": "TimerEventDefinition",
+        }
+        response = client.post(
+            f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(data),
+        )
+
+        response = client.get(
+            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert len(response.json) == 1
+        task = response.json[0]
+
+        response = client.post(
+            f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{task['id']}",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+        )
+        assert response.json["status"] == "suspended"
 
     def setup_initial_groups_for_move_tests(
         self, client: FlaskClient, with_super_admin_user: UserModel

@@ -531,7 +531,7 @@ def process_instance_task_list(
         step_detail = (
             db.session.query(SpiffStepDetailsModel)
             .filter(
-                SpiffStepDetailsModel.process_instance.id == process_instance.id,
+                SpiffStepDetailsModel.process_instance_id == process_instance.id,
                 SpiffStepDetailsModel.spiff_step == spiff_step,
             )
             .first()
@@ -552,7 +552,7 @@ def process_instance_task_list(
 
     tasks = []
     for spiff_task in spiff_tasks:
-        task = ProcessInstanceService.spiff_task_to_api_task(spiff_task)
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
         if get_task_data:
             task.data = spiff_task.data
         tasks.append(task)
