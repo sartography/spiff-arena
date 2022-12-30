@@ -73,9 +73,8 @@ export default function ProcessModelShow() {
     [targetUris.processInstanceCreatePath]: ['POST'],
     [targetUris.processModelFileCreatePath]: ['POST', 'PUT', 'GET', 'DELETE'],
   };
-  const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
-  );
+  const { ability, permissionsLoaded, setPermissionsLoaded } =
+    usePermissionFetcher(permissionRequestData);
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -234,6 +233,10 @@ export default function ProcessModelShow() {
     const elements = [];
     let icon = View;
     let actionWord = 'View';
+    console.log(
+      'targetUris.processModelFileCreatePath',
+      targetUris.processModelFileCreatePath
+    );
     if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
       icon = Edit;
       actionWord = 'Edit';
@@ -306,6 +309,17 @@ export default function ProcessModelShow() {
     if (!processModel || !permissionsLoaded) {
       return null;
     }
+    const permLoad = JSON.stringify(permissionsLoaded);
+    console.log('permLoad', permLoad);
+    const theMap = (ability as any).j;
+    // console.log('theMap', theMap[targetUris.processModelFileCreatePath]);
+    // console.log('theMap', theMap);
+    console.log(
+      'theMap',
+      theMap.get(
+        '/v1.0/process-models/misc:category_number_one:workflow_one/files'
+      )
+    );
     let constructedTag;
     const tags = processModel.files.map((processModelFile: ProcessFile) => {
       const isPrimaryBpmnFile =
@@ -327,11 +341,7 @@ export default function ProcessModelShow() {
       let fileLink = null;
       const fileUrl = profileModelFileEditUrl(processModelFile);
       if (fileUrl) {
-        if (ability.can('GET', targetUris.processModelFileCreatePath)) {
-          fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
-        } else {
-          fileLink = <span>{processModelFile.name}</span>;
-        }
+        fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
       }
       constructedTag = (
         <TableRow key={processModelFile.name}>
