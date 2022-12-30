@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+import re
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -299,8 +300,64 @@ def process_model_file_show(
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
     file.process_model_id = process_model.id
-    # file.process_group_id = process_model.process_group_id
     return FileSchema().dump(file)
+
+
+# {
+#    "natural_language_text": "Create a bug tracker process model with a bug-details form that collects summary, description, and priority"
+# }
+def process_model_create_with_natural_language(
+    modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
+) -> flask.wrappers.Response:
+    # body_include_list = [
+    #     "id",
+    #     "display_name",
+    #     "primary_file_name",
+    #     "primary_process_id",
+    #     "description",
+    #     "metadata_extraction_paths",
+    # ]
+    # body_filtered = {
+    #     include_item: body[include_item]
+    #     for include_item in body_include_list
+    #     if include_item in body
+    # }
+
+    pattern = re.compile(r"Create a (?P<pm_name>.*?) process model with a (?P<form_name>.*?) form that collects (?P<columns_hey>.*)")
+    match = pattern.match(body["natural_language_text"])
+    process_model_display_name = match.group('pm_name')
+    process_model_identifier = re.sub(r"[ _]", '-', process_model_display_name)
+    process_model_identifier = re.sub(r"-{2,}", '-', process_model_identifier).lower()
+    print(f"process_model_identifier: {process_model_identifier}")
+    
+    form_name = match.group('form_name')
+    form_identifier = re.sub(r"[ _]", '-', form_name)
+    form_identifier = re.sub(r"-{2,}", '-', form_identifier).lower()
+    print(f"form_identifier: {form_identifier}")
+
+    column_names = match.group('columns_hey')
+    print(f"column_names: {column_names}")
+    columns = re.sub(r"(, (and )?)", ',', column_names).split(',')
+    print(f"columns: {columns}")
+    #
+    # if modified_process_group_id is None:
+    #     raise ApiError(
+    #         error_code="process_group_id_not_specified",
+    #         message="Process Model could not be created when process_group_id path param is unspecified",
+    #         status_code=400,
+    #     )
+    #
+    # unmodified_process_group_id = _un_modify_modified_process_model_id(
+    #     modified_process_group_id
+    # )
+    # process_group = ProcessModelService.get_process_group(unmodified_process_group_id)
+    # if process_group is None:
+    #     raise ApiError(
+    #         error_code="process_model_could_not_be_created",
+    #         message=f"Process Model could not be created from given body because Process Group could not be found: {body}",
+    #         status_code=400,
+    #     )
+
 
 
 def _get_file_from_request() -> Any:
