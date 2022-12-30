@@ -1070,7 +1070,7 @@ paths:
         schema:
           type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_instance_reset
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_reset
       summary: Reset a process instance to an earlier step
       tags:
         - Process Instances

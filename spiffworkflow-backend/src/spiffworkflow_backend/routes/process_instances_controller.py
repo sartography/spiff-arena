@@ -560,6 +560,46 @@ def process_instance_task_list(
     return make_response(jsonify(tasks), 200)
 
 
+def process_instance_reset(
+    process_instance_id: int,
+    modified_process_model_identifier: str,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    """Process_instance_reset."""
+    process_instance = ProcessInstanceService().get_process_instance(
+        process_instance_id
+    )
+    step_detail = (
+        db.session.query(SpiffStepDetailsModel)
+        .filter(
+            SpiffStepDetailsModel.process_instance_id == process_instance.id,
+            SpiffStepDetailsModel.spiff_step == spiff_step,
+        )
+        .first()
+    )
+    if step_detail is not None and process_instance.bpmn_json is not None:
+        bpmn_json = json.loads(process_instance.bpmn_json)
+        bpmn_json["tasks"] = step_detail.task_json["tasks"]
+        bpmn_json["subprocesses"] = step_detail.task_json["subprocesses"]
+        process_instance.bpmn_json = json.dumps(bpmn_json)
+
+    db.session.add(process_instance)
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise ApiError(
+            error_code="reset_process_instance_error",
+            message=f"Could not update the Instance. Original error is {e}",
+        ) from e
+
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
+    )
+
+
 def _get_process_instance(
     modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,

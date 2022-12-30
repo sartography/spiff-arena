@@ -120,6 +120,6 @@ describe('tasks', () => {
     kickOffModelWithForm();
 
     cy.navigateToHome();
-    cy.basicPaginationTest();
+    cy.basicPaginationTest('process-instance-show-link');
   });
 });
