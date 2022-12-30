@@ -195,57 +195,6 @@ def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) 
     return return_value
 
 
-def update_task_data(
-    process_instance_id: str,
-    modified_process_model_identifier: str,
-    task_id: str,
-    body: Dict,
-) -> Response:
-    """Update task data."""
-    process_instance = ProcessInstanceModel.query.filter(
-        ProcessInstanceModel.id == int(process_instance_id)
-    ).first()
-    if process_instance:
-        if process_instance.status != "suspended":
-            raise ProcessInstanceTaskDataCannotBeUpdatedError(
-                f"The process instance needs to be suspended to udpate the task-data. It is currently: {process_instance.status}"
-            )
-
-        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
-        if "new_task_data" in body:
-            new_task_data_str: str = body["new_task_data"]
-            new_task_data_dict = json.loads(new_task_data_str)
-            if task_id in process_instance_bpmn_json_dict["tasks"]:
-                process_instance_bpmn_json_dict["tasks"][task_id][
-                    "data"
-                ] = new_task_data_dict
-                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
-                db.session.add(process_instance)
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    raise ApiError(
-                        error_code="update_task_data_error",
-                        message=f"Could not update the Instance. Original error is {e}",
-                    ) from e
-            else:
-                raise ApiError(
-                    error_code="update_task_data_error",
-                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
-                )
-    else:
-        raise ApiError(
-            error_code="update_task_data_error",
-            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
-        )
-    return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
-        status=200,
-        mimetype="application/json",
-    )
-
-
 def send_bpmn_event(
     modified_process_model_identifier: str,
     process_instance_id: str,
