@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import ErrorContext from 'src/contexts/ErrorContext';
+import ErrorContext from '../contexts/ErrorContext';
 import { Notification } from './Notification';
 
 export default function ErrorDisplay() {
