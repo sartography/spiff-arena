@@ -170,6 +170,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
+        """Test_process_model_create_with_natural_language."""
         process_group_id = "test_process_group"
         process_group_description = "Test Process Group"
         process_model_id = "sample"
@@ -178,9 +179,11 @@ class TestProcessApi(BaseTest):
             client, with_super_admin_user, process_group_id, process_group_description
         )
 
-        body = {
-            "natural_language_text": "Create a Bug Tracker process model with a Bug Details form that collects summary, description, and priority"
-        }
+        text = "Create a Bug Tracker process model "
+        text += (
+            "with a Bug Details form that collects summary, description, and priority"
+        )
+        body = {"natural_language_text": text}
         self.create_process_model_with_api(
             client,
             process_model_id=process_model_identifier,
@@ -193,6 +196,9 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 201
+        assert response.json is not None
+        assert response.json["id"] == f"{process_group_id}/bug-tracker"
+        assert response.json["display_name"] == "Bug Tracker"
 
     def test_primary_process_id_updates_via_xml(
         self,
@@ -280,7 +286,6 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["ok"] is True
-
 
     def test_process_model_delete_with_instances(
         self,
