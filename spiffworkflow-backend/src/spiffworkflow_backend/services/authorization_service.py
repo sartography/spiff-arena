@@ -128,7 +128,8 @@ class AuthorizationService:
                     # to check for exact matches as well
                     # see test_user_can_access_base_path_when_given_wildcard_permission unit test
                     text(
-                        f"'{target_uri_normalized}' = replace(replace(permission_target.uri, '/%', ''), ':%', '')"
+                        f"'{target_uri_normalized}' ="
+                        " replace(replace(permission_target.uri, '/%', ''), ':%', '')"
                     ),
                 )
             )
@@ -200,7 +201,8 @@ class AuthorizationService:
         if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME"] is None:
             raise (
                 PermissionsFileNotSetError(
-                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME needs to be set in order to import permissions"
+                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME needs to be set in"
+                    " order to import permissions"
                 )
             )
 
@@ -280,9 +282,9 @@ class AuthorizationService:
         """Find_or_create_permission_target."""
         uri_with_percent = re.sub(r"\*", "%", uri)
         target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
-        permission_target: Optional[
-            PermissionTargetModel
-        ] = PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
+        permission_target: Optional[PermissionTargetModel] = (
+            PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
+        )
         if permission_target is None:
             permission_target = PermissionTargetModel(uri=target_uri_normalized)
             db.session.add(permission_target)
@@ -297,13 +299,13 @@ class AuthorizationService:
         permission: str,
     ) -> PermissionAssignmentModel:
         """Create_permission_for_principal."""
-        permission_assignment: Optional[
-            PermissionAssignmentModel
-        ] = PermissionAssignmentModel.query.filter_by(
-            principal_id=principal.id,
-            permission_target_id=permission_target.id,
-            permission=permission,
-        ).first()
+        permission_assignment: Optional[PermissionAssignmentModel] = (
+            PermissionAssignmentModel.query.filter_by(
+                principal_id=principal.id,
+                permission_target_id=permission_target.id,
+                permission=permission,
+            ).first()
+        )
         if permission_assignment is None:
             permission_assignment = PermissionAssignmentModel(
                 principal_id=principal.id,
@@ -403,7 +405,10 @@ class AuthorizationService:
 
         raise ApiError(
             error_code="unauthorized",
-            message=f"User {g.user.username} is not authorized to perform requested action: {permission_string} - {request.path}",
+            message=(
+                f"User {g.user.username} is not authorized to perform requested action:"
+                f" {permission_string} - {request.path}"
+            ),
             status_code=403,
         )
 
@@ -482,7 +487,10 @@ class AuthorizationService:
         except jwt.InvalidTokenError as exception:
             raise ApiError(
                 "token_invalid",
-                "The Authentication token you provided is invalid. You need a new token. ",
+                (
+                    "The Authentication token you provided is invalid. You need a new"
+                    " token. "
+                ),
             ) from exception
 
     @staticmethod
@@ -504,8 +512,9 @@ class AuthorizationService:
 
         if user not in human_task.potential_owners:
             raise UserDoesNotHaveAccessToTaskError(
-                f"User {user.username} does not have access to update task'{spiff_task.task_spec.name}'"
-                f" for process instance '{process_instance_id}'"
+                f"User {user.username} does not have access to update"
+                f" task'{spiff_task.task_spec.name}' for process instance"
+                f" '{process_instance_id}'"
             )
         return True
 
@@ -723,8 +732,9 @@ class AuthorizationService:
                 )
         else:
             raise InvalidPermissionError(
-                f"Target uri '{target}' with permission set '{permission_set}' is invalid. "
-                f"The target uri must either be a macro of PG, PM, BASIC, or ALL or an api uri."
+                f"Target uri '{target}' with permission set '{permission_set}' is"
+                " invalid. The target uri must either be a macro of PG, PM, BASIC, or"
+                " ALL or an api uri."
             )
 
         return permissions_to_assign

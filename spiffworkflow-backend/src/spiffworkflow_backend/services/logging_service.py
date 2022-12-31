@@ -122,7 +122,8 @@ def setup_logger(app: Flask) -> None:
 
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(
-            f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}"
+            f"Log level given is invalid: '{upper_log_level_string}'. Valid options are"
+            f" {log_levels}"
         )
 
     log_level = getattr(logging, upper_log_level_string)
@@ -176,7 +177,8 @@ def setup_logger(app: Flask) -> None:
     spiff_logger = logging.getLogger("spiff")
     spiff_logger.setLevel(spiff_log_level)
     spiff_formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)s | %(message)s | %(action)s | %(task_type)s | %(process)s | %(processName)s | %(process_instance_id)s"
+        "%(asctime)s | %(levelname)s | %(message)s | %(action)s | %(task_type)s |"
+        " %(process)s | %(processName)s | %(process_instance_id)s"
     )
 
     # if you add a handler to spiff, it will be used/inherited by spiff.metrics

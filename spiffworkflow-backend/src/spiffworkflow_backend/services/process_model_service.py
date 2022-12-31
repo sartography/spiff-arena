@@ -146,7 +146,10 @@ class ProcessModelService(FileSystemService):
         if len(instances) > 0:
             raise ApiError(
                 error_code="existing_instances",
-                message=f"We cannot delete the model `{process_model_id}`, there are existing instances that depend on it.",
+                message=(
+                    f"We cannot delete the model `{process_model_id}`, there are"
+                    " existing instances that depend on it."
+                ),
             )
         process_model = self.get_process_model(process_model_id)
         path = self.workflow_path(process_model)
@@ -339,8 +342,11 @@ class ProcessModelService(FileSystemService):
             if len(problem_models) > 0:
                 raise ApiError(
                     error_code="existing_instances",
-                    message=f"We cannot delete the group `{process_group_id}`, "
-                    f"there are models with existing instances inside the group. {problem_models}",
+                    message=(
+                        f"We cannot delete the group `{process_group_id}`, there are"
+                        " models with existing instances inside the group."
+                        f" {problem_models}"
+                    ),
                 )
             shutil.rmtree(path)
         self.cleanup_process_group_display_order()
@@ -392,7 +398,10 @@ class ProcessModelService(FileSystemService):
                 if process_group is None:
                     raise ApiError(
                         error_code="process_group_could_not_be_loaded_from_disk",
-                        message=f"We could not load the process_group from disk from: {dir_path}",
+                        message=(
+                            "We could not load the process_group from disk from:"
+                            f" {dir_path}"
+                        ),
                     )
         else:
             process_group_id = dir_path.replace(FileSystemService.root_path(), "")
@@ -457,7 +466,10 @@ class ProcessModelService(FileSystemService):
                 if process_model_info is None:
                     raise ApiError(
                         error_code="process_model_could_not_be_loaded_from_disk",
-                        message=f"We could not load the process_model from disk with data: {data}",
+                        message=(
+                            "We could not load the process_model from disk with data:"
+                            f" {data}"
+                        ),
                     )
         else:
             if name is None:

@@ -192,7 +192,8 @@ class SpecFileService(FileSystemService):
         full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
         if not os.path.exists(full_file_path):
             raise ProcessModelFileNotFoundError(
-                f"No file found with name {file_name} in {process_model_info.display_name}"
+                f"No file found with name {file_name} in"
+                f" {process_model_info.display_name}"
             )
         with open(full_file_path, "rb") as f_handle:
             spec_file_data = f_handle.read()
@@ -314,8 +315,9 @@ class SpecFileService(FileSystemService):
             ).first()
             if message_model is None:
                 raise ValidationException(
-                    f"Could not find message model with identifier '{message_model_identifier}'"
-                    f"Required by a Start Event in : {ref.file_name}"
+                    "Could not find message model with identifier"
+                    f" '{message_model_identifier}'Required by a Start Event in :"
+                    f" {ref.file_name}"
                 )
             message_triggerable_process_model = (
                 MessageTriggerableProcessModel.query.filter_by(
@@ -335,7 +337,8 @@ class SpecFileService(FileSystemService):
                     != ref.process_model_id
                 ):
                     raise ValidationException(
-                        f"Message model is already used to start process model {ref.process_model_id}"
+                        "Message model is already used to start process model"
+                        f" {ref.process_model_id}"
                     )
 
     @staticmethod
@@ -353,8 +356,9 @@ class SpecFileService(FileSystemService):
                 ).first()
                 if message_model is None:
                     raise ValidationException(
-                        f"Could not find message model with identifier '{message_model_identifier}'"
-                        f"specified by correlation property: {cpre}"
+                        "Could not find message model with identifier"
+                        f" '{message_model_identifier}'specified by correlation"
+                        f" property: {cpre}"
                     )
                 # fixme:  I think we are currently ignoring the correction properties.
                 message_correlation_property = (

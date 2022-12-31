@@ -124,6 +124,7 @@ def process_group_move(
         original_process_group_id, new_location
     )
     _commit_and_push_to_git(
-        f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
+        f"User: {g.user.username} moved process group {original_process_group_id} to"
+        f" {new_process_group.id}"
     )
     return make_response(jsonify(new_process_group), 200)
