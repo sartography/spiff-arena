@@ -352,10 +352,15 @@ def process_model_create_with_natural_language(
         f"{process_group.id}/{process_model_identifier}"
     )
 
+    metadata_extraction_paths = []
+    for column in columns:
+        metadata_extraction_paths.append({"key": column, "path": column})
+
     process_model_attributes = {
         "id": qualified_process_model_identifier,
         "display_name": process_model_display_name,
         "description": None,
+        "metadata_extraction_paths": metadata_extraction_paths,
     }
 
     process_model_info = ProcessModelInfo(**process_model_attributes)  # type: ignore
@@ -371,6 +376,10 @@ def process_model_create_with_natural_language(
         f"User: {g.user.username} created process model via natural language:"
         f" {process_model_info.id}"
     )
+
+    # TODO: Create a form json schema and UI schema
+    # TODO: Add report
+
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
         status=201,

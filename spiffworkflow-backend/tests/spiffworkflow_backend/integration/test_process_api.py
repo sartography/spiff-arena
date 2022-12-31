@@ -199,6 +199,11 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["id"] == f"{process_group_id}/bug-tracker"
         assert response.json["display_name"] == "Bug Tracker"
+        assert response.json["metadata_extraction_paths"] == [
+            {"key": "summary", "path": "summary"},
+            {"key": "description", "path": "description"},
+            {"key": "priority", "path": "priority"},
+        ]
 
     def test_primary_process_id_updates_via_xml(
         self,
