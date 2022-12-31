@@ -343,7 +343,8 @@ class TestProcessApi(BaseTest):
         assert data["error_code"] == "existing_instances"
         assert (
             data["message"]
-            == f"We cannot delete the model `{process_model_identifier}`, there are existing instances that depend on it."
+            == f"We cannot delete the model `{process_model_identifier}`, there are"
+            " existing instances that depend on it."
         )
 
     def test_process_model_update(
@@ -2058,7 +2059,6 @@ class TestProcessApi(BaseTest):
 
         mail = app.config["MAIL_APP"]
         with mail.record_messages() as outbox:
-
             response = client.post(
                 f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
                 headers=self.logged_in_headers(with_super_admin_user),
@@ -2961,7 +2961,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            process_model_id=(
+                "save_process_instance_metadata/save_process_instance_metadata"
+            ),
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )
@@ -3018,7 +3020,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            process_model_id=(
+                "save_process_instance_metadata/save_process_instance_metadata"
+            ),
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )

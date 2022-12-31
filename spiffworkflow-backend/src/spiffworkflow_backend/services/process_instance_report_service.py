@@ -283,9 +283,9 @@ class ProcessInstanceReportService:
             process_instance_dict = process_instance["ProcessInstanceModel"].serialized
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
-                    process_instance_dict[
-                        metadata_column["accessor"]
-                    ] = process_instance[metadata_column["accessor"]]
+                    process_instance_dict[metadata_column["accessor"]] = (
+                        process_instance[metadata_column["accessor"]]
+                    )
 
             results.append(process_instance_dict)
         return results

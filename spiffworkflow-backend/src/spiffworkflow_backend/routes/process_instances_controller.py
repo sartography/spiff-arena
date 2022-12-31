@@ -94,7 +94,10 @@ def process_instance_run(
     if process_instance.status != "not_started":
         raise ApiError(
             error_code="process_instance_not_runnable",
-            message=f"Process Instance ({process_instance.id}) is currently running or has already run.",
+            message=(
+                f"Process Instance ({process_instance.id}) is currently running or has"
+                " already run."
+            ),
             status_code=400,
         )
 
@@ -350,8 +353,8 @@ def process_instance_delete(
 
     if not process_instance.has_terminal_status():
         raise ProcessInstanceCannotBeDeletedError(
-            f"Process instance ({process_instance.id}) cannot be deleted since it does not have a terminal status. "
-            f"Current status is {process_instance.status}."
+            f"Process instance ({process_instance.id}) cannot be deleted since it does"
+            f" not have a terminal status. Current status is {process_instance.status}."
         )
 
     # (Pdb) db.session.delete
@@ -620,7 +623,8 @@ def _get_process_instance(
         ).first()
         if spec_reference is None:
             raise SpecReferenceNotFoundError(
-                f"Could not find given process identifier in the cache: {process_identifier}"
+                "Could not find given process identifier in the cache:"
+                f" {process_identifier}"
             )
 
         process_model_with_diagram = ProcessModelService.get_process_model(
@@ -678,7 +682,10 @@ def _find_process_instance_for_me_or_raise(
         raise (
             ApiError(
                 error_code="process_instance_cannot_be_found",
-                message=f"Process instance with id {process_instance_id} cannot be found that is associated with you.",
+                message=(
+                    f"Process instance with id {process_instance_id} cannot be found"
+                    " that is associated with you."
+                ),
                 status_code=400,
             )
         )

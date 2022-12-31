@@ -112,7 +112,10 @@ class ScriptUnitTestRunner:
         except json.decoder.JSONDecodeError as ex:
             return ScriptUnitTestResult(
                 result=False,
-                error=f"Failed to parse expectedOutputJson: {unit_test['expectedOutputJson']}: {str(ex)}",
+                error=(
+                    "Failed to parse expectedOutputJson:"
+                    f" {unit_test['expectedOutputJson']}: {str(ex)}"
+                ),
             )
 
         script = task.task_spec.script

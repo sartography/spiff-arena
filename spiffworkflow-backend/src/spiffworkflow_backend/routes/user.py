@@ -67,13 +67,16 @@ def verify_token(
                         user_model = get_user_from_decoded_internal_token(decoded_token)
                     except Exception as e:
                         current_app.logger.error(
-                            f"Exception in verify_token getting user from decoded internal token. {e}"
+                            "Exception in verify_token getting user from decoded"
+                            f" internal token. {e}"
                         )
             elif "iss" in decoded_token.keys():
                 try:
                     if AuthenticationService.validate_id_token(token):
                         user_info = decoded_token
-                except ApiError as ae:  # API Error is only thrown in the token is outdated.
+                except (
+                    ApiError
+                ) as ae:  # API Error is only thrown in the token is outdated.
                     # Try to refresh the token
                     user = UserService.get_user_by_service_and_service_id(
                         decoded_token["iss"], decoded_token["sub"]

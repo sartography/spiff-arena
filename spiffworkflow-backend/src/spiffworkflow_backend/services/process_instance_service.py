@@ -85,7 +85,8 @@ class ProcessInstanceService:
                 db.session.add(process_instance)
                 db.session.commit()
                 error_message = (
-                    f"Error running waiting task for process_instance {process_instance.id}"
+                    "Error running waiting task for process_instance"
+                    f" {process_instance.id}"
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
@@ -178,7 +179,10 @@ class ProcessInstanceService:
                     else:
                         raise ApiError.from_task(
                             error_code="task_lane_user_error",
-                            message="Spiff Task %s lane user dict must have a key called 'value' with the user's uid in it."
+                            message=(
+                                "Spiff Task %s lane user dict must have a key called"
+                                " 'value' with the user's uid in it."
+                            )
                             % spiff_task.task_spec.name,
                             task=spiff_task,
                         )
