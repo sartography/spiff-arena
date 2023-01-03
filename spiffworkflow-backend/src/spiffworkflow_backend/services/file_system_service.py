@@ -42,7 +42,7 @@ class FileSystemService:
         """Root_path."""
         dir_name = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
         # ensure this is a string - thanks mypy...
-        return os.path.abspath(os.path.join(dir_name, ''))
+        return os.path.abspath(os.path.join(dir_name, ""))
 
     @staticmethod
     def id_string_to_relative_path(id_string: str) -> str:
