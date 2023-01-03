@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
+import UserService from '../services/UserService';
 import PaginationForTable from './PaginationForTable';
 import {
   convertSecondsToFormattedDateTime,
@@ -46,6 +47,9 @@ export default function TaskListTable({
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
+  const preferredUsername = UserService.getPreferredUsername();
+  const userEmail = UserService.getUserEmail();
+
   useEffect(() => {
     const getTasks = () => {
       const { page, perPage } = getPageInfoFromSearchParams(
@@ -80,56 +84,82 @@ export default function TaskListTable({
     autoReload,
   ]);
 
+  const getWaitingForTableCellComponent = (
+    processInstanceTask: ProcessInstanceTask
+  ) => {
+    let fullUsernameString = '';
+    let shortUsernameString = '';
+    if (processInstanceTask.assigned_user_group_identifier) {
+      fullUsernameString = processInstanceTask.assigned_user_group_identifier;
+      shortUsernameString = processInstanceTask.assigned_user_group_identifier;
+    }
+    if (processInstanceTask.potential_owner_usernames) {
+      fullUsernameString = processInstanceTask.potential_owner_usernames;
+      const usernames =
+        processInstanceTask.potential_owner_usernames.split(',');
+      const firstTwoUsernames = usernames.slice(0, 2);
+      if (usernames.length > 2) {
+        firstTwoUsernames.push('...');
+      }
+      shortUsernameString = firstTwoUsernames.join(',');
+    }
+    return <span title={fullUsernameString}>{shortUsernameString}</span>;
+  };
+
   const buildTable = () => {
     if (!tasks) {
       return null;
     }
-    const rows = tasks.map((row) => {
-      const rowToUse = row as any;
-      const taskUrl = `/tasks/${rowToUse.process_instance_id}/${rowToUse.task_id}`;
+    const rows = tasks.map((row: ProcessInstanceTask) => {
+      const taskUrl = `/tasks/${row.process_instance_id}/${row.task_id}`;
       const modifiedProcessModelIdentifier =
-        modifyProcessIdentifierForPathParam(rowToUse.process_model_identifier);
+        modifyProcessIdentifierForPathParam(row.process_model_identifier);
+
+      const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
+      let hasAccessToCompleteTask = false;
+      if (row.potential_owner_usernames.match(regex)) {
+        hasAccessToCompleteTask = true;
+      }
       return (
-        <tr key={rowToUse.id}>
+        <tr key={row.id}>
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${rowToUse.process_instance_id}`}
-              title={`View process instance ${rowToUse.process_instance_id}`}
+              to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${row.process_instance_id}`}
+              title={`View process instance ${row.process_instance_id}`}
             >
-              {rowToUse.process_instance_id}
+              {row.process_instance_id}
             </Link>
           </td>
           <td>
             <Link
               data-qa="process-model-show-link"
               to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
-              title={rowToUse.process_model_identifier}
+              title={row.process_model_identifier}
             >
-              {rowToUse.process_model_display_name}
+              {row.process_model_display_name}
             </Link>
           </td>
           <td
-            title={`task id: ${rowToUse.name}, spiffworkflow task guid: ${rowToUse.id}`}
+            title={`task id: ${row.name}, spiffworkflow task guid: ${row.id}`}
           >
-            {rowToUse.task_title}
+            {row.task_title}
           </td>
-          {showStartedBy ? <td>{rowToUse.username}</td> : ''}
-          {showWaitingOn ? <td>{rowToUse.group_identifier || '-'}</td> : ''}
+          {showStartedBy ? <td>{row.process_initiator_username}</td> : ''}
+          {showWaitingOn ? <td>{getWaitingForTableCellComponent(row)}</td> : ''}
           <td>
-            {convertSecondsToFormattedDateTime(
-              rowToUse.created_at_in_seconds
-            ) || '-'}
+            {convertSecondsToFormattedDateTime(row.created_at_in_seconds) ||
+              '-'}
           </td>
           <TableCellWithTimeAgoInWords
-            timeInSeconds={rowToUse.updated_at_in_seconds}
+            timeInSeconds={row.updated_at_in_seconds}
           />
           <td>
             <Button
               variant="primary"
               href={taskUrl}
-              hidden={rowToUse.process_instance_status === 'suspended'}
-              disabled={!rowToUse.current_user_is_potential_owner}
+              hidden={row.process_instance_status === 'suspended'}
+              disabled={!hasAccessToCompleteTask}
             >
               Go
             </Button>
