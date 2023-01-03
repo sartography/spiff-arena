@@ -86,6 +86,7 @@ class ProcessInstanceReportService:
 
     @classmethod
     def system_metadata_map(cls, metadata_key: str) -> dict[str, Any]:
+        """System_metadata_map."""
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
             "default": {

@@ -221,7 +221,8 @@ class TestProcessApi(BaseTest):
         process_instance_report = ProcessInstanceReportModel.query.filter_by(identifier='bug-tracker').first()
         assert process_instance_report is not None
         report_column_accessors = [i['accessor'] for i in process_instance_report.report_metadata['columns']]
-        expected_column_accessors = ['id', 'process_model_display_name', 'start_in_seconds', 'end_in_seconds', 'username', 'status', 'summary', 'description', 'priority']
+        expected_column_accessors = ['id', 'process_model_display_name', 'start_in_seconds',
+                                     'end_in_seconds', 'username', 'status', 'summary', 'description', 'priority']
         assert report_column_accessors == expected_column_accessors
 
     def test_primary_process_id_updates_via_xml(
