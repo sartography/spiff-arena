@@ -138,6 +138,29 @@ class MissingProcessInfoError(Exception):
     """MissingProcessInfoError."""
 
 
+# TODO: permanent location
+def delete_process_instances_with_criteria(
+    criteria: list[dict[any, any]], # TODO typed dict
+) -> None:
+    from sqlalchemy import delete, or_
+    
+    query = ProcessInstanceModel.query
+    delete_criteria = []
+    delete_time = time.time()
+
+    for criterion in criteria:
+        delete_criteria.append(
+            (ProcessInstanceModel.process_model_identifier == criterion["name"]) & 
+            ProcessInstanceModel.status.in_(criterion["status"]) & 
+            (ProcessInstanceModel.updated_at_in_seconds < (delete_time - criterion["last_updated_delta"]))
+        )
+
+    query = query.filter(or_(*delete_criteria))
+    print(query)
+    results = query.all()
+    print(results)
+    #db.session.execute(statement)
+
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
 
@@ -158,6 +181,8 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "enumerate": enumerate,
             "list": list,
             "map": map,
+            # TODO: rig this up properly so it can't be called from any process
+            "delete_process_instances_with_criteria": delete_process_instances_with_criteria,
         }
 
         # This will overwrite the standard builtins
