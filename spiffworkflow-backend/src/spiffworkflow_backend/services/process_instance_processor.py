@@ -139,26 +139,40 @@ class MissingProcessInfoError(Exception):
 
 
 # TODO: permanent location
+class ProcessInstanceDeleteCriteria(TypedDict):
+    """ProcessInstanceDeleteCriteria."""
+
+    name: str
+    status: list[str]
+    last_updated_delta: int
+
+
 def delete_process_instances_with_criteria(
-    criteria: list[dict[any, any]], # TODO typed dict
+    criteria_list: list[ProcessInstanceDeleteCriteria],
 ) -> int:
-    from sqlalchemy import delete, or_
-    
+    """Delete_process_instances_with_criteria."""
+    from sqlalchemy import or_
+
     delete_criteria = []
     delete_time = time.time()
 
-    for criterion in criteria:
+    for criteria in criteria_list:
         delete_criteria.append(
-            (ProcessInstanceModel.process_model_identifier == criterion["name"]) & 
-            ProcessInstanceModel.status.in_(criterion["status"]) & 
-            (ProcessInstanceModel.updated_at_in_seconds < (delete_time - criterion["last_updated_delta"]))
+            (ProcessInstanceModel.process_model_identifier == criteria["name"])
+            & ProcessInstanceModel.status.in_(criteria["status"])  # type: ignore
+            & (
+                ProcessInstanceModel.updated_at_in_seconds
+                < (delete_time - criteria["last_updated_delta"])
+            )
         )
 
     results = ProcessInstanceModel.query.filter(or_(*delete_criteria)).all()
     rows_affected = len(results)
-    ids_to_delete = list(map(lambda r: r.id, results))
+    ids_to_delete = list(map(lambda r: r.id, results))  # type: ignore
 
-    step_details = SpiffStepDetailsModel.query.filter(SpiffStepDetailsModel.process_instance_id.in_(ids_to_delete)).all()
+    step_details = SpiffStepDetailsModel.query.filter(
+        SpiffStepDetailsModel.process_instance_id.in_(ids_to_delete)  # type: ignore
+    ).all()
 
     for deletion in step_details:
         db.session.delete(deletion)
@@ -167,6 +181,7 @@ def delete_process_instances_with_criteria(
     db.session.commit()
 
     return rows_affected
+
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
