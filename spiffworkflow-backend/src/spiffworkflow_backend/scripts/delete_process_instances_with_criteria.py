@@ -1,7 +1,8 @@
-"""delete_process_instances_with_criteria."""
+"""Delete_process_instances_with_criteria."""
 from time import time
 from typing import Any
 
+from flask_bpmn.models.db import db
 from sqlalchemy import or_
 
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
