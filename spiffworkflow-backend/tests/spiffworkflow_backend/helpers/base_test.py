@@ -133,7 +133,6 @@ class BaseTest:
     ) -> TestResponse:
         """Create_process_model."""
         if process_model_id is not None:
-
             # make sure we have a group
             process_group_id, _ = os.path.split(process_model_id)
             modified_process_group_id = process_group_id.replace("/", ":")
@@ -141,7 +140,6 @@ class BaseTest:
                 os.path.join(FileSystemService.root_path(), process_group_id)
             )
             if ProcessModelService.is_group(process_group_path):
-
                 if exception_notification_addresses is None:
                     exception_notification_addresses = []
 
@@ -171,7 +169,8 @@ class BaseTest:
                 raise Exception("You must create the group first")
         else:
             raise Exception(
-                "You must include the process_model_id, which must be a path to the model"
+                "You must include the process_model_id, which must be a path to the"
+                " model"
             )
 
     def get_test_data_file_contents(

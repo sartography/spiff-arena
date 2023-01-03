@@ -93,7 +93,8 @@ def create_app() -> flask.app.Flask:
 
     if os.environ.get("FLASK_SESSION_SECRET_KEY") is None:
         raise KeyError(
-            "Cannot find the secret_key from the environment. Please set FLASK_SESSION_SECRET_KEY"
+            "Cannot find the secret_key from the environment. Please set"
+            " FLASK_SESSION_SECRET_KEY"
         )
 
     app.secret_key = os.environ.get("FLASK_SESSION_SECRET_KEY")

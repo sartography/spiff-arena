@@ -27,7 +27,6 @@ def main():
     """Main."""
     app = get_hacked_up_app_for_script()
     with app.app_context():
-
         process_model_identifier_ticket = "ticket"
         db.session.query(ProcessInstanceModel).filter(
             ProcessInstanceModel.process_model_identifier

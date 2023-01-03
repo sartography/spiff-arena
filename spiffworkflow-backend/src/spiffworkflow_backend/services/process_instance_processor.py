@@ -215,14 +215,14 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         except Exception as exception:
             if task is None:
                 raise ProcessInstanceProcessorError(
-                    "Error evaluating expression: "
-                    "'%s', exception: %s" % (expression, str(exception)),
+                    "Error evaluating expression: '%s', exception: %s"
+                    % (expression, str(exception)),
                 ) from exception
             else:
                 raise WorkflowTaskExecException(
                     task,
-                    "Error evaluating expression "
-                    "'%s', %s" % (expression, str(exception)),
+                    "Error evaluating expression '%s', %s"
+                    % (expression, str(exception)),
                 ) from exception
 
     def execute(
@@ -300,9 +300,7 @@ class ProcessInstanceProcessor:
         tld.spiff_step = process_instance_model.spiff_step
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
-        current_app.config[
-            "THREAD_LOCAL_DATA"
-        ].process_model_identifier = (
+        current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
             f"{process_instance_model.process_model_identifier}"
         )
 
@@ -383,8 +381,10 @@ class ProcessInstanceProcessor:
         except MissingSpecError as ke:
             raise ApiError(
                 error_code="unexpected_process_instance_structure",
-                message="Failed to deserialize process_instance"
-                " '%s'  due to a mis-placed or missing task '%s'"
+                message=(
+                    "Failed to deserialize process_instance"
+                    " '%s'  due to a mis-placed or missing task '%s'"
+                )
                 % (self.process_model_identifier, str(ke)),
             ) from ke
 
@@ -400,7 +400,10 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     "process_model_not_found",
-                    f"The given process model was not found: {process_model_identifier}.",
+                    (
+                        "The given process model was not found:"
+                        f" {process_model_identifier}."
+                    ),
                 )
             )
         spec_files = SpecFileService.get_files(process_model_info)
@@ -530,8 +533,11 @@ class ProcessInstanceProcessor:
                     potential_owner_ids.append(lane_owner_user.id)
             self.raise_if_no_potential_owners(
                 potential_owner_ids,
-                f"No users found in task data lane owner list for lane: {task_lane}. "
-                f"The user list used: {task.data['lane_owners'][task_lane]}",
+                (
+                    "No users found in task data lane owner list for lane:"
+                    f" {task_lane}. The user list used:"
+                    f" {task.data['lane_owners'][task_lane]}"
+                ),
             )
         else:
             group_model = GroupModel.query.filter_by(identifier=task_lane).first()
@@ -722,7 +728,8 @@ class ProcessInstanceProcessor:
         if payload is not None:
             event_definition.payload = payload
         current_app.logger.info(
-            f"Event of type {event_definition.event_type} sent to process instance {self.process_instance_model.id}"
+            f"Event of type {event_definition.event_type} sent to process instance"
+            f" {self.process_instance_model.id}"
         )
         self.bpmn_process_instance.catch(event_definition)
         self.do_engine_steps(save=True)
@@ -732,12 +739,14 @@ class ProcessInstanceProcessor:
         spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
         if execute:
             current_app.logger.info(
-                f"Manually executing Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
+                f"Manually executing Task {spiff_task.task_spec.name} of process"
+                f" instance {self.process_instance_model.id}"
             )
             spiff_task.complete()
         else:
             current_app.logger.info(
-                f"Skipping Task {spiff_task.task_spec.name} of process instance {self.process_instance_model.id}"
+                f"Skipping Task {spiff_task.task_spec.name} of process instance"
+                f" {self.process_instance_model.id}"
             )
             spiff_task._set_state(TaskState.COMPLETED)
             for child in spiff_task.children:
@@ -781,7 +790,8 @@ class ProcessInstanceProcessor:
         """Bpmn_file_full_path_from_bpmn_process_identifier."""
         if bpmn_process_identifier is None:
             raise ValueError(
-                "bpmn_file_full_path_from_bpmn_process_identifier: bpmn_process_identifier is unexpectedly None"
+                "bpmn_file_full_path_from_bpmn_process_identifier:"
+                " bpmn_process_identifier is unexpectedly None"
             )
 
         spec_reference = SpecReferenceCache.query.filter_by(
@@ -803,7 +813,10 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     error_code="could_not_find_bpmn_process_identifier",
-                    message="Could not find the the given bpmn process identifier from any sources: %s"
+                    message=(
+                        "Could not find the the given bpmn process identifier from any"
+                        " sources: %s"
+                    )
                     % bpmn_process_identifier,
                 )
             )
@@ -827,7 +840,6 @@ class ProcessInstanceProcessor:
 
         new_bpmn_files = set()
         for bpmn_process_identifier in processor_dependencies_new:
-
             # ignore identifiers that spiff already knows about
             if bpmn_process_identifier in bpmn_process_identifiers_in_parser:
                 continue
@@ -870,7 +882,10 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     error_code="no_primary_bpmn_error",
-                    message="There is no primary BPMN process id defined for process_model %s"
+                    message=(
+                        "There is no primary BPMN process id defined for"
+                        " process_model %s"
+                    )
                     % process_model_info.id,
                 )
             )
@@ -931,7 +946,10 @@ class ProcessInstanceProcessor:
             if not bpmn_message.correlations:
                 raise ApiError(
                     "message_correlations_missing",
-                    f"Could not find any message correlations bpmn_message: {bpmn_message.name}",
+                    (
+                        "Could not find any message correlations bpmn_message:"
+                        f" {bpmn_message.name}"
+                    ),
                 )
 
             message_correlations = []
@@ -951,12 +969,16 @@ class ProcessInstanceProcessor:
                     if message_correlation_property is None:
                         raise ApiError(
                             "message_correlations_missing_from_process",
-                            "Could not find a known message correlation with identifier:"
-                            f"{message_correlation_property_identifier}",
+                            (
+                                "Could not find a known message correlation with"
+                                f" identifier:{message_correlation_property_identifier}"
+                            ),
                         )
                     message_correlations.append(
                         {
-                            "message_correlation_property": message_correlation_property,
+                            "message_correlation_property": (
+                                message_correlation_property
+                            ),
                             "name": message_correlation_key,
                             "value": message_correlation_property_value,
                         }
@@ -1013,7 +1035,10 @@ class ProcessInstanceProcessor:
             if message_model is None:
                 raise ApiError(
                     "invalid_message_name",
-                    f"Invalid message name: {waiting_task.task_spec.event_definition.name}.",
+                    (
+                        "Invalid message name:"
+                        f" {waiting_task.task_spec.event_definition.name}."
+                    ),
                 )
 
             # Ensure we are only creating one message instance for each waiting message

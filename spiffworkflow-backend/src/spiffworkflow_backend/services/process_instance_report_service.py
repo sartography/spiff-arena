@@ -1,6 +1,7 @@
 """Process_instance_report_service."""
 import re
 from dataclasses import dataclass
+from typing import Any
 from typing import Optional
 
 import sqlalchemy
@@ -84,29 +85,8 @@ class ProcessInstanceReportService:
     """ProcessInstanceReportService."""
 
     @classmethod
-    def report_with_identifier(
-        cls,
-        user: UserModel,
-        report_id: Optional[int] = None,
-        report_identifier: Optional[str] = None,
-    ) -> ProcessInstanceReportModel:
-        """Report_with_filter."""
-        if report_id is not None:
-            process_instance_report = ProcessInstanceReportModel.query.filter_by(
-                id=report_id, created_by_id=user.id
-            ).first()
-            if process_instance_report is not None:
-                return process_instance_report  # type: ignore
-
-        if report_identifier is None:
-            report_identifier = "default"
-        process_instance_report = ProcessInstanceReportModel.query.filter_by(
-            identifier=report_identifier, created_by_id=user.id
-        ).first()
-
-        if process_instance_report is not None:
-            return process_instance_report  # type: ignore
-
+    def system_metadata_map(cls, metadata_key: str) -> dict[str, Any]:
+        """System_metadata_map."""
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
             "default": {
@@ -151,10 +131,36 @@ class ProcessInstanceReportService:
                 "order_by": ["-start_in_seconds", "-id"],
             },
         }
+        return temp_system_metadata_map[metadata_key]
+
+    @classmethod
+    def report_with_identifier(
+        cls,
+        user: UserModel,
+        report_id: Optional[int] = None,
+        report_identifier: Optional[str] = None,
+    ) -> ProcessInstanceReportModel:
+        """Report_with_filter."""
+        if report_id is not None:
+            process_instance_report = ProcessInstanceReportModel.query.filter_by(
+                id=report_id, created_by_id=user.id
+            ).first()
+            if process_instance_report is not None:
+                return process_instance_report  # type: ignore
+
+        if report_identifier is None:
+            report_identifier = "default"
+        process_instance_report = ProcessInstanceReportModel.query.filter_by(
+            identifier=report_identifier, created_by_id=user.id
+        ).first()
+
+        if process_instance_report is not None:
+            return process_instance_report  # type: ignore
+
         process_instance_report = ProcessInstanceReportModel(
             identifier=report_identifier,
             created_by_id=user.id,
-            report_metadata=temp_system_metadata_map[report_identifier],
+            report_metadata=cls.system_metadata_map(report_identifier),
         )
 
         return process_instance_report  # type: ignore
@@ -283,9 +289,9 @@ class ProcessInstanceReportService:
             process_instance_dict = process_instance["ProcessInstanceModel"].serialized
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
-                    process_instance_dict[
-                        metadata_column["accessor"]
-                    ] = process_instance[metadata_column["accessor"]]
+                    process_instance_dict[metadata_column["accessor"]] = (
+                        process_instance[metadata_column["accessor"]]
+                    )
 
             results.append(process_instance_dict)
         return results
