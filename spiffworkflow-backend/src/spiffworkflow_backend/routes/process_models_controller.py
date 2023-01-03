@@ -2,7 +2,6 @@
 import json
 import os
 from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 import re
 from typing import Any
 from typing import Dict
@@ -366,16 +365,17 @@ def process_model_create_with_natural_language(
         )
 
     ProcessModelService.add_process_model(process_model_info)
-    bpmn_process_identifier = f"{process_model_info.id}_process"
+    bpmn_process_identifier = f"{process_model_identifier}_process"
     bpmn_template_contents = ''
     with open(bpmn_template_file, encoding="utf-8") as f:
         bpmn_template_contents = f.read()
 
-    bpmn_template_contents = bpmn_template_contents.replace('natural_language_process_id_template', bpmn_process_identifier)
-    bpmn_template_contents = bpmn_template_contents.replace('form-identifier-id-template-', form_identifier)
+    bpmn_template_contents = bpmn_template_contents.replace(
+        'natural_language_process_id_template', bpmn_process_identifier)
+    bpmn_template_contents = bpmn_template_contents.replace('form-identifier-id-template', form_identifier)
 
     form_uischema_json: dict = {
-        "ui:order": []
+        "ui:order": columns
     }
 
     form_properties: dict = {}
@@ -392,8 +392,10 @@ def process_model_create_with_natural_language(
     }
 
     SpecFileService.add_file(process_model_info, f"{process_model_identifier}.bpmn", str.encode(bpmn_template_contents))
-    SpecFileService.add_file(process_model_info, f"{form_identifier}-schema.json", str.encode(json.dumps(form_schema_json)))
-    SpecFileService.add_file(process_model_info, f"{form_identifier}-uischema.json", str.encode(json.dumps(form_uischema_json)))
+    SpecFileService.add_file(process_model_info, f"{form_identifier}-schema.json",
+                             str.encode(json.dumps(form_schema_json)))
+    SpecFileService.add_file(
+        process_model_info, f"{form_identifier}-uischema.json", str.encode(json.dumps(form_uischema_json)))
 
     _commit_and_push_to_git(
         f"User: {g.user.username} created process model via natural language:"
@@ -403,7 +405,7 @@ def process_model_create_with_natural_language(
     default_report_metadata = ProcessInstanceReportService.system_metadata_map('default')
     for column in columns:
         default_report_metadata['columns'].append({
-            "Header": column, "accessor": column
+            "Header": column, "accessor": column, "filterable": True
         })
     ProcessInstanceReportModel.create_report(
         identifier=process_model_identifier,

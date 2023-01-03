@@ -396,6 +396,7 @@ def process_instance_report_update(
     report_id: int,
     body: Dict[str, Any],
 ) -> flask.wrappers.Response:
+    """Process_instance_report_update."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         id=report_id,
         created_by_id=g.user.id,
@@ -416,6 +417,7 @@ def process_instance_report_update(
 def process_instance_report_delete(
     report_id: int,
 ) -> flask.wrappers.Response:
+    """Process_instance_report_delete."""
     process_instance_report = ProcessInstanceReportModel.query.filter_by(
         id=report_id,
         created_by_id=g.user.id,
