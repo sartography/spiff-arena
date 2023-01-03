@@ -1,5 +1,8 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+import os
+from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 import re
 from typing import Any
 from typing import Dict
@@ -26,6 +29,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import (
 )
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
+from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -302,20 +306,6 @@ def process_model_create_with_natural_language(
     modified_process_group_id: str, body: Dict[str, str]
 ) -> flask.wrappers.Response:
     """Process_model_create_with_natural_language."""
-    # body_include_list = [
-    #     "id",
-    #     "display_name",
-    #     "primary_file_name",
-    #     "primary_process_id",
-    #     "description",
-    #     "metadata_extraction_paths",
-    # ]
-    # body_filtered = {
-    #     include_item: body[include_item]
-    #     for include_item in body_include_list
-    #     if include_item in body
-    # }
-
     pattern = re.compile(
         r"Create a (?P<pm_name>.*?) process model with a (?P<form_name>.*?) form that"
         r" collects (?P<columns>.*)"
@@ -333,17 +323,13 @@ def process_model_create_with_natural_language(
     process_model_display_name = match.group("pm_name")
     process_model_identifier = re.sub(r"[ _]", "-", process_model_display_name)
     process_model_identifier = re.sub(r"-{2,}", "-", process_model_identifier).lower()
-    print(f"process_model_identifier: {process_model_identifier}")
 
     form_name = match.group("form_name")
     form_identifier = re.sub(r"[ _]", "-", form_name)
     form_identifier = re.sub(r"-{2,}", "-", form_identifier).lower()
-    print(f"form_identifier: {form_identifier}")
 
     column_names = match.group("columns")
-    print(f"column_names: {column_names}")
     columns = re.sub(r"(, (and )?)", ",", column_names).split(",")
-    print(f"columns: {columns}")
 
     process_group = _get_process_group_from_modified_identifier(
         modified_process_group_id
@@ -371,14 +357,59 @@ def process_model_create_with_natural_language(
             status_code=400,
         )
 
+    bpmn_template_file = os.path.join(current_app.root_path, 'templates', 'basic_with_user_task_template.bpmn')
+    if not os.path.exists(bpmn_template_file):
+        raise ApiError(
+            error_code="bpmn_template_file_does_not_exist",
+            message=f"Could not find the bpmn template file to create process model.",
+            status_code=500,
+        )
+
     ProcessModelService.add_process_model(process_model_info)
+    bpmn_process_identifier = f"{process_model_info.id}_process"
+    bpmn_template_contents = ''
+    with open(bpmn_template_file, encoding="utf-8") as f:
+        bpmn_template_contents = f.read()
+
+    bpmn_template_contents = bpmn_template_contents.replace('natural_language_process_id_template', bpmn_process_identifier)
+    bpmn_template_contents = bpmn_template_contents.replace('form-identifier-id-template-', form_identifier)
+
+    form_uischema_json: dict = {
+        "ui:order": []
+    }
+
+    form_properties: dict = {}
+    for column in columns:
+        form_properties[column] = {
+            "type": "string",
+            "title": column,
+        }
+    form_schema_json = {
+        "title": form_identifier,
+        "description": "",
+        "properties": form_properties,
+        "required": []
+    }
+
+    SpecFileService.add_file(process_model_info, f"{process_model_identifier}.bpmn", str.encode(bpmn_template_contents))
+    SpecFileService.add_file(process_model_info, f"{form_identifier}-schema.json", str.encode(json.dumps(form_schema_json)))
+    SpecFileService.add_file(process_model_info, f"{form_identifier}-uischema.json", str.encode(json.dumps(form_uischema_json)))
+
     _commit_and_push_to_git(
         f"User: {g.user.username} created process model via natural language:"
         f" {process_model_info.id}"
     )
 
-    # TODO: Create a form json schema and UI schema
-    # TODO: Add report
+    default_report_metadata = ProcessInstanceReportService.system_metadata_map('default')
+    for column in columns:
+        default_report_metadata['columns'].append({
+            "Header": column, "accessor": column
+        })
+    ProcessInstanceReportModel.create_report(
+        identifier=process_model_identifier,
+        user=g.user,
+        report_metadata=default_report_metadata,
+    )
 
     return Response(
         json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
