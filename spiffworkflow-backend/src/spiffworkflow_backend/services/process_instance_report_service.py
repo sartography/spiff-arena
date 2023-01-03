@@ -1,7 +1,7 @@
 """Process_instance_report_service."""
 import re
-from typing import Any
 from dataclasses import dataclass
+from typing import Any
 from typing import Optional
 
 import sqlalchemy

@@ -1,7 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 import os
-from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
 import re
 from typing import Any
 from typing import Dict
@@ -19,6 +18,9 @@ from flask_bpmn.api.api_error import ApiError
 
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_instance_report import (
+    ProcessInstanceReportModel,
+)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
@@ -28,7 +30,9 @@ from spiffworkflow_backend.routes.process_api_blueprint import (
 )
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
-from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
+from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportService,
+)
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -356,27 +360,30 @@ def process_model_create_with_natural_language(
             status_code=400,
         )
 
-    bpmn_template_file = os.path.join(current_app.root_path, 'templates', 'basic_with_user_task_template.bpmn')
+    bpmn_template_file = os.path.join(
+        current_app.root_path, "templates", "basic_with_user_task_template.bpmn"
+    )
     if not os.path.exists(bpmn_template_file):
         raise ApiError(
             error_code="bpmn_template_file_does_not_exist",
-            message=f"Could not find the bpmn template file to create process model.",
+            message="Could not find the bpmn template file to create process model.",
             status_code=500,
         )
 
     ProcessModelService.add_process_model(process_model_info)
     bpmn_process_identifier = f"{process_model_identifier}_process"
-    bpmn_template_contents = ''
+    bpmn_template_contents = ""
     with open(bpmn_template_file, encoding="utf-8") as f:
         bpmn_template_contents = f.read()
 
     bpmn_template_contents = bpmn_template_contents.replace(
-        'natural_language_process_id_template', bpmn_process_identifier)
-    bpmn_template_contents = bpmn_template_contents.replace('form-identifier-id-template', form_identifier)
+        "natural_language_process_id_template", bpmn_process_identifier
+    )
+    bpmn_template_contents = bpmn_template_contents.replace(
+        "form-identifier-id-template", form_identifier
+    )
 
-    form_uischema_json: dict = {
-        "ui:order": columns
-    }
+    form_uischema_json: dict = {"ui:order": columns}
 
     form_properties: dict = {}
     for column in columns:
@@ -388,25 +395,37 @@ def process_model_create_with_natural_language(
         "title": form_identifier,
         "description": "",
         "properties": form_properties,
-        "required": []
+        "required": [],
     }
 
-    SpecFileService.add_file(process_model_info, f"{process_model_identifier}.bpmn", str.encode(bpmn_template_contents))
-    SpecFileService.add_file(process_model_info, f"{form_identifier}-schema.json",
-                             str.encode(json.dumps(form_schema_json)))
     SpecFileService.add_file(
-        process_model_info, f"{form_identifier}-uischema.json", str.encode(json.dumps(form_uischema_json)))
+        process_model_info,
+        f"{process_model_identifier}.bpmn",
+        str.encode(bpmn_template_contents),
+    )
+    SpecFileService.add_file(
+        process_model_info,
+        f"{form_identifier}-schema.json",
+        str.encode(json.dumps(form_schema_json)),
+    )
+    SpecFileService.add_file(
+        process_model_info,
+        f"{form_identifier}-uischema.json",
+        str.encode(json.dumps(form_uischema_json)),
+    )
 
     _commit_and_push_to_git(
         f"User: {g.user.username} created process model via natural language:"
         f" {process_model_info.id}"
     )
 
-    default_report_metadata = ProcessInstanceReportService.system_metadata_map('default')
+    default_report_metadata = ProcessInstanceReportService.system_metadata_map(
+        "default"
+    )
     for column in columns:
-        default_report_metadata['columns'].append({
-            "Header": column, "accessor": column, "filterable": True
-        })
+        default_report_metadata["columns"].append(
+            {"Header": column, "accessor": column, "filterable": True}
+        )
     ProcessInstanceReportModel.create_report(
         identifier=process_model_identifier,
         user=g.user,
