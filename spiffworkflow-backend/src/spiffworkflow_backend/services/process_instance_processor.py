@@ -138,53 +138,6 @@ class MissingProcessInfoError(Exception):
     """MissingProcessInfoError."""
 
 
-# TODO: permanent location
-class ProcessInstanceDeleteCriteria(TypedDict):
-    """ProcessInstanceDeleteCriteria."""
-
-    name: str
-    status: list[str]
-    last_updated_delta: int
-
-
-def delete_process_instances_with_criteria(
-    criteria_list: list[ProcessInstanceDeleteCriteria],
-) -> int:
-    """Delete_process_instances_with_criteria."""
-    from sqlalchemy import or_
-
-    delete_criteria = []
-    delete_time = time.time()
-
-    for criteria in criteria_list:
-        delete_criteria.append(
-            (ProcessInstanceModel.process_model_identifier == criteria["name"])
-            & ProcessInstanceModel.status.in_(criteria["status"])  # type: ignore
-            & (
-                ProcessInstanceModel.updated_at_in_seconds
-                < (delete_time - criteria["last_updated_delta"])
-            )
-        )
-
-    results = ProcessInstanceModel.query.filter(or_(*delete_criteria)).all()
-    rows_affected = len(results)
-
-    if rows_affected > 0:
-        ids_to_delete = list(map(lambda r: r.id, results))  # type: ignore
-
-        step_details = SpiffStepDetailsModel.query.filter(
-            SpiffStepDetailsModel.process_instance_id.in_(ids_to_delete)  # type: ignore
-        ).all()
-
-        for deletion in step_details:
-            db.session.delete(deletion)
-        for deletion in results:
-            db.session.delete(deletion)
-        db.session.commit()
-
-    return rows_affected
-
-
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
 
@@ -205,8 +158,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "enumerate": enumerate,
             "list": list,
             "map": map,
-            # TODO: rig this up properly so it can't be called from any process
-            "delete_process_instances_with_criteria": delete_process_instances_with_criteria,
         }
 
         # This will overwrite the standard builtins
