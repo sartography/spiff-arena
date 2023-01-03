@@ -205,6 +205,25 @@ class TestProcessApi(BaseTest):
             {"key": "priority", "path": "priority"},
         ]
 
+        process_model = ProcessModelService.get_process_model(response.json['id'])
+        process_model_path = os.path.join(
+            FileSystemService.root_path(),
+            FileSystemService.id_string_to_relative_path(process_model.id)
+        )
+
+        process_model_diagram = os.path.join(process_model_path, "bug-tracker.bpmn")
+        assert os.path.exists(process_model_diagram)
+        form_schema_json = os.path.join(process_model_path, "bug-details-schema.json")
+        assert os.path.exists(form_schema_json)
+        form_uischema_json = os.path.join(process_model_path, "bug-details-uischema.json")
+        assert os.path.exists(form_uischema_json)
+
+        process_instance_report = ProcessInstanceReportModel.query.filter_by(identifier='bug-tracker').first()
+        assert process_instance_report is not None
+        report_column_accessors = [i['accessor'] for i in process_instance_report.report_metadata['columns']]
+        expected_column_accessors = ['id', 'process_model_display_name', 'start_in_seconds', 'end_in_seconds', 'username', 'status', 'summary', 'description', 'priority']
+        assert report_column_accessors == expected_column_accessors
+
     def test_primary_process_id_updates_via_xml(
         self,
         app: Flask,
