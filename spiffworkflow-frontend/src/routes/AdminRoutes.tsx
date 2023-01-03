@@ -22,6 +22,7 @@ import ProcessInstanceLogList from './ProcessInstanceLogList';
 import MessageInstanceList from './MessageInstanceList';
 import Configuration from './Configuration';
 import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
+import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -49,6 +50,10 @@ export default function AdminRoutes() {
         <Route
           path="process-models/:process_group_id/new"
           element={<ProcessModelNew />}
+        />
+        <Route
+          path="process-models/:process_group_id/new-e"
+          element={<ProcessModelNewExperimental />}
         />
         <Route
           path="process-models/:process_model_id"

@@ -1,5 +1,7 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+import os
+import re
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -15,6 +17,10 @@ from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
 
 from spiffworkflow_backend.models.file import FileSchema
+from spiffworkflow_backend.models.process_group import ProcessGroup
+from spiffworkflow_backend.models.process_instance_report import (
+    ProcessInstanceReportModel,
+)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.routes.process_api_blueprint import _commit_and_push_to_git
@@ -24,6 +30,9 @@ from spiffworkflow_backend.routes.process_api_blueprint import (
 )
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
+from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportService,
+)
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
@@ -46,23 +55,7 @@ def process_model_create(
         if include_item in body
     }
 
-    if modified_process_group_id is None:
-        raise ApiError(
-            error_code="process_group_id_not_specified",
-            message="Process Model could not be created when process_group_id path param is unspecified",
-            status_code=400,
-        )
-
-    unmodified_process_group_id = _un_modify_modified_process_model_id(
-        modified_process_group_id
-    )
-    process_group = ProcessModelService.get_process_group(unmodified_process_group_id)
-    if process_group is None:
-        raise ApiError(
-            error_code="process_model_could_not_be_created",
-            message=f"Process Model could not be created from given body because Process Group could not be found: {body}",
-            status_code=400,
-        )
+    _get_process_group_from_modified_identifier(modified_process_group_id)
 
     process_model_info = ProcessModelInfo(**body_filtered)  # type: ignore
     if process_model_info is None:
@@ -150,7 +143,8 @@ def process_model_move(
         original_process_model_id, new_location
     )
     _commit_and_push_to_git(
-        f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
+        f"User: {g.user.username} moved process model {original_process_model_id} to"
+        f" {new_process_model.id}"
     )
     return make_response(jsonify(new_process_model), 200)
 
@@ -223,7 +217,8 @@ def process_model_file_update(
 
     SpecFileService.update_file(process_model, file_name, request_file_contents)
     _commit_and_push_to_git(
-        f"User: {g.user.username} clicked save for {process_model_identifier}/{file_name}"
+        f"User: {g.user.username} clicked save for"
+        f" {process_model_identifier}/{file_name}"
     )
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -247,7 +242,8 @@ def process_model_file_delete(
         ) from exception
 
     _commit_and_push_to_git(
-        f"User: {g.user.username} deleted process model file {process_model_identifier}/{file_name}"
+        f"User: {g.user.username} deleted process model file"
+        f" {process_model_identifier}/{file_name}"
     )
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -273,7 +269,8 @@ def process_model_file_create(
     file.file_contents = file_contents
     file.process_model_id = process_model.id
     _commit_and_push_to_git(
-        f"User: {g.user.username} added process model file {process_model_identifier}/{file.name}"
+        f"User: {g.user.username} added process model file"
+        f" {process_model_identifier}/{file.name}"
     )
     return Response(
         json.dumps(FileSchema().dump(file)), status=201, mimetype="application/json"
@@ -290,8 +287,10 @@ def process_model_file_show(
     if len(files) == 0:
         raise ApiError(
             error_code="unknown file",
-            message=f"No information exists for file {file_name}"
-            f" it does not exist in workflow {process_model_identifier}.",
+            message=(
+                f"No information exists for file {file_name}"
+                f" it does not exist in workflow {process_model_identifier}."
+            ),
             status_code=404,
         )
 
@@ -299,8 +298,145 @@ def process_model_file_show(
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
     file.process_model_id = process_model.id
-    # file.process_group_id = process_model.process_group_id
     return FileSchema().dump(file)
+
+
+#   {
+#       "natural_language_text": "Create a bug tracker process model \
+#           with a bug-details form that collects summary, description, and priority"
+#   }
+def process_model_create_with_natural_language(
+    modified_process_group_id: str, body: Dict[str, str]
+) -> flask.wrappers.Response:
+    """Process_model_create_with_natural_language."""
+    pattern = re.compile(
+        r"Create a (?P<pm_name>.*?) process model with a (?P<form_name>.*?) form that"
+        r" collects (?P<columns>.*)"
+    )
+    match = pattern.match(body["natural_language_text"])
+    if match is None:
+        raise ApiError(
+            error_code="natural_language_text_not_yet_supported",
+            message=(
+                "Natural language text is not yet supported. Please use the form:"
+                f" {pattern.pattern}"
+            ),
+            status_code=400,
+        )
+    process_model_display_name = match.group("pm_name")
+    process_model_identifier = re.sub(r"[ _]", "-", process_model_display_name)
+    process_model_identifier = re.sub(r"-{2,}", "-", process_model_identifier).lower()
+
+    form_name = match.group("form_name")
+    form_identifier = re.sub(r"[ _]", "-", form_name)
+    form_identifier = re.sub(r"-{2,}", "-", form_identifier).lower()
+
+    column_names = match.group("columns")
+    columns = re.sub(r"(, (and )?)", ",", column_names).split(",")
+
+    process_group = _get_process_group_from_modified_identifier(
+        modified_process_group_id
+    )
+    qualified_process_model_identifier = (
+        f"{process_group.id}/{process_model_identifier}"
+    )
+
+    metadata_extraction_paths = []
+    for column in columns:
+        metadata_extraction_paths.append({"key": column, "path": column})
+
+    process_model_attributes = {
+        "id": qualified_process_model_identifier,
+        "display_name": process_model_display_name,
+        "description": None,
+        "metadata_extraction_paths": metadata_extraction_paths,
+    }
+
+    process_model_info = ProcessModelInfo(**process_model_attributes)  # type: ignore
+    if process_model_info is None:
+        raise ApiError(
+            error_code="process_model_could_not_be_created",
+            message=f"Process Model could not be created from given body: {body}",
+            status_code=400,
+        )
+
+    bpmn_template_file = os.path.join(
+        current_app.root_path, "templates", "basic_with_user_task_template.bpmn"
+    )
+    if not os.path.exists(bpmn_template_file):
+        raise ApiError(
+            error_code="bpmn_template_file_does_not_exist",
+            message="Could not find the bpmn template file to create process model.",
+            status_code=500,
+        )
+
+    ProcessModelService.add_process_model(process_model_info)
+    bpmn_process_identifier = f"{process_model_identifier}_process"
+    bpmn_template_contents = ""
+    with open(bpmn_template_file, encoding="utf-8") as f:
+        bpmn_template_contents = f.read()
+
+    bpmn_template_contents = bpmn_template_contents.replace(
+        "natural_language_process_id_template", bpmn_process_identifier
+    )
+    bpmn_template_contents = bpmn_template_contents.replace(
+        "form-identifier-id-template", form_identifier
+    )
+
+    form_uischema_json: dict = {"ui:order": columns}
+
+    form_properties: dict = {}
+    for column in columns:
+        form_properties[column] = {
+            "type": "string",
+            "title": column,
+        }
+    form_schema_json = {
+        "title": form_identifier,
+        "description": "",
+        "properties": form_properties,
+        "required": [],
+    }
+
+    SpecFileService.add_file(
+        process_model_info,
+        f"{process_model_identifier}.bpmn",
+        str.encode(bpmn_template_contents),
+    )
+    SpecFileService.add_file(
+        process_model_info,
+        f"{form_identifier}-schema.json",
+        str.encode(json.dumps(form_schema_json)),
+    )
+    SpecFileService.add_file(
+        process_model_info,
+        f"{form_identifier}-uischema.json",
+        str.encode(json.dumps(form_uischema_json)),
+    )
+
+    _commit_and_push_to_git(
+        f"User: {g.user.username} created process model via natural language:"
+        f" {process_model_info.id}"
+    )
+
+    default_report_metadata = ProcessInstanceReportService.system_metadata_map(
+        "default"
+    )
+    for column in columns:
+        default_report_metadata["columns"].append(
+            {"Header": column, "accessor": column, "filterable": True}
+        )
+    ProcessInstanceReportModel.create_report(
+        identifier=process_model_identifier,
+        user=g.user,
+        report_metadata=default_report_metadata,
+    )
+
+    return Response(
+        json.dumps(ProcessModelInfoSchema().dump(process_model_info)),
+        status=201,
+        mimetype="application/json",
+    )
 
 
 def _get_file_from_request() -> Any:
@@ -313,3 +449,33 @@ def _get_file_from_request() -> Any:
             status_code=400,
         )
     return request_file
+
+
+def _get_process_group_from_modified_identifier(
+    modified_process_group_id: str,
+) -> ProcessGroup:
+    """_get_process_group_from_modified_identifier."""
+    if modified_process_group_id is None:
+        raise ApiError(
+            error_code="process_group_id_not_specified",
+            message=(
+                "Process Model could not be created when process_group_id path param is"
+                " unspecified"
+            ),
+            status_code=400,
+        )
+
+    unmodified_process_group_id = _un_modify_modified_process_model_id(
+        modified_process_group_id
+    )
+    process_group = ProcessModelService.get_process_group(unmodified_process_group_id)
+    if process_group is None:
+        raise ApiError(
+            error_code="process_model_could_not_be_created",
+            message=(
+                "Process Model could not be created from given body because Process"
+                f" Group could not be found: {unmodified_process_group_id}"
+            ),
+            status_code=400,
+        )
+    return process_group

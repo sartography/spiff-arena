@@ -131,8 +131,11 @@ def message_start(
             raise (
                 ApiError(
                     error_code="cannot_find_waiting_message",
-                    message=f"Could not find waiting message for identifier {message_identifier} "
-                    f"and process instance {process_instance.id}",
+                    message=(
+                        "Could not find waiting message for identifier"
+                        f" {message_identifier} and process instance"
+                        f" {process_instance.id}"
+                    ),
                     status_code=400,
                 )
             )
@@ -151,7 +154,10 @@ def message_start(
             raise (
                 ApiError(
                     error_code="cannot_start_message",
-                    message=f"Message with identifier cannot be start with message: {message_identifier}",
+                    message=(
+                        "Message with identifier cannot be start with message:"
+                        f" {message_identifier}"
+                    ),
                     status_code=400,
                 )
             )

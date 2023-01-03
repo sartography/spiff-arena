@@ -98,8 +98,9 @@ class Script:
                     ).first()
                     if process_instance is None:
                         raise ProcessInstanceNotFoundError(
-                            f"Could not find a process instance with id '{script_attributes_context.process_instance_id}' "
-                            f"when running script '{script_function_name}'"
+                            "Could not find a process instance with id"
+                            f" '{script_attributes_context.process_instance_id}' when"
+                            f" running script '{script_function_name}'"
                         )
                     user = process_instance.process_initiator
                     has_permission = AuthorizationService.user_has_permission(
@@ -107,7 +108,8 @@ class Script:
                     )
                     if not has_permission:
                         raise ScriptUnauthorizedForUserError(
-                            f"User {user.username} does not have access to run privileged script '{script_function_name}'"
+                            f"User {user.username} does not have access to run"
+                            f" privileged script '{script_function_name}'"
                         )
 
             def run_script_if_allowed(*ar: Any, **kw: Any) -> Any:
@@ -149,7 +151,7 @@ class Script:
         """_get_all_subclasses."""
         # hackish mess to make sure we have all the modules loaded for the scripts
         pkg_dir = os.path.dirname(__file__)
-        for (_module_loader, name, _ispkg) in pkgutil.iter_modules([pkg_dir]):
+        for _module_loader, name, _ispkg in pkgutil.iter_modules([pkg_dir]):
             importlib.import_module("." + name, __package__)
 
         """Returns a list of all classes that extend this class."""

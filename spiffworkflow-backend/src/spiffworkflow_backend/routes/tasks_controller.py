@@ -157,7 +157,10 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
         raise (
             ApiError(
                 error_code="no_human_task",
-                message=f"Cannot find a task to complete for task id '{task_id}' and process instance {process_instance_id}.",
+                message=(
+                    f"Cannot find a task to complete for task id '{task_id}' and"
+                    f" process instance {process_instance_id}."
+                ),
                 status_code=500,
             )
         )
@@ -203,7 +206,10 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             raise (
                 ApiError(
                     error_code="missing_form_file",
-                    message=f"Cannot find a form file for process_instance_id: {process_instance_id}, task_id: {task_id}",
+                    message=(
+                        "Cannot find a form file for process_instance_id:"
+                        f" {process_instance_id}, task_id: {task_id}"
+                    ),
                     status_code=400,
                 )
             )
@@ -221,7 +227,10 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             raise (
                 ApiError(
                     error_code="error_loading_form",
-                    message=f"Could not load form schema from: {form_schema_file_name}. Error was: {str(exception)}",
+                    message=(
+                        f"Could not load form schema from: {form_schema_file_name}."
+                        f" Error was: {str(exception)}"
+                    ),
                     status_code=400,
                 )
             ) from exception
@@ -285,8 +294,10 @@ def task_submit(
     if not process_instance.can_submit_task():
         raise ApiError(
             error_code="process_instance_not_runnable",
-            message=f"Process Instance ({process_instance.id}) has status "
-            f"{process_instance.status} which does not allow tasks to be submitted.",
+            message=(
+                f"Process Instance ({process_instance.id}) has status "
+                f"{process_instance.status} which does not allow tasks to be submitted."
+            ),
             status_code=400,
         )
 
@@ -317,7 +328,10 @@ def task_submit(
         raise (
             ApiError(
                 error_code="no_human_task",
-                message=f"Cannot find a task to complete for task id '{task_id}' and process instance {process_instance_id}.",
+                message=(
+                    f"Cannot find a task to complete for task id '{task_id}' and"
+                    f" process instance {process_instance_id}."
+                ),
                 status_code=500,
             )
         )
@@ -511,7 +525,10 @@ def _update_form_schema_with_task_data_as_needed(
                                 raise (
                                     ApiError(
                                         error_code="missing_task_data_var",
-                                        message=f"Task data is missing variable: {task_data_var}",
+                                        message=(
+                                            "Task data is missing variable:"
+                                            f" {task_data_var}"
+                                        ),
                                         status_code=500,
                                     )
                                 )

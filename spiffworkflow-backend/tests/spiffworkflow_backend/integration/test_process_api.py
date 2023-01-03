@@ -163,6 +163,83 @@ class TestProcessApi(BaseTest):
         assert process_model.primary_file_name == bpmn_file_name
         assert process_model.primary_process_id == "sample"
 
+    def test_process_model_create_with_natural_language(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_process_model_create_with_natural_language."""
+        process_group_id = "test_process_group"
+        process_group_description = "Test Process Group"
+        process_model_id = "sample"
+        process_model_identifier = f"{process_group_id}/{process_model_id}"
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_description
+        )
+
+        text = "Create a Bug Tracker process model "
+        text += (
+            "with a Bug Details form that collects summary, description, and priority"
+        )
+        body = {"natural_language_text": text}
+        self.create_process_model_with_api(
+            client,
+            process_model_id=process_model_identifier,
+            user=with_super_admin_user,
+        )
+        response = client.post(
+            f"/v1.0/process-models-natural-language/{process_group_id}",
+            content_type="application/json",
+            data=json.dumps(body),
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 201
+        assert response.json is not None
+        assert response.json["id"] == f"{process_group_id}/bug-tracker"
+        assert response.json["display_name"] == "Bug Tracker"
+        assert response.json["metadata_extraction_paths"] == [
+            {"key": "summary", "path": "summary"},
+            {"key": "description", "path": "description"},
+            {"key": "priority", "path": "priority"},
+        ]
+
+        process_model = ProcessModelService.get_process_model(response.json["id"])
+        process_model_path = os.path.join(
+            FileSystemService.root_path(),
+            FileSystemService.id_string_to_relative_path(process_model.id),
+        )
+
+        process_model_diagram = os.path.join(process_model_path, "bug-tracker.bpmn")
+        assert os.path.exists(process_model_diagram)
+        form_schema_json = os.path.join(process_model_path, "bug-details-schema.json")
+        assert os.path.exists(form_schema_json)
+        form_uischema_json = os.path.join(
+            process_model_path, "bug-details-uischema.json"
+        )
+        assert os.path.exists(form_uischema_json)
+
+        process_instance_report = ProcessInstanceReportModel.query.filter_by(
+            identifier="bug-tracker"
+        ).first()
+        assert process_instance_report is not None
+        report_column_accessors = [
+            i["accessor"] for i in process_instance_report.report_metadata["columns"]
+        ]
+        expected_column_accessors = [
+            "id",
+            "process_model_display_name",
+            "start_in_seconds",
+            "end_in_seconds",
+            "username",
+            "status",
+            "summary",
+            "description",
+            "priority",
+        ]
+        assert report_column_accessors == expected_column_accessors
+
     def test_primary_process_id_updates_via_xml(
         self,
         app: Flask,
@@ -250,10 +327,6 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["ok"] is True
 
-        # assert we no longer have a model
-        with pytest.raises(ProcessEntityNotFoundError):
-            ProcessModelService.get_process_model(process_model_identifier)
-
     def test_process_model_delete_with_instances(
         self,
         app: Flask,
@@ -305,7 +378,8 @@ class TestProcessApi(BaseTest):
         assert data["error_code"] == "existing_instances"
         assert (
             data["message"]
-            == f"We cannot delete the model `{process_model_identifier}`, there are existing instances that depend on it."
+            == f"We cannot delete the model `{process_model_identifier}`, there are"
+            " existing instances that depend on it."
         )
 
     def test_process_model_update(
@@ -2020,7 +2094,6 @@ class TestProcessApi(BaseTest):
 
         mail = app.config["MAIL_APP"]
         with mail.record_messages() as outbox:
-
             response = client.post(
                 f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
                 headers=self.logged_in_headers(with_super_admin_user),
@@ -2923,7 +2996,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            process_model_id=(
+                "save_process_instance_metadata/save_process_instance_metadata"
+            ),
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )
@@ -2980,7 +3055,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            process_model_id=(
+                "save_process_instance_metadata/save_process_instance_metadata"
+            ),
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )

@@ -62,7 +62,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     active_human_tasks = relationship(
         "HumanTaskModel",
-        primaryjoin="and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id, HumanTaskModel.completed == False)",
+        primaryjoin=(
+            "and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id,"
+            " HumanTaskModel.completed == False)"
+        ),
     )  # type: ignore
 
     human_tasks = relationship(

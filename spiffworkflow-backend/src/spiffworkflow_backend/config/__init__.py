@@ -17,21 +17,21 @@ def setup_database_uri(app: Flask) -> None:
     if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
         database_name = f"spiffworkflow_backend_{app.config['ENV_IDENTIFIER']}"
         if app.config.get("SPIFF_DATABASE_TYPE") == "sqlite":
-            app.config[
-                "SQLALCHEMY_DATABASE_URI"
-            ] = f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}.sqlite3"
+            app.config["SQLALCHEMY_DATABASE_URI"] = (
+                f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}.sqlite3"
+            )
         elif app.config.get("SPIFF_DATABASE_TYPE") == "postgres":
-            app.config[
-                "SQLALCHEMY_DATABASE_URI"
-            ] = f"postgresql://spiffworkflow_backend:spiffworkflow_backend@localhost:5432/{database_name}"
+            app.config["SQLALCHEMY_DATABASE_URI"] = (
+                f"postgresql://spiffworkflow_backend:spiffworkflow_backend@localhost:5432/{database_name}"
+            )
         else:
             # use pswd to trick flake8 with hardcoded passwords
             db_pswd = os.environ.get("DB_PASSWORD")
             if db_pswd is None:
                 db_pswd = ""
-            app.config[
-                "SQLALCHEMY_DATABASE_URI"
-            ] = f"mysql+mysqlconnector://root:{db_pswd}@localhost/{database_name}"
+            app.config["SQLALCHEMY_DATABASE_URI"] = (
+                f"mysql+mysqlconnector://root:{db_pswd}@localhost/{database_name}"
+            )
     else:
         app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get(
             "SPIFFWORKFLOW_BACKEND_DATABASE_URI"
@@ -91,10 +91,12 @@ def setup_config(app: Flask) -> None:
             app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME"],
         )
         print(
-            f"set permissions file name config: {app.config['SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME']}"
+            "set permissions file name config:"
+            f" {app.config['SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME']}"
         )
         print(
-            f"set permissions file name full path: {app.config['PERMISSIONS_FILE_FULLPATH']}"
+            "set permissions file name full path:"
+            f" {app.config['PERMISSIONS_FILE_FULLPATH']}"
         )
 
     # unversioned (see .gitignore) config that can override everything and include secrets.
