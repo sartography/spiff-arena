@@ -168,17 +168,19 @@ def delete_process_instances_with_criteria(
 
     results = ProcessInstanceModel.query.filter(or_(*delete_criteria)).all()
     rows_affected = len(results)
-    ids_to_delete = list(map(lambda r: r.id, results))  # type: ignore
 
-    step_details = SpiffStepDetailsModel.query.filter(
-        SpiffStepDetailsModel.process_instance_id.in_(ids_to_delete)  # type: ignore
-    ).all()
+    if rows_affected > 0:
+        ids_to_delete = list(map(lambda r: r.id, results))  # type: ignore
 
-    for deletion in step_details:
-        db.session.delete(deletion)
-    for deletion in results:
-        db.session.delete(deletion)
-    db.session.commit()
+        step_details = SpiffStepDetailsModel.query.filter(
+            SpiffStepDetailsModel.process_instance_id.in_(ids_to_delete)  # type: ignore
+        ).all()
+
+        for deletion in step_details:
+            db.session.delete(deletion)
+        for deletion in results:
+            db.session.delete(deletion)
+        db.session.commit()
 
     return rows_affected
 
