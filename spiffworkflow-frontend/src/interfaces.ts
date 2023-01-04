@@ -1,3 +1,8 @@
+export interface User {
+  id: number;
+  username: string;
+}
+
 export interface Secret {
   id: number;
   key: string;
