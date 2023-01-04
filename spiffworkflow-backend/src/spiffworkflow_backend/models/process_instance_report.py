@@ -70,7 +70,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     identifier: str = db.Column(db.String(50), nullable=False, index=True)
     report_metadata: dict = deferred(db.Column(db.JSON))  # type: ignore
-    created_by_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)
+    created_by_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
     created_by = relationship("UserModel")
     created_at_in_seconds = db.Column(db.Integer)
     updated_at_in_seconds = db.Column(db.Integer)

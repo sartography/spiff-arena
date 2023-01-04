@@ -1,10 +1,10 @@
-"""users_controller."""
-
+"""Users_controller."""
 import flask
-from spiffworkflow_backend.models.user import UserModel
-from flask import make_response
-from flask import jsonify
 from flask import g
+from flask import jsonify
+from flask import make_response
+
+from spiffworkflow_backend.models.user import UserModel
 
 
 def user_search(username_prefix: str) -> flask.wrappers.Response:

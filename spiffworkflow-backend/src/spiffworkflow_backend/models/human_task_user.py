@@ -29,4 +29,4 @@ class HumanTaskUserModel(SpiffworkflowBaseDBModel):
     human_task_id = db.Column(
         ForeignKey(HumanTaskModel.id), nullable=False, index=True  # type: ignore
     )
-    user_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)
+    user_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore

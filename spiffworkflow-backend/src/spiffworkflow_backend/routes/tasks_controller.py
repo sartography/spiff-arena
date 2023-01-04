@@ -434,7 +434,7 @@ def _get_tasks(
             ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
             ProcessInstanceModel.updated_at_in_seconds,
             ProcessInstanceModel.created_at_in_seconds,
-            UserModel.username.label("process_initiator_username"),
+            UserModel.username.label("process_initiator_username"),  # type: ignore
             GroupModel.identifier.label("assigned_user_group_identifier"),
             HumanTaskModel.task_name,
             HumanTaskModel.task_title,
