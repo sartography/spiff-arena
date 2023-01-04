@@ -8,7 +8,7 @@ from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
-from spiffworkflow_backend.models.active_task import ActiveTaskModel
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -17,6 +17,7 @@ from spiffworkflow_backend.models.task import MultiInstanceType
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -36,7 +37,10 @@ class ProcessInstanceService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
-        current_git_revision = GitService.get_current_revision()
+        try:
+            current_git_revision = GitService.get_current_revision()
+        except GitCommandError:
+            current_git_revision = ""
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
             process_initiator=user,
@@ -81,7 +85,8 @@ class ProcessInstanceService:
                 db.session.add(process_instance)
                 db.session.commit()
                 error_message = (
-                    f"Error running waiting task for process_instance {process_instance.id}"
+                    "Error running waiting task for process_instance"
+                    f" {process_instance.id}"
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
@@ -121,7 +126,7 @@ class ProcessInstanceService:
         if next_task_trying_again is not None:
             process_instance_api.next_task = (
                 ProcessInstanceService.spiff_task_to_api_task(
-                    next_task_trying_again, add_docs_and_forms=True
+                    processor, next_task_trying_again, add_docs_and_forms=True
                 )
             )
 
@@ -174,7 +179,10 @@ class ProcessInstanceService:
                     else:
                         raise ApiError.from_task(
                             error_code="task_lane_user_error",
-                            message="Spiff Task %s lane user dict must have a key called 'value' with the user's uid in it."
+                            message=(
+                                "Spiff Task %s lane user dict must have a key called"
+                                " 'value' with the user's uid in it."
+                            )
                             % spiff_task.task_spec.name,
                             task=spiff_task,
                         )
@@ -196,7 +204,7 @@ class ProcessInstanceService:
         spiff_task: SpiffTask,
         data: dict[str, Any],
         user: UserModel,
-        active_task: ActiveTaskModel,
+        human_task: HumanTaskModel,
     ) -> None:
         """All the things that need to happen when we complete a form.
 
@@ -210,7 +218,7 @@ class ProcessInstanceService:
         dot_dct = ProcessInstanceService.create_dot_dict(data)
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
-        processor.complete_task(spiff_task, active_task)
+        processor.complete_task(spiff_task, human_task, user=user)
         processor.do_engine_steps(save=True)
 
     @staticmethod
@@ -277,7 +285,9 @@ class ProcessInstanceService:
 
     @staticmethod
     def spiff_task_to_api_task(
-        spiff_task: SpiffTask, add_docs_and_forms: bool = False
+        processor: ProcessInstanceProcessor,
+        spiff_task: SpiffTask,
+        add_docs_and_forms: bool = False,
     ) -> Task:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.spec_type
@@ -302,9 +312,16 @@ class ProcessInstanceService:
         else:
             lane = None
 
+        if hasattr(spiff_task.task_spec, "spec"):
+            call_activity_process_identifier = spiff_task.task_spec.spec
+        else:
+            call_activity_process_identifier = None
+
         parent_id = None
         if spiff_task.parent:
             parent_id = spiff_task.parent.id
+
+        serialized_task_spec = processor.serialize_task_spec(spiff_task.task_spec)
 
         task = Task(
             spiff_task.id,
@@ -316,9 +333,11 @@ class ProcessInstanceService:
             multi_instance_type=mi_type,
             multi_instance_count=info["mi_count"],
             multi_instance_index=info["mi_index"],
-            process_name=spiff_task.task_spec._wf_spec.description,
+            process_identifier=spiff_task.task_spec._wf_spec.name,
             properties=props,
             parent=parent_id,
+            event_definition=serialized_task_spec.get("event_definition"),
+            call_activity_process_identifier=call_activity_process_identifier,
         )
 
         return task

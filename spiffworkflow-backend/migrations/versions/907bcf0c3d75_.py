@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 4d75421c0af0
+Revision ID: 907bcf0c3d75
 Revises: 
-Create Date: 2022-12-06 17:42:56.417673
+Create Date: 2022-12-28 13:52:13.030028
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4d75421c0af0'
+revision = '907bcf0c3d75'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -72,14 +72,15 @@ def upgrade():
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=255), nullable=False),
-    sa.Column('uid', sa.String(length=50), nullable=True),
-    sa.Column('service', sa.String(length=50), nullable=False),
+    sa.Column('service', sa.String(length=255), nullable=False),
     sa.Column('service_id', sa.String(length=255), nullable=False),
-    sa.Column('name', sa.String(length=255), nullable=True),
+    sa.Column('display_name', sa.String(length=255), nullable=True),
     sa.Column('email', sa.String(length=255), nullable=True),
+    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('service', 'service_id', name='service_key'),
-    sa.UniqueConstraint('uid')
+    sa.UniqueConstraint('username')
     )
     op.create_table('message_correlation_property',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -174,11 +175,20 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id', 'group_id', name='user_group_assignment_unique')
     )
-    op.create_table('active_task',
+    op.create_table('user_group_assignment_waiting',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('username', sa.String(length=255), nullable=False),
+    sa.Column('group_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['group_id'], ['group.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('username', 'group_id', name='user_group_assignment_staged_unique')
+    )
+    op.create_table('human_task',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('actual_owner_id', sa.Integer(), nullable=True),
     sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
+    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
+    sa.Column('actual_owner_id', sa.Integer(), nullable=True),
     sa.Column('form_file_name', sa.String(length=50), nullable=True),
     sa.Column('ui_form_file_name', sa.String(length=50), nullable=True),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
@@ -189,12 +199,15 @@ def upgrade():
     sa.Column('task_type', sa.String(length=50), nullable=True),
     sa.Column('task_status', sa.String(length=50), nullable=True),
     sa.Column('process_model_display_name', sa.String(length=255), nullable=True),
+    sa.Column('completed', sa.Boolean(), nullable=False),
     sa.ForeignKeyConstraint(['actual_owner_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('task_id', 'process_instance_id', name='active_task_unique')
+    sa.UniqueConstraint('task_id', 'process_instance_id', name='human_task_unique')
     )
+    op.create_index(op.f('ix_human_task_completed'), 'human_task', ['completed'], unique=False)
     op.create_table('message_correlation',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -255,23 +268,20 @@ def upgrade():
     sa.Column('spiff_step', sa.Integer(), nullable=False),
     sa.Column('task_json', sa.JSON(), nullable=False),
     sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
-    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
-    sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('active_task_user',
+    op.create_table('human_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('active_task_id', sa.Integer(), nullable=False),
+    sa.Column('human_task_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['active_task_id'], ['active_task.id'], ),
+    sa.ForeignKeyConstraint(['human_task_id'], ['human_task.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('active_task_id', 'user_id', name='active_task_user_unique')
+    sa.UniqueConstraint('human_task_id', 'user_id', name='human_task_user_unique')
     )
-    op.create_index(op.f('ix_active_task_user_active_task_id'), 'active_task_user', ['active_task_id'], unique=False)
-    op.create_index(op.f('ix_active_task_user_user_id'), 'active_task_user', ['user_id'], unique=False)
+    op.create_index(op.f('ix_human_task_user_human_task_id'), 'human_task_user', ['human_task_id'], unique=False)
+    op.create_index(op.f('ix_human_task_user_user_id'), 'human_task_user', ['user_id'], unique=False)
     op.create_table('message_correlation_message_instance',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message_instance_id', sa.Integer(), nullable=False),
@@ -291,9 +301,9 @@ def downgrade():
     op.drop_index(op.f('ix_message_correlation_message_instance_message_instance_id'), table_name='message_correlation_message_instance')
     op.drop_index(op.f('ix_message_correlation_message_instance_message_correlation_id'), table_name='message_correlation_message_instance')
     op.drop_table('message_correlation_message_instance')
-    op.drop_index(op.f('ix_active_task_user_user_id'), table_name='active_task_user')
-    op.drop_index(op.f('ix_active_task_user_active_task_id'), table_name='active_task_user')
-    op.drop_table('active_task_user')
+    op.drop_index(op.f('ix_human_task_user_user_id'), table_name='human_task_user')
+    op.drop_index(op.f('ix_human_task_user_human_task_id'), table_name='human_task_user')
+    op.drop_table('human_task_user')
     op.drop_table('spiff_step_details')
     op.drop_index(op.f('ix_process_instance_metadata_key'), table_name='process_instance_metadata')
     op.drop_table('process_instance_metadata')
@@ -304,7 +314,9 @@ def downgrade():
     op.drop_index(op.f('ix_message_correlation_name'), table_name='message_correlation')
     op.drop_index(op.f('ix_message_correlation_message_correlation_property_id'), table_name='message_correlation')
     op.drop_table('message_correlation')
-    op.drop_table('active_task')
+    op.drop_index(op.f('ix_human_task_completed'), table_name='human_task')
+    op.drop_table('human_task')
+    op.drop_table('user_group_assignment_waiting')
     op.drop_table('user_group_assignment')
     op.drop_table('secret')
     op.drop_table('refresh_token')

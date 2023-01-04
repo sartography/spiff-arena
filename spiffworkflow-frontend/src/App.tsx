@@ -13,41 +13,23 @@ import AdminRoutes from './routes/AdminRoutes';
 import { ErrorForDisplay } from './interfaces';
 
 import { AbilityContext } from './contexts/Can';
+import UserService from './services/UserService';
+import ErrorDisplay from './components/ErrorDisplay';
 
 export default function App() {
-  const [errorMessage, setErrorMessage] = useState<ErrorForDisplay | null>(
-    null
-  );
+  const [errorObject, setErrorObject] = useState<ErrorForDisplay | null>(null);
 
   const errorContextValueArray = useMemo(
-    () => [errorMessage, setErrorMessage],
-    [errorMessage]
+    () => [errorObject, setErrorObject],
+    [errorObject]
   );
 
-  const ability = defineAbility(() => {});
-
-  let errorTag = null;
-  if (errorMessage) {
-    let sentryLinkTag = null;
-    if (errorMessage.sentry_link) {
-      sentryLinkTag = (
-        <span>
-          {
-            ': Find details about this error here (it may take a moment to become available): '
-          }
-          <a href={errorMessage.sentry_link} target="_blank" rel="noreferrer">
-            {errorMessage.sentry_link}
-          </a>
-        </span>
-      );
-    }
-    errorTag = (
-      <div id="filter-errors" className="mt-4 alert alert-danger" role="alert">
-        {errorMessage.message}
-        {sentryLinkTag}
-      </div>
-    );
+  if (!UserService.isLoggedIn()) {
+    UserService.doLogin();
+    return null;
   }
+
+  const ability = defineAbility(() => {});
 
   return (
     <div className="cds--white">
@@ -57,7 +39,7 @@ export default function App() {
           <BrowserRouter>
             <NavigationBar />
             <Content>
-              {errorTag}
+              <ErrorDisplay />
               <ErrorBoundary>
                 <Routes>
                   <Route path="/*" element={<HomePageRoutes />} />

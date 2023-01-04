@@ -52,7 +52,7 @@ import { Notification } from '../components/Notification';
 
 export default function ProcessModelShow() {
   const params = useParams();
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [processInstance, setProcessInstance] =
@@ -148,7 +148,7 @@ export default function ProcessModelShow() {
       !('file_contents' in processModelFile) ||
       processModelFile.file_contents === undefined
     ) {
-      setErrorMessage({
+      setErrorObject({
         message: `Could not file file contents for file: ${processModelFile.name}`,
       });
       return;
@@ -169,7 +169,7 @@ export default function ProcessModelShow() {
   };
 
   const downloadFile = (fileName: string) => {
-    setErrorMessage(null);
+    setErrorObject(null);
     const processModelPath = `process-models/${modifiedProcessModelId}`;
     HttpService.makeCallToBackend({
       path: `/${processModelPath}/files/${fileName}`,
@@ -232,6 +232,15 @@ export default function ProcessModelShow() {
     isPrimaryBpmnFile: boolean
   ) => {
     const elements = [];
+
+    // So there is a bug in here. Since we use a react context for error messages, and since
+    // its provider wraps the entire app, child components will re-render when there is an
+    // error displayed. This is normally fine, but it interacts badly with the casl ability.can
+    // functionality. We have observed that permissionsLoaded is never set to false. So when
+    // you run a process and it fails, for example, process model show will re-render, the ability
+    // will be cleared out and it will start fetching permissions from the server, but this
+    // component still thinks permissionsLoaded is telling the truth (it says true, but it's actually false).
+    // The only bad effect that we know of is that the Edit icon becomes an eye icon even for admins.
     let icon = View;
     let actionWord = 'View';
     if (ability.can('PUT', targetUris.processModelFileCreatePath)) {
@@ -264,25 +273,27 @@ export default function ProcessModelShow() {
       </Can>
     );
 
-    elements.push(
-      <Can
-        I="DELETE"
-        a={targetUris.processModelFileCreatePath}
-        ability={ability}
-      >
-        <ButtonWithConfirmation
-          kind="ghost"
-          renderIcon={TrashCan}
-          iconDescription="Delete File"
-          hasIconOnly
-          description={`Delete file: ${processModelFile.name}`}
-          onConfirmation={() => {
-            onDeleteFile(processModelFile.name);
-          }}
-          confirmButtonLabel="Delete"
-        />
-      </Can>
-    );
+    if (!isPrimaryBpmnFile) {
+      elements.push(
+        <Can
+          I="DELETE"
+          a={targetUris.processModelFileCreatePath}
+          ability={ability}
+        >
+          <ButtonWithConfirmation
+            kind="ghost"
+            renderIcon={TrashCan}
+            iconDescription="Delete File"
+            hasIconOnly
+            description={`Delete file: ${processModelFile.name}`}
+            onConfirmation={() => {
+              onDeleteFile(processModelFile.name);
+            }}
+            confirmButtonLabel="Delete"
+          />
+        </Can>
+      );
+    }
     if (processModelFile.name.match(/\.bpmn$/) && !isPrimaryBpmnFile) {
       elements.push(
         <Can I="PUT" a={targetUris.processModelShowPath} ability={ability}>
@@ -325,11 +336,7 @@ export default function ProcessModelShow() {
       let fileLink = null;
       const fileUrl = profileModelFileEditUrl(processModelFile);
       if (fileUrl) {
-        if (ability.can('GET', targetUris.processModelFileCreatePath)) {
-          fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
-        } else {
-          fileLink = <span>{processModelFile.name}</span>;
-        }
+        fileLink = <Link to={fileUrl}>{processModelFile.name}</Link>;
       }
       constructedTag = (
         <TableRow key={processModelFile.name}>
@@ -360,27 +367,83 @@ export default function ProcessModelShow() {
     );
   };
 
+  const [fileUploadEvent, setFileUploadEvent] = useState(null);
+  const [duplicateFilename, setDuplicateFilename] = useState<String>('');
+  const [showOverwriteConfirmationPrompt, setShowOverwriteConfirmationPrompt] =
+    useState(false);
+
+  const doFileUpload = (event: any) => {
+    event.preventDefault();
+    const url = `/process-models/${modifiedProcessModelId}/files`;
+    const formData = new FormData();
+    formData.append('file', filesToUpload[0]);
+    formData.append('fileName', filesToUpload[0].name);
+    HttpService.makeCallToBackend({
+      path: url,
+      successCallback: onUploadedCallback,
+      httpMethod: 'POST',
+      postBody: formData,
+    });
+    setFilesToUpload(null);
+  };
+
   const handleFileUploadCancel = () => {
     setShowFileUploadModal(false);
     setFilesToUpload(null);
   };
+  const handleOverwriteFileConfirm = () => {
+    setShowOverwriteConfirmationPrompt(false);
+    doFileUpload(fileUploadEvent);
+  };
+  const handleOverwriteFileCancel = () => {
+    setShowOverwriteConfirmationPrompt(false);
+    setFilesToUpload(null);
+  };
+
+  const confirmOverwriteFileDialog = () => {
+    return (
+      <Modal
+        danger
+        open={showOverwriteConfirmationPrompt}
+        data-qa="file-overwrite-modal-confirmation-dialog"
+        modalHeading={`Overwrite the file: ${duplicateFilename}`}
+        modalLabel="Overwrite file?"
+        primaryButtonText="Yes"
+        secondaryButtonText="Cancel"
+        onSecondarySubmit={handleOverwriteFileCancel}
+        onRequestSubmit={handleOverwriteFileConfirm}
+        onRequestClose={handleOverwriteFileCancel}
+      />
+    );
+  };
+  const displayOverwriteConfirmation = (filename: String) => {
+    setDuplicateFilename(filename);
+    setShowOverwriteConfirmationPrompt(true);
+  };
+
+  const checkDuplicateFile = (event: any) => {
+    if (processModel) {
+      let foundExistingFile = false;
+      if (processModel.files.length > 0) {
+        processModel.files.forEach((file) => {
+          if (file.name === filesToUpload[0].name) {
+            foundExistingFile = true;
+          }
+        });
+      }
+      if (foundExistingFile) {
+        displayOverwriteConfirmation(filesToUpload[0].name);
+        setFileUploadEvent(event);
+      } else {
+        doFileUpload(event);
+      }
+    }
+    return null;
+  };
 
   const handleFileUpload = (event: any) => {
-    if (processModel) {
-      event.preventDefault();
-      const url = `/process-models/${modifiedProcessModelId}/files`;
-      const formData = new FormData();
-      formData.append('file', filesToUpload[0]);
-      formData.append('fileName', filesToUpload[0].name);
-      HttpService.makeCallToBackend({
-        path: url,
-        successCallback: onUploadedCallback,
-        httpMethod: 'POST',
-        postBody: formData,
-      });
-    }
+    checkDuplicateFile(event);
     setShowFileUploadModal(false);
-    setFilesToUpload(null);
   };
 
   const fileUploadModal = () => {
@@ -416,16 +479,13 @@ export default function ProcessModelShow() {
   };
 
   const processModelFilesSection = () => {
-    if (!processModel) {
-      return null;
-    }
     return (
       <Grid
         condensed
         fullWidth
         className="megacondensed process-model-files-section"
       >
-        <Column md={5} lg={9} sm={3}>
+        <Column md={8} lg={14} sm={4}>
           <Accordion align="end" open>
             <AccordionItem
               open
@@ -500,7 +560,7 @@ export default function ProcessModelShow() {
       return (
         <Grid fullWidth condensed>
           <Column sm={{ span: 3 }} md={{ span: 4 }} lg={{ span: 3 }}>
-            <h2>Process Instances</h2>
+            <h2>My Process Instances</h2>
           </Column>
           <Column
             sm={{ span: 1, offset: 3 }}
@@ -536,7 +596,7 @@ export default function ProcessModelShow() {
           onClose={() => setProcessModelPublished(false)}
         >
           <a href={prUrl} target="_void()">
-            view the changes and create a Pull Request
+            View the changes and create a Pull Request
           </a>
         </Notification>
       );
@@ -548,6 +608,7 @@ export default function ProcessModelShow() {
     return (
       <>
         {fileUploadModal()}
+        {confirmOverwriteFileDialog()}
         <ProcessBreadcrumb
           hotCrumbs={[
             ['Process Groups', '/admin'],
@@ -619,10 +680,12 @@ export default function ProcessModelShow() {
           {processInstanceListTableButton()}
           <ProcessInstanceListTable
             filtersEnabled={false}
+            variant="for-me"
             processModelFullIdentifier={processModel.id}
             perPageOptions={[2, 5, 25]}
             showReports={false}
           />
+          <span data-qa="process-model-show-permissions-loaded">true</span>
         </Can>
       </>
     );

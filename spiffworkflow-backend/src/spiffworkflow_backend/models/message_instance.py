@@ -86,5 +86,6 @@ def ensure_failure_cause_is_set_if_message_instance_failed(
         if isinstance(instance, MessageInstanceModel):
             if instance.status == "failed" and instance.failure_cause is None:
                 raise ValueError(
-                    f"{instance.__class__.__name__}: failure_cause must be set if status is failed"
+                    f"{instance.__class__.__name__}: failure_cause must be set if"
+                    " status is failed"
                 )

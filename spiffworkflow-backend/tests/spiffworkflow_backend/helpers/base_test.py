@@ -41,7 +41,7 @@ class BaseTest:
         if isinstance(user, UserModel):
             return user
 
-        user = UserService.create_user("internal", username, username=username)
+        user = UserService.create_user(username, "internal", username)
         if isinstance(user, UserModel):
             return user
 
@@ -133,7 +133,6 @@ class BaseTest:
     ) -> TestResponse:
         """Create_process_model."""
         if process_model_id is not None:
-
             # make sure we have a group
             process_group_id, _ = os.path.split(process_model_id)
             modified_process_group_id = process_group_id.replace("/", ":")
@@ -141,7 +140,6 @@ class BaseTest:
                 os.path.join(FileSystemService.root_path(), process_group_id)
             )
             if ProcessModelService.is_group(process_group_path):
-
                 if exception_notification_addresses is None:
                     exception_notification_addresses = []
 
@@ -171,7 +169,8 @@ class BaseTest:
                 raise Exception("You must create the group first")
         else:
             raise Exception(
-                "You must include the process_model_id, which must be a path to the model"
+                "You must include the process_model_id, which must be a path to the"
+                " model"
             )
 
     def get_test_data_file_contents(
@@ -243,7 +242,7 @@ class BaseTest:
         return file
 
     @staticmethod
-    def create_process_instance_from_process_model_id(
+    def create_process_instance_from_process_model_id_with_api(
         client: FlaskClient,
         test_process_model_id: str,
         headers: Dict[str, str],
@@ -324,13 +323,9 @@ class BaseTest:
         permission_names: Optional[list[str]] = None,
     ) -> UserModel:
         """Add_permissions_to_user."""
-        permission_target = PermissionTargetModel.query.filter_by(
-            uri=target_uri
-        ).first()
-        if permission_target is None:
-            permission_target = PermissionTargetModel(uri=target_uri)
-            db.session.add(permission_target)
-            db.session.commit()
+        permission_target = AuthorizationService.find_or_create_permission_target(
+            target_uri
+        )
 
         if permission_names is None:
             permission_names = [member.name for member in Permission]

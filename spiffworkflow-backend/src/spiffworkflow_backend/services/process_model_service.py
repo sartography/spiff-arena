@@ -146,7 +146,10 @@ class ProcessModelService(FileSystemService):
         if len(instances) > 0:
             raise ApiError(
                 error_code="existing_instances",
-                message=f"We cannot delete the model `{process_model_id}`, there are existing instances that depend on it.",
+                message=(
+                    f"We cannot delete the model `{process_model_id}`, there are"
+                    " existing instances that depend on it."
+                ),
             )
         process_model = self.get_process_model(process_model_id)
         path = self.workflow_path(process_model)
@@ -172,7 +175,6 @@ class ProcessModelService(FileSystemService):
         cls, relative_path: str
     ) -> ProcessModelInfo:
         """Get_process_model_from_relative_path."""
-        process_group_identifier, _ = os.path.split(relative_path)
         path = os.path.join(FileSystemService.root_path(), relative_path)
         return cls.__scan_process_model(path)
 
@@ -224,11 +226,11 @@ class ProcessModelService(FileSystemService):
             user = UserService.current_user()
             new_process_model_list = []
             for process_model in process_models:
-                uri = f"/v1.0/process-models/{process_model.id.replace('/', ':')}/process-instances"
-                result = AuthorizationService.user_has_permission(
+                uri = f"/v1.0/process-instances/{process_model.id.replace('/', ':')}"
+                has_permission = AuthorizationService.user_has_permission(
                     user=user, permission="create", target_uri=uri
                 )
-                if result:
+                if has_permission:
                     new_process_model_list.append(process_model)
             return new_process_model_list
 
@@ -340,8 +342,11 @@ class ProcessModelService(FileSystemService):
             if len(problem_models) > 0:
                 raise ApiError(
                     error_code="existing_instances",
-                    message=f"We cannot delete the group `{process_group_id}`, "
-                    f"there are models with existing instances inside the group. {problem_models}",
+                    message=(
+                        f"We cannot delete the group `{process_group_id}`, there are"
+                        " models with existing instances inside the group."
+                        f" {problem_models}"
+                    ),
                 )
             shutil.rmtree(path)
         self.cleanup_process_group_display_order()
@@ -393,7 +398,10 @@ class ProcessModelService(FileSystemService):
                 if process_group is None:
                     raise ApiError(
                         error_code="process_group_could_not_be_loaded_from_disk",
-                        message=f"We could not load the process_group from disk from: {dir_path}",
+                        message=(
+                            "We could not load the process_group from disk from:"
+                            f" {dir_path}"
+                        ),
                     )
         else:
             process_group_id = dir_path.replace(FileSystemService.root_path(), "")
@@ -430,6 +438,9 @@ class ProcessModelService(FileSystemService):
                 # process_group.process_groups.sort()
         return process_group
 
+    # path might have backslashes on windows, not sure
+    # not sure if os.path.join converts forward slashes in the relative_path argument to backslashes:
+    #   path = os.path.join(FileSystemService.root_path(), relative_path)
     @classmethod
     def __scan_process_model(
         cls,
@@ -446,12 +457,19 @@ class ProcessModelService(FileSystemService):
                     data.pop("process_group_id")
                 # we don't save `id` in the json file, so we add it back in here.
                 relative_path = os.path.relpath(path, FileSystemService.root_path())
+
+                # even on windows, use forward slashes for ids
+                relative_path = relative_path.replace("\\", "/")
+
                 data["id"] = relative_path
                 process_model_info = ProcessModelInfo(**data)
                 if process_model_info is None:
                     raise ApiError(
                         error_code="process_model_could_not_be_loaded_from_disk",
-                        message=f"We could not load the process_model from disk with data: {data}",
+                        message=(
+                            "We could not load the process_model from disk with data:"
+                            f" {data}"
+                        ),
                     )
         else:
             if name is None:

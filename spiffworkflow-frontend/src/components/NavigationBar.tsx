@@ -24,6 +24,7 @@ import UserService from '../services/UserService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import { UnauthenticatedError } from '../services/HttpService';
 
 // for ref: https://react-bootstrap.github.io/components/navbar/
 export default function NavigationBar() {
@@ -39,6 +40,11 @@ export default function NavigationBar() {
   const [activeKey, setActiveKey] = useState<string>('');
 
   const { targetUris } = useUriListForPermissions();
+
+  // App.jsx forces login (which redirects to keycloak) so we should never get here if we're not logged in.
+  if (!UserService.isLoggedIn()) {
+    throw new UnauthenticatedError('You must be authenticated to do this.');
+  }
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.authenticationListPath]: ['GET'],
     [targetUris.messageInstanceListPath]: ['GET'],
@@ -75,7 +81,7 @@ export default function NavigationBar() {
       return (
         <>
           <HeaderGlobalAction className="username-header-text">
-            {UserService.getUsername()}
+            {UserService.getPreferredUsername()}
           </HeaderGlobalAction>
           <HeaderGlobalAction
             aria-label="Logout"
@@ -135,6 +141,9 @@ export default function NavigationBar() {
   };
 
   const headerMenuItems = () => {
+    if (!UserService.isLoggedIn()) {
+      return null;
+    }
     return (
       <>
         <HeaderMenuItem href="/" isCurrentPage={isActivePage('/')}>

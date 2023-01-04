@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Table } from '@carbon/react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Notification } from '../components/Notification';
 import PaginationForTable from '../components/PaginationForTable';
 import {
   getPageInfoFromSearchParams,
@@ -51,20 +52,19 @@ export default function MyTasks() {
   const processInstanceRunResultTag = () => {
     if (processInstance) {
       return (
-        <div className="alert alert-success" role="alert">
-          <p>
-            Process Instance {processInstance.id} kicked off (
-            <Link
-              to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
-                processInstance.process_model_identifier
-              )}/${processInstance.id}`}
-              data-qa="process-instance-show-link"
-            >
-              view
-            </Link>
-            ).
-          </p>
-        </div>
+        <Notification
+          title={`Process Instance ${processInstance.id} kicked off`}
+          onClose={() => setProcessInstance(null)}
+        >
+          <Link
+            to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
+              processInstance.process_model_identifier
+            )}/${processInstance.id}`}
+            data-qa="process-instance-show-link"
+          >
+            view
+          </Link>
+        </Notification>
       );
     }
     return null;

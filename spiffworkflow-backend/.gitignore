@@ -1,7 +1,7 @@
 .mypy_cache/
 /.idea/
 /.coverage
-/.coverage.*
+.coverage.*
 /.nox/
 /.python-version
 /.pytype/

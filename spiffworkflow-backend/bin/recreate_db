@@ -61,3 +61,7 @@ for task in $tasks; do
 done
 
 SPIFFWORKFLOW_BACKEND_ENV=testing FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
+if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(development|testing)$' <<< "$SPIFFWORKFLOW_BACKEND_ENV"; then
+  mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_$SPIFFWORKFLOW_BACKEND_ENV"
+  FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
+fi

@@ -45,7 +45,7 @@ export default function ProcessInstanceLogList() {
       const rowToUse = row as any;
       return (
         <tr key={rowToUse.id}>
-          <td>{rowToUse.id}</td>
+          <td data-qa="paginated-entity-id">{rowToUse.id}</td>
           <td>{rowToUse.message}</td>
           <td>{rowToUse.bpmn_task_name}</td>
           {isDetailedView && (
@@ -114,6 +114,7 @@ export default function ProcessInstanceLogList() {
           <TabList aria-label="List of tabs">
             <Tab
               title="Only show a subset of the logs, and show fewer columns"
+              data-qa="process-instance-log-simple"
               onClick={() => {
                 searchParams.set('detailed', 'false');
                 setSearchParams(searchParams);
@@ -123,6 +124,7 @@ export default function ProcessInstanceLogList() {
             </Tab>
             <Tab
               title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
+              data-qa="process-instance-log-detailed"
               onClick={() => {
                 searchParams.set('detailed', 'true');
                 setSearchParams(searchParams);

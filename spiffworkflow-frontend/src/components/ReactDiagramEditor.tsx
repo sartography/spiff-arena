@@ -52,22 +52,25 @@ import TouchModule from 'diagram-js/lib/navigation/touch';
 // @ts-expect-error TS(7016) FIXME
 import ZoomScrollModule from 'diagram-js/lib/navigation/zoomscroll';
 
+import { useNavigate } from 'react-router-dom';
+
 import { Can } from '@casl/react';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
-import { makeid } from '../helpers';
+import { getBpmnProcessIdentifiers, makeid } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck } from '../interfaces';
+import { PermissionsToCheck, ProcessInstanceTask } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 type OwnProps = {
   processModelId: string;
   diagramType: string;
-  readyOrWaitingBpmnTaskIds?: string[] | null;
-  completedTasksBpmnIds?: string[] | null;
+  readyOrWaitingProcessInstanceTasks?: ProcessInstanceTask[] | null;
+  completedProcessInstanceTasks?: ProcessInstanceTask[] | null;
   saveDiagram?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
+  isPrimaryFile?: boolean;
   onSetPrimaryFile?: (..._args: any[]) => any;
   diagramXML?: string | null;
   fileName?: string;
@@ -88,10 +91,11 @@ type OwnProps = {
 export default function ReactDiagramEditor({
   processModelId,
   diagramType,
-  readyOrWaitingBpmnTaskIds,
-  completedTasksBpmnIds,
+  readyOrWaitingProcessInstanceTasks,
+  completedProcessInstanceTasks,
   saveDiagram,
   onDeleteFile,
+  isPrimaryFile,
   onSetPrimaryFile,
   diagramXML,
   fileName,
@@ -119,6 +123,7 @@ export default function ReactDiagramEditor({
     [targetUris.processModelFileShowPath]: ['POST', 'GET', 'PUT', 'DELETE'],
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (diagramModelerState) {
@@ -227,7 +232,11 @@ export default function ReactDiagramEditor({
 
     function handleElementClick(event: any) {
       if (onElementClick) {
-        onElementClick(event.element);
+        const canvas = diagramModeler.get('canvas');
+        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+          canvas.getRootElement()
+        );
+        onElementClick(event.element, bpmnProcessIdentifiers);
       }
     }
 
@@ -350,12 +359,19 @@ export default function ReactDiagramEditor({
 
     function highlightBpmnIoElement(
       canvas: any,
-      taskBpmnId: string,
-      bpmnIoClassName: string
+      processInstanceTask: ProcessInstanceTask,
+      bpmnIoClassName: string,
+      bpmnProcessIdentifiers: string[]
     ) {
-      if (checkTaskCanBeHighlighted(taskBpmnId)) {
+      if (checkTaskCanBeHighlighted(processInstanceTask.name)) {
         try {
-          canvas.addMarker(taskBpmnId, bpmnIoClassName);
+          if (
+            bpmnProcessIdentifiers.includes(
+              processInstanceTask.process_identifier
+            )
+          ) {
+            canvas.addMarker(processInstanceTask.name, bpmnIoClassName);
+          }
         } catch (bpmnIoError: any) {
           // the task list also contains task for processes called from call activities which will
           // not exist in this diagram so just ignore them for now.
@@ -394,21 +410,29 @@ export default function ReactDiagramEditor({
       // highlighting a field
       // Option 3 at:
       //  https://github.com/bpmn-io/bpmn-js-examples/tree/master/colors
-      if (readyOrWaitingBpmnTaskIds) {
-        readyOrWaitingBpmnTaskIds.forEach((readyOrWaitingBpmnTaskId) => {
+      if (readyOrWaitingProcessInstanceTasks) {
+        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+          canvas.getRootElement()
+        );
+        readyOrWaitingProcessInstanceTasks.forEach((readyOrWaitingBpmnTask) => {
           highlightBpmnIoElement(
             canvas,
-            readyOrWaitingBpmnTaskId,
-            'active-task-highlight'
+            readyOrWaitingBpmnTask,
+            'active-task-highlight',
+            bpmnProcessIdentifiers
           );
         });
       }
-      if (completedTasksBpmnIds) {
-        completedTasksBpmnIds.forEach((completedTaskBpmnId) => {
+      if (completedProcessInstanceTasks) {
+        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+          canvas.getRootElement()
+        );
+        completedProcessInstanceTasks.forEach((completedTask) => {
           highlightBpmnIoElement(
             canvas,
-            completedTaskBpmnId,
-            'completed-task-highlight'
+            completedTask,
+            'completed-task-highlight',
+            bpmnProcessIdentifiers
           );
         });
       }
@@ -484,8 +508,8 @@ export default function ReactDiagramEditor({
     diagramType,
     diagramXML,
     diagramXMLString,
-    readyOrWaitingBpmnTaskIds,
-    completedTasksBpmnIds,
+    readyOrWaitingProcessInstanceTasks,
+    completedProcessInstanceTasks,
     fileName,
     performingXmlUpdates,
     processModelId,
@@ -533,6 +557,8 @@ export default function ReactDiagramEditor({
       });
   };
 
+  const canViewXml = fileName !== undefined;
+
   const userActionOptions = () => {
     if (diagramType !== 'readonly') {
       return (
@@ -549,7 +575,7 @@ export default function ReactDiagramEditor({
             a={targetUris.processModelFileShowPath}
             ability={ability}
           >
-            {fileName && (
+            {fileName && !isPrimaryFile && (
               <ButtonWithConfirmation
                 description={`Delete file ${fileName}?`}
                 onConfirmation={handleDelete}
@@ -570,6 +596,23 @@ export default function ReactDiagramEditor({
             ability={ability}
           >
             <Button onClick={downloadXmlFile}>Download</Button>
+          </Can>
+          <Can
+            I="GET"
+            a={targetUris.processModelFileShowPath}
+            ability={ability}
+          >
+            {canViewXml && (
+              <Button
+                onClick={() => {
+                  navigate(
+                    `/admin/process-models/${processModelId}/form/${fileName}`
+                  );
+                }}
+              >
+                View XML
+              </Button>
+            )}
           </Can>
         </>
       );
