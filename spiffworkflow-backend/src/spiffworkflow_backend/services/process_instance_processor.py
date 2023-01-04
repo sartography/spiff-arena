@@ -157,6 +157,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "_strptime": _strptime,
             "enumerate": enumerate,
             "list": list,
+            "map": map,
         }
 
         # This will overwrite the standard builtins
