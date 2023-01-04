@@ -10,6 +10,7 @@ from typing import Any
 import marshmallow
 from marshmallow import Schema
 from marshmallow.decorators import post_load
+from spiffworkflow_backend.interfaces import ProcessGroupLite
 
 from spiffworkflow_backend.models.file import File
 
@@ -37,7 +38,7 @@ class ProcessModelInfo:
     files: list[File] | None = field(default_factory=list[File])
     fault_or_suspend_on_exception: str = NotificationType.fault.value
     exception_notification_addresses: list[str] = field(default_factory=list)
-    parent_groups: list[dict] | None = None
+    parent_groups: list[ProcessGroupLite] | None = None
     metadata_extraction_paths: list[dict[str, str]] | None = None
 
     def __post_init__(self) -> None:

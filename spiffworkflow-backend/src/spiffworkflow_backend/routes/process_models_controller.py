@@ -15,6 +15,7 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
+from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -172,6 +173,7 @@ def process_model_list(
     process_group_identifier: Optional[str] = None,
     recursive: Optional[bool] = False,
     filter_runnable_by_user: Optional[bool] = False,
+    include_parent_groups: Optional[bool] = False,
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
@@ -181,22 +183,29 @@ def process_model_list(
         recursive=recursive,
         filter_runnable_by_user=filter_runnable_by_user,
     )
-    batch = ProcessModelService().get_batch(
+    process_models_to_return = ProcessModelService().get_batch(
         process_models, page=page, per_page=per_page
     )
+
+    if include_parent_groups:
+        process_group_cache = IdToProcessGroupMapping({})
+        for process_model in process_models_to_return:
+            parent_group_lites_with_cache = ProcessModelService.get_parent_group_array_and_cache_it(process_model.id, process_group_cache)
+            process_model.parent_groups = parent_group_lites_with_cache['process_groups']
+
     pages = len(process_models) // per_page
     remainder = len(process_models) % per_page
     if remainder > 0:
         pages += 1
     response_json = {
-        "results": ProcessModelInfoSchema(many=True).dump(batch),
+        "results": process_models_to_return,
         "pagination": {
-            "count": len(batch),
+            "count": len(process_models_to_return),
             "total": len(process_models),
             "pages": pages,
         },
     }
-    return Response(json.dumps(response_json), status=200, mimetype="application/json")
+    return make_response(jsonify(response_json), 200)
 
 
 def process_model_file_update(
