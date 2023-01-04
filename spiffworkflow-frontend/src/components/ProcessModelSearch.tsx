@@ -24,17 +24,21 @@ export default function ProcessModelSearch({
         .map((parentGroup: ProcessGroupLite) => {
           return parentGroup.display_name;
         })
-        .join(' ');
+        .join(' / ');
     }
     return '';
+  };
+
+  const getFullProcessModelLabel = (processModel: ProcessModel) => {
+    return `${processModel.id} (${getParentGroupsDisplayName(processModel)} ${
+      processModel.display_name
+    })`;
   };
 
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
     const { inputValue } = options;
-    return `${processModel.id} (${getParentGroupsDisplayName(processModel)} ${
-      processModel.display_name
-    })`.includes(inputValue);
+    return getFullProcessModelLabel(processModel).includes(inputValue);
   };
   return (
     <ComboBox
@@ -44,10 +48,7 @@ export default function ProcessModelSearch({
       items={processModels}
       itemToString={(processModel: ProcessModel) => {
         if (processModel) {
-          return `${processModel.id} (${truncateString(
-            processModel.display_name,
-            75
-          )})`;
+          return getFullProcessModelLabel(processModel);
         }
         return null;
       }}

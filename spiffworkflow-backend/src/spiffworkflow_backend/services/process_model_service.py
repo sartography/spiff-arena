@@ -1,5 +1,6 @@
 """Process_model_service."""
 import json
+from typing import TypedDict
 import os
 import shutil
 from glob import glob
@@ -13,6 +14,7 @@ from flask_bpmn.api.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
+from spiffworkflow_backend.interfaces import ProcessGroupLite, ProcessGroupLitesWithCache
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -237,21 +239,32 @@ class ProcessModelService(FileSystemService):
         return process_models
 
     @classmethod
-    def get_parent_group_array(cls, process_identifier: str) -> list[dict]:
+    def get_parent_group_array_and_cache_it(cls, process_identifier: str, process_group_cache: dict[str, ProcessGroup]) -> ProcessGroupLitesWithCache:
         """Get_parent_group_array."""
         full_group_id_path = None
-        parent_group_array = []
+        parent_group_array: list[ProcessGroupLite] = []
         for process_group_id_segment in process_identifier.split("/")[0:-1]:
             if full_group_id_path is None:
                 full_group_id_path = process_group_id_segment
             else:
                 full_group_id_path = os.path.join(full_group_id_path, process_group_id_segment)  # type: ignore
-            parent_group = ProcessModelService.get_process_group(full_group_id_path)
+            parent_group = process_group_cache.get(full_group_id_path, None)
+            if parent_group is None:
+                parent_group = ProcessModelService.get_process_group(full_group_id_path)
+
             if parent_group:
+                if full_group_id_path not in process_group_cache:
+                    process_group_cache[full_group_id_path] = parent_group
                 parent_group_array.append(
                     {"id": parent_group.id, "display_name": parent_group.display_name}
                 )
-        return parent_group_array
+        return {'cache': process_group_cache, 'process_groups': parent_group_array}
+
+    @classmethod
+    def get_parent_group_array(cls, process_identifier: str) -> list[ProcessGroupLite]:
+        """Get_parent_group_array."""
+        parent_group_lites_with_cache = cls.get_parent_group_array_and_cache_it(process_identifier, {})
+        return parent_group_lites_with_cache['process_groups']
 
     @classmethod
     def get_process_groups(
