@@ -42,7 +42,7 @@ class DeleteProcessInstancesWithCriteria(Script):
                 )
             )
 
-        results = ProcessInstanceModel.query.filter(or_(*delete_criteria)).all()
+        results = ProcessInstanceModel.query.filter(or_(*delete_criteria)).limit(100).all()
         rows_affected = len(results)
 
         if rows_affected > 0:
