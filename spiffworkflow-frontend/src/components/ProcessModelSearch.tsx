@@ -2,7 +2,6 @@ import {
   ComboBox,
   // @ts-ignore
 } from '@carbon/react';
-import { truncateString } from '../helpers';
 import { ProcessGroupLite, ProcessModel } from '../interfaces';
 
 type OwnProps = {

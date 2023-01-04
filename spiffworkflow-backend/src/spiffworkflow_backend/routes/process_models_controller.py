@@ -15,8 +15,8 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
-from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 
+from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import (
@@ -190,8 +190,14 @@ def process_model_list(
     if include_parent_groups:
         process_group_cache = IdToProcessGroupMapping({})
         for process_model in process_models_to_return:
-            parent_group_lites_with_cache = ProcessModelService.get_parent_group_array_and_cache_it(process_model.id, process_group_cache)
-            process_model.parent_groups = parent_group_lites_with_cache['process_groups']
+            parent_group_lites_with_cache = (
+                ProcessModelService.get_parent_group_array_and_cache_it(
+                    process_model.id, process_group_cache
+                )
+            )
+            process_model.parent_groups = parent_group_lites_with_cache[
+                "process_groups"
+            ]
 
     pages = len(process_models) // per_page
     remainder = len(process_models) % per_page
