@@ -43,8 +43,8 @@ class Task:
     FIELD_TYPE_EMAIL = "email"  # email: Email address
     FIELD_TYPE_URL = "url"  # url: Website address
 
-    FIELD_PROP_AUTO_COMPLETE_MAX = (
-        "autocomplete_num"  # Not used directly, passed in from the front end.
+    FIELD_PROP_AUTO_COMPLETE_MAX = (  # Not used directly, passed in from the front end.
+        "autocomplete_num"
     )
 
     # Required field
@@ -77,8 +77,8 @@ class Task:
 
     # File specific field properties
     FIELD_PROP_DOC_CODE = "doc_code"  # to associate a file upload field with a doc code
-    FIELD_PROP_FILE_DATA = (
-        "file_data"  # to associate a bit of data with a specific file upload file.
+    FIELD_PROP_FILE_DATA = (  # to associate a bit of data with a specific file upload file.
+        "file_data"
     )
 
     # Additional properties
@@ -108,7 +108,7 @@ class Task:
         multi_instance_type: Union[MultiInstanceType, None] = None,
         multi_instance_count: str = "",
         multi_instance_index: str = "",
-        process_name: str = "",
+        process_identifier: str = "",
         properties: Union[dict, None] = None,
         process_instance_id: Union[int, None] = None,
         process_instance_status: Union[str, None] = None,
@@ -118,6 +118,8 @@ class Task:
         form_schema: Union[str, None] = None,
         form_ui_schema: Union[str, None] = None,
         parent: Optional[str] = None,
+        event_definition: Union[dict[str, Any], None] = None,
+        call_activity_process_identifier: Optional[str] = None,
     ):
         """__init__."""
         self.id = id
@@ -129,6 +131,8 @@ class Task:
         self.documentation = documentation
         self.lane = lane
         self.parent = parent
+        self.event_definition = event_definition
+        self.call_activity_process_identifier = call_activity_process_identifier
 
         self.data = data
         if self.data is None:
@@ -151,7 +155,7 @@ class Task:
         self.multi_instance_index = (
             multi_instance_index  # And the index of the currently repeating task.
         )
-        self.process_name = process_name
+        self.process_identifier = process_identifier
 
         self.properties = properties  # Arbitrary extension properties from BPMN editor.
         if self.properties is None:
@@ -177,7 +181,7 @@ class Task:
             "multi_instance_type": multi_instance_type,
             "multi_instance_count": self.multi_instance_count,
             "multi_instance_index": self.multi_instance_index,
-            "process_name": self.process_name,
+            "process_identifier": self.process_identifier,
             "properties": self.properties,
             "process_instance_id": self.process_instance_id,
             "process_instance_status": self.process_instance_status,
@@ -187,6 +191,8 @@ class Task:
             "form_schema": self.form_schema,
             "form_ui_schema": self.form_ui_schema,
             "parent": self.parent,
+            "event_definition": self.event_definition,
+            "call_activity_process_identifier": self.call_activity_process_identifier,
         }
 
     @classmethod
@@ -282,18 +288,19 @@ class TaskSchema(Schema):
             "multi_instance_type",
             "multi_instance_count",
             "multi_instance_index",
-            "process_name",
+            "process_identifier",
             "properties",
             "process_instance_id",
             "form_schema",
             "form_ui_schema",
+            "event_definition",
         ]
 
     multi_instance_type = EnumField(MultiInstanceType)
     documentation = marshmallow.fields.String(required=False, allow_none=True)
     # form = marshmallow.fields.Nested(FormSchema, required=False, allow_none=True)
     title = marshmallow.fields.String(required=False, allow_none=True)
-    process_name = marshmallow.fields.String(required=False, allow_none=True)
+    process_identifier = marshmallow.fields.String(required=False, allow_none=True)
     lane = marshmallow.fields.String(required=False, allow_none=True)
 
     @marshmallow.post_load

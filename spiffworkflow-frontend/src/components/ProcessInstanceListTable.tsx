@@ -40,6 +40,7 @@ import {
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
+  setErrorMessageSafely,
 } from '../helpers';
 
 import PaginationForTable from './PaginationForTable';
@@ -62,6 +63,7 @@ import {
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
+import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
 import { FormatProcessModelDisplayName } from './MiniComponents';
 import { Notification } from './Notification';
@@ -79,6 +81,8 @@ type OwnProps = {
   textToShowIfEmpty?: string;
   paginationClassName?: string;
   autoReload?: boolean;
+  additionalParams?: string;
+  variant?: string;
 };
 
 interface dateParameters {
@@ -90,12 +94,18 @@ export default function ProcessInstanceListTable({
   processModelFullIdentifier,
   paginationQueryParamPrefix,
   perPageOptions,
+  additionalParams,
   showReports = true,
   reportIdentifier,
   textToShowIfEmpty,
   paginationClassName,
   autoReload = false,
+  variant = 'for-me',
 }: OwnProps) {
+  let apiPath = '/process-instances/for-me';
+  if (variant === 'all') {
+    apiPath = '/process-instances';
+  }
   const params = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -122,7 +132,12 @@ export default function ProcessInstanceListTable({
   const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
 
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const [errorObject, setErrorObject] = (useContext as any)(ErrorContext);
+
+  const processInstancePathPrefix =
+    variant === 'all'
+      ? '/admin/process-instances/all'
+      : '/admin/process-instances/for-me';
 
   const [processStatusAllOptions, setProcessStatusAllOptions] = useState<any[]>(
     []
@@ -253,8 +268,12 @@ export default function ProcessInstanceListTable({
         }
       );
 
+      if (additionalParams) {
+        queryParamString += `&${additionalParams}`;
+      }
+
       HttpService.makeCallToBackend({
-        path: `/process-instances?${queryParamString}`,
+        path: `${apiPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
       });
     }
@@ -300,8 +319,13 @@ export default function ProcessInstanceListTable({
 
     checkFiltersAndRun();
     if (autoReload) {
-      refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, checkFiltersAndRun);
+      return refreshAtInterval(
+        REFRESH_INTERVAL,
+        REFRESH_TIMEOUT,
+        checkFiltersAndRun
+      );
     }
+    return undefined;
   }, [
     autoReload,
     searchParams,
@@ -315,6 +339,8 @@ export default function ProcessInstanceListTable({
     processModelFullIdentifier,
     perPageOptions,
     reportIdentifier,
+    additionalParams,
+    apiPath,
   ]);
 
   // This sets the filter data using the saved reports returned from the initial instance_list query.
@@ -404,8 +430,11 @@ export default function ProcessInstanceListTable({
     }
   };
 
-  // TODO: after factoring this out page hangs when invalid date ranges and applying the filter
-  const calculateStartAndEndSeconds = () => {
+  // jasquat/burnettk - 2022-12-28 do not check the validity of the dates when rendering components to avoid the page being
+  // re-rendered while the user is still typing. NOTE that we also prevented rerendering
+  // with the use of the setErrorMessageSafely function. we are not sure why the context not
+  // changing still causes things to rerender when we call its setter without our extra check.
+  const calculateStartAndEndSeconds = (validate: boolean = true) => {
     const startFromSeconds = convertDateAndTimeStringsToSeconds(
       startFromDate,
       startFromTime || '00:00:00'
@@ -423,29 +452,25 @@ export default function ProcessInstanceListTable({
       endToTime || '00:00:00'
     );
     let valid = true;
-    if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
-      setErrorMessage({
-        message: '"Start date from" cannot be after "start date to"',
-      });
-      valid = false;
-    }
-    if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
-      setErrorMessage({
-        message: '"End date from" cannot be after "end date to"',
-      });
-      valid = false;
-    }
-    if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
-      setErrorMessage({
-        message: '"Start date from" cannot be after "end date from"',
-      });
-      valid = false;
-    }
-    if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
-      setErrorMessage({
-        message: '"Start date to" cannot be after "end date to"',
-      });
-      valid = false;
+
+    if (validate) {
+      let message = '';
+      if (isTrueComparison(startFromSeconds, '>', startToSeconds)) {
+        message = '"Start date from" cannot be after "start date to"';
+      }
+      if (isTrueComparison(endFromSeconds, '>', endToSeconds)) {
+        message = '"End date from" cannot be after "end date to"';
+      }
+      if (isTrueComparison(startFromSeconds, '>', endFromSeconds)) {
+        message = '"Start date from" cannot be after "end date from"';
+      }
+      if (isTrueComparison(startToSeconds, '>', endToSeconds)) {
+        message = '"Start date to" cannot be after "end date to"';
+      }
+      if (message !== '') {
+        valid = false;
+        setErrorMessageSafely(message, errorObject, setErrorObject);
+      }
     }
 
     return {
@@ -502,9 +527,9 @@ export default function ProcessInstanceListTable({
       queryParamString += `&report_id=${processInstanceReportSelection.id}`;
     }
 
-    setErrorMessage(null);
+    setErrorObject(null);
     setProcessInstanceReportJustSaved(null);
-    navigate(`/admin/process-instances?${queryParamString}`);
+    navigate(`${processInstancePathPrefix}?${queryParamString}`);
   };
 
   const dateComponent = (
@@ -601,9 +626,9 @@ export default function ProcessInstanceListTable({
       queryParamString = `?report_id=${selectedReport.id}`;
     }
 
-    setErrorMessage(null);
+    setErrorObject(null);
     setProcessInstanceReportJustSaved(mode || null);
-    navigate(`/admin/process-instances${queryParamString}`);
+    navigate(`${processInstancePathPrefix}${queryParamString}`);
   };
 
   const reportColumns = () => {
@@ -633,7 +658,7 @@ export default function ProcessInstanceListTable({
       startToSeconds,
       endFromSeconds,
       endToSeconds,
-    } = calculateStartAndEndSeconds();
+    } = calculateStartAndEndSeconds(false);
 
     if (!valid || !reportMetadata) {
       return null;
@@ -655,6 +680,19 @@ export default function ProcessInstanceListTable({
         endToSeconds={endToSeconds}
       />
     );
+  };
+
+  const onDeleteReportSuccess = () => {
+    processInstanceReportDidChange({ selectedItem: null });
+  };
+
+  const deleteReportComponent = () => {
+    return processInstanceReportSelection ? (
+      <ProcessInstanceListDeleteReport
+        onSuccess={onDeleteReportSuccess}
+        processInstanceReportSelection={processInstanceReportSelection}
+      />
+    ) : null;
   };
 
   const removeColumn = (reportColumn: ReportColumn) => {
@@ -736,7 +774,6 @@ export default function ProcessInstanceListTable({
       setReportMetadata(reportMetadataCopy);
       setReportColumnToOperateOn(null);
       setShowReportColumnForm(false);
-      setShowReportColumnForm(false);
     }
   };
 
@@ -757,9 +794,12 @@ export default function ProcessInstanceListTable({
   };
 
   const updateReportColumn = (event: any) => {
-    const reportColumnForEditing = reportColumnToReportColumnForEditing(
-      event.selectedItem
-    );
+    let reportColumnForEditing = null;
+    if (event.selectedItem) {
+      reportColumnForEditing = reportColumnToReportColumnForEditing(
+        event.selectedItem
+      );
+    }
     setReportColumnToOperateOn(reportColumnForEditing);
   };
 
@@ -789,7 +829,29 @@ export default function ProcessInstanceListTable({
     if (reportColumnFormMode === '') {
       return null;
     }
-    const formElements = [
+    const formElements = [];
+    if (reportColumnFormMode === 'new') {
+      formElements.push(
+        <ComboBox
+          onChange={updateReportColumn}
+          id="report-column-selection"
+          data-qa="report-column-selection"
+          data-modal-primary-focus
+          items={availableReportColumns}
+          itemToString={(reportColumn: ReportColumn) => {
+            if (reportColumn) {
+              return reportColumn.accessor;
+            }
+            return null;
+          }}
+          shouldFilterItem={shouldFilterReportColumn}
+          placeholder="Choose a column to show"
+          titleText="Column"
+          selectedItem={reportColumnToOperateOn}
+        />
+      );
+    }
+    formElements.push([
       <TextInput
         id="report-column-display-name"
         name="report-column-display-name"
@@ -806,7 +868,7 @@ export default function ProcessInstanceListTable({
           }
         }}
       />,
-    ];
+    ]);
     if (reportColumnToOperateOn && reportColumnToOperateOn.filterable) {
       formElements.push(
         <TextInput
@@ -822,27 +884,9 @@ export default function ProcessInstanceListTable({
         />
       );
     }
-    if (reportColumnFormMode === 'new') {
-      formElements.push(
-        <ComboBox
-          onChange={updateReportColumn}
-          className="combo-box-in-modal"
-          id="report-column-selection"
-          data-qa="report-column-selection"
-          data-modal-primary-focus
-          items={availableReportColumns}
-          itemToString={(reportColumn: ReportColumn) => {
-            if (reportColumn) {
-              return reportColumn.accessor;
-            }
-            return null;
-          }}
-          shouldFilterItem={shouldFilterReportColumn}
-          placeholder="Choose a report column"
-          titleText="Report Column"
-        />
-      );
-    }
+    formElements.push(
+      <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
+    );
     const modalHeading =
       reportColumnFormMode === 'new'
         ? 'Add Column'
@@ -888,7 +932,7 @@ export default function ProcessInstanceListTable({
               kind="ghost"
               size="sm"
               className={`button-tag-icon ${tagTypeClass}`}
-              title={`Edit ${reportColumnForEditing.accessor}`}
+              title={`Edit ${reportColumnForEditing.accessor} column`}
               onClick={() => {
                 setReportColumnToOperateOn(reportColumnForEditing);
                 setShowReportColumnForm(true);
@@ -916,7 +960,7 @@ export default function ProcessInstanceListTable({
           <Button
             data-qa="add-column-button"
             renderIcon={AddAlt}
-            iconDescription="Filter Options"
+            iconDescription="Column options"
             className="with-tiny-top-margin"
             kind="ghost"
             hasIconOnly
@@ -1038,6 +1082,7 @@ export default function ProcessInstanceListTable({
           </Column>
           <Column sm={4} md={4} lg={8}>
             {saveAsReportComponent()}
+            {deleteReportComponent()}
           </Column>
         </Grid>
       </>
@@ -1069,10 +1114,10 @@ export default function ProcessInstanceListTable({
       return (
         <Link
           data-qa="process-instance-show-link"
-          to={`/admin/process-instances/${modifiedProcessModelId}/${id}`}
+          to={`${processInstancePathPrefix}/${modifiedProcessModelId}/${id}`}
           title={`View process instance ${id}`}
         >
-          {id}
+          <span data-qa="paginated-entity-id">{id}</span>
         </Link>
       );
     };

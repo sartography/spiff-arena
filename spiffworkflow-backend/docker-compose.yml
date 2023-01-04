@@ -68,7 +68,7 @@ services:
       - "7000:7000"
     network_mode: host
     volumes:
-      - ${BPMN_SPEC_ABSOLUTE_DIR:-./../sample-process-models}:/app/process_models
+      - ${BPMN_SPEC_ABSOLUTE_DIR:-../../sample-process-models}:/app/process_models
       - ./log:/app/log
     healthcheck:
       test: curl localhost:7000/v1.0/status --fail
@@ -82,7 +82,7 @@ services:
     profiles:
       - debug
     volumes:
-      - ${BPMN_SPEC_ABSOLUTE_DIR:-./../sample-process-models}:/app/process_models
+      - ${BPMN_SPEC_ABSOLUTE_DIR:-../../sample-process-models}:/app/process_models
       - ./:/app
     command: /app/bin/boot_in_docker_debug_mode
 

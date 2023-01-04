@@ -1,5 +1,4 @@
 """Get the bpmn process json for a given process instance id and store it in /tmp."""
-#!/usr/bin/env python
 import os
 import sys
 
@@ -18,15 +17,17 @@ def main(process_instance_id: str):
             id=process_instance_id
         ).first()
 
+        file_path = f"/tmp/{process_instance_id}_bpmn_json.json"
         if not process_instance:
             raise Exception(
                 f"Could not find a process instance with id: {process_instance_id}"
             )
 
         with open(
-            f"/tmp/{process_instance_id}_bpmn_json.json", "w", encoding="utf-8"
+            file_path, "w", encoding="utf-8"
         ) as f:
             f.write(process_instance.bpmn_json)
+        print(f"Saved to {file_path}")
 
 
 if len(sys.argv) < 2:

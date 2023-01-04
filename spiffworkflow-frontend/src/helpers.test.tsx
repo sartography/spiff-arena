@@ -1,8 +1,18 @@
-import { convertSecondsToFormattedDateString, slugifyString } from './helpers';
+import {
+  convertSecondsToFormattedDateString,
+  slugifyString,
+  underscorizeString,
+} from './helpers';
 
 test('it can slugify a string', () => {
   expect(slugifyString('hello---world_ and then Some such-')).toEqual(
     'hello-world-and-then-some-such'
+  );
+});
+
+test('it can underscorize a string', () => {
+  expect(underscorizeString('hello---world_ and then Some such-')).toEqual(
+    'hello_world_and_then_some_such'
   );
 });
 

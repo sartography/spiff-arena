@@ -18,11 +18,11 @@ from werkzeug.exceptions import NotFound
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.config import setup_config
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_blueprint
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
     openid_blueprint,
 )
-from spiffworkflow_backend.routes.process_api_blueprint import process_api_blueprint
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -93,7 +93,8 @@ def create_app() -> flask.app.Flask:
 
     if os.environ.get("FLASK_SESSION_SECRET_KEY") is None:
         raise KeyError(
-            "Cannot find the secret_key from the environment. Please set FLASK_SESSION_SECRET_KEY"
+            "Cannot find the secret_key from the environment. Please set"
+            " FLASK_SESSION_SECRET_KEY"
         )
 
     app.secret_key = os.environ.get("FLASK_SESSION_SECRET_KEY")
@@ -103,7 +104,6 @@ def create_app() -> flask.app.Flask:
     migrate.init_app(app, db)
 
     app.register_blueprint(user_blueprint)
-    app.register_blueprint(process_api_blueprint)
     app.register_blueprint(api_error_blueprint)
     app.register_blueprint(admin_blueprint, url_prefix="/admin")
     app.register_blueprint(openid_blueprint, url_prefix="/openid")
@@ -117,7 +117,7 @@ def create_app() -> flask.app.Flask:
     ]
     CORS(app, origins=origins_re, max_age=3600)
 
-    connexion_app.add_api("api.yml", base_path="/v1.0")
+    connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)
 
     mail = Mail(app)
     app.config["MAIL_APP"] = mail

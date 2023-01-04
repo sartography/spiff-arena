@@ -36,11 +36,11 @@ export default function TaskShow() {
   const params = useParams();
   const navigate = useNavigate();
 
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.processInstanceTaskListPath]: ['GET'],
+    [targetUris.processInstanceTaskListDataPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -50,7 +50,7 @@ export default function TaskShow() {
     if (permissionsLoaded) {
       const processResult = (result: any) => {
         setTask(result);
-        if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
+        if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
           HttpService.makeCallToBackend({
             path: `/task-data/${modifyProcessIdentifierForPathParam(
               result.process_model_identifier
@@ -64,30 +64,30 @@ export default function TaskShow() {
         path: `/tasks/${params.process_instance_id}/${params.task_id}`,
         successCallback: processResult,
         // This causes the page to continuously reload
-        // failureCallback: setErrorMessage,
+        // failureCallback: setErrorObject,
       });
     }
   }, [params, permissionsLoaded, ability, targetUris]);
 
   const processSubmitResult = (result: any) => {
-    setErrorMessage(null);
+    setErrorObject(null);
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
       navigate(`/tasks/${result.process_instance_id}/${result.id}`);
     } else {
-      setErrorMessage(`Received unexpected error: ${result.message}`);
+      setErrorObject(`Received unexpected error: ${result.message}`);
     }
   };
 
   const handleFormSubmit = (event: any) => {
-    setErrorMessage(null);
+    setErrorObject(null);
     const dataToSubmit = event.formData;
     delete dataToSubmit.isManualTask;
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
       successCallback: processSubmitResult,
-      failureCallback: setErrorMessage,
+      failureCallback: setErrorObject,
       httpMethod: 'PUT',
       postBody: dataToSubmit,
     });
@@ -171,7 +171,6 @@ export default function TaskShow() {
     } else if (taskToUse.form_ui_schema) {
       formUiSchema = JSON.parse(taskToUse.form_ui_schema);
     }
-
     if (taskToUse.state !== 'READY') {
       formUiSchema = Object.assign(formUiSchema || {}, {
         'ui:readonly': true,
@@ -184,7 +183,7 @@ export default function TaskShow() {
       reactFragmentToHideSubmitButton = <div />;
     }
 
-    if (taskToUse.type === 'Manual Task') {
+    if (taskToUse.type === 'Manual Task' && taskToUse.state === 'READY') {
       reactFragmentToHideSubmitButton = (
         <div>
           <Button type="submit">Continue</Button>

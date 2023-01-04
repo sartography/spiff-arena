@@ -145,8 +145,11 @@ class MessageService:
         if process_instance_receive is None:
             raise MessageServiceError(
                 (
-                    f"Process instance cannot be found for queued message: {message_instance_receive.id}."
-                    f"Tried with id {message_instance_receive.process_instance_id}",
+                    (
+                        "Process instance cannot be found for queued message:"
+                        f" {message_instance_receive.id}.Tried with id"
+                        f" {message_instance_receive.process_instance_id}"
+                    ),
                 )
             )
 
@@ -182,7 +185,6 @@ class MessageService:
             )
 
         for message_instance_receive in message_instances_receive:
-
             # sqlalchemy supports select / where statements like active record apparantly
             # https://docs.sqlalchemy.org/en/14/core/tutorial.html#conjunctions
             message_correlation_select = (

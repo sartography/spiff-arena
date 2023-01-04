@@ -27,8 +27,6 @@ CONNECTOR_PROXY_URL = environ.get(
     "CONNECTOR_PROXY_URL", default="http://localhost:7004"
 )
 
-GIT_COMMIT_ON_SAVE = environ.get("GIT_COMMIT_ON_SAVE", default="false") == "true"
-
 # Open ID server
 OPEN_ID_SERVER_URL = environ.get(
     "OPEN_ID_SERVER_URL", default="http://localhost:7002/realms/spiffworkflow"
@@ -63,7 +61,10 @@ SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
 
 # When a user clicks on the `Publish` button, this is the default branch this server merges into.
 # I.e., dev server could have `staging` here. Staging server might have `production` here.
-GIT_MERGE_BRANCH = environ.get("GIT_MERGE_BRANCH", default="staging")
+GIT_BRANCH_TO_PUBLISH_TO = environ.get("GIT_BRANCH_TO_PUBLISH_TO")
+GIT_BRANCH = environ.get("GIT_BRANCH")
+GIT_CLONE_URL_FOR_PUBLISHING = environ.get("GIT_CLONE_URL")
+GIT_COMMIT_ON_SAVE = environ.get("GIT_COMMIT_ON_SAVE", default="false") == "true"
 
 # Datbase Configuration
 SPIFF_DATABASE_TYPE = environ.get(

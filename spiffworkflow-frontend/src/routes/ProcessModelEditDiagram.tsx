@@ -5,12 +5,21 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-// @ts-ignore
-import { Button, Modal, Stack, Content } from '@carbon/react';
+import {
+  Button,
+  Modal,
+  Content,
+  Tabs,
+  TabList,
+  Tab,
+  TabPanels,
+  TabPanel,
+  // @ts-ignore
+} from '@carbon/react';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 
-import Editor from '@monaco-editor/react';
+import Editor, { DiffEditor } from '@monaco-editor/react';
 
 import MDEditor from '@uiw/react-md-editor';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
@@ -25,6 +34,7 @@ import {
   ProcessReference,
 } from '../interfaces';
 import ProcessSearch from '../components/ProcessSearch';
+import { Notification } from '../components/Notification';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -46,6 +56,8 @@ export default function ProcessModelEditDiagram() {
   const [processSearchEventBus, setProcessSearchEventBus] = useState<any>(null);
   const [processSearchElement, setProcessSearchElement] = useState<any>(null);
   const [processes, setProcesses] = useState<ProcessReference[]>([]);
+  const [displaySaveFileMessage, setDisplaySaveFileMessage] =
+    useState<boolean>(false);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -69,10 +81,10 @@ export default function ProcessModelEditDiagram() {
 
   interface ScriptUnitTestResult {
     result: boolean;
-    context: object;
-    error: string;
-    line_number: number;
-    offset: number;
+    context?: object;
+    error?: string;
+    line_number?: number;
+    offset?: number;
   }
 
   const [currentScriptUnitTest, setCurrentScriptUnitTest] =
@@ -86,7 +98,7 @@ export default function ProcessModelEditDiagram() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
     null
   );
@@ -147,6 +159,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const navigateToProcessModelFile = (_result: any) => {
+    setDisplaySaveFileMessage(true);
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${searchParams.get(
         'file_type'
@@ -158,7 +171,8 @@ export default function ProcessModelEditDiagram() {
   };
 
   const saveDiagram = (bpmnXML: any, fileName = params.file_name) => {
-    setErrorMessage(null);
+    setDisplaySaveFileMessage(false);
+    setErrorObject(null);
     setBpmnXmlForDiagramRendering(bpmnXML);
 
     let url = `/process-models/${modifiedProcessModelId}/files`;
@@ -184,7 +198,7 @@ export default function ProcessModelEditDiagram() {
     HttpService.makeCallToBackend({
       path: url,
       successCallback: navigateToProcessModelFile,
-      failureCallback: setErrorMessage,
+      failureCallback: setErrorObject,
       httpMethod,
       postBody: formData,
     });
@@ -397,6 +411,13 @@ export default function ProcessModelEditDiagram() {
     };
   };
 
+  const jsonEditorOptions = () => {
+    return Object.assign(generalEditorOptions(), {
+      minimap: { enabled: false },
+      folding: true,
+    });
+  };
+
   const setPreviousScriptUnitTest = () => {
     resetUnitTextResult();
     const newScriptIndex = currentScriptUnitTestIndex - 1;
@@ -457,6 +478,21 @@ export default function ProcessModelEditDiagram() {
 
   const runCurrentUnitTest = () => {
     if (currentScriptUnitTest && scriptElement) {
+      let inputJson = '';
+      let expectedJson = '';
+      try {
+        inputJson = JSON.parse(currentScriptUnitTest.inputJson.value);
+        expectedJson = JSON.parse(
+          currentScriptUnitTest.expectedOutputJson.value
+        );
+      } catch (e) {
+        setScriptUnitTestResult({
+          result: false,
+          error: 'The JSON provided contains a formatting error.',
+        });
+        return;
+      }
+
       resetUnitTextResult();
       HttpService.makeCallToBackend({
         path: `/process-models/${modifiedProcessModelId}/script-unit-tests/run`,
@@ -465,37 +501,56 @@ export default function ProcessModelEditDiagram() {
         postBody: {
           bpmn_task_identifier: (scriptElement as any).id,
           python_script: scriptText,
-          input_json: JSON.parse(currentScriptUnitTest.inputJson.value),
-          expected_output_json: JSON.parse(
-            currentScriptUnitTest.expectedOutputJson.value
-          ),
+          input_json: inputJson,
+          expected_output_json: expectedJson,
         },
       });
     }
   };
 
   const unitTestFailureElement = () => {
-    if (
-      scriptUnitTestResult &&
-      scriptUnitTestResult.result === false &&
-      !scriptUnitTestResult.line_number
-    ) {
-      let errorStringElement = null;
-      if (scriptUnitTestResult.error) {
-        errorStringElement = (
-          <span>
-            Received error when running script:{' '}
-            {JSON.stringify(scriptUnitTestResult.error)}
-          </span>
-        );
-      }
-      let errorContextElement = null;
+    if (scriptUnitTestResult && scriptUnitTestResult.result === false) {
+      let errorObject = '';
       if (scriptUnitTestResult.context) {
+        errorObject = 'Unexpected result. Please see the comparison below.';
+      } else if (scriptUnitTestResult.line_number) {
+        errorObject = `Error encountered running the script.  Please check the code around line ${scriptUnitTestResult.line_number}`;
+      } else {
+        errorObject = `Error encountered running the script. ${JSON.stringify(
+          scriptUnitTestResult.error
+        )}`;
+      }
+      let errorStringElement = <span>{errorObject}</span>;
+
+      let errorContextElement = null;
+
+      if (scriptUnitTestResult.context) {
+        errorStringElement = (
+          <span>Unexpected result. Please see the comparison below.</span>
+        );
+        let outputJson = '{}';
+        if (currentScriptUnitTest) {
+          outputJson = JSON.stringify(
+            JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
+            null,
+            '  '
+          );
+        }
+        const contextJson = JSON.stringify(
+          scriptUnitTestResult.context,
+          null,
+          '  '
+        );
         errorContextElement = (
-          <span>
-            Received unexpected output:{' '}
-            {JSON.stringify(scriptUnitTestResult.context)}
-          </span>
+          <DiffEditor
+            height={200}
+            width="auto"
+            originalLanguage="json"
+            modifiedLanguage="json"
+            options={Object.assign(jsonEditorOptions(), {})}
+            original={outputJson}
+            modified={contextJson}
+          />
         );
       }
       return (
@@ -539,19 +594,35 @@ export default function ProcessModelEditDiagram() {
           </Col>
         );
       }
+      let inputJson = currentScriptUnitTest.inputJson.value;
+      let outputJson = currentScriptUnitTest.expectedOutputJson.value;
+      try {
+        inputJson = JSON.stringify(
+          JSON.parse(currentScriptUnitTest.inputJson.value),
+          null,
+          '  '
+        );
+        outputJson = JSON.stringify(
+          JSON.parse(currentScriptUnitTest.expectedOutputJson.value),
+          null,
+          '  '
+        );
+      } catch (e) {
+        // Attemping to format the json failed -- it's invalid.
+      }
+
       return (
         <main>
           <Content>
             <Row>
               <Col xs={8}>
-                <Button variant="link" disabled style={{ fontSize: '1.5em' }}>
+                <Button variant="link" disabled>
                   Unit Test: {currentScriptUnitTest.id}
                 </Button>
               </Col>
               <Col xs={1}>
                 <Button
                   data-qa="unit-test-previous-button"
-                  style={{ fontSize: '1.5em' }}
                   onClick={setPreviousScriptUnitTest}
                   variant="link"
                   disabled={previousButtonDisable}
@@ -582,52 +653,61 @@ export default function ProcessModelEditDiagram() {
               </Col>
               <Col xs={1}>{scriptUnitTestResultBoolElement}</Col>
             </Row>
+            <Row>
+              <Col>{unitTestFailureElement()}</Col>
+            </Row>
+            <Row>
+              <Col>
+                <div>Input Json:</div>
+                <div>
+                  <Editor
+                    height={500}
+                    width="auto"
+                    defaultLanguage="json"
+                    options={Object.assign(jsonEditorOptions(), {})}
+                    value={inputJson}
+                    onChange={handleEditorScriptTestUnitInputChange}
+                  />
+                </div>
+              </Col>
+              <Col>
+                <div>Expected Output Json:</div>
+                <div>
+                  <Editor
+                    height={500}
+                    width="auto"
+                    defaultLanguage="json"
+                    options={Object.assign(jsonEditorOptions(), {})}
+                    value={outputJson}
+                    onChange={handleEditorScriptTestUnitOutputChange}
+                  />
+                </div>
+              </Col>
+            </Row>
           </Content>
-          <Stack orientation="horizontal" gap={3}>
-            {unitTestFailureElement()}
-          </Stack>
-          <Stack orientation="horizontal" gap={3}>
-            <Stack>
-              <div>Input Json:</div>
-              <div>
-                <Editor
-                  height={200}
-                  defaultLanguage="json"
-                  options={Object.assign(generalEditorOptions(), {
-                    minimap: { enabled: false },
-                  })}
-                  value={currentScriptUnitTest.inputJson.value}
-                  onChange={handleEditorScriptTestUnitInputChange}
-                />
-              </div>
-            </Stack>
-            <Stack>
-              <div>Expected Output Json:</div>
-              <div>
-                <Editor
-                  height={200}
-                  defaultLanguage="json"
-                  options={Object.assign(generalEditorOptions(), {
-                    minimap: { enabled: false },
-                  })}
-                  value={currentScriptUnitTest.expectedOutputJson.value}
-                  onChange={handleEditorScriptTestUnitOutputChange}
-                />
-              </div>
-            </Stack>
-          </Stack>
         </main>
       );
     }
     return null;
   };
-
   const scriptEditor = () => {
+    return (
+      <Editor
+        height={500}
+        width="auto"
+        options={generalEditorOptions()}
+        defaultLanguage="python"
+        value={scriptText}
+        onChange={handleEditorScriptChange}
+        onMount={handleEditorDidMount}
+      />
+    );
+  };
+  const scriptEditorAndTests = () => {
     let scriptName = '';
     if (scriptElement) {
       scriptName = (scriptElement as any).di.bpmnElement.name;
     }
-
     return (
       <Modal
         open={showScriptEditor}
@@ -637,16 +717,16 @@ export default function ProcessModelEditDiagram() {
         size="lg"
         onRequestClose={handleScriptEditorClose}
       >
-        <Editor
-          height={500}
-          width="auto"
-          options={generalEditorOptions()}
-          defaultLanguage="python"
-          value={scriptText}
-          onChange={handleEditorScriptChange}
-          onMount={handleEditorDidMount}
-        />
-        {scriptUnitTestEditorElement()}
+        <Tabs>
+          <TabList aria-label="List of tabs" activation="manual">
+            <Tab>Script Editor</Tab>
+            <Tab>Unit Tests</Tab>
+          </TabList>
+          <TabPanels>
+            <TabPanel>{scriptEditor()}</TabPanel>
+            <TabPanel>{scriptUnitTestEditorElement()}</TabPanel>
+          </TabPanels>
+        </Tabs>
       </Modal>
     );
   };
@@ -819,6 +899,7 @@ export default function ProcessModelEditDiagram() {
         processModelId={params.process_model_id || ''}
         saveDiagram={saveDiagram}
         onDeleteFile={onDeleteFile}
+        isPrimaryFile={params.file_name === processModel?.primary_file_name}
         onSetPrimaryFile={onSetPrimaryFileCallback}
         diagramXML={bpmnXmlForDiagramRendering}
         fileName={params.file_name}
@@ -834,6 +915,20 @@ export default function ProcessModelEditDiagram() {
         onSearchProcessModels={onSearchProcessModels}
       />
     );
+  };
+
+  const saveFileMessage = () => {
+    if (displaySaveFileMessage) {
+      return (
+        <Notification
+          title="File Saved: "
+          onClose={() => setDisplaySaveFileMessage(false)}
+        >
+          Changes to the file were saved.
+        </Notification>
+      );
+    }
+    return null;
   };
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
@@ -856,9 +951,10 @@ export default function ProcessModelEditDiagram() {
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h1>
+        {saveFileMessage()}
         {appropriateEditor()}
         {newFileNameBox()}
-        {scriptEditor()}
+        {scriptEditorAndTests()}
         {markdownEditor()}
         {processModelSelector()}
         <div id="diagram-container" />

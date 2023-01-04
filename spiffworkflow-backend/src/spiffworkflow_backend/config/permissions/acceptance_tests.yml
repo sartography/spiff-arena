@@ -1,13 +1,10 @@
 groups:
   admin:
-    users: [ciadmin1]
-
-  common-user:
-    users: [ciuser1]
+    users: [ciadmin1@spiffworkflow.org]
 
 permissions:
   admin:
-    groups: [admin, common-user]
+    groups: [admin]
     users: []
-    allowed_permissions: [create, read, update, delete, list, instantiate]
+    allowed_permissions: [create, read, update, delete]
     uri: /*

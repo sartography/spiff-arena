@@ -16,8 +16,9 @@ from flask_bpmn.api.api_error import ApiError
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import (
-    AuthenticationService,
+    MissingAccessTokenError,
 )
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
@@ -66,16 +67,19 @@ def verify_token(
                         user_model = get_user_from_decoded_internal_token(decoded_token)
                     except Exception as e:
                         current_app.logger.error(
-                            f"Exception in verify_token getting user from decoded internal token. {e}"
+                            "Exception in verify_token getting user from decoded"
+                            f" internal token. {e}"
                         )
             elif "iss" in decoded_token.keys():
                 try:
                     if AuthenticationService.validate_id_token(token):
                         user_info = decoded_token
-                except ApiError as ae:  # API Error is only thrown in the token is outdated.
+                except (
+                    ApiError
+                ) as ae:  # API Error is only thrown in the token is outdated.
                     # Try to refresh the token
                     user = UserService.get_user_by_service_and_service_id(
-                        "open_id", decoded_token["sub"]
+                        decoded_token["iss"], decoded_token["sub"]
                     )
                     if user:
                         refresh_token = AuthenticationService.get_refresh_token(user.id)
@@ -104,10 +108,12 @@ def verify_token(
                     ) from e
 
                 if (
-                    user_info is not None and "error" not in user_info
+                    user_info is not None
+                    and "error" not in user_info
+                    and "iss" in user_info
                 ):  # not sure what to test yet
                     user_model = (
-                        UserModel.query.filter(UserModel.service == "open_id")
+                        UserModel.query.filter(UserModel.service == user_info["iss"])
                         .filter(UserModel.service_id == user_info["sub"])
                         .first()
                     )
@@ -268,10 +274,10 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
         code, "/v1.0/login_api_return"
     )
     access_token: str = auth_token_object["access_token"]
-    assert access_token  # noqa: S101
+    if access_token is None:
+        raise MissingAccessTokenError("Cannot find the access token for the request")
+
     return access_token
-    # return redirect("localhost:7000/v1.0/ui")
-    # return {'uid': 'user_1'}
 
 
 def logout(id_token: str, redirect_url: Optional[str]) -> Response:
@@ -292,7 +298,6 @@ def get_decoded_token(token: str) -> Optional[Dict]:
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
     except Exception as e:
-        print(f"Exception in get_token_type: {e}")
         raise ApiError(
             error_code="invalid_token", message="Cannot decode token."
         ) from e
@@ -340,9 +345,5 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserMo
     )
     if user:
         return user
-    user = UserModel(
-        username=service_id,
-        service=service,
-        service_id=service_id,
-    )
+    user = UserService.create_user(service_id, service, service_id)
     return user

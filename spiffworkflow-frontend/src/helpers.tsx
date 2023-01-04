@@ -8,6 +8,7 @@ import {
   DEFAULT_PER_PAGE,
   DEFAULT_PAGE,
 } from './components/PaginationForTable';
+import { ErrorForDisplay } from './interfaces';
 
 // https://www.30secondsofcode.org/js/s/slugify
 export const slugifyString = (str: any) => {
@@ -18,6 +19,10 @@ export const slugifyString = (str: any) => {
     .replace(/[\s_-]+/g, '-')
     .replace(/^-+/g, '')
     .replace(/-+$/g, '');
+};
+
+export const underscorizeString = (inputString: string) => {
+  return slugifyString(inputString).replace(/-/g, '_');
 };
 
 export const capitalizeFirstLetter = (string: any) => {
@@ -208,5 +213,43 @@ export const refreshAtInterval = (
     () => clearInterval(intervalRef),
     timeout * 1000
   );
-  return [intervalRef, timeoutRef];
+  return () => {
+    clearInterval(intervalRef);
+    clearTimeout(timeoutRef);
+  };
+};
+
+const getChildProcesses = (bpmnElement: any) => {
+  let elements: string[] = [];
+  bpmnElement.children.forEach((c: any) => {
+    if (c.type === 'bpmn:Participant') {
+      if (c.businessObject.processRef) {
+        elements.push(c.businessObject.processRef.id);
+      }
+      elements = [...elements, ...getChildProcesses(c)];
+    } else if (c.type === 'bpmn:SubProcess') {
+      elements.push(c.id);
+    }
+  });
+  return elements;
+};
+
+export const getBpmnProcessIdentifiers = (rootBpmnElement: any) => {
+  const childProcesses = getChildProcesses(rootBpmnElement);
+  childProcesses.push(rootBpmnElement.businessObject.id);
+  return childProcesses;
+};
+
+// Setting the error message state to the same string is still considered a change
+// and re-renders the page so check the message first to avoid that.
+export const setErrorMessageSafely = (
+  newErrorMessageString: string,
+  oldErrorMessage: ErrorForDisplay,
+  errorMessageSetter: any
+) => {
+  if (oldErrorMessage && oldErrorMessage.message === newErrorMessageString) {
+    return null;
+  }
+  errorMessageSetter({ message: newErrorMessageString });
+  return null;
 };

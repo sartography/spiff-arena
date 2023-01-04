@@ -1,5 +1,12 @@
 default_group: everybody
 
+users:
+  testadmin1:
+    service: https://testing/openid/thing
+    email: testadmin1@spiffworkflow.org
+    password: admin
+    preferred_username: El administrador de la muerte
+
 groups:
   admin:
     users: [testadmin1, testadmin2]
@@ -14,7 +21,7 @@ permissions:
   admin:
     groups: [admin]
     users: []
-    allowed_permissions: [create, read, update, delete, list, instantiate]
+    allowed_permissions: [create, read, update, delete]
     uri: /*
 
   read-all:
@@ -27,29 +34,29 @@ permissions:
     groups: [everybody]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/tasks/*
+    uri: /tasks/*
 
   # TODO: all uris should really have the same structure
   finance-admin-group:
     groups: ["Finance Team"]
     users: [testuser4]
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/finance/*
+    uri: /process-groups/finance/*
 
   finance-admin-model:
     groups: ["Finance Team"]
     users: [testuser4]
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/finance/*
+    uri: /process-models/finance/*
 
   finance-admin-model-lanes:
     groups: ["Finance Team"]
     users: [testuser4]
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-models/finance:model_with_lanes/*
+    uri: /process-models/finance:model_with_lanes/*
 
   finance-admin-instance-run:
     groups: ["Finance Team"]
     users: [testuser4]
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/*
+    uri: /process-instances/*

@@ -2,14 +2,17 @@ default_group: everybody
 
 users:
   admin:
+    service: local_open_id
     email: admin@spiffworkflow.org
     password: admin
     preferred_username: Admin
   nelson:
+    service: local_open_id
     email: nelson@spiffworkflow.org
     password: nelson
     preferred_username: Nelson
   malala:
+    service: local_open_id
     email: malala@spiffworkflow.org
     password: malala
     preferred_username: Malala
@@ -18,17 +21,17 @@ groups:
   admin:
     users:
       [
-        admin,
+        admin@spiffworkflow.org,
       ]
   Education:
     users:
       [
-        malala
+        malala@spiffworkflow.org
       ]
   President:
     users:
       [
-        nelson
+        nelson@spiffworkflow.org
       ]
 
 permissions:
@@ -44,45 +47,44 @@ permissions:
     groups: [everybody]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/tasks/*
+    uri: /tasks/*
 
   # Everyone can see everything (all groups, and processes are visible)
   read-all-process-groups:
     groups: [ everybody ]
     users: [ ]
     allowed_permissions: [ read ]
-    uri: /v1.0/process-groups/*
+    uri: /process-groups/*
   read-all-process-models:
     groups: [ everybody ]
     users: [ ]
     allowed_permissions: [ read ]
-    uri: /v1.0/process-models/*
+    uri: /process-models/*
   read-all-process-instance:
     groups: [ everybody ]
     users: [ ]
     allowed_permissions: [ read ]
-    uri: /v1.0/process-instances/*
+    uri: /process-instances/*
   read-process-instance-reports:
     groups: [ everybody ]
     users: [ ]
     allowed_permissions: [ read ]
-    uri: /v1.0/process-instances/reports/*
+    uri: /process-instances/reports/*
   processes-read:
     groups: [ everybody ]
     users: [ ]
     allowed_permissions: [ read ]
-    uri: /v1.0/processes
-
-  # Members of the Education group can change they processes work.
+    uri: /processes
+  # Members of the Education group can change the processes under "education".
   education-admin:
     groups: ["Education", "President"]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-groups/education:*
+    uri: /process-groups/education:*
 
   # Anyone can start an education process.
   education-everybody:
     groups: [everybody]
     users: []
     allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/misc:category_number_one:process-model-with-form/*
+    uri: /process-instances/misc:category_number_one:process-model-with-form/*

@@ -26,34 +26,12 @@ class ProcessInstanceNotFoundError(Exception):
     """ProcessInstanceNotFoundError."""
 
 
-class NavigationItemSchema(Schema):
-    """NavigationItemSchema."""
+class ProcessInstanceTaskDataCannotBeUpdatedError(Exception):
+    """ProcessInstanceTaskDataCannotBeUpdatedError."""
 
-    class Meta:
-        """Meta."""
 
-        fields = [
-            "spec_id",
-            "name",
-            "spec_type",
-            "task_id",
-            "description",
-            "backtracks",
-            "indent",
-            "lane",
-            "state",
-            "children",
-        ]
-        unknown = INCLUDE
-
-    state = marshmallow.fields.String(required=False, allow_none=True)
-    description = marshmallow.fields.String(required=False, allow_none=True)
-    backtracks = marshmallow.fields.String(required=False, allow_none=True)
-    lane = marshmallow.fields.String(required=False, allow_none=True)
-    task_id = marshmallow.fields.String(required=False, allow_none=True)
-    children = marshmallow.fields.List(
-        marshmallow.fields.Nested(lambda: NavigationItemSchema())
-    )
+class ProcessInstanceCannotBeDeletedError(Exception):
+    """ProcessInstanceCannotBeDeletedError."""
 
 
 class ProcessInstanceStatus(SpiffEnum):
@@ -82,7 +60,19 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
     process_initiator = relationship("UserModel")
 
-    active_tasks = relationship("ActiveTaskModel", cascade="delete")  # type: ignore
+    active_human_tasks = relationship(
+        "HumanTaskModel",
+        primaryjoin=(
+            "and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id,"
+            " HumanTaskModel.completed == False)"
+        ),
+    )  # type: ignore
+
+    human_tasks = relationship(
+        "HumanTaskModel",
+        cascade="delete",
+        overlaps="active_human_tasks",
+    )  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
 
@@ -93,7 +83,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer)
     status: str = db.Column(db.String(50))
 
-    bpmn_xml_file_contents: bytes | None = None
+    bpmn_xml_file_contents: str | None = None
     bpmn_version_control_type: str = db.Column(db.String(50))
     bpmn_version_control_identifier: str = db.Column(db.String(255))
     spiff_step: int = db.Column(db.Integer)
@@ -101,9 +91,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     @property
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""
-        local_bpmn_xml_file_contents = ""
-        if self.bpmn_xml_file_contents:
-            local_bpmn_xml_file_contents = self.bpmn_xml_file_contents.decode("utf-8")
         return {
             "id": self.id,
             "process_model_identifier": self.process_model_identifier,
@@ -112,7 +99,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "start_in_seconds": self.start_in_seconds,
             "end_in_seconds": self.end_in_seconds,
             "process_initiator_id": self.process_initiator_id,
-            "bpmn_xml_file_contents": local_bpmn_xml_file_contents,
+            "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "spiff_step": self.spiff_step,
@@ -133,6 +120,19 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def validate_status(self, key: str, value: Any) -> Any:
         """Validate_status."""
         return self.validate_enum_field(key, value, ProcessInstanceStatus)
+
+    def can_submit_task(self) -> bool:
+        """Can_submit_task."""
+        return not self.has_terminal_status() and self.status != "suspended"
+
+    def has_terminal_status(self) -> bool:
+        """Has_terminal_status."""
+        return self.status in self.terminal_statuses()
+
+    @classmethod
+    def terminal_statuses(cls) -> list[str]:
+        """Terminal_statuses."""
+        return ["complete", "error", "terminated"]
 
 
 class ProcessInstanceModelSchema(Schema):
