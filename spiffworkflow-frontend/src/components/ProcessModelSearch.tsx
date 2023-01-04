@@ -2,8 +2,7 @@ import {
   ComboBox,
   // @ts-ignore
 } from '@carbon/react';
-import { truncateString } from '../helpers';
-import { ProcessModel } from '../interfaces';
+import { ProcessGroupLite, ProcessModel } from '../interfaces';
 
 type OwnProps = {
   onChange: (..._args: any[]) => any;
@@ -18,12 +17,27 @@ export default function ProcessModelSearch({
   onChange,
   titleText = 'Process model',
 }: OwnProps) {
+  const getParentGroupsDisplayName = (processModel: ProcessModel) => {
+    if (processModel.parent_groups) {
+      return processModel.parent_groups
+        .map((parentGroup: ProcessGroupLite) => {
+          return parentGroup.display_name;
+        })
+        .join(' / ');
+    }
+    return '';
+  };
+
+  const getFullProcessModelLabel = (processModel: ProcessModel) => {
+    return `${processModel.id} (${getParentGroupsDisplayName(processModel)} ${
+      processModel.display_name
+    })`;
+  };
+
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
     const { inputValue } = options;
-    return `${processModel.id} (${processModel.display_name})`.includes(
-      inputValue
-    );
+    return getFullProcessModelLabel(processModel).includes(inputValue);
   };
   return (
     <ComboBox
@@ -33,10 +47,7 @@ export default function ProcessModelSearch({
       items={processModels}
       itemToString={(processModel: ProcessModel) => {
         if (processModel) {
-          return `${processModel.id} (${truncateString(
-            processModel.display_name,
-            75
-          )})`;
+          return getFullProcessModelLabel(processModel);
         }
         return null;
       }}
