@@ -626,6 +626,7 @@ class AuthorizationService:
 
     @classmethod
     def set_basic_permissions(cls) -> list[PermissionToAssign]:
+        """Set_basic_permissions."""
         permissions_to_assign: list[PermissionToAssign] = []
         permissions_to_assign.append(
             PermissionToAssign(
@@ -661,7 +662,10 @@ class AuthorizationService:
         return permissions_to_assign
 
     @classmethod
-    def set_process_group_permissions(cls, target: str, permission_set: str) -> list[PermissionToAssign]:
+    def set_process_group_permissions(
+        cls, target: str, permission_set: str
+    ) -> list[PermissionToAssign]:
+        """Set_process_group_permissions."""
         permissions_to_assign: list[PermissionToAssign] = []
         process_group_identifier = (
             target.removeprefix("PG:").replace("/", ":").removeprefix(":")
@@ -673,16 +677,16 @@ class AuthorizationService:
             f"/process-groups/{process_related_path_segment}",
             f"/process-models/{process_related_path_segment}",
         ]
-        permissions_to_assign = (
-            permissions_to_assign
-            + cls.get_permissions_to_assign(
-                permission_set, process_related_path_segment, target_uris
-            )
+        permissions_to_assign = permissions_to_assign + cls.get_permissions_to_assign(
+            permission_set, process_related_path_segment, target_uris
         )
         return permissions_to_assign
 
     @classmethod
-    def set_process_model_permissions(cls, target: str, permission_set: str) -> list[PermissionToAssign]:
+    def set_process_model_permissions(
+        cls, target: str, permission_set: str
+    ) -> list[PermissionToAssign]:
+        """Set_process_model_permissions."""
         permissions_to_assign: list[PermissionToAssign] = []
         process_model_identifier = (
             target.removeprefix("PM:").replace("/", ":").removeprefix(":")
@@ -693,11 +697,8 @@ class AuthorizationService:
             process_related_path_segment = "*"
 
         target_uris = [f"/process-models/{process_related_path_segment}"]
-        permissions_to_assign = (
-            permissions_to_assign
-            + cls.get_permissions_to_assign(
-                permission_set, process_related_path_segment, target_uris
-            )
+        permissions_to_assign = permissions_to_assign + cls.get_permissions_to_assign(
+            permission_set, process_related_path_segment, target_uris
         )
         return permissions_to_assign
 
@@ -731,9 +732,13 @@ class AuthorizationService:
             permissions = ["create", "read", "update", "delete"]
 
         if target.startswith("PG:"):
-            permissions_to_assign += cls.set_process_group_permissions(target, permission_set)
+            permissions_to_assign += cls.set_process_group_permissions(
+                target, permission_set
+            )
         elif target.startswith("PM:"):
-            permissions_to_assign += cls.set_process_model_permissions(target, permission_set)
+            permissions_to_assign += cls.set_process_model_permissions(
+                target, permission_set
+            )
         elif permission_set == "start":
             raise InvalidPermissionError(
                 "Permission 'start' is only available for macros PM and PG."

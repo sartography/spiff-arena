@@ -1,7 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -33,6 +31,7 @@ from spiffworkflow_backend.models.process_instance_metadata import (
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
@@ -45,6 +44,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _get_process_mode
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _un_modify_modified_process_model_id,
 )
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -578,25 +578,30 @@ def process_instance_reset(
 def process_instance_find_by_id(
     process_instance_id: int,
 ) -> flask.wrappers.Response:
-
+    """Process_instance_find_by_id."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    modified_process_model_identifier = ProcessModelInfo.modify_process_identifier_for_path_param(process_instance.process_model_identifier)
-    process_instance_uri = f'/process-instances/{modified_process_model_identifier}/{process_instance.id}'
+    modified_process_model_identifier = (
+        ProcessModelInfo.modify_process_identifier_for_path_param(
+            process_instance.process_model_identifier
+        )
+    )
+    process_instance_uri = (
+        f"/process-instances/{modified_process_model_identifier}/{process_instance.id}"
+    )
     has_permission = AuthorizationService.user_has_permission(
         user=g.user,
-        permission='read',
+        permission="read",
         target_uri=process_instance_uri,
     )
 
     uri_type = None
     if not has_permission:
         process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
-        uri_type = 'for-me'
+        uri_type = "for-me"
 
     response_json = {
         "process_instance": process_instance,
         "uri_type": uri_type,
-
     }
     return make_response(jsonify(response_json), 200)
 
