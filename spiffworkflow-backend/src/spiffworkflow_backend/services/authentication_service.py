@@ -57,7 +57,10 @@ class AuthenticationService:
             response = requests.get(openid_config_url)
             AuthenticationService.ENDPOINT_CACHE = response.json()
         if name not in AuthenticationService.ENDPOINT_CACHE:
-            raise Exception(f"Unknown OpenID Endpoint: {name}. Tried to get from {openid_config_url}")
+            raise Exception(
+                f"Unknown OpenID Endpoint: {name}. Tried to get from"
+                f" {openid_config_url}"
+            )
         return AuthenticationService.ENDPOINT_CACHE.get(name, "")
 
     @staticmethod
