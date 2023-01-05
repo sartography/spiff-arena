@@ -40,7 +40,9 @@ class TestProcessInstancesController(BaseTest):
         )
         assert response.status_code == 200
         assert response.json
-        assert response.json["id"] == process_instance.id
+        assert 'process_instance' in response.json
+        assert response.json['process_instance']["id"] == process_instance.id
+        assert response.json['uri_type'] == 'for-me'
 
         response = client.get(
             f"/v1.0/process-instances/find-by-id/{process_instance.id}",
@@ -54,4 +56,6 @@ class TestProcessInstancesController(BaseTest):
         )
         assert response.status_code == 200
         assert response.json
-        assert response.json["id"] == process_instance.id
+        assert 'process_instance' in response.json
+        assert response.json['process_instance']["id"] == process_instance.id
+        assert response.json['uri_type'] is None
