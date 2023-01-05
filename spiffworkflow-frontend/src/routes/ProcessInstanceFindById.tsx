@@ -2,13 +2,9 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
-import {
-  isInteger,
-  modifyProcessIdentifierForPathParam,
-  slugifyString,
-} from '../helpers';
+import { isInteger, modifyProcessIdentifierForPathParam } from '../helpers';
 import HttpService from '../services/HttpService';
-import { ProcessGroup, ProcessInstance } from '../interfaces';
+import { ProcessInstance } from '../interfaces';
 
 export default function ProcessInstanceFindById() {
   const navigate = useNavigate();
