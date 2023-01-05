@@ -253,3 +253,7 @@ export const setErrorMessageSafely = (
   errorMessageSetter({ message: newErrorMessageString });
   return null;
 };
+
+export const isInteger = (str: string | number) => {
+  return /^\d+$/.test(str.toString());
+};
