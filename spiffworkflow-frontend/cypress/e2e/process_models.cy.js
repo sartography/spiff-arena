@@ -20,7 +20,6 @@ describe('process-models', () => {
     const modelId = `test-model-2-${id}`;
     const newModelDisplayName = `${modelDisplayName} edited`;
     cy.contains(miscDisplayName).click();
-    cy.wait(750);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.url().should(
@@ -57,7 +56,6 @@ describe('process-models', () => {
     const decision_acceptance_test_id = `decision_acceptance_test_${id}`;
 
     cy.contains(miscDisplayName).click();
-    cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.contains(groupDisplayName).click();
@@ -141,7 +139,6 @@ describe('process-models', () => {
     const modelId = `test-model-2-${id}`;
     cy.contains('Add a process group');
     cy.contains(miscDisplayName).click();
-    cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
 
