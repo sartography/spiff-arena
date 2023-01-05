@@ -269,10 +269,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return spiffStepLink(<CaretRight />, 1);
   };
 
+  const returnToLastSpiffStep = () => {
+    window.location.href = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+  };
+
   const resetProcessInstance = () => {
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceResetPath}/${currentSpiffStep()}`,
-      successCallback: refreshPage,
+      successCallback: returnToLastSpiffStep,
       httpMethod: 'POST',
     });
   };
@@ -647,8 +651,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     HttpService.makeCallToBackend({
       path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
       httpMethod: 'POST',
-      successCallback: saveTaskDataResult,
-      failureCallback: saveTaskDataFailure,
+      successCallback: returnToLastSpiffStep,
       postBody: { execute },
     });
   };
@@ -727,7 +730,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             data-qa="mark-task-complete-button"
             onClick={() => completeTask(false)}
           >
-            Mark Complete
+            Skip Task
           </Button>
         );
         buttons.push(
@@ -755,7 +758,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             data-qa="reset-process-button"
             onClick={() => resetProcessInstance()}
           >
-            Resume Process Here
+            Reset Process Here
           </Button>
         );
       }

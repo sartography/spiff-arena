@@ -646,7 +646,7 @@ class ProcessInstanceProcessor:
                     subprocesses_by_child_task_ids[task_id] = subprocess_id
         return subprocesses_by_child_task_ids
 
-    def _save(self) -> None:
+    def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
 
@@ -668,9 +668,6 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-    def save(self) -> None:
-        """Saves the current state and moves on to the next state."""
-        self._save()
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id
         ).all()
@@ -758,6 +755,13 @@ class ProcessInstanceProcessor:
         self.bpmn_process_instance.catch(event_definition)
         self.do_engine_steps(save=True)
 
+    def add_step(self, step: Union[dict, None] = None) -> None:
+        """Add a spiff step."""
+        if step is None:
+            step = self.spiff_step_details_mapping()
+        db.session.add(SpiffStepDetailsModel(**step))
+        db.session.commit()
+
     def manual_complete_task(self, task_id: str, execute: bool) -> None:
         """Mark the task complete optionally executing it."""
         spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
@@ -768,17 +772,63 @@ class ProcessInstanceProcessor:
             )
             spiff_task.complete()
         else:
-            current_app.logger.info(
-                f"Skipping Task {spiff_task.task_spec.name} of process instance"
-                f" {self.process_instance_model.id}"
+            spiff_logger = logging.getLogger("spiff")
+            spiff_logger.info(
+                f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info()
             )
             spiff_task._set_state(TaskState.COMPLETED)
             for child in spiff_task.children:
                 child.task_spec._update(child)
         self.bpmn_process_instance.last_task = spiff_task
-        self._save()
+        self.increment_spiff_step()
+        self.add_step()
+        self.save()
         # Saving the workflow seems to reset the status
         self.suspend()
+
+    def reset_process(self, spiff_step: int) -> None:
+        """Reset a process to an earlier state."""
+        spiff_logger = logging.getLogger("spiff")
+        spiff_logger.info(
+            f"Process reset from step {spiff_step}",
+            extra=self.bpmn_process_instance.log_info(),
+        )
+
+        step_detail = (
+            db.session.query(SpiffStepDetailsModel)
+            .filter(
+                SpiffStepDetailsModel.process_instance_id
+                == self.process_instance_model.id,
+                SpiffStepDetailsModel.spiff_step == spiff_step,
+            )
+            .first()
+        )
+        if step_detail is not None:
+            self.increment_spiff_step()
+            self.add_step(
+                {
+                    "process_instance_id": self.process_instance_model.id,
+                    "spiff_step": self.process_instance_model.spiff_step or 1,
+                    "task_json": step_detail.task_json,
+                    "timestamp": round(time.time()),
+                }
+            )
+
+            dct = self._serializer.workflow_to_dict(self.bpmn_process_instance)
+            dct["tasks"] = step_detail.task_json["tasks"]
+            dct["subprocesses"] = step_detail.task_json["subprocesses"]
+            self.bpmn_process_instance = self._serializer.workflow_from_dict(dct)
+
+            # Cascade does not seems to work on filters, only directly through the session
+            tasks = self.bpmn_process_instance.get_tasks(TaskState.NOT_FINISHED_MASK)
+            rows = HumanTaskModel.query.filter(
+                HumanTaskModel.task_id.in_(str(t.id) for t in tasks)  # type: ignore
+            ).all()
+            for row in rows:
+                db.session.delete(row)
+
+            self.save()
+            self.suspend()
 
     @staticmethod
     def get_parser() -> MyCustomParser:
