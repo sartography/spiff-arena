@@ -22,14 +22,15 @@ import ProcessInstanceLogList from './ProcessInstanceLogList';
 import MessageInstanceList from './MessageInstanceList';
 import Configuration from './Configuration';
 import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
+import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 
 export default function AdminRoutes() {
   const location = useLocation();
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   useEffect(() => {
-    setErrorMessage(null);
-  }, [location, setErrorMessage]);
+    setErrorObject(null);
+  }, [location, setErrorObject]);
 
   if (UserService.hasRole(['admin'])) {
     return (
@@ -49,6 +50,10 @@ export default function AdminRoutes() {
         <Route
           path="process-models/:process_group_id/new"
           element={<ProcessModelNew />}
+        />
+        <Route
+          path="process-models/:process_group_id/new-e"
+          element={<ProcessModelNewExperimental />}
         />
         <Route
           path="process-models/:process_model_id"

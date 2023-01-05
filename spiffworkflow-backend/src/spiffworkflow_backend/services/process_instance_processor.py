@@ -17,6 +17,7 @@ from typing import Optional
 from typing import Tuple
 from typing import TypedDict
 from typing import Union
+from uuid import UUID
 
 import dateparser
 import pytz
@@ -43,6 +44,9 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import (
     CallActivityTaskConverter,
 )
 from SpiffWorkflow.spiff.serializer.task_spec_converters import EndEventConverter
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+    EventBasedGatewayConverter,
+)
 from SpiffWorkflow.spiff.serializer.task_spec_converters import (
     IntermediateCatchEventConverter,
 )
@@ -151,6 +155,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "time": time,
             "decimal": decimal,
             "_strptime": _strptime,
+            "enumerate": enumerate,
+            "list": list,
+            "map": map,
         }
 
         # This will overwrite the standard builtins
@@ -209,14 +216,14 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         except Exception as exception:
             if task is None:
                 raise ProcessInstanceProcessorError(
-                    "Error evaluating expression: "
-                    "'%s', exception: %s" % (expression, str(exception)),
+                    "Error evaluating expression: '%s', exception: %s"
+                    % (expression, str(exception)),
                 ) from exception
             else:
                 raise WorkflowTaskExecException(
                     task,
-                    "Error evaluating expression "
-                    "'%s', %s" % (expression, str(exception)),
+                    "Error evaluating expression '%s', %s"
+                    % (expression, str(exception)),
                 ) from exception
 
     def execute(
@@ -263,6 +270,7 @@ class ProcessInstanceProcessor:
             EndEventConverter,
             IntermediateCatchEventConverter,
             IntermediateThrowEventConverter,
+            EventBasedGatewayConverter,
             ManualTaskConverter,
             NoneTaskConverter,
             ReceiveTaskConverter,
@@ -276,6 +284,7 @@ class ProcessInstanceProcessor:
         ]
     )
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
+    _event_serializer = EventBasedGatewayConverter()
 
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
     VALIDATION_PROCESS_KEY = "validate_only"
@@ -292,9 +301,7 @@ class ProcessInstanceProcessor:
         tld.spiff_step = process_instance_model.spiff_step
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
-        current_app.config[
-            "THREAD_LOCAL_DATA"
-        ].process_model_identifier = (
+        current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
             f"{process_instance_model.process_model_identifier}"
         )
 
@@ -375,8 +382,10 @@ class ProcessInstanceProcessor:
         except MissingSpecError as ke:
             raise ApiError(
                 error_code="unexpected_process_instance_structure",
-                message="Failed to deserialize process_instance"
-                " '%s'  due to a mis-placed or missing task '%s'"
+                message=(
+                    "Failed to deserialize process_instance"
+                    " '%s'  due to a mis-placed or missing task '%s'"
+                )
                 % (self.process_model_identifier, str(ke)),
             ) from ke
 
@@ -392,7 +401,10 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     "process_model_not_found",
-                    f"The given process model was not found: {process_model_identifier}.",
+                    (
+                        "The given process model was not found:"
+                        f" {process_model_identifier}."
+                    ),
                 )
             )
         spec_files = SpecFileService.get_files(process_model_info)
@@ -522,8 +534,11 @@ class ProcessInstanceProcessor:
                     potential_owner_ids.append(lane_owner_user.id)
             self.raise_if_no_potential_owners(
                 potential_owner_ids,
-                f"No users found in task data lane owner list for lane: {task_lane}. "
-                f"The user list used: {task.data['lane_owners'][task_lane]}",
+                (
+                    "No users found in task data lane owner list for lane:"
+                    f" {task_lane}. The user list used:"
+                    f" {task.data['lane_owners'][task_lane]}"
+                ),
             )
         else:
             group_model = GroupModel.query.filter_by(identifier=task_lane).first()
@@ -573,12 +588,6 @@ class ProcessInstanceProcessor:
         )
         return details_model
 
-    def save_spiff_step_details(self) -> None:
-        """SaveSpiffStepDetails."""
-        details_model = self.spiff_step_details()
-        db.session.add(details_model)
-        db.session.commit()
-
     def extract_metadata(self, process_model_info: ProcessModelInfo) -> None:
         """Extract_metadata."""
         metadata_extraction_paths = process_model_info.metadata_extraction_paths
@@ -614,7 +623,7 @@ class ProcessInstanceProcessor:
                 db.session.add(pim)
                 db.session.commit()
 
-    def save(self) -> None:
+    def _save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
 
@@ -636,6 +645,9 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
+    def save(self) -> None:
+        """Saves the current state and moves on to the next state."""
+        self._save()
         human_tasks = HumanTaskModel.query.filter_by(
             process_instance_id=self.process_instance_model.id
         ).all()
@@ -704,6 +716,47 @@ class ProcessInstanceProcessor:
                 db.session.add(at)
             db.session.commit()
 
+    def serialize_task_spec(self, task_spec: SpiffTask) -> Any:
+        """Get a serialized version of a task spec."""
+        # The task spec is NOT actually a SpiffTask, it is the task spec attached to a SpiffTask
+        # Not sure why mypy accepts this but whatever.
+        return self._serializer.spec_converter.convert(task_spec)
+
+    def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
+        """Send an event to the workflow."""
+        payload = event_data.pop("payload", None)
+        event_definition = self._event_serializer.restore(event_data)
+        if payload is not None:
+            event_definition.payload = payload
+        current_app.logger.info(
+            f"Event of type {event_definition.event_type} sent to process instance"
+            f" {self.process_instance_model.id}"
+        )
+        self.bpmn_process_instance.catch(event_definition)
+        self.do_engine_steps(save=True)
+
+    def manual_complete_task(self, task_id: str, execute: bool) -> None:
+        """Mark the task complete optionally executing it."""
+        spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
+        if execute:
+            current_app.logger.info(
+                f"Manually executing Task {spiff_task.task_spec.name} of process"
+                f" instance {self.process_instance_model.id}"
+            )
+            spiff_task.complete()
+        else:
+            current_app.logger.info(
+                f"Skipping Task {spiff_task.task_spec.name} of process instance"
+                f" {self.process_instance_model.id}"
+            )
+            spiff_task._set_state(TaskState.COMPLETED)
+            for child in spiff_task.children:
+                child.task_spec._update(child)
+        self.bpmn_process_instance.last_task = spiff_task
+        self._save()
+        # Saving the workflow seems to reset the status
+        self.suspend()
+
     @staticmethod
     def get_parser() -> MyCustomParser:
         """Get_parser."""
@@ -738,14 +791,13 @@ class ProcessInstanceProcessor:
         """Bpmn_file_full_path_from_bpmn_process_identifier."""
         if bpmn_process_identifier is None:
             raise ValueError(
-                "bpmn_file_full_path_from_bpmn_process_identifier: bpmn_process_identifier is unexpectedly None"
+                "bpmn_file_full_path_from_bpmn_process_identifier:"
+                " bpmn_process_identifier is unexpectedly None"
             )
 
-        spec_reference = (
-            SpecReferenceCache.query.filter_by(identifier=bpmn_process_identifier)
-            .filter_by(type="process")
-            .first()
-        )
+        spec_reference = SpecReferenceCache.query.filter_by(
+            identifier=bpmn_process_identifier, type="process"
+        ).first()
         bpmn_file_full_path = None
         if spec_reference is None:
             bpmn_file_full_path = (
@@ -762,7 +814,10 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     error_code="could_not_find_bpmn_process_identifier",
-                    message="Could not find the the given bpmn process identifier from any sources: %s"
+                    message=(
+                        "Could not find the the given bpmn process identifier from any"
+                        " sources: %s"
+                    )
                     % bpmn_process_identifier,
                 )
             )
@@ -786,7 +841,6 @@ class ProcessInstanceProcessor:
 
         new_bpmn_files = set()
         for bpmn_process_identifier in processor_dependencies_new:
-
             # ignore identifiers that spiff already knows about
             if bpmn_process_identifier in bpmn_process_identifiers_in_parser:
                 continue
@@ -829,7 +883,10 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     error_code="no_primary_bpmn_error",
-                    message="There is no primary BPMN process id defined for process_model %s"
+                    message=(
+                        "There is no primary BPMN process id defined for"
+                        " process_model %s"
+                    )
                     % process_model_info.id,
                 )
             )
@@ -890,7 +947,10 @@ class ProcessInstanceProcessor:
             if not bpmn_message.correlations:
                 raise ApiError(
                     "message_correlations_missing",
-                    f"Could not find any message correlations bpmn_message: {bpmn_message.name}",
+                    (
+                        "Could not find any message correlations bpmn_message:"
+                        f" {bpmn_message.name}"
+                    ),
                 )
 
             message_correlations = []
@@ -910,12 +970,16 @@ class ProcessInstanceProcessor:
                     if message_correlation_property is None:
                         raise ApiError(
                             "message_correlations_missing_from_process",
-                            "Could not find a known message correlation with identifier:"
-                            f"{message_correlation_property_identifier}",
+                            (
+                                "Could not find a known message correlation with"
+                                f" identifier:{message_correlation_property_identifier}"
+                            ),
                         )
                     message_correlations.append(
                         {
-                            "message_correlation_property": message_correlation_property,
+                            "message_correlation_property": (
+                                message_correlation_property
+                            ),
                             "name": message_correlation_key,
                             "value": message_correlation_property_value,
                         }
@@ -972,7 +1036,10 @@ class ProcessInstanceProcessor:
             if message_model is None:
                 raise ApiError(
                     "invalid_message_name",
-                    f"Invalid message name: {waiting_task.task_spec.event_definition.name}.",
+                    (
+                        "Invalid message name:"
+                        f" {waiting_task.task_spec.event_definition.name}."
+                    ),
                 )
 
             # Ensure we are only creating one message instance for each waiting message
@@ -1186,9 +1253,13 @@ class ProcessInstanceProcessor:
         self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
         human_task.completed_by_user_id = user.id
+        human_task.completed = True
         db.session.add(human_task)
-        db.session.commit()
-        self.save_spiff_step_details()
+        details_model = self.spiff_step_details()
+        db.session.add(details_model)
+
+        # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
+        self.save()
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""

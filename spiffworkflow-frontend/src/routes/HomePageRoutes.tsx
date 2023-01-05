@@ -11,12 +11,12 @@ import CreateNewInstance from './CreateNewInstance';
 
 export default function HomePageRoutes() {
   const location = useLocation();
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setErrorMessage(null);
+    setErrorObject(null);
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/tasks\/completed-instances\b/)) {
       newSelectedTabIndex = 1;
@@ -24,7 +24,7 @@ export default function HomePageRoutes() {
       newSelectedTabIndex = 2;
     }
     setSelectedTabIndex(newSelectedTabIndex);
-  }, [location, setErrorMessage]);
+  }, [location, setErrorObject]);
 
   const renderTabs = () => {
     if (location.pathname.match(/^\/tasks\/\d+\/\b/)) {

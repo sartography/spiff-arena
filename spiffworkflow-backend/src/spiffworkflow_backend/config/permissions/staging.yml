@@ -4,57 +4,53 @@ groups:
   admin:
     users:
       [
-        admin,
-        jakub,
-        kb,
-        alex,
-        dan,
-        mike,
-        jason,
-        j,
-        jarrad,
-        elizabeth,
-        jon,
-        natalia,
+        admin@spiffworkflow.org,
+        jakub@status.im,
+        jarrad@status.im,
+        kb@sartography.com,
+        alex@sartography.com,
+        dan@sartography.com,
+        mike@sartography.com,
+        jason@sartography.com,
+        j@sartography.com,
+        elizabeth@sartography.com,
+        jon@sartography.com,
       ]
 
   Finance Team:
     users:
       [
-        jakub,
-        alex,
-        dan,
-        mike,
-        jason,
-        j,
-        amir,
-        jarrad,
-        elizabeth,
-        jon,
-        natalia,
-        sasha,
-        fin,
-        fin1,
+        jakub@status.im,
+        amir@status.im,
+        jarrad@status.im,
+        sasha@status.im,
+        fin@status.im,
+        fin1@status.im,
+        alex@sartography.com,
+        dan@sartography.com,
+        mike@sartography.com,
+        jason@sartography.com,
+        j@sartography.com,
+        elizabeth@sartography.com,
+        jon@sartography.com,
       ]
 
   demo:
     users:
       [
-        core,
-        fin,
-        fin1,
-        harmeet,
-        sasha,
-        manuchehr,
-        lead,
-        lead1
+        harmeet@status.im,
+        sasha@status.im,
+        manuchehr@status.im,
+        core@status.im,
+        fin@status.im,
+        fin1@status.im,
+        lead@status.im,
+        lead1@status.im,
       ]
-
-  core-contributor:
+  test:
     users:
       [
-        core,
-        harmeet,
+        natalia@sartography.com,
       ]
 
 permissions:
@@ -67,104 +63,86 @@ permissions:
     groups: [admin]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/*
+    uri: /process-instances/*
 
-  tasks-crud:
-    groups: [everybody]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/tasks/*
-
-  service-tasks:
-    groups: [everybody]
-    users: []
-    allowed_permissions: [read]
-    uri: /v1.0/service-tasks
-  user-groups-for-current-user:
-    groups: [everybody]
-    users: []
-    allowed_permissions: [read]
-    uri: /v1.0/user-groups/for-current-user
-
-
-  # read all for everybody
+  # open system defaults for everybody
   read-all-process-groups:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-groups/*
+    uri: /process-groups/*
   read-all-process-models:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-models/*
+    uri: /process-models/*
+
+  # basic perms for everybody
   read-all-process-instances-for-me:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/process-instances/for-me/*
-  manage-process-instance-reports:
+    uri: /process-instances/for-me/*
+  read-process-instance-reports:
     groups: [everybody]
     users: []
     allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/reports/*
+    uri: /process-instances/reports/*
   processes-read:
     groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/processes
-
-
-  manage-procurement-admin-instances:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/manage-procurement:*
-  manage-procurement-admin-instances-slash:
-    groups: ["Project Lead"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /v1.0/process-instances/manage-procurement/*
-  manage-procurement-admin-instance-logs:
-    groups: ["Project Lead"]
+    uri: /processes
+  service-tasks:
+    groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/logs/manage-procurement:*
-  manage-procurement-admin-instance-logs-slash:
-    groups: ["Project Lead"]
+    uri: /service-tasks
+  tasks-crud:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /tasks/*
+  user-groups-for-current-user:
+    groups: [everybody]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/logs/manage-procurement/*
+    uri: /user-groups/for-current-user
 
   manage-revenue-streams-instances:
-    groups: ["core-contributor", "demo"]
+    groups: ["demo"]
     users: []
-    allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
-  manage-revenue-streams-instance-logs:
-    groups: ["core-contributor", "demo"]
-    users: []
-    allowed_permissions: [read]
-    uri: /v1.0/logs/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
-
+    allowed_permissions: [create]
+    uri: /process-instances/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
   manage-procurement-invoice-instances:
-    groups: ["core-contributor", "demo"]
+    groups: ["demo"]
     users: []
-    allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
-  manage-procurement-invoice-instance-logs:
-    groups: ["core-contributor", "demo"]
-    users: []
-    allowed_permissions: [read]
-    uri: /v1.0/logs/manage-procurement:procurement:core-contributor-invoice-management:*
-
+    allowed_permissions: [create]
+    uri: /process-instances/manage-procurement:procurement:core-contributor-invoice-management:*
   manage-procurement-instances:
-    groups: ["core-contributor", "demo"]
+    groups: ["demo"]
     users: []
-    allowed_permissions: [create, read]
-    uri: /v1.0/process-instances/manage-procurement:vendor-lifecycle-management:*
-  manage-procurement-instance-logs:
-    groups: ["core-contributor", "demo"]
+    allowed_permissions: [create]
+    uri: /process-instances/manage-procurement:vendor-lifecycle-management:*
+
+  manage-revenue-streams-instances-for-me:
+    groups: ["demo"]
     users: []
     allowed_permissions: [read]
-    uri: /v1.0/logs/manage-procurement:vendor-lifecycle-management:*
+    uri: /process-instances/for-me/manage-revenue-streams:product-revenue-streams:customer-contracts-trade-terms/*
+  manage-procurement-invoice-instances-for-me:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-instances/for-me/manage-procurement:procurement:core-contributor-invoice-management:*
+  manage-procurement-instances-for-me:
+    groups: ["demo"]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-instances/for-me/manage-procurement:vendor-lifecycle-management:*
+
+  create-test-instances:
+    groups: ["test"]
+    users: []
+    allowed_permissions: [create, read]
+    uri: /process-instances/misc:test:*

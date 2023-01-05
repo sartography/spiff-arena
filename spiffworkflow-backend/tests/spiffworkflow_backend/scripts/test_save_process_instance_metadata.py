@@ -24,17 +24,18 @@ class TestSaveProcessInstanceMetadata(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_save_process_instance_metadata."""
-        initiator_user = self.find_or_create_user("initiator_user")
         self.create_process_group(
             client, with_super_admin_user, "test_group", "test_group"
         )
         process_model = load_test_spec(
-            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            process_model_id=(
+                "save_process_instance_metadata/save_process_instance_metadata"
+            ),
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )
         process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=initiator_user
+            process_model=process_model, user=with_super_admin_user
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)

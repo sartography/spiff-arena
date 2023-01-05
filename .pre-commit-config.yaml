@@ -11,6 +11,12 @@ repos:
         require_serial: true
         # exclude: ^migrations/
         exclude: "/migrations/"
+
+        # otherwise it will not fix long lines if the long lines contain long strings
+        # https://github.com/psf/black/pull/1132
+        # https://github.com/psf/black/pull/1609
+        args: [--preview]
+
       - id: check-added-large-files
         files: ^spiffworkflow-backend/
         name: Check for added large files

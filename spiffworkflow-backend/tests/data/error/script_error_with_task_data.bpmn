@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1ny7jp4" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.17.0">
+  <bpmn:process id="sample" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_10jwwqy</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_10jwwqy" sourceRef="StartEvent_1" targetRef="script_task_one" />
+    <bpmn:endEvent id="Event_1qb1u6a">
+      <bpmn:incoming>Flow_1axnzv6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:scriptTask id="script_task_one" name="My Script" scriptFormat="python">
+      <bpmn:extensionElements>
+        <spiffworkflow:unitTests>
+          <spiffworkflow:unitTest id="ScriptTest_pass">
+            <spiffworkflow:inputJson>{
+  "current_user": {
+    "id": "2",
+    "username": "ciadmin1"
+  },
+  "num": 0
+}</spiffworkflow:inputJson>
+            <spiffworkflow:expectedOutputJson>{
+  "Mike": "Awesome",
+  "i": 2,
+  "current_user": {
+    "id": "2",
+    "username": "ciadmin1"
+  },
+  "num": 0,
+  "my_var": "whatwhat",
+  "person": "Kevin"
+}</spiffworkflow:expectedOutputJson>
+          </spiffworkflow:unitTest>
+          <spiffworkflow:unitTest id="ScriptTest_fail">
+            <spiffworkflow:inputJson>{}</spiffworkflow:inputJson>
+            <spiffworkflow:expectedOutputJson>{}</spiffworkflow:expectedOutputJson>
+          </spiffworkflow:unitTest>
+          <spiffworkflow:unitTest id="unit_test_5T42ZRC">
+            <spiffworkflow:inputJson>{"current_user": {"id": "1", "username": "kb"}}</spiffworkflow:inputJson>
+            <spiffworkflow:expectedOutputJson>{"Mike": "Awesome", "current_user": {"id": "1", "username": "kb"}, "heyhey": "https://demo.spiffworkflow.org", "i": 2, "members": [], "my_var": "whatwhat", "person": "Kevin"}</spiffworkflow:expectedOutputJson>
+          </spiffworkflow:unitTest>
+        </spiffworkflow:unitTests>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_10jwwqy</bpmn:incoming>
+      <bpmn:outgoing>Flow_1utkzvj</bpmn:outgoing>
+      <bpmn:script>my_var = 'THE VAR'</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_1utkzvj" sourceRef="script_task_one" targetRef="script_task_two" />
+    <bpmn:sequenceFlow id="Flow_1axnzv6" sourceRef="script_task_two" targetRef="Event_1qb1u6a" />
+    <bpmn:scriptTask id="script_task_two" name="Bad News Bears">
+      <bpmn:incoming>Flow_1utkzvj</bpmn:incoming>
+      <bpmn:outgoing>Flow_1axnzv6</bpmn:outgoing>
+      <bpmn:script>hey</bpmn:script>
+    </bpmn:scriptTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="sample">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="132" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1qb1u6a_di" bpmnElement="Event_1qb1u6a">
+        <dc:Bounds x="612" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_17ohe7r_di" bpmnElement="script_task_one">
+        <dc:Bounds x="241" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_03fze1z_di" bpmnElement="script_task_two">
+        <dc:Bounds x="420" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_10jwwqy_di" bpmnElement="Flow_10jwwqy">
+        <di:waypoint x="168" y="120" />
+        <di:waypoint x="241" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1utkzvj_di" bpmnElement="Flow_1utkzvj">
+        <di:waypoint x="341" y="120" />
+        <di:waypoint x="420" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1axnzv6_di" bpmnElement="Flow_1axnzv6">
+        <di:waypoint x="520" y="120" />
+        <di:waypoint x="612" y="120" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
