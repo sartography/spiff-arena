@@ -28,5 +28,7 @@ class GetProcessInfo(Script):
         """Run."""
         return {
             "process_instance_id": script_attributes_context.process_instance_id,
-            "process_model_identifier": script_attributes_context.process_model_identifier,
+            "process_model_identifier": (
+                script_attributes_context.process_model_identifier
+            ),
         }

@@ -44,8 +44,10 @@ class SecretService:
         except Exception as e:
             raise ApiError(
                 error_code="create_secret_error",
-                message=f"There was an error creating a secret with key: {key} and value ending with: {value[:-4]}. "
-                f"Original error is {e}",
+                message=(
+                    f"There was an error creating a secret with key: {key} and value"
+                    f" ending with: {value[:-4]}. Original error is {e}"
+                ),
             ) from e
         return secret_model
 
@@ -89,7 +91,9 @@ class SecretService:
         else:
             raise ApiError(
                 error_code="update_secret_error",
-                message=f"Cannot update secret with key: {key}. Resource does not exist.",
+                message=(
+                    f"Cannot update secret with key: {key}. Resource does not exist."
+                ),
                 status_code=404,
             )
 
@@ -104,11 +108,16 @@ class SecretService:
             except Exception as e:
                 raise ApiError(
                     error_code="delete_secret_error",
-                    message=f"Could not delete secret with key: {key}. Original error is: {e}",
+                    message=(
+                        f"Could not delete secret with key: {key}. Original error"
+                        f" is: {e}"
+                    ),
                 ) from e
         else:
             raise ApiError(
                 error_code="delete_secret_error",
-                message=f"Cannot delete secret with key: {key}. Resource does not exist.",
+                message=(
+                    f"Cannot delete secret with key: {key}. Resource does not exist."
+                ),
                 status_code=404,
             )

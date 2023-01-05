@@ -17,7 +17,7 @@ class SecretModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     key: str = db.Column(db.String(50), unique=True, nullable=False)
     value: str = db.Column(db.Text(), nullable=False)
-    user_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
+    user_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 

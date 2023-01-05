@@ -43,7 +43,9 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
         raise (
             ApiError(
                 error_code="could_not_requests_to_check",
-                message="The key 'requests_to_check' not found at root of request body.",
+                message=(
+                    "The key 'requests_to_check' not found at root of request body."
+                ),
                 status_code=400,
             )
         )
@@ -67,14 +69,6 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
                 response_dict[target_uri][http_method] = has_permission
 
     return make_response(jsonify({"results": response_dict}), 200)
-
-
-def user_group_list_for_current_user() -> flask.wrappers.Response:
-    """User_group_list_for_current_user."""
-    groups = g.user.groups
-    # TODO: filter out the default group and have a way to know what is the default group
-    group_identifiers = [i.identifier for i in groups if i.identifier != "everybody"]
-    return make_response(jsonify(sorted(group_identifiers)), 200)
 
 
 def process_list() -> Any:
@@ -139,7 +133,8 @@ def task_data_update(
     if process_instance:
         if process_instance.status != "suspended":
             raise ProcessInstanceTaskDataCannotBeUpdatedError(
-                f"The process instance needs to be suspended to udpate the task-data. It is currently: {process_instance.status}"
+                "The process instance needs to be suspended to udpate the task-data."
+                f" It is currently: {process_instance.status}"
             )
 
         process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
@@ -163,12 +158,18 @@ def task_data_update(
             else:
                 raise ApiError(
                     error_code="update_task_data_error",
-                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
+                    message=(
+                        f"Could not find Task: {task_id} in Instance:"
+                        f" {process_instance_id}."
+                    ),
                 )
     else:
         raise ApiError(
             error_code="update_task_data_error",
-            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
+            message=(
+                f"Could not update task data for Instance: {process_instance_id}, and"
+                f" Task: {task_id}."
+            ),
         )
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
@@ -236,7 +237,9 @@ def manual_complete_task(
     else:
         raise ApiError(
             error_code="complete_task",
-            message=f"Could not complete Task {task_id} in Instance {process_instance_id}",
+            message=(
+                f"Could not complete Task {task_id} in Instance {process_instance_id}"
+            ),
         )
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),

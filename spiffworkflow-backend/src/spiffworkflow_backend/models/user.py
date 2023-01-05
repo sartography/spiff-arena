@@ -1,6 +1,8 @@
 """User."""
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 import jwt
 import marshmallow
 from flask import current_app
@@ -16,15 +18,16 @@ class UserNotFoundError(Exception):
     """UserNotFoundError."""
 
 
+@dataclass
 class UserModel(SpiffworkflowBaseDBModel):
     """UserModel."""
 
     __tablename__ = "user"
     __table_args__ = (db.UniqueConstraint("service", "service_id", name="service_key"),)
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(
-        db.String(255), nullable=False, unique=True
-    )  # should always be a unique value
+
+    id: int = db.Column(db.Integer, primary_key=True)
+    username: str = db.Column(db.String(255), nullable=False, unique=True)
+
     service = db.Column(
         db.String(255), nullable=False, unique=False
     )  # not 'openid' -- google, aws

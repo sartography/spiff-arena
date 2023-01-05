@@ -52,7 +52,8 @@ class TestProcessInstanceProcessor(BaseTest):
         result = script_engine._evaluate("fact_service(type='norris')", {})
         assert (
             result
-            == "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
+            == "Chuck Norris doesn’t read books. He stares them down until he gets the"
+            " information he wants."
         )
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = None
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None

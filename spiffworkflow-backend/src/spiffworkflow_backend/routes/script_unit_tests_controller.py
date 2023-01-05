@@ -40,7 +40,10 @@ def script_unit_test_create(
     if file is None:
         raise ApiError(
             error_code="cannot_find_file",
-            message=f"Could not find the primary bpmn file for process_model: {process_model.id}",
+            message=(
+                "Could not find the primary bpmn file for process_model:"
+                f" {process_model.id}"
+            ),
             status_code=404,
         )
 

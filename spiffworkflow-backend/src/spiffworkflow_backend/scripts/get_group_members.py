@@ -32,7 +32,8 @@ class GetGroupMembers(Script):
         group = GroupModel.query.filter_by(identifier=group_identifier).first()
         if group is None:
             raise GroupNotFoundError(
-                f"Script 'get_group_members' could not find group with identifier '{group_identifier}'."
+                "Script 'get_group_members' could not find group with identifier"
+                f" '{group_identifier}'."
             )
 
         usernames = [u.username for u in group.users]
