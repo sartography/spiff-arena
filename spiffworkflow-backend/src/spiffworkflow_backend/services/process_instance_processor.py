@@ -623,6 +623,29 @@ class ProcessInstanceProcessor:
                 db.session.add(pim)
                 db.session.commit()
 
+    def get_subprocesses_by_child_task_ids(self) -> dict:
+        """Get all subprocess ids based on the child task ids.
+
+        This is useful when trying to link the child task of a call activity back to
+        the call activity that called it to get the appropriate data. For example, if you
+        have a call activity "Log" that you call twice within the same process, the Hammer log file
+        activity within the Log process will get called twice. They will potentially have different
+        task data. We want to be able to differentiate those two activities.
+
+        subprocess structure in the json:
+            "subprocesses": { [subprocess_task_id]: "tasks" : { [task_id]: [bpmn_task_details] }}
+
+        Also note that subprocess_task_id might in fact be a call activity, because spiff treats
+        call activities like subprocesses in terms of the serialization.
+        """
+        bpmn_json = json.loads(self.serialize())
+        subprocesses_by_child_task_ids = {}
+        if "subprocesses" in bpmn_json:
+            for subprocess_id, subprocess_details in bpmn_json["subprocesses"].items():
+                for task_id in subprocess_details["tasks"]:
+                    subprocesses_by_child_task_ids[task_id] = subprocess_id
+        return subprocesses_by_child_task_ids
+
     def _save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
