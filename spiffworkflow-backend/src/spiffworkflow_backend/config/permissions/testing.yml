@@ -30,6 +30,12 @@ permissions:
     allowed_permissions: [read]
     uri: /*
 
+  process-instances-find-by-id:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-instances/find-by-id/*
+
   tasks-crud:
     groups: [everybody]
     users: []

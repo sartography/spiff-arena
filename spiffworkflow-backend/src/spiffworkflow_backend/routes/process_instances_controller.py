@@ -31,6 +31,7 @@ from spiffworkflow_backend.models.process_instance_metadata import (
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
@@ -43,6 +44,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _get_process_mode
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _un_modify_modified_process_model_id,
 )
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -88,9 +90,7 @@ def process_instance_run(
     do_engine_steps: bool = True,
 ) -> flask.wrappers.Response:
     """Process_instance_run."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if process_instance.status != "not_started":
         raise ApiError(
             error_code="process_instance_not_runnable",
@@ -138,9 +138,7 @@ def process_instance_terminate(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_instance_run."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     processor.terminate()
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -151,9 +149,7 @@ def process_instance_suspend(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_instance_suspend."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     processor.suspend()
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -164,9 +160,7 @@ def process_instance_resume(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_instance_resume."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     processor.resume()
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -575,12 +569,41 @@ def process_instance_reset(
     spiff_step: int = 0,
 ) -> flask.wrappers.Response:
     """Reset a process instance to a particular step."""
-    process_instance = ProcessInstanceService().get_process_instance(
-        process_instance_id
-    )
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     processor.reset_process(spiff_step)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+
+
+def process_instance_find_by_id(
+    process_instance_id: int,
+) -> flask.wrappers.Response:
+    """Process_instance_find_by_id."""
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    modified_process_model_identifier = (
+        ProcessModelInfo.modify_process_identifier_for_path_param(
+            process_instance.process_model_identifier
+        )
+    )
+    process_instance_uri = (
+        f"/process-instances/{modified_process_model_identifier}/{process_instance.id}"
+    )
+    has_permission = AuthorizationService.user_has_permission(
+        user=g.user,
+        permission="read",
+        target_uri=process_instance_uri,
+    )
+
+    uri_type = None
+    if not has_permission:
+        process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+        uri_type = "for-me"
+
+    response_json = {
+        "process_instance": process_instance,
+        "uri_type": uri_type,
+    }
+    return make_response(jsonify(response_json), 200)
 
 
 def _get_process_instance(

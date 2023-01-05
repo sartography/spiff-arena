@@ -85,6 +85,15 @@ export default function ProcessInstanceList({ variant }: OwnProps) {
               All
             </Tab>
           </Can>
+          <Tab
+            title="Search for a process instance by id."
+            data-qa="process-instance-list-find-by-id"
+            onClick={() => {
+              navigate('/admin/process-instances/find-by-id');
+            }}
+          >
+            Find By Id
+          </Tab>
         </TabList>
       </Tabs>
       <br />

@@ -100,7 +100,7 @@ export default function ProcessModelShow() {
           onClose={() => setProcessInstance(null)}
         >
           <Link
-            to={`/admin/process-instances/${modifiedProcessModelId}/${processInstance.id}`}
+            to={`/admin/process-instances/for-me/${modifiedProcessModelId}/${processInstance.id}`}
             data-qa="process-instance-show-link"
           >
             view
