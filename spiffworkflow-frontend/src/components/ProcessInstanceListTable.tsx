@@ -1050,8 +1050,8 @@ export default function ProcessInstanceListTable({
                 }
                 return null;
               }}
-              placeholder="Process Initiator"
-              titleText="PROC"
+              placeholder="Starting typing username"
+              titleText="Process Initiator"
               selectedItem={processInitiatorSelection}
             />
           </Column>

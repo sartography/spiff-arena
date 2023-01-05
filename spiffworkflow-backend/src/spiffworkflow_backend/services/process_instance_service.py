@@ -2,6 +2,7 @@
 import time
 from typing import Any
 from typing import List
+from typing import Optional
 
 from flask import current_app
 from flask_bpmn.api.api_error import ApiError
@@ -288,6 +289,7 @@ class ProcessInstanceService:
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
         add_docs_and_forms: bool = False,
+        calling_subprocess_task_id: Optional[str] = None,
     ) -> Task:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.spec_type
@@ -338,6 +340,7 @@ class ProcessInstanceService:
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),
             call_activity_process_identifier=call_activity_process_identifier,
+            calling_subprocess_task_id=calling_subprocess_task_id,
         )
 
         return task

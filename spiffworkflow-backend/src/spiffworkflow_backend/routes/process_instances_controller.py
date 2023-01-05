@@ -553,9 +553,15 @@ def process_instance_task_list(
     else:
         spiff_tasks = processor.get_all_user_tasks()
 
+    subprocesses_by_child_task_ids = processor.get_subprocesses_by_child_task_ids()
     tasks = []
     for spiff_task in spiff_tasks:
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+        calling_subprocess_task_id = subprocesses_by_child_task_ids.get(
+            str(spiff_task.id), None
+        )
+        task = ProcessInstanceService.spiff_task_to_api_task(
+            processor, spiff_task, calling_subprocess_task_id=calling_subprocess_task_id
+        )
         if get_task_data:
             task.data = spiff_task.data
         tasks.append(task)
