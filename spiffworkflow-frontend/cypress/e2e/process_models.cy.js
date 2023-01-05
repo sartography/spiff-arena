@@ -11,6 +11,8 @@ describe('process-models', () => {
 
   const groupDisplayName = 'Acceptance Tests Group One';
   const deleteProcessModelButtonId = 'delete-process-model-button';
+  const saveChangesButtonText = 'Save Changes';
+  const fileNameInputSelector = 'input[name=file_name]';
 
   it('can perform crud operations', () => {
     const uuid = () => Cypress._.random(0, 1e6);
@@ -80,8 +82,8 @@ describe('process-models', () => {
     cy.wait(500);
     cy.contains('Save').click();
     cy.contains('Start Event Name');
-    cy.get('input[name=file_name]').type(bpmnFileName);
-    cy.contains('Save Changes').click();
+    cy.get(fileNameInputSelector).type(bpmnFileName);
+    cy.contains(saveChangesButtonText).click();
     cy.contains(`Process Model File: ${bpmnFileName}`);
     cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
@@ -98,8 +100,8 @@ describe('process-models', () => {
       .type(decision_acceptance_test_id);
     cy.contains('General').click();
     cy.contains('Save').click();
-    cy.get('input[name=file_name]').type(dmnFileName);
-    cy.contains('Save Changes').click();
+    cy.get(fileNameInputSelector).type(dmnFileName);
+    cy.contains(saveChangesButtonText).click();
     cy.contains(`Process Model File: ${dmnFileName}`);
     cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
@@ -112,8 +114,8 @@ describe('process-models', () => {
     // Some reason, cypress evals json strings so we have to escape it it with '{{}'
     cy.get('.view-line').type('{{} "test_key": "test_value" }');
     cy.getBySel('file-save-button').click();
-    cy.get('input[name=file_name]').type(jsonFileName);
-    cy.contains('Save Changes').click();
+    cy.get(fileNameInputSelector).type(jsonFileName);
+    cy.contains(saveChangesButtonText).click();
     cy.contains(`Process Model File: ${jsonFileName}`);
     // wait for json to load before clicking away to avoid network errors
     cy.wait(500);
