@@ -182,11 +182,10 @@ describe('process-models', () => {
     cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
       .find('.cds--btn--danger')
       .click();
-    // cy.url().should(
-    //   'include',
-    //   `process-instances?process_model_identifier=${modifyProcessIdentifierForPathParam(groupId)}`
-    // );
-    // cy.wait(750);
+    cy.url().should(
+      'include',
+      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
+    );
     cy.contains(modelId).should('not.exist');
     cy.contains(modelDisplayName).should('not.exist');
   });
