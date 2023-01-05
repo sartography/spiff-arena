@@ -39,7 +39,16 @@ const isLoggedIn = () => {
   return !!getAuthToken();
 };
 
-const getUsername = () => {
+const getUserEmail = () => {
+  const idToken = getIdToken();
+  if (idToken) {
+    const idObject = jwt(idToken);
+    return (idObject as any).email;
+  }
+  return null;
+};
+
+const getPreferredUsername = () => {
   const idToken = getIdToken();
   if (idToken) {
     const idObject = jwt(idToken);
@@ -78,7 +87,8 @@ const UserService = {
   isLoggedIn,
   getAuthToken,
   getAuthTokenFromParams,
-  getUsername,
+  getPreferredUsername,
+  getUserEmail,
   hasRole,
 };
 

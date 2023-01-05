@@ -78,7 +78,7 @@ export default function ProcessInstanceRun({
   checkPermissions = true,
 }: OwnProps) {
   const navigate = useNavigate();
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     processModel.id
   );
@@ -105,12 +105,12 @@ export default function ProcessInstanceRun({
   };
 
   const processModelRun = (processInstance: any) => {
-    setErrorMessage(null);
+    setErrorObject(null);
     storeRecentProcessModelInLocalStorage(processModel);
     HttpService.makeCallToBackend({
       path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
       successCallback: onProcessInstanceRun,
-      failureCallback: setErrorMessage,
+      failureCallback: setErrorObject,
       httpMethod: 'POST',
     });
   };

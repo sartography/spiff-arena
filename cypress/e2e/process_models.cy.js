@@ -9,16 +9,19 @@ describe('process-models', () => {
     cy.logout();
   });
 
+  const groupDisplayName = 'Acceptance Tests Group One';
+  const deleteProcessModelButtonId = 'delete-process-model-button';
+  const saveChangesButtonText = 'Save Changes';
+  const fileNameInputSelector = 'input[name=file_name]';
+
   it('can perform crud operations', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const groupId = 'misc/acceptance-tests-group-one';
-    const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     const newModelDisplayName = `${modelDisplayName} edited`;
     cy.contains(miscDisplayName).click();
-    cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.url().should(
@@ -34,37 +37,27 @@ describe('process-models', () => {
     cy.contains('Submit').click();
     cy.contains(`Process Model: ${newModelDisplayName}`);
 
-    // go back to process model show by clicking on the breadcrumb
-    cy.contains(modelDisplayName).click();
+    cy.deleteProcessModelAndConfirm(deleteProcessModelButtonId, groupId);
 
-    cy.getBySel('delete-process-model-button').click();
-    cy.contains('Are you sure');
-    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
-      .find('.cds--btn--danger')
-      .click();
-    cy.url().should(
-      'include',
-      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
-    );
     cy.contains(modelId).should('not.exist');
     cy.contains(modelDisplayName).should('not.exist');
   });
 
-  it('can create new bpmn, dmn, and json files', () => {
+  it('can create new bpmn and dmn and json files', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const directParentGroupId = 'acceptance-tests-group-one';
+    const directParentGroupName = 'Acceptance Tests Group One';
     const groupId = `misc/${directParentGroupId}`;
-    const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
 
     const bpmnFileName = `bpmn_test_file_${id}`;
     const dmnFileName = `dmn_test_file_${id}`;
     const jsonFileName = `json_test_file_${id}`;
+    const decision_acceptance_test_id = `decision_acceptance_test_${id}`;
 
     cy.contains(miscDisplayName).click();
-    cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
     cy.contains(groupDisplayName).click();
@@ -89,8 +82,8 @@ describe('process-models', () => {
     cy.wait(500);
     cy.contains('Save').click();
     cy.contains('Start Event Name');
-    cy.get('input[name=file_name]').type(bpmnFileName);
-    cy.contains('Save Changes').click();
+    cy.get(fileNameInputSelector).type(bpmnFileName);
+    cy.contains(saveChangesButtonText).click();
     cy.contains(`Process Model File: ${bpmnFileName}`);
     cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
@@ -104,11 +97,11 @@ describe('process-models', () => {
     cy.contains('General').click();
     cy.get('#bio-properties-panel-id')
       .clear()
-      .type('decision_acceptance_test_1');
+      .type(decision_acceptance_test_id);
     cy.contains('General').click();
     cy.contains('Save').click();
-    cy.get('input[name=file_name]').type(dmnFileName);
-    cy.contains('Save Changes').click();
+    cy.get(fileNameInputSelector).type(dmnFileName);
+    cy.contains(saveChangesButtonText).click();
     cy.contains(`Process Model File: ${dmnFileName}`);
     cy.contains(modelDisplayName).click();
     cy.contains(`Process Model: ${modelDisplayName}`);
@@ -121,8 +114,8 @@ describe('process-models', () => {
     // Some reason, cypress evals json strings so we have to escape it it with '{{}'
     cy.get('.view-line').type('{{} "test_key": "test_value" }');
     cy.getBySel('file-save-button').click();
-    cy.get('input[name=file_name]').type(jsonFileName);
-    cy.contains('Save Changes').click();
+    cy.get(fileNameInputSelector).type(jsonFileName);
+    cy.contains(saveChangesButtonText).click();
     cy.contains(`Process Model File: ${jsonFileName}`);
     // wait for json to load before clicking away to avoid network errors
     cy.wait(500);
@@ -131,17 +124,12 @@ describe('process-models', () => {
     // cy.getBySel('files-accordion').click();
     cy.contains(`${jsonFileName}.json`).should('exist');
 
-    cy.getBySel('delete-process-model-button').click();
-    cy.contains('Are you sure');
-    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
-      .find('.cds--btn--danger')
-      .click();
-    cy.url().should(
-      'include',
-      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
-    );
+    cy.deleteProcessModelAndConfirm(deleteProcessModelButtonId, groupId);
     cy.contains(modelId).should('not.exist');
     cy.contains(modelDisplayName).should('not.exist');
+
+    // we go back to the parent process group after deleting the model
+    cy.get('.tile-process-group-content-container').should('exist');
   });
 
   it('can upload and run a bpmn file', () => {
@@ -149,12 +137,10 @@ describe('process-models', () => {
     const id = uuid();
     const directParentGroupId = 'acceptance-tests-group-one';
     const groupId = `misc/${directParentGroupId}`;
-    const groupDisplayName = 'Acceptance Tests Group One';
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
     cy.contains('Add a process group');
     cy.contains(miscDisplayName).click();
-    cy.wait(500);
     cy.contains(groupDisplayName).click();
     cy.createModel(groupId, modelId, modelDisplayName);
 
@@ -190,7 +176,7 @@ describe('process-models', () => {
     // in breadcrumb
     cy.contains(modelDisplayName).click();
 
-    cy.getBySel('delete-process-model-button').click();
+    cy.getBySel(deleteProcessModelButtonId).click();
     cy.contains('Are you sure');
     cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
       .find('.cds--btn--danger')
@@ -202,14 +188,6 @@ describe('process-models', () => {
     cy.contains(modelId).should('not.exist');
     cy.contains(modelDisplayName).should('not.exist');
   });
-
-  // process models no longer has pagination post-tiles
-  // it.only('can paginate items', () => {
-  //   cy.contains(miscDisplayName).click();
-  //   cy.wait(500);
-  //   cy.contains('Acceptance Tests Group One').click();
-  //   cy.basicPaginationTest();
-  // });
 
   it('can allow searching for model', () => {
     cy.getBySel('process-model-selection').click().type('model-3');

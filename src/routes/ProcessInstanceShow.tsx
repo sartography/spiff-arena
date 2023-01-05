@@ -25,6 +25,7 @@ import {
   ButtonSet,
   Tag,
   Modal,
+  Dropdown,
   Stack,
   // @ts-ignore
 } from '@carbon/react';
@@ -41,12 +42,18 @@ import ErrorContext from '../contexts/ErrorContext';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   PermissionsToCheck,
+  ProcessData,
   ProcessInstance,
   ProcessInstanceTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 
-export default function ProcessInstanceShow() {
+type OwnProps = {
+  variant: string;
+};
+
+export default function ProcessInstanceShow({ variant }: OwnProps) {
   const navigate = useNavigate();
   const params = useParams();
   const [searchParams] = useSearchParams();
@@ -57,9 +64,16 @@ export default function ProcessInstanceShow() {
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
+  const [processDataToDisplay, setProcessDataToDisplay] =
+    useState<ProcessData | null>(null);
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
+  const [selectingEvent, setSelectingEvent] = useState<boolean>(false);
+  const [eventToSend, setEventToSend] = useState<any>({});
+  const [eventPayload, setEventPayload] = useState<string>('{}');
+  const [eventTextEditorEnabled, setEventTextEditorEnabled] =
+    useState<boolean>(false);
 
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -67,16 +81,24 @@ export default function ProcessInstanceShow() {
   const modifiedProcessModelId = params.process_model_id;
 
   const { targetUris } = useUriListForPermissions();
+  const taskListPath =
+    variant === 'all'
+      ? targetUris.processInstanceTaskListPath
+      : targetUris.processInstanceTaskListForMePath;
+
   const permissionRequestData: PermissionsToCheck = {
+    [`${targetUris.processInstanceResumePath}`]: ['POST'],
+    [`${targetUris.processInstanceSuspendPath}`]: ['POST'],
+    [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
+    [targetUris.processInstanceResetPath]: ['POST'],
     [targetUris.messageInstanceListPath]: ['GET'],
-    [targetUris.processInstanceTaskListPath]: ['GET'],
-    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
+    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
+    [targetUris.processInstanceSendEventPath]: ['POST'],
+    [targetUris.processInstanceCompleteTaskPath]: ['POST'],
     [targetUris.processModelShowPath]: ['PUT'],
-    [`${targetUris.processInstanceActionPath}/suspend`]: ['PUT'],
-    [`${targetUris.processInstanceActionPath}/terminate`]: ['PUT'],
-    [`${targetUris.processInstanceActionPath}/resume`]: ['PUT'],
+    [taskListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -98,8 +120,12 @@ export default function ProcessInstanceShow() {
       if (processIdentifier) {
         queryParams = `?process_identifier=${processIdentifier}`;
       }
+      let apiPath = '/process-instances/for-me';
+      if (variant === 'all') {
+        apiPath = '/process-instances';
+      }
       HttpService.makeCallToBackend({
-        path: `/process-instances/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
+        path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
         successCallback: setProcessInstance,
       });
       let taskParams = '?all_tasks=true';
@@ -109,8 +135,8 @@ export default function ProcessInstanceShow() {
       let taskPath = '';
       if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
         taskPath = `${targetUris.processInstanceTaskListDataPath}${taskParams}`;
-      } else if (ability.can('GET', targetUris.processInstanceTaskListPath)) {
-        taskPath = `${targetUris.processInstanceTaskListPath}${taskParams}`;
+      } else if (ability.can('GET', taskListPath)) {
+        taskPath = `${taskListPath}${taskParams}`;
       }
       if (taskPath) {
         HttpService.makeCallToBackend({
@@ -129,6 +155,8 @@ export default function ProcessInstanceShow() {
     ability,
     targetUris,
     searchParams,
+    taskListPath,
+    variant,
   ]);
 
   const deleteProcessInstance = () => {
@@ -146,7 +174,7 @@ export default function ProcessInstanceShow() {
 
   const terminateProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/terminate`,
+      path: `${targetUris.processInstanceTerminatePath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -154,7 +182,7 @@ export default function ProcessInstanceShow() {
 
   const suspendProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/suspend`,
+      path: `${targetUris.processInstanceSuspendPath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -162,7 +190,7 @@ export default function ProcessInstanceShow() {
 
   const resumeProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceActionPath}/resume`,
+      path: `${targetUris.processInstanceResumePath}`,
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
@@ -172,40 +200,41 @@ export default function ProcessInstanceShow() {
     const taskIds = { completed: [], readyOrWaiting: [] };
     if (tasks) {
       tasks.forEach(function getUserTasksElement(task: ProcessInstanceTask) {
-        if (task.state === 'COMPLETED') {
-          (taskIds.completed as any).push(task);
-        }
-        if (task.state === 'READY' || task.state === 'WAITING') {
-          (taskIds.readyOrWaiting as any).push(task);
+        const callingSubprocessId = searchParams.get('call_activity_task_id');
+        if (
+          !callingSubprocessId ||
+          callingSubprocessId === task.calling_subprocess_task_id
+        ) {
+          console.log('callingSubprocessId', callingSubprocessId);
+          if (task.state === 'COMPLETED') {
+            (taskIds.completed as any).push(task);
+          }
+          if (task.state === 'READY' || task.state === 'WAITING') {
+            (taskIds.readyOrWaiting as any).push(task);
+          }
         }
       });
     }
     return taskIds;
   };
 
-  const currentSpiffStep = (processInstanceToUse: any) => {
-    if (typeof params.spiff_step === 'undefined') {
-      return processInstanceToUse.spiff_step;
+  const currentSpiffStep = () => {
+    if (processInstance && typeof params.spiff_step === 'undefined') {
+      return processInstance.spiff_step || 0;
     }
 
     return Number(params.spiff_step);
   };
 
-  const showingFirstSpiffStep = (processInstanceToUse: any) => {
-    return currentSpiffStep(processInstanceToUse) === 1;
+  const showingFirstSpiffStep = () => {
+    return currentSpiffStep() === 1;
   };
 
-  const showingLastSpiffStep = (processInstanceToUse: any) => {
-    return (
-      currentSpiffStep(processInstanceToUse) === processInstanceToUse.spiff_step
-    );
+  const showingLastSpiffStep = () => {
+    return processInstance && currentSpiffStep() === processInstance.spiff_step;
   };
 
-  const spiffStepLink = (
-    processInstanceToUse: any,
-    label: any,
-    distance: number
-  ) => {
+  const spiffStepLink = (label: any, distance: number) => {
     const processIdentifier = searchParams.get('process_identifier');
     let queryParams = '';
     if (processIdentifier) {
@@ -217,32 +246,47 @@ export default function ProcessInstanceShow() {
         data-qa="process-instance-step-link"
         to={`/admin/process-instances/${params.process_model_id}/${
           params.process_instance_id
-        }/${currentSpiffStep(processInstanceToUse) + distance}${queryParams}`}
+        }/${currentSpiffStep() + distance}${queryParams}`}
       >
         {label}
       </Link>
     );
   };
 
-  const previousStepLink = (processInstanceToUse: any) => {
-    if (showingFirstSpiffStep(processInstanceToUse)) {
+  const previousStepLink = () => {
+    if (showingFirstSpiffStep()) {
       return null;
     }
 
-    return spiffStepLink(processInstanceToUse, <CaretLeft />, -1);
+    return spiffStepLink(<CaretLeft />, -1);
   };
 
-  const nextStepLink = (processInstanceToUse: any) => {
-    if (showingLastSpiffStep(processInstanceToUse)) {
+  const nextStepLink = () => {
+    if (showingLastSpiffStep()) {
       return null;
     }
 
-    return spiffStepLink(processInstanceToUse, <CaretRight />, 1);
+    return spiffStepLink(<CaretRight />, 1);
   };
 
-  const getInfoTag = (processInstanceToUse: any) => {
+  const returnToLastSpiffStep = () => {
+    window.location.href = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+  };
+
+  const resetProcessInstance = () => {
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceResetPath}/${currentSpiffStep()}`,
+      successCallback: returnToLastSpiffStep,
+      httpMethod: 'POST',
+    });
+  };
+
+  const getInfoTag = () => {
+    if (!processInstance) {
+      return null;
+    }
     const currentEndDate = convertSecondsToFormattedDateTime(
-      processInstanceToUse.end_in_seconds
+      processInstance.end_in_seconds || 0
     );
     let currentEndDateTag;
     if (currentEndDate) {
@@ -253,7 +297,7 @@ export default function ProcessInstanceShow() {
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
             {convertSecondsToFormattedDateTime(
-              processInstanceToUse.end_in_seconds
+              processInstance.end_in_seconds || 0
             ) || 'N/A'}
           </Column>
         </Grid>
@@ -261,13 +305,13 @@ export default function ProcessInstanceShow() {
     }
 
     let statusIcon = <InProgress />;
-    if (processInstanceToUse.status === 'suspended') {
+    if (processInstance.status === 'suspended') {
       statusIcon = <PauseOutline />;
-    } else if (processInstanceToUse.status === 'complete') {
+    } else if (processInstance.status === 'complete') {
       statusIcon = <Checkmark />;
-    } else if (processInstanceToUse.status === 'terminated') {
+    } else if (processInstance.status === 'terminated') {
       statusIcon = <StopOutline />;
-    } else if (processInstanceToUse.status === 'error') {
+    } else if (processInstance.status === 'error') {
       statusIcon = <Warning />;
     }
 
@@ -279,7 +323,7 @@ export default function ProcessInstanceShow() {
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
             {convertSecondsToFormattedDateTime(
-              processInstanceToUse.start_in_seconds
+              processInstance.start_in_seconds || 0
             )}
           </Column>
         </Grid>
@@ -290,7 +334,7 @@ export default function ProcessInstanceShow() {
           </Column>
           <Column sm={3} md={3} lg={3}>
             <Tag type="gray" size="sm" className="span-tag">
-              {processInstanceToUse.status} {statusIcon}
+              {processInstance.status} {statusIcon}
             </Tag>
           </Column>
         </Grid>
@@ -333,11 +377,10 @@ export default function ProcessInstanceShow() {
     );
   };
 
-  const terminateButton = (processInstanceToUse: any) => {
+  const terminateButton = () => {
     if (
-      ['complete', 'terminated', 'error'].indexOf(
-        processInstanceToUse.status
-      ) === -1
+      processInstance &&
+      !ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
       return (
         <ButtonWithConfirmation
@@ -345,7 +388,7 @@ export default function ProcessInstanceShow() {
           renderIcon={StopOutline}
           iconDescription="Terminate"
           hasIconOnly
-          description={`Terminate Process Instance: ${processInstanceToUse.id}`}
+          description={`Terminate Process Instance: ${processInstance.id}`}
           onConfirmation={terminateProcessInstance}
           confirmButtonLabel="Terminate"
         />
@@ -354,11 +397,12 @@ export default function ProcessInstanceShow() {
     return <div />;
   };
 
-  const suspendButton = (processInstanceToUse: any) => {
+  const suspendButton = () => {
     if (
-      ['complete', 'terminated', 'error', 'suspended'].indexOf(
-        processInstanceToUse.status
-      ) === -1
+      processInstance &&
+      !ProcessInstanceClass.terminalStatuses()
+        .concat(['suspended'])
+        .includes(processInstance.status)
     ) {
       return (
         <Button
@@ -374,8 +418,8 @@ export default function ProcessInstanceShow() {
     return <div />;
   };
 
-  const resumeButton = (processInstanceToUse: any) => {
-    if (processInstanceToUse.status === 'suspended') {
+  const resumeButton = () => {
+    if (processInstance && processInstance.status === 'suspended') {
       return (
         <Button
           onClick={resumeProcessInstance}
@@ -398,16 +442,53 @@ export default function ProcessInstanceShow() {
     }
   };
 
+  const handleProcessDataDisplayClose = () => {
+    setProcessDataToDisplay(null);
+  };
+
+  const processDataDisplayArea = () => {
+    if (processDataToDisplay) {
+      return (
+        <Modal
+          open={!!processDataToDisplay}
+          passiveModal
+          onRequestClose={handleProcessDataDisplayClose}
+        >
+          <h2>Data Object: {processDataToDisplay.process_data_identifier}</h2>
+          <br />
+          <p>Value:</p>
+          <pre>{JSON.stringify(processDataToDisplay.process_data_value)}</pre>
+        </Modal>
+      );
+    }
+    return null;
+  };
+
+  const handleProcessDataShowResponse = (processData: ProcessData) => {
+    setProcessDataToDisplay(processData);
+  };
+
   const handleClickedDiagramTask = (
     shapeElement: any,
     bpmnProcessIdentifiers: any
   ) => {
-    if (tasks) {
-      const matchingTask: any = tasks.find(
-        (task: any) =>
+    if (shapeElement.type === 'bpmn:DataObjectReference') {
+      const dataObjectIdentifer = shapeElement.businessObject.dataObjectRef.id;
+      HttpService.makeCallToBackend({
+        path: `/process-data/${params.process_model_id}/${params.process_instance_id}/${dataObjectIdentifer}`,
+        httpMethod: 'GET',
+        successCallback: handleProcessDataShowResponse,
+      });
+    } else if (tasks) {
+      const matchingTask: any = tasks.find((task: any) => {
+        const callingSubprocessId = searchParams.get('call_activity_task_id');
+        return (
+          (!callingSubprocessId ||
+            callingSubprocessId === task.calling_subprocess_task_id) &&
           task.name === shapeElement.id &&
           bpmnProcessIdentifiers.includes(task.process_identifier)
-      );
+        );
+      });
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
         initializeTaskDataToDisplay(matchingTask);
@@ -450,16 +531,71 @@ export default function ProcessInstanceShow() {
 
   const canEditTaskData = (task: any) => {
     return (
+      processInstance &&
       ability.can('PUT', targetUris.processInstanceTaskListDataPath) &&
       task.state === 'READY' &&
-      showingLastSpiffStep(processInstance as any)
+      processInstance.status === 'suspended' &&
+      showingLastSpiffStep()
     );
   };
 
-  const cancelEditingTaskData = () => {
+  const canSendEvent = (task: any) => {
+    // We actually could allow this for any waiting events
+    const taskTypes = ['Event Based Gateway'];
+    return (
+      processInstance &&
+      processInstance.status === 'waiting' &&
+      ability.can('POST', targetUris.processInstanceSendEventPath) &&
+      taskTypes.filter((t) => t === task.type).length > 0 &&
+      task.state === 'WAITING' &&
+      showingLastSpiffStep()
+    );
+  };
+
+  const canCompleteTask = (task: any) => {
+    return (
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
+      task.state === 'READY' &&
+      showingLastSpiffStep()
+    );
+  };
+
+  const canResetProcess = (task: any) => {
+    return (
+      ability.can('POST', targetUris.processInstanceResetPath) &&
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      task.state === 'READY' &&
+      !showingLastSpiffStep()
+    );
+  };
+
+  const getEvents = (task: any) => {
+    const handleMessage = (eventDefinition: any) => {
+      if (eventDefinition.typename === 'MessageEventDefinition') {
+        const newEvent = eventDefinition;
+        delete newEvent.message_var;
+        newEvent.payload = {};
+        return newEvent;
+      }
+      return eventDefinition;
+    };
+    if (task.event_definition && task.event_definition.event_definitions)
+      return task.event_definition.event_definitions.map((e: any) =>
+        handleMessage(e)
+      );
+    if (task.event_definition) return [handleMessage(task.event_definition)];
+    return [];
+  };
+
+  const cancelUpdatingTask = () => {
     setEditingTaskData(false);
+    setSelectingEvent(false);
     initializeTaskDataToDisplay(taskToDisplay);
-    setErrorMessage(null);
+    setEventPayload('{}');
+    setErrorObject(null);
   };
 
   const taskDataStringToObject = (dataString: string) => {
@@ -475,7 +611,7 @@ export default function ProcessInstanceShow() {
   };
 
   const saveTaskDataFailure = (result: any) => {
-    setErrorMessage({ message: result.toString() });
+    setErrorObject({ message: result.message });
   };
 
   const saveTaskData = () => {
@@ -483,12 +619,12 @@ export default function ProcessInstanceShow() {
       return;
     }
 
-    setErrorMessage(null);
+    setErrorObject(null);
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
-      path: `/task-data/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
+      path: `${targetUris.processInstanceTaskListDataPath}/${taskToUse.id}`,
       httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,
@@ -498,7 +634,29 @@ export default function ProcessInstanceShow() {
     });
   };
 
-  const taskDataButtons = (task: any) => {
+  const sendEvent = () => {
+    if ('payload' in eventToSend)
+      eventToSend.payload = JSON.parse(eventPayload);
+    HttpService.makeCallToBackend({
+      path: `/send-event/${modifiedProcessModelId}/${params.process_instance_id}`,
+      httpMethod: 'POST',
+      successCallback: saveTaskDataResult,
+      failureCallback: saveTaskDataFailure,
+      postBody: eventToSend,
+    });
+  };
+
+  const completeTask = (execute: boolean) => {
+    const taskToUse: any = taskToDisplay;
+    HttpService.makeCallToBackend({
+      path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
+      httpMethod: 'POST',
+      successCallback: returnToLastSpiffStep,
+      postBody: { execute },
+    });
+  };
+
+  const taskDisplayButtons = (task: any) => {
     const buttons = [];
 
     if (
@@ -519,7 +677,7 @@ export default function ProcessInstanceShow() {
       buttons.push(
         <Link
           data-qa="go-to-call-activity-result"
-          to={`${window.location.pathname}?process_identifier=${task.call_activity_process_identifier}`}
+          to={`${window.location.pathname}?process_identifier=${task.call_activity_process_identifier}&call_activity_task_id=${task.id}`}
           target="_blank"
         >
           View Call Activity Diagram
@@ -527,28 +685,80 @@ export default function ProcessInstanceShow() {
       );
     }
 
-    if (canEditTaskData(task)) {
-      if (editingTaskData) {
-        buttons.push(
-          <Button data-qa="save-task-data-button" onClick={saveTaskData}>
-            Save
-          </Button>
-        );
-        buttons.push(
-          <Button
-            data-qa="cancel-task-data-edit-button"
-            onClick={cancelEditingTaskData}
-          >
-            Cancel
-          </Button>
-        );
-      } else {
+    if (editingTaskData) {
+      buttons.push(
+        <Button data-qa="save-task-data-button" onClick={saveTaskData}>
+          Save
+        </Button>
+      );
+      buttons.push(
+        <Button
+          data-qa="cancel-task-data-edit-button"
+          onClick={cancelUpdatingTask}
+        >
+          Cancel
+        </Button>
+      );
+    } else if (selectingEvent) {
+      buttons.push(
+        <Button data-qa="send-event-button" onClick={sendEvent}>
+          Send
+        </Button>
+      );
+      buttons.push(
+        <Button
+          data-qa="cancel-task-data-edit-button"
+          onClick={cancelUpdatingTask}
+        >
+          Cancel
+        </Button>
+      );
+    } else {
+      if (canEditTaskData(task)) {
         buttons.push(
           <Button
             data-qa="edit-task-data-button"
             onClick={() => setEditingTaskData(true)}
           >
             Edit
+          </Button>
+        );
+      }
+      if (canCompleteTask(task)) {
+        buttons.push(
+          <Button
+            data-qa="mark-task-complete-button"
+            onClick={() => completeTask(false)}
+          >
+            Skip Task
+          </Button>
+        );
+        buttons.push(
+          <Button
+            data-qa="execute-task-complete-button"
+            onClick={() => completeTask(true)}
+          >
+            Execute Task
+          </Button>
+        );
+      }
+      if (canSendEvent(task)) {
+        buttons.push(
+          <Button
+            data-qa="select-event-button"
+            onClick={() => setSelectingEvent(true)}
+          >
+            Send Event
+          </Button>
+        );
+      }
+      if (canResetProcess(task)) {
+        buttons.push(
+          <Button
+            data-qa="reset-process-button"
+            onClick={() => resetProcessInstance()}
+          >
+            Reset Process Here
           </Button>
         );
       }
@@ -571,8 +781,42 @@ export default function ProcessInstanceShow() {
     );
   };
 
-  const taskDataDisplayArea = () => {
+  const eventSelector = (candidateEvents: any) => {
+    const editor = (
+      <Editor
+        height={300}
+        width="auto"
+        defaultLanguage="json"
+        defaultValue={eventPayload}
+        onChange={(value: any) => setEventPayload(value || '{}')}
+        options={{ readOnly: !eventTextEditorEnabled }}
+      />
+    );
+    return selectingEvent ? (
+      <Stack orientation="vertical">
+        <Dropdown
+          id="process-instance-select-event"
+          titleText="Event"
+          label="Select Event"
+          items={candidateEvents}
+          itemToString={(item: any) => item.name || item.label || item.typename}
+          onChange={(value: any) => {
+            setEventToSend(value.selectedItem);
+            setEventTextEditorEnabled(
+              value.selectedItem.typename === 'MessageEventDefinition'
+            );
+          }}
+        />
+        {editor}
+      </Stack>
+    ) : (
+      taskDataContainer()
+    );
+  };
+
+  const taskUpdateDisplayArea = () => {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
+    const candidateEvents: any = getEvents(taskToUse);
     if (taskToDisplay) {
       return (
         <Modal
@@ -582,46 +826,52 @@ export default function ProcessInstanceShow() {
         >
           <Stack orientation="horizontal" gap={2}>
             {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-            {taskDataButtons(taskToUse)}
+            {taskDisplayButtons(taskToUse)}
           </Stack>
-          {taskDataContainer()}
+          {selectingEvent
+            ? eventSelector(candidateEvents)
+            : taskDataContainer()}
         </Modal>
       );
     }
     return null;
   };
 
-  const stepsElement = (processInstanceToUse: any) => {
+  const stepsElement = () => {
+    if (!processInstance) {
+      return null;
+    }
     return (
       <Grid condensed fullWidth>
         <Column sm={3} md={3} lg={3}>
           <Stack orientation="horizontal" gap={3} className="smaller-text">
-            {previousStepLink(processInstanceToUse)}
-            Step {currentSpiffStep(processInstanceToUse)} of{' '}
-            {processInstanceToUse.spiff_step}
-            {nextStepLink(processInstanceToUse)}
+            {previousStepLink()}
+            Step {currentSpiffStep()} of {processInstance.spiff_step}
+            {nextStepLink()}
           </Stack>
         </Column>
       </Grid>
     );
   };
 
-  const buttonIcons = (processInstanceToUse: any) => {
+  const buttonIcons = () => {
+    if (!processInstance) {
+      return null;
+    }
     const elements = [];
-    if (
-      ability.can('POST', `${targetUris.processInstanceActionPath}/terminate`)
-    ) {
-      elements.push(terminateButton(processInstanceToUse));
+    if (ability.can('POST', `${targetUris.processInstanceTerminatePath}`)) {
+      elements.push(terminateButton());
+    }
+    if (ability.can('POST', `${targetUris.processInstanceSuspendPath}`)) {
+      elements.push(suspendButton());
+    }
+    if (ability.can('POST', `${targetUris.processInstanceResumePath}`)) {
+      elements.push(resumeButton());
     }
     if (
-      ability.can('POST', `${targetUris.processInstanceActionPath}/suspend`)
+      ability.can('DELETE', targetUris.processInstanceActionPath) &&
+      ProcessInstanceClass.terminalStatuses().includes(processInstance.status)
     ) {
-      elements.push(suspendButton(processInstanceToUse));
-    }
-    if (ability.can('POST', `${targetUris.processInstanceActionPath}/resume`)) {
-      elements.push(resumeButton(processInstanceToUse));
-    }
-    if (ability.can('DELETE', targetUris.processInstanceActionPath)) {
       elements.push(
         <ButtonWithConfirmation
           data-qa="process-instance-delete"
@@ -629,7 +879,7 @@ export default function ProcessInstanceShow() {
           renderIcon={TrashCan}
           iconDescription="Delete"
           hasIconOnly
-          description={`Delete Process Instance: ${processInstanceToUse.id}`}
+          description={`Delete Process Instance: ${processInstance.id}`}
           onConfirmation={deleteProcessInstance}
           confirmButtonLabel="Delete"
         />
@@ -639,7 +889,6 @@ export default function ProcessInstanceShow() {
   };
 
   if (processInstance && (tasks || tasksCallHadError)) {
-    const processInstanceToUse = processInstance as any;
     const taskIds = getTaskIds();
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
@@ -655,26 +904,27 @@ export default function ProcessInstanceShow() {
               entityType: 'process-model-id',
               linkLastItem: true,
             },
-            [`Process Instance Id: ${processInstanceToUse.id}`],
+            [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
-            Process Instance Id: {processInstanceToUse.id}
+            Process Instance Id: {processInstance.id}
           </h1>
-          {buttonIcons(processInstanceToUse)}
+          {buttonIcons()}
         </Stack>
         <br />
         <br />
-        {getInfoTag(processInstanceToUse)}
+        {getInfoTag()}
         <br />
-        {taskDataDisplayArea()}
-        {stepsElement(processInstanceToUse)}
+        {taskUpdateDisplayArea()}
+        {processDataDisplayArea()}
+        {stepsElement()}
         <br />
         <ReactDiagramEditor
           processModelId={processModelId || ''}
-          diagramXML={processInstanceToUse.bpmn_xml_file_contents || ''}
-          fileName={processInstanceToUse.bpmn_xml_file_contents || ''}
+          diagramXML={processInstance.bpmn_xml_file_contents || ''}
+          fileName={processInstance.bpmn_xml_file_contents || ''}
           readyOrWaitingProcessInstanceTasks={taskIds.readyOrWaiting}
           completedProcessInstanceTasks={taskIds.completed}
           diagramType="readonly"

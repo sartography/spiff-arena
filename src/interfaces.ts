@@ -1,8 +1,18 @@
+export interface User {
+  id: number;
+  username: string;
+}
+
 export interface Secret {
   id: number;
   key: string;
   value: string;
   creator_user_id: string;
+}
+
+export interface ProcessData {
+  process_data_identifier: string;
+  process_data_value: any;
 }
 
 export interface RecentProcessModel {
@@ -12,10 +22,24 @@ export interface RecentProcessModel {
 }
 
 export interface ProcessInstanceTask {
-  id: string;
+  id: number;
+  task_id: string;
+  process_instance_id: number;
+  process_model_display_name: string;
+  process_model_identifier: string;
+  task_title: string;
+  lane_assignment_id: string;
+  process_instance_status: string;
   state: string;
   process_identifier: string;
   name: string;
+  process_initiator_username: string;
+  assigned_user_group_identifier: string;
+  created_at_in_seconds: number;
+  updated_at_in_seconds: number;
+  current_user_is_potential_owner: number;
+  potential_owner_usernames: string;
+  calling_subprocess_task_id: string;
 }
 
 export interface ProcessReference {
@@ -46,6 +70,10 @@ export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
   process_model_display_name: string;
+  status: string;
+  start_in_seconds: number | null;
+  end_in_seconds: number | null;
+  bpmn_xml_file_contents?: string;
   spiff_step?: number;
 }
 
@@ -143,6 +171,10 @@ export type HotCrumbItem = HotCrumbItemArray | HotCrumbItemObject;
 export interface ErrorForDisplay {
   message: string;
   sentry_link?: string;
+  task_name?: string;
+  task_id?: string;
+  line_number?: number;
+  file_name?: string;
 }
 
 export interface AuthenticationParam {

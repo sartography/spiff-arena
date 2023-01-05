@@ -13,11 +13,10 @@ const checkTaskHasClass = (taskName, className) => {
   cy.get(`g[data-element-id=${taskName}]`).should('have.class', className);
 };
 
-const kickOffModelWithForm = (modelId, formName) => {
+const kickOffModelWithForm = () => {
   cy.navigateToProcessModel(
     'Acceptance Tests Group One',
-    'Acceptance Tests Model 2',
-    'acceptance-tests-model-2'
+    'Acceptance Tests Model 2'
   );
   cy.runPrimaryBpmnFile(true);
 };
@@ -32,12 +31,11 @@ describe('tasks', () => {
 
   it('can complete and navigate a form', () => {
     const groupDisplayName = 'Acceptance Tests Group One';
-    const modelId = `acceptance-tests-model-2`;
     const modelDisplayName = `Acceptance Tests Model 2`;
     const completedTaskClassName = 'completed-task-highlight';
     const activeTaskClassName = 'active-task-highlight';
 
-    cy.navigateToProcessModel(groupDisplayName, modelDisplayName, modelId);
+    cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
     cy.runPrimaryBpmnFile(true);
 
     submitInputIntoFormField(
@@ -71,7 +69,7 @@ describe('tasks', () => {
     );
 
     cy.contains('Task: get_user_generated_number_four');
-    cy.navigateToProcessModel(groupDisplayName, modelDisplayName, modelId);
+    cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
     cy.getBySel('process-instance-list-link').click();
     cy.assertAtLeastOneItemInPaginatedResults();
 
@@ -94,7 +92,7 @@ describe('tasks', () => {
     cy.contains('Tasks').should('exist');
 
     // FIXME: this will probably need a better way to link to the proper form that we want
-    cy.contains('Complete Task').click();
+    cy.contains('Go').click();
 
     submitInputIntoFormField(
       'get_user_generated_number_four',
@@ -103,7 +101,7 @@ describe('tasks', () => {
     );
     cy.url().should('include', '/tasks');
 
-    cy.navigateToProcessModel(groupDisplayName, modelDisplayName, modelId);
+    cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
     cy.getBySel('process-instance-list-link').click();
     cy.assertAtLeastOneItemInPaginatedResults();
 
@@ -122,6 +120,6 @@ describe('tasks', () => {
     kickOffModelWithForm();
 
     cy.navigateToHome();
-    cy.basicPaginationTest();
+    cy.basicPaginationTest('process-instance-show-link');
   });
 });
