@@ -2,8 +2,8 @@
 
 SpiffArena is a low(ish)-code software development platform for building, running, and monitoring executable diagrams.  It is intended to support Citizen Developers and help increase their ability to contribute to the software development process.  Using tools that look at lot like flow-charts and spreadsheets, it is possible to design some complex rules in a way that everyone in an organization can see and understand - and that are directly executable.
 
-Please visit `SpiffWorkflow.org <https://www.spiffworkflow.org>`_ for a Getting Started Guide on how to run SpiffArena locally and try it out.  There are also
-additional articles, videos, and tutorials about SpiffArena and it's components - SpiffWorkflow, Service Connectors, and BPMN.js extensions.
+Please visit the [SpiffWorkflow website](https://www.spiffworkflow.org) for a [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/) on how to run SpiffArena locally and try it out.  There are also
+additional articles, videos, and tutorials about SpiffArena and it's components - SpiffWorkflow, Service Connectors, and BPMN.js extensions. 
 
 # Contributing
 
