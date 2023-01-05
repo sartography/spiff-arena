@@ -11,11 +11,6 @@ from spiffworkflow_backend.services.secret_service import SecretService
 class GetSecret(Script):
     """GetSecret."""
 
-    @staticmethod
-    def requires_privileged_permissions() -> bool:
-        """We have deemed this function safe to run without elevated permissions."""
-        return False
-
     def get_description(self) -> str:
         """Get_description."""
         return """Returns the value for a previously configured secret."""
