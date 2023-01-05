@@ -52,12 +52,15 @@ class AuthenticationService:
     @classmethod
     def open_id_endpoint_for_name(cls, name: str) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
+        openid_config_url = f"{cls.server_url()}/.well-known/openid-configuration"
         if name not in AuthenticationService.ENDPOINT_CACHE:
-            request_url = f"{cls.server_url()}/.well-known/openid-configuration"
-            response = requests.get(request_url)
+            response = requests.get(openid_config_url)
             AuthenticationService.ENDPOINT_CACHE = response.json()
         if name not in AuthenticationService.ENDPOINT_CACHE:
-            raise Exception(f"Unknown OpenID Endpoint: {name}")
+            raise Exception(
+                f"Unknown OpenID Endpoint: {name}. Tried to get from"
+                f" {openid_config_url}"
+            )
         return AuthenticationService.ENDPOINT_CACHE.get(name, "")
 
     @staticmethod
@@ -93,7 +96,7 @@ class AuthenticationService:
             + f"?state={state}&"
             + "response_type=code&"
             + f"client_id={self.client_id()}&"
-            + "scope=openid&"
+            + "scope=openid profile email&"
             + f"redirect_uri={return_redirect_url}"
         )
         return login_redirect_url

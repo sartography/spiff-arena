@@ -100,6 +100,7 @@ class GitService:
             branch_name_to_use,
             git_username,
             git_email,
+            current_app.config["GIT_USER_PASSWORD"],
         ]
         return cls.run_shell_command_to_get_stdout(shell_command)
 
@@ -172,13 +173,15 @@ class GitService:
 
         if "repository" not in webhook or "clone_url" not in webhook["repository"]:
             raise InvalidGitWebhookBodyError(
-                f"Cannot find required keys of 'repository:clone_url' from webhook body: {webhook}"
+                "Cannot find required keys of 'repository:clone_url' from webhook"
+                f" body: {webhook}"
             )
 
         clone_url = webhook["repository"]["clone_url"]
         if clone_url != current_app.config["GIT_CLONE_URL_FOR_PUBLISHING"]:
             raise GitCloneUrlMismatchError(
-                f"Configured clone url does not match clone url from webhook: {clone_url}"
+                "Configured clone url does not match clone url from webhook:"
+                f" {clone_url}"
             )
 
         if "ref" not in webhook:
@@ -188,8 +191,8 @@ class GitService:
 
         if current_app.config["GIT_BRANCH"] is None:
             raise MissingGitConfigsError(
-                "Missing config for GIT_BRANCH. "
-                "This is required for updating the repository as a result of the webhook"
+                "Missing config for GIT_BRANCH. This is required for updating the"
+                " repository as a result of the webhook"
             )
 
         ref = webhook["ref"]

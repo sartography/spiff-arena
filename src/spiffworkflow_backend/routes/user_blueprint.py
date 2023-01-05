@@ -26,6 +26,7 @@ user_blueprint = Blueprint("main", __name__)
 #     user = UserService.create_user('internal', username)
 #     return Response(json.dumps({"id": user.id}), status=201, mimetype=APPLICATION_JSON)
 
+
 # def _create_user(username):
 #     user = UserModel.query.filter_by(username=username).first()
 #     if user is not None:

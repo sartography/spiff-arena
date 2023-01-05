@@ -26,34 +26,12 @@ class ProcessInstanceNotFoundError(Exception):
     """ProcessInstanceNotFoundError."""
 
 
-class NavigationItemSchema(Schema):
-    """NavigationItemSchema."""
+class ProcessInstanceTaskDataCannotBeUpdatedError(Exception):
+    """ProcessInstanceTaskDataCannotBeUpdatedError."""
 
-    class Meta:
-        """Meta."""
 
-        fields = [
-            "spec_id",
-            "name",
-            "spec_type",
-            "task_id",
-            "description",
-            "backtracks",
-            "indent",
-            "lane",
-            "state",
-            "children",
-        ]
-        unknown = INCLUDE
-
-    state = marshmallow.fields.String(required=False, allow_none=True)
-    description = marshmallow.fields.String(required=False, allow_none=True)
-    backtracks = marshmallow.fields.String(required=False, allow_none=True)
-    lane = marshmallow.fields.String(required=False, allow_none=True)
-    task_id = marshmallow.fields.String(required=False, allow_none=True)
-    children = marshmallow.fields.List(
-        marshmallow.fields.Nested(lambda: NavigationItemSchema())
-    )
+class ProcessInstanceCannotBeDeletedError(Exception):
+    """ProcessInstanceCannotBeDeletedError."""
 
 
 class ProcessInstanceStatus(SpiffEnum):
@@ -79,10 +57,22 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_model_display_name: str = db.Column(
         db.String(255), nullable=False, index=True
     )
-    process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)
+    process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
     process_initiator = relationship("UserModel")
 
-    active_tasks = relationship("ActiveTaskModel", cascade="delete")  # type: ignore
+    active_human_tasks = relationship(
+        "HumanTaskModel",
+        primaryjoin=(
+            "and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id,"
+            " HumanTaskModel.completed == False)"
+        ),
+    )  # type: ignore
+
+    human_tasks = relationship(
+        "HumanTaskModel",
+        cascade="delete",
+        overlaps="active_human_tasks",
+    )  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
 
@@ -130,6 +120,19 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     def validate_status(self, key: str, value: Any) -> Any:
         """Validate_status."""
         return self.validate_enum_field(key, value, ProcessInstanceStatus)
+
+    def can_submit_task(self) -> bool:
+        """Can_submit_task."""
+        return not self.has_terminal_status() and self.status != "suspended"
+
+    def has_terminal_status(self) -> bool:
+        """Has_terminal_status."""
+        return self.status in self.terminal_statuses()
+
+    @classmethod
+    def terminal_statuses(cls) -> list[str]:
+        """Terminal_statuses."""
+        return ["complete", "error", "terminated"]
 
 
 class ProcessInstanceModelSchema(Schema):
