@@ -40,7 +40,8 @@ def hello_world():
         return (
             'Hello, %s, <a href="/private">See private</a> '
             '<a href="/logout">Log out</a>'
-        ) % oidc.user_getfield("preferred_username")
+            % oidc.user_getfield("preferred_username")
+        )
     else:
         return 'Welcome anonymous, <a href="/private">Log in</a>'
 

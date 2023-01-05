@@ -151,3 +151,18 @@ Cypress.Commands.add('assertAtLeastOneItemInPaginatedResults', () => {
 Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
   cy.contains(/\b0–0 of 0 items/);
 });
+
+Cypress.Commands.add(
+  'deleteProcessModelAndConfirm',
+  (buttonId, groupId) => {
+    cy.getBySel(buttonId).click();
+    cy.contains('Are you sure');
+    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
+      .find('.cds--btn--danger')
+      .click();
+    cy.url().should(
+      'include',
+      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
+    );
+  }
+);

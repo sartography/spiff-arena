@@ -274,6 +274,12 @@ paths:
         description: Get only the process models that the user can run
         schema:
           type: boolean
+      - name: include_parent_groups
+        in: query
+        required: false
+        description: Get the display names for the parent groups as well
+        schema:
+          type: boolean
       - name: page
         in: query
         required: false
@@ -311,6 +317,32 @@ paths:
           type: string
     post:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_create
+      summary: Creates a new process model with the given parameters.
+      tags:
+        - Process Models
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessModel"
+      responses:
+        "201":
+          description: Process model created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessModel"
+
+  /process-models-natural-language/{modified_process_group_id}:
+    parameters:
+      - name: modified_process_group_id
+        in: path
+        required: true
+        description: modified id of an existing process group
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.process_models_controller.process_model_create_with_natural_language
       summary: Creates a new process model with the given parameters.
       tags:
         - Process Models
@@ -1382,11 +1414,34 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
+  /users/search:
+    parameters:
+      - name: username_prefix
+        in: query
+        required: true
+        description: The prefix of the user
+        schema:
+          type: string
+    get:
+      tags:
+        - Users
+      operationId: spiffworkflow_backend.routes.users_controller.user_search
+      summary: Returns a list of users that the search param
+      responses:
+        "200":
+          description: list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
   /user-groups/for-current-user:
     get:
       tags:
-        - Process Instances
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.user_group_list_for_current_user
+        - User Groups
+      operationId: spiffworkflow_backend.routes.users_controller.user_group_list_for_current_user
       summary: Group identifiers for current logged in user
       responses:
         "200":

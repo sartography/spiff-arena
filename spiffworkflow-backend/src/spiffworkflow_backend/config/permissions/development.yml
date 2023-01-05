@@ -63,7 +63,7 @@ groups:
   admin-ro:
     users:
       [
-        j,
+        j@sartography.com,
       ]
 
 permissions:

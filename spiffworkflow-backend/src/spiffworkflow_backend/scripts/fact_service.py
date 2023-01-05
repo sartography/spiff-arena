@@ -35,7 +35,10 @@ class FactService(Script):
         if fact == "cat":
             details = "The cat in the hat"  # self.get_cat()
         elif fact == "norris":
-            details = "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
+            details = (
+                "Chuck Norris doesn’t read books. He stares them down until he gets the"
+                " information he wants."
+            )
         elif fact == "buzzword":
             details = "Move the Needle."  # self.get_buzzword()
         else:

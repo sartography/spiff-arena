@@ -1,3 +1,8 @@
+export interface User {
+  id: number;
+  username: string;
+}
+
 export interface Secret {
   id: number;
   key: string;
@@ -17,16 +22,23 @@ export interface RecentProcessModel {
 }
 
 export interface ProcessInstanceTask {
-  id: string;
+  id: number;
+  task_id: string;
+  process_instance_id: number;
   process_model_display_name: string;
   process_model_identifier: string;
   task_title: string;
   lane_assignment_id: string;
-  process_instance_status: number;
-  updated_at_in_seconds: number;
+  process_instance_status: string;
   state: string;
   process_identifier: string;
   name: string;
+  process_initiator_username: string;
+  assigned_user_group_identifier: string;
+  created_at_in_seconds: number;
+  updated_at_in_seconds: number;
+  current_user_is_potential_owner: number;
+  potential_owner_usernames: string;
 }
 
 export interface ProcessReference {

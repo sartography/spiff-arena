@@ -35,9 +35,9 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
         ForeignKey(ProcessInstanceModel.id), nullable=False  # type: ignore
     )
     lane_assignment_id: int | None = db.Column(ForeignKey(GroupModel.id))
-    completed_by_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True)
+    completed_by_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True)  # type: ignore
 
-    actual_owner_id: int = db.Column(ForeignKey(UserModel.id))
+    actual_owner_id: int = db.Column(ForeignKey(UserModel.id))  # type: ignore
     # actual_owner: RelationshipProperty[UserModel] = relationship(UserModel)
 
     form_file_name: str | None = db.Column(db.String(50))

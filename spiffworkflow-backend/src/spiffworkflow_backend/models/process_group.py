@@ -11,6 +11,7 @@ import marshmallow
 from marshmallow import post_load
 from marshmallow import Schema
 
+from spiffworkflow_backend.interfaces import ProcessGroupLite
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 
@@ -29,7 +30,7 @@ class ProcessGroup:
         default_factory=list[ProcessModelInfo]
     )
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
-    parent_groups: list[dict] | None = None
+    parent_groups: list[ProcessGroupLite] | None = None
 
     def __post_init__(self) -> None:
         """__post_init__."""
