@@ -9,7 +9,7 @@ from spiffworkflow_backend.services.secret_service import SecretService
 
 
 class GetSecret(Script):
-    """FactService."""
+    """GetSecret."""
 
     @staticmethod
     def requires_privileged_permissions() -> bool:
