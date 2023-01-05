@@ -81,7 +81,7 @@ export default function NavigationBar() {
       return (
         <>
           <HeaderGlobalAction className="username-header-text">
-            {UserService.getUsername()}
+            {UserService.getPreferredUsername()}
           </HeaderGlobalAction>
           <HeaderGlobalAction
             aria-label="Logout"

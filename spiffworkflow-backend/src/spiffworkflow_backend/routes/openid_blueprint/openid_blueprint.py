@@ -111,6 +111,7 @@ def token() -> dict:
             "iat": time.time(),
             "exp": time.time() + 86400,  # Expire after a day.
             "sub": user_name,
+            "email": user_details["email"],
             "preferred_username": user_details.get("preferred_username", user_name),
         },
         client_secret,

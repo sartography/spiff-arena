@@ -4,6 +4,7 @@ import json
 import os
 import time
 from typing import Any
+from typing import Dict
 
 import pytest
 from flask.app import Flask
@@ -162,6 +163,83 @@ class TestProcessApi(BaseTest):
         assert process_model.primary_file_name == bpmn_file_name
         assert process_model.primary_process_id == "sample"
 
+    def test_process_model_create_with_natural_language(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_process_model_create_with_natural_language."""
+        process_group_id = "test_process_group"
+        process_group_description = "Test Process Group"
+        process_model_id = "sample"
+        process_model_identifier = f"{process_group_id}/{process_model_id}"
+        self.create_process_group(
+            client, with_super_admin_user, process_group_id, process_group_description
+        )
+
+        text = "Create a Bug Tracker process model "
+        text += (
+            "with a Bug Details form that collects summary, description, and priority"
+        )
+        body = {"natural_language_text": text}
+        self.create_process_model_with_api(
+            client,
+            process_model_id=process_model_identifier,
+            user=with_super_admin_user,
+        )
+        response = client.post(
+            f"/v1.0/process-models-natural-language/{process_group_id}",
+            content_type="application/json",
+            data=json.dumps(body),
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 201
+        assert response.json is not None
+        assert response.json["id"] == f"{process_group_id}/bug-tracker"
+        assert response.json["display_name"] == "Bug Tracker"
+        assert response.json["metadata_extraction_paths"] == [
+            {"key": "summary", "path": "summary"},
+            {"key": "description", "path": "description"},
+            {"key": "priority", "path": "priority"},
+        ]
+
+        process_model = ProcessModelService.get_process_model(response.json["id"])
+        process_model_path = os.path.join(
+            FileSystemService.root_path(),
+            FileSystemService.id_string_to_relative_path(process_model.id),
+        )
+
+        process_model_diagram = os.path.join(process_model_path, "bug-tracker.bpmn")
+        assert os.path.exists(process_model_diagram)
+        form_schema_json = os.path.join(process_model_path, "bug-details-schema.json")
+        assert os.path.exists(form_schema_json)
+        form_uischema_json = os.path.join(
+            process_model_path, "bug-details-uischema.json"
+        )
+        assert os.path.exists(form_uischema_json)
+
+        process_instance_report = ProcessInstanceReportModel.query.filter_by(
+            identifier="bug-tracker"
+        ).first()
+        assert process_instance_report is not None
+        report_column_accessors = [
+            i["accessor"] for i in process_instance_report.report_metadata["columns"]
+        ]
+        expected_column_accessors = [
+            "id",
+            "process_model_display_name",
+            "start_in_seconds",
+            "end_in_seconds",
+            "username",
+            "status",
+            "summary",
+            "description",
+            "priority",
+        ]
+        assert report_column_accessors == expected_column_accessors
+
     def test_primary_process_id_updates_via_xml(
         self,
         app: Flask,
@@ -249,10 +327,6 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["ok"] is True
 
-        # assert we no longer have a model
-        with pytest.raises(ProcessEntityNotFoundError):
-            ProcessModelService.get_process_model(process_model_identifier)
-
     def test_process_model_delete_with_instances(
         self,
         app: Flask,
@@ -304,7 +378,8 @@ class TestProcessApi(BaseTest):
         assert data["error_code"] == "existing_instances"
         assert (
             data["message"]
-            == f"We cannot delete the model `{process_model_identifier}`, there are existing instances that depend on it."
+            == f"We cannot delete the model `{process_model_identifier}`, there are"
+            " existing instances that depend on it."
         )
 
     def test_process_model_update(
@@ -2019,7 +2094,6 @@ class TestProcessApi(BaseTest):
 
         mail = app.config["MAIL_APP"]
         with mail.record_messages() as outbox:
-
             response = client.post(
                 f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
                 headers=self.logged_in_headers(with_super_admin_user),
@@ -2040,6 +2114,36 @@ class TestProcessApi(BaseTest):
         )
         assert process is not None
         assert process.status == "error"
+
+    def test_task_data_is_set_even_if_process_instance_errors(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_task_data_is_set_even_if_process_instance_errors."""
+        process_model = load_test_spec(
+            process_model_id="group/error_with_task_data",
+            bpmn_file_name="script_error_with_task_data.bpmn",
+            process_model_source_directory="error",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 400
+        assert process_instance.status == "error"
+        processor = ProcessInstanceProcessor(process_instance)
+        spiff_task = processor.get_task_by_bpmn_identifier(
+            "script_task_one", processor.bpmn_process_instance
+        )
+        assert spiff_task is not None
+        assert spiff_task.data != {}
 
     def test_process_model_file_create(
         self,
@@ -2507,6 +2611,148 @@ class TestProcessApi(BaseTest):
 
         print("test_script_unit_test_run")
 
+    def test_send_event(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_script_unit_test_run."""
+        process_group_id = "test_group"
+        process_model_id = "process_navigation"
+        bpmn_file_name = "process_navigation.bpmn"
+        bpmn_file_location = "process_navigation"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        bpmn_file_data_bytes = self.get_test_data_file_contents(
+            bpmn_file_name, bpmn_file_location
+        )
+        self.create_spec_file(
+            client=client,
+            process_model_id=process_model_identifier,
+            process_model_location=process_model_identifier,
+            file_name=bpmn_file_name,
+            file_data=bpmn_file_data_bytes,
+            user=with_super_admin_user,
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client, process_model_identifier, headers
+        )
+        process_instance_id = response.json["id"]
+
+        client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        # This is exactly the same the test above, but some reason I to a totally irrelevant type.
+        data: Dict = {
+            "correlation_properties": [],
+            "expression": None,
+            "external": True,
+            "internal": False,
+            "payload": {"message": "message 1"},
+            "name": "Message 1",
+            "typename": "MessageEventDefinition",
+        }
+        response = client.post(
+            f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(data),
+        )
+        assert response.json["status"] == "complete"
+
+        response = client.get(
+            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}?all_tasks=true",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        end = next(task for task in response.json if task["name"] == "End")
+        assert end["data"]["result"] == {"message": "message 1"}
+
+    def test_manual_complete_task(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_script_unit_test_run."""
+        process_group_id = "test_group"
+        process_model_id = "process_navigation"
+        bpmn_file_name = "process_navigation.bpmn"
+        bpmn_file_location = "process_navigation"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        bpmn_file_data_bytes = self.get_test_data_file_contents(
+            bpmn_file_name, bpmn_file_location
+        )
+        self.create_spec_file(
+            client=client,
+            process_model_id=process_model_identifier,
+            process_model_location=process_model_identifier,
+            file_name=bpmn_file_name,
+            file_data=bpmn_file_data_bytes,
+            user=with_super_admin_user,
+        )
+
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client, process_model_identifier, headers
+        )
+        process_instance_id = response.json["id"]
+
+        client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        data = {
+            "dateTime": "timedelta(hours=1)",
+            "external": True,
+            "internal": True,
+            "label": "Event_0e4owa3",
+            "typename": "TimerEventDefinition",
+        }
+        response = client.post(
+            f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+            data=json.dumps(data),
+        )
+
+        response = client.get(
+            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert len(response.json) == 1
+        task = response.json[0]
+
+        response = client.post(
+            f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{task['id']}",
+            headers=self.logged_in_headers(with_super_admin_user),
+            content_type="application/json",
+        )
+        assert response.json["status"] == "suspended"
+
     def setup_initial_groups_for_move_tests(
         self, client: FlaskClient, with_super_admin_user: UserModel
     ) -> None:
@@ -2750,7 +2996,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            process_model_id=(
+                "save_process_instance_metadata/save_process_instance_metadata"
+            ),
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )
@@ -2807,7 +3055,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
-            process_model_id="save_process_instance_metadata/save_process_instance_metadata",
+            process_model_id=(
+                "save_process_instance_metadata/save_process_instance_metadata"
+            ),
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )
@@ -2928,3 +3178,31 @@ class TestProcessApi(BaseTest):
         assert len(response.json["results"]) == 2
         assert response.json["results"][1]["id"] == process_instance_one.id
         assert response.json["results"][0]["id"] == process_instance_two.id
+
+    def test_process_data_show(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_process_data_show."""
+        process_model = load_test_spec(
+            "test_group/data_object_test",
+            process_model_source_directory="data_object_test",
+        )
+        process_instance_one = self.create_process_instance_from_process_model(
+            process_model
+        )
+        processor = ProcessInstanceProcessor(process_instance_one)
+        processor.do_engine_steps(save=True)
+        assert process_instance_one.status == "user_input_required"
+
+        response = client.get(
+            f"/v1.0/process-data/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance_one.id}/the_data_object_var",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+        assert response.json["process_data_value"] == "hey"

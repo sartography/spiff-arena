@@ -7,7 +7,8 @@ def main() -> None:
     """Main."""
     app = get_hacked_up_app_for_script()
     with app.app_context():
-        AuthorizationService.delete_all_permissions_and_recreate()
+        AuthorizationService.delete_all_permissions()
+        AuthorizationService.import_permissions_from_yaml_file()
 
 
 if __name__ == "__main__":

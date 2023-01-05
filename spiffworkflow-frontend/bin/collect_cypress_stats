@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+# see also: npx cypress run --env grep="can filter",grepFilterSpecs=true
+# https://github.com/cypress-io/cypress/tree/develop/npm/grep#pre-filter-specs-grepfilterspecs
+
+iterations="${1:-10}"
+
+test_case_matches="$(rg '^  it\(')"
+
+stats_file="/var/tmp/cypress_stats.txt"
+
+function run_all_test_cases() {
+  local stat_index="$1"
+
+  pushd "$NO_TERM_LIMITS_PROJECTS_DIR/github/sartography/sample-process-models"
+  gitc
+  popd
+
+  while read -r test_case_line; do
+    test_case_file="$(awk -F: '{print $1}' <<< "$test_case_line")"
+    test_case_name_side="$(awk -F: '{print $2}' <<< "$test_case_line")"
+    test_case_name=$(hot_sed -E "s/^\s+it\('(.+)'.*/\1/" <<< "$test_case_name_side")
+    echo "running test case: $test_case_file::$test_case_name"
+    if ./node_modules/.bin/cypress run --e2e --browser chrome --spec "$test_case_file" --env grep="$test_case_name"; then
+      echo "$stat_index:::$test_case_file:::$test_case_name: PASS" >> "$stats_file"
+    else
+      echo "$stat_index:::$test_case_file:::$test_case_name: FAIL" >> "$stats_file"
+    fi
+  done <<< "$test_case_matches"
+}
+
+# clear the stats file
+echo > "$stats_file"
+
+for ((global_stat_index=1;global_stat_index<=$iterations;global_stat_index++)); do
+# for global_stat_index in {1..$iterations}; do
+  run_all_test_cases "$global_stat_index"
+done
+
+# prints summary of most-failing test cases
+grep FAIL "$stats_file" | awk -F ':::' '{for (i=2; i<NF; i++) printf $i " "; print $NF}' | sort | uniq -c | sort -n

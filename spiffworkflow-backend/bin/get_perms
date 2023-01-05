@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+set -x
+mysql -uroot spiffworkflow_backend_development -e 'select pa.id, g.identifier group_identifier, pt.uri, permission from permission_assignment pa join principal p on p.id = pa.principal_id join `group` g on g.id = p.group_id join permission_target pt on pt.id = pa.permission_target_id;'

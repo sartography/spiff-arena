@@ -14,7 +14,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function Configuration() {
   const location = useLocation();
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
 
@@ -26,13 +26,13 @@ export default function Configuration() {
   const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
-    setErrorMessage(null);
+    setErrorObject(null);
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/admin\/configuration\/authentications\b/)) {
       newSelectedTabIndex = 1;
     }
     setSelectedTabIndex(newSelectedTabIndex);
-  }, [location, setErrorMessage]);
+  }, [location, setErrorObject]);
 
   return (
     <>

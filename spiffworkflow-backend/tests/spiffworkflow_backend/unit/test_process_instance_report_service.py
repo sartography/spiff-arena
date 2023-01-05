@@ -880,7 +880,9 @@ class TestProcessInstanceReportService(BaseTest):
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(
             user=user_one,
-            report_identifier="system_report_completed_instances_with_tasks_completed_by_me",
+            report_identifier=(
+                "system_report_completed_instances_with_tasks_completed_by_me"
+            ),
         )
         report_filter = (
             ProcessInstanceReportService.filter_from_metadata_with_overrides(
@@ -983,7 +985,9 @@ class TestProcessInstanceReportService(BaseTest):
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(
             user=user_one,
-            report_identifier="system_report_completed_instances_with_tasks_completed_by_my_groups",
+            report_identifier=(
+                "system_report_completed_instances_with_tasks_completed_by_my_groups"
+            ),
         )
         report_filter = (
             ProcessInstanceReportService.filter_from_metadata_with_overrides(

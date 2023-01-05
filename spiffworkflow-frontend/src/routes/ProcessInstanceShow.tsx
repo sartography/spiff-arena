@@ -25,6 +25,7 @@ import {
   ButtonSet,
   Tag,
   Modal,
+  Dropdown,
   Stack,
   // @ts-ignore
 } from '@carbon/react';
@@ -41,6 +42,7 @@ import ErrorContext from '../contexts/ErrorContext';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   PermissionsToCheck,
+  ProcessData,
   ProcessInstance,
   ProcessInstanceTask,
 } from '../interfaces';
@@ -62,9 +64,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
+  const [processDataToDisplay, setProcessDataToDisplay] =
+    useState<ProcessData | null>(null);
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
+  const [selectingEvent, setSelectingEvent] = useState<boolean>(false);
+  const [eventToSend, setEventToSend] = useState<any>({});
+  const [eventPayload, setEventPayload] = useState<string>('{}');
+  const [eventTextEditorEnabled, setEventTextEditorEnabled] =
+    useState<boolean>(false);
 
-  const setErrorMessage = (useContext as any)(ErrorContext)[1];
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
@@ -78,15 +87,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       : targetUris.processInstanceTaskListForMePath;
 
   const permissionRequestData: PermissionsToCheck = {
-    [targetUris.messageInstanceListPath]: ['GET'],
-    [taskListPath]: ['GET'],
-    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
-    [targetUris.processInstanceActionPath]: ['DELETE'],
-    [targetUris.processInstanceLogListPath]: ['GET'],
-    [targetUris.processModelShowPath]: ['PUT'],
     [`${targetUris.processInstanceResumePath}`]: ['POST'],
     [`${targetUris.processInstanceSuspendPath}`]: ['POST'],
     [`${targetUris.processInstanceTerminatePath}`]: ['POST'],
+    [targetUris.processInstanceResetPath]: ['POST'],
+    [targetUris.messageInstanceListPath]: ['GET'],
+    [targetUris.processInstanceActionPath]: ['DELETE'],
+    [targetUris.processInstanceLogListPath]: ['GET'],
+    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
+    [targetUris.processInstanceSendEventPath]: ['POST'],
+    [targetUris.processInstanceCompleteTaskPath]: ['POST'],
+    [targetUris.processModelShowPath]: ['PUT'],
+    [taskListPath]: ['GET'],
   };
   const { ability, permissionsLoaded } = usePermissionFetcher(
     permissionRequestData
@@ -250,6 +262,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return spiffStepLink(<CaretRight />, 1);
   };
 
+  const resetProcessInstance = () => {
+    HttpService.makeCallToBackend({
+      path: `${targetUris.processInstanceResetPath}/${currentSpiffStep()}`,
+      successCallback: refreshPage,
+      httpMethod: 'POST',
+    });
+  };
+
   const getInfoTag = () => {
     if (!processInstance) {
       return null;
@@ -411,16 +431,50 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const handleProcessDataDisplayClose = () => {
+    setProcessDataToDisplay(null);
+  };
+
+  const processDataDisplayArea = () => {
+    if (processDataToDisplay) {
+      return (
+        <Modal
+          open={!!processDataToDisplay}
+          passiveModal
+          onRequestClose={handleProcessDataDisplayClose}
+        >
+          <h2>Data Object: {processDataToDisplay.process_data_identifier}</h2>
+          <br />
+          <p>Value:</p>
+          <pre>{JSON.stringify(processDataToDisplay.process_data_value)}</pre>
+        </Modal>
+      );
+    }
+    return null;
+  };
+
+  const handleProcessDataShowResponse = (processData: ProcessData) => {
+    setProcessDataToDisplay(processData);
+  };
+
   const handleClickedDiagramTask = (
     shapeElement: any,
     bpmnProcessIdentifiers: any
   ) => {
-    if (tasks) {
-      const matchingTask: any = tasks.find(
-        (task: any) =>
+    if (shapeElement.type === 'bpmn:DataObjectReference') {
+      const dataObjectIdentifer = shapeElement.businessObject.dataObjectRef.id;
+      HttpService.makeCallToBackend({
+        path: `/process-data/${params.process_model_id}/${params.process_instance_id}/${dataObjectIdentifer}`,
+        httpMethod: 'GET',
+        successCallback: handleProcessDataShowResponse,
+      });
+    } else if (tasks) {
+      const matchingTask: any = tasks.find((task: any) => {
+        return (
           task.name === shapeElement.id &&
           bpmnProcessIdentifiers.includes(task.process_identifier)
-      );
+        );
+      });
       if (matchingTask) {
         setTaskToDisplay(matchingTask);
         initializeTaskDataToDisplay(matchingTask);
@@ -471,10 +525,63 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const cancelEditingTaskData = () => {
+  const canSendEvent = (task: any) => {
+    // We actually could allow this for any waiting events
+    const taskTypes = ['Event Based Gateway'];
+    return (
+      processInstance &&
+      processInstance.status === 'waiting' &&
+      ability.can('POST', targetUris.processInstanceSendEventPath) &&
+      taskTypes.filter((t) => t === task.type).length > 0 &&
+      task.state === 'WAITING' &&
+      showingLastSpiffStep()
+    );
+  };
+
+  const canCompleteTask = (task: any) => {
+    return (
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
+      task.state === 'READY' &&
+      showingLastSpiffStep()
+    );
+  };
+
+  const canResetProcess = (task: any) => {
+    return (
+      ability.can('POST', targetUris.processInstanceResetPath) &&
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      task.state === 'READY' &&
+      !showingLastSpiffStep()
+    );
+  };
+
+  const getEvents = (task: any) => {
+    const handleMessage = (eventDefinition: any) => {
+      if (eventDefinition.typename === 'MessageEventDefinition') {
+        const newEvent = eventDefinition;
+        delete newEvent.message_var;
+        newEvent.payload = {};
+        return newEvent;
+      }
+      return eventDefinition;
+    };
+    if (task.event_definition && task.event_definition.event_definitions)
+      return task.event_definition.event_definitions.map((e: any) =>
+        handleMessage(e)
+      );
+    if (task.event_definition) return [handleMessage(task.event_definition)];
+    return [];
+  };
+
+  const cancelUpdatingTask = () => {
     setEditingTaskData(false);
+    setSelectingEvent(false);
     initializeTaskDataToDisplay(taskToDisplay);
-    setErrorMessage(null);
+    setEventPayload('{}');
+    setErrorObject(null);
   };
 
   const taskDataStringToObject = (dataString: string) => {
@@ -490,7 +597,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const saveTaskDataFailure = (result: any) => {
-    setErrorMessage({ message: result.message });
+    setErrorObject({ message: result.message });
   };
 
   const saveTaskData = () => {
@@ -498,12 +605,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return;
     }
 
-    setErrorMessage(null);
+    setErrorObject(null);
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
-      path: `/task-data/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
+      path: `${targetUris.processInstanceTaskListDataPath}/${taskToUse.id}`,
       httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
       failureCallback: saveTaskDataFailure,
@@ -513,7 +620,30 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
-  const taskDataButtons = (task: any) => {
+  const sendEvent = () => {
+    if ('payload' in eventToSend)
+      eventToSend.payload = JSON.parse(eventPayload);
+    HttpService.makeCallToBackend({
+      path: `/send-event/${modifiedProcessModelId}/${params.process_instance_id}`,
+      httpMethod: 'POST',
+      successCallback: saveTaskDataResult,
+      failureCallback: saveTaskDataFailure,
+      postBody: eventToSend,
+    });
+  };
+
+  const completeTask = (execute: boolean) => {
+    const taskToUse: any = taskToDisplay;
+    HttpService.makeCallToBackend({
+      path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
+      httpMethod: 'POST',
+      successCallback: saveTaskDataResult,
+      failureCallback: saveTaskDataFailure,
+      postBody: { execute },
+    });
+  };
+
+  const taskDisplayButtons = (task: any) => {
     const buttons = [];
 
     if (
@@ -542,28 +672,80 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
 
-    if (canEditTaskData(task)) {
-      if (editingTaskData) {
-        buttons.push(
-          <Button data-qa="save-task-data-button" onClick={saveTaskData}>
-            Save
-          </Button>
-        );
-        buttons.push(
-          <Button
-            data-qa="cancel-task-data-edit-button"
-            onClick={cancelEditingTaskData}
-          >
-            Cancel
-          </Button>
-        );
-      } else {
+    if (editingTaskData) {
+      buttons.push(
+        <Button data-qa="save-task-data-button" onClick={saveTaskData}>
+          Save
+        </Button>
+      );
+      buttons.push(
+        <Button
+          data-qa="cancel-task-data-edit-button"
+          onClick={cancelUpdatingTask}
+        >
+          Cancel
+        </Button>
+      );
+    } else if (selectingEvent) {
+      buttons.push(
+        <Button data-qa="send-event-button" onClick={sendEvent}>
+          Send
+        </Button>
+      );
+      buttons.push(
+        <Button
+          data-qa="cancel-task-data-edit-button"
+          onClick={cancelUpdatingTask}
+        >
+          Cancel
+        </Button>
+      );
+    } else {
+      if (canEditTaskData(task)) {
         buttons.push(
           <Button
             data-qa="edit-task-data-button"
             onClick={() => setEditingTaskData(true)}
           >
             Edit
+          </Button>
+        );
+      }
+      if (canCompleteTask(task)) {
+        buttons.push(
+          <Button
+            data-qa="mark-task-complete-button"
+            onClick={() => completeTask(false)}
+          >
+            Mark Complete
+          </Button>
+        );
+        buttons.push(
+          <Button
+            data-qa="execute-task-complete-button"
+            onClick={() => completeTask(true)}
+          >
+            Execute Task
+          </Button>
+        );
+      }
+      if (canSendEvent(task)) {
+        buttons.push(
+          <Button
+            data-qa="select-event-button"
+            onClick={() => setSelectingEvent(true)}
+          >
+            Send Event
+          </Button>
+        );
+      }
+      if (canResetProcess(task)) {
+        buttons.push(
+          <Button
+            data-qa="reset-process-button"
+            onClick={() => resetProcessInstance()}
+          >
+            Resume Process Here
           </Button>
         );
       }
@@ -586,8 +768,42 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const taskDataDisplayArea = () => {
+  const eventSelector = (candidateEvents: any) => {
+    const editor = (
+      <Editor
+        height={300}
+        width="auto"
+        defaultLanguage="json"
+        defaultValue={eventPayload}
+        onChange={(value: any) => setEventPayload(value || '{}')}
+        options={{ readOnly: !eventTextEditorEnabled }}
+      />
+    );
+    return selectingEvent ? (
+      <Stack orientation="vertical">
+        <Dropdown
+          id="process-instance-select-event"
+          titleText="Event"
+          label="Select Event"
+          items={candidateEvents}
+          itemToString={(item: any) => item.name || item.label || item.typename}
+          onChange={(value: any) => {
+            setEventToSend(value.selectedItem);
+            setEventTextEditorEnabled(
+              value.selectedItem.typename === 'MessageEventDefinition'
+            );
+          }}
+        />
+        {editor}
+      </Stack>
+    ) : (
+      taskDataContainer()
+    );
+  };
+
+  const taskUpdateDisplayArea = () => {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
+    const candidateEvents: any = getEvents(taskToUse);
     if (taskToDisplay) {
       return (
         <Modal
@@ -597,9 +813,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         >
           <Stack orientation="horizontal" gap={2}>
             {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
-            {taskDataButtons(taskToUse)}
+            {taskDisplayButtons(taskToUse)}
           </Stack>
-          {taskDataContainer()}
+          {selectingEvent
+            ? eventSelector(candidateEvents)
+            : taskDataContainer()}
         </Modal>
       );
     }
@@ -686,7 +904,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <br />
         {getInfoTag()}
         <br />
-        {taskDataDisplayArea()}
+        {taskUpdateDisplayArea()}
+        {processDataDisplayArea()}
         {stepsElement()}
         <br />
         <ReactDiagramEditor

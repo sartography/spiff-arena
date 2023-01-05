@@ -13,6 +13,9 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
+from spiffworkflow_backend.models.user_group_assignment_waiting import (
+    UserGroupAssignmentWaitingModel,
+)
 
 
 class UserService:
@@ -21,11 +24,11 @@ class UserService:
     @classmethod
     def create_user(
         cls,
+        username: str,
         service: str,
         service_id: str,
-        name: Optional[str] = "",
-        username: Optional[str] = "",
         email: Optional[str] = "",
+        display_name: Optional[str] = "",
     ) -> UserModel:
         """Create_user."""
         user_model: Optional[UserModel] = (
@@ -41,8 +44,8 @@ class UserService:
                 username=username,
                 service=service,
                 service_id=service_id,
-                name=name,
                 email=email,
+                display_name=display_name,
             )
             db.session.add(user_model)
 
@@ -55,6 +58,7 @@ class UserService:
                     message=f"Could not add user {username}",
                 ) from e
             cls.create_principal(user_model.id)
+            UserService().apply_waiting_group_assignments(user_model)
             return user_model
 
         else:
@@ -69,44 +73,11 @@ class UserService:
                 )
             )
 
-    @classmethod
-    def find_or_create_user(
-        cls,
-        service: str,
-        service_id: str,
-        name: Optional[str] = None,
-        username: Optional[str] = None,
-        email: Optional[str] = None,
-    ) -> UserModel:
-        """Find_or_create_user."""
-        user_model: UserModel
-        try:
-            user_model = cls.create_user(
-                service=service,
-                service_id=service_id,
-                name=name,
-                username=username,
-                email=email,
-            )
-        except ApiError:
-            user_model = (
-                UserModel.query.filter(UserModel.service == service)
-                .filter(UserModel.service_id == service_id)
-                .first()
-            )
-        return user_model
-
     # Returns true if the current user is logged in.
     @staticmethod
     def has_user() -> bool:
         """Has_user."""
         return "token" in g and bool(g.token) and "user" in g and bool(g.user)
-
-    # Returns true if the given user uid is different from the current user's uid.
-    @staticmethod
-    def is_different_user(uid: str) -> bool:
-        """Is_different_user."""
-        return UserService.has_user() and uid is not None and uid is not g.user.uid
 
     @staticmethod
     def current_user() -> Any:
@@ -116,20 +87,6 @@ class UserService:
                 "logged_out", "You are no longer logged in.", status_code=401
             )
         return g.user
-
-    @staticmethod
-    def in_list(uids: list[str]) -> bool:
-        """Returns true if the current user's id is in the given list of ids.
-
-        False if there is no user, or the user is not in the list.
-        """
-        if (
-            UserService.has_user()
-        ):  # If someone is logged in, lock tasks that don't belong to them.
-            user = UserService.current_user()
-            if user.uid in uids:
-                return True
-        return False
 
     @staticmethod
     def get_principal_by_user_id(user_id: int) -> PrincipalModel:
@@ -173,8 +130,57 @@ class UserService:
     @classmethod
     def add_user_to_group(cls, user: UserModel, group: GroupModel) -> None:
         """Add_user_to_group."""
-        ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
-        db.session.add(ugam)
+        exists = (
+            UserGroupAssignmentModel()
+            .query.filter_by(user_id=user.id)
+            .filter_by(group_id=group.id)
+            .count()
+        )
+        if not exists:
+            ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
+            db.session.add(ugam)
+            db.session.commit()
+
+    @classmethod
+    def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> None:
+        """Add_waiting_group_assignment."""
+        wugam = (
+            UserGroupAssignmentWaitingModel()
+            .query.filter_by(username=username)
+            .filter_by(group_id=group.id)
+            .first()
+        )
+        if not wugam:
+            wugam = UserGroupAssignmentWaitingModel(
+                username=username, group_id=group.id
+            )
+            db.session.add(wugam)
+            db.session.commit()
+        if wugam.is_match_all():
+            for user in UserModel.query.all():
+                cls.add_user_to_group(user, group)
+
+    @classmethod
+    def apply_waiting_group_assignments(cls, user: UserModel) -> None:
+        """Apply_waiting_group_assignments."""
+        waiting = (
+            UserGroupAssignmentWaitingModel()
+            .query.filter(UserGroupAssignmentWaitingModel.username == user.username)
+            .all()
+        )
+        for assignment in waiting:
+            cls.add_user_to_group(user, assignment.group)
+            db.session.delete(assignment)
+        wildcard = (
+            UserGroupAssignmentWaitingModel()
+            .query.filter(
+                UserGroupAssignmentWaitingModel.username
+                == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS
+            )
+            .all()
+        )
+        for assignment in wildcard:
+            cls.add_user_to_group(user, assignment.group)
         db.session.commit()
 
     @staticmethod
