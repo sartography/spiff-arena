@@ -58,6 +58,14 @@ class ProcessModelInfo:
         """Id_for_file_path."""
         return self.id.replace("/", os.sep)
 
+    @classmethod
+    def modify_process_identifier_for_path_param(cls, identifier: str) -> str:
+        """Identifier."""
+        if "\\" in identifier:
+            raise Exception(f"Found backslash in identifier: {identifier}")
+
+        return identifier.replace("/", ":")
+
 
 class ProcessModelInfoSchema(Schema):
     """ProcessModelInfoSchema."""
