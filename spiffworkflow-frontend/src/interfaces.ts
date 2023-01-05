@@ -39,6 +39,7 @@ export interface ProcessInstanceTask {
   updated_at_in_seconds: number;
   current_user_is_potential_owner: number;
   potential_owner_usernames: string;
+  calling_subprocess_task_id: string;
 }
 
 export interface ProcessReference {

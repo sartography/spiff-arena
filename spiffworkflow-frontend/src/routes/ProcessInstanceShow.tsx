@@ -200,11 +200,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const taskIds = { completed: [], readyOrWaiting: [] };
     if (tasks) {
       tasks.forEach(function getUserTasksElement(task: ProcessInstanceTask) {
-        if (task.state === 'COMPLETED') {
-          (taskIds.completed as any).push(task);
-        }
-        if (task.state === 'READY' || task.state === 'WAITING') {
-          (taskIds.readyOrWaiting as any).push(task);
+        const callingSubprocessId = searchParams.get('call_activity_task_id');
+        if (
+          !callingSubprocessId ||
+          callingSubprocessId === task.calling_subprocess_task_id
+        ) {
+          console.log('callingSubprocessId', callingSubprocessId);
+          if (task.state === 'COMPLETED') {
+            (taskIds.completed as any).push(task);
+          }
+          if (task.state === 'READY' || task.state === 'WAITING') {
+            (taskIds.readyOrWaiting as any).push(task);
+          }
         }
       });
     }
@@ -262,10 +269,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return spiffStepLink(<CaretRight />, 1);
   };
 
+  const returnToLastSpiffStep = () => {
+    window.location.href = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+  };
+
   const resetProcessInstance = () => {
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceResetPath}/${currentSpiffStep()}`,
-      successCallback: refreshPage,
+      successCallback: returnToLastSpiffStep,
       httpMethod: 'POST',
     });
   };
@@ -470,7 +481,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       });
     } else if (tasks) {
       const matchingTask: any = tasks.find((task: any) => {
+        const callingSubprocessId = searchParams.get('call_activity_task_id');
         return (
+          (!callingSubprocessId ||
+            callingSubprocessId === task.calling_subprocess_task_id) &&
           task.name === shapeElement.id &&
           bpmnProcessIdentifiers.includes(task.process_identifier)
         );
@@ -637,8 +651,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     HttpService.makeCallToBackend({
       path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
       httpMethod: 'POST',
-      successCallback: saveTaskDataResult,
-      failureCallback: saveTaskDataFailure,
+      successCallback: returnToLastSpiffStep,
       postBody: { execute },
     });
   };
@@ -664,7 +677,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       buttons.push(
         <Link
           data-qa="go-to-call-activity-result"
-          to={`${window.location.pathname}?process_identifier=${task.call_activity_process_identifier}`}
+          to={`${window.location.pathname}?process_identifier=${task.call_activity_process_identifier}&call_activity_task_id=${task.id}`}
           target="_blank"
         >
           View Call Activity Diagram
@@ -717,7 +730,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             data-qa="mark-task-complete-button"
             onClick={() => completeTask(false)}
           >
-            Mark Complete
+            Skip Task
           </Button>
         );
         buttons.push(
@@ -745,7 +758,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             data-qa="reset-process-button"
             onClick={() => resetProcessInstance()}
           >
-            Resume Process Here
+            Reset Process Here
           </Button>
         );
       }
