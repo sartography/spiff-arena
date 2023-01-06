@@ -19,6 +19,7 @@ from spiffworkflow_backend.models.message_triggerable_process_model import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_by_id_or_raise,
 )
@@ -90,7 +91,7 @@ def message_instance_list(
 #   payload: dict,
 #   process_instance_id: Optional[int],
 # }
-def message_start(
+def message_send(
     message_identifier: str,
     body: Dict[str, Any],
 ) -> flask.wrappers.Response:
@@ -120,6 +121,26 @@ def message_start(
         process_instance = _find_process_instance_by_id_or_raise(
             body["process_instance_id"]
         )
+
+        if process_instance.status == ProcessInstanceStatus.suspended.value:
+            raise ApiError(
+                error_code="process_instance_is_suspended",
+                message=(
+                    f"Process Instance '{process_instance.id}' is suspended and cannot"
+                    " accept messages.'"
+                ),
+                status_code=400,
+            )
+
+        if process_instance.status == ProcessInstanceStatus.terminated.value:
+            raise ApiError(
+                error_code="process_instance_is_terminated",
+                message=(
+                    f"Process Instance '{process_instance.id}' is terminated and cannot"
+                    " accept messages.'"
+                ),
+                status_code=400,
+            )
 
         message_instance = MessageInstanceModel.query.filter_by(
             process_instance_id=process_instance.id,

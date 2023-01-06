@@ -1296,16 +1296,16 @@ class TestProcessApi(BaseTest):
             xml_file_contents = f_open.read()
             assert show_response.json["bpmn_xml_file_contents"] == xml_file_contents
 
-    def test_message_start_when_starting_process_instance(
+    def test_message_send_when_starting_process_instance(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_message_start_when_starting_process_instance."""
+        """Test_message_send_when_starting_process_instance."""
         # ensure process model is loaded
-        process_group_id = "test_message_start"
+        process_group_id = "test_message_send"
         process_model_id = "message_receiver"
         bpmn_file_name = "message_receiver.bpmn"
         bpmn_file_location = "message_send_one_conversation"
@@ -1345,15 +1345,15 @@ class TestProcessApi(BaseTest):
         assert process_instance_data
         assert process_instance_data["the_payload"] == payload
 
-    def test_message_start_when_providing_message_to_running_process_instance(
+    def test_message_send_when_providing_message_to_running_process_instance(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_message_start_when_providing_message_to_running_process_instance."""
-        process_group_id = "test_message_start"
+        """Test_message_send_when_providing_message_to_running_process_instance."""
+        process_group_id = "test_message_send"
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
         bpmn_file_location = "message_send_one_conversation"
@@ -1412,6 +1412,105 @@ class TestProcessApi(BaseTest):
         assert process_instance_data
         assert process_instance_data["the_payload"] == payload
 
+    def test_message_send_errors_when_providing_message_to_suspended_process_instance(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_message_send_when_providing_message_to_running_process_instance."""
+        process_group_id = "test_message_send"
+        process_model_id = "message_sender"
+        bpmn_file_name = "message_sender.bpmn"
+        bpmn_file_location = "message_send_one_conversation"
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_name=bpmn_file_name,
+            bpmn_file_location=bpmn_file_location,
+        )
+
+        message_model_identifier = "message_response"
+        payload = {
+            "the_payload": {
+                "topica": "the_payload.topica_string",
+                "topicb": "the_payload.topicb_string",
+                "andThis": "another_item_non_key",
+            }
+        }
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client,
+            process_model_identifier,
+            self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 200
+        assert response.json is not None
+
+        process_instance = ProcessInstanceModel.query.filter_by(
+            id=process_instance_id
+        ).first()
+        processor = ProcessInstanceProcessor(process_instance)
+
+        processor.suspend()
+        response = client.post(
+            f"/v1.0/messages/{message_model_identifier}",
+            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user),
+            data=json.dumps(
+                {"payload": payload, "process_instance_id": process_instance_id}
+            ),
+        )
+        assert response.status_code == 400
+        assert response.json
+        assert response.json["error_code"] == "process_instance_is_suspended"
+
+        processor.resume()
+        response = client.post(
+            f"/v1.0/messages/{message_model_identifier}",
+            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user),
+            data=json.dumps(
+                {"payload": payload, "process_instance_id": process_instance_id}
+            ),
+        )
+        assert response.status_code == 200
+        json_data = response.json
+        assert json_data
+        assert json_data["status"] == "complete"
+        process_instance_id = json_data["id"]
+        process_instance = ProcessInstanceModel.query.filter_by(
+            id=process_instance_id
+        ).first()
+        assert process_instance
+        processor = ProcessInstanceProcessor(process_instance)
+        process_instance_data = processor.get_data()
+        assert process_instance_data
+        assert process_instance_data["the_payload"] == payload
+
+        processor.terminate()
+        response = client.post(
+            f"/v1.0/messages/{message_model_identifier}",
+            content_type="application/json",
+            headers=self.logged_in_headers(with_super_admin_user),
+            data=json.dumps(
+                {"payload": payload, "process_instance_id": process_instance_id}
+            ),
+        )
+        assert response.status_code == 400
+        assert response.json
+        assert response.json["error_code"] == "process_instance_is_terminated"
+
     def test_process_instance_can_be_terminated(
         self,
         app: Flask,
@@ -1419,9 +1518,9 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_message_start_when_providing_message_to_running_process_instance."""
+        """Test_message_send_when_providing_message_to_running_process_instance."""
         # this task will wait on a catch event
-        process_group_id = "test_message_start"
+        process_group_id = "test_message_send"
         process_model_id = "message_sender"
         bpmn_file_name = "message_sender.bpmn"
         bpmn_file_location = "message_send_one_conversation"
@@ -2188,7 +2287,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_get_message_instances_by_process_instance_id."""
-        process_group_id = "test_message_start"
+        process_group_id = "test_message_send"
         process_model_id = "message_receiver"
         bpmn_file_name = "message_receiver.bpmn"
         bpmn_file_location = "message_send_one_conversation"
