@@ -3046,6 +3046,95 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["pages"] == 1
         assert response.json["pagination"]["total"] == 1
 
+    def test_can_get_process_instance_list_with_report_metadata_and_process_initator(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_can_get_process_instance_list_with_report_metadata_and_process_initator."""
+        user_one = self.create_user_with_permission(username="user_one")
+
+        process_model = load_test_spec(
+            process_model_id=(
+                "save_process_instance_metadata/save_process_instance_metadata"
+            ),
+            bpmn_file_name="save_process_instance_metadata.bpmn",
+            process_model_source_directory="save_process_instance_metadata",
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, user=user_one
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, user=user_one
+        )
+        self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+
+        dne_report_metadata = {
+            "columns": [
+                {"Header": "ID", "accessor": "id"},
+                {"Header": "Status", "accessor": "status"},
+                {"Header": "Process Initiator", "accessor": "username"},
+            ],
+            "order_by": ["status"],
+            "filter_by": [
+                {
+                    "field_name": "process_initiator_username",
+                    "field_value": "DNE",
+                    "operator": "equals",
+                }
+            ],
+        }
+
+        user_one_report_metadata = {
+            "columns": [
+                {"Header": "ID", "accessor": "id"},
+                {"Header": "Status", "accessor": "status"},
+                {"Header": "Process Initiator", "accessor": "username"},
+            ],
+            "order_by": ["status"],
+            "filter_by": [
+                {
+                    "field_name": "process_initiator_username",
+                    "field_value": user_one.username,
+                    "operator": "equals",
+                }
+            ],
+        }
+        process_instance_report_dne = ProcessInstanceReportModel.create_with_attributes(
+            identifier="dne_report",
+            report_metadata=dne_report_metadata,
+            user=user_one,
+        )
+        process_instance_report_user_one = (
+            ProcessInstanceReportModel.create_with_attributes(
+                identifier="user_one_report",
+                report_metadata=user_one_report_metadata,
+                user=user_one,
+            )
+        )
+
+        response = client.get(
+            f"/v1.0/process-instances?report_identifier={process_instance_report_user_one.identifier}",
+            headers=self.logged_in_headers(user_one),
+        )
+        assert response.json is not None
+        assert response.status_code == 200
+        assert len(response.json["results"]) == 2
+        assert response.json["results"][0]["username"] == user_one.username
+        assert response.json["results"][1]["username"] == user_one.username
+
+        response = client.get(
+            f"/v1.0/process-instances?report_identifier={process_instance_report_dne.identifier}",
+            headers=self.logged_in_headers(user_one),
+        )
+        assert response.json is not None
+        assert response.status_code == 200
+        assert len(response.json["results"]) == 0
+
     def test_can_get_process_instance_report_column_list(
         self,
         app: Flask,

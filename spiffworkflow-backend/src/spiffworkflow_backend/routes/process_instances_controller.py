@@ -219,6 +219,7 @@ def process_instance_list_for_me(
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
     user_group_identifier: Optional[str] = None,
+    process_initiator_username: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list_for_me."""
     return process_instance_list(
@@ -252,6 +253,7 @@ def process_instance_list(
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
     user_group_identifier: Optional[str] = None,
+    process_initiator_username: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
@@ -268,6 +270,7 @@ def process_instance_list(
             end_to=end_to,
             with_relation_to_me=with_relation_to_me,
             process_status=process_status.split(",") if process_status else None,
+            process_initiator_username=process_initiator_username,
         )
     else:
         report_filter = (
@@ -281,6 +284,7 @@ def process_instance_list(
                 end_to=end_to,
                 process_status=process_status,
                 with_relation_to_me=with_relation_to_me,
+                process_initiator_username=process_initiator_username,
             )
         )
 

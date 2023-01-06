@@ -28,6 +28,10 @@ from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignme
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
+class ProcessInstanceReportNotFoundError(Exception):
+    """ProcessInstanceReportNotFoundError."""
+
+
 @dataclass
 class ProcessInstanceReportFilter:
     """ProcessInstanceReportFilter."""
@@ -44,6 +48,7 @@ class ProcessInstanceReportFilter:
     with_tasks_completed_by_me: Optional[bool] = None
     with_tasks_assigned_to_my_group: Optional[bool] = None
     with_relation_to_me: Optional[bool] = None
+    process_initiator_username: Optional[str] = (None,)
 
     def to_dict(self) -> dict[str, str]:
         """To_dict."""
@@ -77,6 +82,8 @@ class ProcessInstanceReportFilter:
             ).lower()
         if self.with_relation_to_me is not None:
             d["with_relation_to_me"] = str(self.with_relation_to_me).lower()
+        if self.process_initiator_username is not None:
+            d["process_initiator_username"] = str(self.process_initiator_username)
 
         return d
 
@@ -85,7 +92,7 @@ class ProcessInstanceReportService:
     """ProcessInstanceReportService."""
 
     @classmethod
-    def system_metadata_map(cls, metadata_key: str) -> dict[str, Any]:
+    def system_metadata_map(cls, metadata_key: str) -> Optional[dict[str, Any]]:
         """System_metadata_map."""
         # TODO replace with system reports that are loaded on launch (or similar)
         temp_system_metadata_map = {
@@ -131,6 +138,9 @@ class ProcessInstanceReportService:
                 "order_by": ["-start_in_seconds", "-id"],
             },
         }
+
+        if metadata_key not in temp_system_metadata_map:
+            return None
         return temp_system_metadata_map[metadata_key]
 
     @classmethod
@@ -157,10 +167,17 @@ class ProcessInstanceReportService:
         if process_instance_report is not None:
             return process_instance_report  # type: ignore
 
+        report_metadata = cls.system_metadata_map(report_identifier)
+        if report_metadata is None:
+            raise ProcessInstanceReportNotFoundError(
+                f"Could not find a report with identifier '{report_identifier}' for"
+                f" user '{user.username}'"
+            )
+
         process_instance_report = ProcessInstanceReportModel(
             identifier=report_identifier,
             created_by_id=user.id,
-            report_metadata=cls.system_metadata_map(report_identifier),
+            report_metadata=report_metadata,
         )
 
         return process_instance_report  # type: ignore
@@ -210,20 +227,22 @@ class ProcessInstanceReportService:
         with_tasks_completed_by_me = bool_value("with_tasks_completed_by_me")
         with_tasks_assigned_to_my_group = bool_value("with_tasks_assigned_to_my_group")
         with_relation_to_me = bool_value("with_relation_to_me")
+        process_initiator_username = filters.get("process_initiator_username")
 
         report_filter = ProcessInstanceReportFilter(
-            process_model_identifier,
-            user_group_identifier,
-            start_from,
-            start_to,
-            end_from,
-            end_to,
-            process_status,
-            initiated_by_me,
-            has_terminal_status,
-            with_tasks_completed_by_me,
-            with_tasks_assigned_to_my_group,
-            with_relation_to_me,
+            process_model_identifier=process_model_identifier,
+            user_group_identifier=user_group_identifier,
+            start_from=start_from,
+            start_to=start_to,
+            end_from=end_from,
+            end_to=end_to,
+            process_status=process_status,
+            initiated_by_me=initiated_by_me,
+            has_terminal_status=has_terminal_status,
+            with_tasks_completed_by_me=with_tasks_completed_by_me,
+            with_tasks_assigned_to_my_group=with_tasks_assigned_to_my_group,
+            with_relation_to_me=with_relation_to_me,
+            process_initiator_username=process_initiator_username,
         )
 
         return report_filter
@@ -244,6 +263,7 @@ class ProcessInstanceReportService:
         with_tasks_completed_by_me: Optional[bool] = None,
         with_tasks_assigned_to_my_group: Optional[bool] = None,
         with_relation_to_me: Optional[bool] = None,
+        process_initiator_username: Optional[str] = None,
     ) -> ProcessInstanceReportFilter:
         """Filter_from_metadata_with_overrides."""
         report_filter = cls.filter_from_metadata(process_instance_report)
@@ -268,6 +288,8 @@ class ProcessInstanceReportService:
             report_filter.has_terminal_status = has_terminal_status
         if with_tasks_completed_by_me is not None:
             report_filter.with_tasks_completed_by_me = with_tasks_completed_by_me
+        if process_initiator_username is not None:
+            report_filter.process_initiator_username = process_initiator_username
         if with_tasks_assigned_to_my_group is not None:
             report_filter.with_tasks_assigned_to_my_group = (
                 with_tasks_assigned_to_my_group
@@ -384,6 +406,17 @@ class ProcessInstanceReportService:
         if report_filter.has_terminal_status is True:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
+            )
+
+        if report_filter.process_initiator_username is not None:
+            user = UserModel.query.filter_by(
+                username=report_filter.process_initiator_username
+            ).first()
+            process_initiator_id = -1
+            if user:
+                process_initiator_id = user.id
+            process_instance_query = process_instance_query.filter_by(
+                process_initiator_id=process_initiator_id
             )
 
         if (

@@ -193,11 +193,42 @@ export default function ProcessInstanceListTable({
     setEndToTime,
   ]);
 
+  const handleProcessInstanceInitiatorSearchResult = (
+    result: any,
+    inputText: string
+  ) => {
+    if (lastRequestedInitatorSearchTerm.current === result.username_prefix) {
+      setProcessInstanceInitiatorOptions(result.users);
+      result.users.forEach((user: User) => {
+        if (user.username === inputText) {
+          setProcessInitiatorSelection(user);
+        }
+      });
+    }
+  };
+
+  const searchForProcessInitiator = (inputText: string) => {
+    if (inputText) {
+      lastRequestedInitatorSearchTerm.current = inputText;
+      HttpService.makeCallToBackend({
+        path: `/users/search?username_prefix=${inputText}`,
+        successCallback: (result: any) =>
+          handleProcessInstanceInitiatorSearchResult(result, inputText),
+      });
+    }
+  };
+
   const parametersToGetFromSearchParams = useMemo(() => {
+    const figureOutProcessInitiator = (processInitiatorSearchText: string) => {
+      searchForProcessInitiator(processInitiatorSearchText);
+    };
+
     return {
       process_model_identifier: null,
       process_status: null,
+      process_initiator_username: figureOutProcessInitiator,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -384,6 +415,12 @@ export default function ProcessInstanceListTable({
       }
     });
 
+    if (filters.process_initiator_username) {
+      const functionToCall =
+        parametersToGetFromSearchParams.process_initiator_username;
+      functionToCall(filters.process_initiator_username);
+    }
+
     const processStatusSelectedArray: string[] = [];
     if (filters.process_status) {
       PROCESS_STATUSES.forEach((processStatusOption: any) => {
@@ -538,8 +575,13 @@ export default function ProcessInstanceListTable({
       queryParamString += `&report_id=${processInstanceReportSelection.id}`;
     }
 
+    if (processInitiatorSelection) {
+      queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
+    }
+
     setErrorObject(null);
     setProcessInstanceReportJustSaved(null);
+    setProcessInstanceFilters({});
     navigate(`${processInstanceListPathPrefix}?${queryParamString}`);
   };
 
@@ -682,6 +724,7 @@ export default function ProcessInstanceListTable({
         orderBy=""
         buttonText="Save"
         processModelSelection={processModelSelection}
+        processInitiatorSelection={processInitiatorSelection}
         processStatusSelection={processStatusSelection}
         processInstanceReportSelection={processInstanceReportSelection}
         reportMetadata={reportMetadata}
@@ -985,22 +1028,6 @@ export default function ProcessInstanceListTable({
       );
     }
     return null;
-  };
-
-  const handleProcessInstanceInitiatorSearchResult = (result: any) => {
-    if (lastRequestedInitatorSearchTerm.current === result.username_prefix) {
-      setProcessInstanceInitiatorOptions(result.users);
-    }
-  };
-
-  const searchForProcessInitiator = (inputText: string) => {
-    if (inputText) {
-      lastRequestedInitatorSearchTerm.current = inputText;
-      HttpService.makeCallToBackend({
-        path: `/users/search?username_prefix=${inputText}`,
-        successCallback: handleProcessInstanceInitiatorSearchResult,
-      });
-    }
   };
 
   const filterOptions = () => {
