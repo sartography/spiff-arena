@@ -628,6 +628,12 @@ paths:
         description: The identifier of the group to get the process instances for
         schema:
           type: string
+      - name: process_initiator_username
+        in: query
+        required: false
+        description: The username of the process initiator
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list_for_me
       summary: Returns a list of process instances that are associated with me.
@@ -739,6 +745,12 @@ paths:
         in: query
         required: false
         description: The identifier of the group to get the process instances for
+        schema:
+          type: string
+      - name: process_initiator_username
+        in: query
+        required: false
+        description: The username of the process initiator
         schema:
           type: string
     get:
