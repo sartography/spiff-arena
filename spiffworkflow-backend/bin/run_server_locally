@@ -29,6 +29,12 @@ if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
     fi
   fi
   export BPMN_SPEC_ABSOLUTE_DIR
+  pushd "$BPMN_SPEC_ABSOLUTE_DIR"
+  if [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]]; then
+    >&2 echo "ERROR: please do not use the main branch of sample-process-models. use dev"
+    exit 1
+  fi
+  popd
 fi
 
 export FLASK_SESSION_SECRET_KEY=super_secret_key
