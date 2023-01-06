@@ -548,6 +548,10 @@ def process_instance_task_list(
         spiff_tasks = processor.get_all_user_tasks()
 
     subprocesses_by_child_task_ids = processor.get_subprocesses_by_child_task_ids()
+    processor.get_highest_level_subprocesses_by_child_task_ids(
+        subprocesses_by_child_task_ids
+    )
+
     tasks = []
     for spiff_task in spiff_tasks:
         calling_subprocess_task_id = subprocesses_by_child_task_ids.get(

@@ -646,6 +646,23 @@ class ProcessInstanceProcessor:
                     subprocesses_by_child_task_ids[task_id] = subprocess_id
         return subprocesses_by_child_task_ids
 
+    def get_highest_level_subprocesses_by_child_task_ids(
+        self, subprocesses_by_child_task_ids: dict
+    ) -> dict:
+        """Ensure task ids point to the top level subprocess id.
+
+        This is done by checking if a subprocess is also a task until the subprocess is no longer a task.
+        """
+        for task_id, subprocess_id in subprocesses_by_child_task_ids.items():
+            if subprocess_id in subprocesses_by_child_task_ids:
+                subprocesses_by_child_task_ids[task_id] = (
+                    subprocesses_by_child_task_ids[subprocess_id]
+                )
+                self.get_highest_level_subprocesses_by_child_task_ids(
+                    subprocesses_by_child_task_ids
+                )
+        return subprocesses_by_child_task_ids
+
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.bpmn_json = self.serialize()
