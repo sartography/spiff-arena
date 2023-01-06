@@ -685,7 +685,7 @@ export default function ProcessModelShow() {
             perPageOptions={[2, 5, 25]}
             showReports={false}
           />
-          <span data-qa="process-model-show-permissions-loaded">true</span>
+          <span data-qa="process-model-show-permissions-loaded" />
         </Can>
       </>
     );
