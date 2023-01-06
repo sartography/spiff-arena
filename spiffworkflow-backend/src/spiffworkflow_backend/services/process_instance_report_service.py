@@ -48,7 +48,7 @@ class ProcessInstanceReportFilter:
     with_tasks_completed_by_me: Optional[bool] = None
     with_tasks_assigned_to_my_group: Optional[bool] = None
     with_relation_to_me: Optional[bool] = None
-    process_initiator_username: Optional[str] = (None,)
+    process_initiator_username: Optional[str] = None
 
     def to_dict(self) -> dict[str, str]:
         """To_dict."""

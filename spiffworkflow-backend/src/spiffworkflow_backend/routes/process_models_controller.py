@@ -32,6 +32,9 @@ from spiffworkflow_backend.routes.process_api_blueprint import (
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
 from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportNotFoundError,
+)
+from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -437,6 +440,10 @@ def process_model_create_with_natural_language(
     default_report_metadata = ProcessInstanceReportService.system_metadata_map(
         "default"
     )
+    if default_report_metadata is None:
+        raise ProcessInstanceReportNotFoundError(
+            "Could not find a report with identifier 'default'"
+        )
     for column in columns:
         default_report_metadata["columns"].append(
             {"Header": column, "accessor": column, "filterable": True}
