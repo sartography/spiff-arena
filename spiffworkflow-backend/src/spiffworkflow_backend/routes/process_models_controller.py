@@ -42,7 +42,7 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 def process_model_create(
-    modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_group_id: str, body: Dict[str, Union[str, bool, int, None, list]]
 ) -> flask.wrappers.Response:
     """Process_model_create."""
     body_include_list = [
@@ -93,7 +93,8 @@ def process_model_delete(
 
 
 def process_model_update(
-    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str,
+    body: Dict[str, Union[str, bool, int, None, list]],
 ) -> Any:
     """Process_model_update."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")

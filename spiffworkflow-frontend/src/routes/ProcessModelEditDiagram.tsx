@@ -826,10 +826,13 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onLaunchBpmnEditor = (processId: string) => {
+    console.log('onLaunchBpmnEditor - processId: ', processId);
+    console.log('processes', processes);
     const processRef = processes.find((p) => {
       return p.identifier === processId;
     });
     if (processRef) {
+      console.log('Found ProcessRef: ', processRef);
       const path = generatePath(
         '/admin/process-models/:process_model_path/files/:file_name',
         {
