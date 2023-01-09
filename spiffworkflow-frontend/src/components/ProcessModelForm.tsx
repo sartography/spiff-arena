@@ -8,6 +8,8 @@ import {
   TextInput,
   Grid,
   Column,
+  Select,
+  SelectItem,
   // @ts-ignore
 } from '@carbon/react';
 // @ts-ignore
@@ -76,6 +78,8 @@ export default function ProcessModelForm({
       display_name: processModel.display_name,
       description: processModel.description,
       metadata_extraction_paths: processModel.metadata_extraction_paths,
+      fault_or_suspend_on_exception: processModel.fault_or_suspend_on_exception,
+      exception_notification_addresses: processModel.exception_notification_addresses,
     };
     if (mode === 'new') {
       Object.assign(postBody, {
@@ -173,12 +177,80 @@ export default function ProcessModelForm({
     updateProcessModel({ metadata_extraction_paths: cep });
   };
 
+  const notificationAddressForm = (
+    index: number,
+    notificationAddress: string
+  ) => {
+    return (
+      <Grid>
+        <Column md={3} lg={7} sm={1}>
+          <TextInput
+            id={`process-model-notification-address-key-${index}`}
+            labelText="Address"
+            value={notificationAddress}
+            onChange={(event: any) => {
+              const notificationAddresses: string[] =
+                processModel.exception_notification_addresses || [];
+              notificationAddresses[index] = event.target.value;
+              updateProcessModel({
+                exception_notification_addresses: notificationAddresses,
+              });
+            }}
+          />
+        </Column>
+        <Column md={1} lg={1} sm={1}>
+          <Button
+            kind="ghost"
+            renderIcon={TrashCan}
+            iconDescription="Remove Address"
+            hasIconOnly
+            size="lg"
+            className="with-extra-top-margin"
+            onClick={() => {
+              const notificationAddresses: string[] =
+                processModel.exception_notification_addresses || [];
+              notificationAddresses.splice(index, 1);
+              updateProcessModel({
+                exception_notification_addresses: notificationAddresses,
+              });
+            }}
+          />
+        </Column>
+      </Grid>
+    );
+  };
+
+  const notificationAddressFormArea = () => {
+    if (processModel.exception_notification_addresses) {
+      return processModel.exception_notification_addresses.map(
+        (notificationAddress: string, index: number) => {
+          return notificationAddressForm(index, notificationAddress);
+        }
+      );
+    }
+    return null;
+  };
+
+  const addBlankNotificationAddress = () => {
+    const notificationAddresses: string[] =
+      processModel.exception_notification_addresses || [];
+    notificationAddresses.push('');
+    updateProcessModel({
+      exception_notification_addresses: notificationAddresses,
+    });
+  };
+
   const onDisplayNameChanged = (newDisplayName: any) => {
     setDisplayNameInvalid(false);
     const updateDict = { display_name: newDisplayName };
     if (!idHasBeenUpdatedByUser && mode === 'new') {
       Object.assign(updateDict, { id: slugifyString(newDisplayName) });
     }
+    updateProcessModel(updateDict);
+  };
+
+  const onNotificationTypeChanged = (newNotificationType: string) => {
+    const updateDict = { fault_or_suspend_on_exception: newNotificationType };
     updateProcessModel(updateDict);
   };
 
@@ -228,6 +300,49 @@ export default function ProcessModelForm({
           updateProcessModel({ description: event.target.value })
         }
       />
+    );
+
+    textInputs.push(
+      <Select
+        id="notification-type"
+        defaultValue="fault"
+        labelText="Notification Type"
+        onChange={(event: any) => {
+          onNotificationTypeChanged(event.target.value);
+        }}
+      >
+        <SelectItem value="fault" text="Fault" />
+        <SelectItem value="suspend" text="Suspend" />
+      </Select>
+    );
+    textInputs.push(<h2>Notification Addresses</h2>);
+    textInputs.push(
+      <Grid>
+        <Column md={8} lg={16} sm={4}>
+          <p className="data-table-description">
+            You can provide one or more addresses to notify if this model fails.
+          </p>
+        </Column>
+      </Grid>
+    );
+    textInputs.push(<>{notificationAddressFormArea()}</>);
+    textInputs.push(
+      <Grid>
+        <Column md={4} lg={8} sm={2}>
+          <Button
+            data-qa="add-notification-address-button"
+            renderIcon={AddAlt}
+            className="button-white-background"
+            kind=""
+            size="sm"
+            onClick={() => {
+              addBlankNotificationAddress();
+            }}
+          >
+            Add Notification Address
+          </Button>
+        </Column>
+      </Grid>
     );
 
     textInputs.push(<h2>Metadata Extractions</h2>);
