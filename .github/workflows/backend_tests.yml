@@ -215,6 +215,11 @@ jobs:
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
+      - name: Checkout Samples
+        uses: actions/checkout@v3
+        with:
+          repository: sartography/sample-process-models
+          path: sample-process-models
       - name: start_backend
         run: ./bin/build_and_run_with_docker_compose
         timeout-minutes: 20
