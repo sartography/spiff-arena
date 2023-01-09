@@ -19,7 +19,6 @@ fi
 
 BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
 export BPMN_SPEC_ABSOLUTE_DIR
-echo "$BPMN_SPEC_ABSOLUTE_DIR"
 
 export FLASK_SESSION_SECRET_KEY=super_secret_key
 export APPLICATION_ROOT="/"
