@@ -50,8 +50,8 @@ class DataSetupService:
                     )
                 )
 
-                current_app.logger.debug(
-                    "DataSetupService.save_all_process_models() end"
-                )
+        current_app.logger.debug(
+            "DataSetupService.save_all_process_models() end"
+        )
         db.session.commit()
         return failing_process_models

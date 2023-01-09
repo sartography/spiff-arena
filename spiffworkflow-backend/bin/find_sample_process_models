@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
+  script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+  BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../../sample-process-models"
+  if [[ ! -d "$BPMN_SPEC_ABSOLUTE_DIR" ]]; then
+    BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
+    if [[ ! -d "$BPMN_SPEC_ABSOLUTE_DIR" ]]; then
+      >&2 echo "ERROR: Could not find a location for the sample processes. Last tried: $BPMN_SPEC_ABSOLUTE_DIR"
+      exit 1
+    fi
+  fi
+  export BPMN_SPEC_ABSOLUTE_DIR
+  pushd "$BPMN_SPEC_ABSOLUTE_DIR"
+  if [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]]; then
+    >&2 echo "ERROR: please do not use the main branch of sample-process-models. use dev"
+    exit 1
+  fi
+  popd
+fi
+
+echo "$BPMN_SPEC_ABSOLUTE_DIR"
