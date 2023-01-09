@@ -1,7 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Dict
-from typing import Optional
 
 from flask import g
 from flask import jsonify
@@ -15,9 +14,10 @@ from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.user_service import UserService
 
 
-def secret_show(key: str) -> Optional[str]:
+def secret_show(key: str) -> Response:
     """Secret_show."""
-    return SecretService.get_secret(key)
+    secret = SecretService.get_secret(key)
+    return make_response(jsonify(secret), 200)
 
 
 def secret_list(
