@@ -735,7 +735,7 @@ export default function ProcessModelEditDiagram() {
     );
   };
   const onLaunchMarkdownEditor = (
-    element: any,
+    _element: any,
     markdown: string,
     eventBus: any
   ) => {
@@ -771,7 +771,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onSearchProcessModels = (
-    processId: string,
+    _processId: string,
     eventBus: any,
     element: any
   ) => {
@@ -791,11 +791,13 @@ export default function ProcessModelEditDiagram() {
   };
 
   const processModelSelector = () => {
+    console.log('IN MODEL SELECTOR: ', processes);
     return (
       <Modal
         open={showProcessSearch}
         modalHeading="Select Process Model"
         primaryButtonText="Close"
+        onRequestClose={processSearchOnClose}
         onRequestSubmit={processSearchOnClose}
         size="lg"
       >
@@ -964,6 +966,7 @@ export default function ProcessModelEditDiagram() {
         {scriptEditorAndTests()}
         {markdownEditor()}
         {processModelSelector()}
+        {`Processes length: ${processes.length}`}
         <div id="diagram-container" />
       </>
     );

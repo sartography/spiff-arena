@@ -54,6 +54,9 @@ class ProcessModelInfo:
         return False
 
     # for use with os.path.join so it can work on windows
+    # NOTE: in APIs, ids should always have forward slashes, even in windows.
+    # this is because we have to store ids in the database, and we want the same
+    # database snapshot to work on any OS.
     def id_for_file_path(self) -> str:
         """Id_for_file_path."""
         return self.id.replace("/", os.sep)
