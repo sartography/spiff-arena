@@ -121,13 +121,17 @@ export default function ProcessModelEditDiagram() {
         Object.assign(item, { label });
         return item;
       });
+      console.log(
+        'Setting Process arrays with selection of length: ',
+        selectionArray.length
+      );
       setProcesses(selectionArray);
     };
     HttpService.makeCallToBackend({
       path: `/processes`,
       successCallback: processResults,
     });
-  }, [processModel]);
+  }, []);
 
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
