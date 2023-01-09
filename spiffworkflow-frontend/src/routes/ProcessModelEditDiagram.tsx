@@ -121,10 +121,6 @@ export default function ProcessModelEditDiagram() {
         Object.assign(item, { label });
         return item;
       });
-      console.log(
-        'Setting Process arrays with selection of length: ',
-        selectionArray.length
-      );
       setProcesses(selectionArray);
     };
     HttpService.makeCallToBackend({
@@ -791,7 +787,6 @@ export default function ProcessModelEditDiagram() {
   };
 
   const processModelSelector = () => {
-    console.log('IN MODEL SELECTOR: ', processes);
     return (
       <Modal
         open={showProcessSearch}
@@ -832,25 +827,30 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onLaunchBpmnEditor = (processId: string) => {
-    console.log('onLaunchBpmnEditor - processId: ', processId);
-    console.log('processes', processes);
-    const processRef = processes.find((p) => {
-      return p.identifier === processId;
+    // using the "setState" method with a function gives us access to the
+    // most current state of processes. Otherwise it uses the stale state
+    // when passing the callback to a non-React component like bpmn-js:
+    //   https://stackoverflow.com/a/60643670/6090676
+    setProcesses((upToDateProcesses: ProcessReference[]) => {
+      const processRef = upToDateProcesses.find((p) => {
+        return p.identifier === processId;
+      });
+      if (processRef) {
+        const path = generatePath(
+          '/admin/process-models/:process_model_path/files/:file_name',
+          {
+            process_model_path: modifyProcessIdentifierForPathParam(
+              processRef.process_model_id
+            ),
+            file_name: processRef.file_name,
+          }
+        );
+        window.open(path);
+      }
+      return upToDateProcesses;
     });
-    if (processRef) {
-      console.log('Found ProcessRef: ', processRef);
-      const path = generatePath(
-        '/admin/process-models/:process_model_path/files/:file_name',
-        {
-          process_model_path: modifyProcessIdentifierForPathParam(
-            processRef.process_model_id
-          ),
-          file_name: processRef.file_name,
-        }
-      );
-      window.open(path);
-    }
   };
+
   const onLaunchJsonEditor = (fileName: string) => {
     const path = generatePath(
       '/admin/process-models/:process_model_id/form/:file_name',

@@ -265,12 +265,7 @@ export default function ReactDiagramEditor({
     });
 
     diagramModeler.on('spiff.callactivity.edit', (event: any) => {
-      console.log('Received event spiff.callactivity.edit');
       if (onLaunchBpmnEditor) {
-        console.log(
-          'Calling function onLaunchBpmnEditor with ',
-          event.processId
-        );
         onLaunchBpmnEditor(event.processId);
       }
     });
