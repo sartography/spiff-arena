@@ -3,10 +3,11 @@ import re
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
+from typing import Type
 
 import sqlalchemy
 from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
+from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_
@@ -113,16 +114,16 @@ class ProcessInstanceReportService:
                     {"Header": "status", "accessor": "status"},
                 ],
                 "filter_by": [
-                    {"field_name": "initiated_by_me", "field_value": True},
-                    {"field_name": "has_terminal_status", "field_value": True},
+                    {"field_name": "initiated_by_me", "field_value": "true"},
+                    {"field_name": "has_terminal_status", "field_value": "true"},
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
             "system_report_completed_instances_with_tasks_completed_by_me": {
                 "columns": cls.builtin_column_options(),
                 "filter_by": [
-                    {"field_name": "with_tasks_completed_by_me", "field_value": True},
-                    {"field_name": "has_terminal_status", "field_value": True},
+                    {"field_name": "with_tasks_completed_by_me", "field_value": "true"},
+                    {"field_name": "has_terminal_status", "field_value": "true"},
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
@@ -131,9 +132,9 @@ class ProcessInstanceReportService:
                 "filter_by": [
                     {
                         "field_name": "with_tasks_assigned_to_my_group",
-                        "field_value": True,
+                        "field_value": "true",
                     },
-                    {"field_name": "has_terminal_status", "field_value": True},
+                    {"field_name": "has_terminal_status", "field_value": "true"},
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
@@ -319,7 +320,9 @@ class ProcessInstanceReportService:
         return results
 
     @classmethod
-    def get_column_names_for_model(cls, model: db.Model) -> list[str]:  # type: ignore
+    def get_column_names_for_model(
+        cls, model: Type[SpiffworkflowBaseDBModel]
+    ) -> list[str]:
         """Get_column_names_for_model."""
         return [i.name for i in model.__table__.columns]
 
