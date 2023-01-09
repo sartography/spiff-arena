@@ -1851,7 +1851,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "4195453a46638f23e87c3ffdb038717c2d8abd00"
+resolved_reference = "5eed83ab12f67c01c7836424a22fc425a33fc55d"
 
 [[package]]
 name = "SQLAlchemy"
@@ -2222,7 +2222,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "bbbd1c8bdce7f3dd7ec17c62b85dc7c95045fe500a759bb1a89c93add58a2a25"
+content-hash = "832c1b6cd8d9aebc8529fdce11167bddcb3634fd0767dd2e490b74ababcf2714"
 
 [metadata.files]
 alabaster = [
