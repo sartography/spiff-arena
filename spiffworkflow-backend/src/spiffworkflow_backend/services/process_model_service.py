@@ -42,7 +42,7 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def path_to_id(cls, path: str) -> str:
         """Replace the os path separator for the standard id separator."""
-        return path.replace(os.sep, '/')
+        return path.replace(os.sep, "/")
 
     @classmethod
     def is_group(cls, path: str) -> bool:
@@ -233,7 +233,11 @@ class ProcessModelService(FileSystemService):
             user = UserService.current_user()
             new_process_model_list = []
             for process_model in process_models:
-                modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_model.id)
+                modified_process_model_id = (
+                    ProcessModelInfo.modify_process_identifier_for_path_param(
+                        process_model.id
+                    )
+                )
                 uri = f"/v1.0/process-instances/{modified_process_model_id}"
                 has_permission = AuthorizationService.user_has_permission(
                     user=user, permission="create", target_uri=uri
@@ -427,7 +431,9 @@ class ProcessModelService(FileSystemService):
                         ),
                     )
         else:
-            process_group_id = cls.path_to_id(dir_path.replace(FileSystemService.root_path(), ""))
+            process_group_id = cls.path_to_id(
+                dir_path.replace(FileSystemService.root_path(), "")
+            )
             process_group = ProcessGroup(
                 id="",
                 display_name=process_group_id,
