@@ -181,7 +181,12 @@ def process_instance_log_list(
         SpiffLoggingModel.process_instance_id == process_instance.id
     )
     if not detailed:
-        log_query = log_query.filter(SpiffLoggingModel.message.in_(["State change to COMPLETED"]))  # type: ignore
+        log_query = log_query.filter(
+            or_(
+                SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
+                SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
+            )
+        )
 
     logs = (
         log_query.order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
