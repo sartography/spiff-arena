@@ -18,13 +18,13 @@ if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
       exit 1
     fi
   fi
-  export BPMN_SPEC_ABSOLUTE_DIR
-  pushd "$BPMN_SPEC_ABSOLUTE_DIR"
+
+  pushd "$BPMN_SPEC_ABSOLUTE_DIR" >/dev/null 2>&1
   if [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]]; then
     >&2 echo "ERROR: please do not use the main branch of sample-process-models. use dev"
     exit 1
   fi
-  popd
+  popd >/dev/null 2>&1
 fi
 
-echo "$BPMN_SPEC_ABSOLUTE_DIR"
+realpath "$BPMN_SPEC_ABSOLUTE_DIR"
