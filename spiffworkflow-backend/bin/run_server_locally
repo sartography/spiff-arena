@@ -29,7 +29,6 @@ else
   export FLASK_DEBUG=1
 
   if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
-    echo "RUNING STUFF"
     SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
   fi
   FLASK_APP=src/spiffworkflow_backend poetry run flask run -p 7000
