@@ -5,7 +5,6 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
-from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -77,7 +76,7 @@ class TestSpecFileService(BaseTest):
             bpmn_process_id_lookups[0].relative_path
             == self.call_activity_nested_relative_file_path
         )
-        with pytest.raises(ValidationException) as exception:
+        with pytest.raises(ProcessModelFileInvalidError) as exception:
             load_test_spec(
                 "call_activity_nested_duplicate",
                 process_model_source_directory="call_activity_duplicate",
