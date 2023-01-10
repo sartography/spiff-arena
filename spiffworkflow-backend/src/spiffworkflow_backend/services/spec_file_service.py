@@ -80,9 +80,22 @@ class SpecFileService(FileSystemService):
             )
         return references
 
-    @staticmethod
+    @classmethod
     def get_references_for_file(
-        file: File, process_model_info: ProcessModelInfo
+        cls, file: File, process_model_info: ProcessModelInfo
+    ) -> list[SpecReference]:
+        """Get_references_for_file."""
+        full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
+        file_contents: bytes = b""
+        with open(full_file_path) as f:
+            file_contents = f.read().encode()
+        return cls.get_references_for_file_contents(
+            process_model_info, file.name, file_contents
+        )
+
+    @classmethod
+    def get_references_for_file_contents(
+        cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes
     ) -> list[SpecReference]:
         """Uses spiffworkflow to parse BPMN and DMN files to determine how they can be externally referenced.
 
@@ -93,8 +106,8 @@ class SpecFileService(FileSystemService):
         type = {str} 'process' / 'decision'
         """
         references: list[SpecReference] = []
-        full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
-        file_path = os.path.join(process_model_info.id_for_file_path(), file.name)
+        file_path = os.path.join(process_model_info.id_for_file_path(), file_name)
+        file_type = FileSystemService.file_type(file_name)
         parser = MyCustomParser()
         parser_type = None
         sub_parser = None
@@ -104,14 +117,14 @@ class SpecFileService(FileSystemService):
         messages = {}
         correlations = {}
         start_messages = []
-        if file.type == FileType.bpmn.value:
-            parser.add_bpmn_file(full_file_path)
+        if file_type.value == FileType.bpmn.value:
+            parser.add_bpmn_xml(etree.fromstring(binary_data))
             parser_type = "process"
             sub_parsers = list(parser.process_parsers.values())
             messages = parser.messages
             correlations = parser.correlations
-        elif file.type == FileType.dmn.value:
-            parser.add_dmn_file(full_file_path)
+        elif file_type.value == FileType.dmn.value:
+            parser.add_dmn_xml(etree.fromstring(binary_data))
             sub_parsers = list(parser.dmn_parsers.values())
             parser_type = "decision"
         else:
@@ -131,7 +144,7 @@ class SpecFileService(FileSystemService):
                     display_name=sub_parser.get_name(),
                     process_model_id=process_model_info.id,
                     type=parser_type,
-                    file_name=file.name,
+                    file_name=file_name,
                     relative_path=file_path,
                     has_lanes=has_lanes,
                     is_executable=is_executable,
@@ -172,17 +185,15 @@ class SpecFileService(FileSystemService):
         """Update_file."""
         SpecFileService.assert_valid_file_name(file_name)
         cls.validate_bpmn_xml(file_name, binary_data)
-        full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
-        SpecFileService.write_file_data_to_system(full_file_path, binary_data)
-        file = SpecFileService.to_file_object(file_name, full_file_path)
 
-        references = SpecFileService.get_references_for_file(file, process_model_info)
+        references = cls.get_references_for_file_contents(
+            process_model_info, file_name, binary_data
+        )
         primary_process_ref = next(
             (ref for ref in references if ref.is_primary and ref.is_executable), None
         )
 
         SpecFileService.clear_caches_for_file(file_name, process_model_info)
-
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
             # updated file.
@@ -203,7 +214,11 @@ class SpecFileService(FileSystemService):
                         update_hash,
                     )
             SpecFileService.update_caches(ref)
-        return file
+
+        # make sure we save the file as the last thing we do to ensure validations have run
+        full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
+        SpecFileService.write_file_data_to_system(full_file_path, binary_data)
+        return SpecFileService.to_file_object(file_name, full_file_path)
 
     @staticmethod
     def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:

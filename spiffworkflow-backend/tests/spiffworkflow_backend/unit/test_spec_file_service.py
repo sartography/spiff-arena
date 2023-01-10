@@ -87,6 +87,14 @@ class TestSpecFileService(BaseTest):
                 in str(exception.value)
             )
 
+        process_model = ProcessModelService.get_process_model(
+            "call_activity_nested_duplicate"
+        )
+        full_file_path = SpecFileService.full_file_path(
+            process_model, "call_activity_nested_duplicate.bpmn"
+        )
+        assert not os.path.isfile(full_file_path)
+
     def test_updates_relative_file_path_when_appropriate(
         self,
         app: Flask,
@@ -225,3 +233,6 @@ class TestSpecFileService(BaseTest):
             SpecFileService.update_file(
                 process_model, "bad_xml.bpmn", b"THIS_IS_NOT_VALID_XML"
             )
+
+        full_file_path = SpecFileService.full_file_path(process_model, "bad_xml.bpmn")
+        assert not os.path.isfile(full_file_path)
