@@ -123,7 +123,9 @@ def process_model_update(
     return ProcessModelInfoSchema().dump(process_model)
 
 
-def process_model_show(modified_process_model_identifier: str, include_file_references: bool = False) -> Any:
+def process_model_show(
+    modified_process_model_identifier: str, include_file_references: bool = False
+) -> Any:
     """Process_model_show."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
@@ -135,7 +137,9 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
 
     if include_file_references:
         for file in process_model.files:
-            file.references = SpecFileService.get_references_for_file(file, process_model)
+            file.references = SpecFileService.get_references_for_file(
+                file, process_model
+            )
 
     process_model.parent_groups = ProcessModelService.get_parent_group_array(
         process_model.id
