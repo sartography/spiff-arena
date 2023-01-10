@@ -12,18 +12,18 @@
   </bpmn:collaboration>
   <bpmn:correlationProperty id="mcp_topica_two" name="MCP TopicA Two">
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_send_two">
-      <bpmn:formalExpression>topica_two</bpmn:formalExpression>
+      <bpmn:messagePath>topica_two</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_response_two">
-      <bpmn:formalExpression>topica_two</bpmn:formalExpression>
+      <bpmn:messagePath>topica_two</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:correlationProperty id="mcp_topicb_two" name="MCP TopicB_two">
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_send_two">
-      <bpmn:formalExpression>topicb_two</bpmn:formalExpression>
+      <bpmn:messagePath>topicb_two</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_response_two">
-      <bpmn:formalExpression>topicb_two</bpmn:formalExpression>
+      <bpmn:messagePath>topicb_two</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:message id="message_send_two" name="Message Send Two">

@@ -2,10 +2,10 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
   <bpmn:correlationProperty id="message_correlation_property" name="Message Correlation Property">
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_send">
-      <bpmn:formalExpression>to</bpmn:formalExpression>
+      <bpmn:messagePath>to</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_response">
-      <bpmn:formalExpression>from.name</bpmn:formalExpression>
+      <bpmn:messagePath>from.name</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:message id="message_send" name="Message Send">
@@ -20,7 +20,7 @@
   </bpmn:message>
   <bpmn:correlationProperty id="correlation_property_one" name="Correlation Property One">
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_send">
-      <bpmn:formalExpression>new</bpmn:formalExpression>
+      <bpmn:messagePath>new</bpmn:messagePath>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:process id="test_dot_notation" name="Test Dot Notation" isExecutable="true">

@@ -6,7 +6,8 @@ from typing import List
 from typing import Optional
 
 from flask_bpmn.models.db import db
-from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
+from lxml import etree  # type: ignore
+from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -29,6 +30,10 @@ class ProcessModelFileNotFoundError(Exception):
     """ProcessModelFileNotFoundError."""
 
 
+class ProcessModelFileInvalidError(Exception):
+    """ProcessModelFileInvalidError."""
+
+
 class SpecFileService(FileSystemService):
     """SpecFileService."""
 
@@ -44,7 +49,6 @@ class SpecFileService(FileSystemService):
         extension_filter: str = "",
     ) -> List[File]:
         """Return all files associated with a workflow specification."""
-        # path = SpecFileService.workflow_path(process_model_info)
         path = os.path.join(
             FileSystemService.root_path(), process_model_info.id_for_file_path()
         )
@@ -76,9 +80,22 @@ class SpecFileService(FileSystemService):
             )
         return references
 
-    @staticmethod
+    @classmethod
     def get_references_for_file(
-        file: File, process_model_info: ProcessModelInfo
+        cls, file: File, process_model_info: ProcessModelInfo
+    ) -> list[SpecReference]:
+        """Get_references_for_file."""
+        full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
+        file_contents: bytes = b""
+        with open(full_file_path) as f:
+            file_contents = f.read().encode()
+        return cls.get_references_for_file_contents(
+            process_model_info, file.name, file_contents
+        )
+
+    @classmethod
+    def get_references_for_file_contents(
+        cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes
     ) -> list[SpecReference]:
         """Uses spiffworkflow to parse BPMN and DMN files to determine how they can be externally referenced.
 
@@ -89,8 +106,8 @@ class SpecFileService(FileSystemService):
         type = {str} 'process' / 'decision'
         """
         references: list[SpecReference] = []
-        full_file_path = SpecFileService.full_file_path(process_model_info, file.name)
-        file_path = os.path.join(process_model_info.id_for_file_path(), file.name)
+        file_path = os.path.join(process_model_info.id_for_file_path(), file_name)
+        file_type = FileSystemService.file_type(file_name)
         parser = MyCustomParser()
         parser_type = None
         sub_parser = None
@@ -100,14 +117,14 @@ class SpecFileService(FileSystemService):
         messages = {}
         correlations = {}
         start_messages = []
-        if file.type == FileType.bpmn.value:
-            parser.add_bpmn_file(full_file_path)
+        if file_type.value == FileType.bpmn.value:
+            parser.add_bpmn_xml(etree.fromstring(binary_data))
             parser_type = "process"
             sub_parsers = list(parser.process_parsers.values())
             messages = parser.messages
             correlations = parser.correlations
-        elif file.type == FileType.dmn.value:
-            parser.add_dmn_file(full_file_path)
+        elif file_type.value == FileType.dmn.value:
+            parser.add_dmn_xml(etree.fromstring(binary_data))
             sub_parsers = list(parser.dmn_parsers.values())
             parser_type = "decision"
         else:
@@ -127,7 +144,7 @@ class SpecFileService(FileSystemService):
                     display_name=sub_parser.get_name(),
                     process_model_id=process_model_info.id,
                     type=parser_type,
-                    file_name=file.name,
+                    file_name=file_name,
                     relative_path=file_path,
                     has_lanes=has_lanes,
                     is_executable=is_executable,
@@ -147,23 +164,36 @@ class SpecFileService(FileSystemService):
         # Same as update
         return SpecFileService.update_file(process_model_info, file_name, binary_data)
 
-    @staticmethod
+    @classmethod
+    def validate_bpmn_xml(cls, file_name: str, binary_data: bytes) -> None:
+        """Validate_bpmn_xml."""
+        file_type = FileSystemService.file_type(file_name)
+        if file_type.value == FileType.bpmn.value:
+            validator = BpmnValidator()
+            parser = MyCustomParser(validator=validator)
+            try:
+                parser.add_bpmn_xml(etree.fromstring(binary_data), filename=file_name)
+            except etree.XMLSyntaxError as exception:
+                raise ProcessModelFileInvalidError(
+                    f"Received error trying to parse bpmn xml: {str(exception)}"
+                ) from exception
+
+    @classmethod
     def update_file(
-        process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes
+        cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes
     ) -> File:
         """Update_file."""
         SpecFileService.assert_valid_file_name(file_name)
-        full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
-        SpecFileService.write_file_data_to_system(full_file_path, binary_data)
-        file = SpecFileService.to_file_object(file_name, full_file_path)
+        cls.validate_bpmn_xml(file_name, binary_data)
 
-        references = SpecFileService.get_references_for_file(file, process_model_info)
+        references = cls.get_references_for_file_contents(
+            process_model_info, file_name, binary_data
+        )
         primary_process_ref = next(
             (ref for ref in references if ref.is_primary and ref.is_executable), None
         )
 
         SpecFileService.clear_caches_for_file(file_name, process_model_info)
-
         for ref in references:
             # If no valid primary process is defined, default to the first process in the
             # updated file.
@@ -184,7 +214,11 @@ class SpecFileService(FileSystemService):
                         update_hash,
                     )
             SpecFileService.update_caches(ref)
-        return file
+
+        # make sure we save the file as the last thing we do to ensure validations have run
+        full_file_path = SpecFileService.full_file_path(process_model_info, file_name)
+        SpecFileService.write_file_data_to_system(full_file_path, binary_data)
+        return SpecFileService.to_file_object(file_name, full_file_path)
 
     @staticmethod
     def get_data(process_model_info: ProcessModelInfo, file_name: str) -> bytes:
@@ -282,7 +316,7 @@ class SpecFileService(FileSystemService):
                 # if the old relative bpmn file no longer exists, then assume things were moved around
                 # on the file system. Otherwise, assume it is a duplicate process id and error.
                 if os.path.isfile(full_bpmn_file_path):
-                    raise ValidationException(
+                    raise ProcessModelFileInvalidError(
                         f"Process id ({ref.identifier}) has already been used for "
                         f"{process_id_lookup.relative_path}. It cannot be reused."
                     )
@@ -314,7 +348,7 @@ class SpecFileService(FileSystemService):
                 identifier=message_model_identifier
             ).first()
             if message_model is None:
-                raise ValidationException(
+                raise ProcessModelFileInvalidError(
                     "Could not find message model with identifier"
                     f" '{message_model_identifier}'Required by a Start Event in :"
                     f" {ref.file_name}"
@@ -336,7 +370,7 @@ class SpecFileService(FileSystemService):
                     message_triggerable_process_model.process_model_identifier
                     != ref.process_model_id
                 ):
-                    raise ValidationException(
+                    raise ProcessModelFileInvalidError(
                         "Message model is already used to start process model"
                         f" {ref.process_model_id}"
                     )
@@ -355,7 +389,7 @@ class SpecFileService(FileSystemService):
                     identifier=message_model_identifier
                 ).first()
                 if message_model is None:
-                    raise ValidationException(
+                    raise ProcessModelFileInvalidError(
                         "Could not find message model with identifier"
                         f" '{message_model_identifier}'specified by correlation"
                         f" property: {cpre}"
