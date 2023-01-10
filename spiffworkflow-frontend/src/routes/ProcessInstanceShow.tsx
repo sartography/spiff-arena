@@ -205,7 +205,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           !callingSubprocessId ||
           callingSubprocessId === task.calling_subprocess_task_id
         ) {
-          console.log('callingSubprocessId', callingSubprocessId);
           if (task.state === 'COMPLETED') {
             (taskIds.completed as any).push(task);
           }

@@ -100,7 +100,7 @@ export default function ProcessModelShow() {
           onClose={() => setProcessInstance(null)}
         >
           <Link
-            to={`/admin/process-instances/${modifiedProcessModelId}/${processInstance.id}`}
+            to={`/admin/process-instances/for-me/${modifiedProcessModelId}/${processInstance.id}`}
             data-qa="process-instance-show-link"
           >
             view
@@ -685,7 +685,7 @@ export default function ProcessModelShow() {
             perPageOptions={[2, 5, 25]}
             showReports={false}
           />
-          <span data-qa="process-model-show-permissions-loaded">true</span>
+          <span data-qa="process-model-show-permissions-loaded" />
         </Can>
       </>
     );

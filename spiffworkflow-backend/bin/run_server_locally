@@ -17,19 +17,8 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_ENV=development
 fi
 
-if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
-  script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-
-  BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../../sample-process-models"
-  if [[ ! -d "$BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-    BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
-    if [[ ! -d "$BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-      >&2 echo "ERROR: Could not find a location for the sample processes. Last tried: $BPMN_SPEC_ABSOLUTE_DIR"
-      exit 1
-    fi
-  fi
-  export BPMN_SPEC_ABSOLUTE_DIR
-fi
+BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
+export BPMN_SPEC_ABSOLUTE_DIR
 
 export FLASK_SESSION_SECRET_KEY=super_secret_key
 export APPLICATION_ROOT="/"

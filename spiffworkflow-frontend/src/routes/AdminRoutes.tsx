@@ -23,6 +23,7 @@ import MessageInstanceList from './MessageInstanceList';
 import Configuration from './Configuration';
 import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
+import ProcessInstanceFindById from './ProcessInstanceFindById';
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -132,6 +133,10 @@ export default function AdminRoutes() {
         <Route
           path="process-models/:process_model_id/form-builder"
           element={<JsonSchemaFormBuilder />}
+        />
+        <Route
+          path="process-instances/find-by-id"
+          element={<ProcessInstanceFindById />}
         />
       </Routes>
     );

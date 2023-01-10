@@ -219,6 +219,20 @@ export const refreshAtInterval = (
   };
 };
 
+// bpmn:SubProcess shape elements do not have children
+// but their moddle elements / businessOjects have flowElements
+// that can include the moddleElement of the subprocesses
+const getChildProcessesFromModdleElement = (bpmnModdleElement: any) => {
+  let elements: string[] = [];
+  bpmnModdleElement.flowElements.forEach((c: any) => {
+    if (c.$type === 'bpmn:SubProcess') {
+      elements.push(c.id);
+      elements = [...elements, ...getChildProcessesFromModdleElement(c)];
+    }
+  });
+  return elements;
+};
+
 const getChildProcesses = (bpmnElement: any) => {
   let elements: string[] = [];
   bpmnElement.children.forEach((c: any) => {
@@ -229,6 +243,10 @@ const getChildProcesses = (bpmnElement: any) => {
       elements = [...elements, ...getChildProcesses(c)];
     } else if (c.type === 'bpmn:SubProcess') {
       elements.push(c.id);
+      elements = [
+        ...elements,
+        ...getChildProcessesFromModdleElement(c.businessObject),
+      ];
     }
   });
   return elements;
@@ -252,4 +270,8 @@ export const setErrorMessageSafely = (
   }
   errorMessageSetter({ message: newErrorMessageString });
   return null;
+};
+
+export const isInteger = (str: string | number) => {
+  return /^\d+$/.test(str.toString());
 };
