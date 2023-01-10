@@ -966,7 +966,6 @@ export default function ProcessModelEditDiagram() {
         {scriptEditorAndTests()}
         {markdownEditor()}
         {processModelSelector()}
-        {`Processes length: ${processes.length}`}
         <div id="diagram-container" />
       </>
     );
