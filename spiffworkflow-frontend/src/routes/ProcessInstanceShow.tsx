@@ -528,11 +528,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const isCurrentTask = (task: any) => {
+    const subprocessTypes = [
+      'Subprocess',
+      'Call Activity',
+      'Transactional Subprocess',
+    ];
+    return (
+      (task.state === 'WAITING' &&
+        subprocessTypes.filter((t) => t === task.type).length > 0) ||
+      task.state === 'READY'
+    );
+  };
+
   const canEditTaskData = (task: any) => {
     return (
       processInstance &&
       ability.can('PUT', targetUris.processInstanceTaskListDataPath) &&
-      task.state === 'READY' &&
+      isCurrentTask(task) &&
       processInstance.status === 'suspended' &&
       showingLastSpiffStep()
     );
@@ -556,7 +569,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       processInstance &&
       processInstance.status === 'suspended' &&
       ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
-      task.state === 'READY' &&
+      isCurrentTask(task) &&
       showingLastSpiffStep()
     );
   };
