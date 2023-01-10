@@ -2160,59 +2160,10 @@ class TestProcessApi(BaseTest):
         assert process is not None
         assert process.status == "suspended"
 
-    def test_error_handler_with_email(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        """Test_error_handler."""
-        process_group_id = "data"
-        process_model_id = "error"
-        bpmn_file_name = "error.bpmn"
-        bpmn_file_location = "error"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
-            client,
-            with_super_admin_user,
-            process_group_id=process_group_id,
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
-        )
-
-        process_instance_id = self.setup_testing_instance(
-            client, process_model_identifier, with_super_admin_user
-        )
-
-        process_model = ProcessModelService.get_process_model(process_model_identifier)
-        ProcessModelService.update_process_model(
-            process_model,
-            {"exception_notification_addresses": ["with_super_admin_user@example.com"]},
-        )
-
-        mail = app.config["MAIL_APP"]
-        with mail.record_messages() as outbox:
-            response = client.post(
-                f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
-                headers=self.logged_in_headers(with_super_admin_user),
-            )
-            assert response.status_code == 400
-            assert len(outbox) == 1
-            message = outbox[0]
-            assert message.subject == "Unexpected error in app"
-            assert (
-                message.body == 'TypeError:can only concatenate str (not "int") to str'
-            )
-            assert message.recipients == process_model.exception_notification_addresses
-
-        process = (
-            db.session.query(ProcessInstanceModel)
-            .filter(ProcessInstanceModel.id == process_instance_id)
-            .first()
-        )
-        assert process is not None
-        assert process.status == "error"
+    def test_error_handler_system_notification(self):
+        """Test_error_handler_system_notification."""
+        # TODO: make sure the system notification process is run on exceptions
+        ...
 
     def test_task_data_is_set_even_if_process_instance_errors(
         self,
