@@ -70,6 +70,7 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import UserTaskConverte
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
@@ -302,9 +303,7 @@ class ProcessInstanceProcessor:
         tld.spiff_step = process_instance_model.spiff_step
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
-        current_app.config[
-            "THREAD_LOCAL_DATA"
-        ].process_model_identifier = (
+        current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
             f"{process_instance_model.process_model_identifier}"
         )
 
@@ -658,9 +657,9 @@ class ProcessInstanceProcessor:
         """
         for task_id, subprocess_id in subprocesses_by_child_task_ids.items():
             if subprocess_id in subprocesses_by_child_task_ids:
-                subprocesses_by_child_task_ids[
-                    task_id
-                ] = subprocesses_by_child_task_ids[subprocess_id]
+                subprocesses_by_child_task_ids[task_id] = (
+                    subprocesses_by_child_task_ids[subprocess_id]
+                )
                 self.get_highest_level_subprocesses_by_child_task_ids(
                     subprocesses_by_child_task_ids
                 )
