@@ -134,7 +134,7 @@ export default function ProcessModelEditDiagram() {
       setProcessModel(result);
     };
     HttpService.makeCallToBackend({
-      path: `/${processModelPath}`,
+      path: `/${processModelPath}?include_file_references=true`,
       successCallback: processResult,
     });
   }, [processModelPath]);
