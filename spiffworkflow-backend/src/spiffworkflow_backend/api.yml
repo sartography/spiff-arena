@@ -397,6 +397,12 @@ paths:
         description: the modified process model id
         schema:
           type: string
+      - name: include_file_references
+        in: query
+        required: false
+        description: include all file references in the return
+        schema:
+          type: boolean
     get:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_show
       summary: Returns a single process model

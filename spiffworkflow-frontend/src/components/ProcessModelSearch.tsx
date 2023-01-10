@@ -37,7 +37,9 @@ export default function ProcessModelSearch({
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
     const { inputValue } = options;
-    return getFullProcessModelLabel(processModel).includes(inputValue);
+    return getFullProcessModelLabel(processModel)
+      .toLowerCase()
+      .includes((inputValue || '').toLowerCase());
   };
   return (
     <ComboBox
