@@ -127,7 +127,7 @@ export default function ProcessModelEditDiagram() {
       path: `/processes`,
       successCallback: processResults,
     });
-  }, [processModel]);
+  }, []);
 
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
@@ -731,7 +731,7 @@ export default function ProcessModelEditDiagram() {
     );
   };
   const onLaunchMarkdownEditor = (
-    element: any,
+    _element: any,
     markdown: string,
     eventBus: any
   ) => {
@@ -767,7 +767,7 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onSearchProcessModels = (
-    processId: string,
+    _processId: string,
     eventBus: any,
     element: any
   ) => {
@@ -792,6 +792,7 @@ export default function ProcessModelEditDiagram() {
         open={showProcessSearch}
         modalHeading="Select Process Model"
         primaryButtonText="Close"
+        onRequestClose={processSearchOnClose}
         onRequestSubmit={processSearchOnClose}
         size="lg"
       >
@@ -826,22 +827,30 @@ export default function ProcessModelEditDiagram() {
   };
 
   const onLaunchBpmnEditor = (processId: string) => {
-    const processRef = processes.find((p) => {
-      return p.identifier === processId;
+    // using the "setState" method with a function gives us access to the
+    // most current state of processes. Otherwise it uses the stale state
+    // when passing the callback to a non-React component like bpmn-js:
+    //   https://stackoverflow.com/a/60643670/6090676
+    setProcesses((upToDateProcesses: ProcessReference[]) => {
+      const processRef = upToDateProcesses.find((p) => {
+        return p.identifier === processId;
+      });
+      if (processRef) {
+        const path = generatePath(
+          '/admin/process-models/:process_model_path/files/:file_name',
+          {
+            process_model_path: modifyProcessIdentifierForPathParam(
+              processRef.process_model_id
+            ),
+            file_name: processRef.file_name,
+          }
+        );
+        window.open(path);
+      }
+      return upToDateProcesses;
     });
-    if (processRef) {
-      const path = generatePath(
-        '/admin/process-models/:process_model_path/files/:file_name',
-        {
-          process_model_path: modifyProcessIdentifierForPathParam(
-            processRef.process_model_id
-          ),
-          file_name: processRef.file_name,
-        }
-      );
-      window.open(path);
-    }
   };
+
   const onLaunchJsonEditor = (fileName: string) => {
     const path = generatePath(
       '/admin/process-models/:process_model_id/form/:file_name',
@@ -957,6 +966,7 @@ export default function ProcessModelEditDiagram() {
         {scriptEditorAndTests()}
         {markdownEditor()}
         {processModelSelector()}
+        {`Processes length: ${processes.length}`}
         <div id="diagram-container" />
       </>
     );

@@ -628,6 +628,12 @@ paths:
         description: The identifier of the group to get the process instances for
         schema:
           type: string
+      - name: process_initiator_username
+        in: query
+        required: false
+        description: The username of the process initiator
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list_for_me
       summary: Returns a list of process instances that are associated with me.
@@ -739,6 +745,12 @@ paths:
         in: query
         required: false
         description: The identifier of the group to get the process instances for
+        schema:
+          type: string
+      - name: process_initiator_username
+        in: query
+        required: false
+        description: The username of the process initiator
         schema:
           type: string
     get:
@@ -938,6 +950,27 @@ paths:
         - Process Instances
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_show_for_me
       summary: Show information about a process instance that is associated with me
+      responses:
+        "200":
+          description: One Process Instance
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
+
+  /process-instances/find-by-id/{process_instance_id}:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_find_by_id
+      summary: Find a process instance based on its id only
+      tags:
+        - Process Instances
       responses:
         "200":
           description: One Process Instance
@@ -1787,7 +1820,7 @@ paths:
     post:
       tags:
         - Messages
-      operationId: spiffworkflow_backend.routes.messages_controller.message_start
+      operationId: spiffworkflow_backend.routes.messages_controller.message_send
       summary: Instantiate and run a given process model with a message start event matching given identifier
       requestBody:
         content:

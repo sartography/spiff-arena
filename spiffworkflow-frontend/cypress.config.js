@@ -24,11 +24,8 @@ const deleteVideosOnSuccess = (on) => {
   })
 }
 
-module.exports = defineConfig({
+const cypressConfig = {
   projectId: 'crax1q',
-
-  // since it's slow
-  videoCompression: useVideoCompression,
 
   videoUploadOnPasses: false,
   chromeWebSecurity: false,
@@ -45,4 +42,11 @@ module.exports = defineConfig({
   // https://github.com/cypress-io/cypress/issues/2353
   // https://docs.cypress.io/guides/core-concepts/interacting-with-elements#Scrolling
   scrollBehavior: "center",
-});
+}
+
+if (!process.env.CYPRESS_RECORD_KEY) {
+  // since it's slow
+  cypressConfig.videoCompression = false
+}
+
+module.exports = defineConfig(cypressConfig)

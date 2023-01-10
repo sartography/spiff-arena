@@ -9,6 +9,7 @@ def main() -> None:
     """Main."""
     app = create_app()
     with app.app_context():
+        print("HEY")
         failing_process_models = DataSetupService.save_all_process_models()
         for bpmn_errors in failing_process_models:
             print(bpmn_errors)

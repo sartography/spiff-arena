@@ -40,6 +40,11 @@ class ProcessModelService(FileSystemService):
     PROCESS_MODEL_SCHEMA = ProcessModelInfoSchema()
 
     @classmethod
+    def path_to_id(cls, path: str) -> str:
+        """Replace the os path separator for the standard id separator."""
+        return path.replace(os.sep, "/")
+
+    @classmethod
     def is_group(cls, path: str) -> bool:
         """Is_group."""
         group_json_path = os.path.join(path, cls.PROCESS_GROUP_JSON_FILE)
@@ -228,7 +233,12 @@ class ProcessModelService(FileSystemService):
             user = UserService.current_user()
             new_process_model_list = []
             for process_model in process_models:
-                uri = f"/v1.0/process-instances/{process_model.id.replace('/', ':')}"
+                modified_process_model_id = (
+                    ProcessModelInfo.modify_process_identifier_for_path_param(
+                        process_model.id
+                    )
+                )
+                uri = f"/v1.0/process-instances/{modified_process_model_id}"
                 has_permission = AuthorizationService.user_has_permission(
                     user=user, permission="create", target_uri=uri
                 )
@@ -410,7 +420,7 @@ class ProcessModelService(FileSystemService):
                 data = json.load(cat_json)
                 # we don't store `id` in the json files, so we add it back in here
                 relative_path = os.path.relpath(dir_path, FileSystemService.root_path())
-                data["id"] = relative_path
+                data["id"] = cls.path_to_id(relative_path)
                 process_group = ProcessGroup(**data)
                 if process_group is None:
                     raise ApiError(
@@ -421,7 +431,9 @@ class ProcessModelService(FileSystemService):
                         ),
                     )
         else:
-            process_group_id = dir_path.replace(FileSystemService.root_path(), "")
+            process_group_id = cls.path_to_id(
+                dir_path.replace(FileSystemService.root_path(), "")
+            )
             process_group = ProcessGroup(
                 id="",
                 display_name=process_group_id,
@@ -474,11 +486,7 @@ class ProcessModelService(FileSystemService):
                     data.pop("process_group_id")
                 # we don't save `id` in the json file, so we add it back in here.
                 relative_path = os.path.relpath(path, FileSystemService.root_path())
-
-                # even on windows, use forward slashes for ids
-                relative_path = relative_path.replace("\\", "/")
-
-                data["id"] = relative_path
+                data["id"] = cls.path_to_id(relative_path)
                 process_model_info = ProcessModelInfo(**data)
                 if process_model_info is None:
                     raise ApiError(

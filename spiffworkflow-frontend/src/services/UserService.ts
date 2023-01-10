@@ -10,9 +10,13 @@ import { BACKEND_BASE_URL } from '../config';
 // Some explanation:
 // https://dev.to/nilanth/how-to-secure-jwt-in-a-single-page-application-cko
 
+// const getCurrentLocation = (queryParams: string = window.location.search) => {
 const getCurrentLocation = () => {
-  // to trim off any query params
-  return `${window.location.origin}${window.location.pathname}`;
+  const queryParamString = '';
+  // if (queryParams) {
+  //   queryParamString = `?${queryParams}`;
+  // }
+  return `${window.location.origin}${window.location.pathname}${queryParamString}`;
 };
 
 const doLogin = () => {
@@ -60,18 +64,20 @@ const getPreferredUsername = () => {
 // FIXME: we could probably change this search to a hook
 // and then could use useSearchParams here instead
 const getAuthTokenFromParams = () => {
-  const queryParams = window.location.search;
-  const accessTokenMatch = queryParams.match(/.*\baccess_token=([^&]+).*/);
-  const idTokenMatch = queryParams.match(/.*\bid_token=([^&]+).*/);
-  if (accessTokenMatch) {
-    const accessToken = accessTokenMatch[1];
+  const queryParams = new URLSearchParams(window.location.search);
+  const accessToken = queryParams.get('access_token');
+  const idToken = queryParams.get('id_token');
+
+  queryParams.delete('access_token');
+  queryParams.delete('id_token');
+
+  if (accessToken) {
     localStorage.setItem('jwtAccessToken', accessToken);
-    if (idTokenMatch) {
-      const idToken = idTokenMatch[1];
+    if (idToken) {
       localStorage.setItem('jwtIdToken', idToken);
     }
-    // to remove token query param
-    window.location.href = getCurrentLocation();
+    // window.location.href = `${getCurrentLocation(queryParams.toString())}`;
+    window.location.href = `${getCurrentLocation()}`;
   } else if (!isLoggedIn()) {
     doLogin();
   }

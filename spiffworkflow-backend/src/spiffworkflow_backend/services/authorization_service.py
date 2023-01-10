@@ -625,6 +625,84 @@ class AuthorizationService:
         return permissions_to_assign
 
     @classmethod
+    def set_basic_permissions(cls) -> list[PermissionToAssign]:
+        """Set_basic_permissions."""
+        permissions_to_assign: list[PermissionToAssign] = []
+        permissions_to_assign.append(
+            PermissionToAssign(
+                permission="read", target_uri="/process-instances/for-me"
+            )
+        )
+        permissions_to_assign.append(
+            PermissionToAssign(permission="read", target_uri="/processes")
+        )
+        permissions_to_assign.append(
+            PermissionToAssign(permission="read", target_uri="/service-tasks")
+        )
+        permissions_to_assign.append(
+            PermissionToAssign(
+                permission="read", target_uri="/user-groups/for-current-user"
+            )
+        )
+        permissions_to_assign.append(
+            PermissionToAssign(
+                permission="read", target_uri="/process-instances/find-by-id/*"
+            )
+        )
+
+        for permission in ["create", "read", "update", "delete"]:
+            permissions_to_assign.append(
+                PermissionToAssign(
+                    permission=permission, target_uri="/process-instances/reports/*"
+                )
+            )
+            permissions_to_assign.append(
+                PermissionToAssign(permission=permission, target_uri="/tasks/*")
+            )
+        return permissions_to_assign
+
+    @classmethod
+    def set_process_group_permissions(
+        cls, target: str, permission_set: str
+    ) -> list[PermissionToAssign]:
+        """Set_process_group_permissions."""
+        permissions_to_assign: list[PermissionToAssign] = []
+        process_group_identifier = (
+            target.removeprefix("PG:").replace("/", ":").removeprefix(":")
+        )
+        process_related_path_segment = f"{process_group_identifier}:*"
+        if process_group_identifier == "ALL":
+            process_related_path_segment = "*"
+        target_uris = [
+            f"/process-groups/{process_related_path_segment}",
+            f"/process-models/{process_related_path_segment}",
+        ]
+        permissions_to_assign = permissions_to_assign + cls.get_permissions_to_assign(
+            permission_set, process_related_path_segment, target_uris
+        )
+        return permissions_to_assign
+
+    @classmethod
+    def set_process_model_permissions(
+        cls, target: str, permission_set: str
+    ) -> list[PermissionToAssign]:
+        """Set_process_model_permissions."""
+        permissions_to_assign: list[PermissionToAssign] = []
+        process_model_identifier = (
+            target.removeprefix("PM:").replace("/", ":").removeprefix(":")
+        )
+        process_related_path_segment = f"{process_model_identifier}/*"
+
+        if process_model_identifier == "ALL":
+            process_related_path_segment = "*"
+
+        target_uris = [f"/process-models/{process_related_path_segment}"]
+        permissions_to_assign = permissions_to_assign + cls.get_permissions_to_assign(
+            permission_set, process_related_path_segment, target_uris
+        )
+        return permissions_to_assign
+
+    @classmethod
     def explode_permissions(
         cls, permission_set: str, target: str
     ) -> list[PermissionToAssign]:
@@ -654,72 +732,20 @@ class AuthorizationService:
             permissions = ["create", "read", "update", "delete"]
 
         if target.startswith("PG:"):
-            process_group_identifier = (
-                target.removeprefix("PG:").replace("/", ":").removeprefix(":")
+            permissions_to_assign += cls.set_process_group_permissions(
+                target, permission_set
             )
-            process_related_path_segment = f"{process_group_identifier}:*"
-            if process_group_identifier == "ALL":
-                process_related_path_segment = "*"
-            target_uris = [
-                f"/process-groups/{process_related_path_segment}",
-                f"/process-models/{process_related_path_segment}",
-            ]
-            permissions_to_assign = (
-                permissions_to_assign
-                + cls.get_permissions_to_assign(
-                    permission_set, process_related_path_segment, target_uris
-                )
-            )
-
         elif target.startswith("PM:"):
-            process_model_identifier = (
-                target.removeprefix("PM:").replace("/", ":").removeprefix(":")
+            permissions_to_assign += cls.set_process_model_permissions(
+                target, permission_set
             )
-            process_related_path_segment = f"{process_model_identifier}/*"
-
-            if process_model_identifier == "ALL":
-                process_related_path_segment = "*"
-
-            target_uris = [f"/process-models/{process_related_path_segment}"]
-            permissions_to_assign = (
-                permissions_to_assign
-                + cls.get_permissions_to_assign(
-                    permission_set, process_related_path_segment, target_uris
-                )
-            )
-
         elif permission_set == "start":
             raise InvalidPermissionError(
                 "Permission 'start' is only available for macros PM and PG."
             )
 
         elif target.startswith("BASIC"):
-            permissions_to_assign.append(
-                PermissionToAssign(
-                    permission="read", target_uri="/process-instances/for-me"
-                )
-            )
-            permissions_to_assign.append(
-                PermissionToAssign(permission="read", target_uri="/processes")
-            )
-            permissions_to_assign.append(
-                PermissionToAssign(permission="read", target_uri="/service-tasks")
-            )
-            permissions_to_assign.append(
-                PermissionToAssign(
-                    permission="read", target_uri="/user-groups/for-current-user"
-                )
-            )
-
-            for permission in ["create", "read", "update", "delete"]:
-                permissions_to_assign.append(
-                    PermissionToAssign(
-                        permission=permission, target_uri="/process-instances/reports/*"
-                    )
-                )
-                permissions_to_assign.append(
-                    PermissionToAssign(permission=permission, target_uri="/tasks/*")
-                )
+            permissions_to_assign += cls.set_basic_permissions()
         elif target == "ALL":
             for permission in permissions:
                 permissions_to_assign.append(
