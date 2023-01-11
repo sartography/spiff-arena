@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+from flask import current_app
 
 import flask.wrappers
 from flask.wrappers import Response
@@ -11,6 +12,6 @@ def status() -> flask.wrappers.Response:
     """Status."""
     ProcessInstanceModel.query.filter().first()
     response = Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-    response.set_cookie('TEST_COOKIE', 'HEY')
-    response.set_cookie('TEST_COOKIE', 'HEY', domain='spiff.localdev')
+    # print(f"current_app.config.get('SPIFFWORKFLOW_FRONTEND_URL').replace('http://', ''): {current_app.config.get('SPIFFWORKFLOW_FRONTEND_URL').replace('http://', '')}")
+    response.set_cookie('TEST_COOKIE1', 'HEY', domain=None)
     return response

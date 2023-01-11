@@ -17,12 +17,10 @@ RUN_BACKGROUND_SCHEDULER = (
     environ.get("RUN_BACKGROUND_SCHEDULER", default="false") == "true"
 )
 SPIFFWORKFLOW_FRONTEND_URL = environ.get(
-    # "SPIFFWORKFLOW_FRONTEND_URL", default="http://localhost:7001"
-    "SPIFFWORKFLOW_FRONTEND_URL", default="http://spiff.localdev"
+    "SPIFFWORKFLOW_FRONTEND_URL", default="http://localhost:7001"
 )
 SPIFFWORKFLOW_BACKEND_URL = environ.get(
-    # "SPIFFWORKFLOW_BACKEND_URL", default="http://localhost:7000"
-    "SPIFFWORKFLOW_BACKEND_URL", default="http://api.spiff.localdev"
+    "SPIFFWORKFLOW_BACKEND_URL", default="http://localhost:7000"
 )
 # service task connector proxy
 CONNECTOR_PROXY_URL = environ.get(
@@ -32,8 +30,7 @@ CONNECTOR_PROXY_URL = environ.get(
 # Open ID server
 OPEN_ID_SERVER_URL = environ.get(
     # "OPEN_ID_SERVER_URL", default="http://localhost:7002/realms/spiffworkflow"
-    # "OPEN_ID_SERVER_URL", default="http://keycloak.spiff.localdev/realms/spiffworkflow"
-    "OPEN_ID_SERVER_URL", default="http://api.spiff.localdev/openid"
+    "OPEN_ID_SERVER_URL", default="http://localhost:7000/openid"
 )
 
 # Replace above line with this to use the built-in Open ID Server.
