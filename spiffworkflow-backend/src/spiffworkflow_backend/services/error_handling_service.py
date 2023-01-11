@@ -76,7 +76,7 @@ class ErrorHandlingService:
     def handle_system_notification(
         error: Union[ApiError, Exception],
         recipients: List,
-    ):
+    ) -> Response:
         message_payload = {
             'my_var': 'my_value',
             'error': error.__repr__(),

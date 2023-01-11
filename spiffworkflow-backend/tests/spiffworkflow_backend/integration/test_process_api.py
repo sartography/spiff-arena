@@ -2160,7 +2160,7 @@ class TestProcessApi(BaseTest):
         assert process is not None
         assert process.status == "suspended"
 
-    def test_error_handler_system_notification(self):
+    def test_error_handler_system_notification(self) -> None:
         """Test_error_handler_system_notification."""
         # TODO: make sure the system notification process is run on exceptions
         ...
