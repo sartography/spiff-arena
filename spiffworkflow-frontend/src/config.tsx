@@ -12,7 +12,6 @@ if (/^\d+\./.test(hostname) || hostname === 'localhost') {
   hostAndPort = `${hostname}:${serverPort}`;
   protocol = 'http';
 }
-protocol = 'http';
 
 let url = `${protocol}://${hostAndPort}/v1.0`;
 console.log('OUR URL', url);
