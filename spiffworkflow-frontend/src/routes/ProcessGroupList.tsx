@@ -72,7 +72,6 @@ export default function ProcessGroupList() {
     console.log('document.cookie', document.cookie);
     return (
       <>
-        {document.cookie}
         <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
         <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
           <Button kind="secondary" href="/admin/process-groups/new">

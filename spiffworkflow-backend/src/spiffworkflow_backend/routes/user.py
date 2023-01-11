@@ -14,9 +14,11 @@ from flask import redirect
 from flask import request
 from flask_bpmn.api.api_error import ApiError
 from werkzeug.wrappers import Response
+# from flask.wrappers import Response
+import flask
 
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.authentication_service import AuthenticationService
+from spiffworkflow_backend.services.authentication_service import TokenExpiredError, AuthenticationService
 from spiffworkflow_backend.services.authentication_service import (
     MissingAccessTokenError,
 )
@@ -57,6 +59,11 @@ def verify_token(
     if not token and "Authorization" in request.headers:
         token = request.headers["Authorization"].removeprefix("Bearer ")
 
+    # This should never be set here but just in case
+    tld = current_app.config['THREAD_LOCAL_DATA']
+    if hasattr(tld, "new_access_token"):
+        tld.new_access_token = None
+
     if token:
         user_model = None
         decoded_token = get_decoded_token(token)
@@ -73,13 +80,11 @@ def verify_token(
                             f" internal token. {e}"
                         )
             elif "iss" in decoded_token.keys():
+                user_info = None
                 try:
-                    if AuthenticationService.validate_id_token(token):
+                    if AuthenticationService.validate_id_or_access_token(token):
                         user_info = decoded_token
-                except (
-                    ApiError
-                ) as ae:  # API Error is only thrown in the token is outdated.
-                    print("HEY WE IN ERROR")
+                except (TokenExpiredError) as token_expired_error:
                     # Try to refresh the token
                     user = UserService.get_user_by_service_and_service_id(
                         decoded_token["iss"], decoded_token["sub"]
@@ -92,26 +97,28 @@ def verify_token(
                                     refresh_token
                                 )
                             )
-                            # set_access_cookies()
-                            print(f"auth_token: {auth_token}")
                             if auth_token and "error" not in auth_token:
+                                print("SETTING NEW TOKEN")
+                                print(f"auth_token: {auth_token}")
+                                tld.new_access_token = auth_token['access_token']
                                 # We have the user, but this code is a bit convoluted, and will later demand
                                 # a user_info object so it can look up the user.  Sorry to leave this crap here.
                                 user_info = {"sub": user.service_id, "iss": user.service}
-                            else:
-                                raise ae
-                        else:
-                            raise ae
-                    else:
-                        raise ae
+
+                    if user_info is None:
+                        raise ApiError(
+                            error_code="invalid_token",
+                            message="Your token is expired. Please Login",
+                            status_code=401,
+                        ) from token_expired_error
+
                 except Exception as e:
-                    current_app.logger.error(f"Exception raised in get_token: {e}")
                     raise ApiError(
                         error_code="fail_get_user_info",
                         message="Cannot get user info from token",
                         status_code=401,
                     ) from e
-                print(f"USER_INFO: {user_info}")
+
                 if (
                     user_info is not None
                     and "error" not in user_info
@@ -163,6 +170,14 @@ def verify_token(
     raise ApiError(
         error_code="invalid_token", message="Cannot validate token.", status_code=401
     )
+
+
+def set_new_access_token_in_cookie(response: flask.wrappers.Response) -> flask.wrappers.Response:
+    print(f"response: {response.__class__}")
+    tld = current_app.config['THREAD_LOCAL_DATA']
+    if hasattr(tld, "new_access_token") and tld.new_access_token:
+        response.set_cookie('access_token', tld.new_access_token)
+    return response
 
 
 def validate_scope(token: Any) -> bool:
@@ -220,7 +235,6 @@ def parse_id_token(token: str) -> Any:
     decoded = base64.b64decode(padded)
     return json.loads(decoded)
 
-
 def login_return(code: str, state: str, session_state: str) -> Optional[Response]:
     """Login_return."""
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
@@ -231,7 +245,7 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
 
         user_info = parse_id_token(id_token)
 
-        if AuthenticationService.validate_id_token(id_token):
+        if AuthenticationService.validate_id_or_access_token(id_token):
             if user_info and "error" not in user_info:
                 user_model = AuthorizationService.create_user_from_sign_in(user_info)
                 g.user = user_model.id
@@ -244,6 +258,8 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
                     + f"access_token={auth_token_object['access_token']}&"
                     + f"id_token={id_token}"
                 )
+                tld = current_app.config['THREAD_LOCAL_DATA']
+                tld.new_access_token = auth_token_object['access_token']
                 return redirect(redirect_url)
 
         raise ApiError(

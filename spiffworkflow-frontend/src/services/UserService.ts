@@ -1,4 +1,5 @@
 import jwt from 'jwt-decode';
+import cookie from 'cookie';
 import { BACKEND_BASE_URL } from '../config';
 
 // NOTE: this currently stores the jwt token in local storage
@@ -9,6 +10,14 @@ import { BACKEND_BASE_URL } from '../config';
 //
 // Some explanation:
 // https://dev.to/nilanth/how-to-secure-jwt-in-a-single-page-application-cko
+
+const getCookie = (key: string) => {
+  const parsedCookies = cookie.parse(document.cookie);
+  if (key in parsedCookies) {
+    return parsedCookies[key];
+  }
+  return null;
+};
 
 // const getCurrentLocation = (queryParams: string = window.location.search) => {
 const getCurrentLocation = () => {
@@ -24,24 +33,25 @@ const doLogin = () => {
   console.log('URL', url);
   window.location.href = url;
 };
+
+// Use access_token for now since it seems to work but if we need the
+// id token then set that in a cookie in backend as well
 const getIdToken = () => {
-  return localStorage.getItem('jwtIdToken');
+  return getCookie('access_token');
 };
 
 const doLogout = () => {
   const idToken = getIdToken();
-  localStorage.removeItem('jwtAccessToken');
-  localStorage.removeItem('jwtIdToken');
   const redirectUrl = `${window.location.origin}`;
   const url = `${BACKEND_BASE_URL}/logout?redirect_url=${redirectUrl}&id_token=${idToken}`;
   window.location.href = url;
 };
 
-const getAuthToken = () => {
-  return localStorage.getItem('jwtAccessToken');
+const getAccessToken = () => {
+  return getCookie('access_token');
 };
 const isLoggedIn = () => {
-  return !!getAuthToken();
+  return !!getAccessToken();
 };
 
 const getUserEmail = () => {
@@ -62,25 +72,8 @@ const getPreferredUsername = () => {
   return null;
 };
 
-// FIXME: we could probably change this search to a hook
-// and then could use useSearchParams here instead
-const getAuthTokenFromParams = () => {
-  const queryParams = new URLSearchParams(window.location.search);
-  const accessToken = queryParams.get('access_token');
-  const idToken = queryParams.get('id_token');
-
-  queryParams.delete('access_token');
-  queryParams.delete('id_token');
-
-  if (accessToken) {
-    localStorage.setItem('jwtAccessToken', accessToken);
-    if (idToken) {
-      localStorage.setItem('jwtIdToken', idToken);
-    }
-    // window.location.href = `${getCurrentLocation(queryParams.toString())}`;
-    console.log('THE PALCE: ', `${getCurrentLocation()}`);
-    window.location.href = `${getCurrentLocation()}`;
-  } else if (!isLoggedIn()) {
+const loginIfNeeded = () => {
+  if (!isLoggedIn()) {
     doLogin();
   }
 };
@@ -93,8 +86,8 @@ const UserService = {
   doLogin,
   doLogout,
   isLoggedIn,
-  getAuthToken,
-  getAuthTokenFromParams,
+  getAccessToken,
+  loginIfNeeded,
   getPreferredUsername,
   getUserEmail,
   hasRole,

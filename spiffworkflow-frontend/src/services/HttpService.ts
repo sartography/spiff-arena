@@ -11,7 +11,7 @@ const HttpMethods = {
 const getBasicHeaders = (): object => {
   if (UserService.isLoggedIn()) {
     return {
-      Authorization: `Bearer ${UserService.getAuthToken()}`,
+      Authorization: `Bearer ${UserService.getAccessToken()}`,
     };
   }
   return {};
