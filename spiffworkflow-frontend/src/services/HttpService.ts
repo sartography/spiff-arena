@@ -64,6 +64,7 @@ backendCallProps) => {
   Object.assign(httpArgs, {
     headers: new Headers(headers as any),
     method: httpMethod,
+    credentials: 'include',
   });
 
   const updatedPath = path.replace(/^\/v1\.0/, '');

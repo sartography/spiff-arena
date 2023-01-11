@@ -10,4 +10,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 def status() -> flask.wrappers.Response:
     """Status."""
     ProcessInstanceModel.query.filter().first()
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    response = Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
+    response.set_cookie('TEST_COOKIE', 'HEY')
+    response.set_cookie('TEST_COOKIE', 'HEY', domain='spiff.localdev')
+    return response

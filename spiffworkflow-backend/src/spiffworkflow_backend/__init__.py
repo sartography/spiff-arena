@@ -115,7 +115,7 @@ def create_app() -> flask.app.Flask:
         r"^https?:\/\/%s(.*)" % o.replace(".", r"\.")
         for o in app.config["CORS_ALLOW_ORIGINS"]
     ]
-    CORS(app, origins=origins_re, max_age=3600)
+    CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
 
     connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)
 
