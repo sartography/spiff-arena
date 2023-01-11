@@ -79,7 +79,8 @@ export default function ProcessModelForm({
       description: processModel.description,
       metadata_extraction_paths: processModel.metadata_extraction_paths,
       fault_or_suspend_on_exception: processModel.fault_or_suspend_on_exception,
-      exception_notification_addresses: processModel.exception_notification_addresses,
+      exception_notification_addresses:
+        processModel.exception_notification_addresses,
     };
     if (mode === 'new') {
       Object.assign(postBody, {
