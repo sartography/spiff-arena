@@ -34,6 +34,8 @@ def well_known() -> dict:
     These urls can be very different from one openid impl to the next, this is just a small subset.
     """
     host_url = request.host_url.strip("/")
+    print(f"host_url: {host_url}")
+    print(f"request.path: {request.url}")
     return {
         "issuer": f"{host_url}/openid",
         "authorization_endpoint": f"{host_url}{url_for('openid.auth')}",

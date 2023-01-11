@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+from flask import current_app
 from typing import Any
 from typing import Optional
 
@@ -88,7 +89,10 @@ def process_group_list(
             "pages": pages,
         },
     }
-    return Response(json.dumps(response_json), status=200, mimetype="application/json")
+    response = make_response(jsonify(response_json), 200)
+    current_app.logger.info("SETTING COOKIE")
+    # response.set_cookie('TEST_COOKIE', 'HEY', domain=".spiff.dev", secure=False, httponly=True)
+    return response
 
 
 def process_group_show(

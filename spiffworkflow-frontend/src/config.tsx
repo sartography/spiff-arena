@@ -1,4 +1,6 @@
 const { port, hostname } = window.location;
+console.log('START');
+console.log('window.location', window.location);
 let hostAndPort = `api.${hostname}`;
 let protocol = 'https';
 
@@ -10,12 +12,14 @@ if (/^\d+\./.test(hostname) || hostname === 'localhost') {
   hostAndPort = `${hostname}:${serverPort}`;
   protocol = 'http';
 }
+protocol = 'http';
 
 let url = `${protocol}://${hostAndPort}/v1.0`;
-// Allow overriding the backend base url with an environment variable at build time.
+console.log('OUR URL', url);
 if (process.env.REACT_APP_BACKEND_BASE_URL) {
   url = process.env.REACT_APP_BACKEND_BASE_URL;
 }
+console.log('NO THIS ONE', url);
 
 export const BACKEND_BASE_URL = url;
 
