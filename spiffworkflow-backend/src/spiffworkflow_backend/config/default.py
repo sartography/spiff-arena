@@ -29,8 +29,8 @@ CONNECTOR_PROXY_URL = environ.get(
 
 # Open ID server
 OPEN_ID_SERVER_URL = environ.get(
-    # "OPEN_ID_SERVER_URL", default="http://localhost:7002/realms/spiffworkflow"
-    "OPEN_ID_SERVER_URL", default="http://localhost:7000/openid"
+    "OPEN_ID_SERVER_URL", default="http://localhost:7002/realms/spiffworkflow"
+    # "OPEN_ID_SERVER_URL", default="http://localhost:7000/openid"
 )
 
 # Replace above line with this to use the built-in Open ID Server.

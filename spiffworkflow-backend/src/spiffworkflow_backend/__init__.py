@@ -23,7 +23,7 @@ from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_b
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
     openid_blueprint,
 )
-from spiffworkflow_backend.routes.user import verify_token
+from spiffworkflow_backend.routes.user import set_new_access_token_in_cookie, verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.background_processing_service import (
@@ -131,6 +131,7 @@ def create_app() -> flask.app.Flask:
 
     app.before_request(verify_token)
     app.before_request(AuthorizationService.check_for_permission)
+    app.after_request(set_new_access_token_in_cookie)
 
     return app  # type: ignore
 
