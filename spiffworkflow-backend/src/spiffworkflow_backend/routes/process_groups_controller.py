@@ -89,9 +89,10 @@ def process_group_list(
             "pages": pages,
         },
     }
-    response = make_response(jsonify(response_json), 200)
+    # response = make_response(jsonify(response_json), 200)
+    response = Response(json.dumps(response_json), status=200, mimetype="application/json")
     current_app.logger.info("SETTING COOKIE")
-    # response.set_cookie('TEST_COOKIE', 'HEY', domain=".spiff.dev", secure=False, httponly=True)
+    response.set_cookie('TEST_COOKIE', 'HEY1', domain='spiff.localdev')
     return response
 
 

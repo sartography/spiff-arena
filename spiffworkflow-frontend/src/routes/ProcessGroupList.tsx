@@ -42,6 +42,12 @@ export default function ProcessGroupList() {
       path: `/process-models?per_page=1000&recursive=true&include_parent_groups=true`,
       successCallback: processResultForProcessModels,
     });
+    HttpService.makeCallToBackend({
+      path: `/status`,
+      successCallback: (result: any) => {
+        console.log(result);
+      },
+    });
   }, [searchParams]);
 
   const processModelSearchArea = () => {
@@ -63,8 +69,10 @@ export default function ProcessGroupList() {
   };
 
   if (processModelAvailableItems) {
+    console.log('document.cookie', document.cookie);
     return (
       <>
+        {document.cookie}
         <ProcessBreadcrumb hotCrumbs={[['Process Groups']]} />
         <Can I="POST" a={targetUris.processGroupListPath} ability={ability}>
           <Button kind="secondary" href="/admin/process-groups/new">
