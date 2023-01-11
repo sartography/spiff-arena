@@ -21,6 +21,7 @@ const getCurrentLocation = () => {
 
 const doLogin = () => {
   const url = `${BACKEND_BASE_URL}/login?redirect_url=${getCurrentLocation()}`;
+  console.log('URL', url);
   window.location.href = url;
 };
 const getIdToken = () => {
@@ -77,6 +78,7 @@ const getAuthTokenFromParams = () => {
       localStorage.setItem('jwtIdToken', idToken);
     }
     // window.location.href = `${getCurrentLocation(queryParams.toString())}`;
+    console.log('THE PALCE: ', `${getCurrentLocation()}`);
     window.location.href = `${getCurrentLocation()}`;
   } else if (!isLoggedIn()) {
     doLogin();

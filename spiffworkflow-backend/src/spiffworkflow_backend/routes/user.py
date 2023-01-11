@@ -23,6 +23,8 @@ from spiffworkflow_backend.services.authentication_service import (
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
+# from flask_jwt_extended import set_access_cookies
+
 """
 .. module:: crc.api.user
    :synopsis: Single Sign On (SSO) user login and session handlers
@@ -77,6 +79,7 @@ def verify_token(
                 except (
                     ApiError
                 ) as ae:  # API Error is only thrown in the token is outdated.
+                    print("HEY WE IN ERROR")
                     # Try to refresh the token
                     user = UserService.get_user_by_service_and_service_id(
                         decoded_token["iss"], decoded_token["sub"]
@@ -89,10 +92,12 @@ def verify_token(
                                     refresh_token
                                 )
                             )
+                            # set_access_cookies()
+                            print(f"auth_token: {auth_token}")
                             if auth_token and "error" not in auth_token:
                                 # We have the user, but this code is a bit convoluted, and will later demand
                                 # a user_info object so it can look up the user.  Sorry to leave this crap here.
-                                user_info = {"sub": user.service_id}
+                                user_info = {"sub": user.service_id, "iss": user.service}
                             else:
                                 raise ae
                         else:
@@ -106,7 +111,7 @@ def verify_token(
                         message="Cannot get user info from token",
                         status_code=401,
                     ) from e
-
+                print(f"USER_INFO: {user_info}")
                 if (
                     user_info is not None
                     and "error" not in user_info

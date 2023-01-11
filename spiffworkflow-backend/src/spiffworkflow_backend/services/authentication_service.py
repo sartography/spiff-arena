@@ -53,8 +53,11 @@ class AuthenticationService:
     def open_id_endpoint_for_name(cls, name: str) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
         openid_config_url = f"{cls.server_url()}/.well-known/openid-configuration"
+        print(f"openid_config_url: {openid_config_url}")
         if name not in AuthenticationService.ENDPOINT_CACHE:
+            print("BEFORE")
             response = requests.get(openid_config_url)
+            print("AFTER")
             AuthenticationService.ENDPOINT_CACHE = response.json()
         if name not in AuthenticationService.ENDPOINT_CACHE:
             raise Exception(
@@ -137,6 +140,9 @@ class AuthenticationService:
                 message="Cannot decode id_token",
                 status_code=401,
             ) from e
+        print(f"decoded_token: {decoded_token}")
+        print(f"cls.service_url(): {cls.server_url()}")
+        # import pdb; pdb.set_trace()
         if decoded_token["iss"] != cls.server_url():
             valid = False
         elif (
