@@ -564,10 +564,25 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
+    def check_task_data_size(self, tasks_dict: dict) -> None:
+        """CheckTaskDataSize."""
+        task_data = [v["data"] for v in tasks_dict.values() if len(v["data"]) > 0]
+        task_data_len = len(json.dumps(task_data))
+        task_data_limit = 1024
+
+        if task_data_len > task_data_limit:
+            raise (
+                ApiError(
+                    error_code="task_data_size_exceeded",
+                    message=f"Maximum task data size of {task_data_limit} exceeded."
+                )
+            )
+
     def spiff_step_details_mapping(self) -> dict:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
+        self.check_task_data_size(wf_json["tasks"])
         task_json = {"tasks": wf_json["tasks"], "subprocesses": wf_json["subprocesses"]}
 
         return {
