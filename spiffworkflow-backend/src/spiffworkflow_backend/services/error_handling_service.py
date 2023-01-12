@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.message_triggerable_process_model import (
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 # from spiffworkflow_backend.services.email_service import EmailService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -67,7 +68,7 @@ class ErrorHandlingService:
         # Maybe we can move some of this to the notification process, or dmn tables.
         if len(process_model.exception_notification_addresses) > 0:
             try:
-                self.handle_system_notification(_error, process_model.exception_notification_addresses)
+                self.handle_system_notification(_error, process_model)
             except Exception as e:
                 # hmm... what to do if a notification method fails. Probably log, at least
                 print(e)
@@ -75,12 +76,13 @@ class ErrorHandlingService:
     @staticmethod
     def handle_system_notification(
         error: Union[ApiError, Exception],
-        recipients: List,
+        process_model: ProcessModelInfo
     ) -> Response:
         """Handle_system_notification."""
+        recipients = process_model.exception_notification_addresses
+        message_text = f"There was an exception running process {process_model.id}.\nOriginal Error:\n{error.__repr__()}"
         message_payload = {
-            'my_var': 'my_value',
-            'error': error.__repr__(),
+            'message_text': message_text,
             'recipients': recipients
         }
         message_identifier = current_app.config["SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID"]
