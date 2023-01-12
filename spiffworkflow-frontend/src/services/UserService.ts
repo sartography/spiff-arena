@@ -19,25 +19,24 @@ const getCookie = (key: string) => {
   return null;
 };
 
-// const getCurrentLocation = (queryParams: string = window.location.search) => {
-const getCurrentLocation = () => {
-  const queryParamString = '';
-  // if (queryParams) {
-  //   queryParamString = `?${queryParams}`;
-  // }
-  return `${window.location.origin}${window.location.pathname}${queryParamString}`;
+const getCurrentLocation = (queryParams: string = window.location.search) => {
+  let queryParamString = '';
+  if (queryParams) {
+    queryParamString = `${queryParams}`;
+  }
+  return encodeURIComponent(
+    `${window.location.origin}${window.location.pathname}${queryParamString}`
+  );
 };
 
 const doLogin = () => {
   const url = `${BACKEND_BASE_URL}/login?redirect_url=${getCurrentLocation()}`;
-  console.log('URL', url);
   window.location.href = url;
 };
 
-// Use access_token for now since it seems to work but if we need the
-// id token then set that in a cookie in backend as well
+// required for logging out
 const getIdToken = () => {
-  return getCookie('access_token');
+  return getCookie('id_token');
 };
 
 const doLogout = () => {

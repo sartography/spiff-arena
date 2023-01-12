@@ -62,9 +62,7 @@ def verify_token(
         token = request.headers["Authorization"].removeprefix("Bearer ")
 
     # This should never be set here but just in case
-    tld = current_app.config["THREAD_LOCAL_DATA"]
-    if hasattr(tld, "new_access_token"):
-        tld.new_access_token = None
+    _clear_auth_tokens_from_thread_local_data()
 
     if token:
         user_model = None
@@ -100,9 +98,9 @@ def verify_token(
                                 )
                             )
                             if auth_token and "error" not in auth_token:
-                                print("SETTING NEW TOKEN")
-                                print(f"auth_token: {auth_token}")
+                                tld = current_app.config["THREAD_LOCAL_DATA"]
                                 tld.new_access_token = auth_token["access_token"]
+                                tld.new_id_token = auth_token["id_token"]
                                 # We have the user, but this code is a bit convoluted, and will later demand
                                 # a user_info object so it can look up the user.  Sorry to leave this crap here.
                                 user_info = {
@@ -178,11 +176,24 @@ def verify_token(
 def set_new_access_token_in_cookie(
     response: flask.wrappers.Response,
 ) -> flask.wrappers.Response:
-    """Set_new_access_token_in_cookie."""
+    """Checks if a new token has been set in THREAD_LOCAL_DATA and sets cookies if appropriate.
+
+    It will also delete the cookies if the user has logged out.
+    """
     tld = current_app.config["THREAD_LOCAL_DATA"]
     if hasattr(tld, "new_access_token") and tld.new_access_token:
         response.set_cookie("access_token", tld.new_access_token)
-        tld.new_access_token = None
+
+    # id_token is required for logging out since this gets passed back to the openid server
+    if hasattr(tld, "new_id_token") and tld.new_id_token:
+        response.set_cookie("id_token", tld.new_id_token)
+
+    if hasattr(tld, 'user_has_logged_out') and tld.user_has_logged_out:
+        response.set_cookie("id_token", '', max_age=0)
+        response.set_cookie("access_token", '', max_age=0)
+
+    _clear_auth_tokens_from_thread_local_data()
+
     return response
 
 
@@ -249,12 +260,12 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
                     user_model.id, auth_token_object["refresh_token"]
                 )
                 redirect_url = (
-                    f"{state_redirect_url}?"
-                    + f"access_token={auth_token_object['access_token']}&"
-                    + f"id_token={id_token}"
+                    f"{state_redirect_url}"
                 )
                 tld = current_app.config["THREAD_LOCAL_DATA"]
                 tld.new_access_token = auth_token_object["access_token"]
+                tld.new_id_token = auth_token_object["id_token"]
+                print(f"REDIRECT_URL: {redirect_url}")
                 return redirect(redirect_url)
 
         raise ApiError(
@@ -300,6 +311,8 @@ def logout(id_token: str, redirect_url: Optional[str]) -> Response:
     """Logout."""
     if redirect_url is None:
         redirect_url = ""
+    tld = current_app.config["THREAD_LOCAL_DATA"]
+    tld.user_has_logged_out = True
     return AuthenticationService().logout(redirect_url=redirect_url, id_token=id_token)
 
 
@@ -328,15 +341,6 @@ def get_decoded_token(token: str) -> Optional[Dict]:
                 error_code="unknown_token",
                 message="Unknown token type in get_decoded_token",
             )
-    # try:
-    #     # see if we have an open_id token
-    #     decoded_token = AuthorizationService.decode_auth_token(token)
-    # else:
-    #     if 'sub' in decoded_token and 'iss' in decoded_token and 'aud' in decoded_token:
-    #         token_type = 'id_token'
-
-    # if 'token_type' in decoded_token and 'sub' in decoded_token:
-    #     return True
 
 
 def get_scope(token: str) -> str:
@@ -363,3 +367,14 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserMo
         return user
     user = UserService.create_user(service_id, service, service_id)
     return user
+
+
+def _clear_auth_tokens_from_thread_local_data() -> None:
+    """_clear_auth_tokens_from_thread_local_data."""
+    tld = current_app.config["THREAD_LOCAL_DATA"]
+    if hasattr(tld, "new_access_token"):
+        delattr(tld, "new_access_token")
+    if hasattr(tld, "new_id_token"):
+        delattr(tld, "new_id_token")
+    if hasattr(tld, "user_has_logged_out"):
+        delattr(tld, "user_has_logged_out")
