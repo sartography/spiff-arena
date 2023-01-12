@@ -188,9 +188,9 @@ def set_new_access_token_in_cookie(
     if hasattr(tld, "new_id_token") and tld.new_id_token:
         response.set_cookie("id_token", tld.new_id_token)
 
-    if hasattr(tld, 'user_has_logged_out') and tld.user_has_logged_out:
-        response.set_cookie("id_token", '', max_age=0)
-        response.set_cookie("access_token", '', max_age=0)
+    if hasattr(tld, "user_has_logged_out") and tld.user_has_logged_out:
+        response.set_cookie("id_token", "", max_age=0)
+        response.set_cookie("access_token", "", max_age=0)
 
     _clear_auth_tokens_from_thread_local_data()
 
@@ -259,13 +259,10 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
                 AuthenticationService.store_refresh_token(
                     user_model.id, auth_token_object["refresh_token"]
                 )
-                redirect_url = (
-                    f"{state_redirect_url}"
-                )
+                redirect_url = state_redirect_url
                 tld = current_app.config["THREAD_LOCAL_DATA"]
                 tld.new_access_token = auth_token_object["access_token"]
                 tld.new_id_token = auth_token_object["id_token"]
-                print(f"REDIRECT_URL: {redirect_url}")
                 return redirect(redirect_url)
 
         raise ApiError(
