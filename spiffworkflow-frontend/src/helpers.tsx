@@ -208,10 +208,10 @@ export const refreshAtInterval = (
   timeout: number,
   func: Function
 ) => {
-  const intervalRef = setInterval(() => func(), interval * 1000);
+  const intervalRef = setInterval(() => func(), interval * 100000);
   const timeoutRef = setTimeout(
     () => clearInterval(intervalRef),
-    timeout * 1000
+    timeout * 100000
   );
   return () => {
     clearInterval(intervalRef);
