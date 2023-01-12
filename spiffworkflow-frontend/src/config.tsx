@@ -1,6 +1,4 @@
 const { port, hostname } = window.location;
-console.log('START');
-console.log('window.location', window.location);
 let hostAndPort = `api.${hostname}`;
 let protocol = 'https';
 
@@ -14,11 +12,9 @@ if (/^\d+\./.test(hostname) || hostname === 'localhost') {
 }
 
 let url = `${protocol}://${hostAndPort}/v1.0`;
-console.log('OUR URL', url);
 if (process.env.REACT_APP_BACKEND_BASE_URL) {
   url = process.env.REACT_APP_BACKEND_BASE_URL;
 }
-console.log('NO THIS ONE', url);
 
 export const BACKEND_BASE_URL = url;
 

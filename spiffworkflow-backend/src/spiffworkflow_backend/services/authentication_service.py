@@ -62,7 +62,6 @@ class AuthenticationService:
     def open_id_endpoint_for_name(cls, name: str) -> str:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
         openid_config_url = f"{cls.server_url()}/.well-known/openid-configuration"
-        print(f"openid_config_url: {openid_config_url}")
         if name not in AuthenticationService.ENDPOINT_CACHE:
             response = requests.get(openid_config_url)
             AuthenticationService.ENDPOINT_CACHE = response.json()
@@ -93,7 +92,6 @@ class AuthenticationService:
     @staticmethod
     def generate_state(redirect_url: str) -> bytes:
         """Generate_state."""
-        print(f"REDIRECT_URL_HEY: {redirect_url}")
         state = base64.b64encode(bytes(str({"redirect_url": redirect_url}), "UTF-8"))
         return state
 
@@ -102,7 +100,6 @@ class AuthenticationService:
     ) -> str:
         """Get_login_redirect_url."""
         return_redirect_url = f"{self.get_backend_url()}{redirect_url}"
-        print(f"RETURN_REDIRECT_URL_ONE: {return_redirect_url}")
         login_redirect_url = (
             self.open_id_endpoint_for_name("authorization_endpoint")
             + f"?state={state}&"
