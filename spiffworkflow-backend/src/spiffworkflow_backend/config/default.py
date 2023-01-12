@@ -38,9 +38,7 @@ OPEN_ID_SERVER_URL = environ.get(
 # OPEN_ID_SERVER_URL = environ.get("OPEN_ID_SERVER_URL", default="http://localhost:7000/openid")
 OPEN_ID_CLIENT_ID = environ.get("OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
 OPEN_ID_CLIENT_SECRET_KEY = environ.get(
-    # "OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
-    "OPEN_ID_CLIENT_SECRET_KEY",
-    default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
+    "OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 )  # noqa: S105
 
 SPIFFWORKFLOW_BACKEND_LOG_TO_FILE = (
