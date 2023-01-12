@@ -860,7 +860,7 @@ class TestProcessApi(BaseTest):
 
         assert response.status_code == 200
         assert response.json is not None
-        assert response.json["ok"]
+        assert response.json["file_contents"] is not None
 
         response = client.get(
             f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg",

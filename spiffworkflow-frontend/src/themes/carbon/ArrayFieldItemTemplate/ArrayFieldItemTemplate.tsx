@@ -1,12 +1,23 @@
 import React, { CSSProperties } from 'react';
-import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
-import Paper from '@mui/material/Paper';
-import { ArrayFieldTemplateItemType } from '@rjsf/utils';
+import {
+  ArrayFieldTemplateItemType,
+  FormContextType,
+  RJSFSchema,
+  StrictRJSFSchema,
+} from '@rjsf/utils';
 
-function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
+/** The `ArrayFieldItemTemplate` component is the template used to render an items of an array.
+ *
+ * @param props - The `ArrayFieldTemplateItemType` props for the component
+ */
+export default function ArrayFieldItemTemplate<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any
+>(props: ArrayFieldTemplateItemType<T, S, F>) {
   const {
     children,
+    className,
     disabled,
     hasToolbar,
     hasMoveDown,
@@ -16,8 +27,8 @@ function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
     onDropIndexClick,
     onReorderClick,
     readonly,
-    uiSchema,
     registry,
+    uiSchema,
   } = props;
   const { MoveDownButton, MoveUpButton, RemoveButton } =
     registry.templates.ButtonTemplates;
@@ -26,47 +37,49 @@ function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
     paddingLeft: 6,
     paddingRight: 6,
     fontWeight: 'bold',
-    minWidth: 0,
   };
   return (
-    <Grid container alignItems="center">
-      <Grid item xs style={{ overflow: 'auto' }}>
-        <Box mb={2}>
-          <Paper elevation={2}>
-            <Box p={2}>{children}</Box>
-          </Paper>
-        </Box>
-      </Grid>
+    <div className={className}>
+      <div className={hasToolbar ? 'col-xs-9' : 'col-xs-12'}>{children}</div>
       {hasToolbar && (
-        <Grid item>
-          {(hasMoveUp || hasMoveDown) && (
-            <MoveUpButton
-              style={btnStyle}
-              disabled={disabled || readonly || !hasMoveUp}
-              onClick={onReorderClick(index, index - 1)}
-              uiSchema={uiSchema}
-            />
-          )}
-          {(hasMoveUp || hasMoveDown) && (
-            <MoveDownButton
-              style={btnStyle}
-              disabled={disabled || readonly || !hasMoveDown}
-              onClick={onReorderClick(index, index + 1)}
-              uiSchema={uiSchema}
-            />
-          )}
-          {hasRemove && (
-            <RemoveButton
-              style={btnStyle}
-              disabled={disabled || readonly}
-              onClick={onDropIndexClick(index)}
-              uiSchema={uiSchema}
-            />
-          )}
-        </Grid>
+        <div className="col-xs-3 array-item-toolbox">
+          <div
+            className="btn-group"
+            style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+            }}
+          >
+            {(hasMoveUp || hasMoveDown) && (
+              <MoveUpButton
+                style={btnStyle}
+                disabled={disabled || readonly || !hasMoveUp}
+                onClick={onReorderClick(index, index - 1)}
+                uiSchema={uiSchema}
+                registry={registry}
+              />
+            )}
+            {(hasMoveUp || hasMoveDown) && (
+              <MoveDownButton
+                style={btnStyle}
+                disabled={disabled || readonly || !hasMoveDown}
+                onClick={onReorderClick(index, index + 1)}
+                uiSchema={uiSchema}
+                registry={registry}
+              />
+            )}
+            {hasRemove && (
+              <RemoveButton
+                style={btnStyle}
+                disabled={disabled || readonly}
+                onClick={onDropIndexClick(index)}
+                uiSchema={uiSchema}
+                registry={registry}
+              />
+            )}
+          </div>
+        </div>
       )}
-    </Grid>
+    </div>
   );
 }
-
-export default ArrayFieldItemTemplate;

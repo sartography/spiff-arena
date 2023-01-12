@@ -5,13 +5,15 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 from flask_bpmn.models.db import db
-from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.spec_file_service import (
+    ProcessModelFileInvalidError,
+)
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
@@ -74,7 +76,7 @@ class TestSpecFileService(BaseTest):
             bpmn_process_id_lookups[0].relative_path
             == self.call_activity_nested_relative_file_path
         )
-        with pytest.raises(ValidationException) as exception:
+        with pytest.raises(ProcessModelFileInvalidError) as exception:
             load_test_spec(
                 "call_activity_nested_duplicate",
                 process_model_source_directory="call_activity_duplicate",
@@ -84,6 +86,14 @@ class TestSpecFileService(BaseTest):
                 f"Process id ({bpmn_process_identifier}) has already been used"
                 in str(exception.value)
             )
+
+        process_model = ProcessModelService.get_process_model(
+            "call_activity_nested_duplicate"
+        )
+        full_file_path = SpecFileService.full_file_path(
+            process_model, "call_activity_nested_duplicate.bpmn"
+        )
+        assert not os.path.isfile(full_file_path)
 
     def test_updates_relative_file_path_when_appropriate(
         self,
@@ -206,3 +216,23 @@ class TestSpecFileService(BaseTest):
         assert dmn1[0].display_name == "Decision 1"
         assert dmn1[0].identifier == "Decision_0vrtcmk"
         assert dmn1[0].type == "decision"
+
+    def test_validate_bpmn_xml_with_invalid_xml(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test_validate_bpmn_xml_with_invalid_xml."""
+        process_model = load_test_spec(
+            process_model_id="group/invalid_xml",
+            bpmn_file_name="script_error_with_task_data.bpmn",
+            process_model_source_directory="error",
+        )
+        with pytest.raises(ProcessModelFileInvalidError):
+            SpecFileService.update_file(
+                process_model, "bad_xml.bpmn", b"THIS_IS_NOT_VALID_XML"
+            )
+
+        full_file_path = SpecFileService.full_file_path(process_model, "bad_xml.bpmn")
+        assert not os.path.isfile(full_file_path)
