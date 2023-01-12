@@ -42,7 +42,6 @@ class MessageService:
             message_type="receive", status="ready"
         ).all()
         for message_instance_send in message_instances_send:
-            # print(f"message_instance_send.id: {message_instance_send.id}")
             # check again in case another background process picked up the message
             # while the previous one was running
             if message_instance_send.status != "ready":

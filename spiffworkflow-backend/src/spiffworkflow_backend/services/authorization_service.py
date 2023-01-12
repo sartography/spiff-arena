@@ -412,59 +412,6 @@ class AuthorizationService:
             status_code=403,
         )
 
-    # def refresh_token(self, token: str) -> str:
-    #     """Refresh_token."""
-    #     # if isinstance(token, str):
-    #     #     token = eval(token)
-    #     (
-    #         open_id_server_url,
-    #         open_id_client_id,
-    #         open_id_realm_name,
-    #         open_id_client_secret_key,
-    #     ) = AuthorizationService.get_open_id_args()
-    #     headers = {"Content-Type": "application/x-www-form-urlencoded"}
-    #     request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
-    #     data = {
-    #         "grant_type": "refresh_token",
-    #         "client_id": "spiffworkflow-frontend",
-    #         "subject_token": token,
-    #         "refresh_token": token,
-    #     }
-    #     refresh_response = requests.post(request_url, headers=headers, data=data)
-    #     refresh_token = json.loads(refresh_response.text)
-    #     return refresh_token
-
-    # def get_bearer_token(self, basic_token: str) -> dict:
-    #     """Get_bearer_token."""
-    #     (
-    #         open_id_server_url,
-    #         open_id_client_id,
-    #         open_id_realm_name,
-    #         open_id_client_secret_key,
-    #     ) = AuthorizationService.get_open_id_args()
-    #
-    #     backend_basic_auth_string = f"{open_id_client_id}:{open_id_client_secret_key}"
-    #     backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
-    #     backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)
-    #
-    #     headers = {
-    #         "Content-Type": "application/x-www-form-urlencoded",
-    #         "Authorization": f"Basic {backend_basic_auth.decode('utf-8')}",
-    #     }
-    #     data = {
-    #         "grant_type": "urn:ietf:params:oauth:grant-type:token-exchange",
-    #         "client_id": open_id_client_id,
-    #         "subject_token": basic_token,
-    #         "audience": open_id_client_id,
-    #     }
-    #     request_url = f"{open_id_server_url}/realms/{open_id_realm_name}/protocol/openid-connect/token"
-    #
-    #     backend_response = requests.post(request_url, headers=headers, data=data)
-    #     # json_data = json.loads(backend_response.text)
-    #     # bearer_token = json_data['access_token']
-    #     bearer_token: dict = json.loads(backend_response.text)
-    #     return bearer_token
-
     @staticmethod
     def decode_auth_token(auth_token: str) -> dict[str, Union[str, None]]:
         """Decode the auth token.
