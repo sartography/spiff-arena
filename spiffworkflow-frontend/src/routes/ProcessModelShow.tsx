@@ -374,6 +374,7 @@ export default function ProcessModelShow() {
 
   const doFileUpload = (event: any) => {
     event.preventDefault();
+    setErrorObject(null);
     const url = `/process-models/${modifiedProcessModelId}/files`;
     const formData = new FormData();
     formData.append('file', filesToUpload[0]);
@@ -383,6 +384,7 @@ export default function ProcessModelShow() {
       successCallback: onUploadedCallback,
       httpMethod: 'POST',
       postBody: formData,
+      failureCallback: setErrorObject,
     });
     setFilesToUpload(null);
   };

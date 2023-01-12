@@ -34,6 +34,8 @@ from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # typ
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.event_definitions import CancelEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.events.StartEvent import StartEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
@@ -787,7 +789,16 @@ class ProcessInstanceProcessor:
                 f"Manually executing Task {spiff_task.task_spec.name} of process"
                 f" instance {self.process_instance_model.id}"
             )
-            spiff_task.complete()
+            # Executing a subworkflow manually will restart its subprocess and allow stepping through it
+            if isinstance(spiff_task.task_spec, SubWorkflowTask):
+                subprocess = self.bpmn_process_instance.get_subprocess(spiff_task)
+                # We have to get to the actual start event
+                for task in self.bpmn_process_instance.get_tasks(workflow=subprocess):
+                    task.complete()
+                    if isinstance(task.task_spec, StartEvent):
+                        break
+            else:
+                spiff_task.complete()
         else:
             spiff_logger = logging.getLogger("spiff")
             spiff_logger.info(
@@ -796,7 +807,20 @@ class ProcessInstanceProcessor:
             spiff_task._set_state(TaskState.COMPLETED)
             for child in spiff_task.children:
                 child.task_spec._update(child)
-        self.bpmn_process_instance.last_task = spiff_task
+            spiff_task.workflow.last_task = spiff_task
+
+        if isinstance(spiff_task.task_spec, EndEvent):
+            for task in self.bpmn_process_instance.get_tasks(
+                TaskState.DEFINITE_MASK, workflow=spiff_task.workflow
+            ):
+                task.complete()
+
+        # A subworkflow task will become ready when its workflow is complete.  Engine steps would normally
+        # then complete it, but we have to do it ourselves here.
+        for task in self.bpmn_process_instance.get_tasks(TaskState.READY):
+            if isinstance(task.task_spec, SubWorkflowTask):
+                task.complete()
+
         self.increment_spiff_step()
         self.add_step()
         self.save()
