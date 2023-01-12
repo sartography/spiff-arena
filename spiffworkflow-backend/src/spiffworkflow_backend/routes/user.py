@@ -25,10 +25,6 @@ from spiffworkflow_backend.services.authentication_service import TokenExpiredEr
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
-# from flask.wrappers import Response
-
-# from flask_jwt_extended import set_access_cookies
-
 """
 .. module:: crc.api.user
    :synopsis: Single Sign On (SSO) user login and session handlers
