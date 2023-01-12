@@ -1,10 +1,10 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from flask import current_app
 from typing import Any
 from typing import Optional
 
 import flask.wrappers
+from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
@@ -90,9 +90,11 @@ def process_group_list(
         },
     }
     # response = make_response(jsonify(response_json), 200)
-    response = Response(json.dumps(response_json), status=200, mimetype="application/json")
+    response = Response(
+        json.dumps(response_json), status=200, mimetype="application/json"
+    )
     current_app.logger.info("SETTING COOKIE")
-    response.set_cookie('TEST_COOKIE', 'HEY1')
+    response.set_cookie("TEST_COOKIE", "HEY1")
     return response
 
 

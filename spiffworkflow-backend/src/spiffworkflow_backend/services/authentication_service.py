@@ -22,11 +22,11 @@ class MissingAccessTokenError(Exception):
 
 # These could be either 'id' OR 'access' tokens and we can't always know which
 class TokenExpiredError(Exception):
-    pass
+    """TokenExpiredError."""
 
 
 class TokenInvalidError(Exception):
-    pass
+    """TokenInvalidError."""
 
 
 class AuthenticationProviderTypes(enum.Enum):
@@ -144,7 +144,7 @@ class AuthenticationService:
         try:
             decoded_token = jwt.decode(token, options={"verify_signature": False})
         except Exception as e:
-            raise TokenInvalidError('Cannot decode token') from e
+            raise TokenInvalidError("Cannot decode token") from e
 
         if decoded_token["iss"] != cls.server_url():
             valid = False
