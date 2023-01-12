@@ -88,7 +88,7 @@ def process_group_list(
             "pages": pages,
         },
     }
-    return Response(json.dumps(response_json), status=200, mimetype="application/json")
+    return make_response(jsonify(response_json), 200)
 
 
 def process_group_show(

@@ -3,6 +3,7 @@ from typing import Any
 from typing import List
 from typing import Union
 
+from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 
@@ -57,7 +58,7 @@ class ErrorHandlingService:
                 )
             except Exception as e:
                 # hmm... what to do if a notification method fails. Probably log, at least
-                print(e)
+                current_app.logger.error(e)
 
     @staticmethod
     def hanle_sentry_notification(_error: ApiError, _recipients: List) -> None:

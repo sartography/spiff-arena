@@ -23,6 +23,7 @@ from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_b
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
     openid_blueprint,
 )
+from spiffworkflow_backend.routes.user import set_new_access_token_in_cookie
 from spiffworkflow_backend.routes.user import verify_token
 from spiffworkflow_backend.routes.user_blueprint import user_blueprint
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
@@ -115,7 +116,7 @@ def create_app() -> flask.app.Flask:
         r"^https?:\/\/%s(.*)" % o.replace(".", r"\.")
         for o in app.config["CORS_ALLOW_ORIGINS"]
     ]
-    CORS(app, origins=origins_re, max_age=3600)
+    CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
 
     connexion_app.add_api("api.yml", base_path=V1_API_PATH_PREFIX)
 
@@ -131,6 +132,7 @@ def create_app() -> flask.app.Flask:
 
     app.before_request(verify_token)
     app.before_request(AuthorizationService.check_for_permission)
+    app.after_request(set_new_access_token_in_cookie)
 
     return app  # type: ignore
 

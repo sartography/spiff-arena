@@ -42,7 +42,7 @@ export default function AuthenticationList() {
                   row.id
                 }?redirect_url=${redirectUrl}/${
                   row.id
-                }?token=${UserService.getAuthToken()}`}
+                }?token=${UserService.getAccessToken()}`}
               >
                 {row.id}
               </a>
