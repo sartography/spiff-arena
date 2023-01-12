@@ -7,6 +7,7 @@ from typing import Dict
 from typing import Optional
 from typing import Union
 
+import flask
 import jwt
 from flask import current_app
 from flask import g
@@ -14,16 +15,17 @@ from flask import redirect
 from flask import request
 from flask_bpmn.api.api_error import ApiError
 from werkzeug.wrappers import Response
-# from flask.wrappers import Response
-import flask
 
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.authentication_service import TokenExpiredError, AuthenticationService
+from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import (
     MissingAccessTokenError,
 )
+from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
+
+# from flask.wrappers import Response
 
 # from flask_jwt_extended import set_access_cookies
 
@@ -60,7 +62,7 @@ def verify_token(
         token = request.headers["Authorization"].removeprefix("Bearer ")
 
     # This should never be set here but just in case
-    tld = current_app.config['THREAD_LOCAL_DATA']
+    tld = current_app.config["THREAD_LOCAL_DATA"]
     if hasattr(tld, "new_access_token"):
         tld.new_access_token = None
 
@@ -84,7 +86,7 @@ def verify_token(
                 try:
                     if AuthenticationService.validate_id_or_access_token(token):
                         user_info = decoded_token
-                except (TokenExpiredError) as token_expired_error:
+                except TokenExpiredError as token_expired_error:
                     # Try to refresh the token
                     user = UserService.get_user_by_service_and_service_id(
                         decoded_token["iss"], decoded_token["sub"]
@@ -100,10 +102,13 @@ def verify_token(
                             if auth_token and "error" not in auth_token:
                                 print("SETTING NEW TOKEN")
                                 print(f"auth_token: {auth_token}")
-                                tld.new_access_token = auth_token['access_token']
+                                tld.new_access_token = auth_token["access_token"]
                                 # We have the user, but this code is a bit convoluted, and will later demand
                                 # a user_info object so it can look up the user.  Sorry to leave this crap here.
-                                user_info = {"sub": user.service_id, "iss": user.service}
+                                user_info = {
+                                    "sub": user.service_id,
+                                    "iss": user.service,
+                                }
 
                     if user_info is None:
                         raise ApiError(
@@ -162,8 +167,6 @@ def verify_token(
             g.token = token
             get_scope(token)
             return None
-            # return {"uid": g.user.id, "sub": g.user.id, "scope": scope}
-            # return validate_scope(token, user_info, user_model)
         else:
             raise ApiError(error_code="no_user_id", message="Cannot get a user id")
 
@@ -172,24 +175,15 @@ def verify_token(
     )
 
 
-def set_new_access_token_in_cookie(response: flask.wrappers.Response) -> flask.wrappers.Response:
-    print(f"response: {response.__class__}")
-    tld = current_app.config['THREAD_LOCAL_DATA']
+def set_new_access_token_in_cookie(
+    response: flask.wrappers.Response,
+) -> flask.wrappers.Response:
+    """Set_new_access_token_in_cookie."""
+    tld = current_app.config["THREAD_LOCAL_DATA"]
     if hasattr(tld, "new_access_token") and tld.new_access_token:
-        response.set_cookie('access_token', tld.new_access_token)
+        response.set_cookie("access_token", tld.new_access_token)
+        tld.new_access_token = None
     return response
-
-
-def validate_scope(token: Any) -> bool:
-    """Validate_scope."""
-    print("validate_scope")
-    # token = AuthenticationService.refresh_token(token)
-    # user_info = AuthenticationService.get_user_info_from_public_access_token(token)
-    # bearer_token = AuthenticationService.get_bearer_token(token)
-    # permission = AuthenticationService.get_permission_by_basic_token(token)
-    # permissions = AuthenticationService.get_permissions_by_token_for_resource_and_scope(token)
-    # introspection = AuthenticationService.introspect_token(basic_token)
-    return True
 
 
 def encode_auth_token(sub: str, token_type: Optional[str] = None) -> str:
@@ -235,6 +229,7 @@ def parse_id_token(token: str) -> Any:
     decoded = base64.b64decode(padded)
     return json.loads(decoded)
 
+
 def login_return(code: str, state: str, session_state: str) -> Optional[Response]:
     """Login_return."""
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
@@ -258,8 +253,8 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
                     + f"access_token={auth_token_object['access_token']}&"
                     + f"id_token={id_token}"
                 )
-                tld = current_app.config['THREAD_LOCAL_DATA']
-                tld.new_access_token = auth_token_object['access_token']
+                tld = current_app.config["THREAD_LOCAL_DATA"]
+                tld.new_access_token = auth_token_object["access_token"]
                 return redirect(redirect_url)
 
         raise ApiError(
