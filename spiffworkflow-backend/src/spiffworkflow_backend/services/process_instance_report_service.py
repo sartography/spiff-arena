@@ -338,7 +338,11 @@ class ProcessInstanceReportService:
             },
             {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
             {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
-            {"Header": "Username", "accessor": "username", "filterable": False},
+            {
+                "Header": "Started By",
+                "accessor": "process_initiator_username",
+                "filterable": False,
+            },
             {"Header": "Status", "accessor": "status", "filterable": False},
         ]
 

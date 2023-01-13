@@ -178,20 +178,32 @@ def set_new_access_token_in_cookie(
     It will also delete the cookies if the user has logged out.
     """
     tld = current_app.config["THREAD_LOCAL_DATA"]
-    domain_for_frontend_cookie: Optional[str] = re.sub(r"^https?:\/\/", '', current_app.config['SPIFFWORKFLOW_FRONTEND_URL'])
-    if domain_for_frontend_cookie and domain_for_frontend_cookie.startswith('localhost'):
+    domain_for_frontend_cookie: Optional[str] = re.sub(
+        r"^https?:\/\/", "", current_app.config["SPIFFWORKFLOW_FRONTEND_URL"]
+    )
+    if domain_for_frontend_cookie and domain_for_frontend_cookie.startswith(
+        "localhost"
+    ):
         domain_for_frontend_cookie = None
 
     if hasattr(tld, "new_access_token") and tld.new_access_token:
-        response.set_cookie("access_token", tld.new_access_token, domain=domain_for_frontend_cookie)
+        response.set_cookie(
+            "access_token", tld.new_access_token, domain=domain_for_frontend_cookie
+        )
 
     # id_token is required for logging out since this gets passed back to the openid server
     if hasattr(tld, "new_id_token") and tld.new_id_token:
-        response.set_cookie("id_token", tld.new_id_token, domain=domain_for_frontend_cookie)
+        response.set_cookie(
+            "id_token", tld.new_id_token, domain=domain_for_frontend_cookie
+        )
 
     if hasattr(tld, "user_has_logged_out") and tld.user_has_logged_out:
-        response.set_cookie("id_token", "", max_age=0, domain=domain_for_frontend_cookie)
-        response.set_cookie("access_token", "", max_age=0, domain=domain_for_frontend_cookie)
+        response.set_cookie(
+            "id_token", "", max_age=0, domain=domain_for_frontend_cookie
+        )
+        response.set_cookie(
+            "access_token", "", max_age=0, domain=domain_for_frontend_cookie
+        )
 
     _clear_auth_tokens_from_thread_local_data()
 

@@ -98,12 +98,14 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "status": self.status,
             "start_in_seconds": self.start_in_seconds,
             "end_in_seconds": self.end_in_seconds,
+            "created_at_in_seconds": self.created_at_in_seconds,
+            "updated_at_in_seconds": self.updated_at_in_seconds,
             "process_initiator_id": self.process_initiator_id,
             "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "spiff_step": self.spiff_step,
-            "username": self.process_initiator.username,
+            "process_initiator_username": self.process_initiator.username,
         }
 
     @property

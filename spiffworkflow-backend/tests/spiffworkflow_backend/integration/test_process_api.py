@@ -232,7 +232,7 @@ class TestProcessApi(BaseTest):
             "process_model_display_name",
             "start_in_seconds",
             "end_in_seconds",
-            "username",
+            "process_initiator_username",
             "status",
             "summary",
             "description",
@@ -3145,7 +3145,7 @@ class TestProcessApi(BaseTest):
         assert response.json["pagination"]["pages"] == 1
         assert response.json["pagination"]["total"] == 1
 
-    def test_can_get_process_instance_list_with_report_metadata_and_process_initator(
+    def test_can_get_process_instance_list_with_report_metadata_and_process_initiator(
         self,
         app: Flask,
         client: FlaskClient,
@@ -3223,8 +3223,14 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.status_code == 200
         assert len(response.json["results"]) == 2
-        assert response.json["results"][0]["username"] == user_one.username
-        assert response.json["results"][1]["username"] == user_one.username
+        assert (
+            response.json["results"][0]["process_initiator_username"]
+            == user_one.username
+        )
+        assert (
+            response.json["results"][1]["process_initiator_username"]
+            == user_one.username
+        )
 
         response = client.get(
             f"/v1.0/process-instances?report_identifier={process_instance_report_dne.identifier}",
@@ -3276,7 +3282,11 @@ class TestProcessApi(BaseTest):
             },
             {"Header": "Start", "accessor": "start_in_seconds", "filterable": False},
             {"Header": "End", "accessor": "end_in_seconds", "filterable": False},
-            {"Header": "Username", "accessor": "username", "filterable": False},
+            {
+                "Header": "Started By",
+                "accessor": "process_initiator_username",
+                "filterable": False,
+            },
             {"Header": "Status", "accessor": "status", "filterable": False},
             {"Header": "key1", "accessor": "key1", "filterable": True},
             {"Header": "key2", "accessor": "key2", "filterable": True},
