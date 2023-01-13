@@ -7,6 +7,7 @@ from flask import g
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
+
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
@@ -70,18 +71,21 @@ class ErrorHandlingService:
 
     @staticmethod
     def handle_system_notification(
-        error: Union[ApiError, Exception],
-        process_model: ProcessModelInfo
+        error: Union[ApiError, Exception], process_model: ProcessModelInfo
     ) -> Response:
         """Handle_system_notification."""
         recipients = process_model.exception_notification_addresses
-        message_text = f"There was an exception running process {process_model.id}.\nOriginal Error:\n{error.__repr__()}"
-        message_payload = {
-            'message_text': message_text,
-            'recipients': recipients
-        }
-        message_identifier = current_app.config["SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID"]
-        message_model = MessageModel.query.filter_by(identifier=message_identifier).first()
+        message_text = (
+            f"There was an exception running process {process_model.id}.\nOriginal"
+            f" Error:\n{error.__repr__()}"
+        )
+        message_payload = {"message_text": message_text, "recipients": recipients}
+        message_identifier = current_app.config[
+            "SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID"
+        ]
+        message_model = MessageModel.query.filter_by(
+            identifier=message_identifier
+        ).first()
         message_triggerable_process_model = (
             MessageTriggerableProcessModel.query.filter_by(
                 message_model_id=message_model.id
@@ -91,7 +95,7 @@ class ErrorHandlingService:
             message_triggerable_process_model,
             message_identifier,
             message_payload,
-            g.user
+            g.user,
         )
 
         return Response(
