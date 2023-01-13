@@ -1,15 +1,22 @@
 """Error_handling_service."""
-from typing import Any
-from typing import List
+import json
 from typing import Union
 
 from flask import current_app
+from flask import g
+from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 
+from spiffworkflow_backend.models.message_model import MessageModel
+from spiffworkflow_backend.models.message_triggerable_process_model import (
+    MessageTriggerableProcessModel,
+)
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.services.email_service import EmailService
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -38,6 +45,7 @@ class ErrorHandlingService:
         process_model = ProcessModelService.get_process_model(
             _processor.process_model_identifier
         )
+        # First, suspend or fault the instance
         if process_model.fault_or_suspend_on_exception == "suspend":
             self.set_instance_status(
                 _processor.process_instance_model.id,
@@ -50,57 +58,93 @@ class ErrorHandlingService:
                 ProcessInstanceStatus.error.value,
             )
 
+        # Second, call the System Notification Process
+        # Note that this isn't the best way to do this.
+        # The configs are all in the model.
+        # Maybe we can move some of this to the notification process, or dmn tables.
         if len(process_model.exception_notification_addresses) > 0:
             try:
-                # some notification method (waku?)
-                self.handle_email_notification(
-                    _processor, _error, process_model.exception_notification_addresses
-                )
+                self.handle_system_notification(_error, process_model)
             except Exception as e:
                 # hmm... what to do if a notification method fails. Probably log, at least
                 current_app.logger.error(e)
 
     @staticmethod
-    def hanle_sentry_notification(_error: ApiError, _recipients: List) -> None:
-        """SentryHandler."""
-        ...
-
-    @staticmethod
-    def handle_email_notification(
-        processor: ProcessInstanceProcessor,
-        error: Union[ApiError, Exception],
-        recipients: List,
-    ) -> None:
-        """EmailHandler."""
-        subject = "Unexpected error in app"
-        if isinstance(error, ApiError):
-            content = f"{error.message}"
-        else:
-            content = str(error)
-        content_html = content
-
-        EmailService.add_email(
-            subject,
-            "sender@company.com",
-            recipients,
-            content,
-            content_html,
-            cc=None,
-            bcc=None,
-            reply_to=None,
-            attachment_files=None,
+    def handle_system_notification(
+        error: Union[ApiError, Exception], process_model: ProcessModelInfo
+    ) -> Response:
+        """Handle_system_notification."""
+        recipients = process_model.exception_notification_addresses
+        message_text = (
+            f"There was an exception running process {process_model.id}.\nOriginal"
+            f" Error:\n{error.__repr__()}"
+        )
+        message_payload = {"message_text": message_text, "recipients": recipients}
+        message_identifier = current_app.config[
+            "SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID"
+        ]
+        message_model = MessageModel.query.filter_by(
+            identifier=message_identifier
+        ).first()
+        message_triggerable_process_model = (
+            MessageTriggerableProcessModel.query.filter_by(
+                message_model_id=message_model.id
+            ).first()
+        )
+        process_instance = MessageService.process_message_triggerable_process_model(
+            message_triggerable_process_model,
+            message_identifier,
+            message_payload,
+            g.user,
         )
 
-    @staticmethod
-    def handle_waku_notification(_error: ApiError, _recipients: List) -> Any:
-        """WakuHandler."""
-        # class WakuMessage:
-        #     """WakuMessage."""
-        #
-        #     payload: str
-        #     contentTopic: str  # Optional
-        #     version: int  # Optional
-        #     timestamp: int  # Optional
+        return Response(
+            json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+            status=200,
+            mimetype="application/json",
+        )
+
+    # @staticmethod
+    # def handle_sentry_notification(_error: ApiError, _recipients: List) -> None:
+    #     """SentryHandler."""
+    #     ...
+    #
+    # @staticmethod
+    # def handle_email_notification(
+    #     processor: ProcessInstanceProcessor,
+    #     error: Union[ApiError, Exception],
+    #     recipients: List,
+    # ) -> None:
+    #     """EmailHandler."""
+    #     subject = "Unexpected error in app"
+    #     if isinstance(error, ApiError):
+    #         content = f"{error.message}"
+    #     else:
+    #         content = str(error)
+    #     content_html = content
+    #
+    #     EmailService.add_email(
+    #         subject,
+    #         "sender@company.com",
+    #         recipients,
+    #         content,
+    #         content_html,
+    #         cc=None,
+    #         bcc=None,
+    #         reply_to=None,
+    #         attachment_files=None,
+    #     )
+    #
+    # @staticmethod
+    # def handle_waku_notification(_error: ApiError, _recipients: List) -> Any:
+    #     """WakuHandler."""
+    #     # class WakuMessage:
+    #     #     """WakuMessage."""
+    #     #
+    #     #     payload: str
+    #     #     contentTopic: str  # Optional
+    #     #     version: int  # Optional
+    #     #     timestamp: int  # Optional
 
 
 class FailingService:
