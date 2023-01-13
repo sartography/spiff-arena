@@ -1307,8 +1307,34 @@ class ProcessInstanceProcessor:
         except WorkflowTaskExecException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
+    def user_defined_task_data(self, task_data: dict) -> dict:
+        """UserDefinedTaskData."""
+        return {k: v for k, v in task_data.items() if k != "current_user"}
+
+    def check_task_data_size(self) -> None:
+        """CheckTaskDataSize."""
+        tasks_to_check = self.bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
+        task_data = [self.user_defined_task_data(task.data) for task in tasks_to_check]
+        task_data_to_check = list(filter(len, task_data))
+
+        try:
+            task_data_len = len(json.dumps(task_data_to_check))
+        except Exception:
+            task_data_len = 0
+
+        task_data_limit = 1024**2
+
+        if task_data_len > task_data_limit:
+            raise (
+                ApiError(
+                    error_code="task_data_size_exceeded",
+                    message=f"Maximum task data size of {task_data_limit} exceeded.",
+                )
+            )
+
     def serialize(self) -> str:
         """Serialize."""
+        self.check_task_data_size()
         return self._serializer.serialize_json(self.bpmn_process_instance)  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:
