@@ -89,7 +89,11 @@ export default function BaseInputTemplate<
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
-    errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+    if ('validationErrorMessage' in schema) {
+      errorMessageForField = (schema as any).validationErrorMessage;
+    } else {
+      errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+    }
   }
 
   return (
@@ -97,6 +101,7 @@ export default function BaseInputTemplate<
       <TextInput
         id={id}
         name={id}
+        className="input"
         labelText={labelToUse}
         invalid={invalid}
         invalidText={errorMessageForField}
