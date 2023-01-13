@@ -56,6 +56,8 @@ def process_model_create(
         "primary_process_id",
         "description",
         "metadata_extraction_paths",
+        "fault_or_suspend_on_exception",
+        "exception_notification_addresses",
     ]
     body_filtered = {
         include_item: body[include_item]
@@ -108,6 +110,8 @@ def process_model_update(
         "primary_process_id",
         "description",
         "metadata_extraction_paths",
+        "fault_or_suspend_on_exception",
+        "exception_notification_addresses",
     ]
     body_filtered = {
         include_item: body[include_item]
