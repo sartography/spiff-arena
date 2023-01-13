@@ -67,35 +67,48 @@ class ReactJsonSchemaSelectOption(TypedDict):
 
 # TODO: see comment for before_request
 # @process_api_blueprint.route("/v1.0/tasks", methods=["GET"])
-def task_list_my_tasks(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
+def task_list_my_tasks(
+    process_instance_id: Optional[int] = None, page: int = 1, per_page: int = 100
+) -> flask.wrappers.Response:
     """Task_list_my_tasks."""
     principal = _find_principal_or_raise()
-    human_tasks = (
+    human_task_query = (
         HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
-        .join(ProcessInstanceModel)
-        .join(HumanTaskUserModel)
-        .filter_by(user_id=principal.user_id)
-        .filter(HumanTaskModel.completed == False)  # noqa: E712
-        # just need this add_columns to add the process_model_identifier. Then add everything back that was removed.
-        .add_columns(
-            ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.process_model_display_name,
-            ProcessInstanceModel.status,
-            HumanTaskModel.task_name,
-            HumanTaskModel.task_title,
-            HumanTaskModel.task_type,
-            HumanTaskModel.task_status,
-            HumanTaskModel.task_id,
-            HumanTaskModel.id,
-            HumanTaskModel.process_model_display_name,
-            HumanTaskModel.process_instance_id,
+        .group_by(HumanTaskModel.id)
+        .join(
+            ProcessInstanceModel,
+            ProcessInstanceModel.id == HumanTaskModel.process_instance_id,
         )
-        .paginate(page=page, per_page=per_page, error_out=False)
+        .join(HumanTaskUserModel, HumanTaskUserModel.human_task_id == HumanTaskModel.id)
+        .filter(HumanTaskUserModel.user_id == principal.user_id)
+        .join(UserModel, UserModel.id == HumanTaskUserModel.user_id)
+        .filter(HumanTaskModel.completed == False)  # noqa: E712
+        .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
     )
-    tasks = [HumanTaskModel.to_task(human_task) for human_task in human_tasks.items]
+
+    if process_instance_id is not None:
+        human_task_query = human_task_query.filter(
+            ProcessInstanceModel.id == process_instance_id
+        )
+
+    human_tasks = human_task_query.add_columns(
+        ProcessInstanceModel.process_model_identifier,
+        ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
+        ProcessInstanceModel.updated_at_in_seconds,
+        ProcessInstanceModel.created_at_in_seconds,
+        UserModel.username.label("process_initiator_username"),  # type: ignore
+        GroupModel.identifier.label("assigned_user_group_identifier"),
+        HumanTaskModel.task_name,
+        HumanTaskModel.task_title,
+        HumanTaskModel.process_model_display_name,
+        HumanTaskModel.process_instance_id,
+        func.group_concat(UserModel.username.distinct()).label(  # type: ignore
+            "potential_owner_usernames"
+        ),
+    ).paginate(page=page, per_page=per_page, error_out=False)
 
     response_json = {
-        "results": tasks,
+        "results": human_tasks.items,
         "pagination": {
             "count": len(human_tasks.items),
             "total": human_tasks.total,
@@ -416,6 +429,7 @@ def _get_tasks(
                 HumanTaskModel.id == HumanTaskUserModel.human_task_id,
             ),
         )
+
         if has_lane_assignment_id:
             if user_group_identifier:
                 human_tasks_query = human_tasks_query.filter(

@@ -29,6 +29,13 @@ type OwnProps = {
   showStartedBy?: boolean;
   showWaitingOn?: boolean;
   textToShowIfEmpty?: string;
+  shouldPaginateTable?: boolean;
+  showProcessId?: boolean;
+  showProcessModelIdentifier?: boolean;
+  showTableDescriptionAsTooltip?: boolean;
+  showDateStarted?: boolean;
+  showLastUpdated?: boolean;
+  hideIfNoTasks?: boolean;
 };
 
 export default function TaskListTable({
@@ -42,6 +49,13 @@ export default function TaskListTable({
   autoReload = false,
   showStartedBy = true,
   showWaitingOn = true,
+  shouldPaginateTable = true,
+  showProcessId = true,
+  showProcessModelIdentifier = true,
+  showTableDescriptionAsTooltip = false,
+  showDateStarted = true,
+  showLastUpdated = true,
+  hideIfNoTasks = false,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
@@ -89,10 +103,6 @@ export default function TaskListTable({
   ) => {
     let fullUsernameString = '';
     let shortUsernameString = '';
-    if (processInstanceTask.assigned_user_group_identifier) {
-      fullUsernameString = processInstanceTask.assigned_user_group_identifier;
-      shortUsernameString = processInstanceTask.assigned_user_group_identifier;
-    }
     if (processInstanceTask.potential_owner_usernames) {
       fullUsernameString = processInstanceTask.potential_owner_usernames;
       const usernames =
@@ -103,82 +113,133 @@ export default function TaskListTable({
       }
       shortUsernameString = firstTwoUsernames.join(',');
     }
+    if (processInstanceTask.assigned_user_group_identifier) {
+      fullUsernameString = processInstanceTask.assigned_user_group_identifier;
+      shortUsernameString = processInstanceTask.assigned_user_group_identifier;
+    }
     return <span title={fullUsernameString}>{shortUsernameString}</span>;
   };
 
-  const buildTable = () => {
-    if (!tasks) {
-      return null;
-    }
-    const rows = tasks.map((row: ProcessInstanceTask) => {
-      const taskUrl = `/tasks/${row.process_instance_id}/${row.task_id}`;
-      const modifiedProcessModelIdentifier =
-        modifyProcessIdentifierForPathParam(row.process_model_identifier);
+  const getTableRow = (processInstanceTask: ProcessInstanceTask) => {
+    const taskUrl = `/tasks/${processInstanceTask.process_instance_id}/${processInstanceTask.task_id}`;
+    const modifiedProcessModelIdentifier = modifyProcessIdentifierForPathParam(
+      processInstanceTask.process_model_identifier
+    );
 
-      const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
-      let hasAccessToCompleteTask = false;
-      if (row.potential_owner_usernames.match(regex)) {
-        hasAccessToCompleteTask = true;
-      }
-      return (
-        <tr key={row.id}>
-          <td>
-            <Link
-              data-qa="process-instance-show-link"
-              to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${row.process_instance_id}`}
-              title={`View process instance ${row.process_instance_id}`}
-            >
-              {row.process_instance_id}
-            </Link>
-          </td>
-          <td>
-            <Link
-              data-qa="process-model-show-link"
-              to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
-              title={row.process_model_identifier}
-            >
-              {row.process_model_display_name}
-            </Link>
-          </td>
-          <td
-            title={`task id: ${row.name}, spiffworkflow task guid: ${row.id}`}
+    const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
+    let hasAccessToCompleteTask = false;
+    if ((processInstanceTask.potential_owner_usernames || '').match(regex)) {
+      hasAccessToCompleteTask = true;
+    }
+    const rowElements = [];
+    if (showProcessId) {
+      rowElements.push(
+        <td>
+          <Link
+            data-qa="process-instance-show-link"
+            to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
+            title={`View process instance ${processInstanceTask.process_instance_id}`}
           >
-            {row.task_title}
-          </td>
-          {showStartedBy ? <td>{row.process_initiator_username}</td> : ''}
-          {showWaitingOn ? <td>{getWaitingForTableCellComponent(row)}</td> : ''}
-          <td>
-            {convertSecondsToFormattedDateTime(row.created_at_in_seconds) ||
-              '-'}
-          </td>
-          <TableCellWithTimeAgoInWords
-            timeInSeconds={row.updated_at_in_seconds}
-          />
-          <td>
-            <Button
-              variant="primary"
-              href={taskUrl}
-              hidden={row.process_instance_status === 'suspended'}
-              disabled={!hasAccessToCompleteTask}
-            >
-              Go
-            </Button>
-          </td>
-        </tr>
+            {processInstanceTask.process_instance_id}
+          </Link>
+        </td>
       );
-    });
-    let tableHeaders = ['Id', 'Process', 'Task'];
+    }
+    if (showProcessModelIdentifier) {
+      rowElements.push(
+        <td>
+          <Link
+            data-qa="process-model-show-link"
+            to={`/admin/process-models/${modifiedProcessModelIdentifier}`}
+            title={processInstanceTask.process_model_identifier}
+          >
+            {processInstanceTask.process_model_display_name}
+          </Link>
+        </td>
+      );
+    }
+
+    rowElements.push(
+      <td
+        title={`task id: ${processInstanceTask.name}, spiffworkflow task guid: ${processInstanceTask.id}`}
+      >
+        {processInstanceTask.task_title}
+      </td>
+    );
+    if (showStartedBy) {
+      rowElements.push(
+        <td>{processInstanceTask.process_initiator_username}</td>
+      );
+    }
+    if (showWaitingOn) {
+      rowElements.push(
+        <td>{getWaitingForTableCellComponent(processInstanceTask)}</td>
+      );
+    }
+    if (showDateStarted) {
+      rowElements.push(
+        <td>
+          {convertSecondsToFormattedDateTime(
+            processInstanceTask.created_at_in_seconds
+          ) || '-'}
+        </td>
+      );
+    }
+    if (showLastUpdated) {
+      rowElements.push(
+        <TableCellWithTimeAgoInWords
+          timeInSeconds={processInstanceTask.updated_at_in_seconds}
+        />
+      );
+    }
+    rowElements.push(
+      <td>
+        <Button
+          variant="primary"
+          href={taskUrl}
+          hidden={processInstanceTask.process_instance_status === 'suspended'}
+          disabled={!hasAccessToCompleteTask}
+        >
+          Go
+        </Button>
+      </td>
+    );
+    return <tr key={processInstanceTask.id}>{rowElements}</tr>;
+  };
+
+  const getTableHeaders = () => {
+    let tableHeaders = [];
+    if (showProcessId) {
+      tableHeaders.push('Id');
+    }
+    if (showProcessModelIdentifier) {
+      tableHeaders.push('Process');
+    }
+    tableHeaders.push('Task');
     if (showStartedBy) {
       tableHeaders.push('Started By');
     }
     if (showWaitingOn) {
       tableHeaders.push('Waiting For');
     }
-    tableHeaders = tableHeaders.concat([
-      'Date Started',
-      'Last Updated',
-      'Actions',
-    ]);
+    if (showDateStarted) {
+      tableHeaders.push('Date Started');
+    }
+    if (showLastUpdated) {
+      tableHeaders.push('Last Updated');
+    }
+    tableHeaders = tableHeaders.concat(['Actions']);
+    return tableHeaders;
+  };
+
+  const buildTable = () => {
+    if (!tasks) {
+      return null;
+    }
+    const tableHeaders = getTableHeaders();
+    const rows = tasks.map((processInstanceTask: ProcessInstanceTask) => {
+      return getTableRow(processInstanceTask);
+    });
     return (
       <Table striped bordered>
         <thead>
@@ -207,24 +268,41 @@ export default function TaskListTable({
       undefined,
       paginationQueryParamPrefix
     );
-    return (
-      <PaginationForTable
-        page={page}
-        perPage={perPage}
-        perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
-        pagination={pagination}
-        tableToDisplay={buildTable()}
-        paginationQueryParamPrefix={paginationQueryParamPrefix}
-        paginationClassName={paginationClassName}
-      />
+    let tableElement = (
+      <div className={paginationClassName}>{buildTable()}</div>
     );
+    if (shouldPaginateTable) {
+      tableElement = (
+        <PaginationForTable
+          page={page}
+          perPage={perPage}
+          perPageOptions={[2, PER_PAGE_FOR_TASKS_ON_HOME_PAGE, 25]}
+          pagination={pagination}
+          tableToDisplay={buildTable()}
+          paginationQueryParamPrefix={paginationQueryParamPrefix}
+          paginationClassName={paginationClassName}
+        />
+      );
+    }
+    return tableElement;
   };
 
-  if (tasks) {
+  const tableAndDescriptionElement = () => {
+    if (showTableDescriptionAsTooltip) {
+      return <h2 title={tableDescription}>{tableTitle}</h2>;
+    }
     return (
       <>
         <h2>{tableTitle}</h2>
         <p className="data-table-description">{tableDescription}</p>
+      </>
+    );
+  };
+
+  if (tasks && (tasks.length > 0 || hideIfNoTasks === false)) {
+    return (
+      <>
+        {tableAndDescriptionElement()}
         {tasksComponent()}
       </>
     );

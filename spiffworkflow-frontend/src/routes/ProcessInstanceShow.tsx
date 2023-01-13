@@ -48,6 +48,7 @@ import {
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
+import TaskListTable from '../components/TaskListTable';
 
 type OwnProps = {
   variant: string;
@@ -1009,6 +1010,26 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </Stack>
         <br />
         <br />
+        <Grid condensed fullWidth>
+          <Column md={6} lg={8} sm={4}>
+            <TaskListTable
+              apiPath="/tasks"
+              additionalParams={`process_instance_id=${processInstance.id}`}
+              tableTitle="Tasks I can complete"
+              tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+              paginationClassName="with-large-bottom-margin"
+              textToShowIfEmpty="There are no tasks you can complete for this process instance."
+              shouldPaginateTable={false}
+              showProcessModelIdentifier={false}
+              showProcessId={false}
+              showStartedBy={false}
+              showTableDescriptionAsTooltip
+              showDateStarted={false}
+              showLastUpdated={false}
+              hideIfNoTasks
+            />
+          </Column>
+        </Grid>
         {getInfoTag()}
         <br />
         {taskUpdateDisplayArea()}
