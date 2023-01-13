@@ -556,9 +556,11 @@ def process_instance_task_list(
     else:
         spiff_tasks = processor.get_all_user_tasks()
 
-    subprocesses_by_child_task_ids = processor.get_subprocesses_by_child_task_ids()
-    processor.get_highest_level_subprocesses_by_child_task_ids(
-        subprocesses_by_child_task_ids
+    subprocesses_by_child_task_ids, task_typename_by_task_id = (
+        processor.get_subprocesses_by_child_task_ids()
+    )
+    processor.get_highest_level_calling_subprocesses_by_child_task_ids(
+        subprocesses_by_child_task_ids, task_typename_by_task_id
     )
 
     tasks = []

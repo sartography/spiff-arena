@@ -200,19 +200,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const getTaskIds = () => {
     const taskIds = { completed: [], readyOrWaiting: [] };
     if (tasks) {
+      const callingSubprocessId = searchParams.get('call_activity_task_id');
       tasks.forEach(function getUserTasksElement(task: ProcessInstanceTask) {
-        const callingSubprocessId = searchParams.get('call_activity_task_id');
         if (
-          !callingSubprocessId ||
-          callingSubprocessId === task.calling_subprocess_task_id
+          callingSubprocessId &&
+          callingSubprocessId !== task.calling_subprocess_task_id
         ) {
-          if (task.state === 'COMPLETED') {
-            (taskIds.completed as any).push(task);
-          }
-          if (task.state === 'READY' || task.state === 'WAITING') {
-            (taskIds.readyOrWaiting as any).push(task);
-          }
+          return null;
         }
+        if (task.state === 'COMPLETED') {
+          (taskIds.completed as any).push(task);
+        }
+        if (task.state === 'READY' || task.state === 'WAITING') {
+          (taskIds.readyOrWaiting as any).push(task);
+        }
+        return null;
       });
     }
     return taskIds;
@@ -904,6 +906,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     const candidateEvents: any = getEvents(taskToUse);
     if (taskToDisplay) {
+      let taskTitleText = taskToUse.id;
+      if (taskToUse.title) {
+        taskTitleText += ` (${taskToUse.title})`;
+      }
       return (
         <Modal
           open={!!taskToUse}
@@ -911,7 +917,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onRequestClose={handleTaskDataDisplayClose}
         >
           <Stack orientation="horizontal" gap={2}>
-            {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
+            <span title={taskTitleText}>{taskToUse.name}</span> (
+            {taskToUse.type}
+            ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
           {selectingEvent
