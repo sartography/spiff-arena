@@ -151,6 +151,8 @@ export interface ProcessModel {
   files: ProcessFile[];
   parent_groups?: ProcessGroupLite[];
   metadata_extraction_paths?: MetadataExtractionPath[];
+  fault_or_suspend_on_exception?: string;
+  exception_notification_addresses?: string[];
 }
 
 export interface ProcessGroup {
