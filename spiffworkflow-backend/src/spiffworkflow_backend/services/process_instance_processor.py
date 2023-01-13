@@ -1288,7 +1288,7 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     error_code="task_data_size_exceeded",
-                    message=f"Maximum task data size of {task_data_limit} exceeded."
+                    message=f"Maximum task data size of {task_data_limit} exceeded.",
                 )
             )
 
