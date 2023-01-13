@@ -73,8 +73,13 @@ export interface ProcessInstance {
   status: string;
   start_in_seconds: number | null;
   end_in_seconds: number | null;
+  process_initiator_username: string;
   bpmn_xml_file_contents?: string;
   spiff_step?: number;
+  created_at_in_seconds: number;
+  updated_at_in_seconds: number;
+  bpmn_version_control_identifier: string;
+  bpmn_version_control_type: string;
 }
 
 export interface MessageCorrelationProperties {
