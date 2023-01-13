@@ -2,10 +2,9 @@
 import json
 
 from flask import g
-from flask.wrappers import Response
-from typing import Union
-
 from flask import current_app
+from flask.wrappers import Response
+
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 
@@ -22,6 +21,8 @@ from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+
+from typing import Union
 
 
 class ErrorHandlingService:
