@@ -1278,10 +1278,11 @@ class ProcessInstanceProcessor:
         task_data = [self.user_defined_task_data(task.data) for task in tasks_to_check]
         task_data_to_check = list(filter(len, task_data))
 
-        if len(task_data_to_check) == 0:
-            return
+        try:
+            task_data_len = len(json.dumps(task_data_to_check))
+        except Exception:
+            task_data_len = 0
 
-        task_data_len = len(json.dumps(task_data_to_check))
         task_data_limit = 1024**2
 
         if task_data_len > task_data_limit:
