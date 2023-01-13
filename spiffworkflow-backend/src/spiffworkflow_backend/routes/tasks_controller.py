@@ -98,6 +98,7 @@ def task_list_my_tasks(
         ProcessInstanceModel.created_at_in_seconds,
         UserModel.username.label("process_initiator_username"),  # type: ignore
         GroupModel.identifier.label("assigned_user_group_identifier"),
+        HumanTaskModel.task_id.label("id"),  # type: ignore
         HumanTaskModel.task_name,
         HumanTaskModel.task_title,
         HumanTaskModel.process_model_display_name,
