@@ -73,11 +73,6 @@ export default function JsonSchemaFormBuilder() {
   };
 
   const onFormFieldTitleChange = (newFormFieldTitle: string) => {
-    console.log('newFormFieldTitle', newFormFieldTitle);
-    console.log(
-      'setFormFieldIdHasBeenUpdatedByUser',
-      formFieldIdHasBeenUpdatedByUser
-    );
     if (!formFieldIdHasBeenUpdatedByUser) {
       setFormFieldId(underscorizeString(newFormFieldTitle));
     }

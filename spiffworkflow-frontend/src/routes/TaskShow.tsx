@@ -184,6 +184,13 @@ export default function TaskShow() {
       );
     }
 
+    function customValidate(formData: any, errors: any) {
+      if (formData.pass1 !== formData.pass2) {
+        errors.pass2.addError("Passwords don't match");
+      }
+      return errors;
+    }
+
     return (
       <Grid fullWidth condensed>
         <Column md={5} lg={8} sm={4}>
@@ -193,6 +200,7 @@ export default function TaskShow() {
             schema={jsonSchema}
             uiSchema={formUiSchema}
             validator={validator}
+            customValidate={customValidate}
           >
             {reactFragmentToHideSubmitButton}
           </Form>

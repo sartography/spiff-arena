@@ -55,9 +55,6 @@ class ServiceTaskDelegate:
             f"{connector_proxy_url()}/v1/do/{name}", json=params
         )
 
-        if proxied_response.status_code != 200:
-            print("got error from connector proxy")
-
         parsed_response = json.loads(proxied_response.text)
 
         if "refreshed_token_set" not in parsed_response:
@@ -86,7 +83,7 @@ class ServiceTaskService:
             parsed_response = json.loads(response.text)
             return parsed_response
         except Exception as e:
-            print(e)
+            current_app.logger.error(e)
             return []
 
     @staticmethod

@@ -8,6 +8,7 @@ from flask.wrappers import Response
 from typing import List
 from typing import Union
 
+from flask import current_app
 from flask_bpmn.api.api_error import ApiError
 from flask_bpmn.models.db import db
 
@@ -71,7 +72,7 @@ class ErrorHandlingService:
                 self.handle_system_notification(_error, process_model)
             except Exception as e:
                 # hmm... what to do if a notification method fails. Probably log, at least
-                print(e)
+                current_app.logger.error(e)
 
     @staticmethod
     def handle_system_notification(

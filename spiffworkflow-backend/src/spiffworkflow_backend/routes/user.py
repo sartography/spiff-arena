@@ -2,11 +2,13 @@
 import ast
 import base64
 import json
+import re
 from typing import Any
 from typing import Dict
 from typing import Optional
 from typing import Union
 
+import flask
 import jwt
 from flask import current_app
 from flask import g
@@ -20,6 +22,7 @@ from spiffworkflow_backend.services.authentication_service import Authentication
 from spiffworkflow_backend.services.authentication_service import (
     MissingAccessTokenError,
 )
+from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -55,6 +58,9 @@ def verify_token(
     if not token and "Authorization" in request.headers:
         token = request.headers["Authorization"].removeprefix("Bearer ")
 
+    # This should never be set here but just in case
+    _clear_auth_tokens_from_thread_local_data()
+
     if token:
         user_model = None
         decoded_token = get_decoded_token(token)
@@ -71,12 +77,11 @@ def verify_token(
                             f" internal token. {e}"
                         )
             elif "iss" in decoded_token.keys():
+                user_info = None
                 try:
-                    if AuthenticationService.validate_id_token(token):
+                    if AuthenticationService.validate_id_or_access_token(token):
                         user_info = decoded_token
-                except (
-                    ApiError
-                ) as ae:  # API Error is only thrown in the token is outdated.
+                except TokenExpiredError as token_expired_error:
                     # Try to refresh the token
                     user = UserService.get_user_by_service_and_service_id(
                         decoded_token["iss"], decoded_token["sub"]
@@ -90,17 +95,24 @@ def verify_token(
                                 )
                             )
                             if auth_token and "error" not in auth_token:
+                                tld = current_app.config["THREAD_LOCAL_DATA"]
+                                tld.new_access_token = auth_token["access_token"]
+                                tld.new_id_token = auth_token["id_token"]
                                 # We have the user, but this code is a bit convoluted, and will later demand
                                 # a user_info object so it can look up the user.  Sorry to leave this crap here.
-                                user_info = {"sub": user.service_id}
-                            else:
-                                raise ae
-                        else:
-                            raise ae
-                    else:
-                        raise ae
+                                user_info = {
+                                    "sub": user.service_id,
+                                    "iss": user.service,
+                                }
+
+                    if user_info is None:
+                        raise ApiError(
+                            error_code="invalid_token",
+                            message="Your token is expired. Please Login",
+                            status_code=401,
+                        ) from token_expired_error
+
                 except Exception as e:
-                    current_app.logger.error(f"Exception raised in get_token: {e}")
                     raise ApiError(
                         error_code="fail_get_user_info",
                         message="Cannot get user info from token",
@@ -150,8 +162,6 @@ def verify_token(
             g.token = token
             get_scope(token)
             return None
-            # return {"uid": g.user.id, "sub": g.user.id, "scope": scope}
-            # return validate_scope(token, user_info, user_model)
         else:
             raise ApiError(error_code="no_user_id", message="Cannot get a user id")
 
@@ -160,16 +170,44 @@ def verify_token(
     )
 
 
-def validate_scope(token: Any) -> bool:
-    """Validate_scope."""
-    print("validate_scope")
-    # token = AuthenticationService.refresh_token(token)
-    # user_info = AuthenticationService.get_user_info_from_public_access_token(token)
-    # bearer_token = AuthenticationService.get_bearer_token(token)
-    # permission = AuthenticationService.get_permission_by_basic_token(token)
-    # permissions = AuthenticationService.get_permissions_by_token_for_resource_and_scope(token)
-    # introspection = AuthenticationService.introspect_token(basic_token)
-    return True
+def set_new_access_token_in_cookie(
+    response: flask.wrappers.Response,
+) -> flask.wrappers.Response:
+    """Checks if a new token has been set in THREAD_LOCAL_DATA and sets cookies if appropriate.
+
+    It will also delete the cookies if the user has logged out.
+    """
+    tld = current_app.config["THREAD_LOCAL_DATA"]
+    domain_for_frontend_cookie: Optional[str] = re.sub(
+        r"^https?:\/\/", "", current_app.config["SPIFFWORKFLOW_FRONTEND_URL"]
+    )
+    if domain_for_frontend_cookie and domain_for_frontend_cookie.startswith(
+        "localhost"
+    ):
+        domain_for_frontend_cookie = None
+
+    if hasattr(tld, "new_access_token") and tld.new_access_token:
+        response.set_cookie(
+            "access_token", tld.new_access_token, domain=domain_for_frontend_cookie
+        )
+
+    # id_token is required for logging out since this gets passed back to the openid server
+    if hasattr(tld, "new_id_token") and tld.new_id_token:
+        response.set_cookie(
+            "id_token", tld.new_id_token, domain=domain_for_frontend_cookie
+        )
+
+    if hasattr(tld, "user_has_logged_out") and tld.user_has_logged_out:
+        response.set_cookie(
+            "id_token", "", max_age=0, domain=domain_for_frontend_cookie
+        )
+        response.set_cookie(
+            "access_token", "", max_age=0, domain=domain_for_frontend_cookie
+        )
+
+    _clear_auth_tokens_from_thread_local_data()
+
+    return response
 
 
 def encode_auth_token(sub: str, token_type: Optional[str] = None) -> str:
@@ -226,7 +264,7 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
 
         user_info = parse_id_token(id_token)
 
-        if AuthenticationService.validate_id_token(id_token):
+        if AuthenticationService.validate_id_or_access_token(id_token):
             if user_info and "error" not in user_info:
                 user_model = AuthorizationService.create_user_from_sign_in(user_info)
                 g.user = user_model.id
@@ -234,11 +272,10 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
                 AuthenticationService.store_refresh_token(
                     user_model.id, auth_token_object["refresh_token"]
                 )
-                redirect_url = (
-                    f"{state_redirect_url}?"
-                    + f"access_token={auth_token_object['access_token']}&"
-                    + f"id_token={id_token}"
-                )
+                redirect_url = state_redirect_url
+                tld = current_app.config["THREAD_LOCAL_DATA"]
+                tld.new_access_token = auth_token_object["access_token"]
+                tld.new_id_token = auth_token_object["id_token"]
                 return redirect(redirect_url)
 
         raise ApiError(
@@ -284,6 +321,8 @@ def logout(id_token: str, redirect_url: Optional[str]) -> Response:
     """Logout."""
     if redirect_url is None:
         redirect_url = ""
+    tld = current_app.config["THREAD_LOCAL_DATA"]
+    tld.user_has_logged_out = True
     return AuthenticationService().logout(redirect_url=redirect_url, id_token=id_token)
 
 
@@ -312,15 +351,6 @@ def get_decoded_token(token: str) -> Optional[Dict]:
                 error_code="unknown_token",
                 message="Unknown token type in get_decoded_token",
             )
-    # try:
-    #     # see if we have an open_id token
-    #     decoded_token = AuthorizationService.decode_auth_token(token)
-    # else:
-    #     if 'sub' in decoded_token and 'iss' in decoded_token and 'aud' in decoded_token:
-    #         token_type = 'id_token'
-
-    # if 'token_type' in decoded_token and 'sub' in decoded_token:
-    #     return True
 
 
 def get_scope(token: str) -> str:
@@ -347,3 +377,14 @@ def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserMo
         return user
     user = UserService.create_user(service_id, service, service_id)
     return user
+
+
+def _clear_auth_tokens_from_thread_local_data() -> None:
+    """_clear_auth_tokens_from_thread_local_data."""
+    tld = current_app.config["THREAD_LOCAL_DATA"]
+    if hasattr(tld, "new_access_token"):
+        delattr(tld, "new_access_token")
+    if hasattr(tld, "new_id_token"):
+        delattr(tld, "new_id_token")
+    if hasattr(tld, "user_has_logged_out"):
+        delattr(tld, "user_has_logged_out")
