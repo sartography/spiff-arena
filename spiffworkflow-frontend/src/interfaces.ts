@@ -34,12 +34,12 @@ export interface ProcessInstanceTask {
   process_identifier: string;
   name: string;
   process_initiator_username: string;
-  assigned_user_group_identifier: string;
   created_at_in_seconds: number;
   updated_at_in_seconds: number;
   current_user_is_potential_owner: number;
-  potential_owner_usernames: string;
   calling_subprocess_task_id: string;
+  potential_owner_usernames?: string;
+  assigned_user_group_identifier?: string;
 }
 
 export interface ProcessReference {
