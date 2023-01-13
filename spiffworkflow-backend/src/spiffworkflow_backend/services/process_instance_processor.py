@@ -1221,10 +1221,14 @@ class ProcessInstanceProcessor:
         step_details = []
         try:
             self.bpmn_process_instance.refresh_waiting_tasks(
-                will_refresh_task=lambda t: self.increment_spiff_step(),
-                did_refresh_task=lambda t: step_details.append(
-                    self.spiff_step_details_mapping()
-                ),
+                #
+                # commenting out to see if this helps with the growing spiff steps/db issue
+                #
+
+                # will_refresh_task=lambda t: self.increment_spiff_step(),
+                # did_refresh_task=lambda t: step_details.append(
+                #   self.spiff_step_details_mapping()
+                # ),
             )
 
             self.bpmn_process_instance.do_engine_steps(
