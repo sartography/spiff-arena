@@ -1282,7 +1282,7 @@ class ProcessInstanceProcessor:
             return
 
         task_data_len = len(json.dumps(task_data_to_check))
-        task_data_limit = 1024
+        task_data_limit = 1024**2
 
         if task_data_len > task_data_limit:
             raise (
