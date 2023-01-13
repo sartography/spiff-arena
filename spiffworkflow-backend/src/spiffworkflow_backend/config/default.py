@@ -78,5 +78,6 @@ SPIFFWORKFLOW_BACKEND_DATABASE_URI = environ.get(
     "SPIFFWORKFLOW_BACKEND_DATABASE_URI", default=None
 )
 SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID = environ.get(
-    "SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID", default="Message_SystemMessageNotification"
+    "SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID",
+    default="Message_SystemMessageNotification",
 )
