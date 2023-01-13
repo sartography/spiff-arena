@@ -2,10 +2,7 @@
 import json
 
 from flask import g
-from flask import current_app
 from flask.wrappers import Response
-# from typing import Any
-from typing import List
 from typing import Union
 
 from flask import current_app
@@ -20,7 +17,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-# from spiffworkflow_backend.services.email_service import EmailService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
