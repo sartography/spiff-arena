@@ -11,7 +11,7 @@ const HttpMethods = {
 const getBasicHeaders = (): object => {
   if (UserService.isLoggedIn()) {
     return {
-      Authorization: `Bearer ${UserService.getAuthToken()}`,
+      Authorization: `Bearer ${UserService.getAccessToken()}`,
     };
   }
   return {};
@@ -64,6 +64,7 @@ backendCallProps) => {
   Object.assign(httpArgs, {
     headers: new Headers(headers as any),
     method: httpMethod,
+    credentials: 'include',
   });
 
   const updatedPath = path.replace(/^\/v1\.0/, '');

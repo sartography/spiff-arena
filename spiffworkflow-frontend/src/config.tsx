@@ -12,7 +12,6 @@ if (/^\d+\./.test(hostname) || hostname === 'localhost') {
 }
 
 let url = `${protocol}://${hostAndPort}/v1.0`;
-// Allow overriding the backend base url with an environment variable at build time.
 if (process.env.REACT_APP_BACKEND_BASE_URL) {
   url = process.env.REACT_APP_BACKEND_BASE_URL;
 }

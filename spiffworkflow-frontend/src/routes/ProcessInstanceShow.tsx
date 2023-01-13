@@ -7,12 +7,12 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
+  CaretRight,
   TrashCan,
   StopOutline,
   PauseOutline,
   PlayOutline,
   CaretLeft,
-  CaretRight,
   InProgress,
   Checkmark,
   Warning,
@@ -72,6 +72,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
+  const [displayDetails, setDisplayDetails] = useState<boolean>(false);
 
   const setErrorObject = (useContext as any)(ErrorContext)[1];
 
@@ -280,6 +281,70 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
+  const detailedViewElement = () => {
+    if (!processInstance) {
+      return null;
+    }
+
+    if (displayDetails) {
+      return (
+        <>
+          <Grid condensed fullWidth>
+            <Button
+              kind="ghost"
+              className="button-link"
+              onClick={() => setDisplayDetails(false)}
+              title="Hide Details"
+            >
+              &laquo; Hide Details
+            </Button>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Updated At:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {convertSecondsToFormattedDateTime(
+                processInstance.updated_at_in_seconds
+              )}
+            </Column>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Created At:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {convertSecondsToFormattedDateTime(
+                processInstance.created_at_in_seconds
+              )}
+            </Column>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Process model revision:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {processInstance.bpmn_version_control_identifier} (
+              {processInstance.bpmn_version_control_type})
+            </Column>
+          </Grid>
+        </>
+      );
+    }
+    return (
+      <Grid condensed fullWidth>
+        <Button
+          kind="ghost"
+          className="button-link"
+          onClick={() => setDisplayDetails(true)}
+          title="Show Details"
+        >
+          View Details &raquo;
+        </Button>
+      </Grid>
+    );
+  };
+
   const getInfoTag = () => {
     if (!processInstance) {
       return null;
@@ -318,6 +383,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <>
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
+            Started By:{' '}
+          </Column>
+          <Column sm={3} md={3} lg={3} className="grid-date">
+            {processInstance.process_initiator_username}
+          </Column>
+        </Grid>
+        <Grid condensed fullWidth>
+          <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started:{' '}
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
@@ -337,6 +410,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Tag>
           </Column>
         </Grid>
+        {detailedViewElement()}
         <br />
         <Grid condensed fullWidth>
           <Column sm={2} md={2} lg={2}>
