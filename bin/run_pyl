@@ -38,12 +38,19 @@ function run_fix_docstrings() {
 }
 
 function run_autoflake() {
-  if ! command -v autoflake8 >/dev/null ; then
+  # checking command -v autoflake8 is not good enough, since the asdf shim may be installed, which will make command -v succeed,
+  # but autoflake8 may not have been pip installed inside the correct version of python.
+  if ! autoflake8 --help >/dev/null ; then
     pip install autoflake8
     asdf reshim python
   fi
 
-  if ! command -v autopep8 >/dev/null ; then
+  if ! autoflake --help >/dev/null ; then
+    pip install autoflake
+    asdf reshim python
+  fi
+
+  if ! autopep8 --help >/dev/null ; then
     pip install autopep8
     asdf reshim python
   fi

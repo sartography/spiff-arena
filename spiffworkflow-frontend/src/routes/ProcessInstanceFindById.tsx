@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, ButtonSet, Form, Stack, TextInput } from '@carbon/react';
 import { isInteger, modifyProcessIdentifierForPathParam } from '../helpers';
 import HttpService from '../services/HttpService';
+import ProcessInstanceListTabs from '../components/ProcessInstanceListTabs';
 import { ProcessInstance } from '../interfaces';
 
 export default function ProcessInstanceFindById() {
@@ -69,11 +70,15 @@ export default function ProcessInstanceFindById() {
   };
 
   return (
-    <Form onSubmit={handleFormSubmission}>
-      <Stack gap={5}>
-        {formElements()}
-        {formButtons()}
-      </Stack>
-    </Form>
+    <>
+      <ProcessInstanceListTabs variant="find-by-id" />
+      <br />
+      <Form onSubmit={handleFormSubmission}>
+        <Stack gap={5}>
+          {formElements()}
+          {formButtons()}
+        </Stack>
+      </Form>
+    </>
   );
 }
