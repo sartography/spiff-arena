@@ -1,19 +1,27 @@
 # spiff-arena
 
-SpiffArena is a low(ish)-code software development platform for building, running, and monitoring executable diagrams.  It is intended to support Citizen Developers and help increase their ability to contribute to the software development process.  Using tools that look at lot like flow-charts and spreadsheets, it is possible to design some complex rules in a way that everyone in an organization can see and understand - and that are directly executable.
+SpiffArena is a low(ish)-code software development platform for building, running, and monitoring executable diagrams.
+It is intended to support Citizen Developers and to enhance their ability to contribute to the software development process.
+Using tools that look a lot like flow-charts and spreadsheets, it is possible to capture complex rules in a way that everyone in your organization can see, understand, and directly executable.
 
-Please visit the [SpiffWorkflow website](https://www.spiffworkflow.org) for a [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/) on how to run SpiffArena locally and try it out.  There are also
-additional articles, videos, and tutorials about SpiffArena and it's components - SpiffWorkflow, Service Connectors, and BPMN.js extensions. 
+Please visit the [SpiffWorkflow website](https://www.spiffworkflow.org) for a [Getting Started Guide](https://www.spiffworkflow.org/posts/articles/get_started/) to see how to run SpiffArena locally and try it out.
+There are also additional articles, videos, and tutorials about SpiffArena and its components, including SpiffWorkflow, Service Connectors, and BPMN.js extensions.
 
-# Contributing
+## Contributing
 
-This is a monorepo based on git subtrees that pulls together various
-spiffworkflow-related projects. Here's an example command to push back to one
-project:
+This is a monorepo based on git subtrees that pulls together various spiffworkflow-related projects.
+Feel free to ignore that and drop us a pull request.
+If you need to push back from the monorepo to one of the individual repos, here's an example command (and find other scripts we use in the `bin` directory):
 
     git subtree push --prefix=spiffworkflow-frontend git@github.com:sartography/spiffworkflow-frontend.git add_md_file
 
-# run all lint checks and tests
+Setup
+-----
+
+    poetry install
+
+Run tests
+---------
 
     ./bin/run_pyl
 
@@ -26,13 +34,11 @@ Requires at root:
 
 License
 -------
-SpiffArena's main components under published under the terms of the
-`GNU Lesser General Public License (LGPL) Version 3 <https://www.gnu.org/licenses/lgpl-3.0.txt>`_.
+SpiffArena's main components are published under the terms of the
+[GNU Lesser General Public License (LGPL) Version 3](https://www.gnu.org/licenses/lgpl-3.0.txt).
 
 Support
 -------
-You can find us on `our Discord Channel <https://discord.gg/BYHcc7PpUC>`_
+You can find us on [our Discord Channel](https://discord.gg/BYHcc7PpUC).
 
-Commercial support for SpiffWorkflow is available from
-`Sartography <https://sartography.com>`_
-
+Commercial support for SpiffWorkflow is available from [Sartography](https://sartography.com).
