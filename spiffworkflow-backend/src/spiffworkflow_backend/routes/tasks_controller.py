@@ -10,6 +10,7 @@ from typing import Union
 
 import flask.wrappers
 import jinja2
+from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
@@ -23,6 +24,7 @@ from sqlalchemy import asc
 from sqlalchemy import desc
 from sqlalchemy import func
 from sqlalchemy.orm import aliased
+from sqlalchemy.orm.util import AliasedClass
 
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -72,6 +74,8 @@ def task_list_my_tasks(
 ) -> flask.wrappers.Response:
     """Task_list_my_tasks."""
     principal = _find_principal_or_raise()
+    assigned_user = aliased(UserModel)
+    process_initiator_user = aliased(UserModel)
     human_task_query = (
         HumanTaskModel.query.order_by(desc(HumanTaskModel.id))  # type: ignore
         .group_by(HumanTaskModel.id)
@@ -79,9 +83,13 @@ def task_list_my_tasks(
             ProcessInstanceModel,
             ProcessInstanceModel.id == HumanTaskModel.process_instance_id,
         )
+        .join(
+            process_initiator_user,
+            process_initiator_user.id == ProcessInstanceModel.process_initiator_id,
+        )
         .join(HumanTaskUserModel, HumanTaskUserModel.human_task_id == HumanTaskModel.id)
         .filter(HumanTaskUserModel.user_id == principal.user_id)
-        .join(UserModel, UserModel.id == HumanTaskUserModel.user_id)
+        .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
         .filter(HumanTaskModel.completed == False)  # noqa: E712
         .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
     )
@@ -91,21 +99,23 @@ def task_list_my_tasks(
             ProcessInstanceModel.id == process_instance_id
         )
 
+    potential_owner_usernames_from_group_concat_or_similar = (
+        _get_potential_owner_usernames(assigned_user)
+    )
+
     human_tasks = human_task_query.add_columns(
-        ProcessInstanceModel.process_model_identifier,
-        ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-        ProcessInstanceModel.updated_at_in_seconds,
-        ProcessInstanceModel.created_at_in_seconds,
-        UserModel.username.label("process_initiator_username"),  # type: ignore
-        GroupModel.identifier.label("assigned_user_group_identifier"),
         HumanTaskModel.task_id.label("id"),  # type: ignore
         HumanTaskModel.task_name,
         HumanTaskModel.task_title,
         HumanTaskModel.process_model_display_name,
         HumanTaskModel.process_instance_id,
-        func.group_concat(UserModel.username.distinct()).label(  # type: ignore
-            "potential_owner_usernames"
-        ),
+        func.max(ProcessInstanceModel.process_model_identifier),
+        func.max(ProcessInstanceModel.status.label("process_instance_status")),  # type: ignore
+        func.max(ProcessInstanceModel.updated_at_in_seconds),
+        func.max(ProcessInstanceModel.created_at_in_seconds),
+        func.max(process_initiator_user.username.label("process_initiator_username")),
+        func.max(GroupModel.identifier.label("assigned_user_group_identifier")),
+        potential_owner_usernames_from_group_concat_or_similar,
     ).paginate(page=page, per_page=per_page, error_out=False)
 
     response_json = {
@@ -443,6 +453,10 @@ def _get_tasks(
         else:
             human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
+    potential_owner_usernames_from_group_concat_or_similar = (
+        _get_potential_owner_usernames(assigned_user)
+    )
+
     human_tasks = (
         human_tasks_query.add_columns(
             ProcessInstanceModel.process_model_identifier,
@@ -455,9 +469,7 @@ def _get_tasks(
             HumanTaskModel.task_title,
             HumanTaskModel.process_model_display_name,
             HumanTaskModel.process_instance_id,
-            func.group_concat(assigned_user.username.distinct()).label(
-                "potential_owner_usernames"
-            ),
+            potential_owner_usernames_from_group_concat_or_similar,
         )
         .order_by(desc(HumanTaskModel.id))  # type: ignore
         .paginate(page=page, per_page=per_page, error_out=False)
@@ -576,3 +588,18 @@ def _update_form_schema_with_task_data_as_needed(
             for o in value:
                 if isinstance(o, dict):
                     _update_form_schema_with_task_data_as_needed(o, task_data)
+
+
+def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
+    """_get_potential_owner_usernames."""
+    potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
+        assigned_user.username.distinct()
+    ).label("potential_owner_usernames")
+    db_type = current_app.config.get("SPIFF_DATABASE_TYPE")
+
+    if db_type == "postgres":
+        potential_owner_usernames_from_group_concat_or_similar = func.string_agg(
+            assigned_user.username.distinct(), ", "
+        ).label("potential_owner_usernames")
+
+    return potential_owner_usernames_from_group_concat_or_similar
