@@ -97,7 +97,7 @@ Cypress.Commands.add(
       cy.reload(true);
       cy.contains('Process Model:').should('exist');
       cy.contains(/Process Instance.*[kK]icked [oO]ff/).should('not.exist');
-      cy.contains('[data-qa=process-model-show-permissions-loaded]', 'true');
+      cy.getBySel('process-model-show-permissions-loaded').should('exist');
     }
   }
 );
@@ -152,17 +152,14 @@ Cypress.Commands.add('assertNoItemInPaginatedResults', () => {
   cy.contains(/\b0–0 of 0 items/);
 });
 
-Cypress.Commands.add(
-  'deleteProcessModelAndConfirm',
-  (buttonId, groupId) => {
-    cy.getBySel(buttonId).click();
-    cy.contains('Are you sure');
-    cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
-      .find('.cds--btn--danger')
-      .click();
-    cy.url().should(
-      'include',
-      `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
-    );
-  }
-);
+Cypress.Commands.add('deleteProcessModelAndConfirm', (buttonId, groupId) => {
+  cy.getBySel(buttonId).click();
+  cy.contains('Are you sure');
+  cy.getBySel('delete-process-model-button-modal-confirmation-dialog')
+    .find('.cds--btn--danger')
+    .click();
+  cy.url().should(
+    'include',
+    `process-groups/${modifyProcessIdentifierForPathParam(groupId)}`
+  );
+});
