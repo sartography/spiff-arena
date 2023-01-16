@@ -41,7 +41,6 @@
     "dmn-js": "^12.2.0",
     "dmn-js-properties-panel": "^1.1",
     "dmn-js-shared": "^12.1.1",
-    "jsonpath-plus": "^7.2.0",
     "jwt-decode": "^3.1.2",
     "keycloak-js": "^18.0.1",
     "prop-types": "^15.8.1",
