@@ -184,12 +184,40 @@ export default function TaskShow() {
       );
     }
 
-    function customValidate(formData: any, errors: any) {
-      if (formData.pass1 !== formData.pass2) {
-        errors.pass2.addError("Passwords don't match");
+    const getFieldsWithDateValidations = (formData: any, errors: any) => {
+      if ('properties' in jsonSchema) {
+        Object.keys(jsonSchema.properties).forEach((propertyKey: string) => {
+          const propertyMetadata = jsonSchema.properties[propertyKey];
+          if ('minimum' in propertyMetadata) {
+            if (propertyMetadata.minimum === 'today') {
+              const dateToday = new Date();
+              const dateValue = formData[propertyKey];
+              if (dateValue) {
+                const dateValueObject = new Date(dateValue);
+                const dateValueString = dateValueObject
+                  .toISOString()
+                  .split('T')[0];
+                const dateTodayString = dateToday.toISOString().split('T')[0];
+                if (dateTodayString > dateValueString) {
+                  errors[propertyKey].addError('must be today or after');
+                }
+              }
+            }
+          }
+        });
       }
       return errors;
-    }
+    };
+
+    const customValidate = (formData: any, errors: any) => {
+      console.log('formData', formData);
+      console.log('errors', errors);
+      return getFieldsWithDateValidations(formData, errors);
+      // if (formData.pass1 !== formData.pass2) {
+      //   errors.pass2.addError("Passwords don't match");
+      // }
+      // return errors;
+    };
 
     return (
       <Grid fullWidth condensed>
