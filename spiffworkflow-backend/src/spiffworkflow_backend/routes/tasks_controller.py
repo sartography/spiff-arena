@@ -109,14 +109,12 @@ def task_list_my_tasks(
         HumanTaskModel.task_title,
         HumanTaskModel.process_model_display_name,
         HumanTaskModel.process_instance_id,
-
         ProcessInstanceModel.process_model_identifier,
         ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
         ProcessInstanceModel.updated_at_in_seconds,
         ProcessInstanceModel.created_at_in_seconds,
         process_initiator_user.username.label("process_initiator_username"),
         GroupModel.identifier.label("assigned_user_group_identifier"),
-
         # func.max does not seem to return columns so we need to call both
         func.max(ProcessInstanceModel.process_model_identifier),
         func.max(ProcessInstanceModel.status.label("process_instance_status")),  # type: ignore
@@ -124,7 +122,6 @@ def task_list_my_tasks(
         func.max(ProcessInstanceModel.created_at_in_seconds),
         func.max(process_initiator_user.username.label("process_initiator_username")),
         func.max(GroupModel.identifier.label("assigned_user_group_identifier")),
-
         potential_owner_usernames_from_group_concat_or_similar,
     ).paginate(page=page, per_page=per_page, error_out=False)
 
