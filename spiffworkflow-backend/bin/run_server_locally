@@ -29,7 +29,13 @@ else
   export FLASK_DEBUG=1
 
   if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
-    SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
+    RUN_BACKGROUND_SCHEDULER=false SPIFFWORKFLOW_BACKEND_FAIL_ON_INVALID_PROCESS_MODELS=false poetry run python bin/save_all_bpmn.py
   fi
-  FLASK_APP=src/spiffworkflow_backend poetry run flask run -p 7000
+
+  if [[ -z "${RUN_BACKGROUND_SCHEDULER:-}" ]]; then
+    RUN_BACKGROUND_SCHEDULER=true
+  fi
+
+  # this line blocks
+  RUN_BACKGROUND_SCHEDULER="${RUN_BACKGROUND_SCHEDULER}" FLASK_APP=src/spiffworkflow_backend poetry run flask run -p 7000
 fi

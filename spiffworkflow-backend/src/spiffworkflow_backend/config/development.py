@@ -10,7 +10,7 @@ SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
 )
 
 RUN_BACKGROUND_SCHEDULER = (
-    environ.get("RUN_BACKGROUND_SCHEDULER", default="true") == "true"
+    environ.get("RUN_BACKGROUND_SCHEDULER", default="false") == "true"
 )
 GIT_CLONE_URL_FOR_PUBLISHING = environ.get(
     "GIT_CLONE_URL", default="https://github.com/sartography/sample-process-models.git"
