@@ -94,6 +94,12 @@ class SpecFileService(FileSystemService):
         )
 
     @classmethod
+    def get_etree_from_xml_bytes(cls, binary_data: bytes) -> etree.Element:
+        """Get_etree_from_xml_bytes."""
+        etree_xml_parser = etree.XMLParser(resolve_entities=False)
+        return etree.fromstring(binary_data, parser=etree_xml_parser)
+
+    @classmethod
     def get_references_for_file_contents(
         cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes
     ) -> list[SpecReference]:
@@ -118,13 +124,13 @@ class SpecFileService(FileSystemService):
         correlations = {}
         start_messages = []
         if file_type.value == FileType.bpmn.value:
-            parser.add_bpmn_xml(etree.fromstring(binary_data))
+            parser.add_bpmn_xml(cls.get_etree_from_xml_bytes(binary_data))
             parser_type = "process"
             sub_parsers = list(parser.process_parsers.values())
             messages = parser.messages
             correlations = parser.correlations
         elif file_type.value == FileType.dmn.value:
-            parser.add_dmn_xml(etree.fromstring(binary_data))
+            parser.add_dmn_xml(cls.get_etree_from_xml_bytes(binary_data))
             sub_parsers = list(parser.dmn_parsers.values())
             parser_type = "decision"
         else:
@@ -172,7 +178,9 @@ class SpecFileService(FileSystemService):
             validator = BpmnValidator()
             parser = MyCustomParser(validator=validator)
             try:
-                parser.add_bpmn_xml(etree.fromstring(binary_data), filename=file_name)
+                parser.add_bpmn_xml(
+                    cls.get_etree_from_xml_bytes(binary_data), filename=file_name
+                )
             except etree.XMLSyntaxError as exception:
                 raise ProcessModelFileInvalidError(
                     f"Received error trying to parse bpmn xml: {str(exception)}"

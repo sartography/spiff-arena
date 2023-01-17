@@ -130,7 +130,9 @@ class ProcessModelService(FileSystemService):
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
         """Save_process_model."""
         process_model_path = os.path.abspath(
-            os.path.join(FileSystemService.root_path(), process_model.id)
+            os.path.join(
+                FileSystemService.root_path(), process_model.id_for_file_path()
+            )
         )
         os.makedirs(process_model_path, exist_ok=True)
         json_path = os.path.abspath(

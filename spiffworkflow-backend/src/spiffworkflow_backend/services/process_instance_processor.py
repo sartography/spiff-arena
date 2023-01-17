@@ -1021,10 +1021,10 @@ class ProcessInstanceProcessor:
         for file in files:
             data = SpecFileService.get_data(process_model_info, file.name)
             if file.type == FileType.bpmn.value:
-                bpmn: etree.Element = etree.fromstring(data)
+                bpmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
                 parser.add_bpmn_xml(bpmn, filename=file.name)
             elif file.type == FileType.dmn.value:
-                dmn: etree.Element = etree.fromstring(data)
+                dmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
                 parser.add_dmn_xml(dmn, filename=file.name)
         if (
             process_model_info.primary_process_id is None
