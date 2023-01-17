@@ -5,7 +5,7 @@ from typing import Optional
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
-from flask_bpmn.api.api_error import ApiError
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from werkzeug.test import TestResponse  # type: ignore
 

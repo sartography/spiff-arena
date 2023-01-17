@@ -3,8 +3,9 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+
 from sqlalchemy.orm import validates
 
 

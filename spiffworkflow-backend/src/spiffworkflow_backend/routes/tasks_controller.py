@@ -15,8 +15,8 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_

@@ -14,7 +14,7 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from flask_bpmn.api.api_error import ApiError
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from werkzeug.datastructures import FileStorage
 
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
@@ -519,7 +519,7 @@ def _create_or_update_process_model_file(
             ApiError(
                 error_code="process_model_file_invalid",
                 message=(
-                    f"Invalid Process model file cannot be save: {request_file.name}."
+                    f"Invalid Process model file: {request_file.filename}."
                     f" Received error: {str(exception)}"
                 ),
                 status_code=400,

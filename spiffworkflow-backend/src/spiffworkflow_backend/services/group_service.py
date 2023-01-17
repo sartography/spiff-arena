@@ -1,7 +1,7 @@
 """Group_service."""
 from typing import Optional
 
-from flask_bpmn.models.db import db
+from spiffworkflow_backend.models.db import db
 
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel

@@ -1,8 +1,8 @@
 """Secret_service."""
 from typing import Optional
 
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 
 from spiffworkflow_backend.models.secret_model import SecretModel
 

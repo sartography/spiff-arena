@@ -2,7 +2,7 @@
 import time
 
 import sqlalchemy
-from flask_bpmn.models.db import db
+from spiffworkflow_backend.models.db import db
 
 
 def try_to_connect(start_time: float) -> None:
