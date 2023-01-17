@@ -182,9 +182,15 @@ def process_instance_log_list(
     )
     if not detailed:
         log_query = log_query.filter(
-            or_(
+            # this was the previous implementation, where we only show completed tasks and skipped tasks.
+            # maybe we want to iterate on this in the future (in a third tab under process instance logs?)
+            # or_(
+            #     SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
+            #     SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
+            # )
+            and_(
                 SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
-                SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
+                SpiffLoggingModel.bpmn_task_type == "Default Throwing Event",
             )
         )
 

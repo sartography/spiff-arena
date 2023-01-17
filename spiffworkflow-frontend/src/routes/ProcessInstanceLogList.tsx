@@ -46,10 +46,10 @@ export default function ProcessInstanceLogList() {
       return (
         <tr key={rowToUse.id}>
           <td data-qa="paginated-entity-id">{rowToUse.id}</td>
-          <td>{rowToUse.message}</td>
           <td>{rowToUse.bpmn_task_name}</td>
           {isDetailedView && (
             <>
+              <td>{rowToUse.message}</td>
               <td>{rowToUse.bpmn_task_identifier}</td>
               <td>{rowToUse.bpmn_task_type}</td>
               <td>{rowToUse.bpmn_process_identifier}</td>
@@ -72,10 +72,10 @@ export default function ProcessInstanceLogList() {
         <thead>
           <tr>
             <th>Id</th>
-            <th>Message</th>
             <th>Task Name</th>
             {isDetailedView && (
               <>
+                <th>Message</th>
                 <th>Task Identifier</th>
                 <th>Task Type</th>
                 <th>Bpmn Process Identifier</th>
