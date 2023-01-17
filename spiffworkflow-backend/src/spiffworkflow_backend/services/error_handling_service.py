@@ -5,8 +5,8 @@ from typing import Union
 from flask import current_app
 from flask import g
 from flask.wrappers import Response
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (

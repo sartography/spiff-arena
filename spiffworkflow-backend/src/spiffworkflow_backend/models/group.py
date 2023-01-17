@@ -3,8 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flask_bpmn.models.db import db
-from flask_bpmn.models.group import FlaskBpmnGroupModel
+from spiffworkflow_backend.models.db import db, SpiffworkflowBaseDBModel
 from sqlalchemy.orm import relationship
 
 if TYPE_CHECKING:
@@ -18,12 +17,14 @@ class GroupNotFoundError(Exception):
     """GroupNotFoundError."""
 
 
-class GroupModel(FlaskBpmnGroupModel):
+class GroupModel(SpiffworkflowBaseDBModel):
     """GroupModel."""
 
     __tablename__ = "group"
     __table_args__ = {"extend_existing": True}
 
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255))
     identifier = db.Column(db.String(255))
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")

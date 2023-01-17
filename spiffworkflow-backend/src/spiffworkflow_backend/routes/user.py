@@ -14,7 +14,7 @@ from flask import current_app
 from flask import g
 from flask import redirect
 from flask import request
-from flask_bpmn.api.api_error import ApiError
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.models.user import UserModel

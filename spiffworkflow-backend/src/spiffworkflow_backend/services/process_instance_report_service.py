@@ -6,8 +6,9 @@ from typing import Optional
 from typing import Type
 
 import sqlalchemy
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_

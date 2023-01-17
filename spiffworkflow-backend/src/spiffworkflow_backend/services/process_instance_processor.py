@@ -22,11 +22,11 @@ from uuid import UUID
 import dateparser
 import pytz
 from flask import current_app
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from lxml import etree  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
@@ -222,7 +222,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
                     % (expression, str(exception)),
                 ) from exception
             else:
-                raise WorkflowTaskExecException(
+                raise WorkflowTaskException(
                     task,
                     "Error evaluating expression '%s', %s"
                     % (expression, str(exception)),
@@ -240,7 +240,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         except WorkflowException as e:
             raise e
         except Exception as e:
-            raise WorkflowTaskExecException(task, f" {script}, {e}", e) from e
+            raise WorkflowTaskException(task, f" {script}, {e}", e) from e
 
     def call_service(
         self,
@@ -1284,7 +1284,7 @@ class ProcessInstanceProcessor:
                     handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
 
-        except WorkflowTaskExecException as we:
+        except WorkflowTaskException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
         finally:
@@ -1304,7 +1304,7 @@ class ProcessInstanceProcessor:
             bpmn_process_instance.catch(CancelEventDefinition())
             # Due to this being static, can't save granular step details in this case
             bpmn_process_instance.do_engine_steps()
-        except WorkflowTaskExecException as we:
+        except WorkflowTaskException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
     def user_defined_task_data(self, task_data: dict) -> dict:

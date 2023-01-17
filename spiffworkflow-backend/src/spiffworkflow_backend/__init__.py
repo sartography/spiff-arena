@@ -9,9 +9,9 @@ import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
 from flask.json.provider import DefaultJSONProvider
-from flask_bpmn.api.api_error import api_error_blueprint
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import migrate
+from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import migrate
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
 from werkzeug.exceptions import NotFound

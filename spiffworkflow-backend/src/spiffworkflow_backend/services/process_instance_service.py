@@ -5,8 +5,8 @@ from typing import List
 from typing import Optional
 
 from flask import current_app
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.models.human_task import HumanTaskModel
