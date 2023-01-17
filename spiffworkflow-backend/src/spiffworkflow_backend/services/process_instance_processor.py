@@ -1068,9 +1068,13 @@ class ProcessInstanceProcessor:
         if bpmn_process_instance.is_completed():
             return ProcessInstanceStatus.complete
         user_tasks = bpmn_process_instance.get_ready_user_tasks()
-        waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
-        if len(waiting_tasks) > 0:
-            return ProcessInstanceStatus.waiting
+
+        # if the process instance has status "waiting" it will get picked up
+        # by background processing. when that happens it can potentially overwrite
+        # human tasks which is bad because we cache them with the previous id's.
+        # waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
+        # if len(waiting_tasks) > 0:
+        #     return ProcessInstanceStatus.waiting
         if len(user_tasks) > 0:
             return ProcessInstanceStatus.user_input_required
         else:
