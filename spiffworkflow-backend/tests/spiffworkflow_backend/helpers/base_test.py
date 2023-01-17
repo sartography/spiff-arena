@@ -173,11 +173,11 @@ class BaseTest:
                 " model"
             )
 
-    def get_test_data_file_contents(
+    def get_test_data_file_full_path(
         self, file_name: str, process_model_test_data_dir: str
-    ) -> bytes:
+    ) -> str:
         """Get_test_data_file_contents."""
-        file_full_path = os.path.join(
+        return os.path.join(
             current_app.instance_path,
             "..",
             "..",
@@ -185,6 +185,14 @@ class BaseTest:
             "data",
             process_model_test_data_dir,
             file_name,
+        )
+
+    def get_test_data_file_contents(
+        self, file_name: str, process_model_test_data_dir: str
+    ) -> bytes:
+        """Get_test_data_file_contents."""
+        file_full_path = self.get_test_data_file_full_path(
+            file_name, process_model_test_data_dir
         )
         with open(file_full_path, "rb") as file:
             return file.read()

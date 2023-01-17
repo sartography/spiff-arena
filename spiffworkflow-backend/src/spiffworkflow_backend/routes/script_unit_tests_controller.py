@@ -49,7 +49,7 @@ def script_unit_test_create(
 
     # TODO: move this to an xml service or something
     file_contents = SpecFileService.get_data(process_model, file.name)
-    bpmn_etree_element = etree.fromstring(file_contents)
+    bpmn_etree_element = SpecFileService.get_etree_from_xml_bytes(file_contents)
 
     nsmap = bpmn_etree_element.nsmap
     spiff_element_maker = ElementMaker(
