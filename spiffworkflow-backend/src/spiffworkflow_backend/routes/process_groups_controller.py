@@ -20,11 +20,29 @@ from spiffworkflow_backend.routes.process_api_blueprint import (
     _un_modify_modified_process_model_id,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.process_model_service import (
+    ProcessModelWithInstancesNotDeletableError,
+)
 
 
 def process_group_create(body: dict) -> flask.wrappers.Response:
     """Add_process_group."""
     process_group = ProcessGroup(**body)
+
+    if ProcessModelService.is_process_model_identifier(process_group.id):
+        raise ApiError(
+            error_code="process_model_with_id_already_exists",
+            message=f"Process Model with given id already exists: {process_group.id}",
+            status_code=400,
+        )
+
+    if ProcessModelService.is_process_group_identifier(process_group.id):
+        raise ApiError(
+            error_code="process_group_with_id_already_exists",
+            message=f"Process Group with given id already exists: {process_group.id}",
+            status_code=400,
+        )
+
     ProcessModelService.add_process_group(process_group)
     _commit_and_push_to_git(
         f"User: {g.user.username} added process group {process_group.id}"
@@ -35,7 +53,16 @@ def process_group_create(body: dict) -> flask.wrappers.Response:
 def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Response:
     """Process_group_delete."""
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
-    ProcessModelService().process_group_delete(process_group_id)
+
+    try:
+        ProcessModelService().process_group_delete(process_group_id)
+    except ProcessModelWithInstancesNotDeletableError as exception:
+        raise ApiError(
+            error_code="existing_instances",
+            message=str(exception),
+            status_code=400,
+        ) from exception
+
     _commit_and_push_to_git(
         f"User: {g.user.username} deleted process group {process_group_id}"
     )
@@ -54,6 +81,13 @@ def process_group_update(
     }
 
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
+    if not ProcessModelService.is_process_group_identifier(process_group_id):
+        raise ApiError(
+            error_code="process_group_does_not_exist",
+            message=f"Process Group with given id does not exist: {process_group_id}",
+            status_code=400,
+        )
+
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService.update_process_group(process_group)
     _commit_and_push_to_git(
