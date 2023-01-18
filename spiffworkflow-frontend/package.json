@@ -53,6 +53,7 @@
     "react-jsonschema-form": "^1.8.1",
     "react-markdown": "^8.0.3",
     "react-router-dom": "^6.3.0",
+    "react-router": "^6.3.0",
     "react-scripts": "^5.0.1",
     "remark-gfm": "^3.0.1",
     "serve": "^14.0.0",
