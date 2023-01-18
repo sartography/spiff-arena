@@ -39,6 +39,9 @@ from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.process_model_service import (
+    ProcessModelWithInstancesNotDeletableError,
+)
 from spiffworkflow_backend.services.spec_file_service import (
     ProcessModelFileInvalidError,
 )
@@ -75,6 +78,24 @@ def process_model_create(
             status_code=400,
         )
 
+    if ProcessModelService.is_process_model_identifier(process_model_info.id):
+        raise ApiError(
+            error_code="process_model_with_id_already_exists",
+            message=(
+                f"Process Model with given id already exists: {process_model_info.id}"
+            ),
+            status_code=400,
+        )
+
+    if ProcessModelService.is_process_group_identifier(process_model_info.id):
+        raise ApiError(
+            error_code="process_group_with_id_already_exists",
+            message=(
+                f"Process Group with given id already exists: {process_model_info.id}"
+            ),
+            status_code=400,
+        )
+
     ProcessModelService.add_process_model(process_model_info)
     _commit_and_push_to_git(
         f"User: {g.user.username} created process model {process_model_info.id}"
@@ -91,7 +112,15 @@ def process_model_delete(
 ) -> flask.wrappers.Response:
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    ProcessModelService().process_model_delete(process_model_identifier)
+    try:
+        ProcessModelService().process_model_delete(process_model_identifier)
+    except ProcessModelWithInstancesNotDeletableError as exception:
+        raise ApiError(
+            error_code="existing_instances",
+            message=str(exception),
+            status_code=400,
+        ) from exception
+
     _commit_and_push_to_git(
         f"User: {g.user.username} deleted process model {process_model_identifier}"
     )
