@@ -249,6 +249,9 @@ class TestSpecFileService(BaseTest):
         tmp_file = os.path.normpath(
             self.get_test_data_file_full_path("file_to_inject", "xml_with_entity")
         )
+
+        # add the file: with the correct separator for windows
+        tmp_file = f"file:{os.path.sep}{tmp_file}"
         file_contents = self.get_test_data_file_contents(
             "invoice.bpmn", "xml_with_entity"
         )
