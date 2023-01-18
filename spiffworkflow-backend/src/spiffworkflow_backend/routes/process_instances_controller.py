@@ -190,7 +190,7 @@ def process_instance_log_list(
             # )
             and_(
                 SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
-                SpiffLoggingModel.bpmn_task_type == "Default Throwing Event",
+                SpiffLoggingModel.bpmn_task_type.in_(["Default Throwing Event", "End Event"]),  # type: ignore
             )
         )
 

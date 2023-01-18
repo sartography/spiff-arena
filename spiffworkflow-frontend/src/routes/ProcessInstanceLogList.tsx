@@ -46,7 +46,10 @@ export default function ProcessInstanceLogList() {
       return (
         <tr key={rowToUse.id}>
           <td data-qa="paginated-entity-id">{rowToUse.id}</td>
-          <td>{rowToUse.bpmn_task_name}</td>
+          <td>
+            {rowToUse.bpmn_task_name ||
+              (rowToUse.bpmn_task_type === 'End Event' ? 'Process Ended' : '')}
+          </td>
           {isDetailedView && (
             <>
               <td>{rowToUse.message}</td>
