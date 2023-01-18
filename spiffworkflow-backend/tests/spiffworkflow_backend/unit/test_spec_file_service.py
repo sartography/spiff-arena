@@ -239,7 +239,10 @@ class TestSpecFileService(BaseTest):
         full_file_path = SpecFileService.full_file_path(process_model, "bad_xml.bpmn")
         assert not os.path.isfile(full_file_path)
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="tmp file path is not valid xml for windows and it doesn't matter")
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="tmp file path is not valid xml for windows and it doesn't matter",
+    )
     def test_does_not_evaluate_entities(
         self,
         app: Flask,
