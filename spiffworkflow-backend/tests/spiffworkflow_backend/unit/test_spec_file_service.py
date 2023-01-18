@@ -1,5 +1,6 @@
 """Test_message_service."""
 import os
+import sys
 
 import pytest
 from flask import Flask
@@ -238,6 +239,7 @@ class TestSpecFileService(BaseTest):
         full_file_path = SpecFileService.full_file_path(process_model, "bad_xml.bpmn")
         assert not os.path.isfile(full_file_path)
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="tmp file path is not valid xml for windows and it doesn't matter")
     def test_does_not_evaluate_entities(
         self,
         app: Flask,
@@ -249,9 +251,6 @@ class TestSpecFileService(BaseTest):
         tmp_file = os.path.normpath(
             self.get_test_data_file_full_path("file_to_inject", "xml_with_entity")
         )
-
-        # add the file: with the correct separator for windows
-        tmp_file = f"file:{os.path.sep}{tmp_file}"
         file_contents = self.get_test_data_file_contents(
             "invoice.bpmn", "xml_with_entity"
         )
