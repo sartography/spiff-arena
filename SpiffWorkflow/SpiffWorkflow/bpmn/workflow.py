@@ -41,22 +41,14 @@ class BpmnWorkflow(Workflow):
     Spiff Workflow class with a few extra methods and attributes.
     """
 
-    def __init__(self, top_level_spec, subprocess_specs=None, name=None, script_engine=None,
-                 read_only=False, **kwargs):
+    def __init__(self, top_level_spec, subprocess_specs=None, name=None, script_engine=None, **kwargs):
         """
         Constructor.
 
         :param script_engine: set to an extension of PythonScriptEngine if you
         need a specialised version. Defaults to the script engine of the top
         most workflow, or to the PythonScriptEngine if none is provided.
-
-        :param read_only: If this parameter is set then the workflow state
-        cannot change. It can only be queried to find out about the current
-        state. This is used in conjunction with the CompactWorkflowSerializer
-        to provide read only access to a previously saved workflow.
         """
-        self._busy_with_restore = False
-        # THIS IS THE LINE THAT LOGS
         super(BpmnWorkflow, self).__init__(top_level_spec, **kwargs)
         self.name = name or top_level_spec.name
         self.subprocess_specs = subprocess_specs or {}
@@ -64,7 +56,6 @@ class BpmnWorkflow(Workflow):
         self.bpmn_messages = []
         self.correlations = {}
         self.__script_engine = script_engine or PythonScriptEngine()
-        self.read_only = read_only
 
     @property
     def script_engine(self):
@@ -82,7 +73,6 @@ class BpmnWorkflow(Workflow):
         workflow = self._get_outermost_workflow(my_task)
         subprocess = BpmnWorkflow(
             workflow.subprocess_specs[spec_name], name=name,
-            read_only=self.read_only,
             script_engine=self.script_engine,
             parent=my_task.workflow)
         workflow.subprocesses[my_task.id] = subprocess
@@ -134,8 +124,6 @@ class BpmnWorkflow(Workflow):
 
         :param event_definition: the thrown event
         """
-        assert not self.read_only and not self._is_busy_with_restore()
-
         # Start a subprocess for known specs with start events that catch this
         # This is total hypocritical of me given how I've argued that specs should
         # be immutable, but I see no other way of doing this.
@@ -180,7 +168,6 @@ class BpmnWorkflow(Workflow):
         :param will_complete_task: Callback that will be called prior to completing a task
         :param did_complete_task: Callback that will be called after completing a task
         """
-        assert not self.read_only
         engine_steps = list(
             [t for t in self.get_tasks(TaskState.READY)
              if self._is_engine_task(t.task_spec)])
@@ -207,7 +194,6 @@ class BpmnWorkflow(Workflow):
         :param will_refresh_task: Callback that will be called prior to refreshing a task
         :param did_refresh_task: Callback that will be called after refreshing a task
         """
-        assert not self.read_only
         for my_task in self.get_tasks(TaskState.WAITING):
             if will_refresh_task is not None:
                 will_refresh_task(my_task)
@@ -232,12 +218,11 @@ class BpmnWorkflow(Workflow):
 
     def _find_task(self, task_id):
         if task_id is None:
-            raise WorkflowException(self.spec, 'task_id is None')
+            raise WorkflowException('task_id is None', task_spec=self.spec)
         for task in self.get_tasks():
             if task.id == task_id:
                 return task
-        raise WorkflowException(self.spec,
-            f'A task with the given task_id ({task_id}) was not found')
+        raise WorkflowException(f'A task with the given task_id ({task_id}) was not found', task_spec=self.spec)
 
     def complete_task_from_id(self, task_id):
         # I don't even know why we use this stupid function instead of calling task.complete,
@@ -252,9 +237,7 @@ class BpmnWorkflow(Workflow):
         return task.reset_token(data)
 
     def get_ready_user_tasks(self,lane=None):
-        """
-        Returns a list of User Tasks that are READY for user action
-        """
+        """Returns a list of User Tasks that are READY for user action"""
         if lane is not None:
             return [t for t in self.get_tasks(TaskState.READY)
                        if (not self._is_engine_task(t.task_spec))
@@ -264,26 +247,14 @@ class BpmnWorkflow(Workflow):
                        if not self._is_engine_task(t.task_spec)]
 
     def get_waiting_tasks(self):
-        """
-        Returns a list of all WAITING tasks
-        """
+        """Returns a list of all WAITING tasks"""
         return self.get_tasks(TaskState.WAITING)
 
     def get_catching_tasks(self):
         return [ task for task in self.get_tasks() if isinstance(task.task_spec, CatchingEvent) ]
 
-    def _is_busy_with_restore(self):
-        if self.outer_workflow == self:
-            return self._busy_with_restore
-        return self.outer_workflow._is_busy_with_restore()
-
     def _is_engine_task(self, task_spec):
-        return (not hasattr(task_spec, 'is_engine_task') or
-                task_spec.is_engine_task())
+        return (not hasattr(task_spec, 'is_engine_task') or task_spec.is_engine_task())
 
     def _task_completed_notify(self, task):
-        assert (not self.read_only) or self._is_busy_with_restore()
         super(BpmnWorkflow, self)._task_completed_notify(task)
-
-    def _task_cancelled_notify(self, task):
-        assert (not self.read_only) or self._is_busy_with_restore()
