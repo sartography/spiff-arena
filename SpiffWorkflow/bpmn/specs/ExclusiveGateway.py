@@ -41,22 +41,14 @@ class ExclusiveGateway(ExclusiveChoice, BpmnSpecMixin):
 #            raise WorkflowException(self, 'At least one output required.')
         for condition, name in self.cond_task_specs:
             if name is None:
-                raise WorkflowException(self, 'Condition with no task spec.')
+                raise WorkflowException('Condition with no task spec.', task_spec=self)
             task_spec = self._wf_spec.get_task_spec_from_name(name)
             if task_spec is None:
                 msg = 'Condition leads to non-existent task ' + repr(name)
-                raise WorkflowException(self, msg)
+                raise WorkflowException(msg, task_spec=self)
             if condition is None:
                 continue
 
     @property
     def spec_type(self):
         return 'Exclusive Gateway'
-
-    def serialize(self, serializer):
-        return serializer.serialize_exclusive_gateway(self)
-
-
-    @classmethod
-    def deserialize(self, serializer, wf_spec, s_state):
-        return serializer.deserialize_exclusive_gateway(wf_spec, s_state)
