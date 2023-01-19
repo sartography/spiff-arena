@@ -1,9 +1,12 @@
 """Test_message_service."""
 import os
+import sys
 
 import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+from flask_bpmn.models.db import db
+from lxml import etree  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -237,3 +240,29 @@ class TestSpecFileService(BaseTest):
 
         full_file_path = SpecFileService.full_file_path(process_model, "bad_xml.bpmn")
         assert not os.path.isfile(full_file_path)
+
+    @pytest.mark.skipif(
+        sys.platform == "win32",
+        reason="tmp file path is not valid xml for windows and it doesn't matter",
+    )
+    def test_does_not_evaluate_entities(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        """Test_does_not_evaluate_entities."""
+        string_replacement = b"THIS_STRING_SHOULD_NOT_EXIST_ITS_SECRET"
+        tmp_file = os.path.normpath(
+            self.get_test_data_file_full_path("file_to_inject", "xml_with_entity")
+        )
+        file_contents = self.get_test_data_file_contents(
+            "invoice.bpmn", "xml_with_entity"
+        )
+        file_contents = (
+            file_contents.decode("utf-8")
+            .replace("{{FULL_PATH_TO_FILE}}", tmp_file)
+            .encode()
+        )
+        etree_element = SpecFileService.get_etree_from_xml_bytes(file_contents)
+        assert string_replacement not in etree.tostring(etree_element)

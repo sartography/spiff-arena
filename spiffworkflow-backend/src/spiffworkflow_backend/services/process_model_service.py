@@ -26,6 +26,10 @@ from spiffworkflow_backend.services.user_service import UserService
 T = TypeVar("T")
 
 
+class ProcessModelWithInstancesNotDeletableError(Exception):
+    """ProcessModelWithInstancesNotDeletableError."""
+
+
 class ProcessModelService(FileSystemService):
     """ProcessModelService."""
 
@@ -44,7 +48,7 @@ class ProcessModelService(FileSystemService):
         return path.replace(os.sep, "/")
 
     @classmethod
-    def is_group(cls, path: str) -> bool:
+    def is_process_group(cls, path: str) -> bool:
         """Is_group."""
         group_json_path = os.path.join(path, cls.PROCESS_GROUP_JSON_FILE)
         if os.path.exists(group_json_path):
@@ -52,8 +56,8 @@ class ProcessModelService(FileSystemService):
         return False
 
     @classmethod
-    def is_group_identifier(cls, process_group_identifier: str) -> bool:
-        """Is_group_identifier."""
+    def is_process_group_identifier(cls, process_group_identifier: str) -> bool:
+        """Is_process_group_identifier."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = os.path.abspath(
                 os.path.join(
@@ -63,21 +67,21 @@ class ProcessModelService(FileSystemService):
                     ),
                 )
             )
-            return cls.is_group(process_group_path)
+            return cls.is_process_group(process_group_path)
 
         return False
 
     @classmethod
-    def is_model(cls, path: str) -> bool:
-        """Is_model."""
+    def is_process_model(cls, path: str) -> bool:
+        """Is_process_model."""
         model_json_path = os.path.join(path, cls.PROCESS_MODEL_JSON_FILE)
         if os.path.exists(model_json_path):
             return True
         return False
 
     @classmethod
-    def is_model_identifier(cls, process_model_identifier: str) -> bool:
-        """Is_model_identifier."""
+    def is_process_model_identifier(cls, process_model_identifier: str) -> bool:
+        """Is_process_model_identifier."""
         if os.path.exists(FileSystemService.root_path()):
             process_model_path = os.path.abspath(
                 os.path.join(
@@ -87,7 +91,7 @@ class ProcessModelService(FileSystemService):
                     ),
                 )
             )
-            return cls.is_model(process_model_path)
+            return cls.is_process_model(process_model_path)
 
         return False
 
@@ -129,7 +133,9 @@ class ProcessModelService(FileSystemService):
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
         """Save_process_model."""
         process_model_path = os.path.abspath(
-            os.path.join(FileSystemService.root_path(), process_model.id)
+            os.path.join(
+                FileSystemService.root_path(), process_model.id_for_file_path()
+            )
         )
         os.makedirs(process_model_path, exist_ok=True)
         json_path = os.path.abspath(
@@ -150,12 +156,9 @@ class ProcessModelService(FileSystemService):
             ProcessInstanceModel.process_model_identifier == process_model_id
         ).all()
         if len(instances) > 0:
-            raise ApiError(
-                error_code="existing_instances",
-                message=(
-                    f"We cannot delete the model `{process_model_id}`, there are"
-                    " existing instances that depend on it."
-                ),
+            raise ProcessModelWithInstancesNotDeletableError(
+                f"We cannot delete the model `{process_model_id}`, there are"
+                " existing instances that depend on it."
             )
         process_model = self.get_process_model(process_model_id)
         path = self.workflow_path(process_model)
@@ -196,7 +199,7 @@ class ProcessModelService(FileSystemService):
         model_path = os.path.abspath(
             os.path.join(FileSystemService.root_path(), process_model_id)
         )
-        if cls.is_model(model_path):
+        if cls.is_process_model(model_path):
             return cls.get_process_model_from_relative_path(process_model_id)
         raise ProcessEntityNotFoundError("process_model_not_found")
 
@@ -300,7 +303,7 @@ class ProcessModelService(FileSystemService):
                     FileSystemService.id_string_to_relative_path(process_group_id),
                 )
             )
-            if cls.is_group(process_group_path):
+            if cls.is_process_group(process_group_path):
                 return cls.find_or_create_process_group(
                     process_group_path,
                     find_direct_nested_items=find_direct_nested_items,
@@ -348,7 +351,7 @@ class ProcessModelService(FileSystemService):
         for _root, dirs, _files in os.walk(group_path):
             for dir in dirs:
                 model_dir = os.path.join(group_path, dir)
-                if ProcessModelService.is_model(model_dir):
+                if ProcessModelService.is_process_model(model_dir):
                     process_model = self.get_process_model(model_dir)
                     all_nested_models.append(process_model)
         return all_nested_models
@@ -366,13 +369,10 @@ class ProcessModelService(FileSystemService):
                 if len(instances) > 0:
                     problem_models.append(process_model)
             if len(problem_models) > 0:
-                raise ApiError(
-                    error_code="existing_instances",
-                    message=(
-                        f"We cannot delete the group `{process_group_id}`, there are"
-                        " models with existing instances inside the group."
-                        f" {problem_models}"
-                    ),
+                raise ProcessModelWithInstancesNotDeletableError(
+                    f"We cannot delete the group `{process_group_id}`, there are"
+                    " models with existing instances inside the group."
+                    f" {problem_models}"
                 )
             shutil.rmtree(path)
         self.cleanup_process_group_display_order()
@@ -403,7 +403,7 @@ class ProcessModelService(FileSystemService):
             process_groups = []
             for item in directory_items:
                 # if item.is_dir() and not item.name[0] == ".":
-                if item.is_dir() and cls.is_group(item):  # type: ignore
+                if item.is_dir() and cls.is_process_group(item):  # type: ignore
                     scanned_process_group = cls.find_or_create_process_group(item.path)
                     process_groups.append(scanned_process_group)
             return process_groups
@@ -450,12 +450,12 @@ class ProcessModelService(FileSystemService):
                 for nested_item in nested_items:
                     if nested_item.is_dir():
                         # TODO: check whether this is a group or model
-                        if cls.is_group(nested_item.path):
+                        if cls.is_process_group(nested_item.path):
                             # This is a nested group
                             process_group.process_groups.append(
                                 cls.find_or_create_process_group(nested_item.path)
                             )
-                        elif ProcessModelService.is_model(nested_item.path):
+                        elif ProcessModelService.is_process_model(nested_item.path):
                             process_group.process_models.append(
                                 cls.__scan_process_model(
                                     nested_item.path,

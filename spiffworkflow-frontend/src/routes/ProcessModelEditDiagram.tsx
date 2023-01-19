@@ -35,11 +35,13 @@ import {
 } from '../interfaces';
 import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
+import { usePrompt } from '../hooks/UsePrompt';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
+  const [diagramHasChanges, setDiagramHasChanges] = useState<boolean>(false);
 
   const [scriptText, setScriptText] = useState<string>('');
   const [scriptType, setScriptType] = useState<string>('');
@@ -111,6 +113,8 @@ export default function ProcessModelEditDiagram() {
   );
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
+
+  usePrompt('Changes you made may not be saved.', diagramHasChanges);
 
   useEffect(() => {
     // Grab all available process models in case we need to search for them.
@@ -206,6 +210,11 @@ export default function ProcessModelEditDiagram() {
     // after saving the file, make sure we null out newFileName
     // so it does not get used over the params
     setNewFileName('');
+    setDiagramHasChanges(false);
+  };
+
+  const onElementsChanged = () => {
+    setDiagramHasChanges(true);
   };
 
   const onDeleteFile = (fileName = params.file_name) => {
@@ -922,6 +931,7 @@ export default function ProcessModelEditDiagram() {
         onLaunchDmnEditor={onLaunchDmnEditor}
         onDmnFilesRequested={onDmnFilesRequested}
         onSearchProcessModels={onSearchProcessModels}
+        onElementsChanged={onElementsChanged}
       />
     );
   };

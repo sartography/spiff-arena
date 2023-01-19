@@ -303,7 +303,6 @@ def login_api() -> Response:
 
 
 def login_api_return(code: str, state: str, session_state: str) -> str:
-    """Login_api_return."""
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_dict["redirect_url"]
 

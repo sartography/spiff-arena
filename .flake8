@@ -8,8 +8,11 @@ rst-roles = class,const,func,meth,mod,ref
 rst-directives = deprecated
 
 per-file-ignores =
-    # prefer naming tests descriptively rather than forcing comments
-    spiffworkflow-backend/tests/*:S101,D103
+    # asserts are ok in tests
+    spiffworkflow-backend/tests/*:S101
+
+    # prefer naming functions descriptively rather than forcing comments
+    spiffworkflow-backend/*:D103
 
     spiffworkflow-backend/bin/keycloak_test_server.py:B950,D
     spiffworkflow-backend/conftest.py:S105

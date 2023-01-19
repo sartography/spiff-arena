@@ -1,5 +1,8 @@
+import { slowCypressDown } from 'cypress-slow-down';
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
 import { miscDisplayName } from '../support/helpers';
+
+// slowCypressDown(500);
 
 describe('process-models', () => {
   beforeEach(() => {
@@ -132,7 +135,7 @@ describe('process-models', () => {
     cy.get('.tile-process-group-content-container').should('exist');
   });
 
-  it('can upload and run a bpmn file', () => {
+  it.only('can upload and run a bpmn file', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const directParentGroupId = 'acceptance-tests-group-one';

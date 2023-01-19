@@ -139,7 +139,7 @@ class BaseTest:
             process_group_path = os.path.abspath(
                 os.path.join(FileSystemService.root_path(), process_group_id)
             )
-            if ProcessModelService.is_group(process_group_path):
+            if ProcessModelService.is_process_group(process_group_path):
                 if exception_notification_addresses is None:
                     exception_notification_addresses = []
 
@@ -173,11 +173,11 @@ class BaseTest:
                 " model"
             )
 
-    def get_test_data_file_contents(
+    def get_test_data_file_full_path(
         self, file_name: str, process_model_test_data_dir: str
-    ) -> bytes:
+    ) -> str:
         """Get_test_data_file_contents."""
-        file_full_path = os.path.join(
+        return os.path.join(
             current_app.instance_path,
             "..",
             "..",
@@ -185,6 +185,14 @@ class BaseTest:
             "data",
             process_model_test_data_dir,
             file_name,
+        )
+
+    def get_test_data_file_contents(
+        self, file_name: str, process_model_test_data_dir: str
+    ) -> bytes:
+        """Get_test_data_file_contents."""
+        file_full_path = self.get_test_data_file_full_path(
+            file_name, process_model_test_data_dir
         )
         with open(file_full_path, "rb") as file:
             return file.read()
@@ -251,9 +259,9 @@ class BaseTest:
 
         There must be an existing process model to instantiate.
         """
-        if not ProcessModelService.is_model_identifier(test_process_model_id):
+        if not ProcessModelService.is_process_model_identifier(test_process_model_id):
             dirname = os.path.dirname(test_process_model_id)
-            if not ProcessModelService.is_group_identifier(dirname):
+            if not ProcessModelService.is_process_group_identifier(dirname):
                 process_group = ProcessGroup(id=dirname, display_name=dirname)
                 ProcessModelService.add_process_group(process_group)
             basename = os.path.basename(test_process_model_id)
