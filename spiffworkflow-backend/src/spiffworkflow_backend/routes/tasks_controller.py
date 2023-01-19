@@ -15,8 +15,6 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
@@ -26,6 +24,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm.util import AliasedClass
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel

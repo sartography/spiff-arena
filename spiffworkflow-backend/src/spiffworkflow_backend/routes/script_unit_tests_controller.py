@@ -10,10 +10,10 @@ from flask import current_app
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from spiffworkflow_backend.exceptions.api_error import ApiError
 from lxml import etree  # type: ignore
 from lxml.builder import ElementMaker  # type: ignore
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _get_required_parameter_or_raise,

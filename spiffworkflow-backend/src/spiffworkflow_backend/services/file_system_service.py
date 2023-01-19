@@ -8,8 +8,8 @@ from typing import Optional
 
 import pytz
 from flask import current_app
-from spiffworkflow_backend.exceptions.api_error import ApiError
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.file import CONTENT_TYPES
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -151,7 +151,8 @@ class FileSystemService:
 
     @staticmethod
     def _get_files(file_path: str, file_name: Optional[str] = None) -> List[File]:
-        """Returns an array of File objects at the given path, can be restricted to just one file."""
+        """Returns an array of File objects at the given path, can be restricted to just one file.
+        """
         files = []
         items = os.scandir(file_path)
         for item in items:

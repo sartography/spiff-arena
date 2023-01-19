@@ -9,8 +9,8 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from spiffworkflow_backend.exceptions.api_error import ApiError
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel

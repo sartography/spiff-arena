@@ -5,15 +5,14 @@ from typing import Any
 from typing import Optional
 from typing import TYPE_CHECKING
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from sqlalchemy import ForeignKey
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import validates
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 

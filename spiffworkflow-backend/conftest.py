@@ -5,11 +5,10 @@ import shutil
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel

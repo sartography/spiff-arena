@@ -1,11 +1,10 @@
 """Message_correlation_message_instance."""
 from dataclasses import dataclass
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from sqlalchemy import ForeignKey
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 

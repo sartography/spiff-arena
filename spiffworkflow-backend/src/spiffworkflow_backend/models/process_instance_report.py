@@ -7,9 +7,6 @@ from typing import cast
 from typing import Optional
 from typing import TypedDict
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import deferred
 from sqlalchemy.orm import relationship
@@ -17,6 +14,8 @@ from sqlalchemy.orm import relationship
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (

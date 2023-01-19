@@ -1,10 +1,10 @@
 """Refresh_token."""
 from dataclasses import dataclass
 
+from sqlalchemy import ForeignKey
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
-from sqlalchemy import ForeignKey
 
 # from sqlalchemy.orm import relationship
 

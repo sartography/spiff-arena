@@ -2,9 +2,9 @@
 import time
 
 from flask import current_app
-from spiffworkflow_backend.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.process_instance_service import (

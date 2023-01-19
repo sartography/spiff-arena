@@ -2,12 +2,11 @@
 import enum
 from typing import Any
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import validates
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 

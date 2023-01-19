@@ -5,10 +5,10 @@ from datetime import datetime
 from typing import List
 from typing import Optional
 
-from spiffworkflow_backend.models.db import db
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.file import SpecReference
@@ -325,7 +325,8 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_message_cache(ref: SpecReference) -> None:
-        """Assure we have a record in the database of all possible message ids and names."""
+        """Assure we have a record in the database of all possible message ids and names.
+        """
         for message_model_identifier in ref.messages.keys():
             message_model = MessageModel.query.filter_by(
                 identifier=message_model_identifier

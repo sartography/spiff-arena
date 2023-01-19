@@ -15,7 +15,8 @@ from flask import jsonify
 from flask import make_response
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
-from SpiffWorkflow.exceptions import WorkflowException, WorkflowTaskException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowException
+from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
 
@@ -40,7 +41,7 @@ class ApiError(Exception):
     task_data: dict | str | None = field(default_factory=dict)
     task_id: str = ""
     task_name: str = ""
-    task_trace: dict | None = field(default_factory=dict)
+    task_trace: list | None = field(default_factory=dict)
 
     def __str__(self) -> str:
         """Instructions to print instance as a string."""
@@ -151,7 +152,7 @@ class ApiError(Exception):
             )
 
         else:
-            return ApiError.from_task_spec(error_code, message, exp.sender)
+            return ApiError.from_task_spec(error_code, message, exp.task_spec)
 
 
 def set_user_sentry_context() -> None:
@@ -176,7 +177,9 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
 
         if isinstance(exception, ApiError):
             current_app.logger.info(
-                f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}")
+                f"Sending ApiError exception to sentry: {exception} with error code"
+                f" {exception.error_code}"
+            )
 
         organization_slug = current_app.config.get("SENTRY_ORGANIZATION_SLUG")
         project_slug = current_app.config.get("SENTRY_PROJECT_SLUG")

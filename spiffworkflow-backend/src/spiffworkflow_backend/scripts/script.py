@@ -9,7 +9,6 @@ from typing import Any
 from typing import Callable
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceNotFoundError
 from spiffworkflow_backend.models.script_attributes_context import (
@@ -28,7 +27,8 @@ class ScriptUnauthorizedForUserError(Exception):
 
 
 class Script:
-    """Provides an abstract class that defines how scripts should work, this must be extended in all Script Tasks."""
+    """Provides an abstract class that defines how scripts should work, this must be extended in all Script Tasks.
+    """
 
     @abstractmethod
     def get_description(self) -> str:

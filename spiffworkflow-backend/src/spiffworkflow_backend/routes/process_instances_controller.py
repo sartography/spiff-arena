@@ -11,12 +11,12 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from SpiffWorkflow.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
@@ -556,9 +556,10 @@ def process_instance_task_list(
     else:
         spiff_tasks = processor.get_all_user_tasks()
 
-    subprocesses_by_child_task_ids, task_typename_by_task_id = (
-        processor.get_subprocesses_by_child_task_ids()
-    )
+    (
+        subprocesses_by_child_task_ids,
+        task_typename_by_task_id,
+    ) = processor.get_subprocesses_by_child_task_ids()
     processor.get_highest_level_calling_subprocesses_by_child_task_ids(
         subprocesses_by_child_task_ids, task_typename_by_task_id
     )

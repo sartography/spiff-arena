@@ -5,9 +5,9 @@ from typing import Union
 from flask import current_app
 from flask import g
 from flask.wrappers import Response
+
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
-
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
@@ -41,7 +41,8 @@ class ErrorHandlingService:
     def handle_error(
         self, _processor: ProcessInstanceProcessor, _error: Union[ApiError, Exception]
     ) -> None:
-        """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
+        """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception.
+        """
         process_model = ProcessModelService.get_process_model(
             _processor.process_model_identifier
         )

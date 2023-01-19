@@ -6,15 +6,14 @@ from typing import Optional
 from typing import Type
 
 import sqlalchemy
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import selectinload
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -313,9 +312,9 @@ class ProcessInstanceReportService:
             process_instance_dict = process_instance["ProcessInstanceModel"].serialized
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
-                    process_instance_dict[metadata_column["accessor"]] = (
-                        process_instance[metadata_column["accessor"]]
-                    )
+                    process_instance_dict[
+                        metadata_column["accessor"]
+                    ] = process_instance[metadata_column["accessor"]]
 
             results.append(process_instance_dict)
         return results

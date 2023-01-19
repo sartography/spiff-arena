@@ -9,10 +9,10 @@ import jwt
 import requests
 from flask import current_app
 from flask import redirect
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from werkzeug.wrappers import Response
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 
 
@@ -60,7 +60,8 @@ class AuthenticationService:
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str) -> str:
-        """All openid systems provide a mapping of static names to the full path of that endpoint."""
+        """All openid systems provide a mapping of static names to the full path of that endpoint.
+        """
         openid_config_url = f"{cls.server_url()}/.well-known/openid-configuration"
         if name not in AuthenticationService.ENDPOINT_CACHE:
             response = requests.get(openid_config_url)
@@ -200,7 +201,8 @@ class AuthenticationService:
 
     @classmethod
     def get_auth_token_from_refresh_token(cls, refresh_token: str) -> dict:
-        """Converts a refresh token to an Auth Token by calling the openid's auth endpoint."""
+        """Converts a refresh token to an Auth Token by calling the openid's auth endpoint.
+        """
         backend_basic_auth_string = f"{cls.client_id()}:{cls.secret_key()}"
         backend_basic_auth_bytes = bytes(backend_basic_auth_string, encoding="ascii")
         backend_basic_auth = base64.b64encode(backend_basic_auth_bytes)

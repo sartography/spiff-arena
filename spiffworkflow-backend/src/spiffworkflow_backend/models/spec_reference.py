@@ -1,12 +1,12 @@
 """Message_model."""
 from dataclasses import dataclass
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from flask_marshmallow import Schema  # type: ignore
 from marshmallow import INCLUDE
 from sqlalchemy import UniqueConstraint
+
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
 
 class SpecReferenceNotFoundError(Exception):
@@ -38,7 +38,8 @@ class SpecReference:
 
 
 class SpecReferenceCache(SpiffworkflowBaseDBModel):
-    """A cache of information about all the Processes and Decisions defined in all files."""
+    """A cache of information about all the Processes and Decisions defined in all files.
+    """
 
     __tablename__ = "spec_reference_cache"
     __table_args__ = (

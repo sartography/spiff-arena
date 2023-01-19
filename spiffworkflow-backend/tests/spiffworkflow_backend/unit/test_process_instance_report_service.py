@@ -3,10 +3,10 @@ from typing import Optional
 
 from flask import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance_report import (

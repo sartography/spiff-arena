@@ -17,13 +17,13 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
@@ -171,7 +171,8 @@ class AuthorizationService:
 
     @classmethod
     def delete_all_permissions(cls) -> None:
-        """Delete_all_permissions_and_recreate.  EXCEPT For permissions for the current user?"""
+        """Delete_all_permissions_and_recreate.  EXCEPT For permissions for the current user?
+        """
         for model in [PermissionAssignmentModel, PermissionTargetModel]:
             db.session.query(model).delete()
 
@@ -282,9 +283,9 @@ class AuthorizationService:
         """Find_or_create_permission_target."""
         uri_with_percent = re.sub(r"\*", "%", uri)
         target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
-        permission_target: Optional[PermissionTargetModel] = (
-            PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
-        )
+        permission_target: Optional[
+            PermissionTargetModel
+        ] = PermissionTargetModel.query.filter_by(uri=target_uri_normalized).first()
         if permission_target is None:
             permission_target = PermissionTargetModel(uri=target_uri_normalized)
             db.session.add(permission_target)
@@ -299,13 +300,13 @@ class AuthorizationService:
         permission: str,
     ) -> PermissionAssignmentModel:
         """Create_permission_for_principal."""
-        permission_assignment: Optional[PermissionAssignmentModel] = (
-            PermissionAssignmentModel.query.filter_by(
-                principal_id=principal.id,
-                permission_target_id=permission_target.id,
-                permission=permission,
-            ).first()
-        )
+        permission_assignment: Optional[
+            PermissionAssignmentModel
+        ] = PermissionAssignmentModel.query.filter_by(
+            principal_id=principal.id,
+            permission_target_id=permission_target.id,
+            permission=permission,
+        ).first()
         if permission_assignment is None:
             permission_assignment = PermissionAssignmentModel(
                 principal_id=principal.id,
@@ -434,10 +435,8 @@ class AuthorizationService:
         except jwt.InvalidTokenError as exception:
             raise ApiError(
                 "token_invalid",
-                (
-                    "The Authentication token you provided is invalid. You need a new"
-                    " token. "
-                ),
+                "The Authentication token you provided is invalid. You need a new"
+                " token. ",
             ) from exception
 
     @staticmethod
