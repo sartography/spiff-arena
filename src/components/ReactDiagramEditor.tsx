@@ -84,6 +84,7 @@ type OwnProps = {
   onJsonFilesRequested?: (..._args: any[]) => any;
   onDmnFilesRequested?: (..._args: any[]) => any;
   onSearchProcessModels?: (..._args: any[]) => any;
+  onElementsChanged?: (..._args: any[]) => any;
   url?: string;
 };
 
@@ -109,6 +110,7 @@ export default function ReactDiagramEditor({
   onJsonFilesRequested,
   onDmnFilesRequested,
   onSearchProcessModels,
+  onElementsChanged,
   url,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
@@ -264,9 +266,6 @@ export default function ReactDiagramEditor({
       handleLaunchMarkdownEditor(element, value, eventBus);
     });
 
-    /**
-     * fixme:  this is not in use yet, we need the ability to find bpmn files by id.
-     */
     diagramModeler.on('spiff.callactivity.edit', (event: any) => {
       if (onLaunchBpmnEditor) {
         onLaunchBpmnEditor(event.processId);
@@ -293,6 +292,11 @@ export default function ReactDiagramEditor({
     // 'element.mouseup',
     diagramModeler.on('element.click', (element: any) => {
       handleElementClick(element);
+    });
+    diagramModeler.on('elements.changed', (event: any) => {
+      if (onElementsChanged) {
+        onElementsChanged(event);
+      }
     });
 
     diagramModeler.on('spiff.service_tasks.requested', (event: any) => {
@@ -333,6 +337,7 @@ export default function ReactDiagramEditor({
     onJsonFilesRequested,
     onDmnFilesRequested,
     onSearchProcessModels,
+    onElementsChanged,
   ]);
 
   useEffect(() => {

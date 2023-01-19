@@ -12,6 +12,7 @@ import {
   ProcessModel,
   ReportColumn,
   ReportMetadata,
+  User,
 } from '../interfaces';
 import HttpService from '../services/HttpService';
 
@@ -20,6 +21,7 @@ type OwnProps = {
   columnArray: ReportColumn[];
   orderBy: string;
   processModelSelection: ProcessModel | null;
+  processInitiatorSelection: User | null;
   processStatusSelection: string[];
   startFromSeconds: string | null;
   startToSeconds: string | null;
@@ -36,6 +38,7 @@ export default function ProcessInstanceListSaveAsReport({
   columnArray,
   orderBy,
   processModelSelection,
+  processInitiatorSelection,
   processInstanceReportSelection,
   processStatusSelection,
   startFromSeconds,
@@ -83,6 +86,13 @@ export default function ProcessInstanceListSaveAsReport({
       filterByArray.push({
         field_name: 'process_model_identifier',
         field_value: processModelSelection.id,
+      });
+    }
+
+    if (processInitiatorSelection) {
+      filterByArray.push({
+        field_name: 'process_initiator_username',
+        field_value: processInitiatorSelection.username,
       });
     }
 

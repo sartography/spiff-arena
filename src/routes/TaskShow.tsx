@@ -1,13 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-
-// FIXME: npm install @rjsf/validator-ajv8 and use it as soon as
-// rawErrors is fixed.
-// https://react-jsonschema-form.readthedocs.io/en/latest/usage/validation/
-// https://github.com/rjsf-team/react-jsonschema-form/issues/2309 links to a codesandbox that might be useful to fork
-// if we wanted to file a defect against rjsf to show the difference between validator-ajv6 and validator-ajv8.
-// https://github.com/rjsf-team/react-jsonschema-form/blob/main/docs/api-reference/uiSchema.md talks about rawErrors
-import validator from '@rjsf/validator-ajv6';
+import validator from '@rjsf/validator-ajv8';
 
 import {
   TabList,
@@ -145,6 +138,34 @@ export default function TaskShow() {
     return null;
   };
 
+  const getFieldsWithDateValidations = (
+    jsonSchema: any,
+    formData: any,
+    errors: any
+  ) => {
+    if ('properties' in jsonSchema) {
+      Object.keys(jsonSchema.properties).forEach((propertyKey: string) => {
+        const propertyMetadata = jsonSchema.properties[propertyKey];
+        if (
+          'minimumDate' in propertyMetadata &&
+          propertyMetadata.minimumDate === 'today'
+        ) {
+          const dateToday = new Date();
+          const dateValue = formData[propertyKey];
+          if (dateValue) {
+            const dateValueObject = new Date(dateValue);
+            const dateValueString = dateValueObject.toISOString().split('T')[0];
+            const dateTodayString = dateToday.toISOString().split('T')[0];
+            if (dateTodayString > dateValueString) {
+              errors[propertyKey].addError('must be today or after');
+            }
+          }
+        }
+      });
+    }
+    return errors;
+  };
+
   const formElement = (taskToUse: any) => {
     let formUiSchema;
     let taskData = taskToUse.data;
@@ -191,6 +212,10 @@ export default function TaskShow() {
       );
     }
 
+    const customValidate = (formData: any, errors: any) => {
+      return getFieldsWithDateValidations(jsonSchema, formData, errors);
+    };
+
     return (
       <Grid fullWidth condensed>
         <Column md={5} lg={8} sm={4}>
@@ -200,6 +225,7 @@ export default function TaskShow() {
             schema={jsonSchema}
             uiSchema={formUiSchema}
             validator={validator}
+            customValidate={customValidate}
           >
             {reactFragmentToHideSubmitButton}
           </Form>

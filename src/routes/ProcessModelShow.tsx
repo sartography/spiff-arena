@@ -374,6 +374,7 @@ export default function ProcessModelShow() {
 
   const doFileUpload = (event: any) => {
     event.preventDefault();
+    setErrorObject(null);
     const url = `/process-models/${modifiedProcessModelId}/files`;
     const formData = new FormData();
     formData.append('file', filesToUpload[0]);
@@ -383,6 +384,7 @@ export default function ProcessModelShow() {
       successCallback: onUploadedCallback,
       httpMethod: 'POST',
       postBody: formData,
+      failureCallback: setErrorObject,
     });
     setFilesToUpload(null);
   };
@@ -685,7 +687,7 @@ export default function ProcessModelShow() {
             perPageOptions={[2, 5, 25]}
             showReports={false}
           />
-          <span data-qa="process-model-show-permissions-loaded">true</span>
+          <span data-qa="process-model-show-permissions-loaded" />
         </Can>
       </>
     );

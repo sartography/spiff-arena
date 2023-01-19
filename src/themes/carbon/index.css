@@ -1,3 +1,22 @@
 button.react-json-schema-form-submit-button {
   margin-top: 1.5em;
 }
+
+.rjsf .header {
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 28px;
+  color: #161616;
+}
+
+.rjsf .field-description {
+  font-size: 14px;
+  line-height: 18px;
+  letter-spacing: 0.16px;
+  color: #525252;
+  margin-bottom: 1em;
+}
+
+.rjsf .input {
+  margin-bottom: 2em;
+}

@@ -34,12 +34,12 @@ export interface ProcessInstanceTask {
   process_identifier: string;
   name: string;
   process_initiator_username: string;
-  assigned_user_group_identifier: string;
   created_at_in_seconds: number;
   updated_at_in_seconds: number;
   current_user_is_potential_owner: number;
-  potential_owner_usernames: string;
   calling_subprocess_task_id: string;
+  potential_owner_usernames?: string;
+  assigned_user_group_identifier?: string;
 }
 
 export interface ProcessReference {
@@ -73,8 +73,13 @@ export interface ProcessInstance {
   status: string;
   start_in_seconds: number | null;
   end_in_seconds: number | null;
+  process_initiator_username: string;
   bpmn_xml_file_contents?: string;
   spiff_step?: number;
+  created_at_in_seconds: number;
+  updated_at_in_seconds: number;
+  bpmn_version_control_identifier: string;
+  bpmn_version_control_type: string;
 }
 
 export interface MessageCorrelationProperties {
@@ -146,6 +151,8 @@ export interface ProcessModel {
   files: ProcessFile[];
   parent_groups?: ProcessGroupLite[];
   metadata_extraction_paths?: MetadataExtractionPath[];
+  fault_or_suspend_on_exception?: string;
+  exception_notification_addresses?: string[];
 }
 
 export interface ProcessGroup {

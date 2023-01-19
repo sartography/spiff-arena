@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 // @ts-ignore
@@ -8,17 +8,24 @@ import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessFile } from '../interfaces';
+import ErrorContext from '../contexts/ErrorContext';
+import { Notification } from '../components/Notification';
 
 // NOTE: This is mostly the same as ProcessModelEditDiagram and if we go this route could
 // possibly be merged into it. I'm leaving as a separate file now in case it does
 // end up diverging greatly
 export default function ReactFormEditor() {
   const params = useParams();
+  const setErrorObject = (useContext as any)(ErrorContext)[1];
+
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const searchParams = useSearchParams()[0];
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
   const navigate = useNavigate();
+
+  const [displaySaveFileMessage, setDisplaySaveFileMessage] =
+    useState<boolean>(false);
 
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
     null
@@ -70,6 +77,7 @@ export default function ReactFormEditor() {
   }, [params, modifiedProcessModelId]);
 
   const navigateToProcessModelFile = (_result: any) => {
+    setDisplaySaveFileMessage(true);
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${fileExtension}`;
       navigate(
@@ -79,6 +87,9 @@ export default function ReactFormEditor() {
   };
 
   const saveFile = () => {
+    setErrorObject(null);
+    setDisplaySaveFileMessage(false);
+
     let url = `/process-models/${modifiedProcessModelId}/files`;
     let httpMethod = 'PUT';
     let fileNameWithExtension = params.file_name;
@@ -105,6 +116,7 @@ export default function ReactFormEditor() {
     HttpService.makeCallToBackend({
       path: url,
       successCallback: navigateToProcessModelFile,
+      failureCallback: setErrorObject,
       httpMethod,
       postBody: formData,
     });
@@ -162,6 +174,20 @@ export default function ReactFormEditor() {
     );
   };
 
+  const saveFileMessage = () => {
+    if (displaySaveFileMessage) {
+      return (
+        <Notification
+          title="File Saved: "
+          onClose={() => setDisplaySaveFileMessage(false)}
+        >
+          Changes to the file were saved.
+        </Notification>
+      );
+    }
+    return null;
+  };
+
   if (processModelFile || !params.file_name) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
     return (
@@ -182,6 +208,7 @@ export default function ReactFormEditor() {
           {processModelFileName}
         </h1>
         {newFileNameBox()}
+        {saveFileMessage()}
         <Button onClick={saveFile} variant="danger" data-qa="file-save-button">
           Save
         </Button>

@@ -45,7 +45,6 @@ export default function BaseInputTemplate<
   // Note: since React 15.2.0 we can't forward unknown element attributes, so we
   // exclude the "options" and "schema" ones here.
   if (!id) {
-    console.log('No id for', props);
     throw new Error(`no id for props ${JSON.stringify(props)}`);
   }
   const inputProps = {
@@ -90,7 +89,11 @@ export default function BaseInputTemplate<
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
-    errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+    if ('validationErrorMessage' in schema) {
+      errorMessageForField = (schema as any).validationErrorMessage;
+    } else {
+      errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+    }
   }
 
   return (
@@ -98,6 +101,7 @@ export default function BaseInputTemplate<
       <TextInput
         id={id}
         name={id}
+        className="input"
         labelText={labelToUse}
         invalid={invalid}
         invalidText={errorMessageForField}

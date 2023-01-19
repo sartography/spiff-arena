@@ -7,12 +7,12 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
+  CaretRight,
   TrashCan,
   StopOutline,
   PauseOutline,
   PlayOutline,
   CaretLeft,
-  CaretRight,
   InProgress,
   Checkmark,
   Warning,
@@ -48,6 +48,7 @@ import {
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
+import TaskListTable from '../components/TaskListTable';
 
 type OwnProps = {
   variant: string;
@@ -72,6 +73,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
+  const [displayDetails, setDisplayDetails] = useState<boolean>(false);
 
   const setErrorObject = (useContext as any)(ErrorContext)[1];
 
@@ -199,20 +201,21 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const getTaskIds = () => {
     const taskIds = { completed: [], readyOrWaiting: [] };
     if (tasks) {
+      const callingSubprocessId = searchParams.get('call_activity_task_id');
       tasks.forEach(function getUserTasksElement(task: ProcessInstanceTask) {
-        const callingSubprocessId = searchParams.get('call_activity_task_id');
         if (
-          !callingSubprocessId ||
-          callingSubprocessId === task.calling_subprocess_task_id
+          callingSubprocessId &&
+          callingSubprocessId !== task.calling_subprocess_task_id
         ) {
-          console.log('callingSubprocessId', callingSubprocessId);
-          if (task.state === 'COMPLETED') {
-            (taskIds.completed as any).push(task);
-          }
-          if (task.state === 'READY' || task.state === 'WAITING') {
-            (taskIds.readyOrWaiting as any).push(task);
-          }
+          return null;
         }
+        if (task.state === 'COMPLETED') {
+          (taskIds.completed as any).push(task);
+        }
+        if (task.state === 'READY' || task.state === 'WAITING') {
+          (taskIds.readyOrWaiting as any).push(task);
+        }
+        return null;
       });
     }
     return taskIds;
@@ -281,6 +284,70 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
+  const detailedViewElement = () => {
+    if (!processInstance) {
+      return null;
+    }
+
+    if (displayDetails) {
+      return (
+        <>
+          <Grid condensed fullWidth>
+            <Button
+              kind="ghost"
+              className="button-link"
+              onClick={() => setDisplayDetails(false)}
+              title="Hide Details"
+            >
+              &laquo; Hide Details
+            </Button>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Updated At:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {convertSecondsToFormattedDateTime(
+                processInstance.updated_at_in_seconds
+              )}
+            </Column>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Created At:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {convertSecondsToFormattedDateTime(
+                processInstance.created_at_in_seconds
+              )}
+            </Column>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Process model revision:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {processInstance.bpmn_version_control_identifier} (
+              {processInstance.bpmn_version_control_type})
+            </Column>
+          </Grid>
+        </>
+      );
+    }
+    return (
+      <Grid condensed fullWidth>
+        <Button
+          kind="ghost"
+          className="button-link"
+          onClick={() => setDisplayDetails(true)}
+          title="Show Details"
+        >
+          View Details &raquo;
+        </Button>
+      </Grid>
+    );
+  };
+
   const getInfoTag = () => {
     if (!processInstance) {
       return null;
@@ -319,6 +386,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <>
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
+            Started By:{' '}
+          </Column>
+          <Column sm={3} md={3} lg={3} className="grid-date">
+            {processInstance.process_initiator_username}
+          </Column>
+        </Grid>
+        <Grid condensed fullWidth>
+          <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started:{' '}
           </Column>
           <Column sm={3} md={3} lg={3} className="grid-date">
@@ -338,6 +413,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Tag>
           </Column>
         </Grid>
+        {detailedViewElement()}
         <br />
         <Grid condensed fullWidth>
           <Column sm={2} md={2} lg={2}>
@@ -529,11 +605,24 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
+  const isCurrentTask = (task: any) => {
+    const subprocessTypes = [
+      'Subprocess',
+      'Call Activity',
+      'Transactional Subprocess',
+    ];
+    return (
+      (task.state === 'WAITING' &&
+        subprocessTypes.filter((t) => t === task.type).length > 0) ||
+      task.state === 'READY'
+    );
+  };
+
   const canEditTaskData = (task: any) => {
     return (
       processInstance &&
       ability.can('PUT', targetUris.processInstanceTaskListDataPath) &&
-      task.state === 'READY' &&
+      isCurrentTask(task) &&
       processInstance.status === 'suspended' &&
       showingLastSpiffStep()
     );
@@ -557,7 +646,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       processInstance &&
       processInstance.status === 'suspended' &&
       ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
-      task.state === 'READY' &&
+      isCurrentTask(task) &&
       showingLastSpiffStep()
     );
   };
@@ -818,6 +907,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     const candidateEvents: any = getEvents(taskToUse);
     if (taskToDisplay) {
+      let taskTitleText = taskToUse.id;
+      if (taskToUse.title) {
+        taskTitleText += ` (${taskToUse.title})`;
+      }
       return (
         <Modal
           open={!!taskToUse}
@@ -825,7 +918,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           onRequestClose={handleTaskDataDisplayClose}
         >
           <Stack orientation="horizontal" gap={2}>
-            {taskToUse.name} ({taskToUse.type}): {taskToUse.state}
+            <span title={taskTitleText}>{taskToUse.name}</span> (
+            {taskToUse.type}
+            ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
           {selectingEvent
@@ -915,6 +1010,26 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         </Stack>
         <br />
         <br />
+        <Grid condensed fullWidth>
+          <Column md={6} lg={8} sm={4}>
+            <TaskListTable
+              apiPath="/tasks"
+              additionalParams={`process_instance_id=${processInstance.id}`}
+              tableTitle="Tasks I can complete"
+              tableDescription="These are tasks that can be completed by you, either because they were assigned to a group you are in, or because they were assigned directly to you."
+              paginationClassName="with-large-bottom-margin"
+              textToShowIfEmpty="There are no tasks you can complete for this process instance."
+              shouldPaginateTable={false}
+              showProcessModelIdentifier={false}
+              showProcessId={false}
+              showStartedBy={false}
+              showTableDescriptionAsTooltip
+              showDateStarted={false}
+              showLastUpdated={false}
+              hideIfNoTasks
+            />
+          </Column>
+        </Grid>
         {getInfoTag()}
         <br />
         {taskUpdateDisplayArea()}
