@@ -397,6 +397,12 @@ paths:
         description: the modified process model id
         schema:
           type: string
+      - name: include_file_references
+        in: query
+        required: false
+        description: include all file references in the return
+        schema:
+          type: boolean
     get:
       operationId: spiffworkflow_backend.routes.process_models_controller.process_model_show
       summary: Returns a single process model
@@ -628,6 +634,12 @@ paths:
         description: The identifier of the group to get the process instances for
         schema:
           type: string
+      - name: process_initiator_username
+        in: query
+        required: false
+        description: The username of the process initiator
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list_for_me
       summary: Returns a list of process instances that are associated with me.
@@ -739,6 +751,12 @@ paths:
         in: query
         required: false
         description: The identifier of the group to get the process instances for
+        schema:
+          type: string
+      - name: process_initiator_username
+        in: query
+        required: false
+        description: The username of the process initiator
         schema:
           type: string
     get:
@@ -1315,6 +1333,12 @@ paths:
 
   /tasks:
     parameters:
+      - name: process_instance_id
+        in: query
+        required: false
+        description: The process instance id to search by.
+        schema:
+          type: integer
       - name: page
         in: query
         required: false
@@ -1808,7 +1832,7 @@ paths:
     post:
       tags:
         - Messages
-      operationId: spiffworkflow_backend.routes.messages_controller.message_start
+      operationId: spiffworkflow_backend.routes.messages_controller.message_send
       summary: Instantiate and run a given process model with a message start event matching given identifier
       requestBody:
         content:

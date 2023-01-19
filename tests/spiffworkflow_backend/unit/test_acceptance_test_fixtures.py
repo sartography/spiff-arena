@@ -18,15 +18,15 @@ def test_start_dates_are_one_hour_apart(app: Flask) -> None:
     )
     group_identifier = os.path.dirname(process_model_identifier)
     parent_group_identifier = os.path.dirname(group_identifier)
-    if not ProcessModelService.is_group(parent_group_identifier):
+    if not ProcessModelService.is_process_group(parent_group_identifier):
         process_group = ProcessGroup(
             id=parent_group_identifier, display_name=parent_group_identifier
         )
         ProcessModelService.add_process_group(process_group)
-    if not ProcessModelService.is_group(group_identifier):
+    if not ProcessModelService.is_process_group(group_identifier):
         process_group = ProcessGroup(id=group_identifier, display_name=group_identifier)
         ProcessModelService.add_process_group(process_group)
-    if not ProcessModelService.is_model(process_model_identifier):
+    if not ProcessModelService.is_process_model(process_model_identifier):
         process_model = ProcessModelInfo(
             id=process_model_identifier,
             display_name=process_model_identifier,

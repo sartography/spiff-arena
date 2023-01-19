@@ -27,8 +27,9 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
-#SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
+# temporarily switch off main to fix CI because poetry export doesn't capture the revision if it's not here (it ignores the lock)
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "be26100bcbef8026e26312c665dae42faf476485"}
+# SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
 flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
@@ -44,7 +45,6 @@ marshmallow-enum = "^1.5.1"
 marshmallow-sqlalchemy = "^0.28.0"
 PyJWT = "^2.6.0"
 gunicorn = "^20.1.0"
-python-keycloak = "^2.5.0"
 APScheduler = "*"
 Jinja2 = "^3.1.2"
 RestrictedPython = "^6.0"
@@ -72,6 +72,7 @@ simplejson = "^3.17.6"
 pytz = "^2022.6"
 dateparser = "^1.1.2"
 types-dateparser = "^1.1.4.1"
+flask-jwt-extended = "^4.4.4"
 
 
 [tool.poetry.dev-dependencies]
@@ -79,7 +80,7 @@ pytest = "*"
 coverage = {extras = ["toml"], version = "^6.1"}
 safety = "^2.3.1"
 mypy = ">=0.961"
-typeguard = "^2.13.2"
+typeguard = "^2"
 xdoctest = {extras = ["colors"], version = "^1.0.1"}
 sphinx = "^5.0.2"
 sphinx-autobuild = ">=2021.3.14"

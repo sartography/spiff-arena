@@ -34,6 +34,8 @@ from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # typ
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.event_definitions import CancelEventDefinition  # type: ignore
+from SpiffWorkflow.bpmn.specs.events.StartEvent import StartEvent  # type: ignore
+from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
@@ -623,7 +625,25 @@ class ProcessInstanceProcessor:
                 db.session.add(pim)
                 db.session.commit()
 
-    def get_subprocesses_by_child_task_ids(self) -> dict:
+    def get_all_task_specs(self) -> dict[str, dict]:
+        """This looks both at top level task_specs and subprocess_specs in the serialized data.
+
+        It returns a dict of all task specs based on the task name like it is in the serialized form.
+
+        NOTE: this may not fully work for tasks that are NOT call activities since their task_name may no be unique
+        but in our current use case we only care about the call activities here.
+        """
+        serialized_data = json.loads(self.serialize())
+        spiff_task_json = serialized_data["spec"]["task_specs"] or {}
+        if "subprocess_specs" in serialized_data:
+            for _subprocess_task_name, subprocess_details in serialized_data[
+                "subprocess_specs"
+            ].items():
+                if "task_specs" in subprocess_details:
+                    spiff_task_json = spiff_task_json | subprocess_details["task_specs"]
+        return spiff_task_json
+
+    def get_subprocesses_by_child_task_ids(self) -> Tuple[dict, dict]:
         """Get all subprocess ids based on the child task ids.
 
         This is useful when trying to link the child task of a call activity back to
@@ -639,11 +659,46 @@ class ProcessInstanceProcessor:
         call activities like subprocesses in terms of the serialization.
         """
         bpmn_json = json.loads(self.serialize())
+        spiff_task_json = self.get_all_task_specs()
+
         subprocesses_by_child_task_ids = {}
+        task_typename_by_task_id = {}
         if "subprocesses" in bpmn_json:
             for subprocess_id, subprocess_details in bpmn_json["subprocesses"].items():
-                for task_id in subprocess_details["tasks"]:
+                for task_id, task_details in subprocess_details["tasks"].items():
                     subprocesses_by_child_task_ids[task_id] = subprocess_id
+                    task_name = task_details["task_spec"]
+                    if task_name in spiff_task_json:
+                        task_typename_by_task_id[task_id] = spiff_task_json[task_name][
+                            "typename"
+                        ]
+        return (subprocesses_by_child_task_ids, task_typename_by_task_id)
+
+    def get_highest_level_calling_subprocesses_by_child_task_ids(
+        self, subprocesses_by_child_task_ids: dict, task_typename_by_task_id: dict
+    ) -> dict:
+        """Ensure task ids point to the top level subprocess id.
+
+        This is done by checking if a subprocess is also a task until the subprocess is no longer a task or a Call Activity.
+        """
+        for task_id, subprocess_id in subprocesses_by_child_task_ids.items():
+            if subprocess_id in subprocesses_by_child_task_ids:
+                current_subprocess_id_for_task = subprocesses_by_child_task_ids[task_id]
+                if current_subprocess_id_for_task in task_typename_by_task_id:
+                    # a call activity is like the top-level subprocess since it is the calling subprocess
+                    # according to spiff and the top-level calling subprocess is really what we care about
+                    if (
+                        task_typename_by_task_id[current_subprocess_id_for_task]
+                        == "CallActivity"
+                    ):
+                        continue
+
+                subprocesses_by_child_task_ids[task_id] = (
+                    subprocesses_by_child_task_ids[subprocess_id]
+                )
+                self.get_highest_level_calling_subprocesses_by_child_task_ids(
+                    subprocesses_by_child_task_ids, task_typename_by_task_id
+                )
         return subprocesses_by_child_task_ids
 
     def save(self) -> None:
@@ -770,7 +825,16 @@ class ProcessInstanceProcessor:
                 f"Manually executing Task {spiff_task.task_spec.name} of process"
                 f" instance {self.process_instance_model.id}"
             )
-            spiff_task.complete()
+            # Executing a subworkflow manually will restart its subprocess and allow stepping through it
+            if isinstance(spiff_task.task_spec, SubWorkflowTask):
+                subprocess = self.bpmn_process_instance.get_subprocess(spiff_task)
+                # We have to get to the actual start event
+                for task in self.bpmn_process_instance.get_tasks(workflow=subprocess):
+                    task.complete()
+                    if isinstance(task.task_spec, StartEvent):
+                        break
+            else:
+                spiff_task.complete()
         else:
             spiff_logger = logging.getLogger("spiff")
             spiff_logger.info(
@@ -779,7 +843,20 @@ class ProcessInstanceProcessor:
             spiff_task._set_state(TaskState.COMPLETED)
             for child in spiff_task.children:
                 child.task_spec._update(child)
-        self.bpmn_process_instance.last_task = spiff_task
+            spiff_task.workflow.last_task = spiff_task
+
+        if isinstance(spiff_task.task_spec, EndEvent):
+            for task in self.bpmn_process_instance.get_tasks(
+                TaskState.DEFINITE_MASK, workflow=spiff_task.workflow
+            ):
+                task.complete()
+
+        # A subworkflow task will become ready when its workflow is complete.  Engine steps would normally
+        # then complete it, but we have to do it ourselves here.
+        for task in self.bpmn_process_instance.get_tasks(TaskState.READY):
+            if isinstance(task.task_spec, SubWorkflowTask):
+                task.complete()
+
         self.increment_spiff_step()
         self.add_step()
         self.save()
@@ -944,10 +1021,10 @@ class ProcessInstanceProcessor:
         for file in files:
             data = SpecFileService.get_data(process_model_info, file.name)
             if file.type == FileType.bpmn.value:
-                bpmn: etree.Element = etree.fromstring(data)
+                bpmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
                 parser.add_bpmn_xml(bpmn, filename=file.name)
             elif file.type == FileType.dmn.value:
-                dmn: etree.Element = etree.fromstring(data)
+                dmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
                 parser.add_dmn_xml(dmn, filename=file.name)
         if (
             process_model_info.primary_process_id is None
@@ -991,9 +1068,13 @@ class ProcessInstanceProcessor:
         if bpmn_process_instance.is_completed():
             return ProcessInstanceStatus.complete
         user_tasks = bpmn_process_instance.get_ready_user_tasks()
-        waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
-        if len(waiting_tasks) > 0:
-            return ProcessInstanceStatus.waiting
+
+        # if the process instance has status "waiting" it will get picked up
+        # by background processing. when that happens it can potentially overwrite
+        # human tasks which is bad because we cache them with the previous id's.
+        # waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
+        # if len(waiting_tasks) > 0:
+        #     return ProcessInstanceStatus.waiting
         if len(user_tasks) > 0:
             return ProcessInstanceStatus.user_input_required
         else:
@@ -1180,10 +1261,13 @@ class ProcessInstanceProcessor:
         step_details = []
         try:
             self.bpmn_process_instance.refresh_waiting_tasks(
-                will_refresh_task=lambda t: self.increment_spiff_step(),
-                did_refresh_task=lambda t: step_details.append(
-                    self.spiff_step_details_mapping()
-                ),
+                #
+                # commenting out to see if this helps with the growing spiff steps/db issue
+                #
+                # will_refresh_task=lambda t: self.increment_spiff_step(),
+                # did_refresh_task=lambda t: step_details.append(
+                #   self.spiff_step_details_mapping()
+                # ),
             )
 
             self.bpmn_process_instance.do_engine_steps(
@@ -1227,8 +1311,34 @@ class ProcessInstanceProcessor:
         except WorkflowTaskExecException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
+    def user_defined_task_data(self, task_data: dict) -> dict:
+        """UserDefinedTaskData."""
+        return {k: v for k, v in task_data.items() if k != "current_user"}
+
+    def check_task_data_size(self) -> None:
+        """CheckTaskDataSize."""
+        tasks_to_check = self.bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
+        task_data = [self.user_defined_task_data(task.data) for task in tasks_to_check]
+        task_data_to_check = list(filter(len, task_data))
+
+        try:
+            task_data_len = len(json.dumps(task_data_to_check))
+        except Exception:
+            task_data_len = 0
+
+        task_data_limit = 1024**2
+
+        if task_data_len > task_data_limit:
+            raise (
+                ApiError(
+                    error_code="task_data_size_exceeded",
+                    message=f"Maximum task data size of {task_data_limit} exceeded.",
+                )
+            )
+
     def serialize(self) -> str:
         """Serialize."""
+        self.check_task_data_size()
         return self._serializer.serialize_json(self.bpmn_process_instance)  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:

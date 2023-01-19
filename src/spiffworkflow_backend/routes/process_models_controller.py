@@ -15,6 +15,7 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 from flask_bpmn.api.api_error import ApiError
+from werkzeug.datastructures import FileStorage
 
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.file import FileSchema
@@ -32,14 +33,23 @@ from spiffworkflow_backend.routes.process_api_blueprint import (
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
 from spiffworkflow_backend.services.process_instance_report_service import (
+    ProcessInstanceReportNotFoundError,
+)
+from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.process_model_service import (
+    ProcessModelWithInstancesNotDeletableError,
+)
+from spiffworkflow_backend.services.spec_file_service import (
+    ProcessModelFileInvalidError,
+)
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 
 
 def process_model_create(
-    modified_process_group_id: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_group_id: str, body: Dict[str, Union[str, bool, int, None, list]]
 ) -> flask.wrappers.Response:
     """Process_model_create."""
     body_include_list = [
@@ -49,6 +59,8 @@ def process_model_create(
         "primary_process_id",
         "description",
         "metadata_extraction_paths",
+        "fault_or_suspend_on_exception",
+        "exception_notification_addresses",
     ]
     body_filtered = {
         include_item: body[include_item]
@@ -63,6 +75,24 @@ def process_model_create(
         raise ApiError(
             error_code="process_model_could_not_be_created",
             message=f"Process Model could not be created from given body: {body}",
+            status_code=400,
+        )
+
+    if ProcessModelService.is_process_model_identifier(process_model_info.id):
+        raise ApiError(
+            error_code="process_model_with_id_already_exists",
+            message=(
+                f"Process Model with given id already exists: {process_model_info.id}"
+            ),
+            status_code=400,
+        )
+
+    if ProcessModelService.is_process_group_identifier(process_model_info.id):
+        raise ApiError(
+            error_code="process_group_with_id_already_exists",
+            message=(
+                f"Process Group with given id already exists: {process_model_info.id}"
+            ),
             status_code=400,
         )
 
@@ -82,7 +112,15 @@ def process_model_delete(
 ) -> flask.wrappers.Response:
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    ProcessModelService().process_model_delete(process_model_identifier)
+    try:
+        ProcessModelService().process_model_delete(process_model_identifier)
+    except ProcessModelWithInstancesNotDeletableError as exception:
+        raise ApiError(
+            error_code="existing_instances",
+            message=str(exception),
+            status_code=400,
+        ) from exception
+
     _commit_and_push_to_git(
         f"User: {g.user.username} deleted process model {process_model_identifier}"
     )
@@ -90,7 +128,8 @@ def process_model_delete(
 
 
 def process_model_update(
-    modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
+    modified_process_model_identifier: str,
+    body: Dict[str, Union[str, bool, int, None, list]],
 ) -> Any:
     """Process_model_update."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
@@ -100,6 +139,8 @@ def process_model_update(
         "primary_process_id",
         "description",
         "metadata_extraction_paths",
+        "fault_or_suspend_on_exception",
+        "exception_notification_addresses",
     ]
     body_filtered = {
         include_item: body[include_item]
@@ -115,7 +156,9 @@ def process_model_update(
     return ProcessModelInfoSchema().dump(process_model)
 
 
-def process_model_show(modified_process_model_identifier: str) -> Any:
+def process_model_show(
+    modified_process_model_identifier: str, include_file_references: bool = False
+) -> Any:
     """Process_model_show."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
@@ -124,8 +167,12 @@ def process_model_show(modified_process_model_identifier: str) -> Any:
         key=lambda f: "" if f.name == process_model.primary_file_name else f.sort_index,
     )
     process_model.files = files
-    for file in process_model.files:
-        file.references = SpecFileService.get_references_for_file(file, process_model)
+
+    if include_file_references:
+        for file in process_model.files:
+            file.references = SpecFileService.get_references_for_file(
+                file, process_model
+            )
 
     process_model.parent_groups = ProcessModelService.get_parent_group_array(
         process_model.id
@@ -218,25 +265,10 @@ def process_model_file_update(
     modified_process_model_identifier: str, file_name: str
 ) -> flask.wrappers.Response:
     """Process_model_file_update."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = _get_process_model(process_model_identifier)
-
-    request_file = _get_file_from_request()
-    request_file_contents = request_file.stream.read()
-    if not request_file_contents:
-        raise ApiError(
-            error_code="file_contents_empty",
-            message="Given request file does not have any content",
-            status_code=400,
-        )
-
-    SpecFileService.update_file(process_model, file_name, request_file_contents)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} clicked save for"
-        f" {process_model_identifier}/{file_name}"
+    message = f"User: {g.user.username} clicked save for"
+    return _create_or_update_process_model_file(
+        modified_process_model_identifier, message, 200
     )
-
-    return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
 def process_model_file_delete(
@@ -267,28 +299,9 @@ def process_model_file_create(
     modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_model_file_create."""
-    process_model_identifier = modified_process_model_identifier.replace(":", "/")
-    process_model = _get_process_model(process_model_identifier)
-    request_file = _get_file_from_request()
-    if not request_file.filename:
-        raise ApiError(
-            error_code="could_not_get_filename",
-            message="Could not get filename from request",
-            status_code=400,
-        )
-
-    file = SpecFileService.add_file(
-        process_model, request_file.filename, request_file.stream.read()
-    )
-    file_contents = SpecFileService.get_data(process_model, file.name)
-    file.file_contents = file_contents
-    file.process_model_id = process_model.id
-    _commit_and_push_to_git(
-        f"User: {g.user.username} added process model file"
-        f" {process_model_identifier}/{file.name}"
-    )
-    return Response(
-        json.dumps(FileSchema().dump(file)), status=201, mimetype="application/json"
+    message = f"User: {g.user.username} added process model file"
+    return _create_or_update_process_model_file(
+        modified_process_model_identifier, message, 201
     )
 
 
@@ -437,6 +450,10 @@ def process_model_create_with_natural_language(
     default_report_metadata = ProcessInstanceReportService.system_metadata_map(
         "default"
     )
+    if default_report_metadata is None:
+        raise ProcessInstanceReportNotFoundError(
+            "Could not find a report with identifier 'default'"
+        )
     for column in columns:
         default_report_metadata["columns"].append(
             {"Header": column, "accessor": column, "filterable": True}
@@ -454,9 +471,9 @@ def process_model_create_with_natural_language(
     )
 
 
-def _get_file_from_request() -> Any:
+def _get_file_from_request() -> FileStorage:
     """Get_file_from_request."""
-    request_file = connexion.request.files.get("file")
+    request_file: FileStorage = connexion.request.files.get("file")
     if not request_file:
         raise ApiError(
             error_code="no_file_given",
@@ -494,3 +511,58 @@ def _get_process_group_from_modified_identifier(
             status_code=400,
         )
     return process_group
+
+
+def _create_or_update_process_model_file(
+    modified_process_model_identifier: str,
+    message_for_git_commit: str,
+    http_status_to_return: int,
+) -> flask.wrappers.Response:
+    """_create_or_update_process_model_file."""
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    process_model = _get_process_model(process_model_identifier)
+    request_file = _get_file_from_request()
+
+    # for mypy
+    request_file_contents = request_file.stream.read()
+    if not request_file_contents:
+        raise ApiError(
+            error_code="file_contents_empty",
+            message="Given request file does not have any content",
+            status_code=400,
+        )
+    if not request_file.filename:
+        raise ApiError(
+            error_code="could_not_get_filename",
+            message="Could not get filename from request",
+            status_code=400,
+        )
+
+    file = None
+    try:
+        file = SpecFileService.update_file(
+            process_model, request_file.filename, request_file_contents
+        )
+    except ProcessModelFileInvalidError as exception:
+        raise (
+            ApiError(
+                error_code="process_model_file_invalid",
+                message=(
+                    f"Invalid Process model file cannot be save: {request_file.name}."
+                    f" Received error: {str(exception)}"
+                ),
+                status_code=400,
+            )
+        ) from exception
+    file_contents = SpecFileService.get_data(process_model, file.name)
+    file.file_contents = file_contents
+    file.process_model_id = process_model.id
+    _commit_and_push_to_git(
+        f"{message_for_git_commit} {process_model_identifier}/{file.name}"
+    )
+
+    return Response(
+        json.dumps(FileSchema().dump(file)),
+        status=http_status_to_return,
+        mimetype="application/json",
+    )

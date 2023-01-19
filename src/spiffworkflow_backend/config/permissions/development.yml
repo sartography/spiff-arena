@@ -106,6 +106,11 @@ permissions:
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /process-instances/reports/*
+  read-process-instances-find-by-id:
+    groups: [everybody]
+    users: []
+    allowed_permissions: [read]
+    uri: /process-instances/find-by-id/*
   processes-read:
     groups: [everybody]
     users: []

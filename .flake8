@@ -8,8 +8,11 @@ rst-roles = class,const,func,meth,mod,ref
 rst-directives = deprecated
 
 per-file-ignores =
-    # prefer naming tests descriptively rather than forcing comments
-    tests/*:S101,D103
+    # asserts are ok in tests
+    tests/*:S101
+
+    # prefer naming functions descriptively rather than forcing comments
+    *:D103
 
     bin/keycloak_test_server.py:B950,D
     conftest.py:S105

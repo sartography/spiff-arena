@@ -29,8 +29,11 @@ CONNECTOR_PROXY_URL = environ.get(
 
 # Open ID server
 OPEN_ID_SERVER_URL = environ.get(
-    "OPEN_ID_SERVER_URL", default="http://localhost:7002/realms/spiffworkflow"
+    "OPEN_ID_SERVER_URL",
+    default="http://localhost:7002/realms/spiffworkflow"
+    # "OPEN_ID_SERVER_URL", default="http://localhost:7000/openid"
 )
+
 # Replace above line with this to use the built-in Open ID Server.
 # OPEN_ID_SERVER_URL = environ.get("OPEN_ID_SERVER_URL", default="http://localhost:7000/openid")
 OPEN_ID_CLIENT_ID = environ.get("OPEN_ID_CLIENT_ID", default="spiffworkflow-backend")
@@ -73,4 +76,8 @@ SPIFF_DATABASE_TYPE = environ.get(
 # Overide above with specific sqlalchymy connection string.
 SPIFFWORKFLOW_BACKEND_DATABASE_URI = environ.get(
     "SPIFFWORKFLOW_BACKEND_DATABASE_URI", default=None
+)
+SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID = environ.get(
+    "SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID",
+    default="Message_SystemMessageNotification",
 )

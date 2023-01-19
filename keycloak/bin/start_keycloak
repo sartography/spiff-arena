@@ -39,12 +39,13 @@ docker run \
   -e KEYCLOAK_LOGLEVEL=ALL \
   -e ROOT_LOGLEVEL=ALL \
   -e KEYCLOAK_ADMIN=admin \
-  -e KEYCLOAK_ADMIN_PASSWORD=admin quay.io/keycloak/keycloak:20.0.1 start-dev \
+  -e KEYCLOAK_ADMIN_PASSWORD=admin \
+  quay.io/keycloak/keycloak:20.0.1 start-dev \
   -Dkeycloak.profile.feature.token_exchange=enabled \
   -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
 
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-cp "${script_dir}/spiffworkflow-realm.json" /tmp/spiffworkflow-realm.json
+cp "${script_dir}/../realm_exports/spiffworkflow-realm.json" /tmp/spiffworkflow-realm.json
 spiff_subdomain="unused-for-local-dev"
 perl -pi -e "s/{{SPIFF_SUBDOMAIN}}/${spiff_subdomain}/g" /tmp/spiffworkflow-realm.json
 docker cp /tmp/spiffworkflow-realm.json keycloak:/tmp

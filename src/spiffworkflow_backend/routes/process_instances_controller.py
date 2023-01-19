@@ -181,7 +181,20 @@ def process_instance_log_list(
         SpiffLoggingModel.process_instance_id == process_instance.id
     )
     if not detailed:
-        log_query = log_query.filter(SpiffLoggingModel.message.in_(["State change to COMPLETED"]))  # type: ignore
+        log_query = log_query.filter(
+            # this was the previous implementation, where we only show completed tasks and skipped tasks.
+            # maybe we want to iterate on this in the future (in a third tab under process instance logs?)
+            # or_(
+            #     SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
+            #     SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
+            # )
+            and_(
+                SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
+                SpiffLoggingModel.bpmn_task_type.in_(  # type: ignore
+                    ["Default Throwing Event", "End Event", "Default Start Event"]
+                ),
+            )
+        )
 
     logs = (
         log_query.order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
@@ -219,6 +232,7 @@ def process_instance_list_for_me(
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
     user_group_identifier: Optional[str] = None,
+    process_initiator_username: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list_for_me."""
     return process_instance_list(
@@ -252,6 +266,7 @@ def process_instance_list(
     report_identifier: Optional[str] = None,
     report_id: Optional[int] = None,
     user_group_identifier: Optional[str] = None,
+    process_initiator_username: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
@@ -268,6 +283,7 @@ def process_instance_list(
             end_to=end_to,
             with_relation_to_me=with_relation_to_me,
             process_status=process_status.split(",") if process_status else None,
+            process_initiator_username=process_initiator_username,
         )
     else:
         report_filter = (
@@ -281,6 +297,7 @@ def process_instance_list(
                 end_to=end_to,
                 process_status=process_status,
                 with_relation_to_me=with_relation_to_me,
+                process_initiator_username=process_initiator_username,
             )
         )
 
@@ -547,7 +564,13 @@ def process_instance_task_list(
     else:
         spiff_tasks = processor.get_all_user_tasks()
 
-    subprocesses_by_child_task_ids = processor.get_subprocesses_by_child_task_ids()
+    subprocesses_by_child_task_ids, task_typename_by_task_id = (
+        processor.get_subprocesses_by_child_task_ids()
+    )
+    processor.get_highest_level_calling_subprocesses_by_child_task_ids(
+        subprocesses_by_child_task_ids, task_typename_by_task_id
+    )
+
     tasks = []
     for spiff_task in spiff_tasks:
         calling_subprocess_task_id = subprocesses_by_child_task_ids.get(

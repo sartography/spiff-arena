@@ -20,6 +20,15 @@ class MissingAccessTokenError(Exception):
     """MissingAccessTokenError."""
 
 
+# These could be either 'id' OR 'access' tokens and we can't always know which
+class TokenExpiredError(Exception):
+    """TokenExpiredError."""
+
+
+class TokenInvalidError(Exception):
+    """TokenInvalidError."""
+
+
 class AuthenticationProviderTypes(enum.Enum):
     """AuthenticationServiceProviders."""
 
@@ -125,18 +134,15 @@ class AuthenticationService:
         return auth_token_object
 
     @classmethod
-    def validate_id_token(cls, id_token: str) -> bool:
+    def validate_id_or_access_token(cls, token: str) -> bool:
         """Https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation."""
         valid = True
         now = time.time()
         try:
-            decoded_token = jwt.decode(id_token, options={"verify_signature": False})
+            decoded_token = jwt.decode(token, options={"verify_signature": False})
         except Exception as e:
-            raise ApiError(
-                error_code="bad_id_token",
-                message="Cannot decode id_token",
-                status_code=401,
-            ) from e
+            raise TokenInvalidError("Cannot decode token") from e
+
         if decoded_token["iss"] != cls.server_url():
             valid = False
         elif (
@@ -153,15 +159,10 @@ class AuthenticationService:
             valid = False
 
         if not valid:
-            current_app.logger.error(f"Invalid token in validate_id_token: {id_token}")
             return False
 
         if now > decoded_token["exp"]:
-            raise ApiError(
-                error_code="invalid_token",
-                message="Your token is expired. Please Login",
-                status_code=401,
-            )
+            raise TokenExpiredError("Your token is expired. Please Login")
 
         return True
 
