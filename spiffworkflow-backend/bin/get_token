@@ -22,8 +22,8 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 # KEYCLOAK_BASE_URL=http://localhost:7002
 KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
-# BACKEND_BASE_URL=http://localhost:7000
-BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
+BACKEND_BASE_URL=http://localhost:7000
+# BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
 REALM_NAME=spiffworkflow
 USERNAME=${1-fin}
 PASSWORD=${2-fin}

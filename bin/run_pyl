@@ -31,12 +31,6 @@ function get_python_dirs() {
   (git ls-tree -r HEAD --name-only | grep -E '\.py$' | awk -F '/' '{print $1}' | sort | uniq | grep -v '\.' | grep -Ev '^(bin|migrations)$') || echo ''
 }
 
-function run_fix_docstrings() {
-  if command -v fix_python_docstrings >/dev/null ; then
-    fix_python_docstrings $(get_top_level_directories_containing_python_files)
-  fi
-}
-
 function run_autoflake() {
   # checking command -v autoflake8 is not good enough, since the asdf shim may be installed, which will make command -v succeed,
   # but autoflake8 may not have been pip installed inside the correct version of python.
@@ -86,7 +80,6 @@ done
 for python_project in "${python_projects[@]}" ; do
   if [[ "$subcommand" != "pre" ]] || [[ -n "$(git status --porcelain "$python_project")" ]]; then
     pushd "$python_project"
-    run_fix_docstrings || run_fix_docstrings
     run_autoflake || run_autoflake
     popd
   fi

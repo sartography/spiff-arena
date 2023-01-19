@@ -692,9 +692,8 @@ class ProcessInstanceProcessor:
                     ):
                         continue
 
-                subprocesses_by_child_task_ids[
-                    task_id
-                ] = subprocesses_by_child_task_ids[subprocess_id]
+                subprocesses_by_child_task_ids[task_id] =\
+                    subprocesses_by_child_task_ids[subprocess_id]
                 self.get_highest_level_calling_subprocesses_by_child_task_ids(
                     subprocesses_by_child_task_ids, task_typename_by_task_id
                 )
@@ -1022,10 +1021,10 @@ class ProcessInstanceProcessor:
             data = SpecFileService.get_data(process_model_info, file.name)
             try:
                 if file.type == FileType.bpmn.value:
-                    bpmn: etree.Element = etree.fromstring(data)
+                    bpmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
                     parser.add_bpmn_xml(bpmn, filename=file.name)
                 elif file.type == FileType.dmn.value:
-                    dmn: etree.Element = etree.fromstring(data)
+                    dmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
                     parser.add_dmn_xml(dmn, filename=file.name)
             except XMLSyntaxError as xse:
                 raise ApiError(
@@ -1075,9 +1074,13 @@ class ProcessInstanceProcessor:
         if bpmn_process_instance.is_completed():
             return ProcessInstanceStatus.complete
         user_tasks = bpmn_process_instance.get_ready_user_tasks()
-        waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
-        if len(waiting_tasks) > 0:
-            return ProcessInstanceStatus.waiting
+
+        # if the process instance has status "waiting" it will get picked up
+        # by background processing. when that happens it can potentially overwrite
+        # human tasks which is bad because we cache them with the previous id's.
+        # waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
+        # if len(waiting_tasks) > 0:
+        #     return ProcessInstanceStatus.waiting
         if len(user_tasks) > 0:
             return ProcessInstanceStatus.user_input_required
         else:

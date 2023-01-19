@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+user_file_with_one_email_per_line="${1:-}"
+if [[ -z "${1:-}" ]]; then
+  >&2 echo "usage: $(basename "$0") [user_file_with_one_email_per_line]"
+  exit 1
+fi
+
+KEYCLOAK_BASE_URL=http://localhost:7002
+REALM_NAME=master
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="admin"
+SECURE=false
+
+KEYCLOAK_URL=$KEYCLOAK_BASE_URL/realms/$REALM_NAME/protocol/openid-connect/token
+
+if [[ $SECURE = 'y' ]]; then
+	INSECURE=
+else
+	INSECURE=--insecure
+fi
+
+# https://www.appsdeveloperblog.com/keycloak-rest-api-create-a-new-user/
+result=$(curl --fail -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
+  --header 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode "username=${ADMIN_USERNAME}" \
+  --data-urlencode "password=${ADMIN_PASSWORD}" \
+  --data-urlencode 'grant_type=password' \
+  --data-urlencode 'client_id=admin-cli'
+)
+backend_token=$(jq -r '.access_token' <<< "$result")
+
+while read -r user_email; do
+  if [[ -n "$user_email" ]]; then
+    username=$(awk -F '@' '{print $1}' <<<"$user_email")
+    credentials='{"type":"password","value":"'"${username}"'","temporary":false}'
+
+    curl --fail --location --request POST 'http://localhost:7002/admin/realms/spiffworkflow/users' \
+      -H 'Content-Type: application/json' \
+      -H "Authorization: Bearer $backend_token" \
+      --data-raw '{"email":"'"${user_email}"'", "enabled":"true", "username":"'"${username}"'", "credentials":['"${credentials}"']}'
+  fi
+done <"$user_file_with_one_email_per_line"

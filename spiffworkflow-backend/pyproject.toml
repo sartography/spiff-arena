@@ -27,10 +27,13 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
-#SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
-SpiffWorkflow = {develop = true, path = "/home/dan/code/workflow/SpiffWorkflow" }
+# temporarily switch off main to fix CI because poetry export doesn't capture the revision if it's not here (it ignores the lock)
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
+# SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
+flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
+# flask-bpmn = {develop = true, path = "../flask-bpmn"}
 mysql-connector-python = "*"
 pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
