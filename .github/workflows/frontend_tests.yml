@@ -86,7 +86,7 @@ jobs:
         run: ./bin/wait_for_frontend_to_be_up 5
       - name: wait_for_keycloak
         working-directory: ./spiffworkflow-backend
-        run: ./bin/wait_for_keycloak 5
+        run: ./keycloak/bin/wait_for_keycloak 5
       - name: Cypress run
         uses: cypress-io/github-action@v4
         with:
