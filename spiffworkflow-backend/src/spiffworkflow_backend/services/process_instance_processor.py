@@ -692,8 +692,9 @@ class ProcessInstanceProcessor:
                     ):
                         continue
 
-                subprocesses_by_child_task_ids[task_id] =\
-                    subprocesses_by_child_task_ids[subprocess_id]
+                subprocesses_by_child_task_ids[
+                    task_id
+                ] = subprocesses_by_child_task_ids[subprocess_id]
                 self.get_highest_level_calling_subprocesses_by_child_task_ids(
                     subprocesses_by_child_task_ids, task_typename_by_task_id
                 )
