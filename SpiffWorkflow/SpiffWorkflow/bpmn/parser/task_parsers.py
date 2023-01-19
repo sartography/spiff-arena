@@ -57,25 +57,17 @@ class ExclusiveGatewayParser(TaskParser):
     appropriately.
     """
 
-    def connect_outgoing(self, outgoing_task, outgoing_task_node,
-                         sequence_flow_node, is_default):
+    def connect_outgoing(self, outgoing_task, sequence_flow_node, is_default):
         if is_default:
-            super(ExclusiveGatewayParser, self).connect_outgoing(
-                outgoing_task, outgoing_task_node, sequence_flow_node,
-                is_default)
+            super(ExclusiveGatewayParser, self).connect_outgoing(outgoing_task, sequence_flow_node, is_default)
         else:
             cond = self.parse_condition(sequence_flow_node)
             if cond is None:
                 raise ValidationException(
-                    'Non-default exclusive outgoing sequence flow '
-                    ' without condition',
+                    'Non-default exclusive outgoing sequence flow without condition',
                     sequence_flow_node,
                     self.filename)
-            self.task.connect_outgoing_if(
-                cond, outgoing_task,
-                sequence_flow_node.get('id'),
-                sequence_flow_node.get('name', None),
-                self.parse_documentation(sequence_flow_node))
+            self.task.connect_outgoing_if(cond, outgoing_task)
 
     def handles_multiple_outgoing(self):
         return True
@@ -121,12 +113,12 @@ class SubprocessParser:
             raise ValidationException(
                 'Multiple Start points are not allowed in SubWorkflow Task',
                 node=task_parser.node,
-                filename=task_parser.filename)
+                file_name=task_parser.filename)
         if len(workflow_end_event) == 0:
             raise ValidationException(
                 'A SubWorkflow Must contain an End event',
                 node=task_parser.node,
-                filename=task_parser.filename)
+                file_name=task_parser.filename)
 
         nsmap = DEFAULT_NSMAP.copy()
         nsmap['camunda'] = "http://camunda.org/schema/1.0/bpmn"
@@ -151,14 +143,14 @@ class SubprocessParser:
             raise ValidationException(
                 'No "calledElement" attribute for Call Activity.',
                 node=task_parser.node,
-                filename=task_parser.filename)
+                file_name=task_parser.filename)
         parser = task_parser.process_parser.parser.get_process_parser(called_element)
         if parser is None:
             raise ValidationException(
                 f"The process '{called_element}' was not found. Did you mean one of the following: "
                 f"{', '.join(task_parser.process_parser.parser.get_process_ids())}?",
                 node=task_parser.node,
-                filename=task_parser.filename)
+                file_name=task_parser.filename)
         return called_element
 
 
@@ -206,7 +198,7 @@ class ScriptTaskParser(TaskParser):
         except AssertionError as ae:
             raise ValidationException(
                 f"Invalid Script Task.  No Script Provided. " + str(ae),
-                node=self.node, filename=self.filename)
+                node=self.node, file_name=self.filename)
 
 
 class ServiceTaskParser(TaskParser):
