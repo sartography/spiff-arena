@@ -35,6 +35,9 @@ class TestProcessInstanceService(BaseTest):
         ).all()
         initial_length = len(process_instance_logs)
 
+        # ensure we have something in the logs
+        assert initial_length > 0
+
         # logs should NOT increase after running this a second time since it's just waiting on a human task
         processor.do_engine_steps(save=True)
         process_instance_logs = SpiffLoggingModel.query.filter_by(
