@@ -6,10 +6,10 @@ import time
 from typing import Any
 
 from flask_migrate import Migrate  # type: ignore
-from flask_sqlalchemy import SQLAlchemy  # type: ignore
-from sqlalchemy import event  # type: ignore
-from sqlalchemy.engine.base import Connection  # type: ignore
-from sqlalchemy.orm.mapper import Mapper  # type: ignore
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event
+from sqlalchemy.engine.base import Connection
+from sqlalchemy.orm.mapper import Mapper
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -81,5 +81,5 @@ def add_listeners() -> None:
     This should be called after importing all subclasses
     """
     for cls in SpiffworkflowBaseDBModel._all_subclasses():
-        event.listen(cls, "before_insert", update_created_modified_on_create_listener)
-        event.listen(cls, "before_update", update_modified_on_update_listener)
+        event.listen(cls, "before_insert", update_created_modified_on_create_listener)  # type: ignore
+        event.listen(cls, "before_update", update_modified_on_update_listener)  # type: ignore

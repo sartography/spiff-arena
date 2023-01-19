@@ -8,7 +8,7 @@ avoid circular imports
 """
 
 
-from flask_bpmn.models.db import add_listeners
+from spiffworkflow_backend.models.db import add_listeners
 
 # must load these before UserModel and GroupModel for relationships
 from spiffworkflow_backend.models.user_group_assignment import (

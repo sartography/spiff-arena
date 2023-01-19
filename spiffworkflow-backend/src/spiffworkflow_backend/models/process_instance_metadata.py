@@ -1,10 +1,10 @@
 """Process_instance_metadata."""
 from dataclasses import dataclass
 
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import ForeignKey
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 

@@ -5,7 +5,7 @@ def main():
     """Use main to avoid global namespace."""
     import csv
 
-    from flask_bpmn.models.db import db
+    from spiffworkflow_backend.models.db import db
 
     from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
     from spiffworkflow_backend.models.user import UserModel

@@ -22,11 +22,9 @@ from uuid import UUID
 import dateparser
 import pytz
 from flask import current_app
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from lxml import etree  # type: ignore
+from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
@@ -40,6 +38,7 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import (
@@ -71,6 +70,8 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
@@ -217,15 +218,16 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             return super()._evaluate(expression, context, external_methods=methods)
         except Exception as exception:
             if task is None:
-                raise ProcessInstanceProcessorError(
-                    "Error evaluating expression: '%s', exception: %s"
+                raise WorkflowException(
+                    "Error evaluating expression: '%s', %s"
                     % (expression, str(exception)),
                 ) from exception
             else:
-                raise WorkflowTaskExecException(
-                    task,
+                raise WorkflowTaskException(
                     "Error evaluating expression '%s', %s"
                     % (expression, str(exception)),
+                    task=task,
+                    exception=exception,
                 ) from exception
 
     def execute(
@@ -240,7 +242,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         except WorkflowException as e:
             raise e
         except Exception as e:
-            raise WorkflowTaskExecException(task, f" {script}, {e}", e) from e
+            raise self.create_task_exec_exception(task, script, e) from e
 
     def call_service(
         self,
@@ -1020,12 +1022,18 @@ class ProcessInstanceProcessor:
 
         for file in files:
             data = SpecFileService.get_data(process_model_info, file.name)
-            if file.type == FileType.bpmn.value:
-                bpmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
-                parser.add_bpmn_xml(bpmn, filename=file.name)
-            elif file.type == FileType.dmn.value:
-                dmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
-                parser.add_dmn_xml(dmn, filename=file.name)
+            try:
+                if file.type == FileType.bpmn.value:
+                    bpmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
+                    parser.add_bpmn_xml(bpmn, filename=file.name)
+                elif file.type == FileType.dmn.value:
+                    dmn: etree.Element = SpecFileService.get_etree_from_xml_bytes(data)
+                    parser.add_dmn_xml(dmn, filename=file.name)
+            except XMLSyntaxError as xse:
+                raise ApiError(
+                    error_code="invalid_xml",
+                    message=f"'{file.name}' is not a valid xml file." + str(xse),
+                ) from xse
         if (
             process_model_info.primary_process_id is None
             or process_model_info.primary_process_id == ""
@@ -1056,7 +1064,8 @@ class ProcessInstanceProcessor:
                 error_code="process_instance_validation_error",
                 message="Failed to parse the Workflow Specification. "
                 + "Error is '%s.'" % str(ve),
-                file_name=ve.filename,
+                file_name=ve.file_name,
+                task_name=ve.name,
                 task_id=ve.id,
                 tag=ve.tag,
             ) from ve
@@ -1288,7 +1297,7 @@ class ProcessInstanceProcessor:
                     handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
 
-        except WorkflowTaskExecException as we:
+        except WorkflowTaskException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
         finally:
@@ -1308,7 +1317,7 @@ class ProcessInstanceProcessor:
             bpmn_process_instance.catch(CancelEventDefinition())
             # Due to this being static, can't save granular step details in this case
             bpmn_process_instance.do_engine_steps()
-        except WorkflowTaskExecException as we:
+        except WorkflowTaskException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
     def user_defined_task_data(self, task_data: dict) -> dict:
