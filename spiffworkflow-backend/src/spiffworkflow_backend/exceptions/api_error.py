@@ -15,8 +15,8 @@ from flask import jsonify
 from flask import make_response
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
 
@@ -41,7 +41,7 @@ class ApiError(Exception):
     task_data: dict | str | None = field(default_factory=dict)
     task_id: str = ""
     task_name: str = ""
-    task_trace: dict | None = field(default_factory=dict)
+    task_trace: list | None = field(default_factory=list)
 
     def __str__(self) -> str:
         """Instructions to print instance as a string."""
@@ -65,7 +65,7 @@ class ApiError(Exception):
         offset: int = 0,
         error_type: str = "",
         error_line: str = "",
-        task_trace: dict | None = None,
+        task_trace: list | None = None,
     ) -> ApiError:
         """Constructs an API Error with details pulled from the current task."""
         instance = cls(error_code, message, status_code=status_code)
@@ -79,7 +79,7 @@ class ApiError(Exception):
         if task_trace:
             instance.task_trace = task_trace
         else:
-            instance.task_trace = WorkflowTaskExecException.get_task_trace(task)
+            instance.task_trace = WorkflowTaskException.get_task_trace(task)
 
         # spiffworkflow is doing something weird where task ends up referenced in the data in some cases.
         if "task" in task.data:
@@ -139,20 +139,20 @@ class ApiError(Exception):
         so consolidating the error_code, and doing the best things
         we can with the data we have.
         """
-        if isinstance(exp, WorkflowTaskExecException):
+        if isinstance(exp, WorkflowTaskException):
             return ApiError.from_task(
                 error_code,
                 message,
                 exp.task,
                 line_number=exp.line_number,
                 offset=exp.offset,
-                error_type=exp.exception.__class__.__name__,
+                error_type=exp.error_type,
                 error_line=exp.error_line,
                 task_trace=exp.task_trace,
             )
 
         else:
-            return ApiError.from_task_spec(error_code, message, exp.sender)
+            return ApiError.from_task_spec(error_code, message, exp.task_spec)
 
 
 def set_user_sentry_context() -> None:
@@ -166,7 +166,7 @@ def set_user_sentry_context() -> None:
     set_tag("username", username)
 
 
-@api_error_blueprint.app_errorhandler(Exception)
+@api_error_blueprint.app_errorhandler(Exception)  # type: ignore
 def handle_exception(exception: Exception) -> flask.wrappers.Response:
     """Handles unexpected exceptions."""
     set_user_sentry_context()
@@ -177,7 +177,9 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
 
         if isinstance(exception, ApiError):
             current_app.logger.info(
-                f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}")
+                f"Sending ApiError exception to sentry: {exception} with error code"
+                f" {exception.error_code}"
+            )
 
         organization_slug = current_app.config.get("SENTRY_ORGANIZATION_SLUG")
         project_slug = current_app.config.get("SENTRY_PROJECT_SLUG")

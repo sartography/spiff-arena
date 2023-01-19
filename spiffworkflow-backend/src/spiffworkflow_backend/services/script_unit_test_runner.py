@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 from typing import Optional
 
-from SpiffWorkflow.bpmn.exceptions import WorkflowTaskExecException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -54,9 +54,9 @@ class ScriptUnitTestRunner:
                 offset=ex.offset,
             )
         except Exception as ex:
-            if isinstance(ex, WorkflowTaskExecException):
+            if isinstance(ex, WorkflowTaskException):
                 # we never expect this to happen, so we want to know about it.
-                # if indeed we are always getting WorkflowTaskExecException,
+                # if indeed we are always getting WorkflowTaskException,
                 # we can simplify this error handling and replace it with the
                 # except block from revision cccd523ea39499c10f7f3c2e3f061852970973ac
                 raise ex

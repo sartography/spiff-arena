@@ -8,8 +8,7 @@ from abc import abstractmethod
 from typing import Any
 from typing import Callable
 
-from flask_bpmn.api.api_error import ApiError
-
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceNotFoundError
 from spiffworkflow_backend.models.script_attributes_context import (

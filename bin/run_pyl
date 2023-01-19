@@ -8,7 +8,6 @@ trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
 python_projects=(
-  flask-bpmn
   spiffworkflow-backend
 )
 
@@ -51,7 +50,6 @@ function run_autoflake() {
 
   python_dirs=$(get_python_dirs)
   python_files=$(find $python_dirs -type f -name "*.py" ! -name '.null-ls*' ! -name '_null-ls*')
-
   autoflake8 --in-place --remove-unused-variables --remove-duplicate-keys --expand-star-imports --exit-zero-even-if-changed $python_files
   autoflake --in-place --remove-all-unused-imports $python_files
   autopep8 --in-place $python_files
