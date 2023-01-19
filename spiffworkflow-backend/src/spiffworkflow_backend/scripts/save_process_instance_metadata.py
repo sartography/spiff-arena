@@ -2,7 +2,6 @@
 from typing import Any
 
 from spiffworkflow_backend.models.db import db
-
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )

@@ -1,12 +1,11 @@
 """Secret_model."""
 from dataclasses import dataclass
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from marshmallow import Schema
 from sqlalchemy import ForeignKey
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.user import UserModel
 
 

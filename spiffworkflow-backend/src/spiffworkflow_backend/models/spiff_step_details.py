@@ -1,12 +1,11 @@
 """Spiff_step_details."""
 from dataclasses import dataclass
 
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import deferred
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 

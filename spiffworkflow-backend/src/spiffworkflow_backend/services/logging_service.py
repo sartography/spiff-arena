@@ -7,8 +7,8 @@ from typing import Optional
 
 from flask import g
 from flask.app import Flask
-from spiffworkflow_backend.models.db import db
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 
 
@@ -52,7 +52,8 @@ class JsonFormatter(logging.Formatter):
         self.datefmt = None
 
     def usesTime(self) -> bool:
-        """Overwritten to look for the attribute in the format dict values instead of the fmt string."""
+        """Overwritten to look for the attribute in the format dict values instead of the fmt string.
+        """
         return "asctime" in self.fmt_dict.values()
 
     # we are overriding a method that returns a string and returning a dict, hence the Any

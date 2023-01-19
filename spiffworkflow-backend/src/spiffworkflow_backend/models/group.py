@@ -3,8 +3,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from spiffworkflow_backend.models.db import db, SpiffworkflowBaseDBModel
 from sqlalchemy.orm import relationship
+
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
 if TYPE_CHECKING:
     from spiffworkflow_backend.models.user_group_assignment import (  # noqa: F401

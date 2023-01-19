@@ -1,9 +1,8 @@
 """Grabs tickets from csv and makes process instances."""
 import csv
 
-from spiffworkflow_backend.models.db import db
-
 from spiffworkflow_backend import get_hacked_up_app_for_script
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (

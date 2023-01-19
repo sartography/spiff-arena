@@ -3,10 +3,10 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
+from sqlalchemy.orm import validates
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
-from sqlalchemy.orm import validates
 
 
 class InvalidPermissionTargetUriError(Exception):

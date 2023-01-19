@@ -374,3 +374,12 @@ svg.notification-icon {
 .tag-type-green:hover {
   background-color:	#80ee90;
 }
+
+/* Errors and notifications  */
+.error_info .error_title {
+  display: inline-block;
+  font-weight: lighter;
+  width: 100px;
+  text-align: right;
+  margin-right: 10px;
+}

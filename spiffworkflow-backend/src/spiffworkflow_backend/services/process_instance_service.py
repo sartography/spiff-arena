@@ -5,10 +5,10 @@ from typing import List
 from typing import Optional
 
 from flask import current_app
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -224,7 +224,8 @@ class ProcessInstanceService:
 
     @staticmethod
     def extract_form_data(latest_data: dict, task: SpiffTask) -> dict:
-        """Extracts data from the latest_data that is directly related to the form that is being submitted."""
+        """Extracts data from the latest_data that is directly related to the form that is being submitted.
+        """
         data = {}
 
         if hasattr(task.task_spec, "form"):

@@ -6,12 +6,11 @@ from dataclasses import dataclass
 import jwt
 import marshmallow
 from flask import current_app
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-
 from marshmallow import Schema
 from sqlalchemy.orm import relationship
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.group import GroupModel
 
 

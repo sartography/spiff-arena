@@ -9,11 +9,11 @@ from typing import Optional
 
 from flask import current_app
 from flask.testing import FlaskClient
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from werkzeug.test import TestResponse  # type: ignore
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.permission_assignment import Permission
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.process_group import ProcessGroup

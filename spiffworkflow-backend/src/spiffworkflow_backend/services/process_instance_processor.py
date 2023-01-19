@@ -22,11 +22,9 @@ from uuid import UUID
 import dateparser
 import pytz
 from flask import current_app
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from lxml import etree  # type: ignore
+from lxml.etree import XMLSyntaxError
 from RestrictedPython import safe_globals  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
@@ -40,6 +38,7 @@ from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import (
@@ -71,6 +70,8 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
@@ -217,15 +218,16 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             return super()._evaluate(expression, context, external_methods=methods)
         except Exception as exception:
             if task is None:
-                raise ProcessInstanceProcessorError(
-                    "Error evaluating expression: '%s', exception: %s"
+                raise WorkflowException(
+                    "Error evaluating expression: '%s', %s"
                     % (expression, str(exception)),
                 ) from exception
             else:
                 raise WorkflowTaskException(
-                    task,
                     "Error evaluating expression '%s', %s"
                     % (expression, str(exception)),
+                    task=task,
+                    exception=exception,
                 ) from exception
 
     def execute(
@@ -240,7 +242,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         except WorkflowException as e:
             raise e
         except Exception as e:
-            raise WorkflowTaskException(task, f" {script}, {e}", e) from e
+            raise self.create_task_exec_exception(task, script, e)
 
     def call_service(
         self,
@@ -297,7 +299,8 @@ class ProcessInstanceProcessor:
     def __init__(
         self, process_instance_model: ProcessInstanceModel, validate_only: bool = False
     ) -> None:
-        """Create a Workflow Processor based on the serialized information available in the process_instance model."""
+        """Create a Workflow Processor based on the serialized information available in the process_instance model.
+        """
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.process_instance_id = process_instance_model.id
         tld.spiff_step = process_instance_model.spiff_step
@@ -403,10 +406,8 @@ class ProcessInstanceProcessor:
             raise (
                 ApiError(
                     "process_model_not_found",
-                    (
-                        "The given process model was not found:"
-                        f" {process_model_identifier}."
-                    ),
+                    "The given process model was not found:"
+                    f" {process_model_identifier}.",
                 )
             )
         spec_files = SpecFileService.get_files(process_model_info)
@@ -536,11 +537,9 @@ class ProcessInstanceProcessor:
                     potential_owner_ids.append(lane_owner_user.id)
             self.raise_if_no_potential_owners(
                 potential_owner_ids,
-                (
-                    "No users found in task data lane owner list for lane:"
-                    f" {task_lane}. The user list used:"
-                    f" {task.data['lane_owners'][task_lane]}"
-                ),
+                "No users found in task data lane owner list for lane:"
+                f" {task_lane}. The user list used:"
+                f" {task.data['lane_owners'][task_lane]}",
             )
         else:
             group_model = GroupModel.query.filter_by(identifier=task_lane).first()
@@ -693,9 +692,9 @@ class ProcessInstanceProcessor:
                     ):
                         continue
 
-                subprocesses_by_child_task_ids[task_id] = (
-                    subprocesses_by_child_task_ids[subprocess_id]
-                )
+                subprocesses_by_child_task_ids[
+                    task_id
+                ] = subprocesses_by_child_task_ids[subprocess_id]
                 self.get_highest_level_calling_subprocesses_by_child_task_ids(
                     subprocesses_by_child_task_ids, task_typename_by_task_id
                 )
@@ -1015,17 +1014,24 @@ class ProcessInstanceProcessor:
     def get_spec(
         files: List[File], process_model_info: ProcessModelInfo
     ) -> Tuple[BpmnProcessSpec, IdToBpmnProcessSpecMapping]:
-        """Returns a SpiffWorkflow specification for the given process_instance spec, using the files provided."""
+        """Returns a SpiffWorkflow specification for the given process_instance spec, using the files provided.
+        """
         parser = ProcessInstanceProcessor.get_parser()
 
         for file in files:
             data = SpecFileService.get_data(process_model_info, file.name)
-            if file.type == FileType.bpmn.value:
-                bpmn: etree.Element = etree.fromstring(data)
-                parser.add_bpmn_xml(bpmn, filename=file.name)
-            elif file.type == FileType.dmn.value:
-                dmn: etree.Element = etree.fromstring(data)
-                parser.add_dmn_xml(dmn, filename=file.name)
+            try:
+                if file.type == FileType.bpmn.value:
+                    bpmn: etree.Element = etree.fromstring(data)
+                    parser.add_bpmn_xml(bpmn, filename=file.name)
+                elif file.type == FileType.dmn.value:
+                    dmn: etree.Element = etree.fromstring(data)
+                    parser.add_dmn_xml(dmn, filename=file.name)
+            except XMLSyntaxError as xse:
+                raise ApiError(
+                    error_code="invalid_xml",
+                    message=f"'{file.name}' is not a valid xml file." + str(xse),
+                )
         if (
             process_model_info.primary_process_id is None
             or process_model_info.primary_process_id == ""
@@ -1056,7 +1062,8 @@ class ProcessInstanceProcessor:
                 error_code="process_instance_validation_error",
                 message="Failed to parse the Workflow Specification. "
                 + "Error is '%s.'" % str(ve),
-                file_name=ve.filename,
+                file_name=ve.file_name,
+                task_name=ve.name,
                 task_id=ve.id,
                 tag=ve.tag,
             ) from ve
@@ -1097,10 +1104,8 @@ class ProcessInstanceProcessor:
             if not bpmn_message.correlations:
                 raise ApiError(
                     "message_correlations_missing",
-                    (
-                        "Could not find any message correlations bpmn_message:"
-                        f" {bpmn_message.name}"
-                    ),
+                    "Could not find any message correlations bpmn_message:"
+                    f" {bpmn_message.name}",
                 )
 
             message_correlations = []
@@ -1120,10 +1125,8 @@ class ProcessInstanceProcessor:
                     if message_correlation_property is None:
                         raise ApiError(
                             "message_correlations_missing_from_process",
-                            (
-                                "Could not find a known message correlation with"
-                                f" identifier:{message_correlation_property_identifier}"
-                            ),
+                            "Could not find a known message correlation with"
+                            f" identifier:{message_correlation_property_identifier}",
                         )
                     message_correlations.append(
                         {
@@ -1186,10 +1189,8 @@ class ProcessInstanceProcessor:
             if message_model is None:
                 raise ApiError(
                     "invalid_message_name",
-                    (
-                        "Invalid message name:"
-                        f" {waiting_task.task_spec.event_definition.name}."
-                    ),
+                    "Invalid message name:"
+                    f" {waiting_task.task_spec.event_definition.name}.",
                 )
 
             # Ensure we are only creating one message instance for each waiting message
@@ -1474,7 +1475,8 @@ class ProcessInstanceProcessor:
         return self.bpmn_process_instance.get_ready_user_tasks()  # type: ignore
 
     def get_current_user_tasks(self) -> list[SpiffTask]:
-        """Return a list of all user tasks that are READY or COMPLETE and are parallel to the READY Task."""
+        """Return a list of all user tasks that are READY or COMPLETE and are parallel to the READY Task.
+        """
         ready_tasks = self.bpmn_process_instance.get_ready_user_tasks()
         additional_tasks = []
         if len(ready_tasks) > 0:
@@ -1531,7 +1533,8 @@ class ProcessInstanceProcessor:
         return None
 
     def find_spec_and_field(self, spec_name: str, field_id: Union[str, int]) -> Any:
-        """Tracks down a form field by name in the process_instance spec(s), Returns a tuple of the task, and form."""
+        """Tracks down a form field by name in the process_instance spec(s), Returns a tuple of the task, and form.
+        """
         process_instances = [self.bpmn_process_instance]
         for task in self.bpmn_process_instance.get_ready_user_tasks():
             if task.process_instance not in process_instances:

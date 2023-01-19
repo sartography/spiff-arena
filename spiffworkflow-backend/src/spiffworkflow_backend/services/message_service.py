@@ -2,11 +2,11 @@
 from typing import Any
 from typing import Optional
 
-from spiffworkflow_backend.models.db import db
 from sqlalchemy import and_
 from sqlalchemy import or_
 from sqlalchemy import select
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
 from spiffworkflow_backend.models.message_correlation_message_instance import (
     MessageCorrelationMessageInstanceModel,

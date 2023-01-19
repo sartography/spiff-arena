@@ -6,7 +6,6 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
 
-
 @dataclass
 class SpiffLoggingModel(SpiffworkflowBaseDBModel):
     """SpiffLoggingModel."""

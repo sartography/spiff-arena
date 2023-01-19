@@ -9,16 +9,16 @@ import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
 from flask.json.provider import DefaultJSONProvider
-from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import migrate
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
 from werkzeug.exceptions import NotFound
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.config import setup_config
+from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import migrate
 from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_blueprint
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
     openid_blueprint,

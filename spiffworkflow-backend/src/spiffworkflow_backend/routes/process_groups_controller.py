@@ -8,8 +8,8 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from spiffworkflow_backend.exceptions.api_error import ApiError
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
