@@ -48,6 +48,9 @@ export default function ProcessInstanceLogList() {
           <td data-qa="paginated-entity-id">{rowToUse.id}</td>
           <td>
             {rowToUse.bpmn_task_name ||
+              (rowToUse.bpmn_task_type === 'Default Start Event'
+                ? 'Process Started'
+                : '') ||
               (rowToUse.bpmn_task_type === 'End Event' ? 'Process Ended' : '')}
           </td>
           {isDetailedView && (
@@ -55,9 +58,9 @@ export default function ProcessInstanceLogList() {
               <td>{rowToUse.message}</td>
               <td>{rowToUse.bpmn_task_identifier}</td>
               <td>{rowToUse.bpmn_task_type}</td>
-              <td>{rowToUse.bpmn_process_identifier}</td>
             </>
           )}
+          <td>{rowToUse.bpmn_process_identifier}</td>
           <td>{rowToUse.username}</td>
           <td>
             <Link
@@ -81,9 +84,9 @@ export default function ProcessInstanceLogList() {
                 <th>Message</th>
                 <th>Task Identifier</th>
                 <th>Task Type</th>
-                <th>Bpmn Process Identifier</th>
               </>
             )}
+            <th>Bpmn Process Identifier</th>
             <th>User</th>
             <th>Timestamp</th>
           </tr>
