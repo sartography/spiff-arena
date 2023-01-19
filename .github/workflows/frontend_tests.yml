@@ -67,7 +67,7 @@ jobs:
           path: sample-process-models
       - name: start_keycloak
         working-directory: ./spiffworkflow-backend
-        run: ./bin/start_keycloak
+        run: ./keycloak/bin/start_keycloak 5
       - name: start_backend
         working-directory: ./spiffworkflow-backend
         run: ./bin/build_and_run_with_docker_compose
