@@ -151,8 +151,7 @@ class FileSystemService:
 
     @staticmethod
     def _get_files(file_path: str, file_name: Optional[str] = None) -> List[File]:
-        """Returns an array of File objects at the given path, can be restricted to just one file.
-        """
+        """Returns an array of File objects at the given path, can be restricted to just one file."""
         files = []
         items = os.scandir(file_path)
         for item in items:

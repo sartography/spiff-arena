@@ -15,7 +15,7 @@ from flask import jsonify
 from flask import make_response
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
-from SpiffWorkflow.exceptions import WorkflowException
+from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
@@ -41,7 +41,7 @@ class ApiError(Exception):
     task_data: dict | str | None = field(default_factory=dict)
     task_id: str = ""
     task_name: str = ""
-    task_trace: list | None = field(default_factory=dict)
+    task_trace: list | None = field(default_factory=list)
 
     def __str__(self) -> str:
         """Instructions to print instance as a string."""
@@ -65,7 +65,7 @@ class ApiError(Exception):
         offset: int = 0,
         error_type: str = "",
         error_line: str = "",
-        task_trace: dict | None = None,
+        task_trace: list | None = None,
     ) -> ApiError:
         """Constructs an API Error with details pulled from the current task."""
         instance = cls(error_code, message, status_code=status_code)
@@ -166,7 +166,7 @@ def set_user_sentry_context() -> None:
     set_tag("username", username)
 
 
-@api_error_blueprint.app_errorhandler(Exception)
+@api_error_blueprint.app_errorhandler(Exception)  # type: ignore
 def handle_exception(exception: Exception) -> flask.wrappers.Response:
     """Handles unexpected exceptions."""
     set_user_sentry_context()

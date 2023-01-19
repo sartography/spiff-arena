@@ -6,10 +6,10 @@ import time
 from typing import Any
 
 from flask_migrate import Migrate  # type: ignore
-from flask_sqlalchemy import SQLAlchemy  # type: ignore
-from sqlalchemy import event  # type: ignore
-from sqlalchemy.engine.base import Connection  # type: ignore
-from sqlalchemy.orm.mapper import Mapper  # type: ignore
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import event
+from sqlalchemy.engine.base import Connection
+from sqlalchemy.orm.mapper import Mapper
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -59,8 +59,7 @@ class SpiffworkflowBaseDBModel(db.Model):  # type: ignore
 def update_created_modified_on_create_listener(
     mapper: Mapper, _connection: Connection, target: SpiffworkflowBaseDBModel
 ) -> None:
-    """Event listener that runs before a record is updated, and sets the create/modified field accordingly.
-    """
+    """Event listener that runs before a record is updated, and sets the create/modified field accordingly."""
     if "created_at_in_seconds" in mapper.columns.keys():
         target.created_at_in_seconds = round(time.time())
     if "updated_at_in_seconds" in mapper.columns.keys():
@@ -70,8 +69,7 @@ def update_created_modified_on_create_listener(
 def update_modified_on_update_listener(
     mapper: Mapper, _connection: Connection, target: SpiffworkflowBaseDBModel
 ) -> None:
-    """Event listener that runs before a record is updated, and sets the modified field accordingly.
-    """
+    """Event listener that runs before a record is updated, and sets the modified field accordingly."""
     if "updated_at_in_seconds" in mapper.columns.keys():
         if db.session.is_modified(target, include_collections=False):
             target.updated_at_in_seconds = round(time.time())
@@ -83,5 +81,5 @@ def add_listeners() -> None:
     This should be called after importing all subclasses
     """
     for cls in SpiffworkflowBaseDBModel._all_subclasses():
-        event.listen(cls, "before_insert", update_created_modified_on_create_listener)
-        event.listen(cls, "before_update", update_modified_on_update_listener)
+        event.listen(cls, "before_insert", update_created_modified_on_create_listener)  # type: ignore
+        event.listen(cls, "before_update", update_modified_on_update_listener)  # type: ignore

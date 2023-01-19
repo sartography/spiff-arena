@@ -27,8 +27,7 @@ class ScriptUnauthorizedForUserError(Exception):
 
 
 class Script:
-    """Provides an abstract class that defines how scripts should work, this must be extended in all Script Tasks.
-    """
+    """Provides an abstract class that defines how scripts should work, this must be extended in all Script Tasks."""
 
     @abstractmethod
     def get_description(self) -> str:
