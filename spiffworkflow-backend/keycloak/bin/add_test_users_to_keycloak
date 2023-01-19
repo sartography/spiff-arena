@@ -8,6 +8,7 @@ trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
 user_file_with_one_email_per_line="${1:-}"
+keycloak_realm="${2:-spiffworkflow}"
 if [[ -z "${1:-}" ]]; then
   >&2 echo "usage: $(basename "$0") [user_file_with_one_email_per_line]"
   exit 1
@@ -42,7 +43,7 @@ while read -r user_email; do
     username=$(awk -F '@' '{print $1}' <<<"$user_email")
     credentials='{"type":"password","value":"'"${username}"'","temporary":false}'
 
-    curl --fail --location --request POST 'http://localhost:7002/admin/realms/spiffworkflow/users' \
+    curl --fail --location --request POST "http://localhost:7002/admin/realms/${keycloak_realm}/users" \
       -H 'Content-Type: application/json' \
       -H "Authorization: Bearer $backend_token" \
       --data-raw '{"email":"'"${user_email}"'", "enabled":"true", "username":"'"${username}"'", "credentials":['"${credentials}"']}'
