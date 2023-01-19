@@ -125,7 +125,11 @@ def create_app() -> flask.app.Flask:
 
     app.json = MyJSONEncoder(app)
 
-    if app.config["RUN_BACKGROUND_SCHEDULER"]:
+    # do not start the scheduler twice in flask debug mode
+    if (
+        app.config["RUN_BACKGROUND_SCHEDULER"]
+        and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
+    ):
         start_scheduler(app)
 
     configure_sentry(app)
