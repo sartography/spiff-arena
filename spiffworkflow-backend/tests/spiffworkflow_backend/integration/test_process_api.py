@@ -3103,8 +3103,7 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_can_get_process_instance_list_with_report_metadata_and_process_initator.
-        """
+        """Test_can_get_process_instance_list_with_report_metadata_and_process_initator."""
         user_one = self.create_user_with_permission(username="user_one")
 
         process_model = load_test_spec(

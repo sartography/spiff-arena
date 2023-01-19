@@ -38,8 +38,7 @@ class SpecReference:
 
 
 class SpecReferenceCache(SpiffworkflowBaseDBModel):
-    """A cache of information about all the Processes and Decisions defined in all files.
-    """
+    """A cache of information about all the Processes and Decisions defined in all files."""
 
     __tablename__ = "spec_reference_cache"
     __table_args__ = (

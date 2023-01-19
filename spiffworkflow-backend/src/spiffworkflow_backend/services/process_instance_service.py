@@ -224,8 +224,7 @@ class ProcessInstanceService:
 
     @staticmethod
     def extract_form_data(latest_data: dict, task: SpiffTask) -> dict:
-        """Extracts data from the latest_data that is directly related to the form that is being submitted.
-        """
+        """Extracts data from the latest_data that is directly related to the form that is being submitted."""
         data = {}
 
         if hasattr(task.task_spec, "form"):

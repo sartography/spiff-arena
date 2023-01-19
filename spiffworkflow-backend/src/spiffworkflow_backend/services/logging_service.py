@@ -52,8 +52,7 @@ class JsonFormatter(logging.Formatter):
         self.datefmt = None
 
     def usesTime(self) -> bool:
-        """Overwritten to look for the attribute in the format dict values instead of the fmt string.
-        """
+        """Overwritten to look for the attribute in the format dict values instead of the fmt string."""
         return "asctime" in self.fmt_dict.values()
 
     # we are overriding a method that returns a string and returning a dict, hence the Any

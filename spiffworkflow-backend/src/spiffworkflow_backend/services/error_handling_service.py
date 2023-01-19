@@ -41,8 +41,7 @@ class ErrorHandlingService:
     def handle_error(
         self, _processor: ProcessInstanceProcessor, _error: Union[ApiError, Exception]
     ) -> None:
-        """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception.
-        """
+        """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
         process_model = ProcessModelService.get_process_model(
             _processor.process_model_identifier
         )
