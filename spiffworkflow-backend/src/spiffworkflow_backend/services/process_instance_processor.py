@@ -627,18 +627,67 @@ class ProcessInstanceProcessor:
                 db.session.add(pim)
                 db.session.commit()
 
+    # FIXME: Better to move to SpiffWorkflow and traverse the outer_workflows on the spiff_task
+    # We may need to add whether a subprocess is a call activity or a subprocess in order to do it properly
+    def get_all_processes_with_task_name_list(self) -> dict[str, list[str]]:
+        """Gets the list of processes pointing to a list of task names.
+
+        This is useful for figuring out which process contain which task.
+
+        Rerturns: {process_name: [task_1, task_2, ...], ...}
+        """
+        serialized_data = json.loads(self.serialize())
+        processes: dict[str, list[str]] = {serialized_data["spec"]["name"]: []}
+        for task_name, _task_spec in serialized_data["spec"]["task_specs"].items():
+            processes[serialized_data["spec"]["name"]].append(task_name)
+        if "subprocess_specs" in serialized_data:
+            for subprocess_name, subprocess_details in serialized_data[
+                "subprocess_specs"
+            ].items():
+                processes[subprocess_name] = []
+                if "task_specs" in subprocess_details:
+                    for task_name, _task_spec in subprocess_details[
+                        "task_specs"
+                    ].items():
+                        processes[subprocess_name].append(task_name)
+        return processes
+
+    def find_process_model_process_name_by_task_name(
+        self, task_name: str, processes: Optional[dict[str, list[str]]] = None
+    ) -> str:
+        """Gets the top level process of a process model using the task name that the process contains.
+
+        For example, process_modelA has processA which has a call activity that calls processB which is inside of process_modelB.
+        processB has subprocessA which has taskA. Using taskA this method should return processB and then that can be used with
+        the spec reference cache to find process_modelB.
+        """
+        process_name_to_return = task_name
+        if processes is None:
+            processes = self.get_all_processes_with_task_name_list()
+
+        for process_name, task_spec_names in processes.items():
+            if task_name in task_spec_names:
+                process_name_to_return = (
+                    self.find_process_model_process_name_by_task_name(
+                        process_name, processes
+                    )
+                )
+        return process_name_to_return
+
+    #################################################################
+
     def get_all_task_specs(self) -> dict[str, dict]:
         """This looks both at top level task_specs and subprocess_specs in the serialized data.
 
         It returns a dict of all task specs based on the task name like it is in the serialized form.
 
-        NOTE: this may not fully work for tasks that are NOT call activities since their task_name may no be unique
+        NOTE: this may not fully work for tasks that are NOT call activities since their task_name may not be unique
         but in our current use case we only care about the call activities here.
         """
         serialized_data = json.loads(self.serialize())
         spiff_task_json = serialized_data["spec"]["task_specs"] or {}
         if "subprocess_specs" in serialized_data:
-            for _subprocess_task_name, subprocess_details in serialized_data[
+            for _subprocess_name, subprocess_details in serialized_data[
                 "subprocess_specs"
             ].items():
                 if "task_specs" in subprocess_details:
