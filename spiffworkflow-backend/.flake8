@@ -12,7 +12,7 @@ per-file-ignores =
     tests/*:S101
 
     # prefer naming functions descriptively rather than forcing comments
-    *:D103
+    *:D102
 
     bin/keycloak_test_server.py:B950,D
     conftest.py:S105

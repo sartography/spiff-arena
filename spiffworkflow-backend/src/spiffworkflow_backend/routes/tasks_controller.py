@@ -214,12 +214,16 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     task.process_model_identifier = process_model.id
 
     process_model_with_form = process_model
+
     refs = SpecFileService.get_references_for_process(process_model_with_form)
     all_processes = [i.identifier for i in refs]
     if task.process_identifier not in all_processes:
+        top_process_name = processor.find_process_model_process_name_by_task_name(
+            task.process_identifier
+        )
         bpmn_file_full_path = (
             ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
-                task.process_identifier
+                top_process_name
             )
         )
         relative_path = os.path.relpath(

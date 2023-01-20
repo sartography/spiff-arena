@@ -9,6 +9,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 def main(process_instance_id: str):
     """Main."""
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "development"
+    if os.environ.get("BPMN_SPEC_ABSOLUTE_DIR") is None:
+      os.environ["BPMN_SPEC_ABSOLUTE_DIR"] = "hey"
     flask_env_key = "FLASK_SESSION_SECRET_KEY"
     os.environ[flask_env_key] = "whatevs"
     app = create_app()

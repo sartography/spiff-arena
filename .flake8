@@ -12,7 +12,7 @@ per-file-ignores =
     spiffworkflow-backend/tests/*:S101
 
     # prefer naming functions descriptively rather than forcing comments
-    spiffworkflow-backend/*:D103
+    spiffworkflow-backend/*:D102,D103
 
     spiffworkflow-backend/bin/keycloak_test_server.py:B950,D
     spiffworkflow-backend/conftest.py:S105
