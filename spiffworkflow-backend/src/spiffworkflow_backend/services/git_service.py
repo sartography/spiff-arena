@@ -84,6 +84,8 @@ class GitService:
             repo_path_to_use = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
         if repo_path_to_use is None:
             raise ConfigurationError("BPMN_SPEC_ABSOLUTE_DIR config must be set")
+        if current_app.config['GIT_SSH_PRIVATE_KEY']:
+            os.environ['GIT_SSH_PRIVATE_KEY'] = current_app.config['GIT_SSH_PRIVATE_KEY']
 
         git_username = ""
         git_email = ""
