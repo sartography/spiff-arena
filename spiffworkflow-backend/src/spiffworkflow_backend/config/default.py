@@ -68,6 +68,7 @@ GIT_BRANCH_TO_PUBLISH_TO = environ.get("GIT_BRANCH_TO_PUBLISH_TO")
 GIT_BRANCH = environ.get("GIT_BRANCH")
 GIT_CLONE_URL_FOR_PUBLISHING = environ.get("GIT_CLONE_URL")
 GIT_COMMIT_ON_SAVE = environ.get("GIT_COMMIT_ON_SAVE", default="false") == "true"
+GIT_SSH_PRIVATE_KEY = environ.get("GIT_SSH_PRIVATE_KEY")
 
 # Datbase Configuration
 SPIFF_DATABASE_TYPE = environ.get(

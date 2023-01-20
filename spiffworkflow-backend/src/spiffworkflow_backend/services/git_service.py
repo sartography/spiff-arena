@@ -219,10 +219,12 @@ class GitService:
         # we are adding a guid to this so the flake8 issue has been mitigated
         destination_process_root = f"/tmp/{clone_dir}"  # noqa
 
-        git_clone_url = current_app.config["GIT_CLONE_URL_FOR_PUBLISHING"].replace(
-            "https://",
-            f"https://{current_app.config['GIT_USERNAME']}:{current_app.config['GIT_USER_PASSWORD']}@",
-        )
+        git_clone_url = current_app.config["GIT_CLONE_URL_FOR_PUBLISHING"]
+        if git_clone_url.startswith('https://'):
+            git_clone_url = git_clone_url.replace(
+                "https://",
+                f"https://{current_app.config['GIT_USERNAME']}:{current_app.config['GIT_USER_PASSWORD']}@",
+            )
         cmd = ["git", "clone", git_clone_url, destination_process_root]
 
         cls.run_shell_command(cmd)

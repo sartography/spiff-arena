@@ -16,8 +16,13 @@ git_commit_username="$4"
 git_commit_email="$5"
 git_commit_password="$6"
 
-if [[ -z "${6:-}" ]]; then
+if [[ -z "${5:-}" ]]; then
   >&2 echo "usage: $(basename "$0") [bpmn_models_absolute_dir] [git_commit_message] [git_branch] [git_commit_username] [git_commit_email]"
+  exit 1
+fi
+
+if [[ -z "$git_commit_password" && -z "${GIT_SSH_PRIVATE_KEY:-}" ]]; then
+  >&2 echo "ERROR: A git password or GIT_SSH_PRIVATE_KEY must be provided"
   exit 1
 fi
 
@@ -34,15 +39,27 @@ function run() {
   if [ -z "$(git status --porcelain)" ]; then
     echo "No changes to commit"
   else
-    PAT="${git_commit_username}:${git_commit_password}"
-    AUTH=$(echo -n "$PAT" | openssl base64 | tr -d '\n')
 
     git config --local user.name "$git_commit_username"
     git config --local user.email "$git_commit_email"
-    git config --local http.extraHeader "Authorization: Basic $AUTH"
+
+    if [[ -n "${GIT_SSH_PRIVATE_KEY:-}" ]]; then
+      tmpfile=$(mktemp /tmp/tmp_git.XXXXXX)
+      chmod 600 "$tmpfile"
+      echo "$GIT_SSH_PRIVATE_KEY" >"$tmpfile"
+      export GIT_SSH_COMMAND="ssh -o IdentitiesOnly=yes -i ${tmpfile} -F /dev/null"
+    else
+      PAT="${git_commit_username}:${git_commit_password}"
+      AUTH=$(echo -n "$PAT" | openssl base64 | tr -d '\n')
+      git config --local http.extraHeader "Authorization: Basic $AUTH"
+    fi
+
     git commit -m "$git_commit_message"
     git push --set-upstream origin "$git_branch"
-    git config --unset --local http.extraHeader
+
+    if [[ -z "${GIT_SSH_PRIVATE_KEY:-}" ]]; then
+      git config --unset --local http.extraHeader
+    fi
   fi
 }
 
