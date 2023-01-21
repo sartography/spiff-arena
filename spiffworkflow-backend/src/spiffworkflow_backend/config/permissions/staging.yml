@@ -47,7 +47,6 @@ groups:
         lead@status.im,
         lead1@status.im,
       ]
-
   test:
     users:
       [
@@ -58,8 +57,13 @@ permissions:
   admin:
     groups: [admin]
     users: []
-    allowed_permissions: [create, read, update, delete]
+    allowed_permissions: [read]
     uri: /*
+  admin-process-instances:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /process-instances/*
 
   # open system defaults for everybody
   read-all-process-groups:
@@ -104,13 +108,6 @@ permissions:
     users: []
     allowed_permissions: [read]
     uri: /user-groups/for-current-user
-
-
-  finance-admin:
-    groups: ["Finance Team"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-groups/manage-procurement:procurement:*
 
   manage-revenue-streams-instances:
     groups: ["demo"]
