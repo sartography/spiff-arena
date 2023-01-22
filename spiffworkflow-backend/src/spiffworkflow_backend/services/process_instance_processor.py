@@ -151,16 +151,18 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     def __init__(self) -> None:
         """__init__."""
         default_globals = {
-            "timedelta": timedelta,
-            "datetime": datetime,
-            "dateparser": dateparser,
-            "pytz": pytz,
-            "time": time,
-            "decimal": decimal,
             "_strptime": _strptime,
+            "dateparser": dateparser,
+            "datetime": datetime,
+            "decimal": decimal,
             "enumerate": enumerate,
+            "format": format,
             "list": list,
             "map": map,
+            "pytz": pytz,
+            "sum": sum,
+            "time": time,
+            "timedelta": timedelta,
         }
 
         # This will overwrite the standard builtins
