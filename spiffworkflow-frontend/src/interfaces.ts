@@ -225,11 +225,11 @@ export interface PermissionCheckResponseBody {
 export interface FormField {
   id: string;
   title: string;
-  required: boolean;
+  required?: boolean;
   type: string;
-  enum: string[];
-  default: any;
-  pattern: string;
+  enum?: string[];
+  default?: any;
+  pattern?: string;
 }
 
 export interface JsonSchemaForm {

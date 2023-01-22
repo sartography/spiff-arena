@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
-import { Button, Select, SelectItem, TextInput } from '@carbon/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Button,
+  Select,
+  SelectItem,
+  TextInput,
+  Grid,
+  Column,
+  // @ts-ignore
+} from '@carbon/react';
+import validator from '@rjsf/validator-ajv8';
 import { FormField, JsonSchemaForm } from '../interfaces';
+import Form from '../themes/carbon';
 import {
   modifyProcessIdentifierForPathParam,
   slugifyString,
@@ -147,15 +157,23 @@ export default function JsonSchemaFormBuilder() {
     setFormTitle(newFormTitle);
   };
 
+  const getFormFieldType = (indicatedType: string) => {
+    if (indicatedType === 'checkbox') {
+      return 'boolean';
+    }
+    // undefined or 'select' or 'textbox'
+    return 'string';
+  };
+
   const addFormField = () => {
     const newFormField: FormField = {
       id: formFieldId,
       title: formFieldTitle,
       required: false,
-      type: formFieldType,
-      enum: formFieldSelectOptions.split(','),
-      pattern: '',
-      default: null,
+      type: getFormFieldType(formFieldType),
+      enum: showFormFieldSelectTextField
+        ? formFieldSelectOptions.split(',')
+        : undefined,
     };
 
     setFormFieldIdHasBeenUpdatedByUser(false);
@@ -333,9 +351,9 @@ export default function JsonSchemaFormBuilder() {
       </>
     );
   };
+  const processModelFileName = searchParams.get('file_name') || '';
 
-  const jsonFormArea = () => {
-    const processModelFileName = searchParams.get('file_name') || '';
+  const topOfPageElements = () => {
     return (
       <>
         <ProcessBreadcrumb
@@ -353,6 +371,13 @@ export default function JsonSchemaFormBuilder() {
           Process Model File{processModelFileName ? ': ' : ''}
           {processModelFileName}
         </h1>
+      </>
+    );
+  };
+
+  const jsonFormArea = () => {
+    return (
+      <>
         {formSubmitResultElement()}
         <Button onClick={saveFile}>Save</Button>
         {jsonFormButton()}
@@ -392,6 +417,28 @@ export default function JsonSchemaFormBuilder() {
       </>
     );
   };
+  const schemaString = renderFormJson();
+  const uiSchemaString = renderFormUiJson();
+  const schema = JSON.parse(schemaString);
+  const uiSchema = JSON.parse(uiSchemaString);
 
-  return <>{jsonFormArea()}</>;
+  return (
+    <>
+      {topOfPageElements()}
+      <Grid fullWidth>
+        <Column md={5} lg={8} sm={4}>
+          {jsonFormArea()}
+        </Column>
+        <Column md={5} lg={8} sm={4}>
+          <h2>Form Preview</h2>
+          <Form
+            formData={{}}
+            schema={schema}
+            uiSchema={uiSchema}
+            validator={validator}
+          />
+        </Column>
+      </Grid>
+    </>
+  );
 }
