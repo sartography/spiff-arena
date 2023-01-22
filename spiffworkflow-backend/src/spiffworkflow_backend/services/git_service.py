@@ -84,8 +84,10 @@ class GitService:
             repo_path_to_use = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
         if repo_path_to_use is None:
             raise ConfigurationError("BPMN_SPEC_ABSOLUTE_DIR config must be set")
-        if current_app.config['GIT_SSH_PRIVATE_KEY']:
-            os.environ['GIT_SSH_PRIVATE_KEY'] = current_app.config['GIT_SSH_PRIVATE_KEY']
+        if current_app.config["GIT_SSH_PRIVATE_KEY"]:
+            os.environ["GIT_SSH_PRIVATE_KEY"] = current_app.config[
+                "GIT_SSH_PRIVATE_KEY"
+            ]
 
         git_username = ""
         git_email = ""
@@ -222,7 +224,7 @@ class GitService:
         destination_process_root = f"/tmp/{clone_dir}"  # noqa
 
         git_clone_url = current_app.config["GIT_CLONE_URL_FOR_PUBLISHING"]
-        if git_clone_url.startswith('https://'):
+        if git_clone_url.startswith("https://"):
             git_clone_url = git_clone_url.replace(
                 "https://",
                 f"https://{current_app.config['GIT_USERNAME']}:{current_app.config['GIT_USER_PASSWORD']}@",

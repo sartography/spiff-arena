@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Button, Select, SelectItem, TextInput } from '@carbon/react';
-import { useParams } from 'react-router-dom';
-import { FormField } from '../interfaces';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { FormField, JsonSchemaForm } from '../interfaces';
 import {
   modifyProcessIdentifierForPathParam,
   slugifyString,
   underscorizeString,
 } from '../helpers';
 import HttpService from '../services/HttpService';
+import { Notification } from '../components/Notification';
+import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
+import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 
 export default function JsonSchemaFormBuilder() {
   const params = useParams();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const formFieldTypes = ['textbox', 'checkbox', 'select'];
 
   const [formTitle, setFormTitle] = useState<string>('');
@@ -31,33 +36,89 @@ export default function JsonSchemaFormBuilder() {
   const [formFieldId, setFormFieldId] = useState<string>('');
   const [formFieldTitle, setFormFieldTitle] = useState<string>('');
   const [formFieldType, setFormFieldType] = useState<string>('');
+  const [requiredFields, setRequiredFields] = useState<string[]>([]);
+  const [savedJsonSchema, setSavedJsonSchema] = useState<boolean>(false);
 
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const processResult = (result: JsonSchemaForm) => {
+      const jsonForm = JSON.parse(result.file_contents);
+      setFormTitle(jsonForm.title);
+      setFormDescription(jsonForm.description);
+      setRequiredFields(jsonForm.required);
+      const newFormId = (searchParams.get('file_name') || '').replace(
+        '-schema.json',
+        ''
+      );
+      setFormId(newFormId);
+      const newFormFields: FormField[] = [];
+      Object.keys(jsonForm.properties).forEach((propertyId: string) => {
+        const propertyDetails = jsonForm.properties[propertyId];
+        newFormFields.push({
+          id: propertyId,
+          title: propertyDetails.title,
+          required: propertyDetails.required,
+          type: propertyDetails.type,
+          enum: propertyDetails.enum,
+          default: propertyDetails.default,
+          pattern: propertyDetails.pattern,
+        });
+      });
+      setFormFields(newFormFields);
+    };
+    if (searchParams.get('file_name')) {
+      HttpService.makeCallToBackend({
+        path: `/process-models/${modifiedProcessModelId}/files/${searchParams.get(
+          'file_name'
+        )}`,
+        successCallback: processResult,
+      });
+    }
+  }, [modifiedProcessModelId, searchParams]);
+
+  const formSubmitResultElement = () => {
+    if (savedJsonSchema) {
+      return (
+        <Notification
+          title="Form Saved"
+          onClose={() => setSavedJsonSchema(false)}
+        >
+          It saved
+        </Notification>
+      );
+    }
+    return null;
+  };
 
   const renderFormJson = () => {
     const formJson = {
       title: formTitle,
       description: formDescription,
       properties: {},
-      required: [],
+      required: requiredFields,
     };
 
     formFields.forEach((formField: FormField) => {
-      let jsonSchemaFieldType = 'string';
-      if (formField.type === 'checkbox') {
+      let jsonSchemaFieldType = formField.type;
+      if (['checkbox'].includes(formField.type)) {
         jsonSchemaFieldType = 'boolean';
       }
       const formJsonObject: any = {
-        type: jsonSchemaFieldType,
+        type: jsonSchemaFieldType || 'string',
         title: formField.title,
       };
 
-      if (formField.type === 'select') {
+      if (formField.enum) {
         formJsonObject.enum = formField.enum;
+      }
+      if (formField.default !== undefined) {
+        formJsonObject.default = formField.default;
+      }
+      if (formField.pattern) {
+        formJsonObject.pattern = formField.pattern;
       }
       (formJson.properties as any)[formField.id] = formJsonObject;
     });
@@ -93,6 +154,8 @@ export default function JsonSchemaFormBuilder() {
       required: false,
       type: formFieldType,
       enum: formFieldSelectOptions.split(','),
+      pattern: '',
+      default: null,
     };
 
     setFormFieldIdHasBeenUpdatedByUser(false);
@@ -168,8 +231,8 @@ export default function JsonSchemaFormBuilder() {
     return null;
   };
 
-  const handleSaveCallback = (result: any) => {
-    console.log('result', result);
+  const handleSaveCallback = () => {
+    setSavedJsonSchema(true);
   };
 
   const uploadFile = (file: File) => {
@@ -188,17 +251,111 @@ export default function JsonSchemaFormBuilder() {
   };
 
   const saveFile = () => {
-    const formJsonFileName = `${formId}-schema.json`;
-    const formUiJsonFileName = `${formId}-uischema.json`;
+    setSavedJsonSchema(false);
+    let formJsonFileName = `${formId}-schema.json`;
+    let formUiJsonFileName: string | null = `${formId}-uischema.json`;
+    if (searchParams.get('file_name')) {
+      formJsonFileName = searchParams.get('file_name') as any;
+      if (formJsonFileName.match(/-schema\.json$/)) {
+        formUiJsonFileName = (searchParams.get('file_name') as any).replace(
+          '-schema.json',
+          '-uischema.json'
+        );
+      } else {
+        formUiJsonFileName = null;
+      }
+    }
 
     uploadFile(new File([renderFormJson()], formJsonFileName));
-    uploadFile(new File([renderFormUiJson()], formUiJsonFileName));
+    if (formUiJsonFileName) {
+      uploadFile(new File([renderFormUiJson()], formUiJsonFileName));
+    }
+  };
+
+  const deleteFile = () => {
+    const url = `/process-models/${modifiedProcessModelId}/files/${params.file_name}`;
+    const httpMethod = 'DELETE';
+
+    const navigateToProcessModelShow = (_httpResult: any) => {
+      navigate(`/admin/process-models/${modifiedProcessModelId}`);
+    };
+
+    HttpService.makeCallToBackend({
+      path: url,
+      successCallback: navigateToProcessModelShow,
+      httpMethod,
+    });
+  };
+
+  const formIdTextField = () => {
+    if (searchParams.get('file_name')) {
+      return null;
+    }
+    return (
+      <TextInput
+        id="json-form-id"
+        name="id"
+        labelText="ID"
+        value={formId}
+        onChange={(event: any) => {
+          setFormIdHasBeenUpdatedByUser(true);
+          setFormId(event.srcElement.value);
+        }}
+      />
+    );
+  };
+
+  const jsonFormButton = () => {
+    if (!searchParams.get('file_name')) {
+      return null;
+    }
+    return (
+      <>
+        <ButtonWithConfirmation
+          data-qa="delete-process-model-file"
+          description={`Delete file ${searchParams.get('file_name')}?`}
+          onConfirmation={deleteFile}
+          buttonLabel="Delete"
+        />
+        <Button
+          onClick={() =>
+            navigate(
+              `/admin/process-models/${
+                params.process_model_id
+              }/form/${searchParams.get('file_name')}`
+            )
+          }
+          variant="danger"
+          data-qa="form-builder-button"
+        >
+          View Json
+        </Button>
+      </>
+    );
   };
 
   const jsonFormArea = () => {
+    const processModelFileName = searchParams.get('file_name') || '';
     return (
       <>
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            {
+              entityToExplode: params.process_model_id || '',
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
+            [processModelFileName],
+          ]}
+        />
+        <h1>
+          Process Model File{processModelFileName ? ': ' : ''}
+          {processModelFileName}
+        </h1>
+        {formSubmitResultElement()}
         <Button onClick={saveFile}>Save</Button>
+        {jsonFormButton()}
         <TextInput
           id="json-form-title"
           name="title"
@@ -208,16 +365,7 @@ export default function JsonSchemaFormBuilder() {
             onFormTitleChange(event.srcElement.value);
           }}
         />
-        <TextInput
-          id="json-form-id"
-          name="id"
-          labelText="ID"
-          value={formId}
-          onChange={(event: any) => {
-            setFormIdHasBeenUpdatedByUser(true);
-            setFormId(event.srcElement.value);
-          }}
-        />
+        {formIdTextField()}
         <TextInput
           id="form-description"
           name="description"

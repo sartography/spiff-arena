@@ -190,6 +190,9 @@ export default function ReactFormEditor() {
 
   if (processModelFile || !params.file_name) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
+    const formBuildFileParam = params.file_name
+      ? `?file_name=${params.file_name}`
+      : '';
     return (
       <main>
         <ProcessBreadcrumb
@@ -212,19 +215,7 @@ export default function ReactFormEditor() {
         <Button onClick={saveFile} variant="danger" data-qa="file-save-button">
           Save
         </Button>
-        {params.file_name ? null : (
-          <Button
-            onClick={() =>
-              navigate(
-                `/admin/process-models/${params.process_model_id}/form-builder`
-              )
-            }
-            variant="danger"
-            data-qa="form-builder-button"
-          >
-            Form Builder
-          </Button>
-        )}
+
         {params.file_name ? (
           <ButtonWithConfirmation
             data-qa="delete-process-model-file"
@@ -233,6 +224,17 @@ export default function ReactFormEditor() {
             buttonLabel="Delete"
           />
         ) : null}
+        <Button
+          onClick={() =>
+            navigate(
+              `/admin/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
+            )
+          }
+          variant="danger"
+          data-qa="form-builder-button"
+        >
+          Form Builder
+        </Button>
         {hasDiagram ? (
           <Button
             onClick={() =>

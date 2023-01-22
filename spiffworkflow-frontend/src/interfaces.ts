@@ -228,4 +228,13 @@ export interface FormField {
   required: boolean;
   type: string;
   enum: string[];
+  default: any;
+  pattern: string;
+}
+
+export interface JsonSchemaForm {
+  file_contents: string;
+  name: string;
+  process_model_id: string;
+  required: string[];
 }
