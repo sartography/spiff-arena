@@ -21,6 +21,9 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceIsAlreadyLockedError,
+)
+from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -74,12 +77,18 @@ class ProcessInstanceService:
             .all()
         )
         for process_instance in records:
+            locked = False
+            processor = None
             try:
                 current_app.logger.info(
                     f"Processing process_instance {process_instance.id}"
                 )
                 processor = ProcessInstanceProcessor(process_instance)
+                processor.lock_process_instance("Web")
+                locked = True
                 processor.do_engine_steps(save=True)
+            except ProcessInstanceIsAlreadyLockedError:
+                continue
             except Exception as e:
                 db.session.rollback()  # in case the above left the database with a bad transaction
                 process_instance.status = ProcessInstanceStatus.error.value
@@ -91,6 +100,9 @@ class ProcessInstanceService:
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
+            finally:
+                if locked and processor:
+                    processor.unlock_process_instance("Web")
 
     @staticmethod
     def processor_to_process_instance_api(
@@ -220,6 +232,8 @@ class ProcessInstanceService:
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
+
+        # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
         processor.do_engine_steps(save=True)
 
     @staticmethod
