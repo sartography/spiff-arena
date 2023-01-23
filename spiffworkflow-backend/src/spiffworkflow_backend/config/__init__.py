@@ -1,6 +1,7 @@
 """__init__.py."""
 import os
 import threading
+import uuid
 
 from flask.app import Flask
 from werkzeug.utils import ImportStringError
@@ -95,6 +96,8 @@ def setup_config(app: Flask) -> None:
 
     if app.config["BPMN_SPEC_ABSOLUTE_DIR"] is None:
         raise ConfigurationError("BPMN_SPEC_ABSOLUTE_DIR config must be set")
+
+    app.config["PROCESS_UUID"] = uuid.uuid4()
 
     setup_database_uri(app)
     setup_logger(app)

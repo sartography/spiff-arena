@@ -88,6 +88,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_version_control_identifier: str = db.Column(db.String(255))
     spiff_step: int = db.Column(db.Integer)
 
+    locked_by: str | None = db.Column(db.String(80))
+    locked_at_in_seconds: int | None = db.Column(db.Integer)
+
     @property
     def serialized(self) -> dict[str, Any]:
         """Return object data in serializeable format."""

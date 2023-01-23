@@ -8,11 +8,14 @@ rst-roles = class,const,func,meth,mod,ref
 rst-directives = deprecated
 
 per-file-ignores =
+    # More specific globs seem to overwrite the more generic ones so we have
+    # to split them out by directory
+
     # asserts are ok in tests
-    tests/*:S101
+    tests/*:S101,D102,D103
 
     # prefer naming functions descriptively rather than forcing comments
-    *:D102
+    src/*:D102,D103
 
     bin/keycloak_test_server.py:B950,D
     conftest.py:S105

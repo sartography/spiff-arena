@@ -102,6 +102,7 @@ def process_instance_run(
         )
 
     processor = ProcessInstanceProcessor(process_instance)
+    processor.lock_process_instance("Web")
 
     if do_engine_steps:
         try:
@@ -118,6 +119,8 @@ def process_instance_run(
                 status_code=400,
                 task=task,
             ) from e
+        finally:
+            processor.unlock_process_instance("Web")
 
         if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
