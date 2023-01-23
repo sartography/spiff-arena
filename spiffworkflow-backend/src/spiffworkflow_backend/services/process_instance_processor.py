@@ -1159,6 +1159,8 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
+    # inspiration from https://github.com/collectiveidea/delayed_job_active_record/blob/master/lib/delayed/backend/active_record.rb
+    # could consider borrowing their "cleanup all my locks when the app quits" idea as well and implement via https://docs.python.org/3/library/atexit.html
     def lock_process_instance(self, lock_prefix: str) -> None:
         locked_by = f"{lock_prefix}_{current_app.config['PROCESS_UUID']}"
         current_time_in_seconds = round(time.time())
