@@ -14,6 +14,9 @@ import {
   Tab,
   TabPanels,
   TabPanel,
+  TextInput,
+  Grid,
+  Column,
   // @ts-ignore
 } from '@carbon/react';
 import Row from 'react-bootstrap/Row';
@@ -60,6 +63,8 @@ export default function ProcessModelEditDiagram() {
   const [processes, setProcesses] = useState<ProcessReference[]>([]);
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
     useState<boolean>(false);
+  const [processModelFileInvalidText, setProcessModelFileInvalidText] =
+    useState<string>('');
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -160,6 +165,7 @@ export default function ProcessModelEditDiagram() {
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
     setNewFileName('');
+    setProcessModelFileInvalidText('');
   };
 
   const navigateToProcessModelFile = (_result: any) => {
@@ -251,6 +257,11 @@ export default function ProcessModelEditDiagram() {
 
   const handleFileNameSave = (event: any) => {
     event.preventDefault();
+    if (!newFileName) {
+      setProcessModelFileInvalidText('Process Model file name is required.');
+      return;
+    }
+    setProcessModelFileInvalidText('');
     setShowFileNameEditor(false);
     saveDiagram(bpmnXmlForDiagramRendering);
   };
@@ -267,17 +278,32 @@ export default function ProcessModelEditDiagram() {
         onRequestSubmit={handleFileNameSave}
         onRequestClose={handleFileNameCancel}
       >
-        <label>File Name:</label>
-        <span>
-          <input
-            name="file_name"
-            type="text"
-            value={newFileName}
-            onChange={(e) => setNewFileName(e.target.value)}
-            autoFocus
-          />
-          {fileExtension}
-        </span>
+        <Grid
+          condensed
+          fullWidth
+          className="megacondensed process-model-files-section"
+        >
+          <Column md={4} lg={8} sm={4}>
+            <TextInput
+              id="process_model_file_name"
+              labelText="File Name:"
+              value={newFileName}
+              onChange={(e: any) => setNewFileName(e.target.value)}
+              invalidText={processModelFileInvalidText}
+              invalid={!!processModelFileInvalidText}
+              size="sm"
+              autoFocus
+            />
+          </Column>
+          <Column
+            md={4}
+            lg={8}
+            sm={4}
+            className="with-top-margin-for-label-next-to-text-input"
+          >
+            {fileExtension}
+          </Column>
+        </Grid>
       </Modal>
     );
   };
