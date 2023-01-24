@@ -922,6 +922,28 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["error_code"] == "process_model_file_cannot_be_found"
 
+    def test_process_model_file_delete_when_primary_file(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
+        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+
+        response = client.delete(
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.bpmn",
+            follow_redirects=True,
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 400
+        assert response.json is not None
+        assert response.json["error_code"] == "process_model_file_cannot_be_deleted"
+
     def test_process_model_file_delete(
         self,
         app: Flask,
@@ -935,8 +957,16 @@ class TestProcessApi(BaseTest):
         )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
+        self.create_spec_file(
+            client,
+            process_model_id=process_model_identifier,
+            file_name="second_file.json",
+            file_data=b"<h1>HEY</h1>",
+            user=with_super_admin_user,
+        )
+
         response = client.delete(
-            f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.bpmn",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.json",
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user),
         )
@@ -946,7 +976,7 @@ class TestProcessApi(BaseTest):
         assert response.json["ok"]
 
         response = client.get(
-            f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.json",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 404

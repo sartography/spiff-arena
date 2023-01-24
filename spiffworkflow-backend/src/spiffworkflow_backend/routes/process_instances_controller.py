@@ -72,6 +72,18 @@ def process_instance_create(
     process_model_identifier = _un_modify_modified_process_model_id(
         modified_process_model_identifier
     )
+
+    process_model = _get_process_model(process_model_identifier)
+    if process_model.primary_file_name is None:
+        raise ApiError(
+            error_code="process_model_missing_primary_bpmn_file",
+            message=(
+                f"Process Model '{process_model_identifier}' does not have a primary"
+                " bpmn file. One must be set in order to instantiate this model."
+            ),
+            status_code=400,
+        )
+
     process_instance = (
         ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model_identifier, g.user
