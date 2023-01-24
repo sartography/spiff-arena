@@ -173,6 +173,10 @@ h1.with-icons {
   margin-top: 1.3em;
 }
 
+.with-top-margin-for-label-next-to-text-input {
+  margin-top: 2.3em;
+}
+
 .with-tiny-top-margin {
   margin-top: 4px;
 }
