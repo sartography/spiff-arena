@@ -1,4 +1,9 @@
-import { useContext, useEffect, useState } from 'react';
+import React, {
+  ReactComponentElement,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 import Editor from '@monaco-editor/react';
 import {
   useParams,
@@ -44,6 +49,7 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
+  ProcessInstanceMetadata,
   ProcessInstanceTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -160,6 +166,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     taskListPath,
     variant,
   ]);
+
+  // useEffect(() => {
+  //   setTimeout(() => setDisplayDetails(!displayDetails), 1 * 2000);
+  //   // setTimeout(() => setDisplayDetails(false), 1 * 6000);
+  // }, [displayDetails]);
 
   const deleteProcessInstance = () => {
     HttpService.makeCallToBackend({
@@ -284,6 +295,38 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
+  const processMetadataDisplayArea = () => {
+    if (
+      !processInstance ||
+      (processInstance.process_metadata &&
+        processInstance.process_metadata.length < 1)
+    ) {
+      return null;
+    }
+    const metadataComponents: any[] = [];
+    (processInstance.process_metadata || []).forEach(
+      (processInstanceMetadata: ProcessInstanceMetadata) => {
+        metadataComponents.push(
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              {processInstanceMetadata.key}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {processInstanceMetadata.value}
+            </Column>
+          </Grid>
+        );
+      }
+    );
+    return (
+      <>
+        <br />
+        {metadataComponents}
+      </>
+    );
+    // return metadataComponents;
+  };
+
   const detailedViewElement = () => {
     if (!processInstance) {
       return null;
@@ -331,6 +374,15 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               {processInstance.bpmn_version_control_type})
             </Column>
           </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Process model revision:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {processInstance.bpmn_version_control_identifier} (
+              {processInstance.bpmn_version_control_type})
+            </Column>
+          </Grid>
         </>
       );
     }
@@ -347,6 +399,68 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       </Grid>
     );
   };
+
+  let deets: any = null;
+  if (processInstance) {
+    if (displayDetails) {
+      deets = (
+        <>
+          <Grid condensed fullWidth>
+            <Button
+              kind="ghost"
+              className="button-link"
+              onClick={() => setDisplayDetails(false)}
+              title="Hide Details"
+            >
+              &laquo; Hide Details
+            </Button>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Updated At:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {convertSecondsToFormattedDateTime(
+                processInstance.updated_at_in_seconds
+              )}
+            </Column>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Created At:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {convertSecondsToFormattedDateTime(
+                processInstance.created_at_in_seconds
+              )}
+            </Column>
+          </Grid>
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Process model revision:{' '}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {processInstance.bpmn_version_control_identifier} (
+              {processInstance.bpmn_version_control_type})
+            </Column>
+          </Grid>
+        </>
+      );
+    } else {
+      deets = (
+        <Grid condensed fullWidth>
+          <Button
+            kind="ghost"
+            className="button-link"
+            onClick={() => setDisplayDetails(true)}
+            title="Show Details"
+          >
+            View Details &raquo;
+          </Button>
+        </Grid>
+      );
+    }
+  }
 
   const getInfoTag = () => {
     if (!processInstance) {
@@ -382,8 +496,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       statusIcon = <Warning />;
     }
 
+    const details = detailedViewElement();
+
     return (
       <>
+        {/*
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started By:{' '}
@@ -403,6 +520,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </Column>
         </Grid>
         {currentEndDateTag}
+        */}
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
             Status:{' '}
@@ -413,8 +531,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Tag>
           </Column>
         </Grid>
-        {detailedViewElement()}
+        {/* detailedViewElement() */}
+        {deets}
+        {/*
         <br />
+        */}
         <Grid condensed fullWidth>
           <Column sm={2} md={2} lg={2}>
             <ButtonSet>
@@ -1002,6 +1123,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             [`Process Instance Id: ${processInstance.id}`],
           ]}
         />
+        {/*
         <Stack orientation="horizontal" gap={1}>
           <h1 className="with-icons">
             Process Instance Id: {processInstance.id}
@@ -1030,12 +1152,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             />
           </Column>
         </Grid>
+        */}
         {getInfoTag()}
-        <br />
-        {taskUpdateDisplayArea()}
-        {processDataDisplayArea()}
-        {stepsElement()}
-        <br />
         <ReactDiagramEditor
           processModelId={processModelId || ''}
           diagramXML={processInstance.bpmn_xml_file_contents || ''}
@@ -1045,7 +1163,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           diagramType="readonly"
           onElementClick={handleClickedDiagramTask}
         />
+        {/* <br /> */}
+        {/* {stepsElement()} */}
+        {/* <br /> */}
 
+        {taskUpdateDisplayArea()}
+        {processDataDisplayArea()}
         <div id="diagram-container" />
       </>
     );
