@@ -277,6 +277,17 @@ def process_model_file_delete(
     """Process_model_file_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
+    if process_model.primary_file_name == file_name:
+        raise ApiError(
+            error_code="process_model_file_cannot_be_deleted",
+            message=(
+                f"'{file_name}' is the primary bpmn file for"
+                f" '{process_model_identifier}' and cannot be deleted. Please set"
+                " another file as the primary before attempting to delete this one."
+            ),
+            status_code=400,
+        )
+
     try:
         SpecFileService.delete_file(process_model, file_name)
     except FileNotFoundError as exception:
