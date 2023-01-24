@@ -694,7 +694,8 @@ def _get_process_instance(
             )
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
-    return make_response(jsonify(process_instance), 200)
+    process_instance_as_dict = process_instance.serialized_with_metadata()
+    return make_response(jsonify(process_instance_as_dict), 200)
 
 
 def _find_process_instance_for_me_or_raise(
