@@ -1,23 +1,16 @@
 version: "3.8"
 services:
-  spiffworkflow-db:
-    container_name: spiffworkflow-db
-    image: mysql:8.0.29
-    platform: linux/amd64
-    cap_add:
-      - SYS_NICE
-    restart: "no"
+  spiffworkflow-frontend:
+    container_name: spiffworkflow-frontend
+    image: ghcr.io/sartography/spiffworkflow-frontend:latest
+    depends_on:
+      spiffworkflow-backend:
+        condition: service_healthy
     environment:
-      - MYSQL_DATABASE=spiffworkflow_backend_development
-      - MYSQL_ROOT_PASSWORD=my-secret-pw
-      - MYSQL_TCP_PORT=8003
+      APPLICATION_ROOT: "/"
+      PORT0: "${SPIFF_FRONTEND_PORT:-8001}"
     ports:
-      - "8003"
-    healthcheck:
-      test: mysql --user=root --password=my-secret-pw -e 'select 1' spiffworkflow_backend_development
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - "${SPIFF_FRONTEND_PORT:-8001}:${SPIFF_FRONTEND_PORT:-8001}/tcp"
 
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
@@ -26,57 +19,68 @@ services:
       spiffworkflow-db:
         condition: service_healthy
     environment:
-      - APPLICATION_ROOT=/
-      - SPIFFWORKFLOW_BACKEND_ENV=development
-      - FLASK_DEBUG=0
-      - FLASK_SESSION_SECRET_KEY=super_secret_key
-      - OPEN_ID_SERVER_URL=http://localhost:8000/openid
-      - SPIFFWORKFLOW_FRONTEND_URL=http://localhost:8001
-      - SPIFFWORKFLOW_BACKEND_URL=http://localhost:8000
-      - SPIFFWORKFLOW_BACKEND_PORT=8000
-      - SPIFFWORKFLOW_BACKEND_UPGRADE_DB=true
-      - SPIFFWORKFLOW_BACKEND_DATABASE_URI=mysql+mysqlconnector://root:my-secret-pw@spiffworkflow-db:8003/spiffworkflow_backend_development
-      - BPMN_SPEC_ABSOLUTE_DIR=/app/process_models
-      - SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=false
-      - SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=example.yml
-      - RUN_BACKGROUND_SCHEDULER=true
-      - OPEN_ID_CLIENT_ID=spiffworkflow-backend
-      - OPEN_ID_CLIENT_SECRET_KEY=my_open_id_secret_key
+      APPLICATION_ROOT: "/"
+      SPIFFWORKFLOW_BACKEND_ENV: "development"
+      FLASK_DEBUG: "0"
+      FLASK_SESSION_SECRET_KEY: "${FLASK_SESSION_SECRET_KEY:-super_secret_key}"
+      OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
+      SPIFFWORKFLOW_FRONTEND_URL: "http://localhost:${SPIFF_FRONTEND_PORT:-8001}"
+      # WARNING: Frontend is a static site which assumes frontend port - 1 on localhost.
+      SPIFFWORKFLOW_BACKEND_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}"
+      SPIFFWORKFLOW_BACKEND_PORT: "${SPIFF_BACKEND_PORT:-8000}"
+      SPIFFWORKFLOW_BACKEND_UPGRADE_DB: "true"
+      SPIFFWORKFLOW_BACKEND_DATABASE_URI: "mysql+mysqlconnector://root:${SPIFF_MYSQL_PASS:-my-secret-pw}@spiffworkflow-db:${SPIFF_MYSQL_PORT:-8003}/spiffworkflow_backend_development"
+      BPMN_SPEC_ABSOLUTE_DIR: "/app/process_models"
+      SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "false"
+      SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"
+      RUN_BACKGROUND_SCHEDULER: "true"
+      OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
+      OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
     ports:
-      - "8000:8000"
+      - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
       - ./process_models:/app/process_models
       - ./log:/app/log
     healthcheck:
-      test: curl localhost:8000/v1.0/status --fail
+      test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/v1.0/status --fail"
       interval: 10s
       timeout: 5s
       retries: 20
-
-  spiffworkflow-frontend:
-    container_name: spiffworkflow-frontend
-    image: ghcr.io/sartography/spiffworkflow-frontend
-    environment:
-      - APPLICATION_ROOT=/
-      - PORT0=8001
-    ports:
-      - "8001:8001"
 
   spiffworkflow-connector:
     container_name: spiffworkflow-connector
-    image: ghcr.io/sartography/connector-proxy-demo
+    image: ghcr.io/sartography/connector-proxy-demo:latest
     environment:
-      - FLASK_ENV=${FLASK_ENV:-development}
-      - FLASK_DEBUG=0
-      - FLASK_SESSION_SECRET_KEY=${FLASK_SESSION_SECRET_KEY:-super_secret_key}
-      - CONNECTOR_PROXY_PORT=8004
+      FLASK_ENV: "${FLASK_ENV:-development}"
+      FLASK_DEBUG: "0"
+      FLASK_SESSION_SECRET_KEY: "${FLASK_SESSION_SECRET_KEY:-super_secret_key}"
+      CONNECTOR_PROXY_PORT: "${SPIFF_CONNECTOR_PORT:-8004}"
     ports:
-      - "8004:8004"
+      - "${SPIFF_CONNECTOR_PORT:-8004}:${SPIFF_CONNECTOR_PORT:-8004}/tcp"
     healthcheck:
-      test: curl localhost:8004/liveness --fail
+      test: "curl localhost:${SPIFF_CONNECTOR_PORT:-8004}/liveness --fail"
       interval: 10s
       timeout: 5s
       retries: 20
+
+  spiffworkflow-db:
+    container_name: spiffworkflow-db
+    image: mysql:8.0.29
+    platform: linux/amd64
+    cap_add:
+      - SYS_NICE
+    restart: "no"
+    environment:
+      MYSQL_DATABASE: "spiffworkflow_backend_development"
+      MYSQL_ROOT_PASSWORD: "${SPIFF_MYSQL_PASS:-my-secret-pw}"
+      MYSQL_TCP_PORT: "${SPIFF_MYSQL_PORT:-8003}"
+    ports:
+      - "${SPIFF_MYSQL_PORT:-8003}:${SPIFF_MYSQL_PORT:-8003}/tcp"
+    healthcheck:
+      test: "mysql --user=root --password=${SPIFF_MYSQL_PASS:-my-secret-pw} -e 'select 1' spiffworkflow_backend_development"
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
 
 volumes:
