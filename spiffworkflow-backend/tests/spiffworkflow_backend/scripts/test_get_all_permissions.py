@@ -57,4 +57,6 @@ class TestGetAllPermissions(BaseTest):
         ]
 
         permissions = GetAllPermissions().run(script_attributes_context)
-        assert permissions == expected_permissions
+        sorted_permissions = sorted(permissions, key=lambda x: x['uri'] or '')
+        sorted_expected_permissions = sorted(expected_permissions, key=lambda x: x['uri'] or '')
+        assert sorted_permissions == sorted_expected_permissions
