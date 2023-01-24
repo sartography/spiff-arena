@@ -66,6 +66,12 @@ export interface ProcessFile {
   file_contents?: string;
 }
 
+export interface ProcessInstanceMetadata {
+  id: number;
+  key: string;
+  value: string;
+}
+
 export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
@@ -80,6 +86,7 @@ export interface ProcessInstance {
   updated_at_in_seconds: number;
   bpmn_version_control_identifier: string;
   bpmn_version_control_type: string;
+  process_metadata?: ProcessInstanceMetadata[];
 }
 
 export interface MessageCorrelationProperties {

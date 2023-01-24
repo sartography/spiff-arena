@@ -75,6 +75,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     )  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
     message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
+    process_metadata = relationship(
+        "ProcessInstanceMetadataModel",
+        cascade="delete",
+    )  # type: ignore
 
     bpmn_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
     start_in_seconds: int | None = db.Column(db.Integer)
@@ -110,6 +114,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "spiff_step": self.spiff_step,
             "process_initiator_username": self.process_initiator.username,
         }
+
+    def serialized_with_metadata(self) -> dict[str, Any]:
+        process_instance_attributes = self.serialized
+        process_instance_attributes["process_metadata"] = self.process_metadata
+        return process_instance_attributes
 
     @property
     def serialized_flat(self) -> dict:
