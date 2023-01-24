@@ -177,7 +177,6 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        processor.save()
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
@@ -340,3 +339,41 @@ class TestProcessInstanceProcessor(BaseTest):
         ).first()
         assert process_instance.locked_by is None
         assert process_instance.locked_at_in_seconds is None
+
+    def test_it_can_loopback_to_previous_bpmn_task_with_gateway(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/loopback_to_manual_task",
+            bpmn_file_name="loopback.bpmn",
+            process_model_source_directory="loopback_to_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 1
+        human_task_one = process_instance.active_human_tasks[0]
+
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            human_task_one.task_name, processor.bpmn_process_instance
+        )
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_task, {}, initiator_user, human_task_one
+        )
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 2
+        human_task_two = process_instance.active_human_tasks[0]
+
+        # this is just asserting the way the functionality currently works in spiff.
+        # we would actually expect this to change one day if we stop reusing the same guid
+        # when we re-do a task.
+        assert human_task_two.task_id == human_task_one.task_id

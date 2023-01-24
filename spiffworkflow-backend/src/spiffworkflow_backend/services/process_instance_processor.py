@@ -790,7 +790,7 @@ class ProcessInstanceProcessor:
         db.session.commit()
 
         human_tasks = HumanTaskModel.query.filter_by(
-            process_instance_id=self.process_instance_model.id
+            process_instance_id=self.process_instance_model.id, completed=False
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
         process_model_display_name = ""

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 49aae41d7992
+Revision ID: 2ec4222f0012
 Revises: 
-Create Date: 2023-01-23 14:23:17.989042
+Create Date: 2023-01-24 10:31:26.693063
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '49aae41d7992'
+revision = '2ec4222f0012'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -206,8 +206,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('task_id', 'process_instance_id', name='human_task_unique')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_human_task_completed'), 'human_task', ['completed'], unique=False)
     op.create_table('message_correlation',
