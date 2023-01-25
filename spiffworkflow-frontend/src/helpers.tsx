@@ -8,7 +8,6 @@ import {
   DEFAULT_PER_PAGE,
   DEFAULT_PAGE,
 } from './components/PaginationForTable';
-import { ErrorForDisplay } from './interfaces';
 
 // https://www.30secondsofcode.org/js/s/slugify
 export const slugifyString = (str: any) => {

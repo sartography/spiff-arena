@@ -1,4 +1,4 @@
-import React, { createContext, useState, useCallback } from 'react';
+import React, { createContext, useState } from 'react';
 import { ErrorForDisplay } from '../interfaces';
 
 type ErrorContextType = {
@@ -28,7 +28,7 @@ export default function APIErrorProvider({ children }) {
       addError: (newError: ErrorForDisplay | null) => addError(newError),
       removeError: () => removeError(),
     }),
-    [error, addError, removeError]
+    [error]
   );
 
   return (

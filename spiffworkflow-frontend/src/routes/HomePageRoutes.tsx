@@ -3,7 +3,6 @@ import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Tabs, TabList, Tab } from '@carbon/react';
 import TaskShow from './TaskShow';
-import useAPIError from '../hooks/UseApiError';
 import MyTasks from './MyTasks';
 import GroupedTasks from './GroupedTasks';
 import CompletedInstances from './CompletedInstances';
@@ -11,7 +10,6 @@ import CreateNewInstance from './CreateNewInstance';
 
 export default function HomePageRoutes() {
   const location = useLocation();
-  const { removeError } = useAPIError();
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
 
