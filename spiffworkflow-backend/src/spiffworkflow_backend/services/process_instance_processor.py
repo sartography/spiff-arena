@@ -69,6 +69,7 @@ from SpiffWorkflow.spiff.serializer.task_spec_converters import UserTaskConverte
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+from sqlalchemy import text
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
@@ -139,6 +140,14 @@ class PotentialOwnerUserNotFoundError(Exception):
 
 class MissingProcessInfoError(Exception):
     """MissingProcessInfoError."""
+
+
+class ProcessInstanceIsAlreadyLockedError(Exception):
+    pass
+
+
+class ProcessInstanceLockedBySomethingElseError(Exception):
+    pass
 
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
@@ -761,6 +770,10 @@ class ProcessInstanceProcessor:
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())
         self.process_instance_model.status = self.get_status().value
+        current_app.logger.debug(
+            f"the_status: {self.process_instance_model.status} for instance"
+            f" {self.process_instance_model.id}"
+        )
         self.process_instance_model.total_tasks = len(user_tasks)
         self.process_instance_model.completed_tasks = sum(
             1 for t in user_tasks if t.state in complete_states
@@ -777,7 +790,7 @@ class ProcessInstanceProcessor:
         db.session.commit()
 
         human_tasks = HumanTaskModel.query.filter_by(
-            process_instance_id=self.process_instance_model.id
+            process_instance_id=self.process_instance_model.id, completed=False
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
         process_model_display_name = ""
@@ -1142,7 +1155,55 @@ class ProcessInstanceProcessor:
 
     def get_status(self) -> ProcessInstanceStatus:
         """Get_status."""
-        return self.status_of(self.bpmn_process_instance)
+        the_status = self.status_of(self.bpmn_process_instance)
+        # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
+        return the_status
+
+    # inspiration from https://github.com/collectiveidea/delayed_job_active_record/blob/master/lib/delayed/backend/active_record.rb
+    # could consider borrowing their "cleanup all my locks when the app quits" idea as well and
+    #   implement via https://docs.python.org/3/library/atexit.html
+    def lock_process_instance(self, lock_prefix: str) -> None:
+        locked_by = f"{lock_prefix}_{current_app.config['PROCESS_UUID']}"
+        current_time_in_seconds = round(time.time())
+        lock_expiry_in_seconds = (
+            current_time_in_seconds
+            - current_app.config["ALLOW_CONFISCATING_LOCK_AFTER_SECONDS"]
+        )
+
+        query_text = text(
+            "UPDATE process_instance SET locked_at_in_seconds ="
+            " :current_time_in_seconds, locked_by = :locked_by where id = :id AND"
+            " (locked_by IS NULL OR locked_at_in_seconds < :lock_expiry_in_seconds);"
+        ).execution_options(autocommit=True)
+        result = db.engine.execute(
+            query_text,
+            id=self.process_instance_model.id,
+            current_time_in_seconds=current_time_in_seconds,
+            locked_by=locked_by,
+            lock_expiry_in_seconds=lock_expiry_in_seconds,
+        )
+        # it seems like autocommit is working above (we see the statement in debug logs) but sqlalchemy doesn't
+        #   seem to update properly so tell it to commit as well.
+        # if we omit this line then querying the record from a unit test doesn't ever show the record as locked.
+        db.session.commit()
+        if result.rowcount < 1:
+            raise ProcessInstanceIsAlreadyLockedError(
+                f"Cannot lock process instance {self.process_instance_model.id}."
+                "It has already been locked."
+            )
+
+    def unlock_process_instance(self, lock_prefix: str) -> None:
+        locked_by = f"{lock_prefix}_{current_app.config['PROCESS_UUID']}"
+        if self.process_instance_model.locked_by != locked_by:
+            raise ProcessInstanceLockedBySomethingElseError(
+                f"Cannot unlock process instance {self.process_instance_model.id}."
+                f"It locked by {self.process_instance_model.locked_by}"
+            )
+
+        self.process_instance_model.locked_by = None
+        self.process_instance_model.locked_at_in_seconds = None
+        db.session.add(self.process_instance_model)
+        db.session.commit()
 
     # messages have one correlation key (possibly wrong)
     # correlation keys may have many correlation properties

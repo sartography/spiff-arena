@@ -19,7 +19,6 @@ from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import migrate
-from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_blueprint
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
     openid_blueprint,
 )
@@ -106,7 +105,6 @@ def create_app() -> flask.app.Flask:
 
     app.register_blueprint(user_blueprint)
     app.register_blueprint(api_error_blueprint)
-    app.register_blueprint(admin_blueprint, url_prefix="/admin")
     app.register_blueprint(openid_blueprint, url_prefix="/openid")
 
     # preflight options requests will be allowed if they meet the requirements of the url regex.

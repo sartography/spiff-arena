@@ -7,11 +7,18 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import (
     UserDoesNotHaveAccessToTaskError,
+)
+from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceIsAlreadyLockedError,
+)
+from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceLockedBySomethingElseError,
 )
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -170,7 +177,6 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        processor.save()
 
         assert len(process_instance.active_human_tasks) == 1
         human_task = process_instance.active_human_tasks[0]
@@ -293,3 +299,81 @@ class TestProcessInstanceProcessor(BaseTest):
 
         assert len(process_instance.active_human_tasks) == 1
         assert initial_human_task_id == process_instance.active_human_tasks[0].id
+
+    def test_it_can_lock_and_unlock_a_process_instance(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
+            bpmn_file_name="lanes_with_owner_dict.bpmn",
+            process_model_source_directory="model_with_lanes",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        assert process_instance.locked_by is None
+        assert process_instance.locked_at_in_seconds is None
+        processor.lock_process_instance("TEST")
+
+        process_instance = ProcessInstanceModel.query.filter_by(
+            id=process_instance.id
+        ).first()
+        assert process_instance.locked_by is not None
+        assert process_instance.locked_at_in_seconds is not None
+
+        with pytest.raises(ProcessInstanceIsAlreadyLockedError):
+            processor.lock_process_instance("TEST")
+
+        with pytest.raises(ProcessInstanceLockedBySomethingElseError):
+            processor.unlock_process_instance("TEST2")
+
+        processor.unlock_process_instance("TEST")
+
+        process_instance = ProcessInstanceModel.query.filter_by(
+            id=process_instance.id
+        ).first()
+        assert process_instance.locked_by is None
+        assert process_instance.locked_at_in_seconds is None
+
+    def test_it_can_loopback_to_previous_bpmn_task_with_gateway(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/loopback_to_manual_task",
+            bpmn_file_name="loopback.bpmn",
+            process_model_source_directory="loopback_to_manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 1
+        human_task_one = process_instance.active_human_tasks[0]
+
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            human_task_one.task_name, processor.bpmn_process_instance
+        )
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_task, {}, initiator_user, human_task_one
+        )
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 2
+        human_task_two = process_instance.active_human_tasks[0]
+
+        # this is just asserting the way the functionality currently works in spiff.
+        # we would actually expect this to change one day if we stop reusing the same guid
+        # when we re-do a task.
+        assert human_task_two.task_id == human_task_one.task_id

@@ -72,6 +72,18 @@ def process_instance_create(
     process_model_identifier = _un_modify_modified_process_model_id(
         modified_process_model_identifier
     )
+
+    process_model = _get_process_model(process_model_identifier)
+    if process_model.primary_file_name is None:
+        raise ApiError(
+            error_code="process_model_missing_primary_bpmn_file",
+            message=(
+                f"Process Model '{process_model_identifier}' does not have a primary"
+                " bpmn file. One must be set in order to instantiate this model."
+            ),
+            status_code=400,
+        )
+
     process_instance = (
         ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model_identifier, g.user
@@ -102,6 +114,7 @@ def process_instance_run(
         )
 
     processor = ProcessInstanceProcessor(process_instance)
+    processor.lock_process_instance("Web")
 
     if do_engine_steps:
         try:
@@ -118,6 +131,8 @@ def process_instance_run(
                 status_code=400,
                 task=task,
             ) from e
+        finally:
+            processor.unlock_process_instance("Web")
 
         if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
@@ -658,6 +673,9 @@ def _get_process_instance(
             spec_reference.process_model_id
         )
         name_of_file_with_diagram = spec_reference.file_name
+        process_instance.process_model_with_diagram_identifier = (
+            process_model_with_diagram.id
+        )
     else:
         process_model_with_diagram = _get_process_model(process_model_identifier)
         if process_model_with_diagram.primary_file_name:
@@ -679,7 +697,8 @@ def _get_process_instance(
             )
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
-    return make_response(jsonify(process_instance), 200)
+    process_instance_as_dict = process_instance.serialized_with_metadata()
+    return make_response(jsonify(process_instance_as_dict), 200)
 
 
 def _find_process_instance_for_me_or_raise(

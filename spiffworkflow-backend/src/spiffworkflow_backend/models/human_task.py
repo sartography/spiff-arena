@@ -26,9 +26,6 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     """HumanTaskModel."""
 
     __tablename__ = "human_task"
-    __table_args__ = (
-        db.UniqueConstraint("task_id", "process_instance_id", name="human_task_unique"),
-    )
 
     id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(

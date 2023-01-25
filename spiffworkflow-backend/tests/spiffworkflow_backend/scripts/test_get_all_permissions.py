@@ -1,4 +1,6 @@
 """Test_get_localtime."""
+from operator import itemgetter
+
 from flask.app import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -57,4 +59,8 @@ class TestGetAllPermissions(BaseTest):
         ]
 
         permissions = GetAllPermissions().run(script_attributes_context)
-        assert permissions == expected_permissions
+        sorted_permissions = sorted(permissions, key=itemgetter("uri"))
+        sorted_expected_permissions = sorted(
+            expected_permissions, key=itemgetter("uri")
+        )
+        assert sorted_permissions == sorted_expected_permissions
