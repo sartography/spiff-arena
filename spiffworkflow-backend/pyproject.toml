@@ -86,12 +86,12 @@ xdoctest = {extras = ["colors"], version = "^1.0.1"}
 sphinx = "^5.0.2"
 sphinx-autobuild = ">=2021.3.14"
 pre-commit = "^2.20.0"
-flake8 = "^4.0.1"
+flake8 = "*"
 black = ">=21.10b0"
-flake8-bandit = "^2.1.2"
+flake8-bandit = "*"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
-bandit = "1.7.2"
+bandit = "*"
 
 flake8-bugbear = "^22.10.25"
 flake8-docstrings = "^1.6.0"
