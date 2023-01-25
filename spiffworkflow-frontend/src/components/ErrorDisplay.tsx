@@ -20,7 +20,7 @@ function errorDetailDisplay(
 
 export default function ErrorDisplay() {
   const errorObject = useAPIError().error;
-  const { removeError } = useAPIError()
+  const { removeError } = useAPIError();
   let errorTag = null;
   if (errorObject) {
     let sentryLinkTag = null;

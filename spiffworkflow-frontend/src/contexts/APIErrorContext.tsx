@@ -19,18 +19,17 @@ export default function APIErrorProvider({ children }) {
   const [error, setError] = useState<ErrorForDisplay | null>(null);
   const addError = (errorForDisplay: ErrorForDisplay | null) => {
     setError(errorForDisplay);
-    console.log('Adding an error.', errorForDisplay);
-  }
+  };
   const removeError = () => setError(null);
 
-  const contextValue = {
-    error,
-    addError: useCallback(
-      (newError: ErrorForDisplay | null) => addError(newError),
-      []
-    ),
-    removeError: useCallback(() => removeError(), []),
-  };
+  const contextValue = React.useMemo(
+    () => ({
+      error,
+      addError: (newError: ErrorForDisplay | null) => addError(newError),
+      removeError: () => removeError(),
+    }),
+    [error, addError, removeError]
+  );
 
   return (
     <APIErrorContext.Provider value={contextValue}>

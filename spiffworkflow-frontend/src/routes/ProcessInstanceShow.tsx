@@ -150,8 +150,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
     }
   }, [
-//    targetUris,
-//    params,
+    //    targetUris,
+    //    params,
     modifiedProcessModelId,
     permissionsLoaded,
     ability,
@@ -683,6 +683,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setSelectingEvent(false);
     initializeTaskDataToDisplay(taskToDisplay);
     setEventPayload('{}');
+    console.log("cancel updating task")
     removeError();
   };
 
@@ -702,7 +703,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!taskToDisplay) {
       return;
     }
-
+    console.log("saveTaskData")
     removeError();
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
