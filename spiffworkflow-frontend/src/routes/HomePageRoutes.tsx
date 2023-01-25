@@ -1,9 +1,9 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Tabs, TabList, Tab } from '@carbon/react';
 import TaskShow from './TaskShow';
-import ErrorContext from '../contexts/ErrorContext';
+import useAPIError from '../hooks/UseApiError';
 import MyTasks from './MyTasks';
 import GroupedTasks from './GroupedTasks';
 import CompletedInstances from './CompletedInstances';
@@ -11,12 +11,12 @@ import CreateNewInstance from './CreateNewInstance';
 
 export default function HomePageRoutes() {
   const location = useLocation();
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
+  const { removeError } = useAPIError();
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
 
   useEffect(() => {
-    setErrorObject(null);
+    removeError();
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/tasks\/completed-instances\b/)) {
       newSelectedTabIndex = 1;
@@ -24,7 +24,7 @@ export default function HomePageRoutes() {
       newSelectedTabIndex = 2;
     }
     setSelectedTabIndex(newSelectedTabIndex);
-  }, [location, setErrorObject]);
+  }, [location, removeError]);
 
   const renderTabs = () => {
     if (location.pathname.match(/^\/tasks\/\d+\/\b/)) {

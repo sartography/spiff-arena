@@ -1,4 +1,4 @@
-import { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Link,
   useNavigate,
@@ -40,13 +40,11 @@ import {
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
-  setErrorMessageSafely,
 } from '../helpers';
 
 import PaginationForTable from './PaginationForTable';
 import 'react-datepicker/dist/react-datepicker.css';
 
-import ErrorContext from '../contexts/ErrorContext';
 import HttpService from '../services/HttpService';
 
 import 'react-bootstrap-typeahead/css/Typeahead.css';
@@ -61,6 +59,7 @@ import {
   ReportMetadata,
   ReportFilter,
   User,
+  ErrorForDisplay,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -68,6 +67,7 @@ import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
 import { FormatProcessModelDisplayName } from './MiniComponents';
 import { Notification } from './Notification';
+import useAPIError from '../hooks/UseApiError';
 
 const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
@@ -110,6 +110,7 @@ export default function ProcessInstanceListTable({
   const params = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { addError, removeError } = useAPIError();
 
   const [processInstances, setProcessInstances] = useState([]);
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
@@ -132,8 +133,6 @@ export default function ProcessInstanceListTable({
   const [startToTimeInvalid, setStartToTimeInvalid] = useState<boolean>(false);
   const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
-
-  const [errorObject, setErrorObject] = (useContext as any)(ErrorContext);
 
   const processInstanceListPathPrefix =
     variant === 'all'
@@ -517,7 +516,7 @@ export default function ProcessInstanceListTable({
       }
       if (message !== '') {
         valid = false;
-        setErrorMessageSafely(message, errorObject, setErrorObject);
+        addError({ message } as ErrorForDisplay);
       }
     }
 
@@ -579,7 +578,7 @@ export default function ProcessInstanceListTable({
       queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
     }
 
-    setErrorObject(null);
+    removeError();
     setProcessInstanceReportJustSaved(null);
     setProcessInstanceFilters({});
     navigate(`${processInstanceListPathPrefix}?${queryParamString}`);
@@ -679,7 +678,7 @@ export default function ProcessInstanceListTable({
       queryParamString = `?report_id=${selectedReport.id}`;
     }
 
-    setErrorObject(null);
+    removeError();
     setProcessInstanceReportJustSaved(mode || null);
     navigate(`${processInstanceListPathPrefix}${queryParamString}`);
   };

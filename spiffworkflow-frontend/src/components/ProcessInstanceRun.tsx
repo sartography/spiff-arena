@@ -1,4 +1,3 @@
-import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Button,
@@ -11,9 +10,9 @@ import {
   RecentProcessModel,
 } from '../interfaces';
 import HttpService from '../services/HttpService';
-import ErrorContext from '../contexts/ErrorContext';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import useAPIError from '../hooks/UseApiError';
 
 const storeRecentProcessModelInLocalStorage = (
   processModelForStorage: ProcessModel
@@ -78,7 +77,7 @@ export default function ProcessInstanceRun({
   checkPermissions = true,
 }: OwnProps) {
   const navigate = useNavigate();
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
+  const { addError, removeError } = useAPIError();
   const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
     processModel.id
   );
@@ -105,12 +104,12 @@ export default function ProcessInstanceRun({
   };
 
   const processModelRun = (processInstance: any) => {
-    setErrorObject(null);
+    removeError();
     storeRecentProcessModelInLocalStorage(processModel);
     HttpService.makeCallToBackend({
       path: `/process-instances/${modifiedProcessModelId}/${processInstance.id}/run`,
       successCallback: onProcessInstanceRun,
-      failureCallback: setErrorObject,
+      failureCallback: addError,
       httpMethod: 'POST',
     });
   };

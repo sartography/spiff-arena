@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Add,
@@ -32,7 +32,8 @@ import {
 import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import ErrorContext from '../contexts/ErrorContext';
+import useAPIError from '../hooks/UseApiError';
+
 import {
   getGroupFromModifiedModelId,
   modifyProcessIdentifierForPathParam,
@@ -52,7 +53,7 @@ import { Notification } from '../components/Notification';
 
 export default function ProcessModelShow() {
   const params = useParams();
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
+  const { addError, removeError } = useAPIError();
 
   const [processModel, setProcessModel] = useState<ProcessModel | null>(null);
   const [processInstance, setProcessInstance] =
@@ -148,7 +149,7 @@ export default function ProcessModelShow() {
       !('file_contents' in processModelFile) ||
       processModelFile.file_contents === undefined
     ) {
-      setErrorObject({
+      addError({
         message: `Could not file file contents for file: ${processModelFile.name}`,
       });
       return;
@@ -169,7 +170,7 @@ export default function ProcessModelShow() {
   };
 
   const downloadFile = (fileName: string) => {
-    setErrorObject(null);
+    removeError();
     const processModelPath = `process-models/${modifiedProcessModelId}`;
     HttpService.makeCallToBackend({
       path: `/${processModelPath}/files/${fileName}`,
@@ -374,7 +375,7 @@ export default function ProcessModelShow() {
 
   const doFileUpload = (event: any) => {
     event.preventDefault();
-    setErrorObject(null);
+    removeError();
     const url = `/process-models/${modifiedProcessModelId}/files`;
     const formData = new FormData();
     formData.append('file', filesToUpload[0]);
@@ -384,7 +385,7 @@ export default function ProcessModelShow() {
       successCallback: onUploadedCallback,
       httpMethod: 'POST',
       postBody: formData,
-      failureCallback: setErrorObject,
+      failureCallback: addError,
     });
     setFilesToUpload(null);
   };

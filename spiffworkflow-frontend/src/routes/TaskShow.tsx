@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
 
@@ -17,7 +17,7 @@ import remarkGfm from 'remark-gfm';
 // eslint-disable-next-line import/no-named-as-default
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
-import ErrorContext from '../contexts/ErrorContext';
+import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
@@ -29,7 +29,7 @@ export default function TaskShow() {
   const params = useParams();
   const navigate = useNavigate();
 
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
+  const { addError, removeError } = useAPIError();
 
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
@@ -39,48 +39,55 @@ export default function TaskShow() {
     permissionRequestData
   );
 
+  const processResult = (result: any) => {
+    setTask(result);
+    const url = `/task-data/${modifyProcessIdentifierForPathParam(
+      result.process_model_identifier
+    )}/${params.process_instance_id}`;
+    if (
+      result.process_model_identifier &&
+      ability.can('GET', url)
+      // Assure we get a valid process model identifier back
+    ) {
+      HttpService.makeCallToBackend({
+        path: url,
+        successCallback: setUserTasks,
+        failureCallback: (error: any) => {
+          addError(error);
+        },
+      });
+    }
+  };
+
   useEffect(() => {
     if (permissionsLoaded) {
-      const processResult = (result: any) => {
-        setTask(result);
-        if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
-          HttpService.makeCallToBackend({
-            path: `/task-data/${modifyProcessIdentifierForPathParam(
-              result.process_model_identifier
-            )}/${params.process_instance_id}`,
-            successCallback: setUserTasks,
-          });
-        }
-      };
-
       HttpService.makeCallToBackend({
         path: `/tasks/${params.process_instance_id}/${params.task_id}`,
         successCallback: processResult,
-        // This causes the page to continuously reload
-        // failureCallback: setErrorObject,
+        failureCallback: addError,
       });
     }
-  }, [params, permissionsLoaded, ability, targetUris]);
+  }, [permissionsLoaded, ability]); // params and targetUris (which deps on params) cause this to re-fire in an infinite loop on error.
 
   const processSubmitResult = (result: any) => {
-    setErrorObject(null);
+    removeError();
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
       navigate(`/tasks/${result.process_instance_id}/${result.id}`);
     } else {
-      setErrorObject(`Received unexpected error: ${result.message}`);
+      addError(result);
     }
   };
 
   const handleFormSubmit = (event: any) => {
-    setErrorObject(null);
+    removeError();
     const dataToSubmit = event.formData;
     delete dataToSubmit.isManualTask;
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
       successCallback: processSubmitResult,
-      failureCallback: setErrorObject,
+      failureCallback: addError,
       httpMethod: 'PUT',
       postBody: dataToSubmit,
     });
