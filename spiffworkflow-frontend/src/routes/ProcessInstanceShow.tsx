@@ -717,7 +717,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setSelectingEvent(false);
     initializeTaskDataToDisplay(taskToDisplay);
     setEventPayload('{}');
-    console.log("cancel updating task")
+    console.log('cancel updating task');
     removeError();
   };
 
@@ -737,7 +737,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!taskToDisplay) {
       return;
     }
-    console.log("saveTaskData")
+    console.log('saveTaskData');
     removeError();
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute

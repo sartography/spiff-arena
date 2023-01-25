@@ -115,11 +115,11 @@ export default function ProcessInstanceRun({
   };
 
   const processInstanceCreateAndRun = () => {
-    setErrorObject(null);
+    removeError();
     HttpService.makeCallToBackend({
       path: processInstanceCreatePath,
       successCallback: processModelRun,
-      failureCallback: setErrorObject,
+      failureCallback: addError,
       httpMethod: 'POST',
     });
   };

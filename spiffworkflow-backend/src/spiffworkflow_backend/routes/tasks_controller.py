@@ -10,15 +10,15 @@ from typing import Union
 
 import flask.wrappers
 import jinja2
-from SpiffWorkflow.exceptions import WorkflowTaskException
 from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
+from jinja2 import TemplateSyntaxError
+from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
-from jinja2 import TemplateSyntaxError
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
@@ -293,9 +293,11 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 task.properties["instructionsForEndUser"] = _render_jinja_template(
                     task.properties["instructionsForEndUser"], spiff_task
                 )
-            except  WorkflowTaskException as wfe:
+            except WorkflowTaskException as wfe:
                 wfe.add_note("Failed to render instructions for end user.")
-                raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
+                raise ApiError.from_workflow_exception(
+                    "instructions_error", str(wfe), exp=wfe
+                ) from wfe
     return make_response(jsonify(task), 200)
 
 
@@ -518,9 +520,12 @@ def _prepare_form_data(
         return _render_jinja_template(file_contents, spiff_task)
     except WorkflowTaskException as wfe:
         wfe.add_note(f"Error in Json Form File '{form_file}'")
-        api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
+        api_error = ApiError.from_workflow_exception(
+            "instructions_error", str(wfe), exp=wfe
+        )
         api_error.file_name = form_file
         raise api_error
+
 
 def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> str:
     """Render_jinja_template."""
@@ -531,11 +536,17 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
         template = jinja_environment.from_string(unprocessed_template)
         return template.render(**spiff_task.data)
     except jinja2.exceptions.TemplateError as template_error:
-        wfe = WorkflowTaskException(str(template_error), task=spiff_task, exception=template_error)
+        wfe = WorkflowTaskException(
+            str(template_error), task=spiff_task, exception=template_error
+        )
         if isinstance(template_error, TemplateSyntaxError):
             wfe.line_number = template_error.lineno
-            wfe.error_line = template_error.source.split('\n')[template_error.lineno - 1]
-        wfe.add_note("Jinja2 template errors can happen when trying to displaying task data")
+            wfe.error_line = template_error.source.split("\n")[
+                template_error.lineno - 1
+            ]
+        wfe.add_note(
+            "Jinja2 template errors can happen when trying to displaying task data"
+        )
         raise wfe from template_error
 
 
@@ -582,14 +593,19 @@ def _update_form_schema_with_task_data_as_needed(
 
                             if task_data_var not in task.data:
                                 wte = WorkflowTaskException(
-                                    f"Error building form. Attempting to create a selection list"
-                                    f" with options from variable '{task_data_var}' but it doesn't"
-                                    f" exist in the Task Data.", task=task)
+                                    (
+                                        "Error building form. Attempting to create a"
+                                        " selection list with options from variable"
+                                        f" '{task_data_var}' but it doesn't exist in"
+                                        " the Task Data."
+                                    ),
+                                    task=task,
+                                )
                                 raise (
                                     ApiError.from_workflow_exception(
                                         error_code="missing_task_data_var",
                                         message=str(wte),
-                                        exp=wte
+                                        exp=wte,
                                     )
                                 )
 

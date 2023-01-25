@@ -2806,7 +2806,7 @@ class TestProcessApi(BaseTest):
         )
 
         data = {
-            "dateTime": "timedelta(hours=1)",
+            "dateTime": "PT1H",
             "external": True,
             "internal": True,
             "label": "Event_0e4owa3",

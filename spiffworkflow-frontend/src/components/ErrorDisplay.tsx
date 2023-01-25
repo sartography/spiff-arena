@@ -59,11 +59,7 @@ export default function ErrorDisplay() {
     }
 
     errorTag = (
-      <Notification
-        title={title}
-        onClose={() => (removeError())}
-        type="error"
-      >
+      <Notification title={title} onClose={() => removeError()} type="error">
         {message}
         <br />
         {sentryLinkTag}
