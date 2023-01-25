@@ -1,0 +1,316 @@
+{
+  "data": {
+    "validate_only": false,
+    "my_var_now": 2,
+    "current_user": {
+      "username": "jason@sartography.com",
+      "id": "1"
+    },
+    "a": 1
+  },
+  "last_task": "b6e341d6-4bc5-4ec0-a93e-9d2154bcf58f",
+  "success": true,
+  "tasks": {
+    "8156eb2b-8edb-425b-a775-2bd37fd891af": {
+      "id": "8156eb2b-8edb-425b-a775-2bd37fd891af",
+      "parent": null,
+      "children": [
+        "d070c7f3-be9e-4f6e-b81a-7647ee6b7582"
+      ],
+      "last_state_change": 1674674629.05859,
+      "state": 32,
+      "task_spec": "Root",
+      "triggered": false,
+      "workflow_name": "process_to_call",
+      "internal_data": {},
+      "data": {}
+    },
+    "d070c7f3-be9e-4f6e-b81a-7647ee6b7582": {
+      "id": "d070c7f3-be9e-4f6e-b81a-7647ee6b7582",
+      "parent": "8156eb2b-8edb-425b-a775-2bd37fd891af",
+      "children": [
+        "3e542841-075e-4e18-906e-4ac68168fda7"
+      ],
+      "last_state_change": 1674674629.094655,
+      "state": 32,
+      "task_spec": "Start",
+      "triggered": false,
+      "workflow_name": "process_to_call",
+      "internal_data": {},
+      "data": {
+        "current_user": {
+          "username": "jason@sartography.com",
+          "id": "1"
+        }
+      }
+    },
+    "3e542841-075e-4e18-906e-4ac68168fda7": {
+      "id": "3e542841-075e-4e18-906e-4ac68168fda7",
+      "parent": "d070c7f3-be9e-4f6e-b81a-7647ee6b7582",
+      "children": [
+        "1685edde-09eb-4363-88b7-9b12f37ea1ef"
+      ],
+      "last_state_change": 1674674629.1414993,
+      "state": 32,
+      "task_spec": "StartEvent_1",
+      "triggered": false,
+      "workflow_name": "process_to_call",
+      "internal_data": {
+        "event_fired": true
+      },
+      "data": {
+        "current_user": {
+          "username": "jason@sartography.com",
+          "id": "1"
+        }
+      }
+    },
+    "1685edde-09eb-4363-88b7-9b12f37ea1ef": {
+      "id": "1685edde-09eb-4363-88b7-9b12f37ea1ef",
+      "parent": "3e542841-075e-4e18-906e-4ac68168fda7",
+      "children": [
+        "380f4e01-bb6c-42e0-9ed8-e7a14f1bd756"
+      ],
+      "last_state_change": 1674674629.1694856,
+      "state": 32,
+      "task_spec": "super_awesome_script",
+      "triggered": false,
+      "workflow_name": "process_to_call",
+      "internal_data": {},
+      "data": {
+        "current_user": {
+          "username": "jason@sartography.com",
+          "id": "1"
+        },
+        "a": 1
+      }
+    },
+    "380f4e01-bb6c-42e0-9ed8-e7a14f1bd756": {
+      "id": "380f4e01-bb6c-42e0-9ed8-e7a14f1bd756",
+      "parent": "1685edde-09eb-4363-88b7-9b12f37ea1ef",
+      "children": [
+        "f4846e08-8e5f-47db-87f0-41daacbd3e5b"
+      ],
+      "last_state_change": 1674674629.2164488,
+      "state": 32,
+      "task_spec": "Event_08g7f08",
+      "triggered": false,
+      "workflow_name": "process_to_call",
+      "internal_data": {},
+      "data": {
+        "current_user": {
+          "username": "jason@sartography.com",
+          "id": "1"
+        },
+        "a": 1
+      }
+    },
+    "f4846e08-8e5f-47db-87f0-41daacbd3e5b": {
+      "id": "f4846e08-8e5f-47db-87f0-41daacbd3e5b",
+      "parent": "380f4e01-bb6c-42e0-9ed8-e7a14f1bd756",
+      "children": [
+        "b6e341d6-4bc5-4ec0-a93e-9d2154bcf58f"
+      ],
+      "last_state_change": 1674674629.2567987,
+      "state": 32,
+      "task_spec": "process_to_call.EndJoin",
+      "triggered": false,
+      "workflow_name": "process_to_call",
+      "internal_data": {},
+      "data": {
+        "current_user": {
+          "username": "jason@sartography.com",
+          "id": "1"
+        },
+        "a": 1
+      }
+    },
+    "b6e341d6-4bc5-4ec0-a93e-9d2154bcf58f": {
+      "id": "b6e341d6-4bc5-4ec0-a93e-9d2154bcf58f",
+      "parent": "f4846e08-8e5f-47db-87f0-41daacbd3e5b",
+      "children": [],
+      "last_state_change": 1674674629.28801,
+      "state": 32,
+      "task_spec": "End",
+      "triggered": false,
+      "workflow_name": "process_to_call",
+      "internal_data": {},
+      "data": {
+        "current_user": {
+          "username": "jason@sartography.com",
+          "id": "1"
+        },
+        "a": 1
+      }
+    }
+  },
+  "root": "8156eb2b-8edb-425b-a775-2bd37fd891af",
+  "spec": {
+    "name": "process_to_call",
+    "description": "Process to call",
+    "file": "callable_process.bpmn",
+    "task_specs": {
+      "Start": {
+        "id": "process_to_call_1",
+        "name": "Start",
+        "description": "",
+        "manual": false,
+        "internal": false,
+        "lookahead": 2,
+        "inputs": [],
+        "outputs": [
+          "StartEvent_1"
+        ],
+        "typename": "StartTask"
+      },
+      "process_to_call.EndJoin": {
+        "id": "process_to_call_2",
+        "name": "process_to_call.EndJoin",
+        "description": "",
+        "manual": false,
+        "internal": false,
+        "lookahead": 2,
+        "inputs": [
+          "Event_08g7f08"
+        ],
+        "outputs": [
+          "End"
+        ],
+        "typename": "_EndJoin"
+      },
+      "End": {
+        "id": "process_to_call_3",
+        "name": "End",
+        "description": "",
+        "manual": false,
+        "internal": false,
+        "lookahead": 2,
+        "inputs": [
+          "process_to_call.EndJoin"
+        ],
+        "outputs": [],
+        "typename": "Simple"
+      },
+      "StartEvent_1": {
+        "id": "process_to_call_4",
+        "name": "StartEvent_1",
+        "description": null,
+        "manual": false,
+        "internal": false,
+        "lookahead": 2,
+        "inputs": [
+          "Start"
+        ],
+        "outputs": [
+          "super_awesome_script"
+        ],
+        "lane": null,
+        "documentation": null,
+        "loopTask": false,
+        "position": {
+          "x": 179,
+          "y": 159
+        },
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "event_definition": {
+          "internal": false,
+          "external": false,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "StartEvent",
+        "extensions": {}
+      },
+      "super_awesome_script": {
+        "id": "process_to_call_5",
+        "name": "super_awesome_script",
+        "description": "Super Awesome Script",
+        "manual": false,
+        "internal": false,
+        "lookahead": 2,
+        "inputs": [
+          "StartEvent_1"
+        ],
+        "outputs": [
+          "Event_08g7f08"
+        ],
+        "lane": null,
+        "documentation": null,
+        "loopTask": false,
+        "position": {
+          "x": 380,
+          "y": 137
+        },
+        "data_input_associations": [],
+        "data_output_associations": [
+          {
+            "name": "my_var_now",
+            "description": "my_var_now",
+            "typename": "BpmnDataSpecification"
+          }
+        ],
+        "prescript": null,
+        "postscript": null,
+        "script": "a = 1\nmy_var_now = 2",
+        "typename": "ScriptTask",
+        "extensions": {}
+      },
+      "Event_08g7f08": {
+        "id": "process_to_call_6",
+        "name": "Event_08g7f08",
+        "description": null,
+        "manual": false,
+        "internal": false,
+        "lookahead": 2,
+        "inputs": [
+          "super_awesome_script"
+        ],
+        "outputs": [
+          "process_to_call.EndJoin"
+        ],
+        "lane": null,
+        "documentation": null,
+        "loopTask": false,
+        "position": {
+          "x": 522,
+          "y": 159
+        },
+        "data_input_associations": [],
+        "data_output_associations": [],
+        "event_definition": {
+          "internal": false,
+          "external": false,
+          "typename": "NoneEventDefinition"
+        },
+        "typename": "EndEvent",
+        "extensions": {}
+      },
+      "Root": {
+        "id": "process_to_call_7",
+        "name": "Root",
+        "description": "",
+        "manual": false,
+        "internal": false,
+        "lookahead": 2,
+        "inputs": [],
+        "outputs": [],
+        "typename": "Simple"
+      }
+    },
+    "data_inputs": [],
+    "data_outputs": [],
+    "data_objects": {
+      "my_var_now": {
+        "name": "my_var_now",
+        "description": "my_var_now",
+        "typename": "BpmnDataSpecification"
+      }
+    },
+    "correlation_keys": {},
+    "typename": "BpmnProcessSpec"
+  },
+  "subprocess_specs": {},
+  "subprocesses": {},
+  "bpmn_messages": [],
+  "serializer_version": "1.0-spiffworkflow-backend"
+}
