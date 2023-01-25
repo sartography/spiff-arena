@@ -35,6 +35,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
+  modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -43,6 +44,7 @@ import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
+  ProcessInstanceMetadata,
   ProcessInstanceTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -74,6 +76,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
   const [displayDetails, setDisplayDetails] = useState<boolean>(false);
+  const [showProcessInstanceMetadata, setShowProcessInstanceMetadata] =
+    useState<boolean>(false);
 
   const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
@@ -391,6 +395,23 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             {processInstance.process_initiator_username}
           </Column>
         </Grid>
+        {processInstance.process_model_with_diagram_identifier ? (
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Current Diagram:{' '}
+            </Column>
+            <Column sm={4} md={6} lg={8} className="grid-date">
+              <Link
+                data-qa="go-to-current-diagram-process-model"
+                to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                  processInstance.process_model_with_diagram_identifier || ''
+                )}`}
+              >
+                {processInstance.process_model_with_diagram_identifier}
+              </Link>
+            </Column>
+          </Grid>
+        ) : null}
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started:{' '}
@@ -445,6 +466,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   Messages
                 </Button>
               </Can>
+              {processInstance.process_metadata &&
+              processInstance.process_metadata.length > 0 ? (
+                <Button
+                  size="sm"
+                  className="button-white-background"
+                  data-qa="process-instance-show-metadata"
+                  onClick={() => {
+                    setShowProcessInstanceMetadata(true);
+                  }}
+                >
+                  Metadata
+                </Button>
+              ) : null}
             </ButtonSet>
           </Column>
         </Grid>
@@ -899,6 +933,41 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const processInstanceMetadataArea = () => {
+    if (
+      !processInstance ||
+      (processInstance.process_metadata &&
+        processInstance.process_metadata.length < 1)
+    ) {
+      return null;
+    }
+    const metadataComponents: any[] = [];
+    (processInstance.process_metadata || []).forEach(
+      (processInstanceMetadata: ProcessInstanceMetadata) => {
+        metadataComponents.push(
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              {processInstanceMetadata.key}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {processInstanceMetadata.value}
+            </Column>
+          </Grid>
+        );
+      }
+    );
+    return (
+      <Modal
+        open={showProcessInstanceMetadata}
+        modalHeading="Metadata"
+        passiveModal
+        onRequestClose={() => setShowProcessInstanceMetadata(false)}
+      >
+        {metadataComponents}
+      </Modal>
+    );
+  };
+
   const taskUpdateDisplayArea = () => {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     const candidateEvents: any = getEvents(taskToUse);
@@ -1030,6 +1099,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <br />
         {taskUpdateDisplayArea()}
         {processDataDisplayArea()}
+        {processInstanceMetadataArea()}
         {stepsElement()}
         <br />
         <ReactDiagramEditor

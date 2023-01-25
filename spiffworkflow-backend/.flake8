@@ -8,11 +8,19 @@ rst-roles = class,const,func,meth,mod,ref
 rst-directives = deprecated
 
 per-file-ignores =
+    # More specific globs seem to overwrite the more generic ones so we have
+    # to split them out by directory
+    # So if you have a rule like:
+    # tests/*: D102,D103
+    # and a rule like:
+    # tests/test_hey.py: D102
+    # THEN, test_hey.py will NOT be excluding D103
+
     # asserts are ok in tests
-    tests/*:S101
+    tests/*:S101,D102,D103
 
     # prefer naming functions descriptively rather than forcing comments
-    *:D102
+    src/*:D102,D103
 
     bin/keycloak_test_server.py:B950,D
     conftest.py:S105
@@ -31,4 +39,4 @@ per-file-ignores =
     # and ignore long comment line
     src/spiffworkflow_backend/services/logging_service.py:N802,B950
 
-    tests/spiffworkflow_backend/integration/test_process_api.py:S607,S101,D103,S605
+    tests/spiffworkflow_backend/integration/test_process_api.py:S607,S101,S605,D102,D103,D101

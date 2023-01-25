@@ -149,7 +149,30 @@ def process_model_update(
     }
 
     process_model = _get_process_model(process_model_identifier)
+
+    # FIXME: the logic to update the the process id would be better if it could go into the
+    #   process model save method but this causes circular imports with SpecFileService.
+    # All we really need this for is to get the process id from a bpmn file so maybe that could
+    #   all be moved to FileSystemService.
+    update_primary_bpmn_file = False
+    if (
+        "primary_file_name" in body_filtered
+        and "primary_process_id" not in body_filtered
+    ):
+        if process_model.primary_file_name != body_filtered["primary_file_name"]:
+            update_primary_bpmn_file = True
+
     ProcessModelService.update_process_model(process_model, body_filtered)
+
+    # update the file to ensure we get the correct process id if the primary file changed.
+    if update_primary_bpmn_file and process_model.primary_file_name:
+        primary_file_contents = SpecFileService.get_data(
+            process_model, process_model.primary_file_name
+        )
+        SpecFileService.update_file(
+            process_model, process_model.primary_file_name, primary_file_contents
+        )
+
     _commit_and_push_to_git(
         f"User: {g.user.username} updated process model {process_model_identifier}"
     )
@@ -277,6 +300,17 @@ def process_model_file_delete(
     """Process_model_file_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
+    if process_model.primary_file_name == file_name:
+        raise ApiError(
+            error_code="process_model_file_cannot_be_deleted",
+            message=(
+                f"'{file_name}' is the primary bpmn file for"
+                f" '{process_model_identifier}' and cannot be deleted. Please set"
+                " another file as the primary before attempting to delete this one."
+            ),
+            status_code=400,
+        )
+
     try:
         SpecFileService.delete_file(process_model, file_name)
     except FileNotFoundError as exception:

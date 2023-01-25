@@ -377,6 +377,7 @@ def task_submit(
             )
         )
 
+    processor.lock_process_instance("Web")
     ProcessInstanceService.complete_form_task(
         processor=processor,
         spiff_task=spiff_task,
@@ -384,6 +385,7 @@ def task_submit(
         user=g.user,
         human_task=human_task,
     )
+    processor.unlock_process_instance("Web")
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
     # task spec, complete that form as well.
