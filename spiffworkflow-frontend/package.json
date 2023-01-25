@@ -49,6 +49,7 @@
     "react-bootstrap": "^2.5.0",
     "react-bootstrap-typeahead": "^6.0.0",
     "react-datepicker": "^4.8.0",
+    "react-devtools": "^4.27.1",
     "react-dom": "^18.2.0",
     "react-icons": "^4.4.0",
     "react-jsonschema-form": "^1.8.1",

@@ -258,20 +258,6 @@ export const getBpmnProcessIdentifiers = (rootBpmnElement: any) => {
   return childProcesses;
 };
 
-// Setting the error message state to the same string is still considered a change
-// and re-renders the page so check the message first to avoid that.
-export const setErrorMessageSafely = (
-  newErrorMessageString: string,
-  oldErrorMessage: ErrorForDisplay,
-  errorMessageSetter: any
-) => {
-  if (oldErrorMessage && oldErrorMessage.message === newErrorMessageString) {
-    return null;
-  }
-  errorMessageSetter({ message: newErrorMessageString });
-  return null;
-};
-
 export const isInteger = (str: string | number) => {
   return /^\d+$/.test(str.toString());
 };

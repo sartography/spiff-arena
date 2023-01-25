@@ -182,6 +182,7 @@ export interface ErrorForDisplay {
   task_id?: string;
   line_number?: number;
   file_name?: string;
+  task_trace?: [string];
 }
 
 export interface AuthenticationParam {

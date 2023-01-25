@@ -20,8 +20,10 @@ services:
       retries: 10
 
   spiffworkflow-backend:
-    container_name: spiffworkflow-backend
-    image: ghcr.io/sartography/spiffworkflow-backend:latest
+#    container_name: spiffworkflow-backend
+    build: ./spiffworkflow-backend/.
+#    dockerfile: Dockerfile
+#      image: ghcr.io/sartography/spiffworkflow-backend:latest
     depends_on:
       spiffworkflow-db:
         condition: service_healthy
