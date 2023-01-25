@@ -35,6 +35,7 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
+  modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
@@ -395,6 +396,23 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             {processInstance.process_initiator_username}
           </Column>
         </Grid>
+        {processInstance.process_model_with_diagram_identifier ? (
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Current Diagram:{' '}
+            </Column>
+            <Column sm={4} md={6} lg={8} className="grid-date">
+              <Link
+                data-qa="go-to-current-diagram-process-model"
+                to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                  processInstance.process_model_with_diagram_identifier || ''
+                )}`}
+              >
+                {processInstance.process_model_with_diagram_identifier}
+              </Link>
+            </Column>
+          </Grid>
+        ) : null}
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started:{' '}

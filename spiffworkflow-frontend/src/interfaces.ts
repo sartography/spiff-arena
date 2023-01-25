@@ -87,6 +87,7 @@ export interface ProcessInstance {
   bpmn_version_control_identifier: string;
   bpmn_version_control_type: string;
   process_metadata?: ProcessInstanceMetadata[];
+  process_model_with_diagram_identifier?: string;
 }
 
 export interface MessageCorrelationProperties {

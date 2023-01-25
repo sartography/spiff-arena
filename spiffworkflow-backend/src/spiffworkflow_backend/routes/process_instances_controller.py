@@ -673,6 +673,9 @@ def _get_process_instance(
             spec_reference.process_model_id
         )
         name_of_file_with_diagram = spec_reference.file_name
+        process_instance.process_model_with_diagram_identifier = (
+            process_model_with_diagram.id
+        )
     else:
         process_model_with_diagram = _get_process_model(process_model_identifier)
         if process_model_with_diagram.primary_file_name:
