@@ -381,18 +381,27 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_can_refresh_permissions."""
         user = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="user_two")
         admin_user = self.find_or_create_user(username="testadmin1")
 
         # this group is not mentioned so it will get deleted
         GroupService.find_or_create_group("group_two")
         assert GroupModel.query.filter_by(identifier="group_two").first() is not None
 
+        GroupService.find_or_create_group("group_three")
+        assert GroupModel.query.filter_by(identifier="group_three").first() is not None
+
         group_info = [
             {
-                "users": ["user_one"],
+                "users": ["user_one", "user_two"],
                 "name": "group_one",
                 "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
-            }
+            },
+            {
+                "users": ["user_two"],
+                "name": "group_three",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey2"}],
+            },
         ]
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_two").first() is None
@@ -402,12 +411,32 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
         self.assert_user_has_permission(user, "create", "/v1.0/process-groups/hey:yo")
 
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey")
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey:yo")
+        self.assert_user_has_permission(
+            user_two, "create", "/v1.0/process-groups/hey:yo"
+        )
+        assert GroupModel.query.filter_by(identifier="group_three").first() is not None
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2")
+        self.assert_user_has_permission(
+            user_two, "read", "/v1.0/process-groups/hey2:yo"
+        )
+        self.assert_user_has_permission(
+            user_two, "create", "/v1.0/process-groups/hey2:yo"
+        )
+
+        # remove access to 'hey' from user_two
         group_info = [
             {
                 "users": ["user_one"],
                 "name": "group_one",
                 "permissions": [{"actions": ["read"], "uri": "PG:hey"}],
-            }
+            },
+            {
+                "users": ["user_two"],
+                "name": "group_three",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey2"}],
+            },
         ]
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_one").first() is not None
@@ -417,3 +446,15 @@ class TestAuthorizationService(BaseTest):
             user, "create", "/v1.0/process-groups/hey:yo", expected_result=False
         )
         self.assert_user_has_permission(admin_user, "create", "/anything-they-want")
+
+        self.assert_user_has_permission(
+            user_two, "read", "/v1.0/process-groups/hey", expected_result=False
+        )
+        assert GroupModel.query.filter_by(identifier="group_three").first() is not None
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2")
+        self.assert_user_has_permission(
+            user_two, "read", "/v1.0/process-groups/hey2:yo"
+        )
+        self.assert_user_has_permission(
+            user_two, "create", "/v1.0/process-groups/hey2:yo"
+        )
