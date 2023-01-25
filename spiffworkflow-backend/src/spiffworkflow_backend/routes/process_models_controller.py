@@ -301,10 +301,6 @@ def process_model_file_delete(
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
 
-    # DEBUG CI: TODO: DELETE
-    print(f"CURRENT PRIMARY FILE NAME: {process_model.primary_file_name}")
-    print(f"FILE TO DELETE: {file_name}")
-
     if process_model.primary_file_name == file_name:
         raise ApiError(
             error_code="process_model_file_cannot_be_deleted",
