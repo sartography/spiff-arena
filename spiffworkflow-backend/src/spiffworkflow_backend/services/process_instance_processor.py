@@ -1447,7 +1447,9 @@ class ProcessInstanceProcessor:
         except Exception:
             task_data_len = 0
 
-        task_data_limit = 1024**2
+        # Not sure what the number here should be but this now matches the mysql
+        # max_allowed_packet variable on dev - 1073741824
+        task_data_limit = 1024**3
 
         if task_data_len > task_data_limit:
             raise (
