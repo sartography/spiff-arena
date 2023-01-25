@@ -932,10 +932,13 @@ class TestProcessApi(BaseTest):
         process_model_identifier = self.create_group_and_model_with_bpmn(
             client, with_super_admin_user
         )
+        process_model = ProcessModelService.get_process_model(
+            process_model_id=process_model_identifier
+        )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
         response = client.delete(
-            f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.bpmn",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/{process_model.primary_file_name}",
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user),
         )
