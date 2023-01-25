@@ -26,6 +26,7 @@ export default function Configuration() {
   const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
+    console.log("Configuration remove error")
     removeError();
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/admin\/configuration\/authentications\b/)) {

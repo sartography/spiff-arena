@@ -16,7 +16,7 @@ export default function HomePageRoutes() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    removeError();
+    // Do not remove errors here, or they always get removed.
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/tasks\/completed-instances\b/)) {
       newSelectedTabIndex = 1;
@@ -24,7 +24,7 @@ export default function HomePageRoutes() {
       newSelectedTabIndex = 2;
     }
     setSelectedTabIndex(newSelectedTabIndex);
-  }, [location, removeError]);
+  }, [location]);
 
   const renderTabs = () => {
     if (location.pathname.match(/^\/tasks\/\d+\/\b/)) {

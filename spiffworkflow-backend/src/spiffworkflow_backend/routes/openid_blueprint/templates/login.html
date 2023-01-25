@@ -13,6 +13,8 @@
     <div class="error">{{error_message}}</div>
     <div class="login">
     <form id="login" method="post" action="{{ url_for('openid.form_submit') }}">
+        <p><b>Important:</b> This login form is for demonstration purposes only.  In production systems you should
+        be using a real Open ID System.</p>
         <input type="text" class="cds--text-input" name="Uname" id="Uname" placeholder="Username">
         <br><br>
         <input type="Password" class="cds--text-input" name="Pass" id="Pass" placeholder="Password">
