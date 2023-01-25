@@ -77,11 +77,17 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
 ]
 
 
+class UserToGroupDict(TypedDict):
+    username: str
+    group_identifier: str
+
+
 class DesiredPermissionDict(TypedDict):
     """DesiredPermissionDict."""
 
     group_identifiers: Set[str]
     permission_assignments: list[PermissionAssignmentModel]
+    user_to_group_identifiers: list[UserToGroupDict]
 
 
 class AuthorizationService:
@@ -212,6 +218,7 @@ class AuthorizationService:
 
         default_group = None
         unique_user_group_identifiers: Set[str] = set()
+        user_to_group_identifiers: list[UserToGroupDict] = []
         if "default_group" in permission_configs:
             default_group_identifier = permission_configs["default_group"]
             default_group = GroupService.find_or_create_group(default_group_identifier)
@@ -231,6 +238,11 @@ class AuthorizationService:
                                 )
                             )
                         continue
+                    user_to_group_dict: UserToGroupDict = {
+                        "username": user.username,
+                        "group_identifier": group_identifier,
+                    }
+                    user_to_group_identifiers.append(user_to_group_dict)
                     cls.associate_user_with_group(user, group)
 
         permission_assignments = []
@@ -275,6 +287,7 @@ class AuthorizationService:
         return {
             "group_identifiers": unique_user_group_identifiers,
             "permission_assignments": permission_assignments,
+            "user_to_group_identifiers": user_to_group_identifiers,
         }
 
     @classmethod
@@ -735,13 +748,20 @@ class AuthorizationService:
     def refresh_permissions(cls, group_info: list[dict[str, Any]]) -> None:
         """Adds new permission assignments and deletes old ones."""
         initial_permission_assignments = PermissionAssignmentModel.query.all()
+        initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
         result = cls.import_permissions_from_yaml_file()
         desired_permission_assignments = result["permission_assignments"]
         desired_group_identifiers = result["group_identifiers"]
+        desired_user_to_group_identifiers = result["user_to_group_identifiers"]
 
         for group in group_info:
             group_identifier = group["name"]
             for username in group["users"]:
+                user_to_group_dict: UserToGroupDict = {
+                    "username": username,
+                    "group_identifier": group_identifier,
+                }
+                desired_user_to_group_identifiers.append(user_to_group_dict)
                 GroupService.add_user_to_group_or_add_to_waiting(
                     username, group_identifier
                 )
@@ -760,6 +780,14 @@ class AuthorizationService:
         for ipa in initial_permission_assignments:
             if ipa not in desired_permission_assignments:
                 db.session.delete(ipa)
+
+        for iutga in initial_user_to_group_assignments:
+            current_user_dict: UserToGroupDict = {
+                "username": iutga.user.username,
+                "group_identifier": iutga.group.identifier,
+            }
+            if current_user_dict not in desired_user_to_group_identifiers:
+                db.session.delete(iutga)
 
         groups_to_delete = GroupModel.query.filter(
             GroupModel.identifier.not_in(desired_group_identifiers)
