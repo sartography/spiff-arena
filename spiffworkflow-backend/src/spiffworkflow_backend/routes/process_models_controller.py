@@ -302,7 +302,7 @@ def process_model_file_delete(
     process_model = _get_process_model(process_model_identifier)
 
     # DEBUG CI: TODO: DELETE
-    print(f"CURRENT PRIMARY FILE NAME: {process_model.primary_file_nam}")
+    print(f"CURRENT PRIMARY FILE NAME: {process_model.primary_file_name}")
     print(f"FILE TO DELETE: {file_name}")
 
     if process_model.primary_file_name == file_name:
