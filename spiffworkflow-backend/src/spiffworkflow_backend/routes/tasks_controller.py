@@ -10,6 +10,7 @@ from typing import Union
 
 import flask.wrappers
 import jinja2
+from SpiffWorkflow.exceptions import WorkflowTaskException
 from flask import current_app
 from flask import g
 from flask import jsonify
@@ -17,6 +18,7 @@ from flask import make_response
 from flask.wrappers import Response
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
+from jinja2 import TemplateSyntaxError
 from sqlalchemy import and_
 from sqlalchemy import asc
 from sqlalchemy import desc
@@ -251,7 +253,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
 
         form_contents = _prepare_form_data(
             form_schema_file_name,
-            task.data,
+            spiff_task,
             process_model_with_form,
         )
 
@@ -271,7 +273,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             ) from exception
 
         if task.data:
-            _update_form_schema_with_task_data_as_needed(form_dict, task.data)
+            _update_form_schema_with_task_data_as_needed(form_dict, task)
 
         if form_contents:
             task.form_schema = form_dict
@@ -279,7 +281,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
         if form_ui_schema_file_name:
             ui_form_contents = _prepare_form_data(
                 form_ui_schema_file_name,
-                task.data,
+                task,
                 process_model_with_form,
             )
             if ui_form_contents:
@@ -287,9 +289,13 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
 
     if task.properties and task.data and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
-            task.properties["instructionsForEndUser"] = _render_jinja_template(
-                task.properties["instructionsForEndUser"], task.data
-            )
+            try:
+                task.properties["instructionsForEndUser"] = _render_jinja_template(
+                    task.properties["instructionsForEndUser"], spiff_task
+                )
+            except  WorkflowTaskException as wfe:
+                wfe.add_note("Failed to render instructions for end user.")
+                raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
     return make_response(jsonify(task), 200)
 
 
@@ -499,23 +505,36 @@ def _get_tasks(
 
 
 def _prepare_form_data(
-    form_file: str, task_data: Union[dict, None], process_model: ProcessModelInfo
+    form_file: str, spiff_task: SpiffTask, process_model: ProcessModelInfo
 ) -> str:
     """Prepare_form_data."""
-    if task_data is None:
+    if spiff_task.data is None:
         return ""
 
     file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
-    return _render_jinja_template(file_contents, task_data)
+    try:
+        return _render_jinja_template(file_contents, spiff_task)
+    except WorkflowTaskException as wfe:
+        wfe.add_note(f"Error in Json Form File '{form_file}'")
+        api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
+        api_error.file_name = form_file
+        raise api_error
 
-
-def _render_jinja_template(unprocessed_template: str, data: dict[str, Any]) -> str:
+def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> str:
     """Render_jinja_template."""
     jinja_environment = jinja2.Environment(
         autoescape=True, lstrip_blocks=True, trim_blocks=True
     )
-    template = jinja_environment.from_string(unprocessed_template)
-    return template.render(**data)
+    try:
+        template = jinja_environment.from_string(unprocessed_template)
+        return template.render(**spiff_task.data)
+    except jinja2.exceptions.TemplateError as template_error:
+        wfe = WorkflowTaskException(str(template_error), task=spiff_task, exception=template_error)
+        if isinstance(template_error, TemplateSyntaxError):
+            wfe.line_number = template_error.lineno
+            wfe.error_line = template_error.source.split('\n')[template_error.lineno - 1]
+        wfe.add_note("Jinja2 template errors can happen when trying to displaying task data")
+        raise wfe from template_error
 
 
 def _get_spiff_task_from_process_instance(
@@ -542,7 +561,7 @@ def _get_spiff_task_from_process_instance(
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
 def _update_form_schema_with_task_data_as_needed(
-    in_dict: dict, task_data: dict
+    in_dict: dict, task: SpiffTask
 ) -> None:
     """Update_nested."""
     for k, value in in_dict.items():
@@ -559,19 +578,20 @@ def _update_form_schema_with_task_data_as_needed(
                                 "options_from_task_data_var:", ""
                             )
 
-                            if task_data_var not in task_data:
+                            if task_data_var not in task.data:
+                                wte = WorkflowTaskException(
+                                    f"Error building form. Attempting to create a selection list"
+                                    f" with options from variable '{task_data_var}' but it doesn't"
+                                    f" exist in the Task Data.", task=task)
                                 raise (
-                                    ApiError(
+                                    ApiError.from_workflow_exception(
                                         error_code="missing_task_data_var",
-                                        message=(
-                                            "Task data is missing variable:"
-                                            f" {task_data_var}"
-                                        ),
-                                        status_code=500,
+                                        message=str(wte),
+                                        exp=wte
                                     )
                                 )
 
-                            select_options_from_task_data = task_data.get(task_data_var)
+                            select_options_from_task_data = task.data.get(task_data_var)
                             if isinstance(select_options_from_task_data, list):
                                 if all(
                                     "value" in d and "label" in d
@@ -594,11 +614,11 @@ def _update_form_schema_with_task_data_as_needed(
 
                                     in_dict[k] = options_for_react_json_schema_form
         elif isinstance(value, dict):
-            _update_form_schema_with_task_data_as_needed(value, task_data)
+            _update_form_schema_with_task_data_as_needed(value, task)
         elif isinstance(value, list):
             for o in value:
                 if isinstance(o, dict):
-                    _update_form_schema_with_task_data_as_needed(o, task_data)
+                    _update_form_schema_with_task_data_as_needed(o, task)
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
