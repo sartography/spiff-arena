@@ -1,14 +1,13 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Table } from '@carbon/react';
-import ErrorContext from '../contexts/ErrorContext';
+import useAPIError from '../hooks/UseApiError';
 import { AuthenticationItem } from '../interfaces';
 import HttpService from '../services/HttpService';
 import UserService from '../services/UserService';
 
 export default function AuthenticationList() {
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
-
+  const { addError } = useAPIError();
   const [authenticationList, setAuthenticationList] = useState<
     AuthenticationItem[] | null
   >(null);
@@ -26,9 +25,9 @@ export default function AuthenticationList() {
     HttpService.makeCallToBackend({
       path: `/authentications`,
       successCallback: processResult,
-      failureCallback: setErrorObject,
+      failureCallback: addError,
     });
-  }, [setErrorObject]);
+  }, [addError]);
 
   const buildTable = () => {
     if (authenticationList) {

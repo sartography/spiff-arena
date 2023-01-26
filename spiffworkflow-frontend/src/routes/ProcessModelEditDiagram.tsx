@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   generatePath,
   useNavigate,
@@ -28,7 +28,7 @@ import MDEditor from '@uiw/react-md-editor';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
-import ErrorContext from '../contexts/ErrorContext';
+import useAPIError from '../hooks/UseApiError';
 import { makeid, modifyProcessIdentifierForPathParam } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
@@ -105,7 +105,7 @@ export default function ProcessModelEditDiagram() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
+  const { addError, removeError } = useAPIError();
   const [processModelFile, setProcessModelFile] = useState<ProcessFile | null>(
     null
   );
@@ -182,7 +182,7 @@ export default function ProcessModelEditDiagram() {
 
   const saveDiagram = (bpmnXML: any, fileName = params.file_name) => {
     setDisplaySaveFileMessage(false);
-    setErrorObject(null);
+    removeError();
     setBpmnXmlForDiagramRendering(bpmnXML);
 
     let url = `/process-models/${modifiedProcessModelId}/files`;
@@ -208,7 +208,7 @@ export default function ProcessModelEditDiagram() {
     HttpService.makeCallToBackend({
       path: url,
       successCallback: navigateToProcessModelFile,
-      failureCallback: setErrorObject,
+      failureCallback: addError,
       httpMethod,
       postBody: formData,
     });

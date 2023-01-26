@@ -1,6 +1,5 @@
-import { useContext } from 'react';
-import ErrorContext from '../contexts/ErrorContext';
 import { Notification } from './Notification';
+import useAPIError from '../hooks/UseApiError';
 
 function errorDetailDisplay(
   errorObject: any,
@@ -20,8 +19,8 @@ function errorDetailDisplay(
 }
 
 export default function ErrorDisplay() {
-  const [errorObject, setErrorObject] = (useContext as any)(ErrorContext);
-
+  const errorObject = useAPIError().error;
+  const { removeError } = useAPIError();
   let errorTag = null;
   if (errorObject) {
     let sentryLinkTag = null;
@@ -50,7 +49,7 @@ export default function ErrorDisplay() {
     );
     const errorLine = errorDetailDisplay(errorObject, 'error_line', 'Context');
     let taskTrace = null;
-    if ('task_trace' in errorObject && errorObject.task_trace.length > 1) {
+    if (errorObject.task_trace && errorObject.task_trace.length > 1) {
       taskTrace = (
         <div className="error_info">
           <span className="error_title">Call Activity Trace:</span>
@@ -60,11 +59,7 @@ export default function ErrorDisplay() {
     }
 
     errorTag = (
-      <Notification
-        title={title}
-        onClose={() => setErrorObject(null)}
-        type="error"
-      >
+      <Notification title={title} onClose={() => removeError()} type="error">
         {message}
         <br />
         {sentryLinkTag}

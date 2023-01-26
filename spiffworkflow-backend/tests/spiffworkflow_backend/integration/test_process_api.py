@@ -1680,6 +1680,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         assert response.json is not None
         assert (
             response.json["form_schema"]["definitions"]["Color"]["anyOf"][1]["title"]
@@ -2809,7 +2810,7 @@ class TestProcessApi(BaseTest):
         )
 
         data = {
-            "dateTime": "timedelta(hours=1)",
+            "dateTime": "PT1H",
             "external": True,
             "internal": True,
             "label": "Event_0e4owa3",

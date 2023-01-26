@@ -28,17 +28,6 @@ groups:
     users:
       [
         admin@spiffworkflow.org,
-        oskar@spiffworkflow.org
-      ]
-  Education:
-    users:
-      [
-        malala@spiffworkflow.org
-      ]
-  President:
-    users:
-      [
-        nelson@spiffworkflow.org
       ]
 
 permissions:
@@ -82,21 +71,6 @@ permissions:
     users: [ ]
     allowed_permissions: [ read ]
     uri: /processes
-  # Members of the Education group can change the processes under "education".
-  education-admin:
-    groups: ["Education", "President"]
-    users: []
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-groups/education:*
-
-  # Anyone can start an education process.
-  education-everybody:
-    groups: [everybody]
-    users: []
-    allowed_permissions: [create, read]
-    uri: /process-instances/misc:category_number_one:process-model-with-form/*
-
-  # Anyone can see their own user groups.
   groups-everybody:
     groups: [everybody]
     users: []
