@@ -20,11 +20,11 @@ import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck } from '../interfaces';
+import { PermissionsToCheck, ProcessInstanceTask } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function TaskShow() {
-  const [task, setTask] = useState(null);
+  const [task, setTask] = useState<ProcessInstanceTask | null>(null);
   const [userTasks, setUserTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
@@ -39,35 +39,37 @@ export default function TaskShow() {
     permissionRequestData
   );
 
-  const processResult = (result: any) => {
-    setTask(result);
-    const url = `/task-data/${modifyProcessIdentifierForPathParam(
-      result.process_model_identifier
-    )}/${params.process_instance_id}`;
-    if (
-      result.process_model_identifier &&
-      ability.can('GET', url)
-      // Assure we get a valid process model identifier back
-    ) {
-      HttpService.makeCallToBackend({
-        path: url,
-        successCallback: setUserTasks,
-        failureCallback: (error: any) => {
-          addError(error);
-        },
-      });
-    }
-  };
-
   useEffect(() => {
     if (permissionsLoaded) {
+      const processResult = (result: ProcessInstanceTask) => {
+        // Assure we get a valid process model identifier back
+        if (!result.process_model_identifier) {
+          return null;
+        }
+        setTask(result);
+        const url = `/task-data/${modifyProcessIdentifierForPathParam(
+          result.process_model_identifier
+        )}/${params.process_instance_id}`;
+        if (ability.can('GET', url)) {
+          HttpService.makeCallToBackend({
+            path: url,
+            successCallback: setUserTasks,
+            failureCallback: (error: any) => {
+              addError(error);
+            },
+          });
+        }
+        return null;
+      };
       HttpService.makeCallToBackend({
         path: `/tasks/${params.process_instance_id}/${params.task_id}`,
         successCallback: processResult,
         failureCallback: addError,
       });
     }
-  }, [permissionsLoaded, ability]); // params and targetUris (which deps on params) cause this to re-fire in an infinite loop on error.
+    // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [permissionsLoaded, ability, params, targetUris]);
 
   const processSubmitResult = (result: any) => {
     removeError();
@@ -173,12 +175,16 @@ export default function TaskShow() {
     return errors;
   };
 
-  const formElement = (taskToUse: any) => {
+  const formElement = () => {
+    if (!task) {
+      return null;
+    }
+
     let formUiSchema;
-    let taskData = taskToUse.data;
-    let jsonSchema = taskToUse.form_schema;
+    let taskData = task.data;
+    let jsonSchema = task.form_schema;
     let reactFragmentToHideSubmitButton = null;
-    if (taskToUse.type === 'Manual Task') {
+    if (task.type === 'Manual Task') {
       taskData = {};
       jsonSchema = {
         type: 'object',
@@ -196,10 +202,10 @@ export default function TaskShow() {
           'ui:widget': 'hidden',
         },
       };
-    } else if (taskToUse.form_ui_schema) {
-      formUiSchema = JSON.parse(taskToUse.form_ui_schema);
+    } else if (task.form_ui_schema) {
+      formUiSchema = JSON.parse(task.form_ui_schema);
     }
-    if (taskToUse.state !== 'READY') {
+    if (task.state !== 'READY') {
       formUiSchema = Object.assign(formUiSchema || {}, {
         'ui:readonly': true,
       });
@@ -211,7 +217,7 @@ export default function TaskShow() {
       reactFragmentToHideSubmitButton = <div />;
     }
 
-    if (taskToUse.type === 'Manual Task' && taskToUse.state === 'READY') {
+    if (task.type === 'Manual Task' && task.state === 'READY') {
       reactFragmentToHideSubmitButton = (
         <div>
           <Button type="submit">Continue</Button>
@@ -241,10 +247,13 @@ export default function TaskShow() {
     );
   };
 
-  const instructionsElement = (taskToUse: any) => {
+  const instructionsElement = () => {
+    if (!task) {
+      return null;
+    }
     let instructions = '';
-    if (taskToUse.properties.instructionsForEndUser) {
-      instructions = taskToUse.properties.instructionsForEndUser;
+    if (task.properties.instructionsForEndUser) {
+      instructions = task.properties.instructionsForEndUser;
     }
     return (
       <div className="markdown">
@@ -256,21 +265,19 @@ export default function TaskShow() {
   };
 
   if (task) {
-    const taskToUse = task as any;
     let statusString = '';
-    if (taskToUse.state !== 'READY') {
-      statusString = ` ${taskToUse.state}`;
+    if (task.state !== 'READY') {
+      statusString = ` ${task.state}`;
     }
 
     return (
       <main>
         <div>{buildTaskNavigation()}</div>
         <h3>
-          Task: {taskToUse.title} ({taskToUse.process_model_display_name})
-          {statusString}
+          Task: {task.title} ({task.process_model_display_name}){statusString}
         </h3>
-        {instructionsElement(taskToUse)}
-        {formElement(taskToUse)}
+        {instructionsElement()}
+        {formElement()}
       </main>
     );
   }
