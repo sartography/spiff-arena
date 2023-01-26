@@ -23,15 +23,11 @@ import Configuration from './Configuration';
 import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
-import useAPIError from '../hooks/UseApiError';
 
 export default function AdminRoutes() {
   const location = useLocation();
-  const { removeError } = useAPIError();
 
-  useEffect(() => {
-    removeError();
-  }, [location, removeError]);
+  useEffect(() => {}, [location]);
 
   if (UserService.hasRole(['admin'])) {
     return (

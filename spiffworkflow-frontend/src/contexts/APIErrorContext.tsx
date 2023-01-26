@@ -25,8 +25,12 @@ export default function APIErrorProvider({ children }) {
   const contextValue = React.useMemo(
     () => ({
       error,
-      addError: (newError: ErrorForDisplay | null) => addError(newError),
-      removeError: () => removeError(),
+      addError: (newError: ErrorForDisplay | null) => {
+        addError(newError);
+      },
+      removeError: () => {
+        removeError();
+      },
     }),
     [error]
   );
