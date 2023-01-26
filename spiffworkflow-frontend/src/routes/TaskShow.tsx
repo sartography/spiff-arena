@@ -19,9 +19,7 @@ import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
-import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck, ProcessInstanceTask } from '../interfaces';
-import { usePermissionFetcher } from '../hooks/PermissionService';
+import { ProcessInstanceTask } from '../interfaces';
 
 export default function TaskShow() {
   const [task, setTask] = useState<ProcessInstanceTask | null>(null);
@@ -31,40 +29,32 @@ export default function TaskShow() {
 
   const { addError, removeError } = useAPIError();
 
-  const { targetUris } = useUriListForPermissions();
-  const permissionRequestData: PermissionsToCheck = {
-    [targetUris.processInstanceTaskListDataPath]: ['GET'],
-  };
-  const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
-  );
-
   useEffect(() => {
-    if (permissionsLoaded) {
-      const processResult = (result: ProcessInstanceTask) => {
-        setTask(result);
-        const url = `/task-data/${modifyProcessIdentifierForPathParam(
-          result.process_model_identifier
-        )}/${params.process_instance_id}`;
-        if (ability.can('GET', url)) {
-          HttpService.makeCallToBackend({
-            path: url,
-            successCallback: setUserTasks,
-            failureCallback: (error: any) => {
-              addError(error);
-            },
-          });
-        }
-      };
+    const processResult = (result: ProcessInstanceTask) => {
+      setTask(result);
+      const url = `/task-data/${modifyProcessIdentifierForPathParam(
+        result.process_model_identifier
+      )}/${params.process_instance_id}`;
+      // if user is unauthorized to get task-data then don't do anything
+      // Checking like this so we can dynamically create the url with the correct process model
+      //  instead of passing the process model identifier in through the params
       HttpService.makeCallToBackend({
-        path: `/tasks/${params.process_instance_id}/${params.task_id}`,
-        successCallback: processResult,
-        failureCallback: addError,
+        path: url,
+        successCallback: setUserTasks,
+        onUnauthorized: () => {},
+        failureCallback: (error: any) => {
+          addError(error);
+        },
       });
-    }
+    };
+    HttpService.makeCallToBackend({
+      path: `/tasks/${params.process_instance_id}/${params.task_id}`,
+      successCallback: processResult,
+      failureCallback: addError,
+    });
     // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [permissionsLoaded, ability, params, targetUris]);
+  }, [params]);
 
   const processSubmitResult = (result: any) => {
     removeError();
