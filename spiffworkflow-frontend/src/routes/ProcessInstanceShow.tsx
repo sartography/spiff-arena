@@ -154,8 +154,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
     }
   }, [
-    //    targetUris,
-    //    params,
+    targetUris,
+    params,
     modifiedProcessModelId,
     permissionsLoaded,
     ability,
