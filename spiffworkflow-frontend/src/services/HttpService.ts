@@ -21,6 +21,7 @@ type backendCallProps = {
   path: string;
   successCallback: Function;
   failureCallback?: Function;
+  onUnauthorized?: Function;
   httpMethod?: string;
   extraHeaders?: object;
   postBody?: any;
@@ -37,6 +38,7 @@ const makeCallToBackend = ({
   path,
   successCallback,
   failureCallback,
+  onUnauthorized,
   httpMethod = 'GET',
   extraHeaders = {},
   postBody = {},
@@ -88,9 +90,13 @@ backendCallProps) => {
       if (isSuccessful) {
         successCallback(result);
       } else if (is403) {
-        // Hopefully we can make this service a hook and use the error message context directly
-        // eslint-disable-next-line no-alert
-        alert(result.message);
+        if (onUnauthorized) {
+          onUnauthorized(result);
+        } else {
+          // Hopefully we can make this service a hook and use the error message context directly
+          // eslint-disable-next-line no-alert
+          alert(result.message);
+        }
       } else {
         let message = 'A server error occurred.';
         if (result.message) {
