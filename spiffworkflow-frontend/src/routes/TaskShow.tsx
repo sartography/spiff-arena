@@ -42,10 +42,6 @@ export default function TaskShow() {
   useEffect(() => {
     if (permissionsLoaded) {
       const processResult = (result: ProcessInstanceTask) => {
-        // Assure we get a valid process model identifier back
-        if (!result.process_model_identifier) {
-          return null;
-        }
         setTask(result);
         const url = `/task-data/${modifyProcessIdentifierForPathParam(
           result.process_model_identifier
@@ -59,7 +55,6 @@ export default function TaskShow() {
             },
           });
         }
-        return null;
       };
       HttpService.makeCallToBackend({
         path: `/tasks/${params.process_instance_id}/${params.task_id}`,
