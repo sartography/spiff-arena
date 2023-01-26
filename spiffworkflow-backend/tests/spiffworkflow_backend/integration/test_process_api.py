@@ -1680,6 +1680,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         assert response.json is not None
         assert (
             response.json["form_schema"]["definitions"]["Color"]["anyOf"][1]["title"]

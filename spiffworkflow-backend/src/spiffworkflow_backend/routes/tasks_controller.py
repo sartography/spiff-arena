@@ -34,6 +34,7 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_principal_or_raise,
@@ -574,9 +575,12 @@ def _get_spiff_task_from_process_instance(
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
 def _update_form_schema_with_task_data_as_needed(
-    in_dict: dict, task: SpiffTask
+    in_dict: dict, task: Task
 ) -> None:
     """Update_nested."""
+    if task.data is None:
+        return None
+
     for k, value in in_dict.items():
         if "anyOf" == k:
             # value will look like the array on the right of "anyOf": ["options_from_task_data_var:awesome_options"]
