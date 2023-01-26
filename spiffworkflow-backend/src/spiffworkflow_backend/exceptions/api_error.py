@@ -8,7 +8,6 @@ from typing import Any
 
 import flask.wrappers
 import sentry_sdk
-from SpiffWorkflow.bpmn.exceptions import WorkflowDataException
 from flask import Blueprint
 from flask import current_app
 from flask import g
@@ -16,7 +15,8 @@ from flask import jsonify
 from flask import make_response
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
-from SpiffWorkflow.exceptions import WorkflowException, SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowException
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
@@ -156,6 +156,7 @@ class ApiError(Exception):
             return ApiError.from_task_spec(error_code, message, exp.task_spec)
         else:
             return ApiError("workflow_error", str(exp))
+
 
 def set_user_sentry_context() -> None:
     """Set_user_sentry_context."""
