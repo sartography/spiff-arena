@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   useParams,
@@ -39,7 +39,6 @@ import {
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-import ErrorContext from '../contexts/ErrorContext';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   PermissionsToCheck,
@@ -51,6 +50,7 @@ import {
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
+import useAPIError from '../hooks/UseApiError';
 
 type OwnProps = {
   variant: string;
@@ -79,8 +79,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [showProcessInstanceMetadata, setShowProcessInstanceMetadata] =
     useState<boolean>(false);
 
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
-
+  const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
@@ -155,11 +154,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
     }
   }, [
+    targetUris,
     params,
     modifiedProcessModelId,
     permissionsLoaded,
     ability,
-    targetUris,
     searchParams,
     taskListPath,
     variant,
@@ -718,7 +717,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setSelectingEvent(false);
     initializeTaskDataToDisplay(taskToDisplay);
     setEventPayload('{}');
-    setErrorObject(null);
+    console.log('cancel updating task');
+    removeError();
   };
 
   const taskDataStringToObject = (dataString: string) => {
@@ -733,16 +733,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     refreshPage();
   };
 
-  const saveTaskDataFailure = (result: any) => {
-    setErrorObject({ message: result.message });
-  };
-
   const saveTaskData = () => {
     if (!taskToDisplay) {
       return;
     }
-
-    setErrorObject(null);
+    console.log('saveTaskData');
+    removeError();
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
@@ -750,7 +746,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       path: `${targetUris.processInstanceTaskListDataPath}/${taskToUse.id}`,
       httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
-      failureCallback: saveTaskDataFailure,
+      failureCallback: addError,
       postBody: {
         new_task_data: taskToUse.data,
       },
@@ -764,7 +760,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       path: `/send-event/${modifiedProcessModelId}/${params.process_instance_id}`,
       httpMethod: 'POST',
       successCallback: saveTaskDataResult,
-      failureCallback: saveTaskDataFailure,
+      failureCallback: addError,
       postBody: eventToSend,
     });
   };

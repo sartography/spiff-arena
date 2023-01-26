@@ -873,7 +873,10 @@ class ProcessInstanceProcessor:
             f"Event of type {event_definition.event_type} sent to process instance"
             f" {self.process_instance_model.id}"
         )
-        self.bpmn_process_instance.catch(event_definition)
+        try:
+            self.bpmn_process_instance.catch(event_definition)
+        except Exception as e:
+            print(e)
         self.do_engine_steps(save=True)
 
     def add_step(self, step: Union[dict, None] = None) -> None:
