@@ -19,6 +19,7 @@ from typing import TypedDict
 from typing import Union
 from uuid import UUID
 
+import SpiffWorkflow
 import dateparser
 import pytz
 from flask import current_app
@@ -37,7 +38,7 @@ from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ig
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowException, SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
@@ -1411,9 +1412,8 @@ class ProcessInstanceProcessor:
                 if hasattr(handler, "bulk_insert_logs"):
                     handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
-
-        except WorkflowTaskException as we:
-            raise ApiError.from_workflow_exception("task_error", str(we), we) from we
+        except SpiffWorkflowException as swe:
+            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
             if save:
