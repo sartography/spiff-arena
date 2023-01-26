@@ -76,6 +76,7 @@ class ProcessInstanceService:
             .filter(ProcessInstanceModel.status == ProcessInstanceStatus.waiting.value)
             .all()
         )
+        process_instance_lock_prefix = "Background"
         for process_instance in records:
             locked = False
             processor = None
@@ -84,7 +85,7 @@ class ProcessInstanceService:
                     f"Processing process_instance {process_instance.id}"
                 )
                 processor = ProcessInstanceProcessor(process_instance)
-                processor.lock_process_instance("Web")
+                processor.lock_process_instance(process_instance_lock_prefix)
                 locked = True
                 processor.do_engine_steps(save=True)
             except ProcessInstanceIsAlreadyLockedError:
@@ -102,7 +103,7 @@ class ProcessInstanceService:
                 current_app.logger.error(error_message)
             finally:
                 if locked and processor:
-                    processor.unlock_process_instance("Web")
+                    processor.unlock_process_instance(process_instance_lock_prefix)
 
     @staticmethod
     def processor_to_process_instance_api(
