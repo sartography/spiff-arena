@@ -2755,7 +2755,6 @@ class TestProcessApi(BaseTest):
             content_type="application/json",
             data=json.dumps(data),
         )
-        print(f"response.json: {response.json}")
         assert response.json["status"] == "complete"
 
         response = client.get(

@@ -244,7 +244,7 @@ Order Total: {{ order_total }}
         <bpmn:incoming>Flow_08d8k7v</bpmn:incoming>
         <bpmn:outgoing>Flow_1570y49</bpmn:outgoing>
         <bpmn:timerEventDefinition id="TimerEventDefinition_0hwvz0g">
-          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">timedelta(seconds=10)</bpmn:timeDuration>
+          <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT10S"</bpmn:timeDuration>
         </bpmn:timerEventDefinition>
       </bpmn:intermediateCatchEvent>
       <bpmn:sequenceFlow id="Flow_1570y49" sourceRef="Event_1lwrxto" targetRef="Activity_1f2e8xi" />
@@ -315,7 +315,7 @@ Order Total: {{ order_total }}
     <bpmn:boundaryEvent id="Event_05ljcvh" name="Order Delayed" cancelActivity="false" attachedToRef="Activity_0gol5af">
       <bpmn:outgoing>Flow_1ny6y69</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_1ll0ob4">
-        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">timedelta(minutes=1)</bpmn:timeDuration>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT1M"</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:boundaryEvent>
     <bpmn:boundaryEvent id="Event_0qk2468" name="Handle Product Unavailable" attachedToRef="Activity_0gol5af">
