@@ -13,7 +13,7 @@
       <bpmn:incoming>Flow_109wuuc</bpmn:incoming>
       <bpmn:outgoing>Flow_0cy1fiy</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_1al5gzu">
-        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">timedelta(seconds=30)</bpmn:timeDuration>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT30S"</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
   </bpmn:process>
