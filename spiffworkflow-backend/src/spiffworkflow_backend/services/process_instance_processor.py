@@ -172,6 +172,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "sum": sum,
             "time": time,
             "timedelta": timedelta,
+            "set": set,
         }
 
         # This will overwrite the standard builtins
