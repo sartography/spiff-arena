@@ -41,7 +41,7 @@
       <bpmn:incoming>Flow_1vld4r2</bpmn:incoming>
       <bpmn:outgoing>Flow_13ai5vv</bpmn:outgoing>
       <bpmn:timerEventDefinition id="TimerEventDefinition_1fnogr9">
-        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">timedelta(hours=1)</bpmn:timeDuration>
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT1H"</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
     <bpmn:manualTask id="Activity_0uum4kq" name="Any Task">

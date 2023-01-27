@@ -1304,9 +1304,9 @@ class ProcessInstanceProcessor:
                 continue
 
             # timer events are not related to messaging, so ignore them for these purposes
-            if waiting_task.task_spec.event_definition.__class__.__name__ in [
-                "TimerEventDefinition",
-            ]:
+            if waiting_task.task_spec.event_definition.__class__.__name__.endswith(
+                "TimerEventDefinition"
+            ):
                 continue
 
             message_model = MessageModel.query.filter_by(
