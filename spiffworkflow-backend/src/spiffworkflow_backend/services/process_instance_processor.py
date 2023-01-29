@@ -26,8 +26,8 @@ from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
-from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
