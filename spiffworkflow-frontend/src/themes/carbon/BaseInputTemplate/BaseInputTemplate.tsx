@@ -107,7 +107,6 @@ export default function BaseInputTemplate<
         id={id}
         name={id}
         className="input"
-        labelText={labelToUse}
         helperText={helperText}
         invalid={invalid}
         invalidText={errorMessageForField}
