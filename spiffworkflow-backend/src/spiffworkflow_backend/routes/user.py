@@ -255,7 +255,7 @@ def parse_id_token(token: str) -> Any:
     return json.loads(decoded)
 
 
-def login_return(code: str, state: str, session_state: str = None) -> Optional[Response]:
+def login_return(code: str, state: str, session_state: str = "") -> Optional[Response]:
     """Login_return."""
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
