@@ -1,55 +1,96 @@
 import React from 'react';
-import IconButton, {
-  IconButtonProps as MuiIconButtonProps,
-} from '@mui/material/IconButton';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import RemoveIcon from '@mui/icons-material/Remove';
-import { IconButtonProps } from '@rjsf/utils';
+import {
+  FormContextType,
+  IconButtonProps,
+  RJSFSchema,
+  StrictRJSFSchema,
+} from '@rjsf/utils';
 
-export default function MuiIconButton(props: IconButtonProps) {
-  const { icon, color, uiSchema, ...otherProps } = props;
+// @ts-ignore
+import { Add, TrashCan, ArrowUp, ArrowDown } from '@carbon/icons-react';
+
+export default function IconButton<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any
+>(props: IconButtonProps<T, S, F>) {
+  const {
+    iconType = 'default',
+    icon,
+    className,
+    uiSchema,
+    registry,
+    ...otherProps
+  } = props;
+  // icon string optios: plus, remove, arrow-up, arrow-down
+  let carbonIcon = (
+    <p>
+      Add new <Add />
+    </p>
+  );
+  if (icon === 'remove') {
+    carbonIcon = <TrashCan />;
+  }
+  if (icon === 'arrow-up') {
+    carbonIcon = <ArrowUp />;
+  }
+  if (icon === 'arrow-down') {
+    carbonIcon = <ArrowDown />;
+  }
+
+  return (
+    <button
+      type="button"
+      className={`btn btn-${iconType} ${className}`}
+      {...otherProps}
+    >
+      {carbonIcon}
+    </button>
+  );
+}
+
+export function MoveDownButton<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any
+>(props: IconButtonProps<T, S, F>) {
   return (
     <IconButton
-      {...otherProps}
-      size="small"
-      color={color as MuiIconButtonProps['color']}
-    >
-      {icon}
-    </IconButton>
-  );
-}
-
-export function MoveDownButton(props: IconButtonProps) {
-  return (
-    <MuiIconButton
       title="Move down"
+      className="array-item-move-down"
       {...props}
-      icon={<ArrowDownwardIcon fontSize="small" />}
+      icon="arrow-down"
     />
   );
 }
 
-export function MoveUpButton(props: IconButtonProps) {
+export function MoveUpButton<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any
+>(props: IconButtonProps<T, S, F>) {
   return (
-    <MuiIconButton
+    <IconButton
       title="Move up"
+      className="array-item-move-up"
       {...props}
-      icon={<ArrowUpwardIcon fontSize="small" />}
+      icon="arrow-up"
     />
   );
 }
 
-export function RemoveButton(props: IconButtonProps) {
-  const { iconType, ...otherProps } = props;
+export function RemoveButton<
+  T = any,
+  S extends StrictRJSFSchema = RJSFSchema,
+  F extends FormContextType = any
+>(props: IconButtonProps<T, S, F>) {
   return (
-    <MuiIconButton
+    <IconButton
       title="Remove"
-      {...otherProps}
-      color="error"
-      icon={
-        <RemoveIcon fontSize={iconType === 'default' ? undefined : 'small'} />
-      }
+      className="array-item-remove"
+      {...props}
+      iconType="danger"
+      icon="remove"
     />
   );
 }
