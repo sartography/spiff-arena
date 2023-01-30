@@ -141,6 +141,7 @@ export default function TaskShow() {
       Object.keys(jsonSchema.properties).forEach((propertyKey: string) => {
         const propertyMetadata = jsonSchema.properties[propertyKey];
         if (
+          typeof propertyMetadata === 'object' &&
           'minimumDate' in propertyMetadata &&
           propertyMetadata.minimumDate === 'today'
         ) {
