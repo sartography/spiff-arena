@@ -40,9 +40,9 @@ export default function ArrayFieldItemTemplate<
   const btnStyle: CSSProperties = {
     marginBottom: '0.5em',
   };
-  const mainColumnWidthSmall = hasToolbar ? 3 : 4;
-  const mainColumnWidthMedium = hasToolbar ? 6 : 8;
-  const mainColumnWidthLarge = hasToolbar ? 12 : 16;
+  const mainColumnWidthSmall = 3;
+  const mainColumnWidthMedium = 4;
+  const mainColumnWidthLarge = 7;
   return (
     <div className={className}>
       <Grid condensed fullWidth>
@@ -55,9 +55,9 @@ export default function ArrayFieldItemTemplate<
         </Column>
         {hasToolbar && (
           <Column
-            sm={4 - mainColumnWidthSmall}
-            md={8 - mainColumnWidthMedium}
-            lg={16 - mainColumnWidthLarge}
+            sm={1}
+            md={1}
+            lg={1}
           >
             <div className="array-item-toolbox">
               <div className="NOT-btn-group">
