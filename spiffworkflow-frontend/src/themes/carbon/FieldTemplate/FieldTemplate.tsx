@@ -34,30 +34,32 @@ function FieldTemplate({
     return <div style={{ display: 'none' }}>{children}</div>;
   }
   return (
-    <WrapIfAdditionalTemplate
-      classNames={classNames}
-      disabled={disabled}
-      id={id}
-      label={label}
-      onDropPropertyClick={onDropPropertyClick}
-      onKeyChange={onKeyChange}
-      readonly={readonly}
-      required={required}
-      schema={schema}
-      uiSchema={uiSchema}
-      registry={registry}
-    >
-      <FormControl fullWidth error={!!rawErrors.length} required={required}>
-        {children}
-        {displayLabel && rawDescription ? (
-          <Typography variant="caption" color="textSecondary">
-            {rawDescription}
-          </Typography>
-        ) : null}
-        {errors}
-        {help}
-      </FormControl>
-    </WrapIfAdditionalTemplate>
+    <div className="rjsf-field">
+      <WrapIfAdditionalTemplate
+        classNames={classNames}
+        disabled={disabled}
+        id={id}
+        label={label}
+        onDropPropertyClick={onDropPropertyClick}
+        onKeyChange={onKeyChange}
+        readonly={readonly}
+        required={required}
+        schema={schema}
+        uiSchema={uiSchema}
+        registry={registry}
+      >
+        <FormControl fullWidth error={!!rawErrors.length} required={required}>
+          {children}
+          {displayLabel && rawDescription ? (
+            <Typography variant="caption" color="textSecondary">
+              {rawDescription}
+            </Typography>
+          ) : null}
+          {errors}
+          {help}
+        </FormControl>
+      </WrapIfAdditionalTemplate>
+    </div>
   );
 }
 
