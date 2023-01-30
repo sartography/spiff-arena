@@ -30,5 +30,6 @@ LABEL description="Software development platform for building, running, and moni
 ENV PORT0=7001
 
 COPY --from=setup /app/build /app/build
+COPY --from=setup /app/bin /app/bin
 
 ENTRYPOINT ["/app/bin/boot_server_in_docker"]
