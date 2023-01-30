@@ -29,7 +29,6 @@ from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  #
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box  # type: ignore
-from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
@@ -161,6 +160,7 @@ class CustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):
 
     def evaluate(self, expression, context, external_methods=None):
         # TODO: add current user here instead of task data?
+        # TODO: once integrated look at the tests that fail without Box
         Box.convert_to_box(context)
         state = {}
         state.update(self.state)
@@ -170,6 +170,7 @@ class CustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):
 
     def execute(self, script, context, external_methods=None):
         # TODO: add current user here instead of task data?
+        # TODO: once integrated look at the tests that fail without Box
         Box.convert_to_box(context)
         self.state.update(external_methods or {})
         self.state.update(context)
@@ -188,7 +189,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     scripts directory available for execution.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, default_state: Dict[str, Any]) -> None:
         """__init__."""
         default_globals = {
             "_strptime": _strptime,
@@ -210,9 +211,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals.update(safe_globals)
         default_globals["__builtins__"]["__import__"] = _import
 
-        # TODO: once integrated look at the tests that fail without Box
-        # environment = BoxedTaskDataEnvironment(default_globals)
-        environment = CustomScriptEngineEnvironment(default_globals, {})
+        environment = CustomScriptEngineEnvironment(default_globals, default_state)
 
         super().__init__(environment=environment)
 
@@ -239,6 +238,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         )
         return Script.generate_augmented_list(script_attributes_context)
 
+    # TODO: do we need evaluate and _evaluate now with the environment changes?
     def evaluate(
         self,
         task: SpiffTask,
@@ -311,7 +311,6 @@ IdToBpmnProcessSpecMapping = NewType(
 class ProcessInstanceProcessor:
     """ProcessInstanceProcessor."""
 
-    _script_engine = CustomBpmnScriptEngine()
     SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(
         [
@@ -339,6 +338,8 @@ class ProcessInstanceProcessor:
 
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
     VALIDATION_PROCESS_KEY = "validate_only"
+
+    PYTHON_ENVIRONMENT_STATE = "spiff__python_env_state"
 
     # __init__ calls these helpers:
     #   * get_spec, which returns a spec and any subprocesses (as IdToBpmnProcessSpecMapping dict)
@@ -427,7 +428,7 @@ class ProcessInstanceProcessor:
                 validate_only,
                 subprocesses=subprocesses,
             )
-            self.bpmn_process_instance.script_engine = self._script_engine
+            self.set_script_engine(self.bpmn_process_instance)
             self.add_user_info_to_process_instance(self.bpmn_process_instance)
 
         except MissingSpecError as ke:
@@ -473,6 +474,17 @@ class ProcessInstanceProcessor:
             bpmn_process_spec, subprocesses
         )
 
+    @staticmethod
+    def set_script_engine(bpmn_process_instance: BpmnWorkflow) -> None:
+        state = {}
+        key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE
+        if key in bpmn_process_instance.workflow.data:
+            state = bpmn_process_instance.workflow.data.pop(key)
+        bpmn_process_instance.script_engine = CustomBpmnScriptEngine(state)
+
+    def script_engine_user_defined_state(self) -> Dict[str, Any]:
+        return self.bpmn_process_instance.workflow.script_engine.environment.user_defined_state()
+
     def current_user(self) -> Any:
         """Current_user."""
         current_user = None
@@ -507,7 +519,7 @@ class ProcessInstanceProcessor:
         """Get_bpmn_process_instance_from_workflow_spec."""
         return BpmnWorkflow(
             spec,
-            script_engine=ProcessInstanceProcessor._script_engine,
+            script_engine=CustomBpmnScriptEngine({})
             subprocess_specs=subprocesses,
         )
 
@@ -536,9 +548,7 @@ class ProcessInstanceProcessor:
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
 
-            bpmn_process_instance.script_engine = (
-                ProcessInstanceProcessor._script_engine
-            )
+            ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
         else:
             bpmn_process_instance = (
                 ProcessInstanceProcessor.get_bpmn_process_instance_from_workflow_spec(
@@ -1421,9 +1431,10 @@ class ProcessInstanceProcessor:
         step_details = []
 
         def did_complete_task(task):
-            user_defined_state = self._script_engine.environment.user_defined_state()
+            user_defined_state = self.script_engine_user_defined_state()
             task.data.update(user_defined_state)
             step_details.append(self.spiff_step_details_mapping())
+            # TODO: copy task data before updating with state?
             task.data = {k: v for k, v in task.data.items() if k not in user_defined_state}
 
         try:
@@ -1606,7 +1617,7 @@ class ProcessInstanceProcessor:
     def get_data(self) -> dict[str, Any]:
         """Get_data."""
         data = {}
-        data.update(self._script_engine.environment.user_defined_state())
+        data.update(self.script_engine_user_defined_state())
         data.update(self.bpmn_process_instance.data)
         return data  # type: ignore
 
