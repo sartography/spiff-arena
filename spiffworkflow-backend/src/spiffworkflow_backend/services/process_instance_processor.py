@@ -28,7 +28,7 @@ from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box  # type: ignore
-from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import TaskDataEnvironment  # type: ignore
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
@@ -180,7 +180,8 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals.update(safe_globals)
         default_globals["__builtins__"]["__import__"] = _import
 
-        environment = TaskDataEnvironment(default_globals)
+        # TODO: once integrated look at the tests that fail without Box
+        environment = BoxedTaskDataEnvironment(default_globals)
 
         super().__init__(environment=environment)
 
