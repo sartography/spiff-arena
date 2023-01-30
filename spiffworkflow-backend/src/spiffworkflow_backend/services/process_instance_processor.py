@@ -1605,7 +1605,10 @@ class ProcessInstanceProcessor:
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""
-        return self.bpmn_process_instance.data  # type: ignore
+        data = {}
+        data.update(self._script_engine.environment.user_defined_state())
+        data.update(self.bpmn_process_instance.data)
+        return data  # type: ignore
 
     def get_current_data(self) -> dict[str, Any]:
         """Get the current data for the process.
