@@ -41,6 +41,10 @@ function SelectWidget({
   } else if (schema && schema.title) {
     labelToUse = schema.title;
   }
+  let helperText = null;
+  if (uiSchema && uiSchema['ui:help']) {
+    helperText = uiSchema['ui:help'];
+  }
   if (required) {
     labelToUse = `${labelToUse}*`;
   }
@@ -52,13 +56,16 @@ function SelectWidget({
     errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
   }
 
+  // maybe use placeholder somehow. it was previously jammed into the helperText field,
+  // but allowing ui:help to grab that spot seems much more appropriate.
+
   return (
     <Select
       id={id}
       name={id}
       labelText={labelToUse}
       select
-      helperText={placeholder}
+      helperText={helperText}
       value={typeof value === 'undefined' ? emptyValue : value}
       disabled={disabled || readonly}
       autoFocus={autofocus}
