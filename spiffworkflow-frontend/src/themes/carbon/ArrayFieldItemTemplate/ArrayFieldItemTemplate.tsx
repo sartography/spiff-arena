@@ -54,46 +54,36 @@ export default function ArrayFieldItemTemplate<
           {children}
         </Column>
         {hasToolbar && (
-          <Column
-            sm={1}
-            md={1}
-            lg={1}
-          >
+          <Column sm={1} md={1} lg={1}>
             <div className="array-item-toolbox">
               <div className="NOT-btn-group">
-                <div>
-                  {(hasMoveUp || hasMoveDown) && (
-                    <MoveUpButton
-                      style={btnStyle}
-                      disabled={disabled || readonly || !hasMoveUp}
-                      onClick={onReorderClick(index, index - 1)}
-                      uiSchema={uiSchema}
-                      registry={registry}
-                    />
-                  )}
-                </div>
-                <div>
-                  {(hasMoveUp || hasMoveDown) && (
-                    <MoveDownButton
-                      style={btnStyle}
-                      disabled={disabled || readonly || !hasMoveDown}
-                      onClick={onReorderClick(index, index + 1)}
-                      uiSchema={uiSchema}
-                      registry={registry}
-                    />
-                  )}
-                </div>
-                <div>
-                  {hasRemove && (
-                    <RemoveButton
-                      style={btnStyle}
-                      disabled={disabled || readonly}
-                      onClick={onDropIndexClick(index)}
-                      uiSchema={uiSchema}
-                      registry={registry}
-                    />
-                  )}
-                </div>
+                {(hasMoveUp || hasMoveDown) && (
+                  <MoveUpButton
+                    style={btnStyle}
+                    disabled={disabled || readonly || !hasMoveUp}
+                    onClick={onReorderClick(index, index - 1)}
+                    uiSchema={uiSchema}
+                    registry={registry}
+                  />
+                )}
+                {(hasMoveUp || hasMoveDown) && (
+                  <MoveDownButton
+                    style={btnStyle}
+                    disabled={disabled || readonly || !hasMoveDown}
+                    onClick={onReorderClick(index, index + 1)}
+                    uiSchema={uiSchema}
+                    registry={registry}
+                  />
+                )}
+                {hasRemove && (
+                  <RemoveButton
+                    style={btnStyle}
+                    disabled={disabled || readonly}
+                    onClick={onDropIndexClick(index)}
+                    uiSchema={uiSchema}
+                    registry={registry}
+                  />
+                )}
               </div>
             </div>
           </Column>
