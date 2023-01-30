@@ -27,6 +27,7 @@ from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -151,6 +152,29 @@ class ProcessInstanceLockedBySomethingElseError(Exception):
     pass
 
 
+class CustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):
+    def __init__(self, environment_globals, environment_state):
+        self.state = environment_state
+        self.state.update(environment_globals)
+        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "current_user"])
+        super().__init__(environment_globals)
+
+    def evaluate(self, expression, context, external_methods=None):
+        pass
+
+    def execute(self, script, context, external_methods=None):
+        # TODO: add current user here instead of task data?
+        Box.convert_to_box(context)
+        self.state.update(external_methods or {})
+        self.state.update(context)
+        exec(script, self.state)
+
+        if external_methods is not None:
+            self.state = {k: v for k, v in self.state.items() if k not in external_methods}
+
+    def user_defined_state(self):
+        return {k: v for k, v in self.state.items() if k not in self.non_user_defined_keys and not hasattr(v, "__call__")}
+
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
 
@@ -181,7 +205,8 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals["__builtins__"]["__import__"] = _import
 
         # TODO: once integrated look at the tests that fail without Box
-        environment = BoxedTaskDataEnvironment(default_globals)
+        # environment = BoxedTaskDataEnvironment(default_globals)
+        environment = CustomScriptEngineEnvironment(default_globals, {})
 
         super().__init__(environment=environment)
 
@@ -586,7 +611,8 @@ class ProcessInstanceProcessor:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
-        task_json = {"tasks": wf_json["tasks"], "subprocesses": wf_json["subprocesses"]}
+        task_json = {"tasks": wf_json["tasks"], "subprocesses": wf_json["subprocesses"],
+                "python_env_state": self._script_engine.environment.user_defined_state()}
 
         return {
             "process_instance_id": self.process_instance_model.id,
@@ -1389,15 +1415,7 @@ class ProcessInstanceProcessor:
         """Do_engine_steps."""
         step_details = []
         try:
-            self.bpmn_process_instance.refresh_waiting_tasks(
-                #
-                # commenting out to see if this helps with the growing spiff steps/db issue
-                #
-                # will_refresh_task=lambda t: self.increment_spiff_step(),
-                # did_refresh_task=lambda t: step_details.append(
-                #   self.spiff_step_details_mapping()
-                # ),
-            )
+            self.bpmn_process_instance.refresh_waiting_tasks()
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,
