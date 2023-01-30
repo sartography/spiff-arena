@@ -160,7 +160,13 @@ class CustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):
         super().__init__(environment_globals)
 
     def evaluate(self, expression, context, external_methods=None):
-        pass
+        # TODO: add current user here instead of task data?
+        Box.convert_to_box(context)
+        state = {}
+        state.update(self.state)
+        state.update(external_methods or None)
+        state.update(context)
+        return eval(expression, state)
 
     def execute(self, script, context, external_methods=None):
         # TODO: add current user here instead of task data?
@@ -611,8 +617,7 @@ class ProcessInstanceProcessor:
         """SaveSpiffStepDetails."""
         bpmn_json = self.serialize()
         wf_json = json.loads(bpmn_json)
-        task_json = {"tasks": wf_json["tasks"], "subprocesses": wf_json["subprocesses"],
-                "python_env_state": self._script_engine.environment.user_defined_state()}
+        task_json = {"tasks": wf_json["tasks"], "subprocesses": wf_json["subprocesses"]}
 
         return {
             "process_instance_id": self.process_instance_model.id,
@@ -1414,15 +1419,20 @@ class ProcessInstanceProcessor:
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         step_details = []
+
+        def did_complete_task(task):
+            user_defined_state = self._script_engine.environment.user_defined_state()
+            task.data.update(user_defined_state)
+            step_details.append(self.spiff_step_details_mapping())
+            task.data = {k: v for k, v in task.data.items() if k not in user_defined_state}
+
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,
                 will_complete_task=lambda t: self.increment_spiff_step(),
-                did_complete_task=lambda t: step_details.append(
-                    self.spiff_step_details_mapping()
-                ),
+                did_complete_task=did_complete_task,
             )
 
             self.process_bpmn_messages()
