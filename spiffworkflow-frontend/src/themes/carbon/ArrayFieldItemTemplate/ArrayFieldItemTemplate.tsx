@@ -5,6 +5,11 @@ import {
   RJSFSchema,
   StrictRJSFSchema,
 } from '@rjsf/utils';
+import {
+  Grid,
+  Column,
+  // @ts-ignore
+} from '@carbon/react';
 
 /** The `ArrayFieldItemTemplate` component is the template used to render an items of an array.
  *
@@ -33,53 +38,67 @@ export default function ArrayFieldItemTemplate<
   const { MoveDownButton, MoveUpButton, RemoveButton } =
     registry.templates.ButtonTemplates;
   const btnStyle: CSSProperties = {
-    flex: 1,
-    paddingLeft: 6,
-    paddingRight: 6,
-    fontWeight: 'bold',
+    marginBottom: '0.5em',
   };
+  const mainColumnWidthSmall = hasToolbar ? 3 : 4;
+  const mainColumnWidthMedium = hasToolbar ? 6 : 8;
+  const mainColumnWidthLarge = hasToolbar ? 12 : 16;
   return (
     <div className={className}>
-      <div className={hasToolbar ? 'col-xs-9' : 'col-xs-12'}>{children}</div>
-      {hasToolbar && (
-        <div className="col-xs-3 array-item-toolbox">
-          <div
-            className="btn-group"
-            style={{
-              display: 'flex',
-              justifyContent: 'space-around',
-            }}
+      <Grid condensed fullWidth>
+        <Column
+          sm={mainColumnWidthSmall}
+          md={mainColumnWidthMedium}
+          lg={mainColumnWidthLarge}
+        >
+          {children}
+        </Column>
+        {hasToolbar && (
+          <Column
+            sm={4 - mainColumnWidthSmall}
+            md={8 - mainColumnWidthMedium}
+            lg={16 - mainColumnWidthLarge}
           >
-            {(hasMoveUp || hasMoveDown) && (
-              <MoveUpButton
-                style={btnStyle}
-                disabled={disabled || readonly || !hasMoveUp}
-                onClick={onReorderClick(index, index - 1)}
-                uiSchema={uiSchema}
-                registry={registry}
-              />
-            )}
-            {(hasMoveUp || hasMoveDown) && (
-              <MoveDownButton
-                style={btnStyle}
-                disabled={disabled || readonly || !hasMoveDown}
-                onClick={onReorderClick(index, index + 1)}
-                uiSchema={uiSchema}
-                registry={registry}
-              />
-            )}
-            {hasRemove && (
-              <RemoveButton
-                style={btnStyle}
-                disabled={disabled || readonly}
-                onClick={onDropIndexClick(index)}
-                uiSchema={uiSchema}
-                registry={registry}
-              />
-            )}
-          </div>
-        </div>
-      )}
+            <div className="array-item-toolbox">
+              <div className="NOT-btn-group">
+                <div>
+                  {(hasMoveUp || hasMoveDown) && (
+                    <MoveUpButton
+                      style={btnStyle}
+                      disabled={disabled || readonly || !hasMoveUp}
+                      onClick={onReorderClick(index, index - 1)}
+                      uiSchema={uiSchema}
+                      registry={registry}
+                    />
+                  )}
+                </div>
+                <div>
+                  {(hasMoveUp || hasMoveDown) && (
+                    <MoveDownButton
+                      style={btnStyle}
+                      disabled={disabled || readonly || !hasMoveDown}
+                      onClick={onReorderClick(index, index + 1)}
+                      uiSchema={uiSchema}
+                      registry={registry}
+                    />
+                  )}
+                </div>
+                <div>
+                  {hasRemove && (
+                    <RemoveButton
+                      style={btnStyle}
+                      disabled={disabled || readonly}
+                      onClick={onDropIndexClick(index)}
+                      uiSchema={uiSchema}
+                      registry={registry}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
+          </Column>
+        )}
+      </Grid>
     </div>
   );
 }

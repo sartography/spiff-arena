@@ -217,7 +217,7 @@ export default function TaskShow() {
 
     return (
       <Grid fullWidth condensed>
-        <Column md={5} lg={8} sm={4}>
+        <Column sm={4} md={8} lg={16}>
           <Form
             formData={taskData}
             onSubmit={handleFormSubmit}
