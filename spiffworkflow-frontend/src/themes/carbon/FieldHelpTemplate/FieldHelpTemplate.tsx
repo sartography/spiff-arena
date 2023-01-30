@@ -7,10 +7,8 @@ import FormHelperText from '@mui/material/FormHelperText';
  * @param props - The `FieldHelpProps` to be rendered
  */
 export default function FieldHelpTemplate(props: FieldHelpProps) {
-  const { idSchema, help } = props;
-  if (!help) {
-    return null;
-  }
-  const id = `${idSchema.$id}__help`;
-  return <FormHelperText id={id}>{help}</FormHelperText>;
+  // ui:help is handled by helperText in all carbon widgets.
+  // see BaseInputTemplate/BaseInputTemplate.tsx and
+  // SelectWidget/SelectWidget.tsx
+  return null;
 }
