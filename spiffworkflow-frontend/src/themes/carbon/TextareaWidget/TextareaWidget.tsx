@@ -65,7 +65,7 @@ function TextareaWidget<
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
-    errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+    errorMessageForField = rawErrors[0];
   }
 
   return (

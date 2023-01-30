@@ -53,7 +53,8 @@ function SelectWidget({
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
-    errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+    // errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
+    errorMessageForField = rawErrors[0];
   }
 
   // maybe use placeholder somehow. it was previously jammed into the helperText field,
@@ -63,7 +64,7 @@ function SelectWidget({
     <Select
       id={id}
       name={id}
-      labelText={labelToUse}
+      labelText=""
       select
       helperText={helperText}
       value={typeof value === 'undefined' ? emptyValue : value}
