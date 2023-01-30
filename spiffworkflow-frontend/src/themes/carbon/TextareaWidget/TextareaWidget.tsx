@@ -74,7 +74,7 @@ function TextareaWidget<
       name={id}
       className="form-control"
       value={value || ''}
-      labelText={labelToUse}
+      labelText=""
       placeholder={placeholder}
       required={required}
       disabled={disabled}
