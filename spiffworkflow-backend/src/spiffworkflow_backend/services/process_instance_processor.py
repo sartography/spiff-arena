@@ -153,12 +153,8 @@ class ProcessInstanceLockedBySomethingElseError(Exception):
 
 
 class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # type: ignore
-    def __init__(
-        self, environment_globals: Dict[str, Any], environment_state: Dict[str, Any]
-    ):
-        """TaskDataBasedScriptEngineEnvironment."""
-        self.state = environment_state
-        super().__init__(environment_globals)
+    def set_user_defined_state(self, state: Dict[str, Any]) -> None:
+        pass
 
     def user_defined_state(self) -> Dict[str, Any]:
         return {}
@@ -166,10 +162,10 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
 # TODO: better name?
 class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
     def __init__(
-        self, environment_globals: Dict[str, Any], environment_state: Dict[str, Any]
+        self, environment_globals: Dict[str, Any]
     ):
         """NonTaskDataBasedScriptEngineEnvironment."""
-        self.state = environment_state
+        self.state = {} 
         self.state.update(environment_globals)
         self.non_user_defined_keys = set(
             [*environment_globals.keys()] + ["__builtins__", "current_user"]
@@ -210,6 +206,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 k: v for k, v in self.state.items() if k not in external_methods
             }
 
+    def set_user_defined_state(self, state: Dict[str, Any]) -> None:
+        self.state = state
+        self.state.update(self.globals)
+
     def user_defined_state(self) -> Dict[str, Any]:
         return {
             k: v
@@ -227,8 +227,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     scripts directory available for execution.
     """
 
-    # TODO: if class instance fixes tests, remove default_state
-    def __init__(self, default_state: Dict[str, Any]) -> None:
+    def __init__(self) -> None:
         """__init__."""
         default_globals = {
             "_strptime": _strptime,
@@ -250,7 +249,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals.update(safe_globals)
         default_globals["__builtins__"]["__import__"] = _import
 
-        environment = CustomScriptEngineEnvironment(default_globals, default_state)
+        environment = CustomScriptEngineEnvironment(default_globals)
 
         super().__init__(environment=environment)
 
@@ -349,7 +348,7 @@ IdToBpmnProcessSpecMapping = NewType(
 class ProcessInstanceProcessor:
     """ProcessInstanceProcessor."""
 
-    _script_engine = CustomBpmnScriptEngine({})
+    _script_engine = CustomBpmnScriptEngine()
     SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(
         [
@@ -515,11 +514,10 @@ class ProcessInstanceProcessor:
 
     @staticmethod
     def set_script_engine(bpmn_process_instance: BpmnWorkflow) -> None:
-        state = {}
         key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
         if key in bpmn_process_instance.data:
             state = bpmn_process_instance.data.pop(key)
-        # TODO: set state
+            ProcessInstanceProcessor._script_engine.set_user_defined_state(state)
         bpmn_process_instance.script_engine = ProcessInstanceProcessor._script_engine
 
     def script_engine_user_defined_state(self) -> Dict[str, Any]:
