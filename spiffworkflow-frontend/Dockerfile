@@ -13,7 +13,7 @@ FROM base AS setup
 COPY . /app/
 
 RUN cp /app/package.json /app/package.json.bak
-ADD package.justserve.json /app/package.json
+ADD justservewebserver.package.json /app/package.json
 RUN npm ci --ignore-scripts
 RUN cp -r /app/node_modules /app/node_modules.justserve
 RUN cp /app/package.json.bak /app/package.json
