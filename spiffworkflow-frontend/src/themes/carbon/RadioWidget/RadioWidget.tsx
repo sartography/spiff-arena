@@ -32,9 +32,6 @@ const RadioWidget = ({
 
   return (
     <>
-      <FormLabel required={required} htmlFor={id}>
-        {label || schema.title}
-      </FormLabel>
       <RadioGroup
         id={id}
         name={id}
