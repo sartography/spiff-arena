@@ -29,6 +29,7 @@ from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  #
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
@@ -151,11 +152,22 @@ class ProcessInstanceLockedBySomethingElseError(Exception):
     pass
 
 
-class CustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
+class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # type: ignore
     def __init__(
         self, environment_globals: Dict[str, Any], environment_state: Dict[str, Any]
     ):
-        """CustomScriptEngineEnvironment."""
+        """TaskDataBasedScriptEngineEnvironment."""
+        super().__init__(environment_globals)
+
+    def user_defined_state(self) -> Dict[str, Any]:
+        return {}
+
+# TODO: better name?
+class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
+    def __init__(
+        self, environment_globals: Dict[str, Any], environment_state: Dict[str, Any]
+    ):
+        """NonTaskDataBasedScriptEngineEnvironment."""
         self.state = environment_state
         self.state.update(environment_globals)
         self.non_user_defined_keys = set(
@@ -204,6 +216,8 @@ class CustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type:
             if k not in self.non_user_defined_keys and not callable(v)
         }
 
+class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):  # type: ignore
+    pass
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
@@ -261,7 +275,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         )
         return Script.generate_augmented_list(script_attributes_context)
 
-    # TODO: do we need evaluate and _evaluate now with the environment changes?
     def evaluate(
         self,
         task: SpiffTask,
@@ -511,7 +524,8 @@ class ProcessInstanceProcessor:
     def store_script_engine_user_defined_state(self) -> None:
         key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
         state = self.script_engine_user_defined_state()
-        self.bpmn_process_instance.data[key] = state
+        if len(state) > 0:
+            self.bpmn_process_instance.data[key] = state
 
     def current_user(self) -> Any:
         """Current_user."""
