@@ -141,6 +141,7 @@ export default function TaskShow() {
       Object.keys(jsonSchema.properties).forEach((propertyKey: string) => {
         const propertyMetadata = jsonSchema.properties[propertyKey];
         if (
+          typeof propertyMetadata === 'object' &&
           'minimumDate' in propertyMetadata &&
           propertyMetadata.minimumDate === 'today'
         ) {
@@ -216,7 +217,7 @@ export default function TaskShow() {
 
     return (
       <Grid fullWidth condensed>
-        <Column md={5} lg={8} sm={4}>
+        <Column sm={4} md={5} lg={8}>
           <Form
             formData={taskData}
             onSubmit={handleFormSubmit}
