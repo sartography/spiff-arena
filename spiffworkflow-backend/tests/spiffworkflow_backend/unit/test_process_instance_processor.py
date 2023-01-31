@@ -15,6 +15,9 @@ from spiffworkflow_backend.services.authorization_service import (
     UserDoesNotHaveAccessToTaskError,
 )
 from spiffworkflow_backend.services.process_instance_processor import (
+    CustomBpmnScriptEngine,
+)
+from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceIsAlreadyLockedError,
 )
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -22,7 +25,6 @@ from spiffworkflow_backend.services.process_instance_processor import (
 )
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
-    CustomBpmnScriptEngine,
 )
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,

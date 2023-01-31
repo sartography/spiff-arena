@@ -26,9 +26,9 @@ from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
-from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
+from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
-from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box  # type: ignore
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
@@ -151,36 +151,59 @@ class ProcessInstanceLockedBySomethingElseError(Exception):
     pass
 
 
-class CustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):
-    def __init__(self, environment_globals, environment_state):
+class CustomScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
+    def __init__(
+        self, environment_globals: Dict[str, Any], environment_state: Dict[str, Any]
+    ):
+        """CustomScriptEngineEnvironment."""
         self.state = environment_state
         self.state.update(environment_globals)
-        self.non_user_defined_keys = set([*environment_globals.keys()] + ["__builtins__", "current_user"])
+        self.non_user_defined_keys = set(
+            [*environment_globals.keys()] + ["__builtins__", "current_user"]
+        )
         super().__init__(environment_globals)
 
-    def evaluate(self, expression, context, external_methods=None):
+    def evaluate(
+        self,
+        expression: str,
+        context: Dict[str, Any],
+        external_methods: Optional[dict[str, Any]] = None,
+    ) -> Any:
         # TODO: add current user here instead of task data?
         # TODO: once integrated look at the tests that fail without Box
         Box.convert_to_box(context)
         state = {}
         state.update(self.state)
-        state.update(external_methods or None)
+        if external_methods is not None:
+            state.update(external_methods)
         state.update(context)
-        return eval(expression, state)
+        return eval(expression, state)  # noqa
 
-    def execute(self, script, context, external_methods=None):
+    def execute(
+        self,
+        script: str,
+        context: Dict[str, Any],
+        external_methods: Optional[Dict[str, Any]] = None,
+    ) -> None:
         # TODO: add current user here instead of task data?
         # TODO: once integrated look at the tests that fail without Box
         Box.convert_to_box(context)
         self.state.update(external_methods or {})
         self.state.update(context)
-        exec(script, self.state)
+        exec(script, self.state)  # noqa
 
         if external_methods is not None:
-            self.state = {k: v for k, v in self.state.items() if k not in external_methods}
+            self.state = {
+                k: v for k, v in self.state.items() if k not in external_methods
+            }
 
-    def user_defined_state(self):
-        return {k: v for k, v in self.state.items() if k not in self.non_user_defined_keys and not hasattr(v, "__call__")}
+    def user_defined_state(self) -> Dict[str, Any]:
+        return {
+            k: v
+            for k, v in self.state.items()
+            if k not in self.non_user_defined_keys and not callable(v)
+        }
+
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
@@ -483,7 +506,7 @@ class ProcessInstanceProcessor:
         bpmn_process_instance.script_engine = CustomBpmnScriptEngine(state)
 
     def script_engine_user_defined_state(self) -> Dict[str, Any]:
-        return self.bpmn_process_instance.script_engine.environment.user_defined_state()
+        return self.bpmn_process_instance.script_engine.environment.user_defined_state()  # type: ignore
 
     def store_script_engine_user_defined_state(self) -> None:
         key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
@@ -1435,12 +1458,14 @@ class ProcessInstanceProcessor:
         """Do_engine_steps."""
         step_details = []
 
-        def did_complete_task(task):
+        def did_complete_task(task: SpiffTask) -> None:
             user_defined_state = self.script_engine_user_defined_state()
             task.data.update(user_defined_state)
             step_details.append(self.spiff_step_details_mapping())
             # TODO: copy task data before updating with state?
-            task.data = {k: v for k, v in task.data.items() if k not in user_defined_state}
+            task.data = {
+                k: v for k, v in task.data.items() if k not in user_defined_state
+            }
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
@@ -1625,7 +1650,7 @@ class ProcessInstanceProcessor:
         data = {}
         data.update(self.script_engine_user_defined_state())
         data.update(self.bpmn_process_instance.data)
-        return data  # type: ignore
+        return data
 
     def get_current_data(self) -> dict[str, Any]:
         """Get the current data for the process.
