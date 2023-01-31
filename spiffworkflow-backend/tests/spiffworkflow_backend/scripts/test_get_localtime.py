@@ -88,7 +88,9 @@ class TestGetLocaltime(BaseTest):
 
         assert spiff_task
 
-        data = processor.get_data()
+        # TODO: consistent way to pull results between script engine environments
+        #data = processor.get_data()
+        data = spiff_task.data
         some_time = data["some_time"]
         localtime = data["localtime"]
         timezone = data["timezone"]
