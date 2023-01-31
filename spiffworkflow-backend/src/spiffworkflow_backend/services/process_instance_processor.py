@@ -339,7 +339,7 @@ class ProcessInstanceProcessor:
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
     VALIDATION_PROCESS_KEY = "validate_only"
 
-    PYTHON_ENVIRONMENT_STATE = "spiff__python_env_state"
+    PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
 
     # __init__ calls these helpers:
     #   * get_spec, which returns a spec and any subprocesses (as IdToBpmnProcessSpecMapping dict)
@@ -477,13 +477,18 @@ class ProcessInstanceProcessor:
     @staticmethod
     def set_script_engine(bpmn_process_instance: BpmnWorkflow) -> None:
         state = {}
-        key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE
-        if key in bpmn_process_instance.workflow.data:
-            state = bpmn_process_instance.workflow.data.pop(key)
+        key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
+        if key in bpmn_process_instance.data:
+            state = bpmn_process_instance.data.pop(key)
         bpmn_process_instance.script_engine = CustomBpmnScriptEngine(state)
 
     def script_engine_user_defined_state(self) -> Dict[str, Any]:
-        return self.bpmn_process_instance.workflow.script_engine.environment.user_defined_state()
+        return self.bpmn_process_instance.script_engine.environment.user_defined_state()
+
+    def store_script_engine_user_defined_state(self) -> None:
+        key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
+        state = self.script_engine_user_defined_state()
+        self.bpmn_process_instance.data[key] = state
 
     def current_user(self) -> Any:
         """Current_user."""
@@ -519,7 +524,7 @@ class ProcessInstanceProcessor:
         """Get_bpmn_process_instance_from_workflow_spec."""
         return BpmnWorkflow(
             spec,
-            script_engine=CustomBpmnScriptEngine({})
+            script_engine=CustomBpmnScriptEngine({}),
             subprocess_specs=subprocesses,
         )
 
@@ -1509,6 +1514,7 @@ class ProcessInstanceProcessor:
     def serialize(self) -> str:
         """Serialize."""
         self.check_task_data_size()
+        self.store_script_engine_user_defined_state()
         return self._serializer.serialize_json(self.bpmn_process_instance)  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:

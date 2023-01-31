@@ -30,7 +30,7 @@ class ScriptUnitTestResult:
 class ScriptUnitTestRunner:
     """ScriptUnitTestRunner."""
 
-    _script_engine = CustomBpmnScriptEngine()
+    _script_engine = CustomBpmnScriptEngine({})
 
     @classmethod
     def run_with_script_and_pre_post_contexts(
