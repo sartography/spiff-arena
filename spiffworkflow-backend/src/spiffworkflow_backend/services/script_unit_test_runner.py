@@ -30,6 +30,8 @@ class ScriptUnitTestResult:
 class ScriptUnitTestRunner:
     """ScriptUnitTestRunner."""
 
+    _script_engine = CustomBpmnScriptEngine({})
+
     @classmethod
     def run_with_script_and_pre_post_contexts(
         cls,
@@ -41,10 +43,9 @@ class ScriptUnitTestRunner:
         # make a new variable just for clarity, since we are going to update this dict in place
         # with the output variables from the script.
         context = input_context.copy()
-        script_engine = CustomBpmnScriptEngine({})
 
         try:
-            script_engine._execute(context=context, script=script)
+            cls._script_engine._execute(context=context, script=script)
         except SyntaxError as ex:
             return ScriptUnitTestResult(
                 result=False,
@@ -76,11 +77,12 @@ class ScriptUnitTestRunner:
                 error=f"Failed to execute script: {error_message}",
             )
 
-        result_context = script_engine.environment.user_defined_state()
-        result_as_boolean = result_context == expected_output_context
+        # TODO: consistent way to pull results between script engine environments
+        # result_context = script_engine.environment.user_defined_state()
+        result_as_boolean = context == expected_output_context
 
         script_unit_test_result = ScriptUnitTestResult(
-            result=result_as_boolean, context=result_context
+            result=result_as_boolean, context=context
         )
         return script_unit_test_result
 

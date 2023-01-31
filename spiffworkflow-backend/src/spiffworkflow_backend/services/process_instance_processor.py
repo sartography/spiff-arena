@@ -157,6 +157,7 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
         self, environment_globals: Dict[str, Any], environment_state: Dict[str, Any]
     ):
         """TaskDataBasedScriptEngineEnvironment."""
+        self.state = environment_state
         super().__init__(environment_globals)
 
     def user_defined_state(self) -> Dict[str, Any]:
@@ -226,6 +227,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     scripts directory available for execution.
     """
 
+    # TODO: if class instance fixes tests, remove default_state
     def __init__(self, default_state: Dict[str, Any]) -> None:
         """__init__."""
         default_globals = {
@@ -347,6 +349,7 @@ IdToBpmnProcessSpecMapping = NewType(
 class ProcessInstanceProcessor:
     """ProcessInstanceProcessor."""
 
+    _script_engine = CustomBpmnScriptEngine({})
     SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(
         [
@@ -516,7 +519,8 @@ class ProcessInstanceProcessor:
         key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
         if key in bpmn_process_instance.data:
             state = bpmn_process_instance.data.pop(key)
-        bpmn_process_instance.script_engine = CustomBpmnScriptEngine(state)
+        # TODO: set state
+        bpmn_process_instance.script_engine = ProcessInstanceProcessor._script_engine
 
     def script_engine_user_defined_state(self) -> Dict[str, Any]:
         return self.bpmn_process_instance.script_engine.environment.user_defined_state()  # type: ignore
@@ -561,7 +565,7 @@ class ProcessInstanceProcessor:
         """Get_bpmn_process_instance_from_workflow_spec."""
         return BpmnWorkflow(
             spec,
-            script_engine=CustomBpmnScriptEngine({}),
+            script_engine=ProcessInstanceProcessor._script_engine,
             subprocess_specs=subprocesses,
         )
 

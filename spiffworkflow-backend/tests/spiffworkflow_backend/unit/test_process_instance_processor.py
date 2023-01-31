@@ -15,9 +15,6 @@ from spiffworkflow_backend.services.authorization_service import (
     UserDoesNotHaveAccessToTaskError,
 )
 from spiffworkflow_backend.services.process_instance_processor import (
-    CustomBpmnScriptEngine,
-)
-from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceIsAlreadyLockedError,
 )
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -43,7 +40,7 @@ class TestProcessInstanceProcessor(BaseTest):
         """Test_script_engine_takes_data_and_returns_expected_results."""
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
-        script_engine = CustomBpmnScriptEngine({})
+        script_engine = ProcessInstanceProcessor._script_engine
 
         result = script_engine._evaluate("a", {"a": 1})
         assert result == 1
@@ -58,7 +55,7 @@ class TestProcessInstanceProcessor(BaseTest):
         """Test_script_engine_takes_data_and_returns_expected_results."""
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
-        script_engine = CustomBpmnScriptEngine({})
+        script_engine = ProcessInstanceProcessor._script_engine
         result = script_engine._evaluate("fact_service(type='norris')", {})
         assert (
             result
