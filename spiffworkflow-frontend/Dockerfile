@@ -12,6 +12,12 @@ FROM base AS setup
 
 COPY . /app/
 
+RUN cp /app/package.json /app/package.json.bak
+ADD package.justserve.json /app/package.json
+RUN npm ci --ignore-scripts
+RUN cp -r /app/node_modules /app/node_modules.justserve
+RUN cp /app/package.json.bak /app/package.json
+
 # npm ci because it respects the lock file.
 # --ignore-scripts because authors can do bad things in postinstall scripts.
 # https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html
@@ -31,5 +37,6 @@ ENV PORT0=7001
 
 COPY --from=setup /app/build /app/build
 COPY --from=setup /app/bin /app/bin
+COPY --from=setup /app/node_modules.justserve /app/node_modules
 
 ENTRYPOINT ["/app/bin/boot_server_in_docker"]

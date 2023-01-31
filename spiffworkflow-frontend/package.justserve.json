@@ -1,0 +1,36 @@
+{
+  "name": "spiffworkflow-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "serve": "^14.0.0"
+  },
+  "scripts": {
+    "start": "ESLINT_NO_DEV_ERRORS=true PORT=7001 craco start",
+    "build": "craco build",
+    "test": "react-scripts test --coverage",
+    "t": "npm test -- --watchAll=false",
+    "eject": "craco eject",
+    "format": "prettier --write src/**/*.[tj]s{,x}",
+    "lint": "./node_modules/.bin/eslint src",
+    "lint:fix": "./node_modules/.bin/eslint --fix src"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
