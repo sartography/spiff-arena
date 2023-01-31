@@ -153,6 +153,25 @@ class ProcessInstanceLockedBySomethingElseError(Exception):
 
 
 class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # type: ignore
+    def __init__(
+        self, environment_globals: Dict[str, Any]
+    ):
+        """BoxedTaskDataBasedScriptEngineEnvironment."""
+        self._last_result = {}
+        super().__init__(environment_globals)
+
+    def execute(
+        self,
+        script: str,
+        context: Dict[str, Any],
+        external_methods: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().execute(script, context, external_methods)
+        self._last_result = context
+
+    def last_result(self) -> Dict[str, Any]:
+        return self._last_result
+
     def set_user_defined_state(self, state: Dict[str, Any]) -> None:
         pass
 
@@ -205,6 +224,9 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
             self.state = {
                 k: v for k, v in self.state.items() if k not in external_methods
             }
+
+    def last_result(self) -> Dict[str, Any]:
+        return self.state
 
     def set_user_defined_state(self, state: Dict[str, Any]) -> None:
         self.state = state
@@ -517,7 +539,7 @@ class ProcessInstanceProcessor:
         key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
         if key in bpmn_process_instance.data:
             state = bpmn_process_instance.data.pop(key)
-            ProcessInstanceProcessor._script_engine.set_user_defined_state(state)
+            ProcessInstanceProcessor._script_engine.environment.set_user_defined_state(state)
         bpmn_process_instance.script_engine = ProcessInstanceProcessor._script_engine
 
     def script_engine_user_defined_state(self) -> Dict[str, Any]:
@@ -1474,22 +1496,15 @@ class ProcessInstanceProcessor:
         """Do_engine_steps."""
         step_details = []
 
-        def did_complete_task(task: SpiffTask) -> None:
-            user_defined_state = self.script_engine_user_defined_state()
-            task.data.update(user_defined_state)
-            step_details.append(self.spiff_step_details_mapping())
-            # TODO: copy task data before updating with state?
-            task.data = {
-                k: v for k, v in task.data.items() if k not in user_defined_state
-            }
-
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,
                 will_complete_task=lambda t: self.increment_spiff_step(),
-                did_complete_task=did_complete_task,
+                did_complete_task=lambda t: step_details.append(
+                    self.spiff_step_details_mapping()
+                ),
             )
 
             self.process_bpmn_messages()
