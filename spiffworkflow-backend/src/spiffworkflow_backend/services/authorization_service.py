@@ -551,13 +551,19 @@ class AuthorizationService:
 
         permissions_to_assign: list[PermissionToAssign] = []
 
-        # we were thinking that if you can start an instance, you ought to be able to view your own instances.
+        # we were thinking that if you can start an instance, you ought to be able to:
+        #   1. view your own instances.
+        #   2. view the logs for these instances.
         if permission_set == "start":
             target_uri = f"/process-instances/{process_related_path_segment}"
             permissions_to_assign.append(
                 PermissionToAssign(permission="create", target_uri=target_uri)
             )
             target_uri = f"/process-instances/for-me/{process_related_path_segment}"
+            permissions_to_assign.append(
+                PermissionToAssign(permission="read", target_uri=target_uri)
+            )
+            target_uri = f"/logs/{process_related_path_segment}"
             permissions_to_assign.append(
                 PermissionToAssign(permission="read", target_uri=target_uri)
             )

@@ -43,6 +43,11 @@ class TestGetAllPermissions(BaseTest):
         expected_permissions = [
             {
                 "group_identifier": "my_test_group",
+                "uri": "/logs/hey:group:*",
+                "permissions": ["read"],
+            },
+            {
+                "group_identifier": "my_test_group",
                 "uri": "/process-instances/hey:group:*",
                 "permissions": ["create"],
             },
