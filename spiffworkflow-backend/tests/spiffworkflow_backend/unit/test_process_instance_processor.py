@@ -22,6 +22,7 @@ from spiffworkflow_backend.services.process_instance_processor import (
 )
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
+    CustomBpmnScriptEngine,
 )
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
@@ -40,7 +41,7 @@ class TestProcessInstanceProcessor(BaseTest):
         """Test_script_engine_takes_data_and_returns_expected_results."""
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
-        script_engine = ProcessInstanceProcessor._script_engine
+        script_engine = CustomBpmnScriptEngine({})
 
         result = script_engine._evaluate("a", {"a": 1})
         assert result == 1
@@ -55,7 +56,7 @@ class TestProcessInstanceProcessor(BaseTest):
         """Test_script_engine_takes_data_and_returns_expected_results."""
         app.config["THREAD_LOCAL_DATA"].process_model_identifier = "hey"
         app.config["THREAD_LOCAL_DATA"].process_instance_id = 0
-        script_engine = ProcessInstanceProcessor._script_engine
+        script_engine = CustomBpmnScriptEngine({})
         result = script_engine._evaluate("fact_service(type='norris')", {})
         assert (
             result

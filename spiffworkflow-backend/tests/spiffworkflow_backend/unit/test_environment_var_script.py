@@ -3,7 +3,7 @@ from flask import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
+    CustomBpmnScriptEngine,
 )
 
 
@@ -18,6 +18,6 @@ class TestEnvironmentVarScript(BaseTest):
     ) -> None:
         """Test_script_engine_takes_data_and_returns_expected_results."""
         with app.app_context():
-            script_engine = ProcessInstanceProcessor._script_engine
+            script_engine = CustomBpmnScriptEngine({})
             result = script_engine._evaluate("get_env()", {})
             assert result == "testing"
