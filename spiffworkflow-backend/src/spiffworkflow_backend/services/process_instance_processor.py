@@ -274,7 +274,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         task.data = {k: v for k, v in task.data.items() if k in task_data_keys_to_keep}
 
 
-class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
+class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):
     pass
 
 
