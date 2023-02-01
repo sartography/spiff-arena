@@ -3,6 +3,7 @@ import json
 from typing import Any
 
 import requests
+import sentry_sdk
 from flask import current_app
 from flask import g
 
@@ -45,27 +46,27 @@ class ServiceTaskDelegate:
     @staticmethod
     def call_connector(name: str, bpmn_params: Any, task_data: Any) -> str:
         """Calls a connector via the configured proxy."""
-        params = {
-            k: ServiceTaskDelegate.check_prefixes(v["value"])
-            for k, v in bpmn_params.items()
-        }
-        params["spiff__task_data"] = task_data
+        call_url = f"{connector_proxy_url()}/v1/do/{name}"
+        with sentry_sdk.start_transaction(op="call-connector", name=call_url):
+            params = {
+                k: ServiceTaskDelegate.check_prefixes(v["value"])
+                for k, v in bpmn_params.items()
+            }
+            params["spiff__task_data"] = task_data
 
-        proxied_response = requests.post(
-            f"{connector_proxy_url()}/v1/do/{name}", json=params
-        )
+            proxied_response = requests.post(call_url, json=params)
 
-        parsed_response = json.loads(proxied_response.text)
+            parsed_response = json.loads(proxied_response.text)
 
-        if "refreshed_token_set" not in parsed_response:
-            return proxied_response.text
+            if "refreshed_token_set" not in parsed_response:
+                return proxied_response.text
 
-        secret_key = parsed_response["auth"]
-        refreshed_token_set = json.dumps(parsed_response["refreshed_token_set"])
-        user_id = g.user.id if UserService.has_user() else None
-        SecretService().update_secret(secret_key, refreshed_token_set, user_id)
+            secret_key = parsed_response["auth"]
+            refreshed_token_set = json.dumps(parsed_response["refreshed_token_set"])
+            user_id = g.user.id if UserService.has_user() else None
+            SecretService().update_secret(secret_key, refreshed_token_set, user_id)
 
-        return json.dumps(parsed_response["api_response"])
+            return json.dumps(parsed_response["api_response"])
 
 
 class ServiceTaskService:
