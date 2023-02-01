@@ -4,6 +4,7 @@ from typing import Any
 from typing import List
 from typing import Optional
 
+import sentry_sdk
 from flask import current_app
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
@@ -234,8 +235,9 @@ class ProcessInstanceService:
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 
-        # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
-        processor.do_engine_steps(save=True)
+        with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+            # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
+            processor.do_engine_steps(save=True)
 
     @staticmethod
     def extract_form_data(latest_data: dict, task: SpiffTask) -> dict:

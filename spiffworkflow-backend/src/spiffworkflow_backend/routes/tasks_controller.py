@@ -380,15 +380,16 @@ def task_submit_shared(
             )
         )
 
-    processor.lock_process_instance("Web")
-    ProcessInstanceService.complete_form_task(
-        processor=processor,
-        spiff_task=spiff_task,
-        data=body,
-        user=g.user,
-        human_task=human_task,
-    )
-    processor.unlock_process_instance("Web")
+    with sentry_sdk.start_span(op="task", description="complete_form_task"):
+        processor.lock_process_instance("Web")
+        ProcessInstanceService.complete_form_task(
+            processor=processor,
+            spiff_task=spiff_task,
+            data=body,
+            user=g.user,
+            human_task=human_task,
+        )
+        processor.unlock_process_instance("Web")
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
     # task spec, complete that form as well.
@@ -428,15 +429,13 @@ def task_submit(
     sentry_transaction_name = "tasks_controller.task_submit"
     transaction = sentry_sdk.Hub.current.scope.transaction
     if transaction is None:
-        current_app.logger.debug(
-            "transaction was None. pretty sure this never happens."
-        )
+        current_app.logger.info("transaction was None. pretty sure this never happens.")
         with sentry_sdk.start_transaction(op=sentry_op, name=sentry_transaction_name):
             return task_submit_shared(
                 process_instance_id, task_id, body, terminate_loop
             )
     else:
-        current_app.logger.debug("transaction existed.")
+        current_app.logger.info("transaction existed.")
         with transaction.start_child(op=sentry_op, description=sentry_transaction_name):
             return task_submit_shared(
                 process_instance_id, task_id, body, terminate_loop
