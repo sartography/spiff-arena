@@ -191,7 +191,6 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     ):
         """NonTaskDataBasedScriptEngineEnvironment."""
         self.state = {} 
-        self.state.update(environment_globals)
         self.non_user_defined_keys = set(
             [*environment_globals.keys()] + ["__builtins__", "current_user"]
         )
@@ -206,9 +205,9 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         # TODO: once integrated look at the tests that fail without Box
         Box.convert_to_box(context)
         state = {}
+        state.update(self.globals)
+        state.update(external_methods or {})
         state.update(self.state)
-        if external_methods is not None:
-            state.update(external_methods)
         state.update(context)
         return eval(expression, state)  # noqa
 
@@ -220,28 +219,27 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     ) -> None:
         # TODO: once integrated look at the tests that fail without Box
         Box.convert_to_box(context)
+        self.state.update(self.globals)
         self.state.update(external_methods or {})
         self.state.update(context)
         exec(script, self.state)  # noqa
 
-        if external_methods is not None:
-            self.state = {
-                k: v for k, v in self.state.items() if k not in external_methods
-            }
+        self.state = self._user_defined_state(external_methods)
 
-    def _user_defined_state(self) -> Dict[str, Any]:
+    def _user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        keys_to_filter = self.non_user_defined_keys
+        if external_methods is not None:
+            keys_to_filter |= set(external_methods.keys())
+
         return {
-            k: v
-            for k, v in self.state.items()
-            if k not in self.non_user_defined_keys and not callable(v)
+            k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)
         }
 
     def last_result(self) -> Dict[str, Any]:
-        return self._user_defined_state()
+        return self.state
 
     def clear_state(self) -> None:
         self.state = {} 
-        self.state.update(self.globals)
 
     def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
@@ -249,12 +247,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         bpmn_process_instance.data[key] = state
 
     def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        #self.clear_state()
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
-        state = bpmn_process_instance.data.get(key, {})
-        self.state.update(self.globals)
+        self.state = bpmn_process_instance.data.get(key, {})
 
-class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):  # type: ignore
+class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):  # type: ignore
     pass
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
