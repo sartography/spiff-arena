@@ -181,6 +181,9 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
     def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
+    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
 # TODO: better name?
 class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
 
@@ -249,6 +252,9 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
         self.state = bpmn_process_instance.data.get(key, {})
+
+    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        bpmn_process_instance.data.update(self._user_defined_state())
 
 class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):  # type: ignore
     pass
@@ -547,9 +553,6 @@ class ProcessInstanceProcessor:
     def set_script_engine(bpmn_process_instance: BpmnWorkflow) -> None:
         ProcessInstanceProcessor._script_engine.environment.restore_state(bpmn_process_instance)
         bpmn_process_instance.script_engine = ProcessInstanceProcessor._script_engine
-
-    def script_engine_user_defined_state(self) -> Dict[str, Any]:
-        return self.bpmn_process_instance.script_engine.environment.last_result()  # type: ignore
 
     def preserve_script_engine_state(self) -> None:
         ProcessInstanceProcessor._script_engine.environment.preserve_state(self.bpmn_process_instance)
@@ -1511,6 +1514,9 @@ class ProcessInstanceProcessor:
                 ),
             )
 
+            if self.bpmn_process_instance.is_completed():
+                self._script_engine.environment.finalize_result(self.bpmn_process_instance)
+
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
 
@@ -1682,10 +1688,7 @@ class ProcessInstanceProcessor:
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""
-        data = {}
-        data.update(self.script_engine_user_defined_state())
-        data.update(self.bpmn_process_instance.data)
-        return data
+        return self.bpmn_process_instance.data
 
     def get_current_data(self) -> dict[str, Any]:
         """Get the current data for the process.
