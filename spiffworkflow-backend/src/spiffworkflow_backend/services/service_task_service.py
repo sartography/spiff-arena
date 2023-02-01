@@ -47,7 +47,7 @@ class ServiceTaskDelegate:
     def call_connector(name: str, bpmn_params: Any, task_data: Any) -> str:
         """Calls a connector via the configured proxy."""
         call_url = f"{connector_proxy_url()}/v1/do/{name}"
-        with sentry_sdk.start_transaction(op="call-connector", name=call_url):
+        with sentry_sdk.start_span(op="call-connector", description=call_url):
             params = {
                 k: ServiceTaskDelegate.check_prefixes(v["value"])
                 for k, v in bpmn_params.items()
