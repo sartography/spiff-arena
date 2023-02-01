@@ -187,7 +187,6 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
     def revise_state_with_task_data(self, task: SpiffTask) -> None:
         pass
 
-# TODO: better name?
 class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
 
     PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
@@ -1706,7 +1705,7 @@ class ProcessInstanceProcessor:
 
     def get_data(self) -> dict[str, Any]:
         """Get_data."""
-        return self.bpmn_process_instance.data
+        return self.bpmn_process_instance.data  # type: ignore
 
     def get_current_data(self) -> dict[str, Any]:
         """Get the current data for the process.
