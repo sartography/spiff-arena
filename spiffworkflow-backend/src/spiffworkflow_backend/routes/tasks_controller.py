@@ -10,6 +10,7 @@ from typing import Union
 
 import flask.wrappers
 import jinja2
+import sentry_sdk
 from flask import current_app
 from flask import g
 from flask import jsonify
@@ -326,13 +327,12 @@ def process_data_show(
     )
 
 
-def task_submit(
+def task_submit_shared(
     process_instance_id: int,
     task_id: str,
     body: Dict[str, Any],
     terminate_loop: bool = False,
 ) -> flask.wrappers.Response:
-    """Task_submit_user_data."""
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if not process_instance.can_submit_task():
@@ -415,6 +415,32 @@ def task_submit(
         )
 
     return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
+
+
+def task_submit(
+    process_instance_id: int,
+    task_id: str,
+    body: Dict[str, Any],
+    terminate_loop: bool = False,
+) -> flask.wrappers.Response:
+    """Task_submit_user_data."""
+    sentry_op = "controller_action"
+    sentry_transaction_name = "tasks_controller.task_submit"
+    transaction = sentry_sdk.Hub.current.scope.transaction
+    if transaction is None:
+        current_app.logger.debug(
+            "transaction was None. pretty sure this never happens."
+        )
+        with sentry_sdk.start_transaction(op=sentry_op, name=sentry_transaction_name):
+            return task_submit_shared(
+                process_instance_id, task_id, body, terminate_loop
+            )
+    else:
+        current_app.logger.debug("transaction existed.")
+        with transaction.start_child(op=sentry_op, description=sentry_transaction_name):
+            return task_submit_shared(
+                process_instance_id, task_id, body, terminate_loop
+            )
 
 
 def _get_tasks(

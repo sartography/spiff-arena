@@ -94,8 +94,6 @@ def setup_config(app: Flask) -> None:
     else:
         print("base_permissions: no permissions file loaded")
 
-
-
     # unversioned (see .gitignore) config that can override everything and include secrets.
     # src/spiffworkflow_backend/config/secrets.py
     app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
