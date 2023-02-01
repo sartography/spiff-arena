@@ -184,6 +184,9 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
     def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
+    def revise_state_with_task_data(self, task: SpiffTask) -> None:
+        pass
+
 # TODO: better name?
 class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
 
@@ -229,6 +232,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
 
         self.state = self._user_defined_state(external_methods)
 
+        # the task data needs to be updated with the current state so data references can be resolved properly.
+        # the state will be removed later once the task is completed.
+        context.update(self.state)
+
     def _user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         keys_to_filter = self.non_user_defined_keys
         if external_methods is not None:
@@ -255,6 +262,15 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
 
     def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
         bpmn_process_instance.data.update(self._user_defined_state())
+
+    def revise_state_with_task_data(self, task: SpiffTask) -> None:
+        state_keys = set(self.state.keys())
+        task_data_keys = set(task.data.keys())
+        state_keys_to_remove = state_keys - task_data_keys
+        task_data_keys_to_keep = task_data_keys - state_keys
+
+        self.state = {k: v for k, v in self.state.items() if k not in state_keys_to_remove}
+        task.data = {k: v for k, v in task.data.items() if k in task_data_keys_to_keep}
 
 class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):  # type: ignore
     pass
@@ -1503,15 +1519,17 @@ class ProcessInstanceProcessor:
         """Do_engine_steps."""
         step_details = []
 
+        def did_complete_task(task: SpiffTask) -> None:
+            self._script_engine.environment.revise_state_with_task_data(task)
+            step_details.append(self.spiff_step_details_mapping())
+
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,
                 will_complete_task=lambda t: self.increment_spiff_step(),
-                did_complete_task=lambda t: step_details.append(
-                    self.spiff_step_details_mapping()
-                ),
+                did_complete_task=did_complete_task,
             )
 
             if self.bpmn_process_instance.is_completed():
