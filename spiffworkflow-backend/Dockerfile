@@ -24,6 +24,11 @@ RUN useradd _gunicorn --no-create-home --user-group
 RUN apt-get update \
  && apt-get install -y -q gcc libssl-dev libpq-dev
 
+# poetry install takes a long time and can be cached if dependencies don't change,
+# so that's why we tolerate running it twice.
+COPY pyproject.toml poetry.lock /app/
+RUN poetry install --without dev
+
 COPY . /app
 RUN poetry install --without dev
 
