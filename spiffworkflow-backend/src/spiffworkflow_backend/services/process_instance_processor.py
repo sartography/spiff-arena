@@ -172,6 +172,9 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
     def last_result(self) -> Dict[str, Any]:
         return self._last_result
 
+    def clear_state(self) -> None:
+        pass
+
     def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
@@ -236,21 +239,22 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     def last_result(self) -> Dict[str, Any]:
         return self._user_defined_state()
 
-    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
-        state = self._user_defined_state()
-        if len(state) > 0:
-            bpmn_process_instance.data[key] = state
-
-    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        state = {}
-        key = ProcessInstanceProcessor.PYTHON_ENVIRONMENT_STATE_KEY
-        if key in bpmn_process_instance.data:
-            state = bpmn_process_instance.data.pop(key)
-        self.state = state
+    def clear_state(self) -> None:
+        self.state = {} 
         self.state.update(self.globals)
 
-class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):  # type: ignore
+    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        key = self.PYTHON_ENVIRONMENT_STATE_KEY
+        state = self._user_defined_state()
+        bpmn_process_instance.data[key] = state
+
+    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        #self.clear_state()
+        key = self.PYTHON_ENVIRONMENT_STATE_KEY
+        state = bpmn_process_instance.data.get(key, {})
+        self.state.update(self.globals)
+
+class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):  # type: ignore
     pass
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
@@ -586,11 +590,12 @@ class ProcessInstanceProcessor:
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None,
     ) -> BpmnWorkflow:
         """Get_bpmn_process_instance_from_workflow_spec."""
-        return BpmnWorkflow(
+        bpmn_process_instance = BpmnWorkflow(
             spec,
-            script_engine=ProcessInstanceProcessor._script_engine,
             subprocess_specs=subprocesses,
         )
+        ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
+        return bpmn_process_instance
 
     @staticmethod
     def __get_bpmn_process_instance(

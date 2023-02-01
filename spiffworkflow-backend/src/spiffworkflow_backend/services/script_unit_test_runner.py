@@ -45,6 +45,7 @@ class ScriptUnitTestRunner:
         context = input_context.copy()
 
         try:
+            cls._script_engine.environment.clear_state()
             cls._script_engine._execute(context=context, script=script)
         except SyntaxError as ex:
             return ScriptUnitTestResult(
@@ -77,8 +78,7 @@ class ScriptUnitTestRunner:
                 error=f"Failed to execute script: {error_message}",
             )
 
-        # TODO: consistent way to pull results between script engine environments
-        # result_context = script_engine.environment.user_defined_state()
+        context = cls._script_engine.environment.last_result()
         result_as_boolean = context == expected_output_context
 
         script_unit_test_result = ScriptUnitTestResult(
