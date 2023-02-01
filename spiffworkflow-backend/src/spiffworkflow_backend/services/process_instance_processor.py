@@ -29,7 +29,7 @@ from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  #
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
-from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment  # type: ignore
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
@@ -153,11 +153,9 @@ class ProcessInstanceLockedBySomethingElseError(Exception):
 
 
 class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # type: ignore
-    def __init__(
-        self, environment_globals: Dict[str, Any]
-    ):
+    def __init__(self, environment_globals: Dict[str, Any]):
         """BoxedTaskDataBasedScriptEngineEnvironment."""
-        self._last_result = {}
+        self._last_result: Dict[str, Any] = {}
         super().__init__(environment_globals)
 
     def execute(
@@ -187,15 +185,13 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
     def revise_state_with_task_data(self, task: SpiffTask) -> None:
         pass
 
-class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
 
+class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
     PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
 
-    def __init__(
-        self, environment_globals: Dict[str, Any]
-    ):
+    def __init__(self, environment_globals: Dict[str, Any]):
         """NonTaskDataBasedScriptEngineEnvironment."""
-        self.state = {} 
+        self.state: Dict[str, Any] = {}
         self.non_user_defined_keys = set(
             [*environment_globals.keys()] + ["__builtins__", "current_user"]
         )
@@ -235,20 +231,24 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         # the state will be removed later once the task is completed.
         context.update(self.state)
 
-    def _user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    def _user_defined_state(
+        self, external_methods: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         keys_to_filter = self.non_user_defined_keys
         if external_methods is not None:
             keys_to_filter |= set(external_methods.keys())
 
         return {
-            k: v for k, v in self.state.items() if k not in keys_to_filter and not callable(v)
+            k: v
+            for k, v in self.state.items()
+            if k not in keys_to_filter and not callable(v)
         }
 
     def last_result(self) -> Dict[str, Any]:
         return self.state
 
     def clear_state(self) -> None:
-        self.state = {} 
+        self.state = {}
 
     def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
@@ -268,11 +268,15 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         state_keys_to_remove = state_keys - task_data_keys
         task_data_keys_to_keep = task_data_keys - state_keys
 
-        self.state = {k: v for k, v in self.state.items() if k not in state_keys_to_remove}
+        self.state = {
+            k: v for k, v in self.state.items() if k not in state_keys_to_remove
+        }
         task.data = {k: v for k, v in task.data.items() if k in task_data_keys_to_keep}
 
-class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):  # type: ignore
+
+class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):
     pass
+
 
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
@@ -566,11 +570,15 @@ class ProcessInstanceProcessor:
 
     @staticmethod
     def set_script_engine(bpmn_process_instance: BpmnWorkflow) -> None:
-        ProcessInstanceProcessor._script_engine.environment.restore_state(bpmn_process_instance)
+        ProcessInstanceProcessor._script_engine.environment.restore_state(
+            bpmn_process_instance
+        )
         bpmn_process_instance.script_engine = ProcessInstanceProcessor._script_engine
 
     def preserve_script_engine_state(self) -> None:
-        ProcessInstanceProcessor._script_engine.environment.preserve_state(self.bpmn_process_instance)
+        ProcessInstanceProcessor._script_engine.environment.preserve_state(
+            self.bpmn_process_instance
+        )
 
     def current_user(self) -> Any:
         """Current_user."""
@@ -1532,7 +1540,9 @@ class ProcessInstanceProcessor:
             )
 
             if self.bpmn_process_instance.is_completed():
-                self._script_engine.environment.finalize_result(self.bpmn_process_instance)
+                self._script_engine.environment.finalize_result(
+                    self.bpmn_process_instance
+                )
 
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
