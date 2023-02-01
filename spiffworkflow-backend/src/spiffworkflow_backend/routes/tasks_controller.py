@@ -425,21 +425,10 @@ def task_submit(
     terminate_loop: bool = False,
 ) -> flask.wrappers.Response:
     """Task_submit_user_data."""
-    sentry_op = "controller_action"
-    sentry_transaction_name = "tasks_controller.task_submit"
-    transaction = sentry_sdk.Hub.current.scope.transaction
-    if transaction is None:
-        current_app.logger.info("transaction was None. pretty sure this never happens.")
-        with sentry_sdk.start_transaction(op=sentry_op, name=sentry_transaction_name):
-            return task_submit_shared(
-                process_instance_id, task_id, body, terminate_loop
-            )
-    else:
-        current_app.logger.info("transaction existed.")
-        with transaction.start_child(op=sentry_op, description=sentry_transaction_name):
-            return task_submit_shared(
-                process_instance_id, task_id, body, terminate_loop
-            )
+    with sentry_sdk.start_span(
+        op="controller_action", description="tasks_controller.task_submit"
+    ):
+        return task_submit_shared(process_instance_id, task_id, body, terminate_loop)
 
 
 def _get_tasks(
