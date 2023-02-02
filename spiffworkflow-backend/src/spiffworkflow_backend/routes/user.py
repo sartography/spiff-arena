@@ -17,6 +17,7 @@ from flask import request
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import (
@@ -25,8 +26,6 @@ from spiffworkflow_backend.services.authentication_service import (
 from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
-
-from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 
 """
 .. module:: crc.api.user
@@ -171,7 +170,6 @@ def verify_token(
         else:
             raise ApiError(error_code="no_user_id", message="Cannot get a user id")
 
-    print(request.cookies)
     raise ApiError(
         error_code="invalid_token", message="Cannot validate token.", status_code=401
     )
