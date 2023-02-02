@@ -26,6 +26,8 @@ from spiffworkflow_backend.services.authentication_service import TokenExpiredEr
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.user_service import UserService
 
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+
 """
 .. module:: crc.api.user
    :synopsis: Single Sign On (SSO) user login and session handlers
@@ -57,6 +59,10 @@ def verify_token(
 
     if not token and "Authorization" in request.headers:
         token = request.headers["Authorization"].removeprefix("Bearer ")
+
+    if not token and "access_token" in request.cookies:
+        if request.path.startswith(f"{V1_API_PATH_PREFIX}/process-data-file-download/"):
+            token = request.cookies["access_token"]
 
     # This should never be set here but just in case
     _clear_auth_tokens_from_thread_local_data()
@@ -165,6 +171,7 @@ def verify_token(
         else:
             raise ApiError(error_code="no_user_id", message="Cannot get a user id")
 
+    print(request.cookies)
     raise ApiError(
         error_code="invalid_token", message="Cannot validate token.", status_code=401
     )
