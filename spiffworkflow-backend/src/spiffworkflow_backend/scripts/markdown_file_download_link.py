@@ -44,8 +44,8 @@ class GetMarkdownFileDownloadLink(Script):
         )
         process_instance_id = script_attributes_context.process_instance_id
         url = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
-        url += f"/v1.0/process-data-file-download/{modified_process_model_identifier}/"
-        f"{process_instance_id}/{process_data_identifier}?index={file_index}"
+        url += f"/v1.0/process-data-file-download/{modified_process_model_identifier}/" + \
+            f"{process_instance_id}/{process_data_identifier}?index={file_index}"
         link = f"[{label}]({url})"
 
         return link
