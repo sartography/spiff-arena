@@ -38,36 +38,14 @@ from SpiffWorkflow.bpmn.specs.events.StartEvent import StartEvent  # type: ignor
 from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
-from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
+from SpiffWorkflow.dmn.serializer.task_spec import BusinessRuleTaskConverter  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
-from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    CallActivityTaskConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import EndEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
+from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
+from SpiffWorkflow.spiff.serializer.task_spec_converters import (  # type: ignore
     EventBasedGatewayConverter,
 )
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    IntermediateCatchEventConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    IntermediateThrowEventConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import ManualTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import ReceiveTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import ScriptTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import SendTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import ServiceTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import StartEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import SubWorkflowTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    TransactionSubprocessConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import UserTaskConverter
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
@@ -109,6 +87,8 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
+
+SPIFF_SPEC_CONFIG["task_specs"].append(BusinessRuleTaskConverter)
 
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
@@ -408,26 +388,9 @@ class ProcessInstanceProcessor:
 
     _script_engine = CustomBpmnScriptEngine()
     SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
+
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(
-        [
-            BoundaryEventConverter,
-            BusinessRuleTaskConverter,
-            CallActivityTaskConverter,
-            EndEventConverter,
-            IntermediateCatchEventConverter,
-            IntermediateThrowEventConverter,
-            EventBasedGatewayConverter,
-            ManualTaskConverter,
-            NoneTaskConverter,
-            ReceiveTaskConverter,
-            ScriptTaskConverter,
-            SendTaskConverter,
-            ServiceTaskConverter,
-            StartEventConverter,
-            SubWorkflowTaskConverter,
-            TransactionSubprocessConverter,
-            UserTaskConverter,
-        ]
+        SPIFF_SPEC_CONFIG
     )
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
     _event_serializer = EventBasedGatewayConverter()
