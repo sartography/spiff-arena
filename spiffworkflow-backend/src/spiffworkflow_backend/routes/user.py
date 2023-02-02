@@ -17,6 +17,7 @@ from flask import request
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import (
@@ -57,6 +58,10 @@ def verify_token(
 
     if not token and "Authorization" in request.headers:
         token = request.headers["Authorization"].removeprefix("Bearer ")
+
+    if not token and "access_token" in request.cookies:
+        if request.path.startswith(f"{V1_API_PATH_PREFIX}/process-data-file-download/"):
+            token = request.cookies["access_token"]
 
     # This should never be set here but just in case
     _clear_auth_tokens_from_thread_local_data()

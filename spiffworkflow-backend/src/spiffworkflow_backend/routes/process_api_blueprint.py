@@ -1,7 +1,9 @@
 """APIs for dealing with process groups, process models, and process instances."""
+import base64
 import json
 from typing import Any
 from typing import Dict
+from typing import Optional
 
 import flask.wrappers
 from flask import Blueprint
@@ -81,10 +83,12 @@ def process_list() -> Any:
     return SpecReferenceSchema(many=True).dump(references)
 
 
-def process_data_show(
+def _process_data_fetcher(
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
+    download_file_data: bool,
+    index: Optional[int] = None,
 ) -> flask.wrappers.Response:
     """Process_data_show."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -94,6 +98,26 @@ def process_data_show(
     if process_data_identifier in all_process_data:
         process_data_value = all_process_data[process_data_identifier]
 
+    if process_data_value is not None and index is not None:
+        process_data_value = process_data_value[index]
+
+    if (
+        download_file_data
+        and isinstance(process_data_value, str)
+        and process_data_value.startswith("data:")
+    ):
+        parts = process_data_value.split(";")
+        mimetype = parts[0][4:]
+        filename = parts[1]
+        base64_value = parts[2].split(",")[1]
+        file_contents = base64.b64decode(base64_value)
+
+        return Response(
+            file_contents,
+            mimetype=mimetype,
+            headers={"Content-disposition": f"attachment; filename={filename}"},
+        )
+
     return make_response(
         jsonify(
             {
@@ -102,6 +126,37 @@ def process_data_show(
             }
         ),
         200,
+    )
+
+
+def process_data_show(
+    process_instance_id: int,
+    process_data_identifier: str,
+    modified_process_model_identifier: str,
+) -> flask.wrappers.Response:
+    """Process_data_show."""
+    return _process_data_fetcher(
+        process_instance_id,
+        process_data_identifier,
+        modified_process_model_identifier,
+        False,
+        None,
+    )
+
+
+def process_data_file_download(
+    process_instance_id: int,
+    process_data_identifier: str,
+    modified_process_model_identifier: str,
+    index: Optional[int] = None,
+) -> flask.wrappers.Response:
+    """Process_data_file_download."""
+    return _process_data_fetcher(
+        process_instance_id,
+        process_data_identifier,
+        modified_process_model_identifier,
+        True,
+        index,
     )
 
 
