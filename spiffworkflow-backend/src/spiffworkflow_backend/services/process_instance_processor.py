@@ -43,7 +43,7 @@ from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (  # type: ignore
+from SpiffWorkflow.bpmn.serializer.task_spec import (  # type: ignore
     EventBasedGatewayConverter,
 )
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
