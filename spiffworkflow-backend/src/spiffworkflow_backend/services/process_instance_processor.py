@@ -42,7 +42,8 @@ from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ig
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.dmn.serializer.task_spec import BusinessRuleTaskConverter  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowException
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
@@ -603,7 +604,7 @@ class ProcessInstanceProcessor:
                     )
                 )
             except Exception as err:
-                raise (err)
+                raise err
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
 
@@ -632,7 +633,7 @@ class ProcessInstanceProcessor:
     ) -> None:
         """Raise_if_no_potential_owners."""
         if not potential_owner_ids:
-            raise (NoPotentialOwnersForTaskError(message))
+            raise NoPotentialOwnersForTaskError(message)
 
     def get_potential_owner_ids_from_task(
         self, task: SpiffTask
@@ -1516,9 +1517,8 @@ class ProcessInstanceProcessor:
                 if hasattr(handler, "bulk_insert_logs"):
                     handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
-
-        except WorkflowTaskException as we:
-            raise ApiError.from_workflow_exception("task_error", str(we), we) from we
+        except SpiffWorkflowException as swe:
+            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
             if save:

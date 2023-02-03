@@ -15,7 +15,8 @@ from flask import jsonify
 from flask import make_response
 from sentry_sdk import capture_exception
 from sentry_sdk import set_tag
-from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowException
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
@@ -136,7 +137,7 @@ class ApiError(Exception):
         cls,
         error_code: str,
         message: str,
-        exp: WorkflowException,
+        exp: SpiffWorkflowException,
     ) -> ApiError:
         """Deals with workflow exceptions.
 
@@ -145,6 +146,7 @@ class ApiError(Exception):
         we can with the data we have.
         """
         if isinstance(exp, WorkflowTaskException):
+            # Note that WorkflowDataExceptions are also WorkflowTaskExceptions
             return ApiError.from_task(
                 error_code,
                 message,
@@ -155,9 +157,10 @@ class ApiError(Exception):
                 error_line=exp.error_line,
                 task_trace=exp.task_trace,
             )
-
-        else:
+        elif isinstance(exp, WorkflowException):
             return ApiError.from_task_spec(error_code, message, exp.task_spec)
+        else:
+            return ApiError("workflow_error", str(exp))
 
 
 def set_user_sentry_context() -> None:
