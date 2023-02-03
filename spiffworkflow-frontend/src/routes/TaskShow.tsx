@@ -26,6 +26,7 @@ export default function TaskShow() {
   const [userTasks, setUserTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
+  const [disabled, setDisabled] = useState(false);
 
   const { addError, removeError } = useAPIError();
 
@@ -58,6 +59,7 @@ export default function TaskShow() {
 
   const processSubmitResult = (result: any) => {
     removeError();
+    setDisabled(false);
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
@@ -68,13 +70,20 @@ export default function TaskShow() {
   };
 
   const handleFormSubmit = (event: any) => {
+    if (disabled) {
+      return;
+    }
+    setDisabled(true);
     removeError();
     const dataToSubmit = event.formData;
     delete dataToSubmit.isManualTask;
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
       successCallback: processSubmitResult,
-      failureCallback: addError,
+      failureCallback: (error: any) => {
+        addError(error);
+        setDisabled(false);
+      },
       httpMethod: 'PUT',
       postBody: dataToSubmit,
     });
