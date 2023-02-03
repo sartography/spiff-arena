@@ -215,10 +215,10 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
         # an event id or send out tags like username
         current_app.logger.exception(exception)
     else:
-        current_app.logger.error(
+        current_app.logger.warning(
             f"Received exception: {exception}. Since we do not want this particular"
-            " exception in sentry, we cannot use logger.exception, so there will be no"
-            " backtrace. see api_error.py"
+            " exception in sentry, we cannot use logger.exception or logger.error, so"
+            " there will be no backtrace. see api_error.py"
         )
 
     error_code = "internal_server_error"
