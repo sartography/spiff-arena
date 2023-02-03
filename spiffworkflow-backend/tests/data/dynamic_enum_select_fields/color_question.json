@@ -17,6 +17,14 @@
     "veryImportantFieldButOnlySometimes": {
       "title": "Very important field",
       "type": "string"
+    },
+    "building": {
+      "properties": {
+        "floor": {
+          "title": "Floor",
+          "type": "number"
+        }
+      }
     }
   }
 }
