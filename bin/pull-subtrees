@@ -10,7 +10,6 @@ set -o errtrace -o errexit -o nounset -o pipefail
 for subtree in "SpiffWorkflow" \
   "spiffworkflow-backend" \
   "spiffworkflow-frontend" \
-  "flask-bpmn" \
   "bpmn-js-spiffworkflow" \
   "connector-proxy-demo"
 do
