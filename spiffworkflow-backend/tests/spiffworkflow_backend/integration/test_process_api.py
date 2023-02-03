@@ -1687,6 +1687,14 @@ class TestProcessApi(BaseTest):
             == "Green"
         )
 
+        # if you set this in task data:
+        #   form_ui_hidden_fields = ["veryImportantFieldButOnlySometimes", "building.floor"]
+        # you will get this ui schema:
+        assert response.json["form_ui_schema"] == {
+            "building": {"floor": {"ui:widget": "hidden"}},
+            "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
+        }
+
     def test_process_instance_list_with_default_list(
         self,
         app: Flask,
