@@ -1686,6 +1686,9 @@ class TestProcessApi(BaseTest):
             response.json["form_schema"]["definitions"]["Color"]["anyOf"][1]["title"]
             == "Green"
         )
+        assert response.json["form_ui_schema"] == {
+            "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"}
+        }
 
     def test_process_instance_list_with_default_list(
         self,
