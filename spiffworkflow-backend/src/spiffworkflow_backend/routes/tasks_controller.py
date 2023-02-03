@@ -275,7 +275,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             ) from exception
 
         if task.data:
-            _update_form_schema_with_task_data_as_needed(form_dict, task)
+            _update_form_schema_with_task_data_as_needed(form_dict, task, spiff_task)
 
         if form_contents:
             task.form_schema = form_dict
@@ -588,7 +588,9 @@ def _get_spiff_task_from_process_instance(
 
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
-def _update_form_schema_with_task_data_as_needed(in_dict: dict, task: Task) -> None:
+def _update_form_schema_with_task_data_as_needed(
+    in_dict: dict, task: Task, spiff_task: SpiffTask
+) -> None:
     """Update_nested."""
     if task.data is None:
         return None
@@ -615,7 +617,7 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task: Task) -> N
                                         f" '{task_data_var}' but it doesn't exist in"
                                         " the Task Data."
                                     ),
-                                    task=task,
+                                    task=spiff_task,
                                 )
                                 raise (
                                     ApiError.from_workflow_exception(
@@ -648,11 +650,11 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task: Task) -> N
 
                                     in_dict[k] = options_for_react_json_schema_form
         elif isinstance(value, dict):
-            _update_form_schema_with_task_data_as_needed(value, task)
+            _update_form_schema_with_task_data_as_needed(value, task, spiff_task)
         elif isinstance(value, list):
             for o in value:
                 if isinstance(o, dict):
-                    _update_form_schema_with_task_data_as_needed(o, task)
+                    _update_form_schema_with_task_data_as_needed(o, task, spiff_task)
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
