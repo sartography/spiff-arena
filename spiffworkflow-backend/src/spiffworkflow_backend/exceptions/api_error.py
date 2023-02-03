@@ -20,6 +20,11 @@ from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
 
+from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
+from spiffworkflow_backend.services.authentication_service import TokenInvalidError
+from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
+from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
+
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
 
@@ -172,7 +177,12 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
     set_user_sentry_context()
 
     sentry_link = None
-    if not isinstance(exception, ApiError) or exception.error_code != "invalid_token":
+    # we want to capture_exception to log the exception to sentry, but we don't want to log:
+    #   1. ApiErrors that are just invalid tokens
+    #   2. NotAuthorizedError
+    if (
+        not isinstance(exception, ApiError) or exception.error_code != "invalid_token"
+    ) and not isinstance(exception, NotAuthorizedError):
         id = capture_exception(exception)
 
         if isinstance(exception, ApiError):
@@ -193,17 +203,30 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
     # an event id or send out tags like username
     current_app.logger.exception(exception)
 
+    error_code = "internal_server_error"
+    status_code = 500
+    if (
+        isinstance(exception, NotAuthorizedError)
+        or isinstance(exception, TokenNotProvidedError)
+        or isinstance(exception, TokenInvalidError)
+    ):
+        error_code = "not_authorized"
+        status_code = 403
+    if isinstance(exception, UserNotLoggedInError):
+        error_code = "not_authenticated"
+        status_code = 401
+
     # set api_exception like this to avoid confusing mypy
-    # and what type the object is
+    # about what type the object is
     api_exception = None
     if isinstance(exception, ApiError):
         api_exception = exception
     else:
         api_exception = ApiError(
-            error_code="internal_server_error",
+            error_code=error_code,
             message=f"{exception.__class__.__name__}",
             sentry_link=sentry_link,
-            status_code=500,
+            status_code=status_code,
         )
 
     return make_response(jsonify(api_exception), api_exception.status_code)
