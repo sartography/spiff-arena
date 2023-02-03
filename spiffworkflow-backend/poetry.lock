@@ -1825,7 +1825,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "98c6294f1240aee599cd98bcee58d121cb57b331"
+resolved_reference = "0e61be85c47474a33037e6f398e64c96e02f13ad"
 
 [[package]]
 name = "SQLAlchemy"
