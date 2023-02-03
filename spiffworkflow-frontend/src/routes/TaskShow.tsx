@@ -41,7 +41,10 @@ export default function TaskShow() {
       //  instead of passing the process model identifier in through the params
       HttpService.makeCallToBackend({
         path: url,
-        successCallback: setUserTasks,
+        successCallback: (tasks: any) => {
+          setDisabled(false);
+          setUserTasks(tasks);
+        },
         onUnauthorized: () => {},
         failureCallback: (error: any) => {
           addError(error);
@@ -59,7 +62,6 @@ export default function TaskShow() {
 
   const processSubmitResult = (result: any) => {
     removeError();
-    setDisabled(false);
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
@@ -212,10 +214,16 @@ export default function TaskShow() {
       reactFragmentToHideSubmitButton = <div />;
     }
 
-    if (task.type === 'Manual Task' && task.state === 'READY') {
+    if (task.state === 'READY') {
+      let buttonText = 'Submit';
+      if (task.type === 'Manual Task') {
+        buttonText = 'Continue';
+      }
       reactFragmentToHideSubmitButton = (
         <div>
-          <Button type="submit">Continue</Button>
+          <Button type="submit" disabled={disabled}>
+            {buttonText}
+          </Button>
         </div>
       );
     }
@@ -228,6 +236,7 @@ export default function TaskShow() {
       <Grid fullWidth condensed>
         <Column sm={4} md={5} lg={8}>
           <Form
+            disabled={disabled}
             formData={taskData}
             onSubmit={handleFormSubmit}
             schema={jsonSchema}

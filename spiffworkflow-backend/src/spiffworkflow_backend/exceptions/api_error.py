@@ -242,6 +242,10 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
     api_exception = None
     if isinstance(exception, ApiError):
         api_exception = exception
+    elif isinstance(exception, SpiffWorkflowException):
+        api_exception = ApiError.from_workflow_exception(
+            "unexpected_workflow_exception", "Unexpected Workflow Error", exception
+        )
     else:
         api_exception = ApiError(
             error_code=error_code,
