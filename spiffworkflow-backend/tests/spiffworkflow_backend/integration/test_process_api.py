@@ -1686,8 +1686,13 @@ class TestProcessApi(BaseTest):
             response.json["form_schema"]["definitions"]["Color"]["anyOf"][1]["title"]
             == "Green"
         )
+
+        # if you set this in task data:
+        #   form_ui_hidden_fields = ["veryImportantFieldButOnlySometimes", "building.floor"]
+        # you will get this ui schema:
         assert response.json["form_ui_schema"] == {
-            "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"}
+            "building": {"floor": {"ui:widget": "hidden"}},
+            "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
         }
 
     def test_process_instance_list_with_default_list(
