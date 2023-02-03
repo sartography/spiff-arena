@@ -253,31 +253,16 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 )
             )
 
-        form_contents = _prepare_form_data(
+        form_dict = _prepare_form_data(
             form_schema_file_name,
             spiff_task,
             process_model_with_form,
         )
 
-        try:
-            # form_contents is a str
-            form_dict = json.loads(form_contents)
-        except Exception as exception:
-            raise (
-                ApiError(
-                    error_code="error_loading_form",
-                    message=(
-                        f"Could not load form schema from: {form_schema_file_name}."
-                        f" Error was: {str(exception)}"
-                    ),
-                    status_code=400,
-                )
-            ) from exception
-
         if task.data:
             _update_form_schema_with_task_data_as_needed(form_dict, task)
 
-        if form_contents:
+        if form_dict:
             task.form_schema = form_dict
 
         if form_ui_schema_file_name:
@@ -288,6 +273,23 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             )
             if ui_form_contents:
                 task.form_ui_schema = ui_form_contents
+
+        if task.form_ui_schema is None:
+            task.form_ui_schema = {}
+
+        if task.data and "form_ui_hidden_fields" in task.data:
+            hidden_fields = task.data["form_ui_hidden_fields"]
+            for hidden_field in hidden_fields:
+                hidden_field_parts = hidden_field.split(".")
+                relevant_depth_of_ui_schema = task.form_ui_schema
+                for ii, hidden_field_part in enumerate(hidden_field_parts):
+                    if hidden_field_part not in relevant_depth_of_ui_schema:
+                        relevant_depth_of_ui_schema[hidden_field_part] = {}
+                    relevant_depth_of_ui_schema = relevant_depth_of_ui_schema[
+                        hidden_field_part
+                    ]
+                    if len(hidden_field_parts) == ii + 1:
+                        relevant_depth_of_ui_schema["ui:widget"] = "hidden"
 
     if task.properties and task.data and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
@@ -525,14 +527,29 @@ def _get_tasks(
 
 def _prepare_form_data(
     form_file: str, spiff_task: SpiffTask, process_model: ProcessModelInfo
-) -> str:
+) -> dict:
     """Prepare_form_data."""
     if spiff_task.data is None:
-        return ""
+        return {}
 
     file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
     try:
-        return _render_jinja_template(file_contents, spiff_task)
+        form_contents = _render_jinja_template(file_contents, spiff_task)
+        try:
+            # form_contents is a str
+            hot_dict: dict = json.loads(form_contents)
+            return hot_dict
+        except Exception as exception:
+            raise (
+                ApiError(
+                    error_code="error_loading_form",
+                    message=(
+                        f"Could not load form schema from: {form_file}."
+                        f" Error was: {str(exception)}"
+                    ),
+                    status_code=400,
+                )
+            ) from exception
     except WorkflowTaskException as wfe:
         wfe.add_note(f"Error in Json Form File '{form_file}'")
         api_error = ApiError.from_workflow_exception(
