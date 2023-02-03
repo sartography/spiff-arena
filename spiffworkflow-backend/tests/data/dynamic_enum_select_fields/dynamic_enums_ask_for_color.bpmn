@@ -13,7 +13,9 @@
     <bpmn:scriptTask id="Activity_1qtnye8" name="set color options" scriptFormat="python">
       <bpmn:incoming>Flow_1my9ag5</bpmn:incoming>
       <bpmn:outgoing>Flow_0b04rbg</bpmn:outgoing>
-      <bpmn:script>awesome_color_options = [{"value": "blue", "label": "Blue"}, {"value": "green", "label": "Green"}]</bpmn:script>
+      <bpmn:script>awesome_color_options = [{"value": "blue", "label": "Blue"}, {"value": "green", "label": "Green"}]
+form_ui_hidden_fields = ["veryImportantFieldButOnlySometimes", "building.floor"]
+    </bpmn:script>
     </bpmn:scriptTask>
     <bpmn:userTask id="Activity_1gqykqt" name="ask user for color">
       <bpmn:extensionElements>

@@ -198,7 +198,7 @@ export default function TaskShow() {
         },
       };
     } else if (task.form_ui_schema) {
-      formUiSchema = JSON.parse(task.form_ui_schema);
+      formUiSchema = task.form_ui_schema;
     }
     if (task.state !== 'READY') {
       formUiSchema = Object.assign(formUiSchema || {}, {
