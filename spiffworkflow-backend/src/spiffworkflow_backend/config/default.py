@@ -69,6 +69,8 @@ GIT_BRANCH = environ.get("GIT_BRANCH")
 GIT_CLONE_URL_FOR_PUBLISHING = environ.get("GIT_CLONE_URL")
 GIT_COMMIT_ON_SAVE = environ.get("GIT_COMMIT_ON_SAVE", default="false") == "true"
 GIT_SSH_PRIVATE_KEY = environ.get("GIT_SSH_PRIVATE_KEY")
+GIT_USERNAME = environ.get("GIT_USERNAME")
+GIT_USER_EMAIL = environ.get("GIT_USER_EMAIL")
 
 # Datbase Configuration
 SPIFF_DATABASE_TYPE = environ.get(

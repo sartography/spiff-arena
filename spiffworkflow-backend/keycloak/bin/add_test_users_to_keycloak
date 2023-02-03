@@ -7,7 +7,13 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+# you can get a list of users from the keycloak realm file like:
+#   grep '"email" :' keycloak/realm_exports/spiffworkflow-realm.json | awk -F : '{print $2}' | sed -E 's/ "//g' | sed -E 's/",//g' > s
+
+# we keep some of these in keycloak/test_user_lists
+# spiffworkflow-realm.json is a mashup of the status and sartography user lists.
 user_file_with_one_email_per_line="${1:-}"
+
 keycloak_realm="${2:-spiffworkflow}"
 if [[ -z "${1:-}" ]]; then
   >&2 echo "usage: $(basename "$0") [user_file_with_one_email_per_line]"

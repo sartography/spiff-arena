@@ -82,13 +82,17 @@ def setup_config(app: Flask) -> None:
         app.config.from_pyfile(f"{app.instance_path}/config.py", silent=True)
 
     app.config["PERMISSIONS_FILE_FULLPATH"] = None
-    if app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME"]:
+    permissions_file_name = app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME"]
+    if permissions_file_name is not None:
         app.config["PERMISSIONS_FILE_FULLPATH"] = os.path.join(
             app.root_path,
             "config",
             "permissions",
-            app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME"],
+            permissions_file_name,
         )
+        print(f"base_permissions: loaded permissions file: {permissions_file_name}")
+    else:
+        print("base_permissions: no permissions file loaded")
 
     # unversioned (see .gitignore) config that can override everything and include secrets.
     # src/spiffworkflow_backend/config/secrets.py

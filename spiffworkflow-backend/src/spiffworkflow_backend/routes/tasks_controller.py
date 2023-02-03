@@ -10,6 +10,7 @@ from typing import Union
 
 import flask.wrappers
 import jinja2
+import sentry_sdk
 from flask import current_app
 from flask import g
 from flask import jsonify
@@ -326,13 +327,12 @@ def process_data_show(
     )
 
 
-def task_submit(
+def task_submit_shared(
     process_instance_id: int,
     task_id: str,
     body: Dict[str, Any],
     terminate_loop: bool = False,
 ) -> flask.wrappers.Response:
-    """Task_submit_user_data."""
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if not process_instance.can_submit_task():
@@ -380,15 +380,16 @@ def task_submit(
             )
         )
 
-    processor.lock_process_instance("Web")
-    ProcessInstanceService.complete_form_task(
-        processor=processor,
-        spiff_task=spiff_task,
-        data=body,
-        user=g.user,
-        human_task=human_task,
-    )
-    processor.unlock_process_instance("Web")
+    with sentry_sdk.start_span(op="task", description="complete_form_task"):
+        processor.lock_process_instance("Web")
+        ProcessInstanceService.complete_form_task(
+            processor=processor,
+            spiff_task=spiff_task,
+            data=body,
+            user=g.user,
+            human_task=human_task,
+        )
+        processor.unlock_process_instance("Web")
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
     # task spec, complete that form as well.
@@ -415,6 +416,19 @@ def task_submit(
         )
 
     return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
+
+
+def task_submit(
+    process_instance_id: int,
+    task_id: str,
+    body: Dict[str, Any],
+    terminate_loop: bool = False,
+) -> flask.wrappers.Response:
+    """Task_submit_user_data."""
+    with sentry_sdk.start_span(
+        op="controller_action", description="tasks_controller.task_submit"
+    ):
+        return task_submit_shared(process_instance_id, task_id, body, terminate_loop)
 
 
 def _get_tasks(

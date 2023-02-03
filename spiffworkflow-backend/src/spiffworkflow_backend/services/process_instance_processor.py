@@ -26,8 +26,13 @@ from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
-from SpiffWorkflow.bpmn.PythonScriptEngine import Box  # type: ignore
-from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
+from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
+from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
+from SpiffWorkflow.bpmn.serializer.task_spec import (  # type: ignore
+    EventBasedGatewayConverter,
+)
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
@@ -36,37 +41,12 @@ from SpiffWorkflow.bpmn.specs.events.StartEvent import StartEvent  # type: ignor
 from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
-from SpiffWorkflow.dmn.serializer.task_spec_converters import BusinessRuleTaskConverter  # type: ignore
+from SpiffWorkflow.dmn.serializer.task_spec import BusinessRuleTaskConverter  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowException
+from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
-from SpiffWorkflow.spiff.serializer.task_spec_converters import BoundaryEventConverter  # type: ignore
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    CallActivityTaskConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import EndEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    EventBasedGatewayConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    IntermediateCatchEventConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    IntermediateThrowEventConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import ManualTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import NoneTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import ReceiveTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import ScriptTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import SendTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import ServiceTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import StartEventConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import SubWorkflowTaskConverter
-from SpiffWorkflow.spiff.serializer.task_spec_converters import (
-    TransactionSubprocessConverter,
-)
-from SpiffWorkflow.spiff.serializer.task_spec_converters import UserTaskConverter
+from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
@@ -108,6 +88,8 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
+
+SPIFF_SPEC_CONFIG["task_specs"].append(BusinessRuleTaskConverter)
 
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
@@ -151,6 +133,132 @@ class ProcessInstanceLockedBySomethingElseError(Exception):
     pass
 
 
+class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # type: ignore
+    def __init__(self, environment_globals: Dict[str, Any]):
+        """BoxedTaskDataBasedScriptEngineEnvironment."""
+        self._last_result: Dict[str, Any] = {}
+        super().__init__(environment_globals)
+
+    def execute(
+        self,
+        script: str,
+        context: Dict[str, Any],
+        external_methods: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        super().execute(script, context, external_methods)
+        self._last_result = context
+
+    def last_result(self) -> Dict[str, Any]:
+        return self._last_result
+
+    def clear_state(self) -> None:
+        pass
+
+    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+    def revise_state_with_task_data(self, task: SpiffTask) -> None:
+        pass
+
+
+class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment):  # type: ignore
+    PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
+
+    def __init__(self, environment_globals: Dict[str, Any]):
+        """NonTaskDataBasedScriptEngineEnvironment."""
+        self.state: Dict[str, Any] = {}
+        self.non_user_defined_keys = set(
+            [*environment_globals.keys()] + ["__builtins__", "current_user"]
+        )
+        super().__init__(environment_globals)
+
+    def evaluate(
+        self,
+        expression: str,
+        context: Dict[str, Any],
+        external_methods: Optional[dict[str, Any]] = None,
+    ) -> Any:
+        # TODO: once integrated look at the tests that fail without Box
+        Box.convert_to_box(context)
+        state = {}
+        state.update(self.globals)
+        state.update(external_methods or {})
+        state.update(self.state)
+        state.update(context)
+        return eval(expression, state)  # noqa
+
+    def execute(
+        self,
+        script: str,
+        context: Dict[str, Any],
+        external_methods: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        # TODO: once integrated look at the tests that fail without Box
+        Box.convert_to_box(context)
+        self.state.update(self.globals)
+        self.state.update(external_methods or {})
+        self.state.update(context)
+        exec(script, self.state)  # noqa
+
+        self.state = self._user_defined_state(external_methods)
+
+        # the task data needs to be updated with the current state so data references can be resolved properly.
+        # the state will be removed later once the task is completed.
+        context.update(self.state)
+
+    def _user_defined_state(
+        self, external_methods: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        keys_to_filter = self.non_user_defined_keys
+        if external_methods is not None:
+            keys_to_filter |= set(external_methods.keys())
+
+        return {
+            k: v
+            for k, v in self.state.items()
+            if k not in keys_to_filter and not callable(v)
+        }
+
+    def last_result(self) -> Dict[str, Any]:
+        return self.state
+
+    def clear_state(self) -> None:
+        self.state = {}
+
+    def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        key = self.PYTHON_ENVIRONMENT_STATE_KEY
+        state = self._user_defined_state()
+        bpmn_process_instance.data[key] = state
+
+    def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        key = self.PYTHON_ENVIRONMENT_STATE_KEY
+        self.state = bpmn_process_instance.data.get(key, {})
+
+    def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        bpmn_process_instance.data.update(self._user_defined_state())
+
+    def revise_state_with_task_data(self, task: SpiffTask) -> None:
+        state_keys = set(self.state.keys())
+        task_data_keys = set(task.data.keys())
+        state_keys_to_remove = state_keys - task_data_keys
+        task_data_keys_to_keep = task_data_keys - state_keys
+
+        self.state = {
+            k: v for k, v in self.state.items() if k not in state_keys_to_remove
+        }
+        task.data = {k: v for k, v in task.data.items() if k in task_data_keys_to_keep}
+
+
+class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):
+    pass
+
+
 class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     """This is a custom script processor that can be easily injected into Spiff Workflow.
 
@@ -180,7 +288,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         default_globals.update(safe_globals)
         default_globals["__builtins__"]["__import__"] = _import
 
-        super().__init__(default_globals=default_globals)
+        environment = CustomScriptEngineEnvironment(default_globals)
+
+        super().__init__(environment=environment)
 
     def __get_augment_methods(self, task: SpiffTask) -> Dict[str, Callable]:
         """__get_augment_methods."""
@@ -279,29 +389,12 @@ class ProcessInstanceProcessor:
 
     _script_engine = CustomBpmnScriptEngine()
     SERIALIZER_VERSION = "1.0-spiffworkflow-backend"
+
     wf_spec_converter = BpmnWorkflowSerializer.configure_workflow_spec_converter(
-        [
-            BoundaryEventConverter,
-            BusinessRuleTaskConverter,
-            CallActivityTaskConverter,
-            EndEventConverter,
-            IntermediateCatchEventConverter,
-            IntermediateThrowEventConverter,
-            EventBasedGatewayConverter,
-            ManualTaskConverter,
-            NoneTaskConverter,
-            ReceiveTaskConverter,
-            ScriptTaskConverter,
-            SendTaskConverter,
-            ServiceTaskConverter,
-            StartEventConverter,
-            SubWorkflowTaskConverter,
-            TransactionSubprocessConverter,
-            UserTaskConverter,
-        ]
+        SPIFF_SPEC_CONFIG
     )
     _serializer = BpmnWorkflowSerializer(wf_spec_converter, version=SERIALIZER_VERSION)
-    _event_serializer = EventBasedGatewayConverter()
+    _event_serializer = EventBasedGatewayConverter(wf_spec_converter)
 
     PROCESS_INSTANCE_ID_KEY = "process_instance_id"
     VALIDATION_PROCESS_KEY = "validate_only"
@@ -393,7 +486,7 @@ class ProcessInstanceProcessor:
                 validate_only,
                 subprocesses=subprocesses,
             )
-            self.bpmn_process_instance.script_engine = self._script_engine
+            self.set_script_engine(self.bpmn_process_instance)
             self.add_user_info_to_process_instance(self.bpmn_process_instance)
 
         except MissingSpecError as ke:
@@ -439,6 +532,18 @@ class ProcessInstanceProcessor:
             bpmn_process_spec, subprocesses
         )
 
+    @staticmethod
+    def set_script_engine(bpmn_process_instance: BpmnWorkflow) -> None:
+        ProcessInstanceProcessor._script_engine.environment.restore_state(
+            bpmn_process_instance
+        )
+        bpmn_process_instance.script_engine = ProcessInstanceProcessor._script_engine
+
+    def preserve_script_engine_state(self) -> None:
+        ProcessInstanceProcessor._script_engine.environment.preserve_state(
+            self.bpmn_process_instance
+        )
+
     def current_user(self) -> Any:
         """Current_user."""
         current_user = None
@@ -471,11 +576,12 @@ class ProcessInstanceProcessor:
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None,
     ) -> BpmnWorkflow:
         """Get_bpmn_process_instance_from_workflow_spec."""
-        return BpmnWorkflow(
+        bpmn_process_instance = BpmnWorkflow(
             spec,
-            script_engine=ProcessInstanceProcessor._script_engine,
             subprocess_specs=subprocesses,
         )
+        ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
+        return bpmn_process_instance
 
     @staticmethod
     def __get_bpmn_process_instance(
@@ -502,9 +608,7 @@ class ProcessInstanceProcessor:
             finally:
                 spiff_logger.setLevel(original_spiff_logger_log_level)
 
-            bpmn_process_instance.script_engine = (
-                ProcessInstanceProcessor._script_engine
-            )
+            ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
         else:
             bpmn_process_instance = (
                 ProcessInstanceProcessor.get_bpmn_process_instance_from_workflow_spec(
@@ -868,7 +972,7 @@ class ProcessInstanceProcessor:
     def send_bpmn_event(self, event_data: dict[str, Any]) -> None:
         """Send an event to the workflow."""
         payload = event_data.pop("payload", None)
-        event_definition = self._event_serializer.restore(event_data)
+        event_definition = self._event_serializer.registry.restore(event_data)
         if payload is not None:
             event_definition.payload = payload
         current_app.logger.info(
@@ -1385,24 +1489,24 @@ class ProcessInstanceProcessor:
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         step_details = []
+
+        def did_complete_task(task: SpiffTask) -> None:
+            self._script_engine.environment.revise_state_with_task_data(task)
+            step_details.append(self.spiff_step_details_mapping())
+
         try:
-            self.bpmn_process_instance.refresh_waiting_tasks(
-                #
-                # commenting out to see if this helps with the growing spiff steps/db issue
-                #
-                # will_refresh_task=lambda t: self.increment_spiff_step(),
-                # did_refresh_task=lambda t: step_details.append(
-                #   self.spiff_step_details_mapping()
-                # ),
-            )
+            self.bpmn_process_instance.refresh_waiting_tasks()
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,
                 will_complete_task=lambda t: self.increment_spiff_step(),
-                did_complete_task=lambda t: step_details.append(
-                    self.spiff_step_details_mapping()
-                ),
+                did_complete_task=did_complete_task,
             )
+
+            if self.bpmn_process_instance.is_completed():
+                self._script_engine.environment.finalize_result(
+                    self.bpmn_process_instance
+                )
 
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
@@ -1466,6 +1570,7 @@ class ProcessInstanceProcessor:
     def serialize(self) -> str:
         """Serialize."""
         self.check_task_data_size()
+        self.preserve_script_engine_state()
         return self._serializer.serialize_json(self.bpmn_process_instance)  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:

@@ -21,6 +21,11 @@ from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
 
+from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
+from spiffworkflow_backend.services.authentication_service import TokenInvalidError
+from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
+from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
+
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
 
@@ -169,13 +174,30 @@ def set_user_sentry_context() -> None:
     set_tag("username", username)
 
 
+def should_notify_sentry(exception: Exception) -> bool:
+    """Determine if we should notify sentry.
+
+    We want to capture_exception to log the exception to sentry, but we don't want to log:
+      1. ApiErrors that are just invalid tokens
+      2. NotAuthorizedError. we usually call check-permissions before calling an API to
+         make sure we'll have access, but there are some cases
+         where it's more convenient to just make the call from the frontend and handle the 403 appropriately.
+    """
+    if isinstance(exception, ApiError):
+        if exception.error_code == "invalid_token":
+            return False
+    if isinstance(exception, NotAuthorizedError):
+        return False
+    return True
+
+
 @api_error_blueprint.app_errorhandler(Exception)  # type: ignore
 def handle_exception(exception: Exception) -> flask.wrappers.Response:
     """Handles unexpected exceptions."""
     set_user_sentry_context()
 
     sentry_link = None
-    if not isinstance(exception, ApiError) or exception.error_code != "invalid_token":
+    if should_notify_sentry(exception):
         id = capture_exception(exception)
 
         if isinstance(exception, ApiError):
@@ -191,22 +213,41 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
                 f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
             )
 
-    # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
-    # seems to break the sentry sdk context where we no longer get back
-    # an event id or send out tags like username
-    current_app.logger.exception(exception)
+        # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
+        # seems to break the sentry sdk context where we no longer get back
+        # an event id or send out tags like username
+        current_app.logger.exception(exception)
+    else:
+        current_app.logger.warning(
+            f"Received exception: {exception}. Since we do not want this particular"
+            " exception in sentry, we cannot use logger.exception or logger.error, so"
+            " there will be no backtrace. see api_error.py"
+        )
+
+    error_code = "internal_server_error"
+    status_code = 500
+    if (
+        isinstance(exception, NotAuthorizedError)
+        or isinstance(exception, TokenNotProvidedError)
+        or isinstance(exception, TokenInvalidError)
+    ):
+        error_code = "not_authorized"
+        status_code = 403
+    if isinstance(exception, UserNotLoggedInError):
+        error_code = "not_authenticated"
+        status_code = 401
 
     # set api_exception like this to avoid confusing mypy
-    # and what type the object is
+    # about what type the object is
     api_exception = None
     if isinstance(exception, ApiError):
         api_exception = exception
     else:
         api_exception = ApiError(
-            error_code="internal_server_error",
+            error_code=error_code,
             message=f"{exception.__class__.__name__}",
             sentry_link=sentry_link,
-            status_code=500,
+            status_code=status_code,
         )
 
     return make_response(jsonify(api_exception), api_exception.status_code)
