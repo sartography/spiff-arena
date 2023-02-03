@@ -42,7 +42,6 @@ export default function TaskShow() {
       HttpService.makeCallToBackend({
         path: url,
         successCallback: (tasks: any) => {
-          setDisabled(false);
           setUserTasks(tasks);
         },
         onUnauthorized: () => {},
@@ -62,6 +61,7 @@ export default function TaskShow() {
 
   const processSubmitResult = (result: any) => {
     removeError();
+    setDisabled(false);
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
