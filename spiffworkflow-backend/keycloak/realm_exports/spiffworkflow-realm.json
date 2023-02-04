@@ -1005,6 +1005,9 @@
     "totp" : false,
     "emailVerified" : false,
     "email" : "kb@sartography.com",
+    "attributes" : {
+      "bamboo_id" : [ "42" ]
+    },
     "credentials" : [ {
       "id" : "2c0be363-038f-48f1-86d6-91fdd28657cf",
       "type" : "password",
@@ -2034,6 +2037,21 @@
         "access.token.claim" : "true",
         "claim.name" : "clientId",
         "jsonType.label" : "String"
+      }
+    }, {
+      "id" : "a7692d41-b905-4049-9004-f6bea690051d",
+      "name" : "bamboo_id",
+      "protocol" : "openid-connect",
+      "protocolMapper" : "oidc-usermodel-attribute-mapper",
+      "consentRequired" : false,
+      "config" : {
+        "aggregate.attrs" : "false",
+        "userinfo.token.claim" : "true",
+        "multivalued" : "false",
+        "user.attribute" : "bamboo_id",
+        "id.token.claim" : "true",
+        "access.token.claim" : "true",
+        "claim.name" : "bamboo_id"
       }
     } ],
     "defaultClientScopes" : [ "web-origins", "acr", "profile", "roles", "email" ],
