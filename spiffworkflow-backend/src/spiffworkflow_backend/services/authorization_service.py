@@ -494,9 +494,7 @@ class AuthorizationService:
             user_attributes["username"] = fallback_username
 
         if "preferred_username" in user_info:
-            user_attributes["display_name"] = user_info[
-                "preferred_username"
-            ]
+            user_attributes["display_name"] = user_info["preferred_username"]
         elif "nickname" in user_info:
             user_attributes["display_name"] = user_info["nickname"]
         elif "name" in user_info:
@@ -510,9 +508,9 @@ class AuthorizationService:
         ):
             if tenant_specific_field in user_info:
                 field_number = field_index + 1
-                user_attributes[
-                    f"tenant_specific_field_{field_number}"
-                ] = user_info[tenant_specific_field]
+                user_attributes[f"tenant_specific_field_{field_number}"] = user_info[
+                    tenant_specific_field
+                ]
 
         if user_model is None:
             current_app.logger.debug("create_user in login_return")

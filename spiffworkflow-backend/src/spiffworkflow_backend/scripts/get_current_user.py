@@ -1,4 +1,4 @@
-"""Get_env."""
+"""Get current user."""
 from typing import Any
 
 from flask import g
@@ -10,8 +10,6 @@ from spiffworkflow_backend.scripts.script import Script
 
 
 class GetCurrentUser(Script):
-    """GetCurrentUser."""
-
     @staticmethod
     def requires_privileged_permissions() -> bool:
         """We have deemed this function safe to run without elevated permissions."""
