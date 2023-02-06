@@ -85,7 +85,7 @@ while read -r input_line; do
       http_code=$(add_user "$user_email" "$username" "$user_attribute_one")
 
       if [[ "$http_code" == "409" ]]; then
-        user_info=$(curl --fail --silent --location --request GET "http://localhost:7002/admin/realms/${keycloak_realm}/users?username=${username}" \
+        user_info=$(curl --fail --silent --location --request GET "http://localhost:7002/admin/realms/${keycloak_realm}/users?username=${username}&exact=true" \
           -H 'Content-Type: application/json' \
           -H "Authorization: Bearer $backend_token")
 
