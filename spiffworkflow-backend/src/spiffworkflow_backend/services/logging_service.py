@@ -243,5 +243,5 @@ class DBHandler(logging.Handler):
             # so at some point we are going to insert logs.
             # we don't want to insert on every log, so we will insert every 100 logs, which is just about as fast as inserting
             # on every 1,000 logs. if we get deadlocks in the database, this can be changed to 1 in order to insert on every log.
-            if len(self.logs) % 100 == 0:
+            if len(self.logs) % 1 == 0:
                 self.bulk_insert_logs()

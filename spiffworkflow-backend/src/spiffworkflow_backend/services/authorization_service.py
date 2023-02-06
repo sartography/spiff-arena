@@ -457,6 +457,7 @@ class AuthorizationService:
         human_task = HumanTaskModel.query.filter_by(
             task_name=spiff_task.task_spec.name,
             process_instance_id=process_instance_id,
+            completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
