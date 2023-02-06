@@ -30,6 +30,7 @@ from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ig
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
+from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import (  # type: ignore
     EventBasedGatewayConverter,
 )
@@ -688,14 +689,24 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def spiff_step_details_mapping(self) -> dict:
+    def spiff_step_details_mapping(self, spiff_task: Optional[SpiffTask]=None) -> dict:
         """SaveSpiffStepDetails."""
         # bpmn_json = self.serialize()
         # wf_json = json.loads(bpmn_json)
+        default_registry = DefaultRegistry()
+
+        if spiff_task is None:
+            # TODO: safer to pass in task vs use last task?
+            spiff_task = self.bpmn_process_instance.last_task
+
+        task_data = default_registry.convert(spiff_task.data)
+        python_env = default_registry.convert(self._script_engine.environment.last_result())
+        
         task_json: Dict[str, Any] = {
             # "tasks": wf_json["tasks"],
             # "subprocesses": wf_json["subprocesses"],
-            # "python_env": self._script_engine.environment.last_result(),
+            "task_data": task_data,
+            "python_env": python_env,
         }
 
         return {
@@ -1521,7 +1532,7 @@ class ProcessInstanceProcessor:
         def did_complete_task(task: SpiffTask) -> None:
             if should_log(task):
                 self._script_engine.environment.revise_state_with_task_data(task)
-                step_details.append(self.spiff_step_details_mapping())
+                step_details.append(self.spiff_step_details_mapping(task))
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
