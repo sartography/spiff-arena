@@ -1490,27 +1490,42 @@ class ProcessInstanceProcessor:
             self._do_engine_steps(exit_at=exit_at, save=save)
         pr.print_stats(sort=SortKey.CUMULATIVE)
 
+
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         step_details = []
 
-        tasks_to_skip = {
-            "Start",
-            "End",
+
+        tasks_to_log = {
+            "BPMN Task",
+            "Script Task",
+            "Service Task"
+            # "End Event",
+            # "Default Start Event",
+            # "Exclusive Gateway",
+            # "End Join",
+            # "End Event",
+            # "Default Throwing Event",
+            # "Subprocess"
         }
 
+        def should_log(task: SpiffTask) -> bool:
+            if task.task_spec.spec_type in tasks_to_log and not task.task_spec.name.endswith('.EndJoin'):
+                return True
+            return False
+
         def will_complete_task(task: SpiffTask) -> None:
-            if task.task_spec.name not in tasks_to_skip:
-                #print(f"w0 {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
+            if should_log(task):
+                print(f"w0 {task.task_spec.spec_type} {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
                 self.increment_spiff_step()
-                #print(f"w1 {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
+                print(f"w1 {task.task_spec.spec_type} {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
 
         def did_complete_task(task: SpiffTask) -> None:
-            if task.task_spec.name not in tasks_to_skip:
-                #print(f"d0 {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
+            if should_log(task):
+                print(f"d0 {task.task_spec.spec_type} {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
                 self._script_engine.environment.revise_state_with_task_data(task)
                 step_details.append(self.spiff_step_details_mapping())
-                #print(f"d1 {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
+                print(f"d1 {task.task_spec.spec_type} {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
