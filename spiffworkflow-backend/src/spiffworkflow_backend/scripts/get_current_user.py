@@ -1,6 +1,7 @@
 """Get current user."""
 from typing import Any
 
+from flask import current_app
 from flask import g
 
 from spiffworkflow_backend.models.script_attributes_context import (
@@ -26,4 +27,7 @@ class GetCurrentUser(Script):
         **kwargs: Any
     ) -> Any:
         """Run."""
-        return g.user.__dict__
+        # dump the user using our json encoder and then load it back up as a dict
+        # to remove unwanted field types
+        user_as_json_string = current_app.json.dumps(g.user)
+        return current_app.json.loads(user_as_json_string)
