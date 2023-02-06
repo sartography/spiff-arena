@@ -1495,7 +1495,6 @@ class ProcessInstanceProcessor:
         """Do_engine_steps."""
         step_details = []
 
-
         tasks_to_log = {
             "BPMN Task",
             "Script Task",
@@ -1516,16 +1515,12 @@ class ProcessInstanceProcessor:
 
         def will_complete_task(task: SpiffTask) -> None:
             if should_log(task):
-                print(f"w0 {task.task_spec.spec_type} {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
                 self.increment_spiff_step()
-                print(f"w1 {task.task_spec.spec_type} {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
 
         def did_complete_task(task: SpiffTask) -> None:
             if should_log(task):
-                print(f"d0 {task.task_spec.spec_type} {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
                 self._script_engine.environment.revise_state_with_task_data(task)
                 step_details.append(self.spiff_step_details_mapping())
-                print(f"d1 {task.task_spec.spec_type} {task.task_spec.name} {self.process_instance_model.spiff_step}: {time.time()}")
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
