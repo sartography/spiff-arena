@@ -26,4 +26,4 @@ class GetCurrentUser(Script):
         **kwargs: Any
     ) -> Any:
         """Run."""
-        return g.user.username
+        return g.user.__dict__
