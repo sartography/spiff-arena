@@ -565,11 +565,9 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
         raise wfe from template_error
     except Exception as error:
         type, value, tb = exc_info()
-        wfe = WorkflowTaskException(
-            str(error), task=spiff_task, exception=error
-        )
+        wfe = WorkflowTaskException(str(error), task=spiff_task, exception=error)
         while tb:
-            if tb.tb_frame.f_code.co_filename == '<template>':
+            if tb.tb_frame.f_code.co_filename == "<template>":
                 wfe.line_number = tb.tb_lineno
                 wfe.error_line = unprocessed_template.split("\n")[tb.tb_lineno - 1]
             tb = tb.tb_next
