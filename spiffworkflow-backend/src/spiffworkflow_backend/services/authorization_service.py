@@ -485,38 +485,42 @@ class AuthorizationService:
             .filter(UserModel.service_id == user_info["sub"])
             .first()
         )
-        email = display_name = username = ""
+        user_attributes = {}
+
         if "email" in user_info:
-            username = user_info["email"]
-            email = user_info["email"]
+            user_attributes["username"] = user_info["email"]
+            user_attributes["email"] = user_info["email"]
         else:  # we fall back to the sub, which may be very ugly.
-            username = user_info["sub"] + "@" + user_info["iss"]
+            fallback_username = user_info["sub"] + "@" + user_info["iss"]
+            user_attributes["username"] = fallback_username
 
         if "preferred_username" in user_info:
-            display_name = user_info["preferred_username"]
+            user_attributes["display_name"] = user_info["preferred_username"]
         elif "nickname" in user_info:
-            display_name = user_info["nickname"]
+            user_attributes["display_name"] = user_info["nickname"]
         elif "name" in user_info:
-            display_name = user_info["name"]
+            user_attributes["display_name"] = user_info["name"]
+
+        user_attributes["service"] = user_info["iss"]
+        user_attributes["service_id"] = user_info["sub"]
+
+        for field_index, tenant_specific_field in enumerate(
+            current_app.config["TENANT_SPECIFIC_FIELDS"]
+        ):
+            if tenant_specific_field in user_info:
+                field_number = field_index + 1
+                user_attributes[f"tenant_specific_field_{field_number}"] = user_info[
+                    tenant_specific_field
+                ]
 
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             is_new_user = True
-            user_model = UserService().create_user(
-                username=username,
-                service=user_info["iss"],
-                service_id=user_info["sub"],
-                email=email,
-                display_name=display_name,
-            )
-
+            user_model = UserService().create_user(**user_attributes)
         else:
             # Update with the latest information
-            user_model.username = username
-            user_model.email = email
-            user_model.display_name = display_name
-            user_model.service = user_info["iss"]
-            user_model.service_id = user_info["sub"]
+            for key, value in user_attributes.items():
+                setattr(user_model, key, value)
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because

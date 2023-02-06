@@ -72,7 +72,7 @@ GIT_SSH_PRIVATE_KEY = environ.get("GIT_SSH_PRIVATE_KEY")
 GIT_USERNAME = environ.get("GIT_USERNAME")
 GIT_USER_EMAIL = environ.get("GIT_USER_EMAIL")
 
-# Datbase Configuration
+# Database Configuration
 SPIFF_DATABASE_TYPE = environ.get(
     "SPIFF_DATABASE_TYPE", default="mysql"
 )  # can also be sqlite, postgres
@@ -88,3 +88,8 @@ SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID = environ.get(
 ALLOW_CONFISCATING_LOCK_AFTER_SECONDS = int(
     environ.get("ALLOW_CONFISCATING_LOCK_AFTER_SECONDS", default="600")
 )
+
+# Tenant specific fields is a comma separated list of field names that we will convert to list of strings
+# and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
+# comma-separated list.
+TENANT_SPECIFIC_FIELDS = environ.get("TENANT_SPECIFIC_FIELDS")
