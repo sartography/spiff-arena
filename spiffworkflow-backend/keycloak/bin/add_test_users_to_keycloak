@@ -44,14 +44,66 @@ result=$(curl --fail -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
 )
 backend_token=$(jq -r '.access_token' <<< "$result")
 
-while read -r user_email; do
-  if [[ -n "$user_email" ]]; then
-    username=$(awk -F '@' '{print $1}' <<<"$user_email")
-    credentials='{"type":"password","value":"'"${username}"'","temporary":false}'
+function add_user() {
+  local user_email=$1
+  local username=$2
+  local user_attribute_one=$3
 
-    curl --fail --location --request POST "http://localhost:7002/admin/realms/${keycloak_realm}/users" \
-      -H 'Content-Type: application/json' \
-      -H "Authorization: Bearer $backend_token" \
-      --data-raw '{"email":"'"${user_email}"'", "enabled":"true", "username":"'"${username}"'", "credentials":['"${credentials}"']}'
+  local credentials='{"type":"password","value":"'"${username}"'","temporary":false}'
+
+  local data='{"email":"'"${user_email}"'", "enabled":"true", "username":"'"${username}"'", "credentials":['"${credentials}"']'
+  if [[ -n "$user_attribute_one" ]]; then
+    data=''${data}', "attributes": {"'${custom_attribute_one}'": [ "'$user_attribute_one'" ]}'
+  fi
+  data="${data}}"
+
+  local http_code
+  http_code=$(curl --silent -o /dev/null -w '%{http_code}' --location --request POST "http://localhost:7002/admin/realms/${keycloak_realm}/users" \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: Bearer $backend_token" \
+    --data-raw "$data")
+  echo "$http_code"
+}
+
+first_line_processed="false"
+custom_attribute_one=''
+
+while read -r input_line; do
+  if ! grep -qE '^#' <<<"$input_line" ; then
+    if [[ "$first_line_processed" == "false" ]]; then
+      email_header=$(awk -F ',' '{print $1}' <<<"$input_line")
+      if [[ "$email_header" != "email" ]]; then
+        >&2 echo "ERROR: the first column in the first row must be email."
+        exit 1
+      fi
+      custom_attribute_one=$(awk -F ',' '{print $2}' <<<"$input_line")
+      first_line_processed="true"
+    elif [[ -n "$input_line" ]]; then
+      user_email=$(awk -F ',' '{print $1}' <<<"$input_line")
+      username=$(awk -F '@' '{print $1}' <<<"$user_email")
+      user_attribute_one=$(awk -F ',' '{print $2}' <<<"$input_line")
+      http_code=$(add_user "$user_email" "$username" "$user_attribute_one")
+
+      if [[ "$http_code" == "409" ]]; then
+        user_info=$(curl --fail --silent --location --request GET "http://localhost:7002/admin/realms/${keycloak_realm}/users?username=${username}" \
+          -H 'Content-Type: application/json' \
+          -H "Authorization: Bearer $backend_token")
+
+        user_id=$(jq -r '.[0] | .id' <<<"$user_info")
+        if [[ -z "$user_id" ]]; then
+          >&2 echo "ERROR: Could not find user_id for user: ${user_email}"
+          exit 1
+        fi
+        curl --fail --location --silent --request DELETE "http://localhost:7002/admin/realms/${keycloak_realm}/users/${user_id}" \
+          -H 'Content-Type: application/json' \
+          -H "Authorization: Bearer $backend_token"
+
+        http_code=$(add_user "$user_email" "$username" "$user_attribute_one")
+        if [[ "$http_code" != "201" ]]; then
+          >&2 echo "ERROR: Failed to recreate user: ${user_email} with http_code: ${http_code}"
+          exit 1
+        fi
+      fi
+    fi
   fi
 done <"$user_file_with_one_email_per_line"
