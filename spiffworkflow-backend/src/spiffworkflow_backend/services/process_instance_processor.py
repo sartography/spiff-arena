@@ -254,11 +254,10 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         }
         task.data = {k: v for k, v in task.data.items() if k in task_data_keys_to_keep}
 
-        if hasattr(task.task_spec, '_result_variable'):
+        if hasattr(task.task_spec, "_result_variable"):
             result_variable = task.task_spec._result_variable(task)
             if result_variable in task.data:
                 self.state[result_variable] = task.data.pop(result_variable)
-                assert result_variable not in task.data
 
 
 class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
@@ -691,12 +690,12 @@ class ProcessInstanceProcessor:
 
     def spiff_step_details_mapping(self) -> dict:
         """SaveSpiffStepDetails."""
-        #bpmn_json = self.serialize()
-        #wf_json = json.loads(bpmn_json)
-        task_json = {
-            #"tasks": wf_json["tasks"], 
-            #"subprocesses": wf_json["subprocesses"],
-            "python_env": self._script_engine.environment.last_result(),
+        # bpmn_json = self.serialize()
+        # wf_json = json.loads(bpmn_json)
+        task_json: Dict[str, Any] = {
+            # "tasks": wf_json["tasks"],
+            # "subprocesses": wf_json["subprocesses"],
+            # "python_env": self._script_engine.environment.last_result(),
         }
 
         return {
@@ -1490,7 +1489,6 @@ class ProcessInstanceProcessor:
             self._do_engine_steps(exit_at=exit_at, save=save)
         pr.print_stats(sort=SortKey.CUMULATIVE)
 
-
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         step_details = []
@@ -1509,7 +1507,10 @@ class ProcessInstanceProcessor:
         }
 
         def should_log(task: SpiffTask) -> bool:
-            if task.task_spec.spec_type in tasks_to_log and not task.task_spec.name.endswith('.EndJoin'):
+            if (
+                task.task_spec.spec_type in tasks_to_log
+                and not task.task_spec.name.endswith(".EndJoin")
+            ):
                 return True
             return False
 
