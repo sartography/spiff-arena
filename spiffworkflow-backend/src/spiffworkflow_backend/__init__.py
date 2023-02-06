@@ -1,5 +1,6 @@
 """__init__."""
 import os
+import sys
 from typing import Any
 
 import connexion  # type: ignore
@@ -203,6 +204,9 @@ def configure_sentry(app: flask.app.Flask) -> None:
     if sentry_traces_sample_rate is None:
         raise Exception("SENTRY_TRACES_SAMPLE_RATE is not set somehow")
 
+    # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
+    profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
+
     sentry_sdk.init(
         dsn=app.config.get("SENTRY_DSN"),
         integrations=[
@@ -218,8 +222,6 @@ def configure_sentry(app: flask.app.Flask) -> None:
         traces_sample_rate=float(sentry_traces_sample_rate),
         traces_sampler=traces_sampler,
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
-        _experiments={
-            "profiles_sample_rate": 1,
-        },
+        _experiments={"profiles_sample_rate": profiles_sample_rate},
         before_send=before_send,
     )

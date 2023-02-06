@@ -82,7 +82,8 @@
       <bpmn:incoming>Flow_0bgkfue</bpmn:incoming>
       <bpmn:outgoing>Flow_1ivhu7x</bpmn:outgoing>
       <bpmn:script>approver = get_current_user()
-lane_owners["Finance Team"].remove(approver)</bpmn:script>
+username = approver['username']
+lane_owners["Finance Team"].remove(username)</bpmn:script>
     </bpmn:scriptTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
