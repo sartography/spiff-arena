@@ -691,11 +691,11 @@ class ProcessInstanceProcessor:
 
     def spiff_step_details_mapping(self) -> dict:
         """SaveSpiffStepDetails."""
-        bpmn_json = self.serialize()
-        wf_json = json.loads(bpmn_json)
+        #bpmn_json = self.serialize()
+        #wf_json = json.loads(bpmn_json)
         task_json = {
-            "tasks": wf_json["tasks"], 
-            "subprocesses": wf_json["subprocesses"],
+            #"tasks": wf_json["tasks"], 
+            #"subprocesses": wf_json["subprocesses"],
             "python_env": self._script_engine.environment.last_result(),
         }
 
