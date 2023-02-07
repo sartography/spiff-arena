@@ -51,6 +51,19 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
             ) from exception
 
 
+def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
+    tenant_specific_fields = app.config.get("TENANT_SPECIFIC_FIELDS")
+
+    if tenant_specific_fields is None or tenant_specific_fields == "":
+        app.config["TENANT_SPECIFIC_FIELDS"] = []
+    else:
+        app.config["TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
+        if len(app.config["TENANT_SPECIFIC_FIELDS"]) > 3:
+            raise ConfigurationError(
+                "TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
+            )
+
+
 def setup_config(app: Flask) -> None:
     """Setup_config."""
     # ensure the instance folder exists
@@ -94,8 +107,6 @@ def setup_config(app: Flask) -> None:
     else:
         print("base_permissions: no permissions file loaded")
 
-
-
     # unversioned (see .gitignore) config that can override everything and include secrets.
     # src/spiffworkflow_backend/config/secrets.py
     app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
@@ -110,3 +121,4 @@ def setup_config(app: Flask) -> None:
 
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
+    _set_up_tenant_specific_fields_as_list_of_strings(app)

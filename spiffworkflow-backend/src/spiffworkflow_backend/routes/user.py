@@ -17,6 +17,7 @@ from flask import request
 from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import (
@@ -58,6 +59,10 @@ def verify_token(
     if not token and "Authorization" in request.headers:
         token = request.headers["Authorization"].removeprefix("Bearer ")
 
+    if not token and "access_token" in request.cookies:
+        if request.path.startswith(f"{V1_API_PATH_PREFIX}/process-data-file-download/"):
+            token = request.cookies["access_token"]
+
     # This should never be set here but just in case
     _clear_auth_tokens_from_thread_local_data()
 
@@ -96,7 +101,7 @@ def verify_token(
                             )
                             if auth_token and "error" not in auth_token:
                                 tld = current_app.config["THREAD_LOCAL_DATA"]
-                                tld.new_access_token = auth_token["access_token"]
+                                tld.new_access_token = auth_token["id_token"]
                                 tld.new_id_token = auth_token["id_token"]
                                 # We have the user, but this code is a bit convoluted, and will later demand
                                 # a user_info object so it can look up the user.  Sorry to leave this crap here.
@@ -186,6 +191,7 @@ def set_new_access_token_in_cookie(
     ):
         domain_for_frontend_cookie = None
 
+    # fixme - we should not be passing the access token back to the client
     if hasattr(tld, "new_access_token") and tld.new_access_token:
         response.set_cookie(
             "access_token", tld.new_access_token, domain=domain_for_frontend_cookie
@@ -254,7 +260,7 @@ def parse_id_token(token: str) -> Any:
     return json.loads(decoded)
 
 
-def login_return(code: str, state: str, session_state: str) -> Optional[Response]:
+def login_return(code: str, state: str, session_state: str = "") -> Optional[Response]:
     """Login_return."""
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
@@ -269,12 +275,13 @@ def login_return(code: str, state: str, session_state: str) -> Optional[Response
                 user_model = AuthorizationService.create_user_from_sign_in(user_info)
                 g.user = user_model.id
                 g.token = auth_token_object["id_token"]
-                AuthenticationService.store_refresh_token(
-                    user_model.id, auth_token_object["refresh_token"]
-                )
+                if "refresh_token" in auth_token_object:
+                    AuthenticationService.store_refresh_token(
+                        user_model.id, auth_token_object["refresh_token"]
+                    )
                 redirect_url = state_redirect_url
                 tld = current_app.config["THREAD_LOCAL_DATA"]
-                tld.new_access_token = auth_token_object["access_token"]
+                tld.new_access_token = auth_token_object["id_token"]
                 tld.new_id_token = auth_token_object["id_token"]
                 return redirect(redirect_url)
 

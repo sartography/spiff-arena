@@ -21,7 +21,6 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
 
-from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
@@ -34,6 +33,11 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
+from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
+from spiffworkflow_backend.services.authentication_service import TokenExpiredError
+from spiffworkflow_backend.services.authentication_service import TokenInvalidError
+from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
+from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -98,20 +102,16 @@ class AuthorizationService:
     def verify_sha256_token(cls, auth_header: Optional[str]) -> None:
         """Verify_sha256_token."""
         if auth_header is None:
-            raise ApiError(
-                error_code="unauthorized",
-                message="",
-                status_code=403,
+            raise TokenNotProvidedError(
+                "unauthorized",
             )
 
         received_sign = auth_header.split("sha256=")[-1].strip()
         secret = current_app.config["GITHUB_WEBHOOK_SECRET"].encode()
         expected_sign = HMAC(key=secret, msg=request.data, digestmod=sha256).hexdigest()
         if not compare_digest(received_sign, expected_sign):
-            raise ApiError(
-                error_code="unauthorized",
-                message="",
-                status_code=403,
+            raise TokenInvalidError(
+                "unauthorized",
             )
 
     @classmethod
@@ -393,10 +393,8 @@ class AuthorizationService:
         authorization_exclusion_list = ["permissions_check"]
 
         if not hasattr(g, "user"):
-            raise ApiError(
-                error_code="user_not_logged_in",
-                message="User is not logged in. Please log in",
-                status_code=401,
+            raise UserNotLoggedInError(
+                "User is not logged in. Please log in",
             )
 
         api_view_function = current_app.view_functions[request.endpoint]
@@ -416,13 +414,11 @@ class AuthorizationService:
             if has_permission:
                 return None
 
-        raise ApiError(
-            error_code="unauthorized",
-            message=(
+        raise NotAuthorizedError(
+            (
                 f"User {g.user.username} is not authorized to perform requested action:"
                 f" {permission_string} - {request.path}"
             ),
-            status_code=403,
         )
 
     @staticmethod
@@ -440,13 +436,11 @@ class AuthorizationService:
             payload = jwt.decode(auth_token, options={"verify_signature": False})
             return payload
         except jwt.ExpiredSignatureError as exception:
-            raise ApiError(
-                "token_expired",
+            raise TokenExpiredError(
                 "The Authentication token you provided expired and must be renewed.",
             ) from exception
         except jwt.InvalidTokenError as exception:
-            raise ApiError(
-                "token_invalid",
+            raise TokenInvalidError(
                 (
                     "The Authentication token you provided is invalid. You need a new"
                     " token. "
@@ -463,6 +457,7 @@ class AuthorizationService:
         human_task = HumanTaskModel.query.filter_by(
             task_name=spiff_task.task_spec.name,
             process_instance_id=process_instance_id,
+            completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
@@ -490,38 +485,42 @@ class AuthorizationService:
             .filter(UserModel.service_id == user_info["sub"])
             .first()
         )
-        email = display_name = username = ""
+        user_attributes = {}
+
         if "email" in user_info:
-            username = user_info["email"]
-            email = user_info["email"]
+            user_attributes["username"] = user_info["email"]
+            user_attributes["email"] = user_info["email"]
         else:  # we fall back to the sub, which may be very ugly.
-            username = user_info["sub"] + "@" + user_info["iss"]
+            fallback_username = user_info["sub"] + "@" + user_info["iss"]
+            user_attributes["username"] = fallback_username
 
         if "preferred_username" in user_info:
-            display_name = user_info["preferred_username"]
+            user_attributes["display_name"] = user_info["preferred_username"]
         elif "nickname" in user_info:
-            display_name = user_info["nickname"]
+            user_attributes["display_name"] = user_info["nickname"]
         elif "name" in user_info:
-            display_name = user_info["name"]
+            user_attributes["display_name"] = user_info["name"]
+
+        user_attributes["service"] = user_info["iss"]
+        user_attributes["service_id"] = user_info["sub"]
+
+        for field_index, tenant_specific_field in enumerate(
+            current_app.config["TENANT_SPECIFIC_FIELDS"]
+        ):
+            if tenant_specific_field in user_info:
+                field_number = field_index + 1
+                user_attributes[f"tenant_specific_field_{field_number}"] = user_info[
+                    tenant_specific_field
+                ]
 
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             is_new_user = True
-            user_model = UserService().create_user(
-                username=username,
-                service=user_info["iss"],
-                service_id=user_info["sub"],
-                email=email,
-                display_name=display_name,
-            )
-
+            user_model = UserService().create_user(**user_attributes)
         else:
             # Update with the latest information
-            user_model.username = username
-            user_model.email = email
-            user_model.display_name = display_name
-            user_model.service = user_info["iss"]
-            user_model.service_id = user_info["sub"]
+            for key, value in user_attributes.items():
+                setattr(user_model, key, value)
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
@@ -551,13 +550,19 @@ class AuthorizationService:
 
         permissions_to_assign: list[PermissionToAssign] = []
 
-        # we were thinking that if you can start an instance, you ought to be able to view your own instances.
+        # we were thinking that if you can start an instance, you ought to be able to:
+        #   1. view your own instances.
+        #   2. view the logs for these instances.
         if permission_set == "start":
             target_uri = f"/process-instances/{process_related_path_segment}"
             permissions_to_assign.append(
                 PermissionToAssign(permission="create", target_uri=target_uri)
             )
             target_uri = f"/process-instances/for-me/{process_related_path_segment}"
+            permissions_to_assign.append(
+                PermissionToAssign(permission="read", target_uri=target_uri)
+            )
+            target_uri = f"/logs/{process_related_path_segment}"
             permissions_to_assign.append(
                 PermissionToAssign(permission="read", target_uri=target_uri)
             )

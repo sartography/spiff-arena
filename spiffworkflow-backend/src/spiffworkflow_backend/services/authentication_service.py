@@ -11,7 +11,6 @@ from flask import current_app
 from flask import redirect
 from werkzeug.wrappers import Response
 
-from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 
@@ -20,13 +19,31 @@ class MissingAccessTokenError(Exception):
     """MissingAccessTokenError."""
 
 
+class NotAuthorizedError(Exception):
+    pass
+
+
+class RefreshTokenStorageError(Exception):
+    pass
+
+
+class UserNotLoggedInError(Exception):
+    pass
+
+
 # These could be either 'id' OR 'access' tokens and we can't always know which
+
+
 class TokenExpiredError(Exception):
     """TokenExpiredError."""
 
 
 class TokenInvalidError(Exception):
     """TokenInvalidError."""
+
+
+class TokenNotProvidedError(Exception):
+    pass
 
 
 class AuthenticationProviderTypes(enum.Enum):
@@ -183,9 +200,8 @@ class AuthenticationService:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            raise ApiError(
-                error_code="store_refresh_token_error",
-                message=f"We could not store the refresh token. Original error is {e}",
+            raise RefreshTokenStorageError(
+                f"We could not store the refresh token. Original error is {e}",
             ) from e
 
     @staticmethod

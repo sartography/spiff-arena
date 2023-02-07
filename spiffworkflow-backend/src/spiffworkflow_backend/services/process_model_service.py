@@ -499,7 +499,10 @@ class ProcessModelService(FileSystemService):
             if name is None:
                 raise ApiError(
                     error_code="missing_name_of_process_model",
-                    message="Missing name of process model. It should be given",
+                    message=(
+                        "Missing name of process model. Path not found:"
+                        f" {json_file_path}"
+                    ),
                 )
 
             process_model_info = ProcessModelInfo(

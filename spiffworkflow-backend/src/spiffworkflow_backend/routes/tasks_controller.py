@@ -2,6 +2,7 @@
 import json
 import os
 import uuid
+from sys import exc_info
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -10,6 +11,7 @@ from typing import Union
 
 import flask.wrappers
 import jinja2
+import sentry_sdk
 from flask import current_app
 from flask import g
 from flask import jsonify
@@ -169,6 +171,25 @@ def task_list_for_my_groups(
     )
 
 
+def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task: Task) -> None:
+    if task.form_ui_schema is None:
+        task.form_ui_schema = {}
+
+    if task.data and "form_ui_hidden_fields" in task.data:
+        hidden_fields = task.data["form_ui_hidden_fields"]
+        for hidden_field in hidden_fields:
+            hidden_field_parts = hidden_field.split(".")
+            relevant_depth_of_ui_schema = task.form_ui_schema
+            for ii, hidden_field_part in enumerate(hidden_field_parts):
+                if hidden_field_part not in relevant_depth_of_ui_schema:
+                    relevant_depth_of_ui_schema[hidden_field_part] = {}
+                relevant_depth_of_ui_schema = relevant_depth_of_ui_schema[
+                    hidden_field_part
+                ]
+                if len(hidden_field_parts) == ii + 1:
+                    relevant_depth_of_ui_schema["ui:widget"] = "hidden"
+
+
 def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response:
     """Task_show."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -184,20 +205,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
         process_instance.process_model_identifier,
     )
 
-    human_task = HumanTaskModel.query.filter_by(
-        process_instance_id=process_instance_id, task_id=task_id
-    ).first()
-    if human_task is None:
-        raise (
-            ApiError(
-                error_code="no_human_task",
-                message=(
-                    f"Cannot find a task to complete for task id '{task_id}' and"
-                    f" process instance {process_instance_id}."
-                ),
-                status_code=500,
-            )
-        )
+    _find_human_task_or_raise(process_instance_id, task_id)
 
     form_schema_file_name = ""
     form_ui_schema_file_name = ""
@@ -252,31 +260,16 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 )
             )
 
-        form_contents = _prepare_form_data(
+        form_dict = _prepare_form_data(
             form_schema_file_name,
             spiff_task,
             process_model_with_form,
         )
 
-        try:
-            # form_contents is a str
-            form_dict = json.loads(form_contents)
-        except Exception as exception:
-            raise (
-                ApiError(
-                    error_code="error_loading_form",
-                    message=(
-                        f"Could not load form schema from: {form_schema_file_name}."
-                        f" Error was: {str(exception)}"
-                    ),
-                    status_code=400,
-                )
-            ) from exception
-
         if task.data:
-            _update_form_schema_with_task_data_as_needed(form_dict, task)
+            _update_form_schema_with_task_data_as_needed(form_dict, task, spiff_task)
 
-        if form_contents:
+        if form_dict:
             task.form_schema = form_dict
 
         if form_ui_schema_file_name:
@@ -287,6 +280,8 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             )
             if ui_form_contents:
                 task.form_ui_schema = ui_form_contents
+
+        _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task)
 
     if task.properties and task.data and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
@@ -326,13 +321,12 @@ def process_data_show(
     )
 
 
-def task_submit(
+def task_submit_shared(
     process_instance_id: int,
     task_id: str,
     body: Dict[str, Any],
     terminate_loop: bool = False,
 ) -> flask.wrappers.Response:
-    """Task_submit_user_data."""
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     if not process_instance.can_submit_task():
@@ -365,30 +359,22 @@ def task_submit(
     if terminate_loop and spiff_task.is_looping():
         spiff_task.terminate_loop()
 
-    human_task = HumanTaskModel.query.filter_by(
-        process_instance_id=process_instance_id, task_id=task_id, completed=False
-    ).first()
-    if human_task is None:
-        raise (
-            ApiError(
-                error_code="no_human_task",
-                message=(
-                    f"Cannot find a task to complete for task id '{task_id}' and"
-                    f" process instance {process_instance_id}."
-                ),
-                status_code=500,
-            )
-        )
-
-    processor.lock_process_instance("Web")
-    ProcessInstanceService.complete_form_task(
-        processor=processor,
-        spiff_task=spiff_task,
-        data=body,
-        user=g.user,
-        human_task=human_task,
+    human_task = _find_human_task_or_raise(
+        process_instance_id=process_instance_id,
+        task_id=task_id,
+        only_tasks_that_can_be_completed=True,
     )
-    processor.unlock_process_instance("Web")
+
+    with sentry_sdk.start_span(op="task", description="complete_form_task"):
+        processor.lock_process_instance("Web")
+        ProcessInstanceService.complete_form_task(
+            processor=processor,
+            spiff_task=spiff_task,
+            data=body,
+            user=g.user,
+            human_task=human_task,
+        )
+        processor.unlock_process_instance("Web")
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
     # task spec, complete that form as well.
@@ -415,6 +401,19 @@ def task_submit(
         )
 
     return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
+
+
+def task_submit(
+    process_instance_id: int,
+    task_id: str,
+    body: Dict[str, Any],
+    terminate_loop: bool = False,
+) -> flask.wrappers.Response:
+    """Task_submit_user_data."""
+    with sentry_sdk.start_span(
+        op="controller_action", description="tasks_controller.task_submit"
+    ):
+        return task_submit_shared(process_instance_id, task_id, body, terminate_loop)
 
 
 def _get_tasks(
@@ -511,14 +510,29 @@ def _get_tasks(
 
 def _prepare_form_data(
     form_file: str, spiff_task: SpiffTask, process_model: ProcessModelInfo
-) -> str:
+) -> dict:
     """Prepare_form_data."""
     if spiff_task.data is None:
-        return ""
+        return {}
 
     file_contents = SpecFileService.get_data(process_model, form_file).decode("utf-8")
     try:
-        return _render_jinja_template(file_contents, spiff_task)
+        form_contents = _render_jinja_template(file_contents, spiff_task)
+        try:
+            # form_contents is a str
+            hot_dict: dict = json.loads(form_contents)
+            return hot_dict
+        except Exception as exception:
+            raise (
+                ApiError(
+                    error_code="error_loading_form",
+                    message=(
+                        f"Could not load form schema from: {form_file}."
+                        f" Error was: {str(exception)}"
+                    ),
+                    status_code=400,
+                )
+            ) from exception
     except WorkflowTaskException as wfe:
         wfe.add_note(f"Error in Json Form File '{form_file}'")
         api_error = ApiError.from_workflow_exception(
@@ -546,9 +560,21 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
                 template_error.lineno - 1
             ]
         wfe.add_note(
-            "Jinja2 template errors can happen when trying to displaying task data"
+            "Jinja2 template errors can happen when trying to display task data"
         )
         raise wfe from template_error
+    except Exception as error:
+        type, value, tb = exc_info()
+        wfe = WorkflowTaskException(str(error), task=spiff_task, exception=error)
+        while tb:
+            if tb.tb_frame.f_code.co_filename == "<template>":
+                wfe.line_number = tb.tb_lineno
+                wfe.error_line = unprocessed_template.split("\n")[tb.tb_lineno - 1]
+            tb = tb.tb_next
+        wfe.add_note(
+            "Jinja2 template errors can happen when trying to displaying task data"
+        )
+        raise wfe from error
 
 
 def _get_spiff_task_from_process_instance(
@@ -574,7 +600,9 @@ def _get_spiff_task_from_process_instance(
 
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
-def _update_form_schema_with_task_data_as_needed(in_dict: dict, task: Task) -> None:
+def _update_form_schema_with_task_data_as_needed(
+    in_dict: dict, task: Task, spiff_task: SpiffTask
+) -> None:
     """Update_nested."""
     if task.data is None:
         return None
@@ -601,7 +629,7 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task: Task) -> N
                                         f" '{task_data_var}' but it doesn't exist in"
                                         " the Task Data."
                                     ),
-                                    task=task,
+                                    task=spiff_task,
                                 )
                                 raise (
                                     ApiError.from_workflow_exception(
@@ -634,11 +662,11 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task: Task) -> N
 
                                     in_dict[k] = options_for_react_json_schema_form
         elif isinstance(value, dict):
-            _update_form_schema_with_task_data_as_needed(value, task)
+            _update_form_schema_with_task_data_as_needed(value, task, spiff_task)
         elif isinstance(value, list):
             for o in value:
                 if isinstance(o, dict):
-                    _update_form_schema_with_task_data_as_needed(o, task)
+                    _update_form_schema_with_task_data_as_needed(o, task, spiff_task)
 
 
 def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
@@ -654,3 +682,32 @@ def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
         ).label("potential_owner_usernames")
 
     return potential_owner_usernames_from_group_concat_or_similar
+
+
+def _find_human_task_or_raise(
+    process_instance_id: int,
+    task_id: str,
+    only_tasks_that_can_be_completed: bool = False,
+) -> HumanTaskModel:
+    if only_tasks_that_can_be_completed:
+        human_task_query = HumanTaskModel.query.filter_by(
+            process_instance_id=process_instance_id, task_id=task_id, completed=False
+        )
+    else:
+        human_task_query = HumanTaskModel.query.filter_by(
+            process_instance_id=process_instance_id, task_id=task_id
+        )
+
+    human_task: HumanTaskModel = human_task_query.first()
+    if human_task is None:
+        raise (
+            ApiError(
+                error_code="no_human_task",
+                message=(
+                    f"Cannot find a task to complete for task id '{task_id}' and"
+                    f" process instance {process_instance_id}."
+                ),
+                status_code=500,
+            )
+        )
+    return human_task
