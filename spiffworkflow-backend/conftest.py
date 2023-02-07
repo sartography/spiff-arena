@@ -37,7 +37,7 @@ from spiffworkflow_backend import create_app  # noqa: E402
 @pytest.fixture(scope="session")
 def app() -> Flask:
     """App."""
-    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "testing"
+    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "unit_testing"
     os.environ["FLASK_SESSION_SECRET_KEY"] = "super_secret_key"
     app = create_app()
 

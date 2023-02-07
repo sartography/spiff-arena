@@ -136,7 +136,7 @@ def setup_logger(app: Flask) -> None:
 
     # the json formatter is nice for real environments but makes
     # debugging locally a little more difficult
-    if app.config["ENV_IDENTIFIER"] != "development":
+    if app.config["ENV_IDENTIFIER"] != "local_development":
         json_formatter = JsonFormatter(
             {
                 "level": "levelname",
