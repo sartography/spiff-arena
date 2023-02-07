@@ -25,6 +25,14 @@ if [[ "${SPIFFWORKFLOW_BACKEND_UPGRADE_DB:-}" == "true" ]]; then
   poetry run flask db upgrade
 fi
 
+if [[ -z "${GUNICORN_LOG_LEVEL:-}" ]]; then
+  GUNICORN_LOG_LEVEL=debug
+fi
+
+if [[ -z "${GUNICORN_TIMEOUT_SECONDS:-}" ]]; then
+  GUNICORN_TIMEOUT_SECONDS=90
+fi
+
 port="${SPIFFWORKFLOW_BACKEND_PORT:-}"
 if [[ -z "$port" ]]; then
   port=7000
@@ -53,4 +61,11 @@ git config --global --add safe.directory "${BPMN_SPEC_ABSOLUTE_DIR}"
 
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
-exec poetry run gunicorn ${additional_args} --bind "0.0.0.0:$port" --workers="$workers" --limit-request-line 8192 --timeout 90 --capture-output --access-logfile '-' --log-level debug wsgi:app
+exec poetry run gunicorn ${additional_args}  \
+  --bind "0.0.0.0:$port"  \
+  --workers="$workers"  \
+  --limit-request-line 8192  \
+  --timeout "$GUNICORN_TIMEOUT_SECONDS"  \
+  --capture-output  \
+  --access-logfile '-'  \
+  --log-level "$GUNICORN_LOG_LEVEL" wsgi:app
