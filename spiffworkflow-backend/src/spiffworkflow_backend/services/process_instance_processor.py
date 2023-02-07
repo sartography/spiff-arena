@@ -1300,7 +1300,7 @@ class ProcessInstanceProcessor:
         db.session.commit()
         if result.rowcount < 1:
             raise ProcessInstanceIsAlreadyLockedError(
-                f"Cannot lock process instance {self.process_instance_model.id}."
+                f"Cannot lock process instance {self.process_instance_model.id}. "
                 "It has already been locked."
             )
 
