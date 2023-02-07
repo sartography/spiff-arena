@@ -1,17 +1,46 @@
 const { port, hostname } = window.location;
-let hostAndPort = hostname;
 let protocol = 'https';
+
+declare global {
+  interface SpiffworkflowFrontendJsenvObject {
+    [key: string]: string;
+  }
+  interface Window {
+    spiffworkflowFrontendJsenv: SpiffworkflowFrontendJsenvObject;
+  }
+}
+
+let appRoutingStrategy = 'subdomain_based';
+if (
+  'spiffworkflowFrontendJsenv' in window &&
+  'APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv
+) {
+  appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
+}
+
+let hostAndPortAndPathPrefix;
+if (appRoutingStrategy === 'subdomain_based') {
+  hostAndPortAndPathPrefix = `api.${hostname}`;
+} else if (appRoutingStrategy === 'path_based') {
+  hostAndPortAndPathPrefix = `${hostname}/api`;
+} else {
+  throw new Error(`Invalid app routing strategy: ${appRoutingStrategy}`);
+}
 
 if (/^\d+\./.test(hostname) || hostname === 'localhost') {
   let serverPort = 7000;
   if (!Number.isNaN(Number(port))) {
     serverPort = Number(port) - 1;
   }
-  hostAndPort = `${hostname}:${serverPort}`;
+  hostAndPortAndPathPrefix = `${hostname}:${serverPort}`;
   protocol = 'http';
 }
 
-let url = `${protocol}://${hostAndPort}/api/v1.0`;
+let url = `${protocol}://${hostAndPortAndPathPrefix}/v1.0`;
+
+// this can only ever work locally since this is a static site.
+// use spiffworkflowFrontendJsenv if you want to inject env vars
+// that can be read by the static site.
 if (process.env.REACT_APP_BACKEND_BASE_URL) {
   url = process.env.REACT_APP_BACKEND_BASE_URL;
 }

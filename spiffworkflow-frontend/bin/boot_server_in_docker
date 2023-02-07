@@ -7,4 +7,29 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+# sort of like https://lithic.tech/blog/2020-05/react-dynamic-config, but without golang
+react_configs=$(env | grep -E "^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_")
+if [[ -n "$react_configs" ]]; then
+  index_html_file="./build/index.html"
+  if [[ ! -f "$index_html_file" ]]; then
+    >&2 echo "ERROR: Could not find '${index_html_file}'. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
+    exit 1
+  fi
+
+  if ! command -v sed >/dev/null ; then
+    >&2 echo "ERROR: sed command not found. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
+    exit 1
+  fi
+
+  if ! command -v perl >/dev/null ; then
+    >&2 echo "ERROR: perl command not found. Cannot use SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG values without it."
+    exit 1
+  fi
+
+  for react_config in $react_configs; do
+    react_config_without_prefix=$(sed -E 's/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_([^=]*)=(.*)/\1=\\"\2\\"/' <<<"${react_config}")
+    perl -pi -e "s/(window._jsenv=\{\})/\1;window._jsenv.${react_config_without_prefix}/" "$index_html_file"
+  done
+fi
+
 exec ./node_modules/.bin/serve -s build -l "$PORT0"
