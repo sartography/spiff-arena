@@ -6,3 +6,7 @@ SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(
 )
 
 OPEN_ID_SERVER_URL = "https://keycloak.qa1.spiffworkflow.org/realms/spiffworkflow"
+
+SPIFFWORKFLOW_BACKEND_URL = (
+    "https://qa2.spiffworkflow.org/api"
+)
