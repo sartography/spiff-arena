@@ -14,7 +14,6 @@ services:
 
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
-    build: ./spiffworkflow-backend/.
     image: ghcr.io/sartography/spiffworkflow-backend:latest
     depends_on:
       spiffworkflow-db:
