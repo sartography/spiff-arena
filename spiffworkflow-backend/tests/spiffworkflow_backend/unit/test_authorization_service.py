@@ -198,6 +198,10 @@ class TestAuthorizationService(BaseTest):
         """Test_explode_permissions_start_on_process_group."""
         expected_permissions = [
             (
+                "/logs/some-process-group:some-process-model:*",
+                "read",
+            ),
+            (
                 "/process-instances/for-me/some-process-group:some-process-model:*",
                 "read",
             ),
@@ -255,6 +259,10 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_explode_permissions_start_on_process_model."""
         expected_permissions = [
+            (
+                "/logs/some-process-group:some-process-model/*",
+                "read",
+            ),
             (
                 "/process-instances/for-me/some-process-group:some-process-model/*",
                 "read",

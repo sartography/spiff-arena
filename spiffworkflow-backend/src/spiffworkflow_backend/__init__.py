@@ -1,5 +1,6 @@
 """__init__."""
 import os
+import sys
 from typing import Any
 
 import connexion  # type: ignore
@@ -157,6 +158,29 @@ def get_hacked_up_app_for_script() -> flask.app.Flask:
     return app
 
 
+def traces_sampler(sampling_context: Any) -> Any:
+    # always inherit
+    if sampling_context["parent_sampled"] is not None:
+        return sampling_context["parent_sampled"]
+
+    if "wsgi_environ" in sampling_context:
+        wsgi_environ = sampling_context["wsgi_environ"]
+        path_info = wsgi_environ.get("PATH_INFO")
+        request_method = wsgi_environ.get("REQUEST_METHOD")
+
+        # tasks_controller.task_submit
+        # this is the current pain point as of 31 jan 2023.
+        if (
+            path_info
+            and path_info.startswith("/v1.0/tasks/")
+            and request_method == "PUT"
+        ):
+            return 1
+
+    # Default sample rate for all others (replaces traces_sample_rate)
+    return 0.01
+
+
 def configure_sentry(app: flask.app.Flask) -> None:
     """Configure_sentry."""
     import sentry_sdk
@@ -180,6 +204,9 @@ def configure_sentry(app: flask.app.Flask) -> None:
     if sentry_traces_sample_rate is None:
         raise Exception("SENTRY_TRACES_SAMPLE_RATE is not set somehow")
 
+    # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
+    profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
+
     sentry_sdk.init(
         dsn=app.config.get("SENTRY_DSN"),
         integrations=[
@@ -193,5 +220,8 @@ def configure_sentry(app: flask.app.Flask) -> None:
         # of transactions for performance monitoring.
         # We recommend adjusting this value to less than 1(00%) in production.
         traces_sample_rate=float(sentry_traces_sample_rate),
+        traces_sampler=traces_sampler,
+        # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
+        _experiments={"profiles_sample_rate": profiles_sample_rate},
         before_send=before_send,
     )
