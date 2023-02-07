@@ -14,7 +14,7 @@ if [[ "$arg" == "acceptance" ]]; then
 fi
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]]; then
-  export SPIFFWORKFLOW_BACKEND_ENV=development
+  export SPIFFWORKFLOW_BACKEND_ENV=local_development
 fi
 
 BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
