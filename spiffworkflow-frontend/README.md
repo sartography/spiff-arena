@@ -63,6 +63,17 @@ Fix lint in code.
 
 Probably just stick with lint:fix which also runs prettier.
 
+## Runtime configuration options
+
+# The docker image respects the following environment variables.
+
+SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY=subdomain_based
+SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY=path_based
+
+subdomain_based example: api.spiffworkflow.org goes to backend
+
+path_based example: spiffworkflow.org/api goes to backend
+
 ## Learn More
 
 You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
