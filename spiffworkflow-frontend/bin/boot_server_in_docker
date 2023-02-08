@@ -8,7 +8,7 @@ trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
 # sort of like https://lithic.tech/blog/2020-05/react-dynamic-config, but without golang
-react_configs=$(env | grep -E "^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_")
+react_configs=$(env | grep -E "^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_" || echo '')
 if [[ -n "$react_configs" ]]; then
   index_html_file="./build/index.html"
   if [[ ! -f "$index_html_file" ]]; then
