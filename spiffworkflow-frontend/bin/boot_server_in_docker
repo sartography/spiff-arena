@@ -28,7 +28,19 @@ if [[ -n "$react_configs" ]]; then
 
   for react_config in $react_configs; do
     react_config_without_prefix=$(sed -E 's/^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_([^=]*)=(.*)/\1=\\"\2\\"/' <<<"${react_config}")
+
+    if [[ -z "$react_config_without_prefix" ]]; then
+      >&2 echo "ERROR: Could not parse react config line: '${react_config}'."
+      exit 1
+    fi
+
+    # actually do the search and replace to add the js config to the html page
     perl -pi -e "s/(window._jsenv=\{\})/\1;window._jsenv.${react_config_without_prefix}/" "$index_html_file"
+
+    if ! grep -Eq "${react_config_without_prefix}" "$index_html_file"; then
+      >&2 echo "ERROR: Could not find '${react_config_without_prefix}' in '${index_html_file}' after search and replace. It is likely that the assumptions in boot_server_in_docker about the contents of the html page have changed. Fix the glitch in boot_server_in_docker."
+      exit 1
+    fi
   done
 fi
 
