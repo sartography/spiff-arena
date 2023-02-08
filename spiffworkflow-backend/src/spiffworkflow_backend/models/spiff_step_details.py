@@ -27,4 +27,9 @@ class SpiffStepDetailsModel(SpiffworkflowBaseDBModel):
     )
     spiff_step: int = db.Column(db.Integer, nullable=False)
     task_json: dict = deferred(db.Column(db.JSON, nullable=False))  # type: ignore
-    timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False)
+    task_id: str | None = db.Column(db.String(50), nullable=False)
+    bpmn_task_identifier: str | None = db.Column(db.String(255), nullable=False)
+
+    # timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False)
+    engine_step_start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
+    engine_step_end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
