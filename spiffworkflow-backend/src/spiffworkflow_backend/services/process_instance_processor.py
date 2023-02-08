@@ -689,7 +689,7 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def spiff_step_details_mapping(self, spiff_task: Optional[SpiffTask]=None) -> dict:
+    def spiff_step_details_mapping(self, spiff_task: Optional[SpiffTask]=None, start_in_seconds: Optional[float] = 0, end_in_seconds: Optional[float] = 0) -> dict:
         """SaveSpiffStepDetails."""
         # bpmn_json = self.serialize()
         # wf_json = json.loads(bpmn_json)
@@ -698,6 +698,9 @@ class ProcessInstanceProcessor:
         if spiff_task is None:
             # TODO: safer to pass in task vs use last task?
             spiff_task = self.bpmn_process_instance.last_task
+
+        if spiff_task is None:
+            return {}
 
         task_data = default_registry.convert(spiff_task.data)
         python_env = default_registry.convert(self._script_engine.environment.last_result())
@@ -708,13 +711,14 @@ class ProcessInstanceProcessor:
             "task_data": task_data,
             "python_env": python_env,
         }
-
         return {
             "process_instance_id": self.process_instance_model.id,
             "spiff_step": self.process_instance_model.spiff_step or 1,
             "task_json": task_json,
-            "timestamp": round(time.time()),
-            # "completed_by_user_id": self.current_user().id,
+            "task_id": str(spiff_task.id),
+            "bpmn_task_identifier": spiff_task.task_spec.id,
+            "engine_step_start_in_seconds": start_in_seconds,
+            "engine_step_end_in_seconds": end_in_seconds,
         }
 
     def spiff_step_details(self) -> SpiffStepDetailsModel:
@@ -1517,6 +1521,9 @@ class ProcessInstanceProcessor:
             # "Subprocess"
         }
 
+        # making a dictionary to ensure we are not shadowing variables in the other methods
+        current_task_start_in_seconds = {}
+
         def should_log(task: SpiffTask) -> bool:
             if (
                 task.task_spec.spec_type in tasks_to_log
@@ -1527,12 +1534,13 @@ class ProcessInstanceProcessor:
 
         def will_complete_task(task: SpiffTask) -> None:
             if should_log(task):
+                current_task_start_in_seconds['time'] = time.time()
                 self.increment_spiff_step()
 
         def did_complete_task(task: SpiffTask) -> None:
             if should_log(task):
                 self._script_engine.environment.revise_state_with_task_data(task)
-                step_details.append(self.spiff_step_details_mapping(task))
+                step_details.append(self.spiff_step_details_mapping(task, current_task_start_in_seconds['time'], time.time()))
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
