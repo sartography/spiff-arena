@@ -1225,10 +1225,6 @@ class TestProcessApi(BaseTest):
         assert response.json["updated_at_in_seconds"] > 0
         assert response.json["status"] == "complete"
         assert response.json["process_model_identifier"] == process_model_identifier
-        assert (
-            response.json["data"]["current_user"]["username"]
-            == with_super_admin_user.username
-        )
         assert response.json["data"]["Mike"] == "Awesome"
         assert response.json["data"]["person"] == "Kevin"
 
@@ -2232,10 +2228,10 @@ class TestProcessApi(BaseTest):
         assert process_instance.status == "error"
         processor = ProcessInstanceProcessor(process_instance)
         spiff_task = processor.get_task_by_bpmn_identifier(
-            "script_task_one", processor.bpmn_process_instance
+            "script_task_two", processor.bpmn_process_instance
         )
         assert spiff_task is not None
-        assert spiff_task.data != {}
+        assert spiff_task.data == {"my_var": "THE VAR"}
 
     def test_process_model_file_create(
         self,

@@ -174,11 +174,7 @@ class ProcessInstanceService:
                 not hasattr(spiff_task.task_spec, "lane")
                 or spiff_task.task_spec.lane is None
             ):
-                current_user = spiff_task.data["current_user"]
-                return [
-                    current_user["id"],
-                ]
-                # return [processor.process_instance_model.process_initiator_id]
+                return [processor.process_instance_model.process_initiator_id]
 
             if spiff_task.task_spec.lane not in spiff_task.data:
                 return []  # No users are assignable to the task at this moment
