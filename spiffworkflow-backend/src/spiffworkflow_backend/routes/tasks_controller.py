@@ -283,7 +283,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
 
         _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task)
 
-    if task.properties and task.data and "instructionsForEndUser" in task.properties:
+    if task.properties and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
             try:
                 task.properties["instructionsForEndUser"] = _render_jinja_template(
