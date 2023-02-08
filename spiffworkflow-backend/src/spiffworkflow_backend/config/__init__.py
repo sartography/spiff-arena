@@ -91,7 +91,10 @@ def setup_config(app: Flask) -> None:
     # This allows config/testing.py or instance/config.py to override the default config
     if "ENV_IDENTIFIER" in app.config and app.config["ENV_IDENTIFIER"] == "testing":
         app.config.from_pyfile("config/testing.py", silent=True)
-    elif "ENV_IDENTIFIER" in app.config and app.config["ENV_IDENTIFIER"] == "unit_testing":
+    elif (
+        "ENV_IDENTIFIER" in app.config
+        and app.config["ENV_IDENTIFIER"] == "unit_testing"
+    ):
         app.config.from_pyfile("config/unit_testing.py", silent=True)
     else:
         app.config.from_pyfile(f"{app.instance_path}/config.py", silent=True)
