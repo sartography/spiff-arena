@@ -80,7 +80,6 @@ from spiffworkflow_backend.models.script_attributes_context import (
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.user import UserModelSchema
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -561,7 +560,6 @@ class ProcessInstanceProcessor:
             current_user = self.process_instance_model.process_initiator
 
         return current_user
-
 
     @staticmethod
     def get_bpmn_process_instance_from_workflow_spec(

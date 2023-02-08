@@ -2231,7 +2231,7 @@ class TestProcessApi(BaseTest):
             "script_task_two", processor.bpmn_process_instance
         )
         assert spiff_task is not None
-        assert spiff_task.data == {'my_var': 'THE VAR'}
+        assert spiff_task.data == {"my_var": "THE VAR"}
 
     def test_process_model_file_create(
         self,
