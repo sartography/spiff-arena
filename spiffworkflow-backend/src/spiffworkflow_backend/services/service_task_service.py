@@ -44,7 +44,7 @@ class ServiceTaskDelegate:
         return value
 
     @staticmethod
-    def get_message_for_status(code):
+    def get_message_for_status(code: int) -> str:
         """Given a code like 404, return a string like 'The requested resource was not found.'"""
         msg = f"HTTP Status Code {code}."
         if code == 301:
