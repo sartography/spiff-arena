@@ -1,9 +1,10 @@
 """Test_various_bpmn_constructs."""
+import pytest
 from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.services.secret_service import SecretService
-from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
+from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate, ConnectorProxyError
 
 
 class TestServiceTaskDelegate(BaseTest):
@@ -31,3 +32,12 @@ class TestServiceTaskDelegate(BaseTest):
         SecretService().add_secret("hot_secret", "my_secret_value", user.id)
         result = ServiceTaskDelegate.check_prefixes("secret:hot_secret")
         assert result == "my_secret_value"
+
+    def test_invalid_call_returns_good_error_message(
+        self, app: Flask, with_db_and_bpmn_file_cleanup: None
+    ) -> None:
+        with pytest.raises(ConnectorProxyError) as ae:
+            ServiceTaskDelegate.call_connector('my_invalid_operation', {}, {})
+        assert "404" in str(ae)
+        assert "The service did not find the requested resource." in str(ae)
+        assert "A critical component (The connector proxy) is not responding correctly." in str(ae)
