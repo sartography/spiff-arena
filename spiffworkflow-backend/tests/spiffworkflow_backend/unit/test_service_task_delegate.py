@@ -4,7 +4,8 @@ from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.services.secret_service import SecretService
-from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate, ConnectorProxyError
+from spiffworkflow_backend.services.service_task_service import ConnectorProxyError
+from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 
 
 class TestServiceTaskDelegate(BaseTest):
@@ -37,7 +38,10 @@ class TestServiceTaskDelegate(BaseTest):
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
         with pytest.raises(ConnectorProxyError) as ae:
-            ServiceTaskDelegate.call_connector('my_invalid_operation', {}, {})
+            ServiceTaskDelegate.call_connector("my_invalid_operation", {}, {})
         assert "404" in str(ae)
         assert "The service did not find the requested resource." in str(ae)
-        assert "A critical component (The connector proxy) is not responding correctly." in str(ae)
+        assert (
+            "A critical component (The connector proxy) is not responding correctly."
+            in str(ae)
+        )
