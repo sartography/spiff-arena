@@ -45,7 +45,7 @@ class ServiceTaskDelegate:
 
     @staticmethod
     def get_message_for_status(code: int) -> str:
-        """Given a code like 404, return a string like 'The requested resource was not found.'"""
+        """Given a code like 404, return a string like: The requested resource was not found."""
         msg = f"HTTP Status Code {code}."
         if code == 301:
             msg = (
@@ -110,10 +110,10 @@ class ServiceTaskDelegate:
                 parsed_response = {}
 
             if proxied_response.status_code >= 300:
-                error = f"Received an unexpected response from the service : "
-                error += ServiceTaskDelegate.get_message_for_status(
+                message = ServiceTaskDelegate.get_message_for_status(
                     proxied_response.status_code
                 )
+                error = f"Received an unexpected response from the service : {message}"
                 if "error" in parsed_response:
                     error += parsed_response["error"]
                 if json_parse_error:

@@ -1,8 +1,10 @@
 """Test_various_bpmn_constructs."""
+from unittest.mock import patch
+
 import pytest
 from flask.app import Flask
-from unittest.mock import Mock, patch
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+
 from spiffworkflow_backend.services.secret_service import SecretService
 from spiffworkflow_backend.services.service_task_service import ConnectorProxyError
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
@@ -37,7 +39,7 @@ class TestServiceTaskDelegate(BaseTest):
     def test_invalid_call_returns_good_error_message(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        with patch('requests.post') as mock_post:
+        with patch("requests.post") as mock_post:
             mock_post.return_value.status_code = 404
             mock_post.return_value.ok = True
             mock_post.return_value.json.return_value = ""
