@@ -51,7 +51,7 @@ services:
       context: .
     environment:
       - APPLICATION_ROOT=/
-      - SPIFFWORKFLOW_BACKEND_ENV=${SPIFFWORKFLOW_BACKEND_ENV:-development}
+      - SPIFFWORKFLOW_BACKEND_ENV=${SPIFFWORKFLOW_BACKEND_ENV:-local_development}
       - FLASK_DEBUG=0
       - FLASK_SESSION_SECRET_KEY=${FLASK_SESSION_SECRET_KEY:-super_secret_key}
       - OPEN_ID_SERVER_URL=${OPEN_ID_SERVER_URL:-http://localhost:7002/realms/spiffworkflow}

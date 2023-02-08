@@ -2,6 +2,7 @@
 import json
 import os
 import uuid
+from sys import exc_info
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -559,9 +560,21 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
                 template_error.lineno - 1
             ]
         wfe.add_note(
-            "Jinja2 template errors can happen when trying to displaying task data"
+            "Jinja2 template errors can happen when trying to display task data"
         )
         raise wfe from template_error
+    except Exception as error:
+        type, value, tb = exc_info()
+        wfe = WorkflowTaskException(str(error), task=spiff_task, exception=error)
+        while tb:
+            if tb.tb_frame.f_code.co_filename == "<template>":
+                wfe.line_number = tb.tb_lineno
+                wfe.error_line = unprocessed_template.split("\n")[tb.tb_lineno - 1]
+            tb = tb.tb_next
+        wfe.add_note(
+            "Jinja2 template errors can happen when trying to displaying task data"
+        )
+        raise wfe from error
 
 
 def _get_spiff_task_from_process_instance(

@@ -12,8 +12,7 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import MDEditor from '@uiw/react-md-editor';
 // eslint-disable-next-line import/no-named-as-default
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
@@ -263,9 +262,7 @@ export default function TaskShow() {
     }
     return (
       <div className="markdown">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {instructions}
-        </ReactMarkdown>
+        <MDEditor.Markdown source={instructions} />
       </div>
     );
   };

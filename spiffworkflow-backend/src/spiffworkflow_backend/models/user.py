@@ -34,6 +34,9 @@ class UserModel(SpiffworkflowBaseDBModel):
     service_id = db.Column(db.String(255), nullable=False, unique=False)
     display_name = db.Column(db.String(255))
     email = db.Column(db.String(255))
+    tenant_specific_field_1: str | None = db.Column(db.String(255))
+    tenant_specific_field_2: str | None = db.Column(db.String(255))
+    tenant_specific_field_3: str | None = db.Column(db.String(255))
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
