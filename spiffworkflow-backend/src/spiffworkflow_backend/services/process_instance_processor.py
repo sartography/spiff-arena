@@ -716,7 +716,8 @@ class ProcessInstanceProcessor:
             "spiff_step": self.process_instance_model.spiff_step or 1,
             "task_json": task_json,
             "task_id": str(spiff_task.id),
-            "bpmn_task_identifier": spiff_task.task_spec.id,
+            "task_state": spiff_task.state,
+            "bpmn_task_identifier": spiff_task.task_spec.name,
             "engine_step_start_in_seconds": start_in_seconds,
             "engine_step_end_in_seconds": end_in_seconds,
         }
