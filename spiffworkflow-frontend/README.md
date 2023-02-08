@@ -65,7 +65,7 @@ Probably just stick with lint:fix which also runs prettier.
 
 ## Runtime configuration options
 
-# The docker image respects the following environment variables.
+The docker image respects the following environment variables.
 
 SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY=subdomain_based
 SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_APP_ROUTING_STRATEGY=path_based
