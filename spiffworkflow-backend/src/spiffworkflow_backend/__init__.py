@@ -1,6 +1,7 @@
 """__init__."""
 import os
 import sys
+import faulthandler
 from typing import Any
 
 import connexion  # type: ignore
@@ -80,6 +81,8 @@ def start_scheduler(
 
 def create_app() -> flask.app.Flask:
     """Create_app."""
+    faulthandler.enable()
+
     # We need to create the sqlite database in a known location.
     # If we rely on the app.instance_path without setting an environment
     # variable, it will be one thing when we run flask db upgrade in the
