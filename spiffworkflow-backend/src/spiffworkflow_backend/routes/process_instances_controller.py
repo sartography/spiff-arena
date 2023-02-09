@@ -573,7 +573,7 @@ def process_instance_task_list(
 
     steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
 
-    subprocesses_to_set_to_waiting = []
+    subprocess_state_overrides = {}
     for step_detail in step_details:
         if step_detail.task_id in tasks:
             # task_ids_in_use.append(step_detail.task_id)
@@ -594,20 +594,17 @@ def process_instance_task_list(
                         task_data = {}
                     subprocess_info['tasks'][step_detail.task_id]["data"] = task_data
                     subprocess_info['tasks'][step_detail.task_id]['state'] = Task.task_state_name_to_int(step_detail.task_state)
-                    subprocesses_to_set_to_waiting.append(subprocess_id)
+                    subprocess_state_overrides[subprocess_id] = TaskState.WAITING
 
     for subprocess_info in subprocesses.values():
         for spiff_task_id in subprocess_info['tasks']:
             if spiff_task_id not in steps_by_id:
                 subprocess_info['tasks'][spiff_task_id]['data'] = {}
-                subprocess_info['tasks'][spiff_task_id]['state'] = TaskState.FUTURE
+                subprocess_info['tasks'][spiff_task_id]['state'] = subprocess_state_overrides.get(spiff_task_id, TaskState.FUTURE)
     for spiff_task_id in tasks:
         if spiff_task_id not in steps_by_id:
             tasks[spiff_task_id]['data'] = {}
-            if spiff_task_id in subprocesses_to_set_to_waiting:
-                tasks[spiff_task_id]['state'] = TaskState.WAITING
-            else:
-                tasks[spiff_task_id]['state'] = TaskState.FUTURE
+            tasks[spiff_task_id]['state'] = subprocess_state_overrides.get(spiff_task_id, TaskState.FUTURE)
 
     process_instance.bpmn_json = json.dumps(bpmn_json)
 
