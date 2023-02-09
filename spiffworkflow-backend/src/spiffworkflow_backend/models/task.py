@@ -1,6 +1,5 @@
 """Task."""
 import enum
-from SpiffWorkflow.task import TaskStateNames # type: ignore
 from typing import Any
 from typing import Optional
 from typing import Union
@@ -8,6 +7,7 @@ from typing import Union
 import marshmallow
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
+from SpiffWorkflow.task import TaskStateNames  # type: ignore
 
 
 class MultiInstanceType(enum.Enum):

@@ -243,7 +243,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const spiffStepLink = (label: any, distance: number) => {
     const processIdentifier = searchParams.get('process_identifier');
     const callActivityTaskId = searchParams.get('call_activity_task_id');
-    let queryParamArray = [];
+    const queryParamArray = [];
     if (processIdentifier) {
       queryParamArray.push(`process_identifier=${processIdentifier}`);
     }
@@ -251,7 +251,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       queryParamArray.push(`call_activity_task_id=${callActivityTaskId}`);
     }
     let queryParams = '';
-    if (queryParamArray.length > 0){
+    if (queryParamArray.length > 0) {
       queryParams = `?${queryParamArray.join('&')}`;
     }
     return (

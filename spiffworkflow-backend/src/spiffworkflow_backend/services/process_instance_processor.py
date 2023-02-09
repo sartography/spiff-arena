@@ -730,7 +730,9 @@ class ProcessInstanceProcessor:
             "end_in_seconds": end_in_seconds,
         }
 
-    def spiff_step_details(self, spiff_task: Optional[SpiffTask] = None) -> SpiffStepDetailsModel:
+    def spiff_step_details(
+        self, spiff_task: Optional[SpiffTask] = None
+    ) -> SpiffStepDetailsModel:
         """SaveSpiffStepDetails."""
         details_mapping = self.spiff_step_details_mapping(spiff_task=spiff_task)
         details_model = SpiffStepDetailsModel(**details_mapping)
@@ -983,8 +985,12 @@ class ProcessInstanceProcessor:
                         db.session.add(human_task_user)
 
                     self.increment_spiff_step()
-                    spiff_step_detail_mapping = self.spiff_step_details_mapping(spiff_task=ready_or_waiting_task, start_in_seconds=time.time())
-                    spiff_step_detail = SpiffStepDetailsModel(**spiff_step_detail_mapping)
+                    spiff_step_detail_mapping = self.spiff_step_details_mapping(
+                        spiff_task=ready_or_waiting_task, start_in_seconds=time.time()
+                    )
+                    spiff_step_detail = SpiffStepDetailsModel(
+                        **spiff_step_detail_mapping
+                    )
                     db.session.add(spiff_step_detail)
                     db.session.commit()
 
@@ -1731,11 +1737,19 @@ class ProcessInstanceProcessor:
         human_task.completed_by_user_id = user.id
         human_task.completed = True
         db.session.add(human_task)
-        details_model = SpiffStepDetailsModel.query.filter_by(process_instance_id=self.process_instance_model.id, task_id=str(task.id), task_state="READY").order_by(SpiffStepDetailsModel.id.desc()).first()
+        details_model = (
+            SpiffStepDetailsModel.query.filter_by(
+                process_instance_id=self.process_instance_model.id,
+                task_id=str(task.id),
+                task_state="READY",
+            )
+            .order_by(SpiffStepDetailsModel.id.desc())  # type: ignore
+            .first()
+        )
         if details_model is None:
             raise SpiffStepDetailIsMissingError(
-                f"Cannot find a ready spiff_step_detail entry for process instance {self.process_instance_model.id} "
-                f"and task_id is {task.id}"
+                "Cannot find a ready spiff_step_detail entry for process instance"
+                f" {self.process_instance_model.id} and task_id is {task.id}"
             )
 
         details_model.task_state = task.get_state_name()
