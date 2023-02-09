@@ -682,7 +682,12 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def spiff_step_details_mapping(self, spiff_task: Optional[SpiffTask]=None, start_in_seconds: Optional[float] = 0, end_in_seconds: Optional[float] = 0) -> dict:
+    def spiff_step_details_mapping(
+        self,
+        spiff_task: Optional[SpiffTask] = None,
+        start_in_seconds: Optional[float] = 0,
+        end_in_seconds: Optional[float] = 0,
+    ) -> dict:
         """SaveSpiffStepDetails."""
         # bpmn_json = self.serialize()
         # wf_json = json.loads(bpmn_json)
@@ -696,8 +701,10 @@ class ProcessInstanceProcessor:
             return {}
 
         task_data = default_registry.convert(spiff_task.data)
-        python_env = default_registry.convert(self._script_engine.environment.last_result())
-        
+        python_env = default_registry.convert(
+            self._script_engine.environment.last_result()
+        )
+
         task_json: Dict[str, Any] = {
             # "tasks": wf_json["tasks"],
             # "subprocesses": wf_json["subprocesses"],
@@ -1528,13 +1535,17 @@ class ProcessInstanceProcessor:
 
         def will_complete_task(task: SpiffTask) -> None:
             if should_log(task):
-                current_task_start_in_seconds['time'] = time.time()
+                current_task_start_in_seconds["time"] = time.time()
                 self.increment_spiff_step()
 
         def did_complete_task(task: SpiffTask) -> None:
             if should_log(task):
                 self._script_engine.environment.revise_state_with_task_data(task)
-                step_details.append(self.spiff_step_details_mapping(task, current_task_start_in_seconds['time'], time.time()))
+                step_details.append(
+                    self.spiff_step_details_mapping(
+                        task, current_task_start_in_seconds["time"], time.time()
+                    )
+                )
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
