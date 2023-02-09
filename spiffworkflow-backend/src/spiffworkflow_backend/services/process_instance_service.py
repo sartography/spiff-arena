@@ -303,6 +303,7 @@ class ProcessInstanceService:
         spiff_task: SpiffTask,
         add_docs_and_forms: bool = False,
         calling_subprocess_task_id: Optional[str] = None,
+        task_spiff_step: Optional[int] = None,
     ) -> Task:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.spec_type
@@ -354,6 +355,7 @@ class ProcessInstanceService:
             event_definition=serialized_task_spec.get("event_definition"),
             call_activity_process_identifier=call_activity_process_identifier,
             calling_subprocess_task_id=calling_subprocess_task_id,
+            task_spiff_step=task_spiff_step,
         )
 
         return task

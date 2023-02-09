@@ -640,23 +640,19 @@ def process_instance_task_list(
 
     tasks = []
     for spiff_task in spiff_tasks:
+        task_spiff_step: Optional[int] = None
+        if str(spiff_task.id) in steps_by_id:
+            task_spiff_step = steps_by_id[str(spiff_task.id)].spiff_step
         calling_subprocess_task_id = subprocesses_by_child_task_ids.get(
             str(spiff_task.id), None
         )
         task = ProcessInstanceService.spiff_task_to_api_task(
-            processor, spiff_task, calling_subprocess_task_id=calling_subprocess_task_id
+            processor,
+            spiff_task,
+            calling_subprocess_task_id=calling_subprocess_task_id,
+            task_spiff_step=task_spiff_step,
         )
         if get_task_data:
-            # if str(spiff_task.id) in steps_by_id:
-            #     spiff_step_detail = steps_by_id[str(spiff_task.id)]
-            #     task_data = (
-            #         spiff_step_detail.task_json["task_data"] | spiff_step_detail.task_json["python_env"]
-            #     )
-            #     task.data = task_data
-            #     task.state = spiff_step_detail.task_state
-            # else:
-            #     task.data = {}
-            #     task.state = TaskStateNames[TaskState.FUTURE]
             task.data = spiff_task.data
         tasks.append(task)
 

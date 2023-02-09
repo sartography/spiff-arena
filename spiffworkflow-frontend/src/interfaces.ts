@@ -46,6 +46,7 @@ export interface ProcessInstanceTask {
   type: string;
   updated_at_in_seconds: number;
 
+  task_spiff_step?: number;
   potential_owner_usernames?: string;
   assigned_user_group_identifier?: string;
 }
