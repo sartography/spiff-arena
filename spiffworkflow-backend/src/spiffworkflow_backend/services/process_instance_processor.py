@@ -1527,10 +1527,12 @@ class ProcessInstanceProcessor:
             "Service Task",
             "Default Start Event",
             "Exclusive Gateway",
+            "Call Activity",
             # "End Join",
             "End Event",
             "Default Throwing Event",
-            "Subprocess"
+            "Subprocess",
+            "Transactional Subprocess",
         }
 
         # making a dictionary to ensure we are not shadowing variables in the other methods
