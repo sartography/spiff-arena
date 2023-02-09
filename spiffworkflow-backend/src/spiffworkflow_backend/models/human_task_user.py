@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
@@ -30,3 +31,5 @@ class HumanTaskUserModel(SpiffworkflowBaseDBModel):
         ForeignKey(HumanTaskModel.id), nullable=False, index=True  # type: ignore
     )
     user_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
+
+    human_task = relationship(HumanTaskModel)
