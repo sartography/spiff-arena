@@ -556,29 +556,28 @@ def process_instance_task_list(
     get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
-    step_detail_query = (
-        db.session.query(SpiffStepDetailsModel)
-        .filter(
-            SpiffStepDetailsModel.process_instance_id == process_instance.id,
-        )
+    step_detail_query = db.session.query(SpiffStepDetailsModel).filter(
+        SpiffStepDetailsModel.process_instance_id == process_instance.id,
     )
 
     if spiff_step > 0:
-        step_detail_query = step_detail_query.filter(SpiffStepDetailsModel.spiff_step <= spiff_step)
+        step_detail_query = step_detail_query.filter(
+            SpiffStepDetailsModel.spiff_step <= spiff_step
+        )
 
     step_details = step_detail_query.all()
-    bpmn_json = json.loads(process_instance.bpmn_json)
-    tasks = bpmn_json['tasks']
+    bpmn_json = json.loads(process_instance.bpmn_json or "{}")
+    tasks = bpmn_json["tasks"]
 
     # if step_detail is not None and process_instance.bpmn_json is not None:
     for step_detail in step_details:
-        print(f"step_detail.task_id: {step_detail.task_id}")
-        print(f"step_detail.bpmn_task_identifier: {step_detail.bpmn_task_identifier}")
         if step_detail.task_id in tasks:
-            task_data = step_detail.task_json['task_data'] | step_detail.task_json['python_env']
+            task_data = (
+                step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
+            )
             if task_data is None:
                 task_data = {}
-            tasks[step_detail.task_id]['data'] = task_data
+            tasks[step_detail.task_id]["data"] = task_data
 
     process_instance.bpmn_json = json.dumps(bpmn_json)
 
