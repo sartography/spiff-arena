@@ -81,7 +81,6 @@ from spiffworkflow_backend.models.script_attributes_context import (
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.user import UserModelSchema
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -175,7 +174,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         """NonTaskDataBasedScriptEngineEnvironment."""
         self.state: Dict[str, Any] = {}
         self.non_user_defined_keys = set(
-            [*environment_globals.keys()] + ["__builtins__", "current_user"]
+            [*environment_globals.keys()] + ["__builtins__"]
         )
         super().__init__(environment_globals)
 
@@ -493,7 +492,6 @@ class ProcessInstanceProcessor:
                 subprocesses=subprocesses,
             )
             self.set_script_engine(self.bpmn_process_instance)
-            self.add_user_info_to_process_instance(self.bpmn_process_instance)
 
         except MissingSpecError as ke:
             raise ApiError(
@@ -563,18 +561,6 @@ class ProcessInstanceProcessor:
             current_user = self.process_instance_model.process_initiator
 
         return current_user
-
-    def add_user_info_to_process_instance(
-        self, bpmn_process_instance: BpmnWorkflow
-    ) -> None:
-        """Add_user_info_to_process_instance."""
-        current_user = self.current_user()
-
-        if current_user:
-            current_user_data = UserModelSchema().dump(current_user)
-            tasks = bpmn_process_instance.get_tasks(TaskState.READY)
-            for task in tasks:
-                task.data["current_user"] = current_user_data
 
     @staticmethod
     def get_bpmn_process_instance_from_workflow_spec(
@@ -1589,14 +1575,10 @@ class ProcessInstanceProcessor:
         except WorkflowTaskException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
-    def user_defined_task_data(self, task_data: dict) -> dict:
-        """UserDefinedTaskData."""
-        return {k: v for k, v in task_data.items() if k != "current_user"}
-
     def check_task_data_size(self) -> None:
         """CheckTaskDataSize."""
         tasks_to_check = self.bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
-        task_data = [self.user_defined_task_data(task.data) for task in tasks_to_check]
+        task_data = [task.data for task in tasks_to_check]
         task_data_to_check = list(filter(len, task_data))
 
         try:
