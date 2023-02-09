@@ -30,6 +30,7 @@ from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ig
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import Box
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BoxedTaskDataEnvironment
+from SpiffWorkflow.bpmn.serializer.helpers.registry import DefaultRegistry  # type: ignore
 from SpiffWorkflow.bpmn.serializer.task_spec import (  # type: ignore
     EventBasedGatewayConverter,
 )
@@ -204,6 +205,13 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         self.state.update(external_methods or {})
         self.state.update(context)
         exec(script, self.state)  # noqa
+
+        # since the task data is not directly mutated when the script executes, need to determine which keys
+        # have been deleted from the environment and remove them from task data if present.
+        context_keys_to_drop = context.keys() - self.state.keys()
+
+        for key_to_drop in context_keys_to_drop:
+            context.pop(key_to_drop)
 
         self.state = self._user_defined_state(external_methods)
 
@@ -674,22 +682,44 @@ class ProcessInstanceProcessor:
             "lane_assignment_id": lane_assignment_id,
         }
 
-    def spiff_step_details_mapping(self) -> dict:
+    def spiff_step_details_mapping(
+        self,
+        spiff_task: Optional[SpiffTask] = None,
+        start_in_seconds: Optional[float] = 0,
+        end_in_seconds: Optional[float] = 0,
+    ) -> dict:
         """SaveSpiffStepDetails."""
         # bpmn_json = self.serialize()
         # wf_json = json.loads(bpmn_json)
+        default_registry = DefaultRegistry()
+
+        if spiff_task is None:
+            # TODO: safer to pass in task vs use last task?
+            spiff_task = self.bpmn_process_instance.last_task
+
+        if spiff_task is None:
+            return {}
+
+        task_data = default_registry.convert(spiff_task.data)
+        python_env = default_registry.convert(
+            self._script_engine.environment.last_result()
+        )
+
         task_json: Dict[str, Any] = {
             # "tasks": wf_json["tasks"],
             # "subprocesses": wf_json["subprocesses"],
-            # "python_env": self._script_engine.environment.last_result(),
+            "task_data": task_data,
+            "python_env": python_env,
         }
-
         return {
             "process_instance_id": self.process_instance_model.id,
             "spiff_step": self.process_instance_model.spiff_step or 1,
             "task_json": task_json,
-            "timestamp": round(time.time()),
-            # "completed_by_user_id": self.current_user().id,
+            "task_id": str(spiff_task.id),
+            "task_state": spiff_task.state,
+            "bpmn_task_identifier": spiff_task.task_spec.name,
+            "engine_step_start_in_seconds": start_in_seconds,
+            "engine_step_end_in_seconds": end_in_seconds,
         }
 
     def spiff_step_details(self) -> SpiffStepDetailsModel:
@@ -1492,6 +1522,9 @@ class ProcessInstanceProcessor:
             # "Subprocess"
         }
 
+        # making a dictionary to ensure we are not shadowing variables in the other methods
+        current_task_start_in_seconds = {}
+
         def should_log(task: SpiffTask) -> bool:
             if (
                 task.task_spec.spec_type in tasks_to_log
@@ -1502,12 +1535,17 @@ class ProcessInstanceProcessor:
 
         def will_complete_task(task: SpiffTask) -> None:
             if should_log(task):
+                current_task_start_in_seconds["time"] = time.time()
                 self.increment_spiff_step()
 
         def did_complete_task(task: SpiffTask) -> None:
             if should_log(task):
                 self._script_engine.environment.revise_state_with_task_data(task)
-                step_details.append(self.spiff_step_details_mapping())
+                step_details.append(
+                    self.spiff_step_details_mapping(
+                        task, current_task_start_in_seconds["time"], time.time()
+                    )
+                )
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
