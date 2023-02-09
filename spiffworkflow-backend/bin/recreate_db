@@ -50,6 +50,8 @@ if [[ "${1:-}" == "clean" ]]; then
       docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_testing -c "create database spiffworkflow_backend_local_development;"
     fi
   fi
+elif [[ "${1:-}" == "migrate" ]]; then
+  tasks="$tasks migrate"
 fi
 tasks="$tasks upgrade"
 
