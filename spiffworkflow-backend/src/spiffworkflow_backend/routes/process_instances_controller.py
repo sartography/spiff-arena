@@ -36,6 +36,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_by_id_or_raise,
@@ -568,20 +569,60 @@ def process_instance_task_list(
     step_details = step_detail_query.all()
     bpmn_json = json.loads(process_instance.bpmn_json or "{}")
     tasks = bpmn_json["tasks"]
+    subprocesses = bpmn_json["subprocesses"]
 
-    # if step_detail is not None and process_instance.bpmn_json is not None:
+    steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
+
+    subprocess_state_overrides = {}
     for step_detail in step_details:
         if step_detail.task_id in tasks:
+            # task_ids_in_use.append(step_detail.task_id)
             task_data = (
                 step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
             )
             if task_data is None:
                 task_data = {}
             tasks[step_detail.task_id]["data"] = task_data
+            tasks[step_detail.task_id]["state"] = Task.task_state_name_to_int(
+                step_detail.task_state
+            )
+        else:
+            for subprocess_id, subprocess_info in subprocesses.items():
+                if step_detail.task_id in subprocess_info["tasks"]:
+                    task_data = (
+                        step_detail.task_json["task_data"]
+                        | step_detail.task_json["python_env"]
+                    )
+                    if task_data is None:
+                        task_data = {}
+                    subprocess_info["tasks"][step_detail.task_id]["data"] = task_data
+                    subprocess_info["tasks"][step_detail.task_id]["state"] = (
+                        Task.task_state_name_to_int(step_detail.task_state)
+                    )
+                    subprocess_state_overrides[subprocess_id] = TaskState.WAITING
+
+    for subprocess_info in subprocesses.values():
+        for spiff_task_id in subprocess_info["tasks"]:
+            if spiff_task_id not in steps_by_id:
+                subprocess_info["tasks"][spiff_task_id]["data"] = {}
+                subprocess_info["tasks"][spiff_task_id]["state"] = (
+                    subprocess_state_overrides.get(spiff_task_id, TaskState.FUTURE)
+                )
+    for spiff_task_id in tasks:
+        if spiff_task_id not in steps_by_id:
+            tasks[spiff_task_id]["data"] = {}
+            tasks[spiff_task_id]["state"] = subprocess_state_overrides.get(
+                spiff_task_id, TaskState.FUTURE
+            )
 
     process_instance.bpmn_json = json.dumps(bpmn_json)
 
     processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+        step_details[-1].bpmn_task_identifier, processor.bpmn_process_instance
+    )
+    if spiff_task is not None:
+        spiff_task.complete()
 
     spiff_tasks = None
     if all_tasks:
@@ -606,6 +647,16 @@ def process_instance_task_list(
             processor, spiff_task, calling_subprocess_task_id=calling_subprocess_task_id
         )
         if get_task_data:
+            # if str(spiff_task.id) in steps_by_id:
+            #     spiff_step_detail = steps_by_id[str(spiff_task.id)]
+            #     task_data = (
+            #         spiff_step_detail.task_json["task_data"] | spiff_step_detail.task_json["python_env"]
+            #     )
+            #     task.data = task_data
+            #     task.state = spiff_step_detail.task_state
+            # else:
+            #     task.data = {}
+            #     task.state = TaskStateNames[TaskState.FUTURE]
             task.data = spiff_task.data
         tasks.append(task)
 
