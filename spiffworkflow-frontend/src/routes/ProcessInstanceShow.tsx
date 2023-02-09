@@ -240,7 +240,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return processInstance && currentSpiffStep() === processInstance.spiff_step;
   };
 
-  const spiffStepLink = (label: any, distance: number) => {
+  const spiffStepLink = (label: any, spiffStep: number) => {
     const processIdentifier = searchParams.get('process_identifier');
     const callActivityTaskId = searchParams.get('call_activity_task_id');
     const queryParamArray = [];
@@ -258,9 +258,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`/admin/process-instances/${params.process_model_id}/${
-          params.process_instance_id
-        }/${currentSpiffStep() + distance}${queryParams}`}
+        to={`/admin/process-instances/${params.process_model_id}/${params.process_instance_id}/${spiffStep}${queryParams}`}
       >
         {label}
       </Link>
@@ -272,7 +270,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
-    return spiffStepLink(<CaretLeft />, -1);
+    return spiffStepLink(<CaretLeft />, currentSpiffStep() - 1);
   };
 
   const nextStepLink = () => {
@@ -280,7 +278,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
-    return spiffStepLink(<CaretRight />, 1);
+    return spiffStepLink(<CaretRight />, currentSpiffStep() + 1);
   };
 
   const returnToLastSpiffStep = () => {
@@ -996,6 +994,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
+          {taskToUse.task_spiff_step ? (
+            <div>
+              <Stack orientation="horizontal" gap={2}>
+                Task completed at step:{' '}
+                {spiffStepLink(
+                  `${taskToUse.task_spiff_step}`,
+                  taskToUse.task_spiff_step
+                )}
+              </Stack>
+              <br />
+              <br />
+            </div>
+          ) : null}
           {selectingEvent
             ? eventSelector(candidateEvents)
             : taskDataContainer()}

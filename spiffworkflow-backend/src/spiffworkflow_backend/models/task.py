@@ -122,6 +122,7 @@ class Task:
         event_definition: Union[dict[str, Any], None] = None,
         call_activity_process_identifier: Optional[str] = None,
         calling_subprocess_task_id: Optional[str] = None,
+        task_spiff_step: Optional[int] = None,
     ):
         """__init__."""
         self.id = id
@@ -136,6 +137,7 @@ class Task:
         self.event_definition = event_definition
         self.call_activity_process_identifier = call_activity_process_identifier
         self.calling_subprocess_task_id = calling_subprocess_task_id
+        self.task_spiff_step = task_spiff_step
 
         self.data = data
         if self.data is None:
@@ -197,6 +199,7 @@ class Task:
             "event_definition": self.event_definition,
             "call_activity_process_identifier": self.call_activity_process_identifier,
             "calling_subprocess_task_id": self.calling_subprocess_task_id,
+            "task_spiff_step": self.task_spiff_step,
         }
 
     @classmethod
