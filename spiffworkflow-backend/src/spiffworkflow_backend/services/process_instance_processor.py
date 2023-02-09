@@ -133,6 +133,10 @@ class ProcessInstanceLockedBySomethingElseError(Exception):
     pass
 
 
+class SpiffStepDetailIsMissingError(Exception):
+    pass
+
+
 class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # type: ignore
     def __init__(self, environment_globals: Dict[str, Any]):
         """BoxedTaskDataBasedScriptEngineEnvironment."""
@@ -685,8 +689,8 @@ class ProcessInstanceProcessor:
     def spiff_step_details_mapping(
         self,
         spiff_task: Optional[SpiffTask] = None,
-        start_in_seconds: Optional[float] = 0,
-        end_in_seconds: Optional[float] = 0,
+        start_in_seconds: Optional[float] = None,
+        end_in_seconds: Optional[float] = None,
     ) -> dict:
         """SaveSpiffStepDetails."""
         # bpmn_json = self.serialize()
@@ -699,6 +703,10 @@ class ProcessInstanceProcessor:
 
         if spiff_task is None:
             return {}
+
+        # it's only None when we're starting a human task (it's not complete yet)
+        if start_in_seconds is None:
+            start_in_seconds = time.time()
 
         task_data = default_registry.convert(spiff_task.data)
         python_env = default_registry.convert(
@@ -716,15 +724,15 @@ class ProcessInstanceProcessor:
             "spiff_step": self.process_instance_model.spiff_step or 1,
             "task_json": task_json,
             "task_id": str(spiff_task.id),
-            "task_state": spiff_task.state,
+            "task_state": spiff_task.get_state_name(),
             "bpmn_task_identifier": spiff_task.task_spec.name,
-            "engine_step_start_in_seconds": start_in_seconds,
-            "engine_step_end_in_seconds": end_in_seconds,
+            "start_in_seconds": start_in_seconds,
+            "end_in_seconds": end_in_seconds,
         }
 
-    def spiff_step_details(self) -> SpiffStepDetailsModel:
+    def spiff_step_details(self, spiff_task: Optional[SpiffTask] = None) -> SpiffStepDetailsModel:
         """SaveSpiffStepDetails."""
-        details_mapping = self.spiff_step_details_mapping()
+        details_mapping = self.spiff_step_details_mapping(spiff_task=spiff_task)
         details_model = SpiffStepDetailsModel(**details_mapping)
         return details_model
 
@@ -934,7 +942,7 @@ class ProcessInstanceProcessor:
                 potential_owner_hash = self.get_potential_owner_ids_from_task(
                     ready_or_waiting_task
                 )
-                extensions = ready_or_waiting_task.task_spec.extensions
+                extensions = task_spec.extensions
 
                 form_file_name = None
                 ui_form_file_name = None
@@ -965,15 +973,19 @@ class ProcessInstanceProcessor:
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
                     )
                     db.session.add(human_task)
-                    db.session.commit()
 
                     for potential_owner_id in potential_owner_hash[
                         "potential_owner_ids"
                     ]:
                         human_task_user = HumanTaskUserModel(
-                            user_id=potential_owner_id, human_task_id=human_task.id
+                            user_id=potential_owner_id, human_task=human_task
                         )
                         db.session.add(human_task_user)
+
+                    self.increment_spiff_step()
+                    spiff_step_detail_mapping = self.spiff_step_details_mapping(spiff_task=ready_or_waiting_task, start_in_seconds=time.time())
+                    spiff_step_detail = SpiffStepDetailsModel(**spiff_step_detail_mapping)
+                    db.session.add(spiff_step_detail)
                     db.session.commit()
 
         if len(human_tasks) > 0:
@@ -1512,14 +1524,13 @@ class ProcessInstanceProcessor:
         tasks_to_log = {
             "BPMN Task",
             "Script Task",
-            "Service Task"
-            # "End Event",
-            # "Default Start Event",
-            # "Exclusive Gateway",
+            "Service Task",
+            "Default Start Event",
+            "Exclusive Gateway",
             # "End Join",
-            # "End Event",
-            # "Default Throwing Event",
-            # "Subprocess"
+            "End Event",
+            "Default Throwing Event",
+            "Subprocess"
         }
 
         # making a dictionary to ensure we are not shadowing variables in the other methods
@@ -1714,12 +1725,19 @@ class ProcessInstanceProcessor:
         self, task: SpiffTask, human_task: HumanTaskModel, user: UserModel
     ) -> None:
         """Complete_task."""
-        self.increment_spiff_step()
         self.bpmn_process_instance.complete_task_from_id(task.id)
         human_task.completed_by_user_id = user.id
         human_task.completed = True
         db.session.add(human_task)
-        details_model = self.spiff_step_details()
+        details_model = SpiffStepDetailsModel.query.filter_by(process_instance_id=self.process_instance_model.id, task_id=str(task.id), task_state="READY").order_by(SpiffStepDetailsModel.id.desc()).first()
+        if details_model is None:
+            raise SpiffStepDetailIsMissingError(
+                f"Cannot find a ready spiff_step_detail entry for process instance {self.process_instance_model.id} "
+                f"and task_id is {task.id}"
+            )
+
+        details_model.task_state = task.get_state_name()
+        details_model.end_in_seconds = time.time()
         db.session.add(details_model)
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)

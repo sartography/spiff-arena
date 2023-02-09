@@ -31,6 +31,5 @@ class SpiffStepDetailsModel(SpiffworkflowBaseDBModel):
     task_state: str = db.Column(db.String(50), nullable=False)
     bpmn_task_identifier: str = db.Column(db.String(255), nullable=False)
 
-    # timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False)
-    engine_step_start_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
-    engine_step_end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
+    start_in_seconds: float = db.Column(db.DECIMAL(17, 6), nullable=False)
+    end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))

@@ -11,7 +11,7 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
-from SpiffWorkflow.task import TaskState  # type: ignore
+from SpiffWorkflow.task import TaskState, TaskStateNames  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
 
@@ -20,6 +20,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
+from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceCannotBeDeletedError,
 )
@@ -568,20 +569,52 @@ def process_instance_task_list(
     step_details = step_detail_query.all()
     bpmn_json = json.loads(process_instance.bpmn_json or "{}")
     tasks = bpmn_json["tasks"]
+    subprocesses = bpmn_json["subprocesses"]
 
-    # if step_detail is not None and process_instance.bpmn_json is not None:
+    steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
+
+    subprocesses_to_set_to_waiting = []
     for step_detail in step_details:
         if step_detail.task_id in tasks:
+            # task_ids_in_use.append(step_detail.task_id)
             task_data = (
                 step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
             )
             if task_data is None:
                 task_data = {}
             tasks[step_detail.task_id]["data"] = task_data
+            tasks[step_detail.task_id]['state'] = Task.task_state_name_to_int(step_detail.task_state)
+        else:
+            for subprocess_id, subprocess_info in subprocesses.items():
+                if step_detail.task_id in subprocess_info['tasks']:
+                    task_data = (
+                        step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
+                    )
+                    if task_data is None:
+                        task_data = {}
+                    subprocess_info['tasks'][step_detail.task_id]["data"] = task_data
+                    subprocess_info['tasks'][step_detail.task_id]['state'] = Task.task_state_name_to_int(step_detail.task_state)
+                    subprocesses_to_set_to_waiting.append(subprocess_id)
+
+    for subprocess_info in subprocesses.values():
+        for spiff_task_id in subprocess_info['tasks']:
+            if spiff_task_id not in steps_by_id:
+                subprocess_info['tasks'][spiff_task_id]['data'] = {}
+                subprocess_info['tasks'][spiff_task_id]['state'] = TaskState.FUTURE
+    for spiff_task_id in tasks:
+        if spiff_task_id not in steps_by_id:
+            tasks[spiff_task_id]['data'] = {}
+            if spiff_task_id in subprocesses_to_set_to_waiting:
+                tasks[spiff_task_id]['state'] = TaskState.WAITING
+            else:
+                tasks[spiff_task_id]['state'] = TaskState.FUTURE
 
     process_instance.bpmn_json = json.dumps(bpmn_json)
 
     processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = processor.__class__.get_task_by_bpmn_identifier(step_details[-1].bpmn_task_identifier, processor.bpmn_process_instance)
+    if spiff_task is not None:
+        spiff_task.complete()
 
     spiff_tasks = None
     if all_tasks:
@@ -606,6 +639,16 @@ def process_instance_task_list(
             processor, spiff_task, calling_subprocess_task_id=calling_subprocess_task_id
         )
         if get_task_data:
+            # if str(spiff_task.id) in steps_by_id:
+            #     spiff_step_detail = steps_by_id[str(spiff_task.id)]
+            #     task_data = (
+            #         spiff_step_detail.task_json["task_data"] | spiff_step_detail.task_json["python_env"]
+            #     )
+            #     task.data = task_data
+            #     task.state = spiff_step_detail.task_state
+            # else:
+            #     task.data = {}
+            #     task.state = TaskStateNames[TaskState.FUTURE]
             task.data = spiff_task.data
         tasks.append(task)
 

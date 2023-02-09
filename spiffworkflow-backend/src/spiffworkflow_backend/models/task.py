@@ -1,5 +1,6 @@
 """Task."""
 import enum
+from SpiffWorkflow.task import TaskStateNames # type: ignore
 from typing import Any
 from typing import Optional
 from typing import Union
@@ -211,6 +212,12 @@ class Task:
         return [
             value for name, value in vars(cls).items() if name.startswith("FIELD_TYPE")
         ]
+
+    @classmethod
+    def task_state_name_to_int(cls, task_state_name: str) -> int:
+        task_state_integers = {v: k for k, v in TaskStateNames.items()}
+        task_state_int: int = task_state_integers[task_state_name]
+        return task_state_int
 
 
 class OptionSchema(Schema):
