@@ -35,7 +35,7 @@ if [[ -n "$react_configs" ]]; then
     fi
 
     # actually do the search and replace to add the js config to the html page
-    perl -pi -e "s/(window._jsenv=\{\})/\1;window._jsenv.${react_config_without_prefix}/" "$index_html_file"
+    perl -pi -e "s/(window.spiffworkflowFrontendJsenv=\{\})/\1;window.spiffworkflowFrontendJsenv.${react_config_without_prefix}/" "$index_html_file"
 
     if ! grep -Eq "${react_config_without_prefix}" "$index_html_file"; then
       >&2 echo "ERROR: Could not find '${react_config_without_prefix}' in '${index_html_file}' after search and replace. It is likely that the assumptions in boot_server_in_docker about the contents of the html page have changed. Fix the glitch in boot_server_in_docker."
