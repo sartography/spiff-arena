@@ -1582,17 +1582,17 @@ class ProcessInstanceProcessor:
 
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
+        except SpiffWorkflowException as swe:
+            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
+        finally:
             db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
                 if hasattr(handler, "bulk_insert_logs"):
                     handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
-        except SpiffWorkflowException as swe:
-            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
-        finally:
             if save:
                 self.save()
 
