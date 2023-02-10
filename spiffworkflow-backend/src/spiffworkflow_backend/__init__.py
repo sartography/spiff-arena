@@ -225,6 +225,6 @@ def configure_sentry(app: flask.app.Flask) -> None:
         traces_sample_rate=float(sentry_traces_sample_rate),
         traces_sampler=traces_sampler,
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
-        _experiments={"profiles_sample_rate": profiles_sample_rate},
+        # _experiments={"profiles_sample_rate": profiles_sample_rate},
         before_send=before_send,
     )
