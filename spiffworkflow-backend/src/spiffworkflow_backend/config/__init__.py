@@ -73,7 +73,7 @@ def setup_config(app: Flask) -> None:
         pass
 
     app.config["ENV_IDENTIFIER"] = os.environ.get(
-        "SPIFFWORKFLOW_BACKEND_ENV", "development"
+        "SPIFFWORKFLOW_BACKEND_ENV", "local_development"
     )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     load_config_file(app, "spiffworkflow_backend.config.default")
