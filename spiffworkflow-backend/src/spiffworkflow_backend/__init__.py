@@ -1,7 +1,6 @@
 """__init__."""
 import faulthandler
 import os
-import sys
 from typing import Any
 
 import connexion  # type: ignore
@@ -208,7 +207,8 @@ def configure_sentry(app: flask.app.Flask) -> None:
         raise Exception("SENTRY_TRACES_SAMPLE_RATE is not set somehow")
 
     # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
-    profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
+    # but also we commented out profiling because it was causing segfaults (i guess it is marked experimental)
+    # profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
 
     sentry_sdk.init(
         dsn=app.config.get("SENTRY_DSN"),
