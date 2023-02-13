@@ -2766,7 +2766,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        end = next(task for task in response.json if task["name"] == "End")
+        end = next(task for task in response.json if task["type"] == "End Event")
         assert end["data"]["result"] == {"message": "message 1"}
 
     def test_manual_complete_task(
