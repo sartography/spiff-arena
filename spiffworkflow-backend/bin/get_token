@@ -20,10 +20,14 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # ./bin/get_token repeat_form_user_1 repeat_form_user_1 # actually has permissions to the resource in this script
 # ./bin/get_token ciadmin1 ciadmin1 '%2Fprocess-models'
 
-KEYCLOAK_BASE_URL=http://localhost:7002
-# KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
-BACKEND_BASE_URL=http://localhost:7000
-# BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
+if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
+  # KEYCLOAK_BASE_URL=http://localhost:7002
+  KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
+fi
+if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
+  # BACKEND_BASE_URL=http://localhost:7000
+  BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
+fi
 REALM_NAME=spiffworkflow
 USERNAME=${1-fin}
 PASSWORD=${2-fin}

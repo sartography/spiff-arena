@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+function error_handler() {
+  >&2 echo "Exited with BAD EXIT CODE '${2}' in ${0} script at line: ${1}."
+  exit "$2"
+}
+trap 'error_handler ${LINENO} $?' ERR
+set -o errtrace -o errexit -o nounset -o pipefail
+
+script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
+
+if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
+  # export KEYCLOAK_BASE_URL=http://localhost:7002
+  export KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
+fi
+if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
+  # export BACKEND_BASE_URL=http://localhost:7000
+  export BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
+fi
+
+user_list="${1}"
+if [[ -z "${1:-}" ]]; then
+  >&2 echo "usage: $(basename "$0") [user_list]"
+  exit 1
+fi
+
+while read -r input_line; do
+  if ! grep -qE '(^#|email)' <<<"$input_line" ; then
+    username=$(awk -F '@' '{print $1}' <<<"$input_line")
+    access_token=$("${script_dir}/get_token" "$username" "$username")
+    curl -v -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?access_token=${access_token}" -H "Authorization: Bearer $access_token"
+  fi
+done <"$user_list"
