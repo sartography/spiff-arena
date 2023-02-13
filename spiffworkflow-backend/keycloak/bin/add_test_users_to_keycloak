@@ -20,7 +20,10 @@ if [[ -z "${1:-}" ]]; then
   exit 1
 fi
 
-KEYCLOAK_BASE_URL=http://localhost:7002
+if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
+  KEYCLOAK_BASE_URL=http://localhost:7002
+fi
+
 REALM_NAME="$keycloak_realm"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin"
