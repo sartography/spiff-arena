@@ -21,7 +21,7 @@ if [[ -z "${1:-}" ]]; then
 fi
 
 KEYCLOAK_BASE_URL=http://localhost:7002
-REALM_NAME=master
+REALM_NAME="$keycloak_realm"
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="admin"
 SECURE=false
@@ -58,7 +58,7 @@ function add_user() {
   data="${data}}"
 
   local http_code
-  http_code=$(curl --silent -o /dev/null -w '%{http_code}' --location --request POST "http://localhost:7002/admin/realms/${keycloak_realm}/users" \
+  http_code=$(curl --silent -o /dev/null -w '%{http_code}' --location --request POST "${KEYCLOAK_BASE_URL}/admin/realms/${keycloak_realm}/users" \
     -H 'Content-Type: application/json' \
     -H "Authorization: Bearer $backend_token" \
     --data-raw "$data")
@@ -85,7 +85,7 @@ while read -r input_line; do
       http_code=$(add_user "$user_email" "$username" "$user_attribute_one")
 
       if [[ "$http_code" == "409" ]]; then
-        user_info=$(curl --fail --silent --location --request GET "http://localhost:7002/admin/realms/${keycloak_realm}/users?username=${username}&exact=true" \
+        user_info=$(curl --fail --silent --location --request GET "${KEYCLOAK_BASE_URL}/admin/realms/${keycloak_realm}/users?username=${username}&exact=true" \
           -H 'Content-Type: application/json' \
           -H "Authorization: Bearer $backend_token")
 
@@ -94,15 +94,15 @@ while read -r input_line; do
           >&2 echo "ERROR: Could not find user_id for user: ${user_email}"
           exit 1
         fi
-        curl --fail --location --silent --request DELETE "http://localhost:7002/admin/realms/${keycloak_realm}/users/${user_id}" \
+        curl --fail --location --silent --request DELETE "${KEYCLOAK_BASE_URL}/admin/realms/${keycloak_realm}/users/${user_id}" \
           -H 'Content-Type: application/json' \
           -H "Authorization: Bearer $backend_token"
 
         http_code=$(add_user "$user_email" "$username" "$user_attribute_one")
-        if [[ "$http_code" != "201" ]]; then
-          >&2 echo "ERROR: Failed to recreate user: ${user_email} with http_code: ${http_code}"
-          exit 1
-        fi
+      fi
+      if [[ "$http_code" != "201" ]]; then
+        >&2 echo "ERROR: Failed to create user: ${user_email} with http_code: ${http_code}"
+        exit 1
       fi
     fi
   fi
