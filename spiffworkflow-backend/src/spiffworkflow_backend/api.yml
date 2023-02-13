@@ -79,6 +79,26 @@ paths:
         "200":
           description: Logout Authenticated User
 
+  /login_with_access_token:
+    parameters:
+      - name: access_token
+        in: query
+        required: true
+        schema:
+          type: string
+    post:
+      operationId: spiffworkflow_backend.routes.user.login_with_access_token
+      summary: Authenticate user for API access with an openid token already posessed.
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: "Returns ok: true if user successfully logged in."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /login_api:
     get:
       operationId: spiffworkflow_backend.routes.user.login_api

@@ -20,10 +20,10 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # ./bin/get_token repeat_form_user_1 repeat_form_user_1 # actually has permissions to the resource in this script
 # ./bin/get_token ciadmin1 ciadmin1 '%2Fprocess-models'
 
-# KEYCLOAK_BASE_URL=http://localhost:7002
-KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
-# BACKEND_BASE_URL=http://localhost:7000
-BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
+KEYCLOAK_BASE_URL=http://localhost:7002
+# KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
+BACKEND_BASE_URL=http://localhost:7000
+# BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
 REALM_NAME=spiffworkflow
 USERNAME=${1-fin}
 PASSWORD=${2-fin}
@@ -36,12 +36,12 @@ SECURE=false
 BACKEND_BASIC_AUTH=$(echo -n "${BACKEND_CLIENT_ID}:${BACKEND_CLIENT_SECRET}" | base64)
 KEYCLOAK_URL=$KEYCLOAK_BASE_URL/realms/$REALM_NAME/protocol/openid-connect/token
 
-echo "Using Keycloak: $KEYCLOAK_URL"
-echo "realm: $REALM_NAME"
-echo "client-id: $FRONTEND_CLIENT_ID"
-echo "username: $USERNAME"
-echo "password: $PASSWORD"
-echo "secure: $SECURE"
+>&2 echo "Using Keycloak: $KEYCLOAK_URL"
+>&2 echo "realm: $REALM_NAME"
+>&2 echo "client-id: $FRONTEND_CLIENT_ID"
+>&2 echo "username: $USERNAME"
+>&2 echo "password: $PASSWORD"
+>&2 echo "secure: $SECURE"
 
 
 if [[ $SECURE = 'y' ]]; then
@@ -61,8 +61,9 @@ result=$(curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
  -d "client_id=$BACKEND_CLIENT_ID" \
 )
 backend_token=$(jq -r '.access_token' <<< "$result")
-echo "testing hitting backend with token: $backend_token"
-curl --fail -v "${BACKEND_BASE_URL}/v1.0/process-groups?per_page=1" -H "Authorization: Bearer $backend_token"
+echo "$backend_token"
+# curl --fail -v "${BACKEND_BASE_URL}/v1.0/process-groups?per_page=1" -H "Authorization: Bearer $backend_token"
+# curl -v -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?access_token=${backend_token}" -H "Authorization: Bearer $backend_token"
 
 
 ### Get with frontend and exchange with backend - not configured to work in keycloak atm
