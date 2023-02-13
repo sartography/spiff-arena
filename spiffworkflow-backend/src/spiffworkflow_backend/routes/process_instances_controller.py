@@ -622,7 +622,7 @@ def process_instance_task_list(
     spiff_task = processor.__class__.get_task_by_bpmn_identifier(
         step_details[-1].bpmn_task_identifier, processor.bpmn_process_instance
     )
-    if spiff_task is not None:
+    if spiff_task is not None and spiff_task.state != TaskState.READY:
         spiff_task.complete()
 
     spiff_tasks = None
