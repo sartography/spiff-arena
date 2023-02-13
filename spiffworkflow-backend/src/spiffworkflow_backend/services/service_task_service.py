@@ -113,7 +113,7 @@ class ServiceTaskDelegate:
                 message = ServiceTaskDelegate.get_message_for_status(
                     proxied_response.status_code
                 )
-                error = f"Received an unexpected response from the service : {message}"
+                error = f"Received an unexpected response from service {name} : {message}"
                 if "error" in parsed_response:
                     error += parsed_response["error"]
                 if json_parse_error:
