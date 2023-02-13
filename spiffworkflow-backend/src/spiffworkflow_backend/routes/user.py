@@ -1,5 +1,7 @@
 """User."""
 import ast
+from flask import make_response
+from flask import jsonify
 import base64
 import json
 import re
@@ -261,13 +263,11 @@ def parse_id_token(token: str) -> Any:
 
 
 def login_return(code: str, state: str, session_state: str = "") -> Optional[Response]:
-    """Login_return."""
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
     auth_token_object = AuthenticationService().get_auth_token_object(code)
     if "id_token" in auth_token_object:
         id_token = auth_token_object["id_token"]
-
         user_info = parse_id_token(id_token)
 
         if AuthenticationService.validate_id_or_access_token(id_token):
@@ -297,6 +297,23 @@ def login_return(code: str, state: str, session_state: str = "") -> Optional[Res
             message="Login failed. Please try again",
             status_code=401,
         )
+
+
+# FIXME: share more code with login_return and maybe attempt to get a refresh token
+def login_with_access_token(access_token: str) -> Response:
+    user_info = parse_id_token(access_token)
+
+    if AuthenticationService.validate_id_or_access_token(access_token):
+        if user_info and "error" not in user_info:
+            AuthorizationService.create_user_from_sign_in(user_info)
+    else:
+        raise ApiError(
+            error_code="invalid_login",
+            message="Login failed. Please try again",
+            status_code=401,
+        )
+
+    return make_response(jsonify({"ok": True}))
 
 
 def login_api() -> Response:
