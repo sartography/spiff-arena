@@ -208,20 +208,21 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         self.state.update(self.globals)
         self.state.update(external_methods or {})
         self.state.update(context)
-        exec(script, self.state)  # noqa
+        try:
+            exec(script, self.state)  # noqa
+        finally:
+            # since the task data is not directly mutated when the script executes, need to determine which keys
+            # have been deleted from the environment and remove them from task data if present.
+            context_keys_to_drop = context.keys() - self.state.keys()
 
-        # since the task data is not directly mutated when the script executes, need to determine which keys
-        # have been deleted from the environment and remove them from task data if present.
-        context_keys_to_drop = context.keys() - self.state.keys()
+            for key_to_drop in context_keys_to_drop:
+                context.pop(key_to_drop)
 
-        for key_to_drop in context_keys_to_drop:
-            context.pop(key_to_drop)
+            self.state = self._user_defined_state(external_methods)
 
-        self.state = self._user_defined_state(external_methods)
-
-        # the task data needs to be updated with the current state so data references can be resolved properly.
-        # the state will be removed later once the task is completed.
-        context.update(self.state)
+            # the task data needs to be updated with the current state so data references can be resolved properly.
+            # the state will be removed later once the task is completed.
+            context.update(self.state)
 
     def _user_defined_state(
         self, external_methods: Optional[Dict[str, Any]] = None
