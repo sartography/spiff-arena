@@ -154,33 +154,43 @@ class AuthenticationService:
     def validate_id_or_access_token(cls, token: str) -> bool:
         """Https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation."""
         valid = True
-        now = time.time()
+        now = round(time.time())
         try:
             decoded_token = jwt.decode(token, options={"verify_signature": False})
         except Exception as e:
             raise TokenInvalidError("Cannot decode token") from e
 
-        if decoded_token["iss"] != cls.server_url():
+        # give a 5 second leeway to iat in case keycloak server time doesn't match backend server
+        iat_clock_skew_leeway = 5
+
+        iss = decoded_token["iss"]
+        aud = decoded_token["aud"]
+        azp = decoded_token['azp'] if "azp" in decoded_token else None
+        iat = decoded_token["iat"]
+        if iss != cls.server_url():
             valid = False
-        elif (
-            cls.client_id() not in decoded_token["aud"]
-            and "account" not in decoded_token["aud"]
-        ):
-            valid = False
-        elif "azp" in decoded_token and decoded_token["azp"] not in (
+        elif aud not in (
             cls.client_id(),
             "account",
         ):
             valid = False
-        elif now < decoded_token["iat"]:
+        elif azp and azp not in (
+            cls.client_id(),
+            "account",
+        ):
+            valid = False
+        elif now + iat_clock_skew_leeway < iat:
             valid = False
 
         if valid and now > decoded_token["exp"]:
             raise TokenExpiredError("Your token is expired. Please Login")
-        else:
+        elif not valid:
             current_app.logger.error(
                 "TOKEN INVALID: details: "
-                f"DECODED_TOKEN: {decoded_token} "
+                f"ISS: {iss} "
+                f"AUD: {aud} "
+                f"AZP: {azp} "
+                f"IAT: {iat} "
                 f"SERVER_URL: {cls.server_url()} "
                 f"CLIENT_ID: {cls.client_id()} "
                 f"NOW: {now}"
