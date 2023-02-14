@@ -519,8 +519,16 @@ class AuthorizationService:
             user_model = UserService().create_user(**user_attributes)
         else:
             # Update with the latest information
+            user_db_model_changed = False
             for key, value in user_attributes.items():
-                setattr(user_model, key, value)
+                current_value = getattr(user_model, key)
+                if current_value != value:
+                    user_db_model_changed = True
+                    setattr(user_model, key, value)
+
+            if user_db_model_changed:
+                db.session.add(user_model)
+                db.session.commit()
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
