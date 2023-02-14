@@ -1,5 +1,6 @@
 """Spiff_step_details."""
 from dataclasses import dataclass
+from typing import Union
 
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
@@ -32,4 +33,8 @@ class SpiffStepDetailsModel(SpiffworkflowBaseDBModel):
     bpmn_task_identifier: str = db.Column(db.String(255), nullable=False)
 
     start_in_seconds: float = db.Column(db.DECIMAL(17, 6), nullable=False)
-    end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
+
+    # to fix mypy in 3.9 - not sure why syntax like:
+    #   float | None
+    # works in other dataclass db models
+    end_in_seconds: Union[float, None] = db.Column(db.DECIMAL(17, 6))

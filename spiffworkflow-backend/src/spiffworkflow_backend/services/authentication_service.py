@@ -165,7 +165,7 @@ class AuthenticationService:
 
         iss = decoded_token["iss"]
         aud = decoded_token["aud"]
-        azp = decoded_token['azp'] if "azp" in decoded_token else None
+        azp = decoded_token["azp"] if "azp" in decoded_token else None
         iat = decoded_token["iat"]
         if iss != cls.server_url():
             valid = False
@@ -179,6 +179,7 @@ class AuthenticationService:
             "account",
         ):
             valid = False
+        # make sure issued at time is not in the future
         elif now + iat_clock_skew_leeway < iat:
             valid = False
 
