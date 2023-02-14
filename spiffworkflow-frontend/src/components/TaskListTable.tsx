@@ -36,6 +36,7 @@ type OwnProps = {
   showDateStarted?: boolean;
   showLastUpdated?: boolean;
   hideIfNoTasks?: boolean;
+  canCompleteAllTasks?: boolean;
 };
 
 export default function TaskListTable({
@@ -56,6 +57,7 @@ export default function TaskListTable({
   showDateStarted = true,
   showLastUpdated = true,
   hideIfNoTasks = false,
+  canCompleteAllTasks = false,
 }: OwnProps) {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
@@ -128,7 +130,10 @@ export default function TaskListTable({
 
     const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
     let hasAccessToCompleteTask = false;
-    if ((processInstanceTask.potential_owner_usernames || '').match(regex)) {
+    if (
+      canCompleteAllTasks ||
+      (processInstanceTask.potential_owner_usernames || '').match(regex)
+    ) {
       hasAccessToCompleteTask = true;
     }
     const rowElements = [];

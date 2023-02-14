@@ -1111,6 +1111,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               showDateStarted={false}
               showLastUpdated={false}
               hideIfNoTasks
+              canCompleteAllTasks
             />
           </Column>
         </Grid>
