@@ -96,6 +96,42 @@ reference = "HEAD"
 resolved_reference = "ad386286bcc72eeb000b9b053596dfee40f7c6b5"
 
 [[package]]
+name = "connector-http"
+version = "0.1.0"
+description = "Make HTTP Requests available to SpiffWorkflow Service Tasks"
+category = "main"
+optional = false
+python-versions = "^3.11"
+develop = false
+
+[package.dependencies]
+requests = "^2.28.1"
+
+[package.source]
+type = "git"
+url = "https://github.com/sartography/connector-http.git"
+reference = "HEAD"
+resolved_reference = "337671b38f47bd8a3113bc6fa85b987828c4ee66"
+
+[[package]]
+name = "connector-slack"
+version = "0.1.0"
+description = "Send messages to Slack through a SpiffWorkflow Service Task"
+category = "main"
+optional = false
+python-versions = "^3.11"
+develop = false
+
+[package.dependencies]
+requests = "^2.28.1"
+
+[package.source]
+type = "git"
+url = "https://github.com/sartography/connector-slack.git"
+reference = "HEAD"
+resolved_reference = "8390faca568f769f37412c7a58041bbad1695f31"
+
+[[package]]
 name = "Flask"
 version = "2.2.2"
 description = "A simple framework for building complex web applications."
@@ -308,7 +344,7 @@ Flask-OAuthlib = "^0.9.6"
 type = "git"
 url = "https://github.com/sartography/spiffworkflow-proxy"
 reference = "HEAD"
-resolved_reference = "5e4926030cf6f2808ddb8e65527168dd914e5fc3"
+resolved_reference = "cfe9b93665e10390a2e64c492c57bd2613364588"
 
 [[package]]
 name = "urllib3"
@@ -339,8 +375,8 @@ watchdog = ["watchdog"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.10"
-content-hash = "cc395c0c1ce2b0b7ca063a17617981b2d55db39802265b36f0bc3c4383c89919"
+python-versions = "^3.11"
+content-hash = "3ac32d6902d0f7e425db530dd3f907f3f3e3f1717c4e77c955e31f39fd3bdeec"
 
 [metadata.files]
 boto3 = [
@@ -372,6 +408,8 @@ colorama = [
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
 ]
 connector-aws = []
+connector-http = []
+connector-slack = []
 Flask = [
     {file = "Flask-2.2.2-py3-none-any.whl", hash = "sha256:b9c46cc36662a7949f34b52d8ec7bb59c0d74ba08ba6cb9ce9adc1d8676d9526"},
     {file = "Flask-2.2.2.tar.gz", hash = "sha256:642c450d19c4ad482f96729bd2a8f6d32554aa1e231f4f6b4e7e5264b16cca2b"},
