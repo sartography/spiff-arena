@@ -28,13 +28,16 @@ if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
   # BACKEND_BASE_URL=http://localhost:7000
   BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
 fi
-REALM_NAME=spiffworkflow
+if [[ -z "${BACKEND_CLIENT_ID:-}" ]]; then
+  export BACKEND_CLIENT_ID=spiffworkflow-backend
+fi
+if [[ -z "${BACKEND_CLIENT_SECRET:-}" ]]; then
+  export BACKEND_CLIENT_SECRET="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
+fi
 USERNAME=${1-fin}
 PASSWORD=${2-fin}
+REALM_NAME=${3-spiffworkflow}
 
-FRONTEND_CLIENT_ID=spiffworkflow-frontend
-BACKEND_CLIENT_ID=spiffworkflow-backend
-BACKEND_CLIENT_SECRET="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
 SECURE=false
 
 BACKEND_BASIC_AUTH=$(echo -n "${BACKEND_CLIENT_ID}:${BACKEND_CLIENT_SECRET}" | base64)
@@ -42,7 +45,7 @@ KEYCLOAK_URL=$KEYCLOAK_BASE_URL/realms/$REALM_NAME/protocol/openid-connect/token
 
 >&2 echo "Using Keycloak: $KEYCLOAK_URL"
 >&2 echo "realm: $REALM_NAME"
->&2 echo "client-id: $FRONTEND_CLIENT_ID"
+>&2 echo "client-id: $BACKEND_CLIENT_ID"
 >&2 echo "username: $USERNAME"
 >&2 echo "password: $PASSWORD"
 >&2 echo "secure: $SECURE"
