@@ -175,13 +175,18 @@ class AuthenticationService:
         elif now < decoded_token["iat"]:
             valid = False
 
-        if not valid:
-            return False
-
-        if now > decoded_token["exp"]:
+        if valid and now > decoded_token["exp"]:
             raise TokenExpiredError("Your token is expired. Please Login")
+        else:
+            current_app.logger.error(
+                "TOKEN INVALID: details: "
+                f"DECODED_TOKEN: {decoded_token} "
+                f"SERVER_URL: {cls.server_url()} "
+                f"CLIENT_ID: {cls.client_id()} "
+                f"NOW: {now}"
+            )
 
-        return True
+        return valid
 
     @staticmethod
     def store_refresh_token(user_id: int, refresh_token: str) -> None:
