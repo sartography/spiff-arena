@@ -35,6 +35,7 @@ services:
       RUN_BACKGROUND_SCHEDULER: "true"
       OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
       OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
+      CONNECTOR_PROXY_URL: "http://spiffworkflow-connector:8004"
     ports:
       - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
