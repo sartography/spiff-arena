@@ -1,7 +1,5 @@
 """User."""
 import ast
-from flask import make_response
-from flask import jsonify
 import base64
 import json
 import re
@@ -14,6 +12,8 @@ import flask
 import jwt
 from flask import current_app
 from flask import g
+from flask import jsonify
+from flask import make_response
 from flask import redirect
 from flask import request
 from werkzeug.wrappers import Response

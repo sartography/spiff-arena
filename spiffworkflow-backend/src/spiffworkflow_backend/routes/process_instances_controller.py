@@ -577,7 +577,6 @@ def process_instance_task_list(
     subprocess_state_overrides = {}
     for step_detail in step_details:
         if step_detail.task_id in tasks:
-            # task_ids_in_use.append(step_detail.task_id)
             task_data = (
                 step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
             )
