@@ -124,6 +124,9 @@ def setup_config(app: Flask) -> None:
     setup_database_uri(app)
     setup_logger(app)
 
+    if app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"] == "":
+        app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"] = None
+
     thread_local_data = threading.local()
     app.config["THREAD_LOCAL_DATA"] = thread_local_data
     _set_up_tenant_specific_fields_as_list_of_strings(app)
