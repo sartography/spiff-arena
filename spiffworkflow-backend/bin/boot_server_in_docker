@@ -56,8 +56,8 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
 fi
 
 # Assure that the the Process Models Directory is initialized as a git repo
-git init "${BPMN_SPEC_ABSOLUTE_DIR}"
-git config --global --add safe.directory "${BPMN_SPEC_ABSOLUTE_DIR}"
+git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
+git config --global --add safe.directory "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!

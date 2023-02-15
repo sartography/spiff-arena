@@ -81,7 +81,7 @@ class ErrorHandlingService:
         )
         message_payload = {"message_text": message_text, "recipients": recipients}
         message_identifier = current_app.config[
-            "SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID"
+            "SPIFFWORKFLOW_BACKEND_SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID"
         ]
         message_model = MessageModel.query.filter_by(
             identifier=message_identifier
