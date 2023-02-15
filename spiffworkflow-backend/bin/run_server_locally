@@ -21,7 +21,7 @@ SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
 export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 
 export FLASK_SESSION_SECRET_KEY=super_secret_key
-export APPLICATION_ROOT="/"
+export SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT="/"
 
 if [[ -n "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" ]]; then
   ./bin/boot_server_in_docker
