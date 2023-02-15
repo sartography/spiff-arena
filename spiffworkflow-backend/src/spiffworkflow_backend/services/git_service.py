@@ -104,7 +104,7 @@ class GitService:
             branch_name_to_use,
             git_username,
             git_email,
-            current_app.config["GIT_USER_PASSWORD"],
+            current_app.config["SPIFFWORKFLOW_BACKEND_GIT_USER_PASSWORD"],
         ]
         return cls.run_shell_command_to_get_stdout(shell_command)
 
@@ -227,7 +227,7 @@ class GitService:
         if git_clone_url.startswith("https://"):
             git_clone_url = git_clone_url.replace(
                 "https://",
-                f"https://{current_app.config['SPIFFWORKFLOW_BACKEND_GIT_USERNAME']}:{current_app.config['GIT_USER_PASSWORD']}@",
+                f"https://{current_app.config['SPIFFWORKFLOW_BACKEND_GIT_USERNAME']}:{current_app.config['SPIFFWORKFLOW_BACKEND_GIT_USER_PASSWORD']}@",
             )
         cmd = ["git", "clone", git_clone_url, destination_process_root]
 
