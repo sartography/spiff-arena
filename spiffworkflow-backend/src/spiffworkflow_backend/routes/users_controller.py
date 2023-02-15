@@ -26,6 +26,6 @@ def user_group_list_for_current_user() -> flask.wrappers.Response:
     group_identifiers = [
         i.identifier
         for i in groups
-        if i.identifier != current_app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"]
+        if i.identifier != current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
     ]
     return make_response(jsonify(sorted(group_identifiers)), 200)

@@ -2,15 +2,10 @@
 import re
 from os import environ
 
-# Does the site allow self-registration of users
-SELF_REGISTRATION = environ.get("SELF_REGISTRATION", default=False)
-
-DEVELOPMENT = False
-
 BPMN_SPEC_ABSOLUTE_DIR = environ.get("BPMN_SPEC_ABSOLUTE_DIR")
-CORS_DEFAULT = "*"
+cors_allow_all = "*"
 CORS_ALLOW_ORIGINS = re.split(
-    r",\s*", environ.get("CORS_ALLOW_ORIGINS", default=CORS_DEFAULT)
+    r",\s*", environ.get("CORS_ALLOW_ORIGINS", default=cors_allow_all)
 )
 
 RUN_BACKGROUND_SCHEDULER = (
@@ -94,6 +89,6 @@ ALLOW_CONFISCATING_LOCK_AFTER_SECONDS = int(
     environ.get("ALLOW_CONFISCATING_LOCK_AFTER_SECONDS", default="600")
 )
 
-SPIFFWORKFLOW_DEFAULT_USER_GROUP = environ.get(
-    "SPIFFWORKFLOW_DEFAULT_USER_GROUP", default="everybody"
+SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP = environ.get(
+    "SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP", default="everybody"
 )
