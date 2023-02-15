@@ -23,11 +23,18 @@ if [[ -z "${1:-}" ]]; then
   >&2 echo "usage: $(basename "$0") [user_list]"
   exit 1
 fi
+REALM_NAME=${2-spiffworkflow}
 
 while read -r input_line; do
   if ! grep -qE '(^#|email)' <<<"$input_line" ; then
     username=$(awk -F '@' '{print $1}' <<<"$input_line")
-    access_token=$("${script_dir}/get_token" "$username" "$username")
-    curl -v -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?access_token=${access_token}" -H "Authorization: Bearer $access_token"
+    access_token=$("${script_dir}/get_token" "$username" "$username" "$REALM_NAME")
+    if [[ -z "$access_token" || "$access_token" == "null" ]]; then
+      >&2 echo "ERROR: failed to get access token for '$username'"
+    else
+
+      echo "access_token: ${access_token}"
+      curl -v -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?access_token=${access_token}" -H "Authorization: Bearer $access_token"
+    fi
   fi
 done <"$user_list"
