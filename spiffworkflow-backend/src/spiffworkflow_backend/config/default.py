@@ -93,3 +93,7 @@ ALLOW_CONFISCATING_LOCK_AFTER_SECONDS = int(
 # and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
 # comma-separated list.
 TENANT_SPECIFIC_FIELDS = environ.get("TENANT_SPECIFIC_FIELDS")
+
+SPIFFWORKFLOW_DEFAULT_USER_GROUP = environ.get(
+    "SPIFFWORKFLOW_DEFAULT_USER_GROUP", default="everybody"
+)

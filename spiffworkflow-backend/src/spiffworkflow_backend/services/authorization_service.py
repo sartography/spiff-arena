@@ -141,7 +141,6 @@ class AuthorizationService:
             )
             .all()
         )
-
         for permission_assignment in permission_assignments:
             if permission_assignment.grant_type == "permit":
                 return True
@@ -795,13 +794,23 @@ class AuthorizationService:
                 db.session.delete(ipa)
 
         for iutga in initial_user_to_group_assignments:
-            current_user_dict: UserToGroupDict = {
-                "username": iutga.user.username,
-                "group_identifier": iutga.group.identifier,
-            }
-            if current_user_dict not in desired_user_to_group_identifiers:
-                db.session.delete(iutga)
+            # do not remove users from the default user group
+            if (
+                current_app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"] is None
+                or current_app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"]
+                != iutga.group.identifier
+            ):
+                current_user_dict: UserToGroupDict = {
+                    "username": iutga.user.username,
+                    "group_identifier": iutga.group.identifier,
+                }
+                if current_user_dict not in desired_user_to_group_identifiers:
+                    db.session.delete(iutga)
 
+        # do not remove the default user group
+        desired_group_identifiers.add(
+            current_app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"]
+        )
         groups_to_delete = GroupModel.query.filter(
             GroupModel.identifier.not_in(desired_group_identifiers)
         ).all()

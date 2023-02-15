@@ -169,8 +169,11 @@ class AuthenticationService:
         iat = decoded_token["iat"]
         if iss != cls.server_url():
             valid = False
-        elif aud not in (cls.client_id(), "account") and\
-                aud != [cls.client_id(), "account"]:
+        # aud could be an array or a string
+        elif aud not in (cls.client_id(), "account") and aud != [
+            cls.client_id(),
+            "account",
+        ]:
             valid = False
         elif azp and azp not in (
             cls.client_id(),
