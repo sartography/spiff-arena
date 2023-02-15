@@ -21,8 +21,8 @@ if [[ -z "${5:-}" ]]; then
   exit 1
 fi
 
-if [[ -z "$git_commit_password" && -z "${GIT_SSH_PRIVATE_KEY:-}" ]]; then
-  >&2 echo "ERROR: A git password or GIT_SSH_PRIVATE_KEY must be provided"
+if [[ -z "$git_commit_password" && -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
+  >&2 echo "ERROR: A git password or SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY must be provided"
   exit 1
 fi
 
@@ -43,10 +43,10 @@ function run() {
     git config --local user.name "$git_commit_username"
     git config --local user.email "$git_commit_email"
 
-    if [[ -n "${GIT_SSH_PRIVATE_KEY:-}" ]]; then
+    if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
       tmpfile=$(mktemp /tmp/tmp_git.XXXXXX)
       chmod 600 "$tmpfile"
-      echo "$GIT_SSH_PRIVATE_KEY" >"$tmpfile"
+      echo "$SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY" >"$tmpfile"
       export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${tmpfile} -F /dev/null"
     else
       PAT="${git_commit_username}:${git_commit_password}"
@@ -57,7 +57,7 @@ function run() {
     git commit -m "$git_commit_message"
     git push --set-upstream origin "$git_branch"
 
-    if [[ -z "${GIT_SSH_PRIVATE_KEY:-}" ]]; then
+    if [[ -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
       git config --unset --local http.extraHeader
     fi
   fi

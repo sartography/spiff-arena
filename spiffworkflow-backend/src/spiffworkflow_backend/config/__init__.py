@@ -17,11 +17,11 @@ def setup_database_uri(app: Flask) -> None:
     """Setup_database_uri."""
     if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
         database_name = f"spiffworkflow_backend_{app.config['ENV_IDENTIFIER']}"
-        if app.config.get("SPIFF_DATABASE_TYPE") == "sqlite":
+        if app.config.get("SPIFFWORKFLOW_BACKEND_SPIFF_DATABASE_TYPE") == "sqlite":
             app.config["SQLALCHEMY_DATABASE_URI"] = (
                 f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}.sqlite3"
             )
-        elif app.config.get("SPIFF_DATABASE_TYPE") == "postgres":
+        elif app.config.get("SPIFFWORKFLOW_BACKEND_SPIFF_DATABASE_TYPE") == "postgres":
             app.config["SQLALCHEMY_DATABASE_URI"] = (
                 f"postgresql://spiffworkflow_backend:spiffworkflow_backend@localhost:5432/{database_name}"
             )
@@ -52,15 +52,15 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
 
 
 def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
-    tenant_specific_fields = app.config.get("OPEN_ID_TENANT_SPECIFIC_FIELDS")
+    tenant_specific_fields = app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS")
 
     if tenant_specific_fields is None or tenant_specific_fields == "":
-        app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"] = []
+        app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = []
     else:
-        app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
-        if len(app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"]) > 3:
+        app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
+        if len(app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]) > 3:
             raise ConfigurationError(
-                "OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
+                "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
             )
 
 
@@ -116,8 +116,8 @@ def setup_config(app: Flask) -> None:
     # src/spiffworkflow_backend/config/secrets.py
     app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
 
-    if app.config["BPMN_SPEC_ABSOLUTE_DIR"] is None:
-        raise ConfigurationError("BPMN_SPEC_ABSOLUTE_DIR config must be set")
+    if app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] is None:
+        raise ConfigurationError("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR config must be set")
 
     app.config["PROCESS_UUID"] = uuid.uuid4()
 

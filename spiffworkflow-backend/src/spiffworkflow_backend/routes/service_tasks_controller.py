@@ -27,7 +27,7 @@ def authentication_list() -> flask.wrappers.Response:
     available_authentications = ServiceTaskService.authentication_list()
     response_json = {
         "results": available_authentications,
-        "connector_proxy_base_url": current_app.config["CONNECTOR_PROXY_URL"],
+        "connector_proxy_base_url": current_app.config["SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL"],
         "redirect_url": f"{current_app.config['SPIFFWORKFLOW_BACKEND_URL']}/v1.0/authentication_callback",
     }
 
@@ -45,5 +45,5 @@ def authentication_callback(
         f"{service}/{auth_method}", response, g.user.id, create_if_not_exists=True
     )
     return redirect(
-        f"{current_app.config['SPIFFWORKFLOW_FRONTEND_URL']}/admin/configuration"
+        f"{current_app.config['SPIFFWORKFLOW_BACKEND_SPIFFWORKFLOW_FRONTEND_URL']}/admin/configuration"
     )

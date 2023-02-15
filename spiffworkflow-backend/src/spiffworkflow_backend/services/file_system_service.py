@@ -40,7 +40,7 @@ class FileSystemService:
     @staticmethod
     def root_path() -> str:
         """Root_path."""
-        dir_name = current_app.config["BPMN_SPEC_ABSOLUTE_DIR"]
+        dir_name = current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         # ensure this is a string - thanks mypy...
         return os.path.abspath(os.path.join(dir_name, ""))
 
@@ -66,7 +66,7 @@ class FileSystemService:
 
     @staticmethod
     def process_model_relative_path(spec: ProcessModelInfo) -> str:
-        """Get the file path to a process model relative to BPMN_SPEC_ABSOLUTE_DIR.
+        """Get the file path to a process model relative to SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR.
 
         If the full path is /path/to/process-group-a/group-b/process-model-a, it will return:
         process-group-a/group-b/process-model-a

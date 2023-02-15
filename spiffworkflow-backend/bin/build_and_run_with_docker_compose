@@ -7,8 +7,8 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
-export BPMN_SPEC_ABSOLUTE_DIR
+SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR=$(./bin/find_sample_process_models)
+export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_DOCKER_COMPOSE_PROFILE=run

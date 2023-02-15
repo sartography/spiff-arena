@@ -674,7 +674,7 @@ def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
     potential_owner_usernames_from_group_concat_or_similar = func.group_concat(
         assigned_user.username.distinct()
     ).label("potential_owner_usernames")
-    db_type = current_app.config.get("SPIFF_DATABASE_TYPE")
+    db_type = current_app.config.get("SPIFFWORKFLOW_BACKEND_SPIFF_DATABASE_TYPE")
 
     if db_type == "postgres":
         potential_owner_usernames_from_group_concat_or_similar = func.string_agg(
