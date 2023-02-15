@@ -504,7 +504,7 @@ class AuthorizationService:
         user_attributes["service_id"] = user_info["sub"]
 
         for field_index, tenant_specific_field in enumerate(
-            current_app.config["TENANT_SPECIFIC_FIELDS"]
+            current_app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"]
         ):
             if tenant_specific_field in user_info:
                 field_number = field_index + 1

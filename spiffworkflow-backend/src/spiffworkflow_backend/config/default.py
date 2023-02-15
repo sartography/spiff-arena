@@ -41,6 +41,11 @@ OPEN_ID_CLIENT_SECRET_KEY = environ.get(
     "OPEN_ID_CLIENT_SECRET_KEY", default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"
 )  # noqa: S105
 
+# Tenant specific fields is a comma separated list of field names that we will convert to list of strings
+# and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
+# comma-separated list.
+OPEN_ID_TENANT_SPECIFIC_FIELDS = environ.get("OPEN_ID_TENANT_SPECIFIC_FIELDS")
+
 SPIFFWORKFLOW_BACKEND_LOG_TO_FILE = (
     environ.get("SPIFFWORKFLOW_BACKEND_LOG_TO_FILE", default="false") == "true"
 )
@@ -88,11 +93,6 @@ SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID = environ.get(
 ALLOW_CONFISCATING_LOCK_AFTER_SECONDS = int(
     environ.get("ALLOW_CONFISCATING_LOCK_AFTER_SECONDS", default="600")
 )
-
-# Tenant specific fields is a comma separated list of field names that we will convert to list of strings
-# and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
-# comma-separated list.
-TENANT_SPECIFIC_FIELDS = environ.get("TENANT_SPECIFIC_FIELDS")
 
 SPIFFWORKFLOW_DEFAULT_USER_GROUP = environ.get(
     "SPIFFWORKFLOW_DEFAULT_USER_GROUP", default="everybody"

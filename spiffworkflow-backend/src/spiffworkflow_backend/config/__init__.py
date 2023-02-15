@@ -52,15 +52,15 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
 
 
 def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
-    tenant_specific_fields = app.config.get("TENANT_SPECIFIC_FIELDS")
+    tenant_specific_fields = app.config.get("OPEN_ID_TENANT_SPECIFIC_FIELDS")
 
     if tenant_specific_fields is None or tenant_specific_fields == "":
-        app.config["TENANT_SPECIFIC_FIELDS"] = []
+        app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"] = []
     else:
-        app.config["TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
-        if len(app.config["TENANT_SPECIFIC_FIELDS"]) > 3:
+        app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
+        if len(app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"]) > 3:
             raise ConfigurationError(
-                "TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
+                "OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
             )
 
 
