@@ -796,8 +796,8 @@ class AuthorizationService:
         for iutga in initial_user_to_group_assignments:
             # do not remove users from the default user group
             if (
-                current_app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"] is None
-                or current_app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"]
+                current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] is None
+                or current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
                 != iutga.group.identifier
             ):
                 current_user_dict: UserToGroupDict = {
@@ -809,7 +809,7 @@ class AuthorizationService:
 
         # do not remove the default user group
         desired_group_identifiers.add(
-            current_app.config["SPIFFWORKFLOW_DEFAULT_USER_GROUP"]
+            current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
         )
         groups_to_delete = GroupModel.query.filter(
             GroupModel.identifier.not_in(desired_group_identifiers)
