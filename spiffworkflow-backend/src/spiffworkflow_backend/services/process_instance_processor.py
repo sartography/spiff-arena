@@ -694,10 +694,6 @@ class ProcessInstanceProcessor:
         end_in_seconds: Optional[float] = None,
     ) -> dict:
         """SaveSpiffStepDetails."""
-        # bpmn_json = self.serialize()
-        # wf_json = json.loads(bpmn_json)
-        default_registry = DefaultRegistry()
-
         if spiff_task is None:
             # TODO: safer to pass in task vs use last task?
             spiff_task = self.bpmn_process_instance.last_task
@@ -709,17 +705,8 @@ class ProcessInstanceProcessor:
         if start_in_seconds is None:
             start_in_seconds = time.time()
 
-        task_data = default_registry.convert(spiff_task.data)
-        python_env = default_registry.convert(
-            self._script_engine.environment.last_result()
-        )
+        task_json = self.get_task_json_from_spiff_task(spiff_task)
 
-        task_json: Dict[str, Any] = {
-            # "tasks": wf_json["tasks"],
-            # "subprocesses": wf_json["subprocesses"],
-            "task_data": task_data,
-            "python_env": python_env,
-        }
         return {
             "process_instance_id": self.process_instance_model.id,
             "spiff_step": self.process_instance_model.spiff_step or 1,
@@ -1730,6 +1717,18 @@ class ProcessInstanceProcessor:
         )
         return user_tasks  # type: ignore
 
+    def get_task_json_from_spiff_task(self, spiff_task: SpiffTask) -> dict[str, Any]:
+        default_registry = DefaultRegistry()
+        task_data = default_registry.convert(spiff_task.data)
+        python_env = default_registry.convert(
+            self._script_engine.environment.last_result()
+        )
+        task_json: Dict[str, Any] = {
+            "task_data": task_data,
+            "python_env": python_env,
+        }
+        return task_json
+
     def complete_task(
         self, task: SpiffTask, human_task: HumanTaskModel, user: UserModel
     ) -> None:
@@ -1755,6 +1754,7 @@ class ProcessInstanceProcessor:
 
         details_model.task_state = task.get_state_name()
         details_model.end_in_seconds = time.time()
+        details_model.task_json = self.get_task_json_from_spiff_task(task)
         db.session.add(details_model)
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
