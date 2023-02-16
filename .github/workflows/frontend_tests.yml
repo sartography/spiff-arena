@@ -29,6 +29,7 @@ jobs:
         with:
           working-directory: ./spiffworkflow-frontend
           browser: chrome
+        env:
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "false"

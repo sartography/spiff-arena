@@ -20,3 +20,4 @@ while [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${port}/v1.
   attempts=$(( attempts + 1 ))
   sleep 1
 done
+echo "backend up"
