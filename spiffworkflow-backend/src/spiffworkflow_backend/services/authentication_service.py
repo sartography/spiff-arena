@@ -63,17 +63,19 @@ class AuthenticationService:
     @staticmethod
     def client_id() -> str:
         """Returns the client id from the config."""
-        return current_app.config.get("OPEN_ID_CLIENT_ID", "")
+        return current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", "")
 
     @staticmethod
     def server_url() -> str:
         """Returns the server url from the config."""
-        return current_app.config.get("OPEN_ID_SERVER_URL", "")
+        return current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL", "")
 
     @staticmethod
     def secret_key() -> str:
         """Returns the secret key from the config."""
-        return current_app.config.get("OPEN_ID_CLIENT_SECRET_KEY", "")
+        return current_app.config.get(
+            "SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", ""
+        )
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str) -> str:

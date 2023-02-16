@@ -7,9 +7,9 @@ services:
         condition: service_healthy
     environment:
       APPLICATION_ROOT: "/"
-      PORT0: "${SPIFF_FRONTEND_PORT:-8001}"
+      PORT0: "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
     ports:
-      - "${SPIFF_FRONTEND_PORT:-8001}:${SPIFF_FRONTEND_PORT:-8001}/tcp"
+      - "${SPIFFWORKFLOW_FRONTEND_PORT:-8001}:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}/tcp"
 
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
@@ -18,24 +18,25 @@ services:
       spiffworkflow-db:
         condition: service_healthy
     environment:
-      APPLICATION_ROOT: "/"
+      SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT: "/"
       SPIFFWORKFLOW_BACKEND_ENV: "local_development"
       FLASK_DEBUG: "0"
       FLASK_SESSION_SECRET_KEY: "${FLASK_SESSION_SECRET_KEY:-super_secret_key}"
-      OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
-      SPIFFWORKFLOW_FRONTEND_URL: "http://localhost:${SPIFF_FRONTEND_PORT:-8001}"
       # WARNING: Frontend is a static site which assumes frontend port - 1 on localhost.
       SPIFFWORKFLOW_BACKEND_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}"
-      SPIFFWORKFLOW_BACKEND_PORT: "${SPIFF_BACKEND_PORT:-8000}"
-      SPIFFWORKFLOW_BACKEND_UPGRADE_DB: "true"
+
+      SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "/app/process_models"
+      SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL: "http://spiffworkflow-connector:8004"
       SPIFFWORKFLOW_BACKEND_DATABASE_URI: "mysql+mysqlconnector://root:${SPIFF_MYSQL_PASS:-my-secret-pw}@spiffworkflow-db:${SPIFF_MYSQL_PORT:-8003}/spiffworkflow_backend_development"
-      BPMN_SPEC_ABSOLUTE_DIR: "/app/process_models"
       SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "false"
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
+      SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL: "http://localhost:${SPIFF_BACKEND_PORT:-8000}/openid"
       SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "example.yml"
-      RUN_BACKGROUND_SCHEDULER: "true"
-      OPEN_ID_CLIENT_ID: "spiffworkflow-backend"
-      OPEN_ID_CLIENT_SECRET_KEY: "my_open_id_secret_key"
-      CONNECTOR_PROXY_URL: "http://spiffworkflow-connector:8004"
+      SPIFFWORKFLOW_BACKEND_PORT: "${SPIFF_BACKEND_PORT:-8000}"
+      SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER: "true"
+      SPIFFWORKFLOW_BACKEND_UPGRADE_DB: "true"
+      SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND: "http://localhost:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}"
     ports:
       - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
