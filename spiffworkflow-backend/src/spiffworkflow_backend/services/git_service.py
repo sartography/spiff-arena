@@ -82,7 +82,9 @@ class GitService:
         cls.check_for_basic_configs()
         branch_name_to_use = branch_name
         if branch_name_to_use is None:
-            branch_name_to_use = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
+            branch_name_to_use = current_app.config[
+                "SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"
+            ]
         repo_path_to_use = repo_path
         if repo_path is None:
             repo_path_to_use = current_app.config[
@@ -132,15 +134,15 @@ class GitService:
     def check_for_publish_configs(cls) -> None:
         """Check_for_configs."""
         cls.check_for_basic_configs()
-        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"] is None:
+        if (
+            current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"]
+            is None
+        ):
             raise MissingGitConfigsError(
                 "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. "
                 "This is required for publishing process models"
             )
-        if (
-            current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"]
-            is None
-        ):
+        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"] is None:
             raise MissingGitConfigsError(
                 "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL."
                 " This is required for publishing process models"
@@ -212,8 +214,8 @@ class GitService:
 
         if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
             raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. This is required"
-                " for updating the repository as a result of the webhook"
+                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. This is"
+                " required for updating the repository as a result of the webhook"
             )
 
         ref = webhook["ref"]
