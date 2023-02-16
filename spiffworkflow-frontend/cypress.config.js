@@ -30,7 +30,7 @@ const cypressConfig = {
   videoUploadOnPasses: false,
   chromeWebSecurity: false,
   e2e: {
-    baseUrl: 'http://localhost:7001',
+    baseUrl: `http://localhost:${process.env.SPIFFWORKFLOW_FRONTEND_PORT || 7001}`,
     setupNodeEvents(on, config) {
       deleteVideosOnSuccess(on)
       require('@cypress/grep/src/plugin')(config);

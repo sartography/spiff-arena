@@ -33,7 +33,7 @@ describe('process-groups', () => {
     cy.contains(newGroupDisplayName).should('not.exist');
 
     // meaning the process group list page is loaded, so we can sign out safely without worrying about ajax requests failing
-    cy.get('.tile-process-group-content-container').should('exist');
+    cy.getBySel('process-groups-loaded').should('exist');
   });
 
   // process groups no longer has pagination post-tiles
