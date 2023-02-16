@@ -28,4 +28,4 @@ class GetFrontendUrl(Script):
         **kwargs: Any
     ) -> Any:
         """Run."""
-        return current_app.config["SPIFFWORKFLOW_BACKEND_SPIFFWORKFLOW_FRONTEND_URL"]
+        return current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"]
