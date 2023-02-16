@@ -1,353 +1,353 @@
-# name: Backend Tests
-#
-# on:
-#   - push
-#   - pull_request
-#
-# defaults:
-#   run:
-#     working-directory: spiffworkflow-backend
-#
-# jobs:
-#   tests:
-#     name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }} ${{ matrix.database }}
-#     runs-on: ${{ matrix.os }}
-#     strategy:
-#       fail-fast: false
-#       matrix:
-#         include:
-#           # FIXME: https://github.com/mysql/mysql-connector-python/pull/86
-#           # put back when poetry update protobuf mysql-connector-python updates protobuf
-#           # right now mysql is forcing protobuf to version 3
-#           # - { python: "3.11", os: "ubuntu-latest", session: "safety" }
-#           - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
-#           - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
-#           - { python: "3.9", os: "ubuntu-latest", session: "mypy" }
-#           - {
-#               python: "3.11",
-#               os: "ubuntu-latest",
-#               session: "tests",
-#               database: "mysql",
-#             }
-#           - {
-#               python: "3.11",
-#               os: "ubuntu-latest",
-#               session: "tests",
-#               database: "postgres",
-#             }
-#           - {
-#               python: "3.11",
-#               os: "ubuntu-latest",
-#               session: "tests",
-#               database: "sqlite",
-#             }
-#           - {
-#               python: "3.10",
-#               os: "ubuntu-latest",
-#               session: "tests",
-#               database: "sqlite",
-#             }
-#           - {
-#               python: "3.9",
-#               os: "ubuntu-latest",
-#               session: "tests",
-#               database: "sqlite",
-#             }
-#           - {
-#               python: "3.10",
-#               os: "windows-latest",
-#               session: "tests",
-#               database: "sqlite",
-#             }
-#           - {
-#               python: "3.11",
-#               os: "macos-latest",
-#               session: "tests",
-#               database: "sqlite",
-#             }
-#           - {
-#               # typeguard 2.13.3 is broken with TypeDict in 3.11.
-#               # probably the next release fixes it.
-#               # https://github.com/agronholm/typeguard/issues/242
-#               python: "3.11",
-#               os: "ubuntu-latest",
-#               session: "typeguard",
-#               database: "sqlite",
-#             }
-#           - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
-#           - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
-#
-#     env:
-#       FLASK_SESSION_SECRET_KEY: super_secret_key
-#       FORCE_COLOR: "1"
-#       NOXSESSION: ${{ matrix.session }}
-#       PRE_COMMIT_COLOR: "always"
-#       SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
-#       SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
-#
-#     steps:
-#       - name: Check out the repository
-#         uses: actions/checkout@v3.0.2
-#
-#       - name: Set up Python ${{ matrix.python }}
-#         uses: actions/setup-python@v4.2.0
-#         with:
-#           python-version: ${{ matrix.python }}
-#
-#       - name: Upgrade pip
-#         run: |
-#           pip install --constraint=.github/workflows/constraints.txt pip
-#           pip --version
-#
-#       - name: Upgrade pip in virtual environments
-#         shell: python
-#         run: |
-#           import os
-#           import pip
-#
-#           with open(os.environ["GITHUB_ENV"], mode="a") as io:
-#               print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
-#
-#       - name: Install Poetry
-#         run: |
-#           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
-#           poetry --version
-#
-#       - name: Install Nox
-#         run: |
-#           pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-#           pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
-#           nox --version
-#
-#       # - name: Compute pre-commit cache key
-#       #   if: matrix.session == 'pre-commit'
-#       #   id: pre-commit-cache
-#       #   shell: python
-#       #   run: |
-#       #     import hashlib
-#       #     import sys
-#       #
-#       #     python = "py{}.{}".format(*sys.version_info[:2])
-#       #     payload = sys.version.encode() + sys.executable.encode()
-#       #     digest = hashlib.sha256(payload).hexdigest()
-#       #     result = "${{ runner.os }}-{}-{}-pre-commit".format(python, digest[:8])
-#       #
-#       #     print("::set-output name=result::{}".format(result))
-#       #
-#       # - name: Restore pre-commit cache
-#       #   uses: actions/cache@v3.0.11
-#       #   if: matrix.session == 'pre-commit'
-#       #   with:
-#       #     path: ~/.cache/pre-commit
-#       #     key: ${{ steps.pre-commit-cache.outputs.result }}-${{ hashFiles('.pre-commit-config.yaml') }}
-#       #     restore-keys: |
-#       #       ${{ steps.pre-commit-cache.outputs.result }}-
-#       - name: Setup Mysql
-#         uses: mirromutth/mysql-action@v1.1
-#         with:
-#           host port: 3306
-#           container port: 3306
-#           mysql version: "8.0"
-#           mysql database: "spiffworkflow_backend_unit_testing"
-#           mysql root password: password
-#         if: matrix.database == 'mysql'
-#
-#       - name: Setup Postgres
-#         run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
-#         if: matrix.database == 'postgres'
-#
-#       - name: Run Nox
-#         run: |
-#           nox --force-color --python=${{ matrix.python }}
-#
-#       - name: Upload coverage data
-#         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
-#         if: always() && matrix.session == 'tests' && matrix.python == '3.11' && matrix.os == 'ubuntu-latest' && matrix.database == 'mysql'
-#         uses: "actions/upload-artifact@v3.0.0"
-#         # this action doesn't seem to respect working-directory so include working-directory value in path
-#         with:
-#           name: coverage-data
-#           path: "spiffworkflow-backend/.coverage.*"
-#
-#       - name: Upload documentation
-#         if: matrix.session == 'docs-build'
-#         uses: actions/upload-artifact@v3.0.0
-#         with:
-#           name: docs
-#           path: docs/_build
-#
-#       - name: Upload logs
-#         if: failure() && matrix.session == 'tests'
-#         uses: "actions/upload-artifact@v3.0.0"
-#         with:
-#           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
-#           path: "./log/*.log"
-#
-#   run_pre_commit_checks:
-#     runs-on: ubuntu-latest
-#     defaults:
-#       run:
-#         working-directory: .
-#     steps:
-#       - name: Check out the repository
-#         uses: actions/checkout@v3.0.2
-#         with:
-#           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-#           fetch-depth: 0
-#       - name: Set up Python
-#         uses: actions/setup-python@v4.2.0
-#         with:
-#           python-version: "3.11"
-#       - name: Install Poetry
-#         run: |
-#           pipx install poetry
-#           poetry --version
-#       - name: Poetry Install
-#         run: poetry install
-#       - name: run_pre_commit
-#         run: ./bin/run_pre_commit_in_ci
-#
-#   check_docker_start_script:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Check out the repository
-#         uses: actions/checkout@v3.0.2
-#         with:
-#           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-#           fetch-depth: 0
-#       - name: Checkout Samples
-#         uses: actions/checkout@v3
-#         with:
-#           repository: sartography/sample-process-models
-#           path: sample-process-models
-#       - name: start_backend
-#         run: ./bin/build_and_run_with_docker_compose
-#         timeout-minutes: 20
-#         env:
-#           SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP: "false"
-#       - name: wait_for_backend
-#         run: ./bin/wait_for_server_to_be_up 5
-#
-#   coverage:
-#     runs-on: ubuntu-latest
-#     needs: [tests, run_pre_commit_checks, check_docker_start_script]
-#     steps:
-#       - name: Check out the repository
-#         uses: actions/checkout@v3.0.2
-#         with:
-#           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-#           fetch-depth: 0
-#
-#       - name: Set up Python
-#         uses: actions/setup-python@v4.2.0
-#         with:
-#           python-version: "3.11"
-#
-#       - name: Upgrade pip
-#         run: |
-#           pip install --constraint=.github/workflows/constraints.txt pip
-#           pip --version
-#
-#       - name: Install Poetry
-#         run: |
-#           pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
-#           poetry --version
-#
-#       - name: Install Nox
-#         run: |
-#           pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
-#           pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
-#           nox --version
-#
-#       - name: Download coverage data
-#         uses: actions/download-artifact@v3.0.1
-#         with:
-#           name: coverage-data
-#           # this action doesn't seem to respect working-directory so include working-directory value in path
-#           path: spiffworkflow-backend
-#
-#       - name: Combine coverage data and display human readable report
-#         run: |
-#           find . -name \*.pyc -delete
-#           nox --force-color --session=coverage
-#
-#       - name: Create coverage report
-#         run: |
-#           nox --force-color --session=coverage -- xml
-#
-#       - name: Upload coverage report
-#         uses: codecov/codecov-action@v3.1.0
-#
-#       - name: SonarCloud Scan
-#         uses: sonarsource/sonarcloud-github-action@master
-#         # thought about just skipping dependabot
-#         # if: ${{ github.actor != 'dependabot[bot]' }}
-#         # but figured all pull requests seems better, since none of them will have access to sonarcloud.
-#         # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
-#         # if: ${{ github.event_name != 'pull_request' }}
-#         # so just skip everything but main
-#         if: github.ref_name == 'main'
-#         with:
-#           projectBaseDir: spiffworkflow-frontend
-#         env:
-#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-#       # part about saving PR number and then using it from auto-merge-dependabot-prs from:
-#       # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-#       - name: Save PR number
-#         if: ${{ github.event_name == 'pull_request' }}
-#         env:
-#           PR_NUMBER: ${{ github.event.number }}
-#         run: |
-#           mkdir -p ./pr
-#           echo "$PR_NUMBER" > ./pr/pr_number
-#       - uses: actions/upload-artifact@v3
-#         with:
-#           name: pr_number
-#           path: pr/
-#
-#   build-and-push-image:
-#     needs: coverage
-#     if: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
-#     env:
-#       REGISTRY: ghcr.io
-#       IMAGE_NAME: sartography/spiffworkflow-backend
-#     runs-on: ubuntu-latest
-#     permissions:
-#       contents: read
-#       packages: write
-#
-#     steps:
-#       - name: Check out the repository
-#         uses: actions/checkout@v3.0.2
-#         with:
-#           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-#           fetch-depth: 0
-#       - name: Get current date
-#         id: date
-#         run: echo "date=$(date +%s)" >> $GITHUB_OUTPUT
-#       - name: Log in to the Container registry
-#         uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
-#         with:
-#           registry: ${{ env.REGISTRY }}
-#           username: ${{ github.actor }}
-#           password: ${{ secrets.GITHUB_TOKEN }}
-#
-#       - name: Extract metadata (tags, labels) for Docker
-#         id: meta
-#         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
-#         with:
-#           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-#
-#       - name: Build and push Docker image
-#         uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
-#         env:
-#           # if we ever support more than main we will need to format the ref name
-#           # like sub '/' with '-'
-#           TAG: ${{ github.ref_name }}-${{ steps.date.outputs.date }}
-#         with:
-#           # this action doesn't seem to respect working-directory so set context
-#           context: spiffworkflow-backend
-#           push: true
-#           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
-#           labels: ${{ steps.meta.outputs.labels }}
+name: Backend Tests
+
+on:
+  - push
+  - pull_request
+
+defaults:
+  run:
+    working-directory: spiffworkflow-backend
+
+jobs:
+  tests:
+    name: ${{ matrix.session }} ${{ matrix.python }} / ${{ matrix.os }} ${{ matrix.database }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # FIXME: https://github.com/mysql/mysql-connector-python/pull/86
+          # put back when poetry update protobuf mysql-connector-python updates protobuf
+          # right now mysql is forcing protobuf to version 3
+          # - { python: "3.11", os: "ubuntu-latest", session: "safety" }
+          - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
+          - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
+          - { python: "3.9", os: "ubuntu-latest", session: "mypy" }
+          - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "mysql",
+            }
+          - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "postgres",
+            }
+          - {
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.10",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.9",
+              os: "ubuntu-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.10",
+              os: "windows-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              python: "3.11",
+              os: "macos-latest",
+              session: "tests",
+              database: "sqlite",
+            }
+          - {
+              # typeguard 2.13.3 is broken with TypeDict in 3.11.
+              # probably the next release fixes it.
+              # https://github.com/agronholm/typeguard/issues/242
+              python: "3.11",
+              os: "ubuntu-latest",
+              session: "typeguard",
+              database: "sqlite",
+            }
+          - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
+          - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
+
+    env:
+      FLASK_SESSION_SECRET_KEY: super_secret_key
+      FORCE_COLOR: "1"
+      NOXSESSION: ${{ matrix.session }}
+      PRE_COMMIT_COLOR: "always"
+      SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
+      SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.0.2
+
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v4.2.0
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Upgrade pip
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt pip
+          pip --version
+
+      - name: Upgrade pip in virtual environments
+        shell: python
+        run: |
+          import os
+          import pip
+
+          with open(os.environ["GITHUB_ENV"], mode="a") as io:
+              print(f"VIRTUALENV_PIP={pip.__version__}", file=io)
+
+      - name: Install Poetry
+        run: |
+          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          poetry --version
+
+      - name: Install Nox
+        run: |
+          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
+          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+          nox --version
+
+      # - name: Compute pre-commit cache key
+      #   if: matrix.session == 'pre-commit'
+      #   id: pre-commit-cache
+      #   shell: python
+      #   run: |
+      #     import hashlib
+      #     import sys
+      #
+      #     python = "py{}.{}".format(*sys.version_info[:2])
+      #     payload = sys.version.encode() + sys.executable.encode()
+      #     digest = hashlib.sha256(payload).hexdigest()
+      #     result = "${{ runner.os }}-{}-{}-pre-commit".format(python, digest[:8])
+      #
+      #     print("::set-output name=result::{}".format(result))
+      #
+      # - name: Restore pre-commit cache
+      #   uses: actions/cache@v3.0.11
+      #   if: matrix.session == 'pre-commit'
+      #   with:
+      #     path: ~/.cache/pre-commit
+      #     key: ${{ steps.pre-commit-cache.outputs.result }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      #     restore-keys: |
+      #       ${{ steps.pre-commit-cache.outputs.result }}-
+      - name: Setup Mysql
+        uses: mirromutth/mysql-action@v1.1
+        with:
+          host port: 3306
+          container port: 3306
+          mysql version: "8.0"
+          mysql database: "spiffworkflow_backend_unit_testing"
+          mysql root password: password
+        if: matrix.database == 'mysql'
+
+      - name: Setup Postgres
+        run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
+        if: matrix.database == 'postgres'
+
+      - name: Run Nox
+        run: |
+          nox --force-color --python=${{ matrix.python }}
+
+      - name: Upload coverage data
+        # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
+        if: always() && matrix.session == 'tests' && matrix.python == '3.11' && matrix.os == 'ubuntu-latest' && matrix.database == 'mysql'
+        uses: "actions/upload-artifact@v3.0.0"
+        # this action doesn't seem to respect working-directory so include working-directory value in path
+        with:
+          name: coverage-data
+          path: "spiffworkflow-backend/.coverage.*"
+
+      - name: Upload documentation
+        if: matrix.session == 'docs-build'
+        uses: actions/upload-artifact@v3.0.0
+        with:
+          name: docs
+          path: docs/_build
+
+      - name: Upload logs
+        if: failure() && matrix.session == 'tests'
+        uses: "actions/upload-artifact@v3.0.0"
+        with:
+          name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
+          path: "./log/*.log"
+
+  run_pre_commit_checks:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.0.2
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@v4.2.0
+        with:
+          python-version: "3.11"
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+          poetry --version
+      - name: Poetry Install
+        run: poetry install
+      - name: run_pre_commit
+        run: ./bin/run_pre_commit_in_ci
+
+  check_docker_start_script:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.0.2
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+          fetch-depth: 0
+      - name: Checkout Samples
+        uses: actions/checkout@v3
+        with:
+          repository: sartography/sample-process-models
+          path: sample-process-models
+      - name: start_backend
+        run: ./bin/build_and_run_with_docker_compose
+        timeout-minutes: 20
+        env:
+          SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP: "false"
+      - name: wait_for_backend
+        run: ./bin/wait_for_server_to_be_up 5
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: [tests, run_pre_commit_checks, check_docker_start_script]
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.0.2
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4.2.0
+        with:
+          python-version: "3.11"
+
+      - name: Upgrade pip
+        run: |
+          pip install --constraint=.github/workflows/constraints.txt pip
+          pip --version
+
+      - name: Install Poetry
+        run: |
+          pipx install --pip-args=--constraint=.github/workflows/constraints.txt poetry
+          poetry --version
+
+      - name: Install Nox
+        run: |
+          pipx install --pip-args=--constraint=.github/workflows/constraints.txt nox
+          pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
+          nox --version
+
+      - name: Download coverage data
+        uses: actions/download-artifact@v3.0.1
+        with:
+          name: coverage-data
+          # this action doesn't seem to respect working-directory so include working-directory value in path
+          path: spiffworkflow-backend
+
+      - name: Combine coverage data and display human readable report
+        run: |
+          find . -name \*.pyc -delete
+          nox --force-color --session=coverage
+
+      - name: Create coverage report
+        run: |
+          nox --force-color --session=coverage -- xml
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v3.1.0
+
+      - name: SonarCloud Scan
+        uses: sonarsource/sonarcloud-github-action@master
+        # thought about just skipping dependabot
+        # if: ${{ github.actor != 'dependabot[bot]' }}
+        # but figured all pull requests seems better, since none of them will have access to sonarcloud.
+        # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
+        # if: ${{ github.event_name != 'pull_request' }}
+        # so just skip everything but main
+        if: github.ref_name == 'main'
+        with:
+          projectBaseDir: spiffworkflow-frontend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+      - name: Save PR number
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./pr
+          echo "$PR_NUMBER" > ./pr/pr_number
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr/
+
+  build-and-push-image:
+    needs: coverage
+    if: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: sartography/spiffworkflow-backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.0.2
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+          fetch-depth: 0
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +%s)" >> $GITHUB_OUTPUT
+      - name: Log in to the Container registry
+        uses: docker/login-action@f054a8b539a109f9f41c372932f1ae047eff08c9
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@ad44023a93711e3deb337508980b4b5e9bcdc5dc
+        env:
+          # if we ever support more than main we will need to format the ref name
+          # like sub '/' with '-'
+          TAG: ${{ github.ref_name }}-${{ steps.date.outputs.date }}
+        with:
+          # this action doesn't seem to respect working-directory so set context
+          context: spiffworkflow-backend
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+          labels: ${{ steps.meta.outputs.labels }}

@@ -4,154 +4,126 @@ on:
   - push
   - pull_request
 
-# defaults:
-#   run:
-#     working-directory: spiffworkflow-frontend
+defaults:
+  run:
+    working-directory: spiffworkflow-frontend
 
 # https://docs.github.com/en/actions/using-workflows/reusing-workflows
 
 jobs:
-  quickstart-guide-test:
+  tests:
     runs-on: ubuntu-latest
-    # needs: [create_frontend_docker_container, create_backend_docker_container, create_demo-proxy]
+    steps:
+      - name: Development Code
+        uses: actions/checkout@v3
+        with:
+          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
+          fetch-depth: 0
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.x
+      - run: npm install
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build --if-present
+      - name: SonarCloud Scan
+        # thought about just skipping dependabot
+        # if: ${{ github.actor != 'dependabot[bot]' }}
+        # but figured all pull requests seems better, since none of them will have access to sonarcloud.
+        # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
+        # if: ${{ github.event_name != 'pull_request' }}
+        # so just skip everything but main
+        if: github.ref_name == 'main'
+        uses: sonarsource/sonarcloud-github-action@master
+        with:
+          projectBaseDir: spiffworkflow-frontend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      # part about saving PR number and then using it from auto-merge-dependabot-prs from:
+      # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
+      - name: Save PR number
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          PR_NUMBER: ${{ github.event.number }}
+        run: |
+          mkdir -p ./pr
+          echo "$PR_NUMBER" > ./pr/pr_number
+      - uses: actions/upload-artifact@v3
+        with:
+          name: pr_number
+          path: pr/
+
+  cypress-run:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Setup Apps
-        run: ./bin/run_arena_with_docker_compose
+      - name: Checkout Samples
+        uses: actions/checkout@v3
+        with:
+          repository: sartography/sample-process-models
+          path: sample-process-models
+      - name: start_keycloak
+        working-directory: ./spiffworkflow-backend
+        run: ./keycloak/bin/start_keycloak
+      - name: start_backend
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/build_and_run_with_docker_compose
+        timeout-minutes: 20
+        env:
+          SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "true"
+          SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "acceptance_tests.yml"
+      - name: start_frontend
+        # working-directory: ./spiffworkflow-frontend
+        run: ./bin/build_and_run_with_docker_compose
       - name: wait_for_backend
         working-directory: ./spiffworkflow-backend
-        run: ./bin/wait_for_server_to_be_up 5 8000
+        run: ./bin/wait_for_server_to_be_up 5
       - name: wait_for_frontend
-        working-directory: ./spiffworkflow-frontend
-        run: ./bin/wait_for_frontend_to_be_up 5 8001
+        # working-directory: ./spiffworkflow-frontend
+        run: ./bin/wait_for_frontend_to_be_up 5
+      - name: wait_for_keycloak
+        working-directory: ./spiffworkflow-backend
+        run: ./keycloak/bin/wait_for_keycloak 5
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:
           working-directory: ./spiffworkflow-frontend
           browser: chrome
-          spec: cypress/e2e/process_groups.cy.js
+          # only record on push, not pull_request, since we do not have secrets for PRs,
+          # so the required CYPRESS_RECORD_KEY will not be available.
+          # we have limited runs in cypress cloud, so only record main builds
+          record: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
         env:
+          # pass the Dashboard record key as an environment variable
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "false"
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_USERNAME: "admin"
-          CYPRESS_SPIFFWORKFLOW_FRONTEND_PASSWORD: "admin"
-          SPIFFWORKFLOW_FRONTEND_PORT: 8001
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "true"
+      - name: get_backend_logs_from_docker_compose
+        if: failure()
+        working-directory: ./spiffworkflow-backend
+        run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
+      - name: Upload logs
+        if: failure()
+        uses: "actions/upload-artifact@v3.0.0"
+        with:
+          name: spiffworkflow-backend-logs
+          path: "./spiffworkflow-backend/log/*.log"
 
-  # tests:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Development Code
-  #       uses: actions/checkout@v3
-  #       with:
-  #         # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-  #         fetch-depth: 0
-  #     - name: Setup Node
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 18.x
-  #     - run: npm install
-  #     - run: npm run lint
-  #     - run: npm test
-  #     - run: npm run build --if-present
-  #     - name: SonarCloud Scan
-  #       # thought about just skipping dependabot
-  #       # if: ${{ github.actor != 'dependabot[bot]' }}
-  #       # but figured all pull requests seems better, since none of them will have access to sonarcloud.
-  #       # however, with just skipping pull requests, the build associated with "Triggered via push" is also associated with the pull request and also fails hitting sonarcloud
-  #       # if: ${{ github.event_name != 'pull_request' }}
-  #       # so just skip everything but main
-  #       if: github.ref_name == 'main'
-  #       uses: sonarsource/sonarcloud-github-action@master
-  #       with:
-  #         projectBaseDir: spiffworkflow-frontend
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  #     # part about saving PR number and then using it from auto-merge-dependabot-prs from:
-  #     # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_run
-  #     - name: Save PR number
-  #       if: ${{ github.event_name == 'pull_request' }}
-  #       env:
-  #         PR_NUMBER: ${{ github.event.number }}
-  #       run: |
-  #         mkdir -p ./pr
-  #         echo "$PR_NUMBER" > ./pr/pr_number
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         name: pr_number
-  #         path: pr/
-  #
-  # cypress-run:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - name: Checkout Samples
-  #       uses: actions/checkout@v3
-  #       with:
-  #         repository: sartography/sample-process-models
-  #         path: sample-process-models
-  #     - name: start_keycloak
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./keycloak/bin/start_keycloak
-  #     - name: start_backend
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/build_and_run_with_docker_compose
-  #       timeout-minutes: 20
-  #       env:
-  #         SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA: "true"
-  #         SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME: "acceptance_tests.yml"
-  #     - name: start_frontend
-  #       # working-directory: ./spiffworkflow-frontend
-  #       run: ./bin/build_and_run_with_docker_compose
-  #     - name: wait_for_backend
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/wait_for_server_to_be_up 5
-  #     - name: wait_for_frontend
-  #       # working-directory: ./spiffworkflow-frontend
-  #       run: ./bin/wait_for_frontend_to_be_up 5
-  #     - name: wait_for_keycloak
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./keycloak/bin/wait_for_keycloak 5
-  #     - name: Cypress run
-  #       uses: cypress-io/github-action@v5
-  #       with:
-  #         working-directory: ./spiffworkflow-frontend
-  #         browser: chrome
-  #         # only record on push, not pull_request, since we do not have secrets for PRs,
-  #         # so the required CYPRESS_RECORD_KEY will not be available.
-  #         # we have limited runs in cypress cloud, so only record main builds
-  #         record: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
-  #       env:
-  #         # pass the Dashboard record key as an environment variable
-  #         CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
-  #         # pass GitHub token to allow accurately detecting a build vs a re-run build
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #         CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "true"
-  #     - name: get_backend_logs_from_docker_compose
-  #       if: failure()
-  #       working-directory: ./spiffworkflow-backend
-  #       run: ./bin/get_logs_from_docker_compose >./log/docker_compose.log
-  #     - name: Upload logs
-  #       if: failure()
-  #       uses: "actions/upload-artifact@v3.0.0"
-  #       with:
-  #         name: spiffworkflow-backend-logs
-  #         path: "./spiffworkflow-backend/log/*.log"
-  #
-  #     #  https://github.com/cypress-io/github-action#artifacts
-  #     - name: upload_screenshots
-  #       uses: actions/upload-artifact@v2
-  #       if: failure()
-  #       with:
-  #         name: cypress-screenshots
-  #         path: ./spiffworkflow-frontend/cypress/screenshots
-  #     # Test run video was always captured, so this action uses "always()" condition
-  #     - name: upload_videos
-  #       uses: actions/upload-artifact@v2
-  #       if: failure()
-  #       with:
-  #         name: cypress-videos
-  #         path: ./spiffworkflow-frontend/cypress/videos
+      #  https://github.com/cypress-io/github-action#artifacts
+      - name: upload_screenshots
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: cypress-screenshots
+          path: ./spiffworkflow-frontend/cypress/screenshots
+      # Test run video was always captured, so this action uses "always()" condition
+      - name: upload_videos
+        uses: actions/upload-artifact@v2
+        if: failure()
+        with:
+          name: cypress-videos
+          path: ./spiffworkflow-frontend/cypress/videos
