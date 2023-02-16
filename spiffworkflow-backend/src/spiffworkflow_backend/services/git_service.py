@@ -132,17 +132,17 @@ class GitService:
     def check_for_publish_configs(cls) -> None:
         """Check_for_configs."""
         cls.check_for_basic_configs()
-        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO"] is None:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"] is None:
             raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO. "
+                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. "
                 "This is required for publishing process models"
             )
         if (
-            current_app.config["SPIFFWORKFLOW_BACKEND_GIT_CLONE_URL_FOR_PUBLISHING"]
+            current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"]
             is None
         ):
             raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_CLONE_URL_FOR_PUBLISHING."
+                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL."
                 " This is required for publishing process models"
             )
 
@@ -198,7 +198,7 @@ class GitService:
         clone_url = webhook["repository"]["clone_url"]
         if (
             clone_url
-            != current_app.config["SPIFFWORKFLOW_BACKEND_GIT_CLONE_URL_FOR_PUBLISHING"]
+            != current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"]
         ):
             raise GitCloneUrlMismatchError(
                 "Configured clone url does not match clone url from webhook:"
@@ -243,7 +243,7 @@ class GitService:
         destination_process_root = f"/tmp/{clone_dir}"  # noqa
 
         git_clone_url = current_app.config[
-            "SPIFFWORKFLOW_BACKEND_GIT_CLONE_URL_FOR_PUBLISHING"
+            "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"
         ]
         if git_clone_url.startswith("https://"):
             git_clone_url = git_clone_url.replace(

@@ -33,6 +33,6 @@ SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL = (
     f"https://connector-proxy.{environment_identifier_for_this_config_file_only}"
     ".spiffworkflow.org"
 )
-SPIFFWORKFLOW_BACKEND_GIT_CLONE_URL_FOR_PUBLISHING = environ.get(
+SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL = environ.get(
     "GIT_CLONE_URL", default="https://github.com/sartography/sample-process-models.git"
 )

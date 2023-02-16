@@ -9,7 +9,7 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = (
 SPIFFWORKFLOW_BACKEND_GIT_BRANCH = environ.get(
     "SPIFFWORKFLOW_BACKEND_GIT_BRANCH", default="main"
 )
-SPIFFWORKFLOW_BACKEND_GIT_CLONE_URL_FOR_PUBLISHING = environ.get(
+SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL = environ.get(
     "GIT_CLONE_URL",
     default="https://github.com/sartography/sartography-process-models.git",
 )
