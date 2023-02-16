@@ -87,8 +87,12 @@ SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH = environ.get(
 # or otherwise changes a process model.
 # If publishing is enabled, the contents of this "staging area" / "scratch pad" / WIP spot will be used
 # as the relevant contents for process model that the user wants to publish.
-SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH = environ.get("SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH")
-SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL = environ.get("SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL")
+SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH = environ.get(
+    "SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"
+)
+SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL = environ.get(
+    "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"
+)
 SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE = (
     environ.get("SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE", default="false") == "true"
 )
