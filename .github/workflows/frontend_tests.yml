@@ -56,7 +56,7 @@ jobs:
           path: pr/
 
   cypress-run:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -88,7 +88,7 @@ jobs:
         working-directory: ./spiffworkflow-backend
         run: ./keycloak/bin/wait_for_keycloak 5
       - name: Cypress run
-        uses: cypress-io/github-action@v4
+        uses: cypress-io/github-action@v5
         with:
           working-directory: ./spiffworkflow-frontend
           browser: chrome
