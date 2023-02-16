@@ -45,7 +45,10 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
         app.config.from_object(env_config_module)
         print(f"loaded config: {env_config_module}")
     except ImportStringError as exception:
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT") != "true":
+        if (
+            os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT")
+            != "true"
+        ):
             raise ModuleNotFoundError(
                 f"Cannot find config module: {env_config_module}"
             ) from exception
