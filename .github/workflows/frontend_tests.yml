@@ -25,10 +25,13 @@ jobs:
         working-directory: ./spiffworkflow-frontend
         run: ./bin/wait_for_frontend_to_be_up 5 8001
       - name: Cypress run
-        uses: cypress-io/github-action@v4
+        uses: cypress-io/github-action@v5
+      # - name: Cypress run
+      #   uses: cypress-io/github-action@v4
         with:
           working-directory: ./spiffworkflow-frontend
           browser: chrome
+          spec: cypress/e2e/process_groups.cy.js
         env:
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
