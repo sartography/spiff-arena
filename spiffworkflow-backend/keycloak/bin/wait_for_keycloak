@@ -7,14 +7,12 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-max_attempts="${1:-}"
-if [[ -z "$max_attempts" ]]; then
-  max_attempts=100
-fi
+max_attempts="${1:-100}"
+port="${2:-7002}"
 
 echo "waiting for backend to come up..."
 attempts=0
-while [[ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:7002/realms/master/.well-known/openid-configuration)" != "200" ]]; do
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${port}/realms/master/.well-known/openid-configuration")" != "200" ]]; do
   if [[ "$attempts" -gt "$max_attempts" ]]; then
     >&2 echo "ERROR: Server not up after $max_attempts attempts. There is probably a problem"
     exit 1
