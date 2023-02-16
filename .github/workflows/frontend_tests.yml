@@ -101,7 +101,7 @@ jobs:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
           # pass GitHub token to allow accurately detecting a build vs a re-run build
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "true"
+          CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK: "true"
       - name: get_backend_logs_from_docker_compose
         if: failure()
         working-directory: ./spiffworkflow-backend

@@ -47,7 +47,7 @@ Cypress.Commands.add('login', (selector, ...args) => {
   const password = Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
   cy.get('#username').type(username);
   cy.get('#password').type(password);
-  if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === 'true') {
+  if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
     cy.get('#kc-login').click();
   } else {
     cy.get('#spiff-login-button').click();
@@ -57,7 +57,7 @@ Cypress.Commands.add('login', (selector, ...args) => {
 Cypress.Commands.add('logout', (selector, ...args) => {
   cy.getBySel('logout-button').click();
 
-  if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === 'true') {
+  if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
     // otherwise we can click logout, quickly load the next page, and the javascript
     // doesn't have time to actually sign you out
     cy.contains('Sign in to your account');
