@@ -23,7 +23,7 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = (
     f"https://keycloak.{environment_identifier_for_this_config_file_only}"
     ".spiffworkflow.org/realms/spiffworkflow"
 )
-SPIFFWORKFLOW_BACKEND_SPIFFWORKFLOW_FRONTEND_URL = (
+SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND = (
     f"https://{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
 )
 SPIFFWORKFLOW_BACKEND_URL = (
