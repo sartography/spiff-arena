@@ -80,11 +80,15 @@ SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
 
 # When a user clicks on the `Publish` button, this is the default branch this server merges into.
 # I.e., dev server could have `staging` here. Staging server might have `production` here.
-SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO = environ.get(
-    "SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO"
+SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH = environ.get(
+    "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"
 )
-SPIFFWORKFLOW_BACKEND_GIT_BRANCH = environ.get("SPIFFWORKFLOW_BACKEND_GIT_BRANCH")
-SPIFFWORKFLOW_BACKEND_GIT_CLONE_URL_FOR_PUBLISHING = environ.get("GIT_CLONE_URL")
+# This is the branch that the app automatically commits to every time the user clicks the save button
+# or otherwise changes a process model.
+# If publishing is enabled, the contents of this "staging area" / "scratch pad" / WIP spot will be used
+# as the relevant contents for process model that the user wants to publish.
+SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH = environ.get("SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH")
+SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL = environ.get("SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL")
 SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE = (
     environ.get("SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE", default="false") == "true"
 )

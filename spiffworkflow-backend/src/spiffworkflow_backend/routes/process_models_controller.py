@@ -226,11 +226,11 @@ def process_model_publish(
     """Process_model_publish."""
     if branch_to_update is None:
         branch_to_update = current_app.config[
-            "SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO"
+            "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"
         ]
     if branch_to_update is None:
         raise MissingGitConfigsError(
-            "Missing config for SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO. "
+            "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. "
             "This is required for publishing process models"
         )
     process_model_identifier = _un_modify_modified_process_model_id(
