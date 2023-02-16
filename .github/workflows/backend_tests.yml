@@ -78,12 +78,12 @@ jobs:
           - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
 
     env:
-      NOXSESSION: ${{ matrix.session }}
-      SPIFF_DATABASE_TYPE: ${{ matrix.database }}
-      FORCE_COLOR: "1"
-      PRE_COMMIT_COLOR: "always"
-      DB_PASSWORD: password
       FLASK_SESSION_SECRET_KEY: super_secret_key
+      FORCE_COLOR: "1"
+      NOXSESSION: ${{ matrix.session }}
+      PRE_COMMIT_COLOR: "always"
+      SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
+      SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
 
     steps:
       - name: Check out the repository

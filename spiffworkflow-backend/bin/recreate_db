@@ -9,18 +9,18 @@ set -o errtrace -o errexit -o nounset -o pipefail
 
 export FLASK_SESSION_SECRET_KEY="this_is_recreate_db_secret_key"
 
-if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
+if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-  BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../../sample-process-models"
-  if [[ ! -d "$BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-    BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
-    if [[ ! -d "$BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-      >&2 echo "ERROR: Could not find a location for the sample processes. Last tried: $BPMN_SPEC_ABSOLUTE_DIR"
+  SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../../sample-process-models"
+  if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
+    SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
+    if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
+      >&2 echo "ERROR: Could not find a location for the sample processes. Last tried: $SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
       exit 1
     fi
   fi
-  export BPMN_SPEC_ABSOLUTE_DIR
+  export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 fi
 
 tasks=""
@@ -40,7 +40,7 @@ if [[ "${1:-}" == "clean" ]]; then
 
   # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
   # start postgres in background with one db
-  if [[ "${SPIFF_DATABASE_TYPE:-}" == "postgres" ]]; then
+  if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
     if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_testing -c "select 1"; then
       docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_testing -d postgres
       sleep 4 # classy

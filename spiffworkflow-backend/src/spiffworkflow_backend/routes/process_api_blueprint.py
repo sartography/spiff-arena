@@ -305,7 +305,7 @@ def manual_complete_task(
 
 def _commit_and_push_to_git(message: str) -> None:
     """Commit_and_push_to_git."""
-    if current_app.config["GIT_COMMIT_ON_SAVE"]:
+    if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE"]:
         git_output = GitService.commit(message=message)
         current_app.logger.info(f"git output: {git_output}")
     else:
