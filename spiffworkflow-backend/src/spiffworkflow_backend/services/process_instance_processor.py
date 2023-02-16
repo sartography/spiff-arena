@@ -1301,7 +1301,9 @@ class ProcessInstanceProcessor:
         current_time_in_seconds = round(time.time())
         lock_expiry_in_seconds = (
             current_time_in_seconds
-            - current_app.config["SPIFFWORKFLOW_BACKEND_ALLOW_CONFISCATING_LOCK_AFTER_SECONDS"]
+            - current_app.config[
+                "SPIFFWORKFLOW_BACKEND_ALLOW_CONFISCATING_LOCK_AFTER_SECONDS"
+            ]
         )
 
         query_text = text(

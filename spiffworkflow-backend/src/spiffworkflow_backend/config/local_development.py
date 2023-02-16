@@ -10,10 +10,13 @@ SPIFFWORKFLOW_BACKEND_LOG_LEVEL = environ.get(
 )
 
 SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER = (
-    environ.get("SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER", default="false") == "true"
+    environ.get("SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER", default="false")
+    == "true"
 )
 SPIFFWORKFLOW_BACKEND_GIT_CLONE_URL_FOR_PUBLISHING = environ.get(
     "GIT_CLONE_URL", default="https://github.com/sartography/sample-process-models.git"
 )
 SPIFFWORKFLOW_BACKEND_GIT_USERNAME = "sartography-automated-committer"
-SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL = f"{SPIFFWORKFLOW_BACKEND_GIT_USERNAME}@users.noreply.github.com"
+SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL = (
+    f"{SPIFFWORKFLOW_BACKEND_GIT_USERNAME}@users.noreply.github.com"
+)

@@ -153,7 +153,9 @@ def get_hacked_up_app_for_script() -> flask.app.Flask:
             f"{home}/projects/github/sartography/sample-process-models"
         )
         if os.path.isdir(full_process_model_path):
-            os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = full_process_model_path
+            os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = (
+                full_process_model_path
+            )
         else:
             raise Exception(f"Could not find {full_process_model_path}")
     app = create_app()
@@ -198,13 +200,21 @@ def configure_sentry(app: flask.app.Flask) -> None:
                 return None
         return event
 
-    sentry_errors_sample_rate = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE")
+    sentry_errors_sample_rate = app.config.get(
+        "SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE"
+    )
     if sentry_errors_sample_rate is None:
-        raise Exception("SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE is not set somehow")
+        raise Exception(
+            "SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE is not set somehow"
+        )
 
-    sentry_traces_sample_rate = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE")
+    sentry_traces_sample_rate = app.config.get(
+        "SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE"
+    )
     if sentry_traces_sample_rate is None:
-        raise Exception("SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow")
+        raise Exception(
+            "SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow"
+        )
 
     # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
     # but also we commented out profiling because it was causing segfaults (i guess it is marked experimental)

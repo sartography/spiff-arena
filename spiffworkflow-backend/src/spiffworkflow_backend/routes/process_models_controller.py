@@ -225,7 +225,9 @@ def process_model_publish(
 ) -> flask.wrappers.Response:
     """Process_model_publish."""
     if branch_to_update is None:
-        branch_to_update = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO"]
+        branch_to_update = current_app.config[
+            "SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO"
+        ]
     if branch_to_update is None:
         raise MissingGitConfigsError(
             "Missing config for SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO. "
