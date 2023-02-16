@@ -82,7 +82,7 @@ class GitService:
         cls.check_for_basic_configs()
         branch_name_to_use = branch_name
         if branch_name_to_use is None:
-            branch_name_to_use = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_BRANCH"]
+            branch_name_to_use = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
         repo_path_to_use = repo_path
         if repo_path is None:
             repo_path_to_use = current_app.config[
@@ -122,9 +122,9 @@ class GitService:
     @classmethod
     def check_for_basic_configs(cls) -> None:
         """Check_for_basic_configs."""
-        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_BRANCH"] is None:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
             raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_BRANCH. "
+                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. "
                 "This is required for publishing process models"
             )
 
@@ -210,14 +210,14 @@ class GitService:
                 f"Could not find the 'ref' arg in the webhook boy: {webhook}"
             )
 
-        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_BRANCH"] is None:
+        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"] is None:
             raise MissingGitConfigsError(
-                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_BRANCH. This is required"
+                "Missing config for SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH. This is required"
                 " for updating the repository as a result of the webhook"
             )
 
         ref = webhook["ref"]
-        git_branch = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_BRANCH"]
+        git_branch = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SOURCE_BRANCH"]
         if ref != f"refs/heads/{git_branch}":
             return False
 
