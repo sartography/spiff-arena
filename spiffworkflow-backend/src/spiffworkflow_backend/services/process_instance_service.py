@@ -308,16 +308,6 @@ class ProcessInstanceService:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.spec_type
 
-        info = spiff_task.task_info()
-        if info["is_looping"]:
-            mi_type = MultiInstanceType.looping
-        elif info["is_sequential_mi"]:
-            mi_type = MultiInstanceType.sequential
-        elif info["is_parallel_mi"]:
-            mi_type = MultiInstanceType.parallel
-        else:
-            mi_type = MultiInstanceType.none
-
         props = {}
         if hasattr(spiff_task.task_spec, "extensions"):
             for key, val in spiff_task.task_spec.extensions.items():
@@ -346,9 +336,6 @@ class ProcessInstanceService:
             task_type,
             spiff_task.get_state_name(),
             lane=lane,
-            multi_instance_type=mi_type,
-            multi_instance_count=info["mi_count"],
-            multi_instance_index=info["mi_index"],
             process_identifier=spiff_task.task_spec._wf_spec.name,
             properties=props,
             parent=parent_id,
