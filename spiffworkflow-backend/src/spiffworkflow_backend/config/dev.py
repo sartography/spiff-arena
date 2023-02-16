@@ -1,8 +1,8 @@
 """Dev."""
 from os import environ
 
-SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO = environ.get(
-    "SPIFFWORKFLOW_BACKEND_GIT_BRANCH_TO_PUBLISH_TO", default="staging"
+SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH = environ.get(
+    "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH", default="staging"
 )
 SPIFFWORKFLOW_BACKEND_GIT_USERNAME = environ.get(
     "SPIFFWORKFLOW_BACKEND_GIT_USERNAME", default="sartography-automated-committer"
