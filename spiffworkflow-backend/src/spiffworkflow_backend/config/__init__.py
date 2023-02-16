@@ -52,15 +52,20 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
 
 
 def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
-    tenant_specific_fields = app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS")
+    tenant_specific_fields = app.config.get(
+        "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"
+    )
 
     if tenant_specific_fields is None or tenant_specific_fields == "":
         app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = []
     else:
-        app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
+        app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = (
+            tenant_specific_fields.split(",")
+        )
         if len(app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]) > 3:
             raise ConfigurationError(
-                "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
+                "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a"
+                " maximum of 3 fields"
             )
 
 
@@ -117,7 +122,9 @@ def setup_config(app: Flask) -> None:
     app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
 
     if app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] is None:
-        raise ConfigurationError("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR config must be set")
+        raise ConfigurationError(
+            "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR config must be set"
+        )
 
     app.config["PROCESS_UUID"] = uuid.uuid4()
 

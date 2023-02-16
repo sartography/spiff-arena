@@ -73,7 +73,9 @@ class AuthenticationService:
     @staticmethod
     def secret_key() -> str:
         """Returns the secret key from the config."""
-        return current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", "")
+        return current_app.config.get(
+            "SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", ""
+        )
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str) -> str:

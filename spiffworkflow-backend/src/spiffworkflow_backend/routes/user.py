@@ -186,7 +186,9 @@ def set_new_access_token_in_cookie(
     """
     tld = current_app.config["THREAD_LOCAL_DATA"]
     domain_for_frontend_cookie: Optional[str] = re.sub(
-        r"^https?:\/\/", "", current_app.config["SPIFFWORKFLOW_BACKEND_SPIFFWORKFLOW_FRONTEND_URL"]
+        r"^https?:\/\/",
+        "",
+        current_app.config["SPIFFWORKFLOW_BACKEND_SPIFFWORKFLOW_FRONTEND_URL"],
     )
     if domain_for_frontend_cookie and domain_for_frontend_cookie.startswith(
         "localhost"
@@ -351,7 +353,9 @@ def logout(id_token: str, redirect_url: Optional[str]) -> Response:
 
 def logout_return() -> Response:
     """Logout_return."""
-    frontend_url = str(current_app.config["SPIFFWORKFLOW_BACKEND_SPIFFWORKFLOW_FRONTEND_URL"])
+    frontend_url = str(
+        current_app.config["SPIFFWORKFLOW_BACKEND_SPIFFWORKFLOW_FRONTEND_URL"]
+    )
     return redirect(f"{frontend_url}/")
 
 
