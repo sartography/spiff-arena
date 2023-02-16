@@ -45,7 +45,7 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
         app.config.from_object(env_config_module)
         print(f"loaded config: {env_config_module}")
     except ImportStringError as exception:
-        if os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT=") != "true":
+        if os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT") != "true":
             raise ModuleNotFoundError(
                 f"Cannot find config module: {env_config_module}"
             ) from exception
@@ -85,7 +85,7 @@ def setup_config(app: Flask) -> None:
 
     env_config_prefix = "spiffworkflow_backend.config."
     if (
-        os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT=") == "true"
+        os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
         and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
     ):
         load_config_file(app, f"{env_config_prefix}terraform_deployed_environment")
