@@ -85,6 +85,12 @@ class TestMessageService(BaseTest):
         ## No error when calling with the correct parameters
         response = message_send("approval_result", {'payload': {'po_number' : 1001, 'customer_id': 'Sartography'}})
 
+        ## There is no longer a waiting message
+        waiting_messages = MessageInstanceModel.query. \
+            filter_by(message_type = "receive"). \
+            filter_by(process_instance_id = self.process_instance.id).all()
+        assert len(waiting_messages) == 0
+
     def assure_a_message_was_sent(self):
         # There should be one new send message for the given process instance.
         send_messages = MessageInstanceModel.query. \
@@ -109,8 +115,6 @@ class TestMessageService(BaseTest):
         assert len(waiting_messages) == 1
         waiting_message = waiting_messages[0]
         self.assure_correlation_properties_are_right(waiting_message)
-
-
 
     def assure_correlation_properties_are_right(self, message):
         # Correlation Properties should match up
