@@ -17,17 +17,17 @@ def setup_database_uri(app: Flask) -> None:
     """Setup_database_uri."""
     if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
         database_name = f"spiffworkflow_backend_{app.config['ENV_IDENTIFIER']}"
-        if app.config.get("SPIFF_DATABASE_TYPE") == "sqlite":
+        if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "sqlite":
             app.config["SQLALCHEMY_DATABASE_URI"] = (
                 f"sqlite:///{app.instance_path}/db_{app.config['ENV_IDENTIFIER']}.sqlite3"
             )
-        elif app.config.get("SPIFF_DATABASE_TYPE") == "postgres":
+        elif app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "postgres":
             app.config["SQLALCHEMY_DATABASE_URI"] = (
                 f"postgresql://spiffworkflow_backend:spiffworkflow_backend@localhost:5432/{database_name}"
             )
         else:
             # use pswd to trick flake8 with hardcoded passwords
-            db_pswd = os.environ.get("DB_PASSWORD")
+            db_pswd = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD")
             if db_pswd is None:
                 db_pswd = ""
             app.config["SQLALCHEMY_DATABASE_URI"] = (
@@ -45,22 +45,30 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
         app.config.from_object(env_config_module)
         print(f"loaded config: {env_config_module}")
     except ImportStringError as exception:
-        if os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") != "true":
+        if (
+            os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT")
+            != "true"
+        ):
             raise ModuleNotFoundError(
                 f"Cannot find config module: {env_config_module}"
             ) from exception
 
 
 def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
-    tenant_specific_fields = app.config.get("OPEN_ID_TENANT_SPECIFIC_FIELDS")
+    tenant_specific_fields = app.config.get(
+        "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"
+    )
 
     if tenant_specific_fields is None or tenant_specific_fields == "":
-        app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"] = []
+        app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = []
     else:
-        app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
-        if len(app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"]) > 3:
+        app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = (
+            tenant_specific_fields.split(",")
+        )
+        if len(app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]) > 3:
             raise ConfigurationError(
-                "OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
+                "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a"
+                " maximum of 3 fields"
             )
 
 
@@ -80,7 +88,7 @@ def setup_config(app: Flask) -> None:
 
     env_config_prefix = "spiffworkflow_backend.config."
     if (
-        os.environ.get("TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
+        os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT") == "true"
         and os.environ.get("SPIFFWORKFLOW_BACKEND_ENV") is not None
     ):
         load_config_file(app, f"{env_config_prefix}terraform_deployed_environment")
@@ -116,8 +124,10 @@ def setup_config(app: Flask) -> None:
     # src/spiffworkflow_backend/config/secrets.py
     app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
 
-    if app.config["BPMN_SPEC_ABSOLUTE_DIR"] is None:
-        raise ConfigurationError("BPMN_SPEC_ABSOLUTE_DIR config must be set")
+    if app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] is None:
+        raise ConfigurationError(
+            "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR config must be set"
+        )
 
     app.config["PROCESS_UUID"] = uuid.uuid4()
 

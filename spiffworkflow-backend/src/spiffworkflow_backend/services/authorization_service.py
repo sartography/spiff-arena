@@ -107,7 +107,9 @@ class AuthorizationService:
             )
 
         received_sign = auth_header.split("sha256=")[-1].strip()
-        secret = current_app.config["GITHUB_WEBHOOK_SECRET"].encode()
+        secret = current_app.config[
+            "SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"
+        ].encode()
         expected_sign = HMAC(key=secret, msg=request.data, digestmod=sha256).hexdigest()
         if not compare_digest(received_sign, expected_sign):
             raise TokenInvalidError(
@@ -504,7 +506,7 @@ class AuthorizationService:
         user_attributes["service_id"] = user_info["sub"]
 
         for field_index, tenant_specific_field in enumerate(
-            current_app.config["OPEN_ID_TENANT_SPECIFIC_FIELDS"]
+            current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]
         ):
             if tenant_specific_field in user_info:
                 field_number = field_index + 1

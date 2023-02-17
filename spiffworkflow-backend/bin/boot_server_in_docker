@@ -10,12 +10,12 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # run migrations
 export FLASK_APP=/app/src/spiffworkflow_backend
 
-if [[ "${WAIT_FOR_DB_TO_BE_READY:-}" == "true" ]]; then
+if [[ "${SPIFFWORKFLOW_BACKEND_WAIT_FOR_DB_TO_BE_READY:-}" == "true" ]]; then
   echo 'Waiting for db to be ready...'
   poetry run python ./bin/wait_for_db_to_be_ready.py
 fi
 
-if [[ "${DOWNGRADE_DB:-}" == "true" ]]; then
+if [[ "${SPIFFWORKFLOW_BACKEND_DOWNGRADE_DB:-}" == "true" ]]; then
   echo 'Downgrading database...'
   poetry run flask db downgrade
 fi
@@ -40,8 +40,8 @@ fi
 
 additional_args=""
 
-if [[ "${APPLICATION_ROOT:-}" != "/" ]]; then
-  additional_args="${additional_args} -e SCRIPT_NAME=${APPLICATION_ROOT}"
+if [[ "${SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT:-}" != "/" ]]; then
+  additional_args="${additional_args} -e SCRIPT_NAME=${SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT}"
 fi
 
 # HACK: if loading fixtures for acceptance tests when we do not need multiple workers
@@ -56,8 +56,8 @@ if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
 fi
 
 # Assure that the the Process Models Directory is initialized as a git repo
-git init "${BPMN_SPEC_ABSOLUTE_DIR}"
-git config --global --add safe.directory "${BPMN_SPEC_ABSOLUTE_DIR}"
+git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
+git config --global --add safe.directory "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
