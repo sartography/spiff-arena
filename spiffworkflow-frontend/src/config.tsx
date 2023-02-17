@@ -10,12 +10,15 @@ declare global {
   }
 }
 
+let spiffEnvironment = '';
 let appRoutingStrategy = 'subdomain_based';
-if (
-  'spiffworkflowFrontendJsenv' in window &&
-  'APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv
-) {
-  appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
+if ('spiffworkflowFrontendJsenv' in window) {
+  if ('APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv) {
+    appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
+  }
+  if ('ENVIRONMENT_IDENTIFIER' in window.spiffworkflowFrontendJsenv) {
+    spiffEnvironment = window.spiffworkflowFrontendJsenv.ENVIRONMENT_IDENTIFIER;
+  }
 }
 
 let hostAndPortAndPathPrefix;
@@ -34,6 +37,20 @@ if (/^\d+\./.test(hostname) || hostname === 'localhost') {
   }
   hostAndPortAndPathPrefix = `${hostname}:${serverPort}`;
   protocol = 'http';
+
+  if (spiffEnvironment === '') {
+    // using destructuring on an array where we only want the first element
+    // seems super confusing for non-javascript devs to read so let's NOT do that.
+    // eslint-disable-next-line prefer-destructuring
+    spiffEnvironment = hostname.split('.')[0];
+  }
+}
+
+if (
+  'spiffworkflowFrontendJsenv' in window &&
+  'APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv
+) {
+  appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
 }
 
 let url = `${protocol}://${hostAndPortAndPathPrefix}/v1.0`;
@@ -62,3 +79,5 @@ export const DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm:ss';
 export const TIME_FORMAT_HOURS_MINUTES = 'HH:mm';
 export const DATE_FORMAT = 'yyyy-MM-dd';
 export const DATE_FORMAT_CARBON = 'Y-m-d';
+
+export const SPIFF_ENVIRONMENT = spiffEnvironment;
