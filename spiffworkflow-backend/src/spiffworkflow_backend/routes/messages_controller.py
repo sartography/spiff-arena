@@ -12,6 +12,7 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
+from spiffworkflow_backend.models.message_correlation_property import MessageCorrelationPropertyModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
@@ -110,79 +111,57 @@ def message_send(
         raise (
             ApiError(
                 error_code="missing_payload",
-                message="Body is missing payload.",
+                message="Please include a 'payload' in the JSON body that contains the message contents.",
                 status_code=400,
             )
         )
 
     process_instance = None
-    if "process_instance_id" in body:
-        # to make sure we have a valid process_instance_id
-        process_instance = _find_process_instance_by_id_or_raise(
-            body["process_instance_id"]
+
+    # Is there a running instance that is waiting for this message?
+    message_instances = MessageInstanceModel.query.filter_by(message_model_id=message_model.id).all()
+    correlations = MessageCorrelationPropertyModel.query.filter_by(message_model_id=message_model.id).all()
+
+    # do any waiting message instances have matching correlations?
+    matching_message = None
+    for message_instance in message_instances:
+        if message_instance.correlates(body["payload"]):
+            matching_message = message_instance
+
+    process_instance = None
+    if matching_message:
+        process_instance = ProcessInstanceModel.query.filter_by(id = matching_message.process_instance_id).first()
+
+    if matching_message and process_instance and process_instance.status != ProcessInstanceStatus.waiting.value:
+        ApiError(
+            error_code="message_not_accepted",
+            message=(
+                f"The process that can accept message '{message_identifier}' with the given correlation keys"
+                f" is not currently waiting for that message.  It is currently in the a '{process_instance.status}' state."
+            ),
+            status_code=400,
         )
-
-        if process_instance.status == ProcessInstanceStatus.suspended.value:
-            raise ApiError(
-                error_code="process_instance_is_suspended",
-                message=(
-                    f"Process Instance '{process_instance.id}' is suspended and cannot"
-                    " accept messages.'"
-                ),
-                status_code=400,
-            )
-
-        if process_instance.status == ProcessInstanceStatus.terminated.value:
-            raise ApiError(
-                error_code="process_instance_is_terminated",
-                message=(
-                    f"Process Instance '{process_instance.id}' is terminated and cannot"
-                    " accept messages.'"
-                ),
-                status_code=400,
-            )
-
-        message_instance = MessageInstanceModel.query.filter_by(
-            process_instance_id=process_instance.id,
-            message_model_id=message_model.id,
-            message_type="receive",
-            status="ready",
-        ).first()
-        if message_instance is None:
-            raise (
-                ApiError(
-                    error_code="cannot_find_waiting_message",
-                    message=(
-                        "Could not find waiting message for identifier"
-                        f" {message_identifier} and process instance"
-                        f" {process_instance.id}"
-                    ),
-                    status_code=400,
-                )
-            )
+    elif matching_message and process_instance:
         MessageService.process_message_receive(
             message_instance, message_model.name, body["payload"]
         )
-
     else:
+        # We don't have a process model waiting on this message, perhaps some process should be started?
         message_triggerable_process_model = (
             MessageTriggerableProcessModel.query.filter_by(
                 message_model_id=message_model.id
             ).first()
         )
-
         if message_triggerable_process_model is None:
             raise (
                 ApiError(
                     error_code="cannot_start_message",
                     message=(
-                        "Message with identifier cannot be start with message:"
-                        f" {message_identifier}"
-                    ),
+                        f"No process instances correlate with the given message id of '{message_identifier}'.  "
+                        f"And this message name is not currently associated with any process Start Event."),
                     status_code=400,
                 )
             )
-
         process_instance = MessageService.process_message_triggerable_process_model(
             message_triggerable_process_model,
             message_model.name,
