@@ -8,9 +8,6 @@ from sqlalchemy import select
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_correlation_message_instance import (
-    MessageCorrelationMessageInstanceModel,
-)
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
@@ -166,11 +163,8 @@ class MessageService:
         message_instances_receive: list[MessageInstanceModel],
     ) -> Optional[MessageInstanceModel]:
         """Get_message_instance_receive."""
-        message_correlations_send = (
-            MessageCorrelationModel.query.join(MessageCorrelationMessageInstanceModel)
-            .filter_by(message_instance_id=message_instance_send.id)
-            .all()
-        )
+
+        message_correlations_send = message_instance_send.message_correlations
 
         message_correlation_filter = []
         for message_correlation_send in message_correlations_send:
@@ -196,7 +190,7 @@ class MessageService:
                         or_(*message_correlation_filter),
                     )
                 )
-                .join(MessageCorrelationMessageInstanceModel)  # type: ignore
+                .join(message_correlation_message_instance_table)  # type: ignore
                 .filter_by(
                     message_instance_id=message_instance_receive.id,
                 )

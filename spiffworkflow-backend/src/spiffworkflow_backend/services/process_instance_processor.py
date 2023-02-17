@@ -61,9 +61,6 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_correlation_message_instance import (
-    MessageCorrelationMessageInstanceModel,
-)
 from spiffworkflow_backend.models.message_correlation_property import (
     MessageCorrelationPropertyModel,
 )
@@ -1389,7 +1386,7 @@ class ProcessInstanceProcessor:
                             "message_correlation_property": (
                                 message_correlation_property
                             ),
-                            "name": message_correlation_key,
+                            "name": message_correlation_property_identifier,
                             "value": message_correlation_property_value,
                         }
                     )
@@ -1399,27 +1396,19 @@ class ProcessInstanceProcessor:
                 message_model_id=message_model.id,
                 payload=bpmn_message.payload,
             )
-            db.session.add(message_instance)
-            db.session.commit()
 
+            correlation_models = []
             for message_correlation in message_correlations:
-                message_correlation = MessageCorrelationModel(
+                correlation_models.append(MessageCorrelationModel(
                     process_instance_id=self.process_instance_model.id,
                     message_correlation_property_id=message_correlation[
                         "message_correlation_property"
                     ].id,
                     name=message_correlation["name"],
                     value=message_correlation["value"],
-                )
-                db.session.add(message_correlation)
-                db.session.commit()
-                message_correlation_message_instance = (
-                    MessageCorrelationMessageInstanceModel(
-                        message_instance_id=message_instance.id,
-                        message_correlation_id=message_correlation.id,
-                    )
-                )
-                db.session.add(message_correlation_message_instance)
+                ))
+            message_instance.message_correlations = correlation_models
+            db.session.add(message_instance)
             db.session.commit()
 
     def queue_waiting_receive_messages(self) -> None:
@@ -1465,31 +1454,28 @@ class ProcessInstanceProcessor:
                 message_type="receive",
                 message_model_id=message_model.id,
             )
-            db.session.add(message_instance)
 
             for (
                 spiff_correlation_property
             ) in waiting_task.task_spec.event_definition.correlation_properties:
-                # NOTE: we may have to cycle through keys here
-                # not sure yet if it's valid for a property to be associated with multiple keys
-                correlation_key_name = spiff_correlation_property.correlation_keys[0]
-                message_correlation = (
-                    MessageCorrelationModel.query.filter_by(
-                        process_instance_id=self.process_instance_model.id,
-                        name=correlation_key_name,
-                    )
-                    .join(MessageCorrelationPropertyModel)
-                    .filter_by(identifier=spiff_correlation_property.name)
-                    .first()
-                )
-                message_correlation_message_instance = (
-                    MessageCorrelationMessageInstanceModel(
-                        message_instance_id=message_instance.id,
-                        message_correlation_id=message_correlation.id,
-                    )
-                )
-                db.session.add(message_correlation_message_instance)
+                message_correlation = next((mc for mc in message_instance.message_correlations
+                                            if mc.name == spiff_correlation_property.name), None)
+                if not message_correlation:
+                    expression = spiff_correlation_property.expression
+                    correlation_value = ProcessInstanceProcessor._script_engine.evaluate(waiting_task, expression)
+                    correlation_name = spiff_correlation_property.name
+                    message_prop = MessageCorrelationPropertyModel.query.\
+                        filter_by(identifier=correlation_name).\
+                        filter_by(message_model_id=message_model.id).first()
 
+                    message_correlation = MessageCorrelationModel(
+                        process_instance_id=self.process_instance_model.id,
+                        message_correlation_property_id=message_prop.id,
+                        name=correlation_name,
+                        value=correlation_value,
+                    )
+                message_instance.message_correlations.append(message_correlation)
+            db.session.add(message_instance)
             db.session.commit()
 
     def increment_spiff_step(self) -> None:

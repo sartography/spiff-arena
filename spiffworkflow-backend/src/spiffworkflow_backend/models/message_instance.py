@@ -13,13 +13,10 @@ from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.message_correlation_message_instance import message_correlation_message_instance_table
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
-if TYPE_CHECKING:
-    from spiffworkflow_backend.models.message_correlation_message_instance import (  # noqa: F401
-        MessageCorrelationMessageInstanceModel,
-    )
 
 
 class MessageTypes(enum.Enum):
@@ -38,6 +35,7 @@ class MessageStatuses(enum.Enum):
     failed = "failed"
 
 
+
 @dataclass
 class MessageInstanceModel(SpiffworkflowBaseDBModel):
     """Messages from a process instance that are ready to send to a receiving task."""
@@ -47,10 +45,11 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False)  # type: ignore
     message_model_id: int = db.Column(ForeignKey(MessageModel.id), nullable=False)
-    message_model = relationship("MessageModel")
-    message_correlations_message_instances = relationship(
-        "MessageCorrelationMessageInstanceModel", cascade="delete"
-    )
+    message_model = db.relationship("MessageModel")
+    message_correlations = db.relationship("MessageCorrelationModel",
+                                   secondary=message_correlation_message_instance_table,
+                                   backref="message_instances",
+                                   cascade="all,delete")
 
     message_type: str = db.Column(db.String(20), nullable=False)
     payload: str = db.Column(db.JSON)
@@ -58,8 +57,6 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     failure_cause: str = db.Column(db.Text())
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
-
-    message_correlations: Optional[dict] = None
 
     @validates("message_type")
     def validate_message_type(self, key: str, value: Any) -> Any:
@@ -70,6 +67,19 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     def validate_status(self, key: str, value: Any) -> Any:
         """Validate_status."""
         return self.validate_enum_field(key, value, MessageStatuses)
+
+    def correlates(self, correlation_dictionary):
+        """Returns true if the given dictionary matches the correlation names and values connected to this message instance"""
+        for c in self.message_correlations:
+            # Fixme:  Maybe we should look at typing the correlations and not forcing them to strings?
+            if c.name in correlation_dictionary and str(correlation_dictionary[c.name]) == c.value:
+                continue
+            else:
+                return False
+        return True
+
+        corrs = {}
+
 
 
 # This runs for ALL db flushes for ANY model, not just this one even if it's in the MessageInstanceModel class

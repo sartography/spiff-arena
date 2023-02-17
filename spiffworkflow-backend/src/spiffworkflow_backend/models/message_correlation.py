@@ -12,11 +12,6 @@ from spiffworkflow_backend.models.message_correlation_property import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
-if TYPE_CHECKING:
-    from spiffworkflow_backend.models.message_correlation_message_instance import (  # noqa: F401
-        MessageCorrelationMessageInstanceModel,
-    )
-
 
 @dataclass
 class MessageCorrelationModel(SpiffworkflowBaseDBModel):
@@ -45,6 +40,4 @@ class MessageCorrelationModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer)
 
     message_correlation_property = relationship("MessageCorrelationPropertyModel")
-    message_correlations_message_instances = relationship(
-        "MessageCorrelationMessageInstanceModel", cascade="delete"
-    )
+

@@ -5,6 +5,8 @@ import shutil
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
+
+from spiffworkflow_backend.models import message_correlation_message_instance
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.db import db
@@ -46,12 +48,13 @@ def app() -> Flask:
 
 @pytest.fixture()
 def with_db_and_bpmn_file_cleanup() -> None:
-    """Process_group_resource."""
-    db.session.query(HumanTaskUserModel).delete()
-
-    for model in SpiffworkflowBaseDBModel._all_subclasses():
-        db.session.query(model).delete()
+    meta = db.metadata
+    for table in reversed(meta.sorted_tables):
+        print
+        'Clear table %s' % table
+        db.session.execute(table.delete())
     db.session.commit()
+
 
     try:
         yield
