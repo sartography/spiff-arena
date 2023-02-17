@@ -43,17 +43,27 @@ Cypress.Commands.add('navigateToAdmin', () => {
 
 Cypress.Commands.add('login', (selector, ...args) => {
   cy.visit('/admin');
-  cy.get('#username').type('ciadmin1');
-  cy.get('#password').type('ciadmin1');
-  cy.get('#kc-login').click();
+  const username = Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
+  const password = Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
+  cy.get('#username').type(username);
+  cy.get('#password').type(password);
+  if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
+    cy.get('#kc-login').click();
+  } else {
+    cy.get('#spiff-login-button').click();
+  }
 });
 
 Cypress.Commands.add('logout', (selector, ...args) => {
   cy.getBySel('logout-button').click();
 
-  // otherwise we can click logout, quickly load the next page, and the javascript
-  // doesn't have time to actually sign you out
-  cy.contains('Sign in to your account');
+  if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
+    // otherwise we can click logout, quickly load the next page, and the javascript
+    // doesn't have time to actually sign you out
+    cy.contains('Sign in to your account');
+  } else {
+    cy.get('#spiff-login-button').should('exist');
+  }
 });
 
 Cypress.Commands.add('createGroup', (groupId, groupDisplayName) => {

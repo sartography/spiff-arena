@@ -115,7 +115,7 @@ def create_app() -> flask.app.Flask:
     # need to continually keep asking for the same path.
     origins_re = [
         r"^https?:\/\/%s(.*)" % o.replace(".", r"\.")
-        for o in app.config["CORS_ALLOW_ORIGINS"]
+        for o in app.config["SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS"]
     ]
     CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
 
@@ -128,7 +128,7 @@ def create_app() -> flask.app.Flask:
 
     # do not start the scheduler twice in flask debug mode
     if (
-        app.config["RUN_BACKGROUND_SCHEDULER"]
+        app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]
         and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
     ):
         start_scheduler(app)
@@ -147,13 +147,15 @@ def get_hacked_up_app_for_script() -> flask.app.Flask:
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "local_development"
     flask_env_key = "FLASK_SESSION_SECRET_KEY"
     os.environ[flask_env_key] = "whatevs"
-    if "BPMN_SPEC_ABSOLUTE_DIR" not in os.environ:
+    if "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" not in os.environ:
         home = os.environ["HOME"]
         full_process_model_path = (
             f"{home}/projects/github/sartography/sample-process-models"
         )
         if os.path.isdir(full_process_model_path):
-            os.environ["BPMN_SPEC_ABSOLUTE_DIR"] = full_process_model_path
+            os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = (
+                full_process_model_path
+            )
         else:
             raise Exception(f"Could not find {full_process_model_path}")
     app = create_app()
@@ -198,20 +200,28 @@ def configure_sentry(app: flask.app.Flask) -> None:
                 return None
         return event
 
-    sentry_errors_sample_rate = app.config.get("SENTRY_ERRORS_SAMPLE_RATE")
+    sentry_errors_sample_rate = app.config.get(
+        "SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE"
+    )
     if sentry_errors_sample_rate is None:
-        raise Exception("SENTRY_ERRORS_SAMPLE_RATE is not set somehow")
+        raise Exception(
+            "SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE is not set somehow"
+        )
 
-    sentry_traces_sample_rate = app.config.get("SENTRY_TRACES_SAMPLE_RATE")
+    sentry_traces_sample_rate = app.config.get(
+        "SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE"
+    )
     if sentry_traces_sample_rate is None:
-        raise Exception("SENTRY_TRACES_SAMPLE_RATE is not set somehow")
+        raise Exception(
+            "SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow"
+        )
 
     # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
     # but also we commented out profiling because it was causing segfaults (i guess it is marked experimental)
     # profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
 
     sentry_sdk.init(
-        dsn=app.config.get("SENTRY_DSN"),
+        dsn=app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN"),
         integrations=[
             FlaskIntegration(),
         ],

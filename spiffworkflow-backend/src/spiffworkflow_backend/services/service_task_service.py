@@ -18,7 +18,7 @@ class ConnectorProxyError(Exception):
 
 def connector_proxy_url() -> Any:
     """Returns the connector proxy url."""
-    return current_app.config["CONNECTOR_PROXY_URL"]
+    return current_app.config["SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL"]
 
 
 class ServiceTaskDelegate:
