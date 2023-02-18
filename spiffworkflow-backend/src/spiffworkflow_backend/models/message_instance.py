@@ -1,7 +1,7 @@
 """Message_instance."""
 import enum
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Self
 from typing import Optional
 from typing import TYPE_CHECKING
 
@@ -68,7 +68,15 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
         """Validate_status."""
         return self.validate_enum_field(key, value, MessageStatuses)
 
-    def correlates(self, correlation_dictionary):
+    def correlates(self, other_message_instance: Self) -> bool:
+        if other_message_instance.message_model_id != self.message_model_id:
+            return False
+        correlation_dict = {}
+        for c in other_message_instance.message_correlations:
+            correlation_dict[c.name]=c.value
+        return self.correlates_with_dictionary(correlation_dict)
+
+    def correlates_with_dictionary(self, correlation_dictionary: dict) -> bool:
         """Returns true if the given dictionary matches the correlation names and values connected to this message instance"""
         for c in self.message_correlations:
             # Fixme:  Maybe we should look at typing the correlations and not forcing them to strings?

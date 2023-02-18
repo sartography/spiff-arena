@@ -5,25 +5,31 @@
     <bpmn:participant id="message-receiver" name="Message Receiver" />
     <bpmn:messageFlow id="message_send_flow" name="Message Send Flow" sourceRef="send_message" targetRef="message-receiver" />
     <bpmn:messageFlow id="message_response_flow" name="Message Response Flow" sourceRef="message-receiver" targetRef="receive_message_response" />
-    <bpmn:correlationKey name="message_correlation_key">
-      <bpmn:correlationPropertyRef>message_correlation_property_topica</bpmn:correlationPropertyRef>
-      <bpmn:correlationPropertyRef>message_correlation_property_topicb</bpmn:correlationPropertyRef>
+    <bpmn:textAnnotation id="TextAnnotation_0oxbpew">
+      <bpmn:text>The messages sent here are about an Invoice that can be uniquely identified by the customer_id ("sartography") and a purchase order number (1001)
+
+It will fire a message connected to the invoice keys above, starting another process, which can communicate back to this specific process instance using the correct key.</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_1d6q7zd" sourceRef="message_initiator" targetRef="TextAnnotation_0oxbpew" />
+    <bpmn:correlationKey name="invoice">
+      <bpmn:correlationPropertyRef>po_number</bpmn:correlationPropertyRef>
+      <bpmn:correlationPropertyRef>customer_id</bpmn:correlationPropertyRef>
     </bpmn:correlationKey>
   </bpmn:collaboration>
-  <bpmn:correlationProperty id="message_correlation_property_topica" name="Message Correlation Property TopicA">
-    <bpmn:correlationPropertyRetrievalExpression messageRef="message_send">
-      <bpmn:messagePath>topica</bpmn:messagePath>
+  <bpmn:correlationProperty id="po_number" name="Purchase Order Number">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="request_approval">
+      <bpmn:formalExpression>po_number</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
-    <bpmn:correlationPropertyRetrievalExpression messageRef="message_response">
-      <bpmn:messagePath>the_payload.topica</bpmn:messagePath>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="approval_result">
+      <bpmn:formalExpression>po_number</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
-  <bpmn:correlationProperty id="message_correlation_property_topicb" name="Message Correlation Property TopicB">
-    <bpmn:correlationPropertyRetrievalExpression messageRef="message_send">
-      <bpmn:messagePath>topicb</bpmn:messagePath>
+  <bpmn:correlationProperty id="customer_id" name="Customer ID">
+    <bpmn:correlationPropertyRetrievalExpression messageRef="request_approval">
+      <bpmn:formalExpression>customer_id</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
-    <bpmn:correlationPropertyRetrievalExpression messageRef="message_response">
-      <bpmn:messagePath>the_payload.topicb</bpmn:messagePath>
+    <bpmn:correlationPropertyRetrievalExpression messageRef="approval_result">
+      <bpmn:formalExpression>customer_id</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:process id="message_send_process" name="Message Send Process" isExecutable="true">
@@ -32,42 +38,45 @@
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="Flow_037vpjk" sourceRef="send_message" targetRef="receive_message_response" />
     <bpmn:sequenceFlow id="Flow_1qgz6p0" sourceRef="receive_message_response" targetRef="Event_0kndoyu" />
-    <bpmn:sequenceFlow id="Flow_10conab" sourceRef="StartEvent_1" targetRef="set_topic" />
+    <bpmn:sequenceFlow id="Flow_10conab" sourceRef="StartEvent_1" targetRef="invoice_form" />
     <bpmn:endEvent id="Event_0kndoyu">
       <bpmn:incoming>Flow_1qgz6p0</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:intermediateCatchEvent id="receive_message_response" name="Receive Message Response">
+    <bpmn:intermediateCatchEvent id="receive_message_response" name="Receive Approval Result">
       <bpmn:incoming>Flow_037vpjk</bpmn:incoming>
       <bpmn:outgoing>Flow_1qgz6p0</bpmn:outgoing>
-      <bpmn:messageEventDefinition id="MessageEventDefinition_1l3n0zr" messageRef="message_response" />
+      <bpmn:messageEventDefinition id="MessageEventDefinition_1l3n0zr" messageRef="approval_result" />
     </bpmn:intermediateCatchEvent>
-    <bpmn:sendTask id="send_message" name="Send Message" messageRef="message_send">
+    <bpmn:sendTask id="send_message" name="Request Approval" messageRef="request_approval">
       <bpmn:extensionElements>
         <spiffworkflow:preScript>the_topic = "first_conversation" </spiffworkflow:preScript>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_1ihr88m</bpmn:incoming>
+      <bpmn:incoming>Flow_02lw0q9</bpmn:incoming>
       <bpmn:outgoing>Flow_037vpjk</bpmn:outgoing>
     </bpmn:sendTask>
-    <bpmn:sequenceFlow id="Flow_1ihr88m" sourceRef="set_topic" targetRef="send_message" />
-    <bpmn:scriptTask id="set_topic" name="Set Topic" scriptFormat="python">
+    <bpmn:sequenceFlow id="Flow_02lw0q9" sourceRef="invoice_form" targetRef="send_message" />
+    <bpmn:userTask id="invoice_form" name="Create Invoice">
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="invoice_form.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="invoice_ui.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
       <bpmn:incoming>Flow_10conab</bpmn:incoming>
-      <bpmn:outgoing>Flow_1ihr88m</bpmn:outgoing>
-      <bpmn:script>
-timestamp = time.time()
-the_topica = f"first_conversation_a_{timestamp}"
-the_topicb = f"first_conversation_b_{timestamp}"
-del time</bpmn:script>
-    </bpmn:scriptTask>
+      <bpmn:outgoing>Flow_02lw0q9</bpmn:outgoing>
+    </bpmn:userTask>
   </bpmn:process>
-  <bpmn:message id="message_send" name="Message Send">
+  <bpmn:message id="request_approval" name="Request Approval">
     <bpmn:extensionElements>
       <spiffworkflow:messagePayload>{
-"topica": the_topica,
-"topicb": the_topicb,
+"customer_id": customer_id,
+"po_number": po_number,
+"amount": amount,
+"description": description,
 }</spiffworkflow:messagePayload>
     </bpmn:extensionElements>
   </bpmn:message>
-  <bpmn:message id="message_response" name="Message Response">
+  <bpmn:message id="approval_result" name="Approval Result">
     <bpmn:extensionElements>
       <spiffworkflow:messageVariable>the_payload</spiffworkflow:messageVariable>
     </bpmn:extensionElements>
@@ -78,22 +87,6 @@ del time</bpmn:script>
         <dc:Bounds x="120" y="52" width="600" height="338" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1ihr88m_di" bpmnElement="Flow_1ihr88m">
-        <di:waypoint x="350" y="177" />
-        <di:waypoint x="390" y="177" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_10conab_di" bpmnElement="Flow_10conab">
-        <di:waypoint x="215" y="177" />
-        <di:waypoint x="250" y="177" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1qgz6p0_di" bpmnElement="Flow_1qgz6p0">
-        <di:waypoint x="568" y="177" />
-        <di:waypoint x="622" y="177" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_037vpjk_di" bpmnElement="Flow_037vpjk">
-        <di:waypoint x="490" y="177" />
-        <di:waypoint x="532" y="177" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="159" width="36" height="36" />
       </bpmndi:BPMNShape>
@@ -103,20 +96,44 @@ del time</bpmn:script>
       <bpmndi:BPMNShape id="Event_0yt48xb_di" bpmnElement="receive_message_response">
         <dc:Bounds x="532" y="159" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="507" y="129" width="88" height="27" />
+          <dc:Bounds x="508" y="129" width="86" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0vm33bu_di" bpmnElement="send_message">
         <dc:Bounds x="390" y="137" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1t3nq1h_di" bpmnElement="set_topic">
-        <dc:Bounds x="250" y="137" width="100" height="80" />
+      <bpmndi:BPMNShape id="Activity_0798vfz_di" bpmnElement="invoice_form">
+        <dc:Bounds x="240" y="137" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_037vpjk_di" bpmnElement="Flow_037vpjk">
+        <di:waypoint x="490" y="177" />
+        <di:waypoint x="532" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1qgz6p0_di" bpmnElement="Flow_1qgz6p0">
+        <di:waypoint x="568" y="177" />
+        <di:waypoint x="622" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10conab_di" bpmnElement="Flow_10conab">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="240" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02lw0q9_di" bpmnElement="Flow_02lw0q9">
+        <di:waypoint x="340" y="177" />
+        <di:waypoint x="390" y="177" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="Participant_158b3ei_di" bpmnElement="message-receiver" isHorizontal="true">
         <dc:Bounds x="120" y="350" width="600" height="60" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_0oxbpew_di" bpmnElement="TextAnnotation_0oxbpew">
+        <dc:Bounds x="760" y="-30" width="226.98863220214844" height="155.9943084716797" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_1d6q7zd_di" bpmnElement="Association_1d6q7zd">
+        <di:waypoint x="699" y="52" />
+        <di:waypoint x="760" y="15" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1ueajoz_di" bpmnElement="message_send_flow">
         <di:waypoint x="410" y="217" />
         <di:waypoint x="410" y="350" />
@@ -128,7 +145,7 @@ del time</bpmn:script>
         <di:waypoint x="550" y="350" />
         <di:waypoint x="550" y="195" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="552" y="294" width="76" height="27" />
+          <dc:Bounds x="552" y="294" width="77" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>

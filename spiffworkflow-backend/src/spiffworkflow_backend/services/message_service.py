@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel, MessageStatuses
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
@@ -38,6 +38,7 @@ class MessageService:
         message_instances_receive = MessageInstanceModel.query.filter_by(
             message_type="receive", status="ready"
         ).all()
+
         for message_instance_send in message_instances_send:
             # check again in case another background process picked up the message
             # while the previous one was running
@@ -121,8 +122,7 @@ class MessageService:
         processor_receive.do_engine_steps(save=False)
         processor_receive.bpmn_process_instance.catch_bpmn_message(
             message_model_name,
-            message_payload,
-            correlations={},
+            message_payload
         )
         processor_receive.do_engine_steps(save=True)
 
@@ -156,58 +156,19 @@ class MessageService:
             correlations={},
         )
         processor_receive.do_engine_steps(save=True)
+        message_instance_receive.status = MessageStatuses.completed.value
+        db.session.add(message_instance_receive)
+        db.session.commit()
 
     @staticmethod
     def get_message_instance_receive(
         message_instance_send: MessageInstanceModel,
         message_instances_receive: list[MessageInstanceModel],
     ) -> Optional[MessageInstanceModel]:
-        """Get_message_instance_receive."""
-
-        message_correlations_send = message_instance_send.message_correlations
-
-        message_correlation_filter = []
-        for message_correlation_send in message_correlations_send:
-            message_correlation_filter.append(
-                and_(
-                    MessageCorrelationModel.name == message_correlation_send.name,
-                    MessageCorrelationModel.value == message_correlation_send.value,
-                    MessageCorrelationModel.message_correlation_property_id
-                    == message_correlation_send.message_correlation_property_id,
-                )
-            )
-
-        for message_instance_receive in message_instances_receive:
-            # sqlalchemy supports select / where statements like active record apparantly
-            # https://docs.sqlalchemy.org/en/14/core/tutorial.html#conjunctions
-            message_correlation_select = (
-                select([db.func.count()])
-                .select_from(MessageCorrelationModel)  # type: ignore
-                .where(
-                    and_(
-                        MessageCorrelationModel.process_instance_id
-                        == message_instance_receive.process_instance_id,
-                        or_(*message_correlation_filter),
-                    )
-                )
-                .join(message_correlation_message_instance_table)  # type: ignore
-                .filter_by(
-                    message_instance_id=message_instance_receive.id,
-                )
-            )
-            message_correlations_receive = db.session.execute(
-                message_correlation_select
-            )
-
-            # since the query matches on name, value, and message_instance_receive.id, if the counts
-            # message correlations found are the same, then this should be the relevant message
-            if (
-                message_correlations_receive.scalar() == len(message_correlations_send)
-                and message_instance_receive.message_model_id
-                == message_instance_send.message_model_id
-            ):
-                return message_instance_receive
-
+        """Returns the message instance that correlates to the send message, or None if nothing correlates."""
+        for message_instance in message_instances_receive:
+            if message_instance.correlates(message_instance_send):
+                return message_instance
         return None
 
     @staticmethod

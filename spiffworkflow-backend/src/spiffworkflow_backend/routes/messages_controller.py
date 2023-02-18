@@ -125,7 +125,7 @@ def message_send(
     # do any waiting message instances have matching correlations?
     matching_message = None
     for message_instance in message_instances:
-        if message_instance.correlates(body["payload"]):
+        if message_instance.correlates_with_dictionary(body["payload"]):
             matching_message = message_instance
 
     process_instance = None

@@ -1,6 +1,10 @@
 """Test_message_service."""
+import pytest
 from flask import Flask
 from flask.testing import FlaskClient
+
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.routes.messages_controller import message_send
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -20,105 +24,182 @@ from spiffworkflow_backend.services.process_instance_service import (
 class TestMessageService(BaseTest):
     """TestMessageService."""
 
-    def test_can_send_message_to_waiting_message(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
+    def test_message_from_api_into_running_process(
+            self,
+            app: Flask,
+            client: FlaskClient,
+            with_db_and_bpmn_file_cleanup: None,
+            with_super_admin_user: UserModel,
     ) -> None:
-        """Test_can_send_message_to_waiting_message."""
+        """This example workflow will send a message called 'request_approval' and then wait for a response message
+        of 'approval_result'.  This test assures that it will fire the message with the correct correlation properties
+        and will respond only to a message called "approval_result' that has the matching correlation properties,
+        as sent by an API Call"""
+
+        self.payload = {
+            "customer_id": "Sartography",
+            "po_number": 1001,
+            "description": "We built a new feature for messages!",
+            "amount": "100.00"
+        }
+
+        self.start_sender_process(client, with_super_admin_user)
+        self.assure_a_message_was_sent()
+        self.assure_there_is_a_process_waiting_on_a_message()
+
+        # Make an API call to the service endpoint, but use the wrong po number
+        with pytest.raises(ApiError):
+            message_send("approval_result", {'payload': {'po_number': 5001}})
+
+        # Sound return an error when making an API call for right po number, wrong client
+        with pytest.raises(ApiError):
+            message_send("approval_result", {'payload': {'po_number': 1001, 'customer_id': 'jon'}})
+
+        # No error when calling with the correct parameters
+        response = message_send("approval_result", {'payload': {'po_number': 1001, 'customer_id': 'Sartography'}})
+
+        # There is no longer a waiting message
+        waiting_messages = MessageInstanceModel.query. \
+            filter_by(message_type="receive"). \
+            filter_by(status="ready"). \
+            filter_by(process_instance_id=self.process_instance.id).all()
+        assert len(waiting_messages) == 0
+
+        # The process has completed
+        assert self.process_instance.status == 'complete'
+
+    def test_single_conversation_between_two_processes(
+            self,
+            app: Flask,
+            client: FlaskClient,
+            with_db_and_bpmn_file_cleanup: None,
+            with_super_admin_user: UserModel,
+    ) -> None:
+        """Assure that communication between two processes works the same as making a call through the API, here
+        we have two process instances that are communicating with each other using one conversation about an
+        Invoice whose details are defined in the following message payload """
+        self.payload = {
+            "customer_id": "Sartography",
+            "po_number": 1001,
+            "description": "We built a new feature for messages!",
+            "amount": "100.00"
+        }
+
+        # Load up the definition for the receiving process (it has a message start event that should cause it to
+        # fire when a unique message comes through.
+        # Fire up the first process
+        second_process_model = load_test_spec(
+            "test_group/message_receive",
+            process_model_source_directory="message_send_one_conversation",
+            bpmn_file_name="message_receiver.bpmn"
+        )
+
+        # Now start the main process
+        self.start_sender_process(client, with_super_admin_user)
+        self.assure_a_message_was_sent()
+
+        # This is typically called in a background cron process, so we will manually call it
+        # here in the tests
+        # The first time it is called, it will instantiate a new instance of the message_recieve process
+        MessageService.process_message_instances()
+
+        # The sender process should still be waiting on a message to be returned to it ...
+        self.assure_there_is_a_process_waiting_on_a_message()
+
+        # The second time we call ths process_message_isntances (again it would typically be running on cron)
+        # it will deliver the message that was sent from the receiver back to the original sender.
+        MessageService.process_message_instances()
+
+
+        # But there should be no send message waiting for delivery, because
+        # the message receiving process should pick it up instantly via
+        # it's start event.
+        waiting_messages = MessageInstanceModel.query. \
+            filter_by(message_type="receive"). \
+            filter_by(status="ready"). \
+            filter_by(process_instance_id=self.process_instance.id).all()
+        assert len(waiting_messages) == 0
+
+        # The message sender process is complete
+        assert self.process_instance.status == 'complete'
+
+        # The message receiver process is also complete
+        message_receiver_process = ProcessInstanceModel.query.filter_by(process_model_identifier = "test_group/message_receive").first()
+        assert message_receiver_process.status == 'complete'
+
+
+
+
+
+    def start_sender_process(self,
+                             client: FlaskClient,
+                             with_super_admin_user: UserModel):
         process_group_id = "test_group"
         self.create_process_group(
             client, with_super_admin_user, process_group_id, process_group_id
         )
 
-        load_test_spec(
-            "test_group/message_receiver",
+        process_model = load_test_spec(
+            "test_group/message",
             process_model_source_directory="message_send_one_conversation",
-            bpmn_file_name="message_receiver.bpmn",
-        )
-        process_model_sender = load_test_spec(
-            "test_group/message_sender",
-            process_model_source_directory="message_send_one_conversation",
-            bpmn_file_name="message_sender.bpmn",
+            bpmn_file_name="message_sender.bpmn",  # Slightly misnamed, it sends and receives
         )
 
-        process_instance_sender = ProcessInstanceService.create_process_instance_from_process_model_identifier(
-            process_model_sender.id,
+        self.process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
+            process_model.id,
             with_super_admin_user,
         )
+        processor_send_receive = ProcessInstanceProcessor(self.process_instance)
+        processor_send_receive.do_engine_steps(save=True)
+        task = processor_send_receive.get_all_user_tasks()[0]
+        human_task = self.process_instance.active_human_tasks[0]
+        spiff_task = processor_send_receive.__class__.get_task_by_bpmn_identifier(
+            human_task.task_name, processor_send_receive.bpmn_process_instance
+        )
 
-        processor_sender = ProcessInstanceProcessor(process_instance_sender)
-        processor_sender.do_engine_steps()
-        processor_sender.save()
+        ProcessInstanceService.complete_form_task(
+            processor_send_receive,
+            task,
+            self.payload,
+            with_super_admin_user,
+            human_task,
+        )
+        processor_send_receive.save()
 
+    def assure_a_message_was_sent(self):
+        # There should be one new send message for the given process instance.
+        send_messages = MessageInstanceModel.query. \
+            filter_by(message_type="send"). \
+            filter_by(process_instance_id=self.process_instance.id).all()
+        assert len(send_messages) == 1
+        send_message = send_messages[0]
+
+        # The payload should match because of how it is written in the Send task.
+        assert send_message.payload == self.payload, "The send message should match up with the payload"
+        assert send_message.message_model.identifier == "request_approval"
+        assert send_message.status == "ready"
+        assert len(send_message.message_correlations) == 2
         message_instance_result = MessageInstanceModel.query.all()
-        assert len(message_instance_result) == 2
-        # ensure both message instances are for the same process instance
-        # it will be send_message and receive_message_response
-        assert (
-            message_instance_result[0].process_instance_id
-            == message_instance_result[1].process_instance_id
-        )
+        self.assure_correlation_properties_are_right(send_message)
 
-        message_instance_sender = message_instance_result[0]
-        assert message_instance_sender.process_instance_id == process_instance_sender.id
-        message_correlations = MessageCorrelationModel.query.all()
-        assert len(message_correlations) == 2
-        assert message_correlations[0].process_instance_id == process_instance_sender.id
-        message_correlations_message_instances = (
-            MessageCorrelationMessageInstanceModel.query.all()
-        )
-        assert len(message_correlations_message_instances) == 4
-        assert (
-            message_correlations_message_instances[0].message_instance_id
-            == message_instance_sender.id
-        )
-        assert (
-            message_correlations_message_instances[1].message_instance_id
-            == message_instance_sender.id
-        )
-        assert (
-            message_correlations_message_instances[2].message_instance_id
-            == message_instance_result[1].id
-        )
-        assert (
-            message_correlations_message_instances[3].message_instance_id
-            == message_instance_result[1].id
-        )
+    def assure_there_is_a_process_waiting_on_a_message(self):
+        # There should be one new send message for the given process instance.
+        waiting_messages = MessageInstanceModel.query. \
+            filter_by(message_type="receive"). \
+            filter_by(status="ready"). \
+            filter_by(process_instance_id=self.process_instance.id).all()
+        assert len(waiting_messages) == 1
+        waiting_message = waiting_messages[0]
+        self.assure_correlation_properties_are_right(waiting_message)
 
-        # process first message
-        MessageService.process_message_instances()
-        assert message_instance_sender.status == "completed"
-
-        process_instance_result = ProcessInstanceModel.query.all()
-
-        assert len(process_instance_result) == 2
-        process_instance_receiver = process_instance_result[1]
-
-        # just make sure it's a different process instance
-        assert process_instance_receiver.id != process_instance_sender.id
-        assert process_instance_receiver.status == "complete"
-
-        message_instance_result = MessageInstanceModel.query.all()
-        assert len(message_instance_result) == 3
-        message_instance_receiver = message_instance_result[1]
-        assert message_instance_receiver.id != message_instance_sender.id
-        assert message_instance_receiver.status == "ready"
-
-        # process second message
-        MessageService.process_message_instances()
-
-        message_instance_result = MessageInstanceModel.query.all()
-        assert len(message_instance_result) == 3
-        for message_instance in message_instance_result:
-            assert message_instance.status == "completed"
-
-        process_instance_result = ProcessInstanceModel.query.all()
-        assert len(process_instance_result) == 2
-        for process_instance in process_instance_result:
-            assert process_instance.status == "complete"
+    def assure_correlation_properties_are_right(self, message):
+        # Correlation Properties should match up
+        po_curr = next(c for c in message.message_correlations if c.name == "po_number")
+        customer_curr = next(c for c in message.message_correlations if c.name == "customer_id")
+        assert po_curr is not None
+        assert customer_curr is not None
+        assert po_curr.value == '1001'
+        assert customer_curr.value == "Sartography"
 
     def test_can_send_message_to_multiple_process_models(
         self,
@@ -153,55 +234,34 @@ class TestMessageService(BaseTest):
 
         process_instance_sender = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model_sender.id,
-            user,
-            # process_group_identifier=process_model_sender.process_group_id,
-        )
+            user)
 
         processor_sender = ProcessInstanceProcessor(process_instance_sender)
         processor_sender.do_engine_steps()
         processor_sender.save()
 
-        message_instance_result = MessageInstanceModel.query.all()
-        assert len(message_instance_result) == 3
-        # ensure both message instances are for the same process instance
-        # it will be send_message and receive_message_response
-        assert (
-            message_instance_result[0].process_instance_id
-            == message_instance_result[1].process_instance_id
-        )
+        # At this point, the message_sender process has fired two different messages but those
+        # processes have not started, and it is now paused, waiting for to receive a message. so
+        # we should have two sends and a receive.
+        assert MessageInstanceModel.query.filter_by(process_instance_id = process_instance_sender.id).count() == 3
+        assert MessageInstanceModel.query.count() == 3  # all messages are related to the instance
+        orig_send_messages =  MessageInstanceModel.query.filter_by(message_type="send").all()
+        assert len(orig_send_messages) == 2
+        assert MessageInstanceModel.query.filter_by(message_type="receive").count() == 1
 
-        message_instance_sender = message_instance_result[0]
-        assert message_instance_sender.process_instance_id == process_instance_sender.id
-        message_correlations = MessageCorrelationModel.query.all()
-        assert len(message_correlations) == 4
-        assert message_correlations[0].process_instance_id == process_instance_sender.id
-        message_correlations_message_instances = (
-            MessageCorrelationMessageInstanceModel.query.all()
-        )
-        assert len(message_correlations_message_instances) == 6
-        assert (
-            message_correlations_message_instances[0].message_instance_id
-            == message_instance_sender.id
-        )
-        assert (
-            message_correlations_message_instances[1].message_instance_id
-            == message_instance_sender.id
-        )
-        assert (
-            message_correlations_message_instances[2].message_instance_id
-            == message_instance_result[1].id
-        )
-        assert (
-            message_correlations_message_instances[3].message_instance_id
-            == message_instance_result[1].id
-        )
+        message_instances = MessageInstanceModel.query.all()
+        # Each message instance should have two correlations
+        for mi in message_instances:
+            assert len(mi.message_correlations) == 2
 
-        # process first message
+        # process message instances
         MessageService.process_message_instances()
-        assert message_instance_sender.status == "completed"
+        # Once complete the original send messages should be completed and two new instanges
+        # should now exist, one for each of the process instances ...
+        for osm in orig_send_messages:
+            assert osm.status == "completed"
 
         process_instance_result = ProcessInstanceModel.query.all()
-
         assert len(process_instance_result) == 3
         process_instance_receiver_one = ProcessInstanceModel.query.filter_by(
             process_model_identifier="test_group/message_receiver_one"
@@ -241,9 +301,7 @@ class TestMessageService(BaseTest):
         ][0]
         assert message_instance_receiver_one is not None
         assert message_instance_receiver_two is not None
-        assert message_instance_receiver_one.id != message_instance_sender.id
         assert message_instance_receiver_one.status == "ready"
-        assert message_instance_receiver_two.id != message_instance_sender.id
         assert message_instance_receiver_two.status == "ready"
 
         # process second message
