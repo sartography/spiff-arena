@@ -50,6 +50,7 @@ class CatchingEvent(Simple, BpmnSpecMixin):
 
     def _update_hook(self, my_task):
 
+        super()._update_hook(my_task)
         # None events don't propogate, so as soon as we're ready, we fire our event
         if isinstance(self.event_definition, NoneEventDefinition):
             my_task._set_internal_data(event_fired=True)
@@ -71,6 +72,15 @@ class CatchingEvent(Simple, BpmnSpecMixin):
                 my_task._set_state(TaskState.WAITING)
         self.event_definition.reset(my_task)
         super(CatchingEvent, self)._on_complete_hook(my_task)
+
+    # This fixes the problem of boundary events remaining cancelled if the task is reused.
+    # It pains me to add these methods, but unless we can get rid of the loop reset task we're stuck
+
+    def task_should_set_children_future(self, my_task):
+        return True
+
+    def task_will_set_children_future(self, my_task):
+        my_task.internal_data = {}
 
 
 class ThrowingEvent(Simple, BpmnSpecMixin):
