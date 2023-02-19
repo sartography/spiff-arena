@@ -129,6 +129,14 @@ def setup_config(app: Flask) -> None:
             "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR config must be set"
         )
 
+    if app.config["FLASK_SESSION_SECRET_KEY"] is None:
+        raise KeyError(
+            "Cannot find the secret_key from the environment. Please set"
+            " FLASK_SESSION_SECRET_KEY"
+        )
+
+    app.secret_key = os.environ.get("FLASK_SESSION_SECRET_KEY")
+
     app.config["PROCESS_UUID"] = uuid.uuid4()
 
     setup_database_uri(app)
