@@ -94,13 +94,6 @@ def create_app() -> flask.app.Flask:
     app.config["CONNEXION_APP"] = connexion_app
     app.config["SESSION_TYPE"] = "filesystem"
 
-    if os.environ.get("FLASK_SESSION_SECRET_KEY") is None:
-        raise KeyError(
-            "Cannot find the secret_key from the environment. Please set"
-            " FLASK_SESSION_SECRET_KEY"
-        )
-
-    app.secret_key = os.environ.get("FLASK_SESSION_SECRET_KEY")
 
     setup_config(app)
     db.init_app(app)
