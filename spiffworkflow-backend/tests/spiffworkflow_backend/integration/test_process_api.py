@@ -1352,7 +1352,7 @@ class TestProcessApi(BaseTest):
             "customer_id": "sartography",
             "po_number": "1001",
             "amount": "One Billion Dollars! Mwhahahahahaha",
-            "description": "But seriously."
+            "description": "But seriously.",
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
@@ -1401,7 +1401,7 @@ class TestProcessApi(BaseTest):
             "customer_id": "sartography",
             "po_number": "1001",
             "amount": "One Billion Dollars! Mwhahahahahaha",
-            "description": "Ya!, a-ok bud!"
+            "description": "Ya!, a-ok bud!",
         }
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
@@ -1417,14 +1417,13 @@ class TestProcessApi(BaseTest):
         )
         assert response.json is not None
 
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        process_instance = ProcessInstanceModel.query.filter_by(
+            id=process_instance_id
+        ).first()
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         task = processor.get_all_user_tasks()[0]
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
 
         ProcessInstanceService.complete_form_task(
             processor,
@@ -1484,7 +1483,7 @@ class TestProcessApi(BaseTest):
             "customer_id": "sartography",
             "po_number": "1001",
             "amount": "One Billion Dollars! Mwhahahahahaha",
-            "description": "But seriously."
+            "description": "But seriously.",
         }
 
         response = self.create_process_instance_from_process_model_id_with_api(
@@ -1495,7 +1494,6 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         process_instance_id = response.json["id"]
 
-
         process_instance = ProcessInstanceModel.query.filter_by(
             id=process_instance_id
         ).first()
@@ -1503,9 +1501,6 @@ class TestProcessApi(BaseTest):
         processor.do_engine_steps(save=True)
         task = processor.get_all_user_tasks()[0]
         human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
 
         ProcessInstanceService.complete_form_task(
             processor,
@@ -1517,7 +1512,7 @@ class TestProcessApi(BaseTest):
         processor.save()
 
         processor.suspend()
-        payload['description'] = "Message To Suspended"
+        payload["description"] = "Message To Suspended"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
@@ -1531,14 +1526,12 @@ class TestProcessApi(BaseTest):
         assert response.json["error_code"] == "message_not_accepted"
 
         processor.resume()
-        payload['description'] = "Message To Resumed"
+        payload["description"] = "Message To Resumed"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
-            data=json.dumps(
-                {"payload": payload}
-            ),
+            data=json.dumps({"payload": payload}),
         )
         assert response.status_code == 200
         json_data = response.json
@@ -2325,7 +2318,7 @@ class TestProcessApi(BaseTest):
             "customer_id": "sartography",
             "po_number": "1001",
             "amount": "One Billion Dollars! Mwhahahahahaha",
-            "description": "But seriously."
+            "description": "But seriously.",
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",

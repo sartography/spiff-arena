@@ -1,6 +1,5 @@
 """Message_correlation."""
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
@@ -40,4 +39,3 @@ class MessageCorrelationModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer)
 
     message_correlation_property = relationship("MessageCorrelationPropertyModel")
-

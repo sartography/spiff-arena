@@ -1,4 +1,6 @@
 """Message_model."""
+from typing import Any
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
@@ -13,8 +15,8 @@ class MessageModel(SpiffworkflowBaseDBModel):
     name = db.Column(db.String(50), unique=True, index=True)
     # correlation_properties is a backref and defined in the MessageCorrelationProperties class.
 
-    def get_correlation_property(self, identifier):
+    def get_correlation_property(self, identifier: str) -> Any | None:
         for corr_prop in self.correlation_properties:
             if corr_prop.identifier == identifier:
-                return corr_prop;
+                return corr_prop
         return None

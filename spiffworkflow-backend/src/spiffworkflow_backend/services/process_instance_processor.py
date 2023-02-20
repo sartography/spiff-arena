@@ -1340,7 +1340,6 @@ class ProcessInstanceProcessor:
 
     def process_bpmn_messages(self) -> None:
         """Process_bpmn_messages."""
-
         bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
         for bpmn_message in bpmn_messages:
             # only message sends are in get_bpmn_messages
@@ -1350,7 +1349,6 @@ class ProcessInstanceProcessor:
                     "invalid_message_name",
                     f"Invalid message name: {bpmn_message.name}.",
                 )
-
 
             if not bpmn_message.correlations:
                 raise ApiError(
@@ -1362,8 +1360,10 @@ class ProcessInstanceProcessor:
                 )
 
             message_correlations = []
-            for (name, value) in bpmn_message.correlations.items():
-                message_correlation_property = message_model.get_correlation_property(name)
+            for name, value in bpmn_message.correlations.items():
+                message_correlation_property = message_model.get_correlation_property(
+                    name
+                )
                 if message_correlation_property is None:
                     raise ApiError(
                         "message_correlations_missing_from_process",
@@ -1372,17 +1372,20 @@ class ProcessInstanceProcessor:
                             f" identifier:{name}"
                         ),
                     )
-                message_correlations.append(MessageCorrelationModel(
-                    process_instance_id=self.process_instance_model.id,
-                    message_correlation_property_id=message_correlation_property.id,
-                    name=name,
-                    value=value))
+                message_correlations.append(
+                    MessageCorrelationModel(
+                        process_instance_id=self.process_instance_model.id,
+                        message_correlation_property_id=message_correlation_property.id,
+                        name=name,
+                        value=value,
+                    )
+                )
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
                 message_type="send",
                 message_model_id=message_model.id,
                 payload=bpmn_message.payload,
-                message_correlations=message_correlations
+                message_correlations=message_correlations,
             )
             db.session.add(message_instance)
             db.session.commit()
@@ -1434,15 +1437,29 @@ class ProcessInstanceProcessor:
             for (
                 spiff_correlation_property
             ) in waiting_task.task_spec.event_definition.correlation_properties:
-                message_correlation = next((mc for mc in message_instance.message_correlations
-                                            if mc.name == spiff_correlation_property.name), None)
+                message_correlation = next(
+                    (
+                        mc
+                        for mc in message_instance.message_correlations
+                        if mc.name == spiff_correlation_property.name
+                    ),
+                    None,
+                )
                 if not message_correlation:
                     expression = spiff_correlation_property.expression
-                    correlation_value = ProcessInstanceProcessor._script_engine.evaluate(waiting_task, expression)
+                    correlation_value = (
+                        ProcessInstanceProcessor._script_engine.evaluate(
+                            waiting_task, expression
+                        )
+                    )
                     correlation_name = spiff_correlation_property.name
-                    message_prop = MessageCorrelationPropertyModel.query.\
-                        filter_by(identifier=correlation_name).\
-                        filter_by(message_model_id=message_model.id).first()
+                    message_prop = (
+                        MessageCorrelationPropertyModel.query.filter_by(
+                            identifier=correlation_name
+                        )
+                        .filter_by(message_model_id=message_model.id)
+                        .first()
+                    )
 
                     message_correlation = MessageCorrelationModel(
                         process_instance_id=self.process_instance_model.id,
