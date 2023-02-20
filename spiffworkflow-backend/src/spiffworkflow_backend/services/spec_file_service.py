@@ -175,7 +175,7 @@ class SpecFileService(FileSystemService):
         """Validate_bpmn_xml."""
         file_type = FileSystemService.file_type(file_name)
         if file_type.value == FileType.bpmn.value:
-            validator = BpmnValidator()
+            BpmnValidator()
             parser = MyCustomParser()
             try:
                 parser.add_bpmn_xml(

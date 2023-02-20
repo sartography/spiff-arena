@@ -94,7 +94,6 @@ def create_app() -> flask.app.Flask:
     app.config["CONNEXION_APP"] = connexion_app
     app.config["SESSION_TYPE"] = "filesystem"
 
-
     setup_config(app)
     db.init_app(app)
     migrate.init_app(app, db)

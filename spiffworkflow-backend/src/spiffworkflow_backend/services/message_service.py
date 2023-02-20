@@ -2,13 +2,9 @@
 from typing import Any
 from typing import Optional
 
-from sqlalchemy import and_
-from sqlalchemy import or_
-from sqlalchemy import select
-
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel, MessageStatuses
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_instance import MessageStatuses
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
@@ -121,8 +117,7 @@ class MessageService:
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
         processor_receive.do_engine_steps(save=False)
         processor_receive.bpmn_process_instance.catch_bpmn_message(
-            message_model_name,
-            message_payload
+            message_model_name, message_payload
         )
         processor_receive.do_engine_steps(save=True)
 
@@ -148,7 +143,6 @@ class MessageService:
                     ),
                 )
             )
-
 
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
         processor_receive.bpmn_process_instance.catch_bpmn_message(

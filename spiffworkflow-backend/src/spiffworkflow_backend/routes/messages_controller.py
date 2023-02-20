@@ -11,8 +11,6 @@ from flask import make_response
 from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_correlation_property import MessageCorrelationPropertyModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
@@ -21,9 +19,6 @@ from spiffworkflow_backend.models.message_triggerable_process_model import (
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.routes.process_api_blueprint import (
-    _find_process_instance_by_id_or_raise,
-)
 from spiffworkflow_backend.services.message_service import MessageService
 
 
@@ -91,7 +86,10 @@ def message_send(
         raise (
             ApiError(
                 error_code="missing_payload",
-                message="Please include a 'payload' in the JSON body that contains the message contents.",
+                message=(
+                    "Please include a 'payload' in the JSON body that contains the"
+                    " message contents."
+                ),
                 status_code=400,
             )
         )
@@ -99,7 +97,9 @@ def message_send(
     process_instance = None
 
     # Is there a running instance that is waiting for this message?
-    message_instances = MessageInstanceModel.query.filter_by(message_model_id=message_model.id).all()
+    message_instances = MessageInstanceModel.query.filter_by(
+        message_model_id=message_model.id
+    ).all()
 
     # do any waiting message instances have matching correlations?
     matching_message = None
@@ -109,14 +109,21 @@ def message_send(
 
     process_instance = None
     if matching_message:
-        process_instance = ProcessInstanceModel.query.filter_by(id = matching_message.process_instance_id).first()
+        process_instance = ProcessInstanceModel.query.filter_by(
+            id=matching_message.process_instance_id
+        ).first()
 
-    if matching_message and process_instance and process_instance.status != ProcessInstanceStatus.waiting.value:
+    if (
+        matching_message
+        and process_instance
+        and process_instance.status != ProcessInstanceStatus.waiting.value
+    ):
         raise ApiError(
             error_code="message_not_accepted",
             message=(
-                f"The process that can accept message '{message_identifier}' with the given correlation keys"
-                f" is not currently waiting for that message.  It is currently in the a '{process_instance.status}' state."
+                f"The process that can accept message '{message_identifier}' with the"
+                " given correlation keys is not currently waiting for that message. "
+                f" It is currently in the a '{process_instance.status}' state."
             ),
             status_code=400,
         )
@@ -136,8 +143,10 @@ def message_send(
                 ApiError(
                     error_code="cannot_start_message",
                     message=(
-                        f"No process instances correlate with the given message id of '{message_identifier}'.  "
-                        f"And this message name is not currently associated with any process Start Event."),
+                        "No process instances correlate with the given message id of"
+                        f" '{message_identifier}'.  And this message name is not"
+                        " currently associated with any process Start Event."
+                    ),
                     status_code=400,
                 )
             )
