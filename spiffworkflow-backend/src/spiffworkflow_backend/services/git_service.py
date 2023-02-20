@@ -197,13 +197,15 @@ class GitService:
                 f" body: {webhook}"
             )
 
-        config_clone_url = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"]
+        config_clone_url = current_app.config[
+            "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"
+        ]
         repo = webhook["repository"]
         valid_clone_urls = [repo["clone_url"], repo["git_url"], repo["ssh_url"]]
         if config_clone_url not in valid_clone_urls:
             raise GitCloneUrlMismatchError(
-                "Configured clone url does not match the repo URLs from webhook: %s =/= %s"
-                % (config_clone_url, valid_clone_urls)
+                "Configured clone url does not match the repo URLs from webhook: %s"
+                " =/= %s" % (config_clone_url, valid_clone_urls)
             )
 
         # Test webhook requests have a zen koan and hook info.
