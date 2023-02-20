@@ -37,7 +37,7 @@ function run() {
   git push --set-upstream origin "${git_branch}"
 }
 
-exec {lock_fd}>/var/lock/mylockfile || failed_to_get_lock
+exec {lock_fd}>/var/lock/spiff-workflow-git-lock || failed_to_get_lock
 flock --timeout 60 "${lock_fd}" || failed_to_get_lock
 run
 flock -u "${lock_fd}"
