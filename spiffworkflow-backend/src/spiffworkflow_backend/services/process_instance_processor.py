@@ -1338,10 +1338,9 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-    # messages have one correlation key (possibly wrong)
-    # correlation keys may have many correlation properties
     def process_bpmn_messages(self) -> None:
         """Process_bpmn_messages."""
+
         bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
         for bpmn_message in bpmn_messages:
             # only message sends are in get_bpmn_messages
@@ -1351,6 +1350,7 @@ class ProcessInstanceProcessor:
                     "invalid_message_name",
                     f"Invalid message name: {bpmn_message.name}.",
                 )
+
 
             if not bpmn_message.correlations:
                 raise ApiError(
@@ -1362,54 +1362,28 @@ class ProcessInstanceProcessor:
                 )
 
             message_correlations = []
-            for (
-                message_correlation_key,
-                message_correlation_properties,
-            ) in bpmn_message.correlations.items():
-                for (
-                    message_correlation_property_identifier,
-                    message_correlation_property_value,
-                ) in message_correlation_properties.items():
-                    message_correlation_property = (
-                        MessageCorrelationPropertyModel.query.filter_by(
-                            identifier=message_correlation_property_identifier,
-                        ).first()
+            for (name, value) in bpmn_message.correlations.items():
+                message_correlation_property = message_model.get_correlation_property(name)
+                if message_correlation_property is None:
+                    raise ApiError(
+                        "message_correlations_missing_from_process",
+                        (
+                            "Could not find a known message correlation with"
+                            f" identifier:{name}"
+                        ),
                     )
-                    if message_correlation_property is None:
-                        raise ApiError(
-                            "message_correlations_missing_from_process",
-                            (
-                                "Could not find a known message correlation with"
-                                f" identifier:{message_correlation_property_identifier}"
-                            ),
-                        )
-                    message_correlations.append(
-                        {
-                            "message_correlation_property": (
-                                message_correlation_property
-                            ),
-                            "name": message_correlation_property_identifier,
-                            "value": message_correlation_property_value,
-                        }
-                    )
+                message_correlations.append(MessageCorrelationModel(
+                    process_instance_id=self.process_instance_model.id,
+                    message_correlation_property_id=message_correlation_property.id,
+                    name=name,
+                    value=value))
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
                 message_type="send",
                 message_model_id=message_model.id,
                 payload=bpmn_message.payload,
+                message_correlations=message_correlations
             )
-
-            correlation_models = []
-            for message_correlation in message_correlations:
-                correlation_models.append(MessageCorrelationModel(
-                    process_instance_id=self.process_instance_model.id,
-                    message_correlation_property_id=message_correlation[
-                        "message_correlation_property"
-                    ].id,
-                    name=message_correlation["name"],
-                    value=message_correlation["value"],
-                ))
-            message_instance.message_correlations = correlation_models
             db.session.add(message_instance)
             db.session.commit()
 

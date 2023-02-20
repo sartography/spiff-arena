@@ -9,5 +9,5 @@ message_correlation_message_instance_table \
                db.Column('message_instance_id',
                          ForeignKey('message_instance.id'), primary_key=True),
                db.Column('message_correlation_id',
-                         ForeignKey('message_correlation.id'),primary_key=True)
+                         ForeignKey('message_correlation.id'),primary_key=True),
                )

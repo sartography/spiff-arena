@@ -11,3 +11,10 @@ class MessageModel(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     identifier = db.Column(db.String(50), unique=True, index=True)
     name = db.Column(db.String(50), unique=True, index=True)
+    # correlation_properties is a backref and defined in the MessageCorrelationProperties class.
+
+    def get_correlation_property(self, identifier):
+        for corr_prop in self.correlation_properties:
+            if corr_prop.identifier == identifier:
+                return corr_prop;
+        return None

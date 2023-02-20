@@ -56,26 +56,6 @@ def message_instance_list(
         .paginate(page=page, per_page=per_page, error_out=False)
     )
 
-    for message_instance in message_instances:
-        message_correlations: dict = {}
-        for (
-            mcmi
-        ) in (
-            message_instance.MessageInstanceModel.message_correlations_message_instances
-        ):
-            mc = MessageCorrelationModel.query.filter_by(
-                id=mcmi.message_correlation_id
-            ).all()
-            for m in mc:
-                if m.name not in message_correlations:
-                    message_correlations[m.name] = {}
-                message_correlations[m.name][
-                    m.message_correlation_property.identifier
-                ] = m.value
-        message_instance.MessageInstanceModel.message_correlations = (
-            message_correlations
-        )
-
     response_json = {
         "results": message_instances.items,
         "pagination": {
@@ -120,7 +100,6 @@ def message_send(
 
     # Is there a running instance that is waiting for this message?
     message_instances = MessageInstanceModel.query.filter_by(message_model_id=message_model.id).all()
-    correlations = MessageCorrelationPropertyModel.query.filter_by(message_model_id=message_model.id).all()
 
     # do any waiting message instances have matching correlations?
     matching_message = None
@@ -133,7 +112,7 @@ def message_send(
         process_instance = ProcessInstanceModel.query.filter_by(id = matching_message.process_instance_id).first()
 
     if matching_message and process_instance and process_instance.status != ProcessInstanceStatus.waiting.value:
-        ApiError(
+        raise ApiError(
             error_code="message_not_accepted",
             message=(
                 f"The process that can accept message '{message_identifier}' with the given correlation keys"
