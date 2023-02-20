@@ -225,7 +225,7 @@ class GitService:
         with FileSystemService.cd(
             current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         ):
-            cls.run_shell_command(["git", "pull"])
+            cls.run_shell_command(["git", "pull", "--rebase"])
         return True
 
     @classmethod
