@@ -68,19 +68,23 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
         """Validate_status."""
         return self.validate_enum_field(key, value, MessageStatuses)
 
+    def correlation_dictionary(self):
+        correlation_dict = {}
+        for c in self.message_correlations:
+            correlation_dict[c.name]=c.value
+        return correlation_dict
+
     def correlates(self, other_message_instance: Self) -> bool:
         if other_message_instance.message_model_id != self.message_model_id:
             return False
-        correlation_dict = {}
-        for c in other_message_instance.message_correlations:
-            correlation_dict[c.name]=c.value
-        return self.correlates_with_dictionary(correlation_dict)
+        return self.correlates_with_dictionary(other_message_instance.correlation_dictionary())
 
-    def correlates_with_dictionary(self, correlation_dictionary: dict) -> bool:
-        """Returns true if the given dictionary matches the correlation names and values connected to this message instance"""
+    def correlates_with_dictionary(self, dict: dict) -> bool:
+        """Returns true if the given dictionary matches the correlation
+        names and values connected to this message instance"""
         for c in self.message_correlations:
-            # Fixme:  Maybe we should look at typing the correlations and not forcing them to strings?
-            if c.name in correlation_dictionary and str(correlation_dictionary[c.name]) == c.value:
+            # Fixme: Maybe we should look at typing the correlations and not forcing them to strings?
+            if c.name in dict and str(dict[c.name]) == c.value:
                 continue
             else:
                 return False

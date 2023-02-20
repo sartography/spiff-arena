@@ -149,11 +149,12 @@ class MessageService:
                 )
             )
 
+
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
         processor_receive.bpmn_process_instance.catch_bpmn_message(
             message_model_name,
             message_payload,
-            correlations={},
+            correlations=message_instance_receive.correlation_dictionary(),
         )
         processor_receive.do_engine_steps(save=True)
         message_instance_receive.status = MessageStatuses.completed.value

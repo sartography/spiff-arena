@@ -1347,11 +1347,12 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        message_model_identifier = "message_send"
+        message_model_identifier = "request_approval"
         payload = {
-            "topica": "the_topica_string",
-            "topicb": "the_topicb_string",
-            "andThis": "another_item_non_key",
+            "customer_id": "sartography",
+            "po_number": "1001",
+            "amount": "One Billion Dollars! Mwhahahahahaha",
+            "description": "But seriously."
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
@@ -1372,7 +1373,7 @@ class TestProcessApi(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         process_instance_data = processor.get_data()
         assert process_instance_data
-        assert process_instance_data["the_payload"] == payload
+        assert process_instance_data["invoice"] == payload
 
     def test_message_send_when_providing_message_to_running_process_instance(
         self,
@@ -1395,13 +1396,12 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        message_model_identifier = "message_response"
+        message_model_identifier = "approval_result"
         payload = {
-            "the_payload": {
-                "topica": "the_payload.topica_string",
-                "topicb": "the_payload.topicb_string",
-                "andThis": "another_item_non_key",
-            }
+            "customer_id": "sartography",
+            "po_number": "1001",
+            "amount": "One Billion Dollars! Mwhahahahahaha",
+            "description": "Ya!, a-ok bud!"
         }
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
@@ -1415,8 +1415,25 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-
         assert response.json is not None
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        task = processor.get_all_user_tasks()[0]
+        human_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            human_task.task_name, processor.bpmn_process_instance
+        )
+
+        ProcessInstanceService.complete_form_task(
+            processor,
+            task,
+            payload,
+            with_super_admin_user,
+            human_task,
+        )
+        processor.save()
 
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
@@ -1462,14 +1479,14 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        message_model_identifier = "message_response"
+        message_model_identifier = "approval_result"
         payload = {
-            "the_payload": {
-                "topica": "the_payload.topica_string",
-                "topicb": "the_payload.topicb_string",
-                "andThis": "another_item_non_key",
-            }
+            "customer_id": "sartography",
+            "po_number": "1001",
+            "amount": "One Billion Dollars! Mwhahahahahaha",
+            "description": "But seriously."
         }
+
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
             process_model_identifier,
@@ -1478,20 +1495,29 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         process_instance_id = response.json["id"]
 
-        response = client.post(
-            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-
-        assert response.status_code == 200
-        assert response.json is not None
 
         process_instance = ProcessInstanceModel.query.filter_by(
             id=process_instance_id
         ).first()
         processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        task = processor.get_all_user_tasks()[0]
+        human_task = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            human_task.task_name, processor.bpmn_process_instance
+        )
+
+        ProcessInstanceService.complete_form_task(
+            processor,
+            task,
+            payload,
+            with_super_admin_user,
+            human_task,
+        )
+        processor.save()
 
         processor.suspend()
+        payload['description'] = "Message To Suspended"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
@@ -1502,15 +1528,16 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 400
         assert response.json
-        assert response.json["error_code"] == "process_instance_is_suspended"
+        assert response.json["error_code"] == "message_not_accepted"
 
         processor.resume()
+        payload['description'] = "Message To Resumed"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
             headers=self.logged_in_headers(with_super_admin_user),
             data=json.dumps(
-                {"payload": payload, "process_instance_id": process_instance_id}
+                {"payload": payload}
             ),
         )
         assert response.status_code == 200
@@ -1538,7 +1565,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 400
         assert response.json
-        assert response.json["error_code"] == "process_instance_is_terminated"
+        assert response.json["error_code"] == "message_not_accepted"
 
     def test_process_instance_can_be_terminated(
         self,
@@ -2293,11 +2320,12 @@ class TestProcessApi(BaseTest):
         #     process_model_source_directory="message_send_one_conversation",
         #     bpmn_file_name="message_receiver",
         # )
-        message_model_identifier = "message_send"
+        message_model_identifier = "request_approval"
         payload = {
-            "topica": "the_topica_string",
-            "topicb": "the_topicb_string",
-            "andThis": "another_item_non_key",
+            "customer_id": "sartography",
+            "po_number": "1001",
+            "amount": "One Billion Dollars! Mwhahahahahaha",
+            "description": "But seriously."
         }
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
