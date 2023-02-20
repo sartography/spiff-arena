@@ -94,9 +94,11 @@ def _process_data_fetcher(
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     all_process_data = processor.get_data()
-    process_data_value = None
-    if process_data_identifier in all_process_data:
-        process_data_value = all_process_data[process_data_identifier]
+    process_data_value = all_process_data.get(process_data_identifier)
+
+    if process_data_value is None:
+        script_engine_last_result = processor._script_engine.environment.last_result()
+        process_data_value = script_engine_last_result.get(process_data_identifier)
 
     if process_data_value is not None and index is not None:
         process_data_value = process_data_value[index]
@@ -108,7 +110,7 @@ def _process_data_fetcher(
     ):
         parts = process_data_value.split(";")
         mimetype = parts[0][4:]
-        filename = parts[1]
+        filename = parts[1].split("=")[1]
         base64_value = parts[2].split(",")[1]
         file_contents = base64.b64decode(base64_value)
 
