@@ -206,6 +206,10 @@ class GitService:
                 % (config_clone_url, valid_clone_urls)
             )
 
+        # Test webhook requests have a zen koan and hook info.
+        if "zen" in webhook or "hook_id" in webhook:
+            return False
+
         if "ref" not in webhook:
             raise InvalidGitWebhookBodyError(
                 f"Could not find the 'ref' arg in the webhook boy: {webhook}"
