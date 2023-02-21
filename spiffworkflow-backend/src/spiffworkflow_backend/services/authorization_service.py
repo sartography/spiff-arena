@@ -76,8 +76,9 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     },
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
-    {"path": "/task-data", "relevant_permissions": ["read", "update"]},
     {"path": "/process-data", "relevant_permissions": ["read"]},
+    {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
+    {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
 
@@ -567,15 +568,24 @@ class AuthorizationService:
             permissions_to_assign.append(
                 PermissionToAssign(permission="create", target_uri=target_uri)
             )
-            target_uri = f"/process-instances/for-me/{process_related_path_segment}"
-            permissions_to_assign.append(
-                PermissionToAssign(permission="read", target_uri=target_uri)
-            )
-            target_uri = f"/logs/{process_related_path_segment}"
-            permissions_to_assign.append(
-                PermissionToAssign(permission="read", target_uri=target_uri)
-            )
 
+            # giving people access to all logs for an instance actually gives them a little bit more access
+            # than would be optimal. ideally, you would only be able to view the logs for instances that you started
+            # or that you need to approve, etc. we could potentially implement this by adding before filters
+            # in the controllers that confirm that you are viewing logs for your instances. i guess you need to check
+            # both for-me and NOT for-me URLs for the instance in question to see if you should get access to its logs.
+            # if we implemented things this way, there would also be no way to restrict access to logs when you do not
+            # restrict access to instances. everything would be inheriting permissions from instances.
+            # if we want to really codify this rule, we could change logs from a prefix to a suffix (just add it to the end of the process instances path).
+            # but that makes it harder to change our minds in the future.
+            for target_uri in [
+                f"/process-instances/for-me/{process_related_path_segment}",
+                f"/logs/{process_related_path_segment}",
+                f"/process-data-file-download/{process_related_path_segment}",
+            ]:
+                permissions_to_assign.append(
+                    PermissionToAssign(permission="read", target_uri=target_uri)
+                )
         else:
             if permission_set == "all":
                 for path_segment_dict in PATH_SEGMENTS_FOR_PERMISSION_ALL:
