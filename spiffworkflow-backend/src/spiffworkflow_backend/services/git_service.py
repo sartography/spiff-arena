@@ -155,15 +155,23 @@ class GitService:
     ) -> Union[subprocess.CompletedProcess[bytes], bool]:
         """Run_shell_command."""
         git_env_options = {
-            "GIT_COMMITTER_NAME": current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USERNAME") or 'unknown',
-            "GIT_COMMITTER_EMAIL": current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL") or "unknown@example.org",
+            "GIT_COMMITTER_NAME": (
+                current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USERNAME")
+                or "unknown"
+            ),
+            "GIT_COMMITTER_EMAIL": (
+                current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL")
+                or "unknown@example.org"
+            ),
         }
         # SSH authentication can be also provided via gitconfig.
         ssh_key_path = current_app.config.get(
             "SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH"
         )
         if ssh_key_path is not None:
-            git_env_options["GIT_SSH_COMMAND"] = "ssh -F /dev/null -i %s" % ssh_key_path
+            git_env_options["GIT_SSH_COMMAND"] = (
+                "ssh -F /dev/null -o StrictHostKeyChecking=no -i %s" % ssh_key_path
+            )
 
         # this is fine since we pass the commands directly
         result = subprocess.run(  # noqa
