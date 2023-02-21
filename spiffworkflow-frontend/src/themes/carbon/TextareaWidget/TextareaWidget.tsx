@@ -72,7 +72,7 @@ function TextareaWidget<
     <TextArea
       id={id}
       name={id}
-      className="form-control"
+      className="text-input"
       value={value || ''}
       labelText=""
       placeholder={placeholder}
