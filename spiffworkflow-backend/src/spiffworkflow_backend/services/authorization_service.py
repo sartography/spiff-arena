@@ -576,7 +576,8 @@ class AuthorizationService:
             # both for-me and NOT for-me URLs for the instance in question to see if you should get access to its logs.
             # if we implemented things this way, there would also be no way to restrict access to logs when you do not
             # restrict access to instances. everything would be inheriting permissions from instances.
-            # if we want to really codify this rule, we could change logs from a prefix to a suffix (just add it to the end of the process instances path).
+            # if we want to really codify this rule, we could change logs from a prefix to a suffix
+            #   (just add it to the end of the process instances path).
             # but that makes it harder to change our minds in the future.
             for target_uri in [
                 f"/process-instances/for-me/{process_related_path_segment}",
