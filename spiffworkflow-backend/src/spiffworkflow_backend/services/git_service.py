@@ -170,7 +170,8 @@ class GitService:
         )
         if ssh_key_path is not None:
             git_env_options["GIT_SSH_COMMAND"] = (
-                "ssh -F /dev/null -o StrictHostKeyChecking=no -i %s" % ssh_key_path
+                "ssh -F /dev/null -o UserKnownHostsFile=/dev/null -o"
+                " StrictHostKeyChecking=no -i %s" % ssh_key_path
             )
 
         # this is fine since we pass the commands directly
