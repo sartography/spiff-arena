@@ -9,8 +9,6 @@ from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 
-# from spiffworkflow_backend.servces.process_instance_processor import ProcessInstanceProcessor
-
 
 class GetDataSizes(Script):
     """GetDataSizes."""
