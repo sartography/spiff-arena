@@ -115,6 +115,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  if (variant === 'all') {
+    processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+  }
+
   useEffect(() => {
     if (permissionsLoaded) {
       const processTaskFailure = () => {
@@ -254,11 +259,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (queryParamArray.length > 0) {
       queryParams = `?${queryParamArray.join('&')}`;
     }
+
     return (
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`/admin/process-instances/${params.process_model_id}/${params.process_instance_id}/${spiffStep}${queryParams}`}
+        to={`${processInstanceShowPageBaseUrl}/${spiffStep}${queryParams}`}
       >
         {label}
       </Link>
@@ -282,7 +288,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const returnToLastSpiffStep = () => {
-    window.location.href = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+    window.location.href = processInstanceShowPageBaseUrl;
   };
 
   const resetProcessInstance = () => {
