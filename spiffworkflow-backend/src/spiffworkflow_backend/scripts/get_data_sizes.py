@@ -32,12 +32,17 @@ class GetDataSizes(Script):
         **kwargs: Any
     ) -> Any:
         """Run."""
-        task = script_attributes_context.task
-        cumulative_task_data_size = ProcessInstanceProcessor.get_task_data_size(
-            task.workflow
-        )
-        python_env_size = ProcessInstanceProcessor.get_python_env_size(task.workflow)
+        workflow = script_attributes_context.task.workflow
+        task_data_size = ProcessInstanceProcessor.get_task_data_size(workflow)
+        task_data_keys_by_task = {
+            t.task_spec.name: sorted(t.data.keys())
+            for t in ProcessInstanceProcessor.get_tasks_with_data(workflow)
+        }
+        python_env_size = ProcessInstanceProcessor.get_python_env_size(workflow)
+        python_env_keys = workflow.script_engine.environment.user_defined_state().keys()
         return {
-            "cumulative_task_data_size": cumulative_task_data_size,
             "python_env_size": python_env_size,
+            "python_env_keys": sorted(python_env_keys),
+            "task_data_size": task_data_size,
+            "task_data_keys_by_task": task_data_keys_by_task,
         }
