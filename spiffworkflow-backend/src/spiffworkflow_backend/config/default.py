@@ -2,6 +2,10 @@
 import re
 from os import environ
 
+# Consider: https://flask.palletsprojects.com/en/2.2.x/config/#configuring-from-environment-variables
+#   and from_prefixed_env(), though we want to ensure that these variables are all documented, so that
+#   is a benefit of the status quo and having them all in this file explicitly.
+
 SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR = environ.get(
     "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
 )
