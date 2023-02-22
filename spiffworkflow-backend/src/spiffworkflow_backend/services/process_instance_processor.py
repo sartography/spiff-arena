@@ -293,6 +293,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "enumerate": enumerate,
             "format": format,
             "list": list,
+            "dict": dict,
             "map": map,
             "pytz": pytz,
             "sum": sum,
