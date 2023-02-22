@@ -1280,6 +1280,7 @@ class ProcessInstanceProcessor:
         # by background processing. when that happens it can potentially overwrite
         # human tasks which is bad because we cache them with the previous id's.
         # waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
+        # waiting_tasks = bpmn_process_instance.get_waiting()
         # if len(waiting_tasks) > 0:
         #     return ProcessInstanceStatus.waiting
         if len(user_tasks) > 0:
