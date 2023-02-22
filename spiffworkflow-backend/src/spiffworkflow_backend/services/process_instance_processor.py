@@ -1602,16 +1602,24 @@ class ProcessInstanceProcessor:
         except WorkflowTaskException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
-    def check_task_data_size(self) -> None:
-        """CheckTaskDataSize."""
-        tasks_to_check = self.bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
-        task_data = [task.data for task in tasks_to_check]
-        task_data_to_check = list(filter(len, task_data))
+    @classmethod
+    def _get_data_size(cls, data: Dict[Any, Any]) -> int:
+        data_to_check = list(filter(len, data))
 
         try:
-            task_data_len = len(json.dumps(task_data_to_check))
+            return len(json.dumps(data_to_check))
         except Exception:
-            task_data_len = 0
+            return 0
+
+    @classmethod
+    def get_task_data_size(cls, bpmn_process_instance: BpmnWorkflow) -> int:
+        tasks_to_check = bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
+        task_data = [task.data for task in tasks_to_check]
+        return cls._get_data_size(task_data)
+
+    def check_task_data_size(self) -> None:
+        """CheckTaskDataSize."""
+        task_data_len = self.get_task_data_size(self.bpmn_process_instance)
 
         # Not sure what the number here should be but this now matches the mysql
         # max_allowed_packet variable on dev - 1073741824
