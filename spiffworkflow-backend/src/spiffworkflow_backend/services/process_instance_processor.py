@@ -1608,13 +1608,20 @@ class ProcessInstanceProcessor:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
     @classmethod
+    def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
+        return [
+            task
+            for task in bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
+            if len(task.data) > 0
+        ]
+
+    @classmethod
     def get_task_data_size(cls, bpmn_process_instance: BpmnWorkflow) -> int:
-        tasks_to_check = bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
-        task_data = [task.data for task in tasks_to_check]
-        task_data_to_check = list(filter(len, task_data))
+        tasks_with_data = cls.get_tasks_with_data(bpmn_process_instance)
+        all_task_data = [task.data for task in tasks_with_data]
 
         try:
-            return len(json.dumps(task_data_to_check))
+            return len(json.dumps(all_task_data))
         except Exception:
             return 0
 
