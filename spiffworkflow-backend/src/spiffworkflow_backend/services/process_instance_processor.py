@@ -1608,7 +1608,9 @@ class ProcessInstanceProcessor:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
     @classmethod
-    def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
+    def get_tasks_with_data(
+        cls, bpmn_process_instance: BpmnWorkflow
+    ) -> List[SpiffTask]:
         return [
             task
             for task in bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
