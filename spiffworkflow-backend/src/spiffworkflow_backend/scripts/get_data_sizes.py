@@ -33,5 +33,5 @@ class GetDataSizes(Script):
         task = script_attributes_context.task
         return {
             "cumulative_task_data_size": ProcessInstanceProcessor.get_task_data_size(task.workflow),
-            "python_env_size": 0,
+            "python_env_size": ProcessInstanceProcessor.get_python_env_size(task.workflow),
         }
