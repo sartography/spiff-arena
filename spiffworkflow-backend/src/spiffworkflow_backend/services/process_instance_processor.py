@@ -1608,26 +1608,26 @@ class ProcessInstanceProcessor:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
     @classmethod
-    def _get_data_size(cls, data: Dict[Any, Any]) -> int:
-        data_to_check = list(filter(len, data))
-
-        try:
-            return len(json.dumps(data_to_check))
-        except Exception:
-            return 0
-
-    @classmethod
     def get_task_data_size(cls, bpmn_process_instance: BpmnWorkflow) -> int:
         tasks_to_check = bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
         task_data = [task.data for task in tasks_to_check]
-        return cls._get_data_size(task_data)
+        task_data_to_check = list(filter(len, task_data))
+
+        try:
+            return len(json.dumps(task_data_to_check))
+        except Exception:
+            return 0
 
     @classmethod
     def get_python_env_size(cls, bpmn_process_instance: BpmnWorkflow) -> int:
         user_defined_state = (
             bpmn_process_instance.script_engine.environment.user_defined_state()
         )
-        return cls._get_data_size(user_defined_state)
+
+        try:
+            return len(json.dumps(user_defined_state))
+        except Exception:
+            return 0
 
     def check_task_data_size(self) -> None:
         """CheckTaskDataSize."""
