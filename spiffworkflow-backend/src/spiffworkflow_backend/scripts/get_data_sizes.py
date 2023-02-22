@@ -5,10 +5,11 @@ from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
 from spiffworkflow_backend.scripts.script import Script
-#from spiffworkflow_backend.servces.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+
+# from spiffworkflow_backend.servces.process_instance_processor import ProcessInstanceProcessor
 
 
 class GetDataSizes(Script):
@@ -32,6 +33,10 @@ class GetDataSizes(Script):
         """Run."""
         task = script_attributes_context.task
         return {
-            "cumulative_task_data_size": ProcessInstanceProcessor.get_task_data_size(task.workflow),
-            "python_env_size": ProcessInstanceProcessor.get_python_env_size(task.workflow),
+            "cumulative_task_data_size": ProcessInstanceProcessor.get_task_data_size(
+                task.workflow
+            ),
+            "python_env_size": ProcessInstanceProcessor.get_python_env_size(
+                task.workflow
+            ),
         }

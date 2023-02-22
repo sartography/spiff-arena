@@ -1624,7 +1624,9 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def get_python_env_size(cls, bpmn_process_instance: BpmnWorkflow) -> int:
-        user_defined_state = bpmn_process_instance.script_engine.environment.user_defined_state()
+        user_defined_state = (
+            bpmn_process_instance.script_engine.environment.user_defined_state()
+        )
         return cls._get_data_size(user_defined_state)
 
     def check_task_data_size(self) -> None:
