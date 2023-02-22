@@ -33,6 +33,13 @@ function run() {
     return
   fi
 
+  # FIXME: the environment variables may not be working with the root user which we are using in the docker container.
+  # we see some evidence with this issue https://stackoverflow.com/questions/68975943/git-config-environment-variables
+  # and it didn't seem to work for us either so set them like this for now.
+  # One day we should probably not use the root user in the docker container.
+  git config --local user.email "$GIT_COMMITTER_EMAIL"
+  git config --local user.name "$GIT_COMMITTER_NAME"
+
   git commit -m "${git_commit_message}"
   git push --set-upstream origin "${git_branch}"
 }
