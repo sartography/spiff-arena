@@ -22,7 +22,8 @@ class GetDataSizes(Script):
 
     def get_description(self) -> str:
         """Get_description."""
-        return """Returns a dictionary of information about the size of task data and the python environment for the currently running process."""
+        return """Returns a dictionary of information about the size of task data and
+            the python environment for the currently running process."""
 
     def run(
         self,
@@ -32,11 +33,11 @@ class GetDataSizes(Script):
     ) -> Any:
         """Run."""
         task = script_attributes_context.task
+        cumulative_task_data_size = ProcessInstanceProcessor.get_task_data_size(
+            task.workflow
+        )
+        python_env_size = ProcessInstanceProcessor.get_python_env_size(task.workflow)
         return {
-            "cumulative_task_data_size": ProcessInstanceProcessor.get_task_data_size(
-                task.workflow
-            ),
-            "python_env_size": ProcessInstanceProcessor.get_python_env_size(
-                task.workflow
-            ),
+            "cumulative_task_data_size": cumulative_task_data_size,
+            "python_env_size": python_env_size,
         }
