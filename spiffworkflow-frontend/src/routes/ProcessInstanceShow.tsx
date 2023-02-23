@@ -116,8 +116,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  let processInstanceLogListPageBaseUrl = `/admin/logs/for-me/${params.process_model_id}/${params.process_instance_id}`;
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+    processInstanceLogListPageBaseUrl = `/admin/logs/${params.process_model_id}/${params.process_instance_id}`;
   }
 
   useEffect(() => {
@@ -459,7 +461,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   size="sm"
                   className="button-white-background"
                   data-qa="process-instance-log-list-link"
-                  href={`/admin/logs/${modifiedProcessModelId}/${params.process_instance_id}`}
+                  href={`${processInstanceLogListPageBaseUrl}`}
                 >
                   Logs
                 </Button>
