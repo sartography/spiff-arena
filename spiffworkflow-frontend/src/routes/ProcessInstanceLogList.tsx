@@ -6,7 +6,6 @@ import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
-  modifyProcessIdentifierForPathParam,
   convertSecondsToFormattedDateTime,
 } from '../helpers';
 import HttpService from '../services/HttpService';

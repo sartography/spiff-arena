@@ -1,5 +1,6 @@
 """__init__."""
 import faulthandler
+import sys
 import os
 from typing import Any
 
@@ -174,10 +175,9 @@ def traces_sampler(sampling_context: Any) -> Any:
 
         # tasks_controller.task_submit
         # this is the current pain point as of 31 jan 2023.
-        if (
-            path_info
-            and path_info.startswith("/v1.0/tasks/")
-            and request_method == "PUT"
+        if path_info and (
+            (path_info.startswith("/v1.0/tasks/") and request_method == "PUT")
+            or (path_info.startswith("/v1.0/task-data/") and request_method == "GET")
         ):
             return 1
 
@@ -218,7 +218,7 @@ def configure_sentry(app: flask.app.Flask) -> None:
 
     # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
     # but also we commented out profiling because it was causing segfaults (i guess it is marked experimental)
-    # profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
+    profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
 
     sentry_sdk.init(
         dsn=app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN"),
@@ -235,6 +235,6 @@ def configure_sentry(app: flask.app.Flask) -> None:
         traces_sample_rate=float(sentry_traces_sample_rate),
         traces_sampler=traces_sampler,
         # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
-        # _experiments={"profiles_sample_rate": profiles_sample_rate},
+        _experiments={"profiles_sample_rate": profiles_sample_rate},
         before_send=before_send,
     )
