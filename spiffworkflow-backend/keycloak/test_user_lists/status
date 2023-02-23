@@ -1,7 +1,8 @@
 email,spiffworkflow-employeeid
 # admin@spiffworkflow.org
 amir@status.im
-app.program.lead@status.im,121
+app.program-lead@status.im,121
+codex.project-lead@status.im,153
 codex.sme@status.im,185
 codex1.sme@status.im,186
 codex2.sme@status.im,187
@@ -46,6 +47,7 @@ legal2.sme@status.im,165
 legal3.sme@status.im,166
 legal4.sme@status.im,177
 legal5.sme@status.im,178
+logos.program-lead@status.im,160
 manuchehr@status.im,110
 peopleops.partner.sme@status.im,148
 peopleops.partner1.sme@status.im,149
