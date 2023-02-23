@@ -1,4 +1,9 @@
 name: Release Builds
+# on every commit to main:
+#   frontend:main-20230223164322-b8becd1-45
+#   frontend:main-latest
+# on every tag:
+#   frontend:latest
 
 on:
   push:
