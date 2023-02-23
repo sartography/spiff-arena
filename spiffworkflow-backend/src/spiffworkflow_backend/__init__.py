@@ -1,7 +1,7 @@
 """__init__."""
 import faulthandler
-import sys
 import os
+import sys
 from typing import Any
 
 import connexion  # type: ignore

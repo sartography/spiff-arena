@@ -44,7 +44,7 @@ class MessageService:
         available_receive_messages = MessageInstanceModel.query.filter_by(
             name=message_instance_send.name, status=MessageStatuses.ready.value
         ).all()
-        message_instance_receive = None
+        message_instance_receive: MessageInstanceModel | None = None
         try:
             for message_instance in available_receive_messages:
                 if message_instance.correlates(
@@ -84,7 +84,7 @@ class MessageService:
                 message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
                 db.session.commit()
-                return
+                return None
 
             # Set the receiving message to running, so it is not altered elswhere ...
             message_instance_receive.status = "running"
@@ -145,9 +145,11 @@ class MessageService:
         message_instance_receive: MessageInstanceModel,
     ) -> ProcessInstanceModel:
         """Process_message_receive."""
-        process_instance_receive = ProcessInstanceModel.query.filter_by(
-            id=message_instance_receive.process_instance_id
-        ).first()
+        process_instance_receive: ProcessInstanceModel = (
+            ProcessInstanceModel.query.filter_by(
+                id=message_instance_receive.process_instance_id
+            ).first()
+        )
         if process_instance_receive is None:
             raise MessageServiceError(
                 (
