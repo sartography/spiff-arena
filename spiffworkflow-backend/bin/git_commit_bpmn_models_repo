@@ -12,17 +12,9 @@ set -o errtrace -o errexit -o nounset -o pipefail
 bpmn_models_absolute_dir="$1"
 git_commit_message="$2"
 git_branch="$3"
-git_commit_username="$4"
-git_commit_email="$5"
-git_commit_password="$6"
 
-if [[ -z "${5:-}" ]]; then
-  >&2 echo "usage: $(basename "$0") [bpmn_models_absolute_dir] [git_commit_message] [git_branch] [git_commit_username] [git_commit_email]"
-  exit 1
-fi
-
-if [[ -z "$git_commit_password" && -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
-  >&2 echo "ERROR: A git password or SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY must be provided"
+if [[ -z "${3:-}" ]]; then
+  >&2 echo "usage: $(basename "${0}") [bpmn_models_absolute_dir] [git_commit_message] [git_branch]"
   exit 1
 fi
 
@@ -32,38 +24,27 @@ function failed_to_get_lock() {
 }
 
 function run() {
-  cd "$bpmn_models_absolute_dir"
+  cd "${bpmn_models_absolute_dir}"
   git add .
 
   # https://unix.stackexchange.com/a/155077/456630
   if [ -z "$(git status --porcelain)" ]; then
     echo "No changes to commit"
-  else
-
-    git config --local user.name "$git_commit_username"
-    git config --local user.email "$git_commit_email"
-
-    if [[ -n "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
-      tmpfile=$(mktemp /tmp/tmp_git.XXXXXX)
-      chmod 600 "$tmpfile"
-      echo "$SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY" >"$tmpfile"
-      export GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ${tmpfile} -F /dev/null"
-    else
-      PAT="${git_commit_username}:${git_commit_password}"
-      AUTH=$(echo -n "$PAT" | openssl base64 | tr -d '\n')
-      git config --local http.extraHeader "Authorization: Basic $AUTH"
-    fi
-
-    git commit -m "$git_commit_message"
-    git push --set-upstream origin "$git_branch"
-
-    if [[ -z "${SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY:-}" ]]; then
-      git config --unset --local http.extraHeader
-    fi
+    return
   fi
+
+  # FIXME: the environment variables may not be working with the root user which we are using in the docker container.
+  # we see some evidence with this issue https://stackoverflow.com/questions/68975943/git-config-environment-variables
+  # and it didn't seem to work for us either so set them like this for now.
+  # One day we should probably not use the root user in the docker container.
+  git config --local user.email "$GIT_COMMITTER_EMAIL"
+  git config --local user.name "$GIT_COMMITTER_NAME"
+
+  git commit -m "${git_commit_message}"
+  git push --set-upstream origin "${git_branch}"
 }
 
-exec {lock_fd}>/var/lock/mylockfile || failed_to_get_lock
-flock --timeout 60 "$lock_fd" || failed_to_get_lock
+exec {lock_fd}>/var/lock/spiff-workflow-git-lock || failed_to_get_lock
+flock --timeout 60 "${lock_fd}" || failed_to_get_lock
 run
-flock -u "$lock_fd"
+flock -u "${lock_fd}"

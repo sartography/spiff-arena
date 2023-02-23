@@ -147,6 +147,11 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
         super().execute(script, context, external_methods)
         self._last_result = context
 
+    def user_defined_state(
+        self, external_methods: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        return {}
+
     def last_result(self) -> Dict[str, Any]:
         return {k: v for k, v in self._last_result.items()}
 
@@ -213,13 +218,13 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
             for key_to_drop in context_keys_to_drop:
                 context.pop(key_to_drop)
 
-            self.state = self._user_defined_state(external_methods)
+            self.state = self.user_defined_state(external_methods)
 
             # the task data needs to be updated with the current state so data references can be resolved properly.
             # the state will be removed later once the task is completed.
             context.update(self.state)
 
-    def _user_defined_state(
+    def user_defined_state(
         self, external_methods: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         keys_to_filter = self.non_user_defined_keys
@@ -240,7 +245,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
 
     def preserve_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
         key = self.PYTHON_ENVIRONMENT_STATE_KEY
-        state = self._user_defined_state()
+        state = self.user_defined_state()
         bpmn_process_instance.data[key] = state
 
     def restore_state(self, bpmn_process_instance: BpmnWorkflow) -> None:
@@ -248,7 +253,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         self.state = bpmn_process_instance.data.get(key, {})
 
     def finalize_result(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        bpmn_process_instance.data.update(self._user_defined_state())
+        bpmn_process_instance.data.update(self.user_defined_state())
 
     def revise_state_with_task_data(self, task: SpiffTask) -> None:
         state_keys = set(self.state.keys())
@@ -288,6 +293,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "enumerate": enumerate,
             "format": format,
             "list": list,
+            "dict": dict,
             "map": map,
             "pytz": pytz,
             "sum": sum,
@@ -765,12 +771,12 @@ class ProcessInstanceProcessor:
 
         Rerturns: {process_name: [task_1, task_2, ...], ...}
         """
-        serialized_data = json.loads(self.serialize())
-        processes: dict[str, list[str]] = {serialized_data["spec"]["name"]: []}
-        for task_name, _task_spec in serialized_data["spec"]["task_specs"].items():
-            processes[serialized_data["spec"]["name"]].append(task_name)
-        if "subprocess_specs" in serialized_data:
-            for subprocess_name, subprocess_details in serialized_data[
+        bpmn_json = json.loads(self.process_instance_model.bpmn_json or '{}')
+        processes: dict[str, list[str]] = {bpmn_json["spec"]["name"]: []}
+        for task_name, _task_spec in bpmn_json["spec"]["task_specs"].items():
+            processes[bpmn_json["spec"]["name"]].append(task_name)
+        if "subprocess_specs" in bpmn_json:
+            for subprocess_name, subprocess_details in bpmn_json[
                 "subprocess_specs"
             ].items():
                 processes[subprocess_name] = []
@@ -805,7 +811,7 @@ class ProcessInstanceProcessor:
 
     #################################################################
 
-    def get_all_task_specs(self) -> dict[str, dict]:
+    def get_all_task_specs(self, bpmn_json: dict) -> dict[str, dict]:
         """This looks both at top level task_specs and subprocess_specs in the serialized data.
 
         It returns a dict of all task specs based on the task name like it is in the serialized form.
@@ -813,10 +819,9 @@ class ProcessInstanceProcessor:
         NOTE: this may not fully work for tasks that are NOT call activities since their task_name may not be unique
         but in our current use case we only care about the call activities here.
         """
-        serialized_data = json.loads(self.serialize())
-        spiff_task_json = serialized_data["spec"]["task_specs"] or {}
-        if "subprocess_specs" in serialized_data:
-            for _subprocess_name, subprocess_details in serialized_data[
+        spiff_task_json = bpmn_json["spec"]["task_specs"] or {}
+        if "subprocess_specs" in bpmn_json:
+            for _subprocess_name, subprocess_details in bpmn_json[
                 "subprocess_specs"
             ].items():
                 if "task_specs" in subprocess_details:
@@ -838,8 +843,8 @@ class ProcessInstanceProcessor:
         Also note that subprocess_task_id might in fact be a call activity, because spiff treats
         call activities like subprocesses in terms of the serialization.
         """
-        bpmn_json = json.loads(self.serialize())
-        spiff_task_json = self.get_all_task_specs()
+        bpmn_json = json.loads(self.process_instance_model.bpmn_json or '{}')
+        spiff_task_json = self.get_all_task_specs(bpmn_json)
 
         subprocesses_by_child_task_ids = {}
         task_typename_by_task_id = {}
@@ -1275,6 +1280,7 @@ class ProcessInstanceProcessor:
         # by background processing. when that happens it can potentially overwrite
         # human tasks which is bad because we cache them with the previous id's.
         # waiting_tasks = bpmn_process_instance.get_tasks(TaskState.WAITING)
+        # waiting_tasks = bpmn_process_instance.get_waiting()
         # if len(waiting_tasks) > 0:
         #     return ProcessInstanceStatus.waiting
         if len(user_tasks) > 0:
@@ -1496,16 +1502,40 @@ class ProcessInstanceProcessor:
         except WorkflowTaskException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
 
-    def check_task_data_size(self) -> None:
-        """CheckTaskDataSize."""
-        tasks_to_check = self.bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
-        task_data = [task.data for task in tasks_to_check]
-        task_data_to_check = list(filter(len, task_data))
+    @classmethod
+    def get_tasks_with_data(
+        cls, bpmn_process_instance: BpmnWorkflow
+    ) -> List[SpiffTask]:
+        return [
+            task
+            for task in bpmn_process_instance.get_tasks(TaskState.FINISHED_MASK)
+            if len(task.data) > 0
+        ]
+
+    @classmethod
+    def get_task_data_size(cls, bpmn_process_instance: BpmnWorkflow) -> int:
+        tasks_with_data = cls.get_tasks_with_data(bpmn_process_instance)
+        all_task_data = [task.data for task in tasks_with_data]
 
         try:
-            task_data_len = len(json.dumps(task_data_to_check))
+            return len(json.dumps(all_task_data))
         except Exception:
-            task_data_len = 0
+            return 0
+
+    @classmethod
+    def get_python_env_size(cls, bpmn_process_instance: BpmnWorkflow) -> int:
+        user_defined_state = (
+            bpmn_process_instance.script_engine.environment.user_defined_state()
+        )
+
+        try:
+            return len(json.dumps(user_defined_state))
+        except Exception:
+            return 0
+
+    def check_task_data_size(self) -> None:
+        """CheckTaskDataSize."""
+        task_data_len = self.get_task_data_size(self.bpmn_process_instance)
 
         # Not sure what the number here should be but this now matches the mysql
         # max_allowed_packet variable on dev - 1073741824

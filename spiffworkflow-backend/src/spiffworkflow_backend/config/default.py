@@ -2,6 +2,10 @@
 import re
 from os import environ
 
+# Consider: https://flask.palletsprojects.com/en/2.2.x/config/#configuring-from-environment-variables
+#   and from_prefixed_env(), though we want to ensure that these variables are all documented, so that
+#   is a benefit of the status quo and having them all in this file explicitly.
+
 FLASK_SESSION_SECRET_KEY = environ.get("FLASK_SESSION_SECRET_KEY")
 
 SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR = environ.get(
@@ -98,9 +102,6 @@ SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL = environ.get(
 SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE = (
     environ.get("SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE", default="false") == "true"
 )
-SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY = environ.get(
-    "SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY"
-)
 SPIFFWORKFLOW_BACKEND_GIT_USERNAME = environ.get("SPIFFWORKFLOW_BACKEND_GIT_USERNAME")
 SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL = environ.get(
     "SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL"
@@ -108,11 +109,8 @@ SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL = environ.get(
 SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET = environ.get(
     "SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET", default=None
 )
-SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY = environ.get(
-    "SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY", default=None
-)
-SPIFFWORKFLOW_BACKEND_GIT_USER_PASSWORD = environ.get(
-    "SPIFFWORKFLOW_BACKEND_GIT_USER_PASSWORD", default=None
+SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH = environ.get(
+    "SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH", default=None
 )
 
 # Database Configuration

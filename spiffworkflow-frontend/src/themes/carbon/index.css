@@ -21,3 +21,7 @@
 .array-item-toolbox {
   margin-left: 2em;
 }
+
+.rjsf .text-input {
+  padding-top: 8px;
+}

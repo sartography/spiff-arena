@@ -110,7 +110,11 @@ export default function AdminRoutes() {
         />
         <Route
           path="logs/:process_model_id/:process_instance_id"
-          element={<ProcessInstanceLogList />}
+          element={<ProcessInstanceLogList variant="all" />}
+        />
+        <Route
+          path="logs/for-me/:process_model_id/:process_instance_id"
+          element={<ProcessInstanceLogList variant="for-me" />}
         />
         <Route
           path="process-instances"

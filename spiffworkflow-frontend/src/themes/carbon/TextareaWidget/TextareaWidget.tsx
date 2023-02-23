@@ -61,6 +61,11 @@ function TextareaWidget<
     labelToUse = `${labelToUse}*`;
   }
 
+  let helperText = null;
+  if (uiSchema && uiSchema['ui:help']) {
+    helperText = uiSchema['ui:help'];
+  }
+
   let invalid = false;
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
@@ -72,7 +77,8 @@ function TextareaWidget<
     <TextArea
       id={id}
       name={id}
-      className="form-control"
+      className="text-input"
+      helperText={helperText}
       value={value || ''}
       labelText=""
       placeholder={placeholder}
