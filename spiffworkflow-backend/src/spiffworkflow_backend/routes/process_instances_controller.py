@@ -576,6 +576,9 @@ def process_instance_task_list(
 
     steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
 
+    # FIXME: never evaluate task data in this call and instead create a new api getter
+    # that will return the task data for a given step only. We think processing this
+    # data is what is causing long load times on the processInstanceShowPage.
     subprocess_state_overrides = {}
     for step_detail in step_details:
         if step_detail.task_id in tasks:
