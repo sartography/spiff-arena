@@ -105,7 +105,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
                     return False
             return True
         elif other_message_instance.message_type == MessageTypes.receive.value:
-            return other_message_instance.correlates(self, expression_engine)
+            return other_message_instance.correlates(self, expression_engine)  # type: ignore
         return False
 
 

@@ -771,7 +771,7 @@ class ProcessInstanceProcessor:
 
         Rerturns: {process_name: [task_1, task_2, ...], ...}
         """
-        bpmn_json = json.loads(self.process_instance_model.bpmn_json or '{}')
+        bpmn_json = json.loads(self.process_instance_model.bpmn_json or "{}")
         processes: dict[str, list[str]] = {bpmn_json["spec"]["name"]: []}
         for task_name, _task_spec in bpmn_json["spec"]["task_specs"].items():
             processes[bpmn_json["spec"]["name"]].append(task_name)
@@ -843,7 +843,7 @@ class ProcessInstanceProcessor:
         Also note that subprocess_task_id might in fact be a call activity, because spiff treats
         call activities like subprocesses in terms of the serialization.
         """
-        bpmn_json = json.loads(self.process_instance_model.bpmn_json or '{}')
+        bpmn_json = json.loads(self.process_instance_model.bpmn_json or "{}")
         spiff_task_json = self.get_all_task_specs(bpmn_json)
 
         subprocesses_by_child_task_ids = {}
@@ -1480,7 +1480,7 @@ class ProcessInstanceProcessor:
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
                 if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()
+                    handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
 
             if save:
