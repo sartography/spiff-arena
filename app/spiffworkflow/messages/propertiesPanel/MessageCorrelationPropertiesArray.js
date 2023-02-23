@@ -82,7 +82,7 @@ export function MessageCorrelationPropertiesArray(props) {
         'bpmn:CorrelationPropertyRetrievalExpression'
       );
       const messageRefElement = getMessageRefElement(element);
-      const newFormalExpression = moddle.create('bpmn:messagePath');
+      const newFormalExpression = moddle.create('bpmn:FormalExpression');
       newFormalExpression.body = '';
 
       newRetrievalExpressionElement.messageRef = messageRefElement;
