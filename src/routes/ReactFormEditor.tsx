@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 // @ts-ignore
@@ -8,16 +8,14 @@ import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessFile } from '../interfaces';
-import ErrorContext from '../contexts/ErrorContext';
 import { Notification } from '../components/Notification';
-
+import useAPIError from '../hooks/UseApiError';
 // NOTE: This is mostly the same as ProcessModelEditDiagram and if we go this route could
 // possibly be merged into it. I'm leaving as a separate file now in case it does
 // end up diverging greatly
 export default function ReactFormEditor() {
   const params = useParams();
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
-
+  const { addError, removeError } = useAPIError();
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
   const [newFileName, setNewFileName] = useState('');
   const searchParams = useSearchParams()[0];
@@ -87,7 +85,7 @@ export default function ReactFormEditor() {
   };
 
   const saveFile = () => {
-    setErrorObject(null);
+    removeError();
     setDisplaySaveFileMessage(false);
 
     let url = `/process-models/${modifiedProcessModelId}/files`;
@@ -116,7 +114,7 @@ export default function ReactFormEditor() {
     HttpService.makeCallToBackend({
       path: url,
       successCallback: navigateToProcessModelFile,
-      failureCallback: setErrorObject,
+      failureCallback: addError,
       httpMethod,
       postBody: formData,
     });
@@ -190,6 +188,9 @@ export default function ReactFormEditor() {
 
   if (processModelFile || !params.file_name) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
+    const formBuildFileParam = params.file_name
+      ? `?file_name=${params.file_name}`
+      : '';
     return (
       <main>
         <ProcessBreadcrumb
@@ -212,19 +213,7 @@ export default function ReactFormEditor() {
         <Button onClick={saveFile} variant="danger" data-qa="file-save-button">
           Save
         </Button>
-        {params.file_name ? null : (
-          <Button
-            onClick={() =>
-              navigate(
-                `/admin/process-models/${params.process_model_id}/form-builder`
-              )
-            }
-            variant="danger"
-            data-qa="form-builder-button"
-          >
-            Form Builder
-          </Button>
-        )}
+
         {params.file_name ? (
           <ButtonWithConfirmation
             data-qa="delete-process-model-file"
@@ -233,6 +222,17 @@ export default function ReactFormEditor() {
             buttonLabel="Delete"
           />
         ) : null}
+        <Button
+          onClick={() =>
+            navigate(
+              `/admin/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
+            )
+          }
+          variant="danger"
+          data-qa="form-builder-button"
+        >
+          Form Builder
+        </Button>
         {hasDiagram ? (
           <Button
             onClick={() =>

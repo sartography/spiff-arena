@@ -14,6 +14,21 @@
   width: 5rem;
 }
 
+.cds--header__action.spiff-environment-header-text {
+  width: 5rem;
+  color: #126d82;
+}
+
+.cds--header__action.unclickable-text:hover {
+  background-color: #161616;
+  cursor: default;
+}
+.cds--header__action.unclickable-text:focus {
+  border: none;
+  box-shadow: none;
+  border-color: none;
+}
+
 h1 {
   font-weight: 400;
   font-size: 28px;
@@ -171,6 +186,10 @@ h1.with-icons {
 
 .with-extra-top-margin {
   margin-top: 1.3em;
+}
+
+.with-top-margin-for-label-next-to-text-input {
+  margin-top: 2.3em;
 }
 
 .with-tiny-top-margin {
@@ -373,4 +392,13 @@ svg.notification-icon {
 /* lime green */
 .tag-type-green:hover {
   background-color:	#80ee90;
+}
+
+/* Errors and notifications  */
+.error_info .error_title {
+  display: inline-block;
+  font-weight: lighter;
+  width: 100px;
+  text-align: right;
+  margin-right: 10px;
 }

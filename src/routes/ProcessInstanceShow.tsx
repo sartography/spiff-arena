@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   useParams,
@@ -35,20 +35,22 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import {
   convertSecondsToFormattedDateTime,
+  modifyProcessIdentifierForPathParam,
   unModifyProcessIdentifierForPathParam,
 } from '../helpers';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
-import ErrorContext from '../contexts/ErrorContext';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
+  ProcessInstanceMetadata,
   ProcessInstanceTask,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
+import useAPIError from '../hooks/UseApiError';
 
 type OwnProps = {
   variant: string;
@@ -74,9 +76,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
   const [displayDetails, setDisplayDetails] = useState<boolean>(false);
+  const [showProcessInstanceMetadata, setShowProcessInstanceMetadata] =
+    useState<boolean>(false);
 
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
-
+  const { addError, removeError } = useAPIError();
   const unModifiedProcessModelId = unModifyProcessIdentifierForPathParam(
     `${params.process_model_id}`
   );
@@ -111,6 +114,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       `/admin/process-instances?process_model_identifier=${unModifiedProcessModelId}`
     );
   };
+
+  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  let processInstanceLogListPageBaseUrl = `/admin/logs/for-me/${params.process_model_id}/${params.process_instance_id}`;
+  if (variant === 'all') {
+    processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+    processInstanceLogListPageBaseUrl = `/admin/logs/${params.process_model_id}/${params.process_instance_id}`;
+  }
 
   useEffect(() => {
     if (permissionsLoaded) {
@@ -151,11 +161,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       }
     }
   }, [
+    targetUris,
     params,
     modifiedProcessModelId,
     permissionsLoaded,
     ability,
-    targetUris,
     searchParams,
     taskListPath,
     variant,
@@ -237,19 +247,26 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return processInstance && currentSpiffStep() === processInstance.spiff_step;
   };
 
-  const spiffStepLink = (label: any, distance: number) => {
+  const spiffStepLink = (label: any, spiffStep: number) => {
     const processIdentifier = searchParams.get('process_identifier');
-    let queryParams = '';
+    const callActivityTaskId = searchParams.get('call_activity_task_id');
+    const queryParamArray = [];
     if (processIdentifier) {
-      queryParams = `?process_identifier=${processIdentifier}`;
+      queryParamArray.push(`process_identifier=${processIdentifier}`);
     }
+    if (callActivityTaskId) {
+      queryParamArray.push(`call_activity_task_id=${callActivityTaskId}`);
+    }
+    let queryParams = '';
+    if (queryParamArray.length > 0) {
+      queryParams = `?${queryParamArray.join('&')}`;
+    }
+
     return (
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`/admin/process-instances/${params.process_model_id}/${
-          params.process_instance_id
-        }/${currentSpiffStep() + distance}${queryParams}`}
+        to={`${processInstanceShowPageBaseUrl}/${spiffStep}${queryParams}`}
       >
         {label}
       </Link>
@@ -261,7 +278,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
-    return spiffStepLink(<CaretLeft />, -1);
+    return spiffStepLink(<CaretLeft />, currentSpiffStep() - 1);
   };
 
   const nextStepLink = () => {
@@ -269,11 +286,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return null;
     }
 
-    return spiffStepLink(<CaretRight />, 1);
+    return spiffStepLink(<CaretRight />, currentSpiffStep() + 1);
   };
 
   const returnToLastSpiffStep = () => {
-    window.location.href = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
+    window.location.href = processInstanceShowPageBaseUrl;
   };
 
   const resetProcessInstance = () => {
@@ -392,6 +409,23 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             {processInstance.process_initiator_username}
           </Column>
         </Grid>
+        {processInstance.process_model_with_diagram_identifier ? (
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              Current Diagram:{' '}
+            </Column>
+            <Column sm={4} md={6} lg={8} className="grid-date">
+              <Link
+                data-qa="go-to-current-diagram-process-model"
+                to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                  processInstance.process_model_with_diagram_identifier || ''
+                )}`}
+              >
+                {processInstance.process_model_with_diagram_identifier}
+              </Link>
+            </Column>
+          </Grid>
+        ) : null}
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started:{' '}
@@ -427,7 +461,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   size="sm"
                   className="button-white-background"
                   data-qa="process-instance-log-list-link"
-                  href={`/admin/logs/${modifiedProcessModelId}/${params.process_instance_id}`}
+                  href={`${processInstanceLogListPageBaseUrl}`}
                 >
                   Logs
                 </Button>
@@ -446,6 +480,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                   Messages
                 </Button>
               </Can>
+              {processInstance.process_metadata &&
+              processInstance.process_metadata.length > 0 ? (
+                <Button
+                  size="sm"
+                  className="button-white-background"
+                  data-qa="process-instance-show-metadata"
+                  onClick={() => {
+                    setShowProcessInstanceMetadata(true);
+                  }}
+                >
+                  Metadata
+                </Button>
+              ) : null}
             </ButtonSet>
           </Column>
         </Grid>
@@ -684,7 +731,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setSelectingEvent(false);
     initializeTaskDataToDisplay(taskToDisplay);
     setEventPayload('{}');
-    setErrorObject(null);
+    console.log('cancel updating task');
+    removeError();
   };
 
   const taskDataStringToObject = (dataString: string) => {
@@ -699,16 +747,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     refreshPage();
   };
 
-  const saveTaskDataFailure = (result: any) => {
-    setErrorObject({ message: result.message });
-  };
-
   const saveTaskData = () => {
     if (!taskToDisplay) {
       return;
     }
-
-    setErrorObject(null);
+    console.log('saveTaskData');
+    removeError();
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
@@ -716,7 +760,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       path: `${targetUris.processInstanceTaskListDataPath}/${taskToUse.id}`,
       httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
-      failureCallback: saveTaskDataFailure,
+      failureCallback: addError,
       postBody: {
         new_task_data: taskToUse.data,
       },
@@ -730,7 +774,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       path: `/send-event/${modifiedProcessModelId}/${params.process_instance_id}`,
       httpMethod: 'POST',
       successCallback: saveTaskDataResult,
-      failureCallback: saveTaskDataFailure,
+      failureCallback: addError,
       postBody: eventToSend,
     });
   };
@@ -903,6 +947,41 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
+  const processInstanceMetadataArea = () => {
+    if (
+      !processInstance ||
+      (processInstance.process_metadata &&
+        processInstance.process_metadata.length < 1)
+    ) {
+      return null;
+    }
+    const metadataComponents: any[] = [];
+    (processInstance.process_metadata || []).forEach(
+      (processInstanceMetadata: ProcessInstanceMetadata) => {
+        metadataComponents.push(
+          <Grid condensed fullWidth>
+            <Column sm={1} md={1} lg={2} className="grid-list-title">
+              {processInstanceMetadata.key}
+            </Column>
+            <Column sm={3} md={3} lg={3} className="grid-date">
+              {processInstanceMetadata.value}
+            </Column>
+          </Grid>
+        );
+      }
+    );
+    return (
+      <Modal
+        open={showProcessInstanceMetadata}
+        modalHeading="Metadata"
+        passiveModal
+        onRequestClose={() => setShowProcessInstanceMetadata(false)}
+      >
+        {metadataComponents}
+      </Modal>
+    );
+  };
+
   const taskUpdateDisplayArea = () => {
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     const candidateEvents: any = getEvents(taskToUse);
@@ -923,6 +1002,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
+          {taskToUse.task_spiff_step ? (
+            <div>
+              <Stack orientation="horizontal" gap={2}>
+                Task completed at step:{' '}
+                {spiffStepLink(
+                  `${taskToUse.task_spiff_step}`,
+                  taskToUse.task_spiff_step
+                )}
+              </Stack>
+              <br />
+              <br />
+            </div>
+          ) : null}
           {selectingEvent
             ? eventSelector(candidateEvents)
             : taskDataContainer()}
@@ -1027,6 +1119,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
               showDateStarted={false}
               showLastUpdated={false}
               hideIfNoTasks
+              canCompleteAllTasks
             />
           </Column>
         </Grid>
@@ -1034,6 +1127,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         <br />
         {taskUpdateDisplayArea()}
         {processDataDisplayArea()}
+        {processInstanceMetadataArea()}
         {stepsElement()}
         <br />
         <ReactDiagramEditor

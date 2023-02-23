@@ -11,6 +11,7 @@ export default function TasksWaitingForMe() {
       textToShowIfEmpty="No tasks are waiting for you."
       autoReload
       showWaitingOn={false}
+      canCompleteAllTasks
     />
   );
 }

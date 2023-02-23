@@ -85,6 +85,11 @@ export default function BaseInputTemplate<
     labelToUse = `${labelToUse}*`;
   }
 
+  let helperText = null;
+  if (uiSchema && uiSchema['ui:help']) {
+    helperText = uiSchema['ui:help'];
+  }
+
   let invalid = false;
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
@@ -101,8 +106,8 @@ export default function BaseInputTemplate<
       <TextInput
         id={id}
         name={id}
-        className="input"
-        labelText={labelToUse}
+        className="text-input"
+        helperText={helperText}
         invalid={invalid}
         invalidText={errorMessageForField}
         autoFocus={autofocus}

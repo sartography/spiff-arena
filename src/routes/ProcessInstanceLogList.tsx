@@ -12,16 +12,22 @@ import {
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
-export default function ProcessInstanceLogList() {
+type OwnProps = {
+  variant: string;
+};
+
+export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
-  const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
-    `${params.process_model_id}`
-  );
   const { targetUris } = useUriListForPermissions();
   const isDetailedView = searchParams.get('detailed') === 'true';
+
+  let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}`;
+  if (variant === 'all') {
+    processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}`;
+  }
 
   useEffect(() => {
     const setProcessInstanceLogListFromResult = (result: any) => {
@@ -65,7 +71,7 @@ export default function ProcessInstanceLogList() {
           <td>
             <Link
               data-qa="process-instance-show-link"
-              to={`/admin/process-instances/${modifiedProcessModelId}/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
+              to={`${processInstanceShowPageBaseUrl}/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
             >
               {convertSecondsToFormattedDateTime(rowToUse.timestamp)}
             </Link>
@@ -111,7 +117,7 @@ export default function ProcessInstanceLogList() {
             },
             [
               `Process Instance: ${params.process_instance_id}`,
-              `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`,
+              `${processInstanceShowPageBaseUrl}/${params.process_instance_id}`,
             ],
             ['Logs'],
           ]}

@@ -1,9 +1,9 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { Tabs, TabList, Tab } from '@carbon/react';
 import { Can } from '@casl/react';
-import ErrorContext from '../contexts/ErrorContext';
+import useAPIError from '../hooks/UseApiError';
 import SecretList from './SecretList';
 import SecretNew from './SecretNew';
 import SecretShow from './SecretShow';
@@ -14,7 +14,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 
 export default function Configuration() {
   const location = useLocation();
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
+  const { removeError } = useAPIError();
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(0);
   const navigate = useNavigate();
 
@@ -26,13 +26,14 @@ export default function Configuration() {
   const { ability } = usePermissionFetcher(permissionRequestData);
 
   useEffect(() => {
-    setErrorObject(null);
+    console.log('Configuration remove error');
+    removeError();
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/admin\/configuration\/authentications\b/)) {
       newSelectedTabIndex = 1;
     }
     setSelectedTabIndex(newSelectedTabIndex);
-  }, [location, setErrorObject]);
+  }, [location, removeError]);
 
   return (
     <>

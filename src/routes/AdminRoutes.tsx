@@ -1,6 +1,6 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 
-import { useContext, useEffect } from 'react';
+import { useEffect } from 'react';
 import ProcessGroupList from './ProcessGroupList';
 import ProcessGroupShow from './ProcessGroupShow';
 import ProcessGroupNew from './ProcessGroupNew';
@@ -17,7 +17,6 @@ import ProcessInstanceReportList from './ProcessInstanceReportList';
 import ProcessInstanceReportNew from './ProcessInstanceReportNew';
 import ProcessInstanceReportEdit from './ProcessInstanceReportEdit';
 import ReactFormEditor from './ReactFormEditor';
-import ErrorContext from '../contexts/ErrorContext';
 import ProcessInstanceLogList from './ProcessInstanceLogList';
 import MessageInstanceList from './MessageInstanceList';
 import Configuration from './Configuration';
@@ -27,11 +26,8 @@ import ProcessInstanceFindById from './ProcessInstanceFindById';
 
 export default function AdminRoutes() {
   const location = useLocation();
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
 
-  useEffect(() => {
-    setErrorObject(null);
-  }, [location, setErrorObject]);
+  useEffect(() => {}, [location]);
 
   if (UserService.hasRole(['admin'])) {
     return (
@@ -114,7 +110,11 @@ export default function AdminRoutes() {
         />
         <Route
           path="logs/:process_model_id/:process_instance_id"
-          element={<ProcessInstanceLogList />}
+          element={<ProcessInstanceLogList variant="all" />}
+        />
+        <Route
+          path="logs/for-me/:process_model_id/:process_instance_id"
+          element={<ProcessInstanceLogList variant="for-me" />}
         />
         <Route
           path="process-instances"

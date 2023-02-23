@@ -24,20 +24,29 @@ export interface RecentProcessModel {
 export interface ProcessInstanceTask {
   id: number;
   task_id: string;
+
+  calling_subprocess_task_id: string;
+  created_at_in_seconds: number;
+  current_user_is_potential_owner: number;
+  data: any;
+  form_schema: any;
+  form_ui_schema: any;
+  lane_assignment_id: string;
+  name: string;
+  process_identifier: string;
+  process_initiator_username: string;
   process_instance_id: number;
+  process_instance_status: string;
   process_model_display_name: string;
   process_model_identifier: string;
-  task_title: string;
-  lane_assignment_id: string;
-  process_instance_status: string;
+  properties: any;
   state: string;
-  process_identifier: string;
-  name: string;
-  process_initiator_username: string;
-  created_at_in_seconds: number;
+  task_title: string;
+  title: string;
+  type: string;
   updated_at_in_seconds: number;
-  current_user_is_potential_owner: number;
-  calling_subprocess_task_id: string;
+
+  task_spiff_step?: number;
   potential_owner_usernames?: string;
   assigned_user_group_identifier?: string;
 }
@@ -66,6 +75,12 @@ export interface ProcessFile {
   file_contents?: string;
 }
 
+export interface ProcessInstanceMetadata {
+  id: number;
+  key: string;
+  value: string;
+}
+
 export interface ProcessInstance {
   id: number;
   process_model_identifier: string;
@@ -80,6 +95,8 @@ export interface ProcessInstance {
   updated_at_in_seconds: number;
   bpmn_version_control_identifier: string;
   bpmn_version_control_type: string;
+  process_metadata?: ProcessInstanceMetadata[];
+  process_model_with_diagram_identifier?: string;
 }
 
 export interface MessageCorrelationProperties {
@@ -182,6 +199,7 @@ export interface ErrorForDisplay {
   task_id?: string;
   line_number?: number;
   file_name?: string;
+  task_trace?: [string];
 }
 
 export interface AuthenticationParam {
@@ -225,7 +243,16 @@ export interface PermissionCheckResponseBody {
 export interface FormField {
   id: string;
   title: string;
-  required: boolean;
+  required?: boolean;
   type: string;
-  enum: string[];
+  enum?: string[];
+  default?: any;
+  pattern?: string;
+}
+
+export interface JsonSchemaForm {
+  file_contents: string;
+  name: string;
+  process_model_id: string;
+  required: string[];
 }

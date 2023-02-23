@@ -1,7 +1,3 @@
-button.react-json-schema-form-submit-button {
-  margin-top: 1.5em;
-}
-
 .rjsf .header {
   font-weight: 400;
   font-size: 20px;
@@ -17,6 +13,15 @@ button.react-json-schema-form-submit-button {
   margin-bottom: 1em;
 }
 
-.rjsf .input {
+/* for some reason it wraps the entire form using FieldTemplate.jsx, which is where we added the rjsf-field thing (which is only intended for fields, not entire forms. hence the double rjsf-field reference, only for rjsf-fields inside rjsf-fields, so we don't get double margin after the last field */
+.rjsf .rjsf-field .rjsf-field {
   margin-bottom: 2em;
+}
+
+.array-item-toolbox {
+  margin-left: 2em;
+}
+
+.rjsf .text-input {
+  padding-top: 8px;
 }

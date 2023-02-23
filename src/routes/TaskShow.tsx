@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
 
@@ -12,75 +12,81 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import MDEditor from '@uiw/react-md-editor';
 // eslint-disable-next-line import/no-named-as-default
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
-import ErrorContext from '../contexts/ErrorContext';
+import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
-import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck } from '../interfaces';
-import { usePermissionFetcher } from '../hooks/PermissionService';
+import { ProcessInstanceTask } from '../interfaces';
 
 export default function TaskShow() {
-  const [task, setTask] = useState(null);
+  const [task, setTask] = useState<ProcessInstanceTask | null>(null);
   const [userTasks, setUserTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
+  const [disabled, setDisabled] = useState(false);
 
-  const setErrorObject = (useContext as any)(ErrorContext)[1];
-
-  const { targetUris } = useUriListForPermissions();
-  const permissionRequestData: PermissionsToCheck = {
-    [targetUris.processInstanceTaskListDataPath]: ['GET'],
-  };
-  const { ability, permissionsLoaded } = usePermissionFetcher(
-    permissionRequestData
-  );
+  const { addError, removeError } = useAPIError();
 
   useEffect(() => {
-    if (permissionsLoaded) {
-      const processResult = (result: any) => {
-        setTask(result);
-        if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
-          HttpService.makeCallToBackend({
-            path: `/task-data/${modifyProcessIdentifierForPathParam(
-              result.process_model_identifier
-            )}/${params.process_instance_id}`,
-            successCallback: setUserTasks,
-          });
-        }
-      };
-
+    const processResult = (result: ProcessInstanceTask) => {
+      setTask(result);
+      const url = `/task-data/${modifyProcessIdentifierForPathParam(
+        result.process_model_identifier
+      )}/${params.process_instance_id}`;
+      // if user is unauthorized to get task-data then don't do anything
+      // Checking like this so we can dynamically create the url with the correct process model
+      //  instead of passing the process model identifier in through the params
       HttpService.makeCallToBackend({
-        path: `/tasks/${params.process_instance_id}/${params.task_id}`,
-        successCallback: processResult,
-        // This causes the page to continuously reload
-        // failureCallback: setErrorObject,
+        path: url,
+        successCallback: (tasks: any) => {
+          setDisabled(false);
+          setUserTasks(tasks);
+        },
+        onUnauthorized: () => {
+          setDisabled(false);
+        },
+        failureCallback: (error: any) => {
+          addError(error);
+        },
       });
-    }
-  }, [params, permissionsLoaded, ability, targetUris]);
+    };
+    HttpService.makeCallToBackend({
+      path: `/tasks/${params.process_instance_id}/${params.task_id}`,
+      successCallback: processResult,
+      failureCallback: addError,
+    });
+    // FIXME: not sure what to do about addError. adding it to this array causes the page to endlessly reload
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
 
   const processSubmitResult = (result: any) => {
-    setErrorObject(null);
+    removeError();
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
       navigate(`/tasks/${result.process_instance_id}/${result.id}`);
     } else {
-      setErrorObject(`Received unexpected error: ${result.message}`);
+      addError(result);
     }
   };
 
   const handleFormSubmit = (event: any) => {
-    setErrorObject(null);
+    if (disabled) {
+      return;
+    }
+    setDisabled(true);
+    removeError();
     const dataToSubmit = event.formData;
     delete dataToSubmit.isManualTask;
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
       successCallback: processSubmitResult,
-      failureCallback: setErrorObject,
+      failureCallback: (error: any) => {
+        addError(error);
+        setDisabled(false);
+      },
       httpMethod: 'PUT',
       postBody: dataToSubmit,
     });
@@ -147,6 +153,7 @@ export default function TaskShow() {
       Object.keys(jsonSchema.properties).forEach((propertyKey: string) => {
         const propertyMetadata = jsonSchema.properties[propertyKey];
         if (
+          typeof propertyMetadata === 'object' &&
           'minimumDate' in propertyMetadata &&
           propertyMetadata.minimumDate === 'today'
         ) {
@@ -161,17 +168,28 @@ export default function TaskShow() {
             }
           }
         }
+
+        // recurse through all nested properties as well
+        getFieldsWithDateValidations(
+          propertyMetadata,
+          formData[propertyKey],
+          errors[propertyKey]
+        );
       });
     }
     return errors;
   };
 
-  const formElement = (taskToUse: any) => {
+  const formElement = () => {
+    if (!task) {
+      return null;
+    }
+
     let formUiSchema;
-    let taskData = taskToUse.data;
-    let jsonSchema = taskToUse.form_schema;
+    let taskData = task.data;
+    let jsonSchema = task.form_schema;
     let reactFragmentToHideSubmitButton = null;
-    if (taskToUse.type === 'Manual Task') {
+    if (task.type === 'Manual Task') {
       taskData = {};
       jsonSchema = {
         type: 'object',
@@ -189,10 +207,10 @@ export default function TaskShow() {
           'ui:widget': 'hidden',
         },
       };
-    } else if (taskToUse.form_ui_schema) {
-      formUiSchema = JSON.parse(taskToUse.form_ui_schema);
+    } else if (task.form_ui_schema) {
+      formUiSchema = task.form_ui_schema;
     }
-    if (taskToUse.state !== 'READY') {
+    if (task.state !== 'READY') {
       formUiSchema = Object.assign(formUiSchema || {}, {
         'ui:readonly': true,
       });
@@ -204,10 +222,16 @@ export default function TaskShow() {
       reactFragmentToHideSubmitButton = <div />;
     }
 
-    if (taskToUse.type === 'Manual Task' && taskToUse.state === 'READY') {
+    if (task.state === 'READY') {
+      let buttonText = 'Submit';
+      if (task.type === 'Manual Task') {
+        buttonText = 'Continue';
+      }
       reactFragmentToHideSubmitButton = (
         <div>
-          <Button type="submit">Continue</Button>
+          <Button type="submit" disabled={disabled}>
+            {buttonText}
+          </Button>
         </div>
       );
     }
@@ -218,8 +242,9 @@ export default function TaskShow() {
 
     return (
       <Grid fullWidth condensed>
-        <Column md={5} lg={8} sm={4}>
+        <Column sm={4} md={5} lg={8}>
           <Form
+            disabled={disabled}
             formData={taskData}
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
@@ -234,36 +259,35 @@ export default function TaskShow() {
     );
   };
 
-  const instructionsElement = (taskToUse: any) => {
+  const instructionsElement = () => {
+    if (!task) {
+      return null;
+    }
     let instructions = '';
-    if (taskToUse.properties.instructionsForEndUser) {
-      instructions = taskToUse.properties.instructionsForEndUser;
+    if (task.properties.instructionsForEndUser) {
+      instructions = task.properties.instructionsForEndUser;
     }
     return (
       <div className="markdown">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {instructions}
-        </ReactMarkdown>
+        <MDEditor.Markdown source={instructions} />
       </div>
     );
   };
 
   if (task) {
-    const taskToUse = task as any;
     let statusString = '';
-    if (taskToUse.state !== 'READY') {
-      statusString = ` ${taskToUse.state}`;
+    if (task.state !== 'READY') {
+      statusString = ` ${task.state}`;
     }
 
     return (
       <main>
         <div>{buildTaskNavigation()}</div>
         <h3>
-          Task: {taskToUse.title} ({taskToUse.process_model_display_name})
-          {statusString}
+          Task: {task.title} ({task.process_model_display_name}){statusString}
         </h3>
-        {instructionsElement(taskToUse)}
-        {formElement(taskToUse)}
+        {instructionsElement()}
+        {formElement()}
       </main>
     );
   }

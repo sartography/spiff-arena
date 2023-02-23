@@ -29,6 +29,7 @@ export default function TasksWaitingForMyGroups() {
           textToShowIfEmpty="This group has no task assignments at this time."
           autoReload
           showWaitingOn={false}
+          canCompleteAllTasks
         />
       );
     });
