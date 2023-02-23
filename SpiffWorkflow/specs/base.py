@@ -205,27 +205,11 @@ class TaskSpec(object):
         self.outputs.append(taskspec)
         taskspec._connect_notify(self)
 
-    def follow(self, taskspec):
-        """
-        Make this task follow the provided one. In other words, this task is
-        added to the given task outputs.
-
-        This is an alias to connect, just easier to understand when reading
-        code - ex: my_task.follow(the_other_task)
-        Adding it after being confused by .connect one times too many!
-
-        :type  taskspec: TaskSpec
-        :param taskspec: The task to follow.
-        """
-        taskspec.connect(self)
-
     def test(self):
         """
         Checks whether all required attributes are set. Throws an exception
         if an error was detected.
         """
-        # if self.id is None:
-        #    raise WorkflowException(self, 'TaskSpec is not yet instanciated.')
         if len(self.inputs) < 1:
             raise WorkflowException(self, 'No input task connected.')
 
@@ -272,7 +256,6 @@ class TaskSpec(object):
         state of this task in the workflow. For example, if a predecessor
         completes it makes sure to call this method so we can react.
         """
-        my_task._inherit_data()
         if my_task._is_predicted():
             self._predict(my_task)
         self.entered_event.emit(my_task.workflow, my_task)
@@ -282,8 +265,10 @@ class TaskSpec(object):
     def _update_hook(self, my_task):
         """
         This method should decide whether the task should run now or need to wait.
+        Tasks can also optionally choose not to inherit data.
         Returning True will cause the task to go into READY.
         """
+        my_task._inherit_data()
         return True
 
     def _on_ready(self, my_task):
