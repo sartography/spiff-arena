@@ -94,19 +94,7 @@ class GitService:
             raise ConfigurationError(
                 "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR config must be set"
             )
-        if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY"]:
-            os.environ["SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY"] = (
-                current_app.config["SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY"]
-            )
 
-        git_username = ""
-        git_email = ""
-        if (
-            current_app.config["SPIFFWORKFLOW_BACKEND_GIT_USERNAME"]
-            and current_app.config["SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL"]
-        ):
-            git_username = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_USERNAME"]
-            git_email = current_app.config["SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL"]
         shell_command_path = os.path.join(
             current_app.root_path, "..", "..", "bin", "git_commit_bpmn_models_repo"
         )
@@ -115,9 +103,6 @@ class GitService:
             repo_path_to_use,
             message,
             branch_name_to_use,
-            git_username,
-            git_email,
-            current_app.config["SPIFFWORKFLOW_BACKEND_GIT_USER_PASSWORD"],
         ]
         return cls.run_shell_command_to_get_stdout(shell_command)
 
@@ -169,8 +154,31 @@ class GitService:
         cls, command: list[str], return_success_state: bool = False
     ) -> Union[subprocess.CompletedProcess[bytes], bool]:
         """Run_shell_command."""
+        my_env = os.environ.copy()
+        my_env["GIT_COMMITTER_NAME"] = (
+            current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USERNAME") or "unknown"
+        )
+
+        my_env["GIT_COMMITTER_EMAIL"] = (
+            current_app.config.get("SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL")
+            or "unknown@example.org"
+        )
+
+        # SSH authentication can be also provided via gitconfig.
+        ssh_key_path = current_app.config.get(
+            "SPIFFWORKFLOW_BACKEND_GIT_SSH_PRIVATE_KEY_PATH"
+        )
+        if ssh_key_path is not None:
+            my_env["GIT_SSH_COMMAND"] = (
+                "ssh -F /dev/null -o UserKnownHostsFile=/dev/null -o"
+                " StrictHostKeyChecking=no -i %s" % ssh_key_path
+            )
+
         # this is fine since we pass the commands directly
-        result = subprocess.run(command, check=False, capture_output=True)  # noqa
+        result = subprocess.run(  # noqa
+            command, check=False, capture_output=True, env=my_env
+        )
+
         if return_success_state:
             return result.returncode == 0
 
@@ -178,9 +186,9 @@ class GitService:
             stdout = result.stdout.decode("utf-8")
             stderr = result.stderr.decode("utf-8")
             raise GitCommandError(
-                f"Failed to execute git command: {command} "
-                f"Stdout: {stdout} "
-                f"Stderr: {stderr} "
+                f"Failed to execute git command: {command}"
+                f"Stdout: {stdout}"
+                f"Stderr: {stderr}"
             )
 
         return result
@@ -197,15 +205,20 @@ class GitService:
                 f" body: {webhook}"
             )
 
-        clone_url = webhook["repository"]["clone_url"]
-        if (
-            clone_url
-            != current_app.config["SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"]
-        ):
+        config_clone_url = current_app.config[
+            "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"
+        ]
+        repo = webhook["repository"]
+        valid_clone_urls = [repo["clone_url"], repo["git_url"], repo["ssh_url"]]
+        if config_clone_url not in valid_clone_urls:
             raise GitCloneUrlMismatchError(
-                "Configured clone url does not match clone url from webhook:"
-                f" {clone_url}"
+                "Configured clone url does not match the repo URLs from webhook: %s"
+                " =/= %s" % (config_clone_url, valid_clone_urls)
             )
+
+        # Test webhook requests have a zen koan and hook info.
+        if "zen" in webhook or "hook_id" in webhook:
+            return False
 
         if "ref" not in webhook:
             raise InvalidGitWebhookBodyError(
@@ -226,7 +239,7 @@ class GitService:
         with FileSystemService.cd(
             current_app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"]
         ):
-            cls.run_shell_command(["git", "pull"])
+            cls.run_shell_command(["git", "pull", "--rebase"])
         return True
 
     @classmethod
@@ -247,11 +260,6 @@ class GitService:
         git_clone_url = current_app.config[
             "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL"
         ]
-        if git_clone_url.startswith("https://"):
-            git_clone_url = git_clone_url.replace(
-                "https://",
-                f"https://{current_app.config['SPIFFWORKFLOW_BACKEND_GIT_USERNAME']}:{current_app.config['SPIFFWORKFLOW_BACKEND_GIT_USER_PASSWORD']}@",
-            )
         cmd = ["git", "clone", git_clone_url, destination_process_root]
 
         cls.run_shell_command(cmd)

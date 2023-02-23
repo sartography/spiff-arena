@@ -25,6 +25,7 @@ import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { UnauthenticatedError } from '../services/HttpService';
+import { SPIFF_ENVIRONMENT } from '../config';
 
 // for ref: https://react-bootstrap.github.io/components/navbar/
 export default function NavigationBar() {
@@ -80,7 +81,12 @@ export default function NavigationBar() {
     if (UserService.isLoggedIn()) {
       return (
         <>
-          <HeaderGlobalAction className="username-header-text">
+          {SPIFF_ENVIRONMENT ? (
+            <HeaderGlobalAction className="spiff-environment-header-text unclickable-text">
+              {SPIFF_ENVIRONMENT}
+            </HeaderGlobalAction>
+          ) : null}
+          <HeaderGlobalAction className="username-header-text unclickable-text">
             {UserService.getPreferredUsername()}
           </HeaderGlobalAction>
           <HeaderGlobalAction

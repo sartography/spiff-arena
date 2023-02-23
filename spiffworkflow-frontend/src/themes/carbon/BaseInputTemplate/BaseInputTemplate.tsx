@@ -106,7 +106,7 @@ export default function BaseInputTemplate<
       <TextInput
         id={id}
         name={id}
-        className="input"
+        className="text-input"
         helperText={helperText}
         invalid={invalid}
         invalidText={errorMessageForField}

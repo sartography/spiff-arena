@@ -14,6 +14,21 @@
   width: 5rem;
 }
 
+.cds--header__action.spiff-environment-header-text {
+  width: 5rem;
+  color: #126d82;
+}
+
+.cds--header__action.unclickable-text:hover {
+  background-color: #161616;
+  cursor: default;
+}
+.cds--header__action.unclickable-text:focus {
+  border: none;
+  box-shadow: none;
+  border-color: none;
+}
+
 h1 {
   font-weight: 400;
   font-size: 28px;

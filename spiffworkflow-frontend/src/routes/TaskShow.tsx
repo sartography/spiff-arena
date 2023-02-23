@@ -168,6 +168,13 @@ export default function TaskShow() {
             }
           }
         }
+
+        // recurse through all nested properties as well
+        getFieldsWithDateValidations(
+          propertyMetadata,
+          formData[propertyKey],
+          errors[propertyKey]
+        );
       });
     }
     return errors;
