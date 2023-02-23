@@ -36,6 +36,7 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
@@ -169,6 +170,46 @@ def task_list_for_my_groups(
         page=page,
         per_page=per_page,
     )
+
+
+def task_data_show(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    step_detail = (
+        db.session.query(SpiffStepDetailsModel)
+        .filter(
+            SpiffStepDetailsModel.process_instance_id == process_instance.id,
+            SpiffStepDetailsModel.spiff_step == spiff_step,
+        )
+        .first()
+    )
+
+    if step_detail is None:
+        raise ApiError(
+            error_code="spiff_step_for_proces_instance_not_found",
+            message=(
+                "The given spiff step for the given process instance could not be"
+                " found."
+            ),
+            status_code=400,
+        )
+
+    processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+        step_detail.bpmn_task_identifier, processor.bpmn_process_instance
+    )
+    task_data = step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
+    task = ProcessInstanceService.spiff_task_to_api_task(
+        processor,
+        spiff_task,
+        task_spiff_step=spiff_step,
+    )
+    task.data = task_data
+
+    return make_response(jsonify(task), 200)
 
 
 def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task: Task) -> None:
