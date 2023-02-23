@@ -514,7 +514,6 @@ def process_instance_task_list_without_task_data_for_me(
         process_instance,
         all_tasks,
         spiff_step,
-        get_task_data=False,
     )
 
 
@@ -531,24 +530,6 @@ def process_instance_task_list_without_task_data(
         process_instance,
         all_tasks,
         spiff_step,
-        get_task_data=False,
-    )
-
-
-def process_instance_task_list_with_task_data(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
-) -> flask.wrappers.Response:
-    """Process_instance_task_list_with_task_data."""
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    return process_instance_task_list(
-        modified_process_model_identifier,
-        process_instance,
-        all_tasks,
-        spiff_step,
-        get_task_data=True,
     )
 
 
@@ -557,7 +538,6 @@ def process_instance_task_list(
     process_instance: ProcessInstanceModel,
     all_tasks: bool = False,
     spiff_step: int = 0,
-    get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     step_detail_query = db.session.query(SpiffStepDetailsModel).filter(

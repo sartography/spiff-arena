@@ -2766,8 +2766,14 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        end = next(task for task in response.json if task["type"] == "End Event")
-        assert end["data"]["result"] == {"message": "message 1"}
+        end_task = next(task for task in response.json if task["type"] == "End Event")
+        response = client.get(
+            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{end_task['task_spiff_step']}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        task = response.json
+        assert task["data"]["result"] == {"message": "message 1"}
 
     def test_manual_complete_task(
         self,
