@@ -208,9 +208,7 @@ class TestMessageService(BaseTest):
     ) -> None:
         # Correlation Properties should match up
         po_curr = next(c for c in message.correlations if c.name == "po_number")
-        customer_curr = next(
-            c for c in message.correlations if c.name == "customer_id"
-        )
+        customer_curr = next(c for c in message.correlations if c.name == "customer_id")
         assert po_curr is not None
         assert customer_curr is not None
         assert po_curr.expected_value == "1001"
@@ -273,13 +271,12 @@ class TestMessageService(BaseTest):
         assert len(orig_send_messages) == 2
         assert MessageInstanceModel.query.filter_by(message_type="receive").count() == 1
 
-
         # process message instances
         MessageService.correlate_all_message_instances()
         # Once complete the original send messages should be completed and two new instances
         # should now exist, one for each of the process instances ...
-#        for osm in orig_send_messages:
-#            assert osm.status == "completed"
+        #        for osm in orig_send_messages:
+        #            assert osm.status == "completed"
 
         process_instance_result = ProcessInstanceModel.query.all()
         assert len(process_instance_result) == 3

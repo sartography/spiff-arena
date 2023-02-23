@@ -61,7 +61,9 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationModel
+from spiffworkflow_backend.models.message_instance_correlation import (
+    MessageInstanceCorrelationModel,
+)
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_metadata import (
@@ -1340,7 +1342,7 @@ class ProcessInstanceProcessor:
         for bpmn_message in bpmn_messages:
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
-                user_id=self.process_instance_model.process_initiator_id, # TODO: use the correct swimlane user when that is set up
+                user_id=self.process_instance_model.process_initiator_id,  # TODO: use the correct swimlane user when that is set up
                 message_type="send",
                 name=bpmn_message.name,
                 payload=bpmn_message.payload,
@@ -1352,15 +1354,20 @@ class ProcessInstanceProcessor:
     def queue_waiting_receive_messages(self) -> None:
         """Queue_waiting_receive_messages."""
         waiting_events = self.bpmn_process_instance.waiting_events()
-        waiting_message_events = filter(lambda e: e['event_type'] == "Message", waiting_events)
+        waiting_message_events = filter(
+            lambda e: e["event_type"] == "Message", waiting_events
+        )
 
         for event in waiting_message_events:
-
             # Ensure we are only creating one message instance for each waiting message
-            if MessageInstanceModel.query.filter_by(
-                process_instance_id=self.process_instance_model.id,
-                message_type="receive",
-                name=event['name']).count() > 0:
+            if (
+                MessageInstanceModel.query.filter_by(
+                    process_instance_id=self.process_instance_model.id,
+                    message_type="receive",
+                    name=event["name"],
+                ).count()
+                > 0
+            ):
                 continue
 
             # Create a new Message Instance
@@ -1368,14 +1375,14 @@ class ProcessInstanceProcessor:
                 process_instance_id=self.process_instance_model.id,
                 user_id=self.process_instance_model.process_initiator_id,
                 message_type="receive",
-                name=event['name'],
+                name=event["name"],
             )
-            for correlation_property in event['value']:
-                message_correlation = MessageInstanceCorrelationModel (
+            for correlation_property in event["value"]:
+                message_correlation = MessageInstanceCorrelationModel(
                     message_instance_id=message_instance.id,
                     name=correlation_property.name,
                     expected_value=correlation_property.expected_value,
-                    retrieval_expression=correlation_property.retrieval_expression
+                    retrieval_expression=correlation_property.retrieval_expression,
                 )
                 message_instance.correlations.append(message_correlation)
             db.session.add(message_instance)
@@ -1467,7 +1474,7 @@ class ProcessInstanceProcessor:
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
                 if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()  # type: ignore
+                    handler.bulk_insert_logs()
             db.session.commit()
 
             if save:

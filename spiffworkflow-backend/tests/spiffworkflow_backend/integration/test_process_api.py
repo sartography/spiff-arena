@@ -2330,7 +2330,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         process_instance_id_one = response.json["id"]
 
-        payload['po_number'] = "1002"
+        payload["po_number"] = "1002"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
@@ -2347,7 +2347,9 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert len(response.json["results"]) == 2  # Two messages, one is the completed receive, the other is new send
+        assert (
+            len(response.json["results"]) == 2
+        )  # Two messages, one is the completed receive, the other is new send
         assert (
             response.json["results"][0]["process_instance_id"]
             == process_instance_id_one
