@@ -15,6 +15,11 @@ setup_traps
 
 set -o errtrace -o errexit -o nounset -o pipefail
 
+realm_name="${1:-}"
+if [[ -z "$realm_name" ]]; then
+  realm_name="spiffworkflow"
+fi
+
 if ! docker network inspect spiffworkflow > /dev/null 2>&1; then
   docker network create spiffworkflow
 fi
@@ -45,15 +50,15 @@ docker run \
   -Dkeycloak.profile.feature.admin_fine_grained_authz=enabled
 
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-cp "${script_dir}/../realm_exports/spiffworkflow-realm.json" /tmp/spiffworkflow-realm.json
+cp "${script_dir}/../realm_exports/${realm_name}-realm.json" /tmp/${realm_name}-realm.json
 spiff_subdomain="unused-for-local-dev"
-perl -pi -e "s/{{SPIFF_SUBDOMAIN}}/${spiff_subdomain}/g" /tmp/spiffworkflow-realm.json
-docker cp /tmp/spiffworkflow-realm.json keycloak:/tmp
+perl -pi -e "s/{{SPIFF_SUBDOMAIN}}/${spiff_subdomain}/g" /tmp/${realm_name}-realm.json
+docker cp /tmp/${realm_name}-realm.json keycloak:/tmp
 
 sleep 20
 remove_traps
 set +e
-import_output=$(docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/spiffworkflow-realm.json 2>&1)
+import_output=$(docker exec keycloak /opt/keycloak/bin/kc.sh import --file /tmp/${realm_name}-realm.json 2>&1)
 setup_traps
 set -e
 if ! grep -qE "Import finished successfully" <<<"$import_output"; then
@@ -66,7 +71,7 @@ echo 'imported realms'
 if [ "${TURN_OFF_SSL:-}" == "true" ]; then
   docker exec -it keycloak /opt/keycloak/bin/kcadm.sh config credentials --server http://localhost:8080 --realm master --user admin --password admin
   docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/master -s sslRequired=NONE
-  docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/spiffworkflow -s sslRequired=NONE
+  docker exec -it keycloak /opt/keycloak/bin/kcadm.sh update realms/${realm_name} -s sslRequired=NONE
   echo 'turned off SSL requirement'
 fi
 

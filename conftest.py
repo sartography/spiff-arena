@@ -5,10 +5,10 @@ import shutil
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -37,7 +37,7 @@ from spiffworkflow_backend import create_app  # noqa: E402
 @pytest.fixture(scope="session")
 def app() -> Flask:
     """App."""
-    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "testing"
+    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "unit_testing"
     os.environ["FLASK_SESSION_SECRET_KEY"] = "super_secret_key"
     app = create_app()
 

@@ -5,10 +5,10 @@ from datetime import datetime
 from typing import List
 from typing import Optional
 
-from flask_bpmn.models.db import db
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.file import SpecReference
@@ -181,7 +181,7 @@ class SpecFileService(FileSystemService):
                 parser.add_bpmn_xml(
                     cls.get_etree_from_xml_bytes(binary_data), filename=file_name
                 )
-            except etree.XMLSyntaxError as exception:
+            except Exception as exception:
                 raise ProcessModelFileInvalidError(
                     f"Received error trying to parse bpmn xml: {str(exception)}"
                 ) from exception

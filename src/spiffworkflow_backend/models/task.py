@@ -7,6 +7,7 @@ from typing import Union
 import marshmallow
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
+from SpiffWorkflow.task import TaskStateNames  # type: ignore
 
 
 class MultiInstanceType(enum.Enum):
@@ -115,12 +116,13 @@ class Task:
         process_model_display_name: Union[str, None] = None,
         process_group_identifier: Union[str, None] = None,
         process_model_identifier: Union[str, None] = None,
-        form_schema: Union[str, None] = None,
-        form_ui_schema: Union[str, None] = None,
+        form_schema: Union[dict, None] = None,
+        form_ui_schema: Union[dict, None] = None,
         parent: Optional[str] = None,
         event_definition: Union[dict[str, Any], None] = None,
         call_activity_process_identifier: Optional[str] = None,
         calling_subprocess_task_id: Optional[str] = None,
+        task_spiff_step: Optional[int] = None,
     ):
         """__init__."""
         self.id = id
@@ -135,6 +137,7 @@ class Task:
         self.event_definition = event_definition
         self.call_activity_process_identifier = call_activity_process_identifier
         self.calling_subprocess_task_id = calling_subprocess_task_id
+        self.task_spiff_step = task_spiff_step
 
         self.data = data
         if self.data is None:
@@ -196,6 +199,7 @@ class Task:
             "event_definition": self.event_definition,
             "call_activity_process_identifier": self.call_activity_process_identifier,
             "calling_subprocess_task_id": self.calling_subprocess_task_id,
+            "task_spiff_step": self.task_spiff_step,
         }
 
     @classmethod
@@ -211,6 +215,12 @@ class Task:
         return [
             value for name, value in vars(cls).items() if name.startswith("FIELD_TYPE")
         ]
+
+    @classmethod
+    def task_state_name_to_int(cls, task_state_name: str) -> int:
+        task_state_integers = {v: k for k, v in TaskStateNames.items()}
+        task_state_int: int = task_state_integers[task_state_name]
+        return task_state_int
 
 
 class OptionSchema(Schema):

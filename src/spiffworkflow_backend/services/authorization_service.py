@@ -17,13 +17,12 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
 
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
@@ -34,6 +33,11 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
+from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
+from spiffworkflow_backend.services.authentication_service import TokenExpiredError
+from spiffworkflow_backend.services.authentication_service import TokenInvalidError
+from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
+from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -72,9 +76,15 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     },
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
-    {"path": "/task-data", "relevant_permissions": ["read", "update"]},
     {"path": "/process-data", "relevant_permissions": ["read"]},
+    {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
+    {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
+
+
+class UserToGroupDict(TypedDict):
+    username: str
+    group_identifier: str
 
 
 class DesiredPermissionDict(TypedDict):
@@ -82,6 +92,7 @@ class DesiredPermissionDict(TypedDict):
 
     group_identifiers: Set[str]
     permission_assignments: list[PermissionAssignmentModel]
+    user_to_group_identifiers: list[UserToGroupDict]
 
 
 class AuthorizationService:
@@ -92,20 +103,18 @@ class AuthorizationService:
     def verify_sha256_token(cls, auth_header: Optional[str]) -> None:
         """Verify_sha256_token."""
         if auth_header is None:
-            raise ApiError(
-                error_code="unauthorized",
-                message="",
-                status_code=403,
+            raise TokenNotProvidedError(
+                "unauthorized",
             )
 
         received_sign = auth_header.split("sha256=")[-1].strip()
-        secret = current_app.config["GITHUB_WEBHOOK_SECRET"].encode()
+        secret = current_app.config[
+            "SPIFFWORKFLOW_BACKEND_GITHUB_WEBHOOK_SECRET"
+        ].encode()
         expected_sign = HMAC(key=secret, msg=request.data, digestmod=sha256).hexdigest()
         if not compare_digest(received_sign, expected_sign):
-            raise ApiError(
-                error_code="unauthorized",
-                message="",
-                status_code=403,
+            raise TokenInvalidError(
+                "unauthorized",
             )
 
     @classmethod
@@ -135,7 +144,6 @@ class AuthorizationService:
             )
             .all()
         )
-
         for permission_assignment in permission_assignments:
             if permission_assignment.grant_type == "permit":
                 return True
@@ -212,6 +220,7 @@ class AuthorizationService:
 
         default_group = None
         unique_user_group_identifiers: Set[str] = set()
+        user_to_group_identifiers: list[UserToGroupDict] = []
         if "default_group" in permission_configs:
             default_group_identifier = permission_configs["default_group"]
             default_group = GroupService.find_or_create_group(default_group_identifier)
@@ -231,6 +240,11 @@ class AuthorizationService:
                                 )
                             )
                         continue
+                    user_to_group_dict: UserToGroupDict = {
+                        "username": user.username,
+                        "group_identifier": group_identifier,
+                    }
+                    user_to_group_identifiers.append(user_to_group_dict)
                     cls.associate_user_with_group(user, group)
 
         permission_assignments = []
@@ -275,6 +289,7 @@ class AuthorizationService:
         return {
             "group_identifiers": unique_user_group_identifiers,
             "permission_assignments": permission_assignments,
+            "user_to_group_identifiers": user_to_group_identifiers,
         }
 
     @classmethod
@@ -380,10 +395,8 @@ class AuthorizationService:
         authorization_exclusion_list = ["permissions_check"]
 
         if not hasattr(g, "user"):
-            raise ApiError(
-                error_code="user_not_logged_in",
-                message="User is not logged in. Please log in",
-                status_code=401,
+            raise UserNotLoggedInError(
+                "User is not logged in. Please log in",
             )
 
         api_view_function = current_app.view_functions[request.endpoint]
@@ -403,13 +416,11 @@ class AuthorizationService:
             if has_permission:
                 return None
 
-        raise ApiError(
-            error_code="unauthorized",
-            message=(
+        raise NotAuthorizedError(
+            (
                 f"User {g.user.username} is not authorized to perform requested action:"
                 f" {permission_string} - {request.path}"
             ),
-            status_code=403,
         )
 
     @staticmethod
@@ -427,13 +438,11 @@ class AuthorizationService:
             payload = jwt.decode(auth_token, options={"verify_signature": False})
             return payload
         except jwt.ExpiredSignatureError as exception:
-            raise ApiError(
-                "token_expired",
+            raise TokenExpiredError(
                 "The Authentication token you provided expired and must be renewed.",
             ) from exception
         except jwt.InvalidTokenError as exception:
-            raise ApiError(
-                "token_invalid",
+            raise TokenInvalidError(
                 (
                     "The Authentication token you provided is invalid. You need a new"
                     " token. "
@@ -450,6 +459,7 @@ class AuthorizationService:
         human_task = HumanTaskModel.query.filter_by(
             task_name=spiff_task.task_spec.name,
             process_instance_id=process_instance_id,
+            completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
@@ -477,38 +487,50 @@ class AuthorizationService:
             .filter(UserModel.service_id == user_info["sub"])
             .first()
         )
-        email = display_name = username = ""
+        user_attributes = {}
+
         if "email" in user_info:
-            username = user_info["email"]
-            email = user_info["email"]
+            user_attributes["username"] = user_info["email"]
+            user_attributes["email"] = user_info["email"]
         else:  # we fall back to the sub, which may be very ugly.
-            username = user_info["sub"] + "@" + user_info["iss"]
+            fallback_username = user_info["sub"] + "@" + user_info["iss"]
+            user_attributes["username"] = fallback_username
 
         if "preferred_username" in user_info:
-            display_name = user_info["preferred_username"]
+            user_attributes["display_name"] = user_info["preferred_username"]
         elif "nickname" in user_info:
-            display_name = user_info["nickname"]
+            user_attributes["display_name"] = user_info["nickname"]
         elif "name" in user_info:
-            display_name = user_info["name"]
+            user_attributes["display_name"] = user_info["name"]
+
+        user_attributes["service"] = user_info["iss"]
+        user_attributes["service_id"] = user_info["sub"]
+
+        for field_index, tenant_specific_field in enumerate(
+            current_app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]
+        ):
+            if tenant_specific_field in user_info:
+                field_number = field_index + 1
+                user_attributes[f"tenant_specific_field_{field_number}"] = user_info[
+                    tenant_specific_field
+                ]
 
         if user_model is None:
             current_app.logger.debug("create_user in login_return")
             is_new_user = True
-            user_model = UserService().create_user(
-                username=username,
-                service=user_info["iss"],
-                service_id=user_info["sub"],
-                email=email,
-                display_name=display_name,
-            )
-
+            user_model = UserService().create_user(**user_attributes)
         else:
             # Update with the latest information
-            user_model.username = username
-            user_model.email = email
-            user_model.display_name = display_name
-            user_model.service = user_info["iss"]
-            user_model.service_id = user_info["sub"]
+            user_db_model_changed = False
+            for key, value in user_attributes.items():
+                current_value = getattr(user_model, key)
+                if current_value != value:
+                    user_db_model_changed = True
+                    setattr(user_model, key, value)
+
+            if user_db_model_changed:
+                db.session.add(user_model)
+                db.session.commit()
 
         # this may eventually get too slow.
         # when it does, be careful about backgrounding, because
@@ -538,17 +560,33 @@ class AuthorizationService:
 
         permissions_to_assign: list[PermissionToAssign] = []
 
-        # we were thinking that if you can start an instance, you ought to be able to view your own instances.
+        # we were thinking that if you can start an instance, you ought to be able to:
+        #   1. view your own instances.
+        #   2. view the logs for these instances.
         if permission_set == "start":
             target_uri = f"/process-instances/{process_related_path_segment}"
             permissions_to_assign.append(
                 PermissionToAssign(permission="create", target_uri=target_uri)
             )
-            target_uri = f"/process-instances/for-me/{process_related_path_segment}"
-            permissions_to_assign.append(
-                PermissionToAssign(permission="read", target_uri=target_uri)
-            )
 
+            # giving people access to all logs for an instance actually gives them a little bit more access
+            # than would be optimal. ideally, you would only be able to view the logs for instances that you started
+            # or that you need to approve, etc. we could potentially implement this by adding before filters
+            # in the controllers that confirm that you are viewing logs for your instances. i guess you need to check
+            # both for-me and NOT for-me URLs for the instance in question to see if you should get access to its logs.
+            # if we implemented things this way, there would also be no way to restrict access to logs when you do not
+            # restrict access to instances. everything would be inheriting permissions from instances.
+            # if we want to really codify this rule, we could change logs from a prefix to a suffix
+            #   (just add it to the end of the process instances path).
+            # but that makes it harder to change our minds in the future.
+            for target_uri in [
+                f"/process-instances/for-me/{process_related_path_segment}",
+                f"/logs/{process_related_path_segment}",
+                f"/process-data-file-download/{process_related_path_segment}",
+            ]:
+                permissions_to_assign.append(
+                    PermissionToAssign(permission="read", target_uri=target_uri)
+                )
         else:
             if permission_set == "all":
                 for path_segment_dict in PATH_SEGMENTS_FOR_PERMISSION_ALL:
@@ -735,13 +773,20 @@ class AuthorizationService:
     def refresh_permissions(cls, group_info: list[dict[str, Any]]) -> None:
         """Adds new permission assignments and deletes old ones."""
         initial_permission_assignments = PermissionAssignmentModel.query.all()
+        initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
         result = cls.import_permissions_from_yaml_file()
         desired_permission_assignments = result["permission_assignments"]
         desired_group_identifiers = result["group_identifiers"]
+        desired_user_to_group_identifiers = result["user_to_group_identifiers"]
 
         for group in group_info:
             group_identifier = group["name"]
             for username in group["users"]:
+                user_to_group_dict: UserToGroupDict = {
+                    "username": username,
+                    "group_identifier": group_identifier,
+                }
+                desired_user_to_group_identifiers.append(user_to_group_dict)
                 GroupService.add_user_to_group_or_add_to_waiting(
                     username, group_identifier
                 )
@@ -761,6 +806,24 @@ class AuthorizationService:
             if ipa not in desired_permission_assignments:
                 db.session.delete(ipa)
 
+        for iutga in initial_user_to_group_assignments:
+            # do not remove users from the default user group
+            if (
+                current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] is None
+                or current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
+                != iutga.group.identifier
+            ):
+                current_user_dict: UserToGroupDict = {
+                    "username": iutga.user.username,
+                    "group_identifier": iutga.group.identifier,
+                }
+                if current_user_dict not in desired_user_to_group_identifiers:
+                    db.session.delete(iutga)
+
+        # do not remove the default user group
+        desired_group_identifiers.add(
+            current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
+        )
         groups_to_delete = GroupModel.query.filter(
             GroupModel.identifier.not_in(desired_group_identifiers)
         ).all()

@@ -7,8 +7,8 @@ from typing import Optional
 
 from flask import g
 from flask.app import Flask
-from flask_bpmn.models.db import db
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 
 
@@ -136,7 +136,7 @@ def setup_logger(app: Flask) -> None:
 
     # the json formatter is nice for real environments but makes
     # debugging locally a little more difficult
-    if app.config["ENV_IDENTIFIER"] != "development":
+    if app.config["ENV_IDENTIFIER"] != "local_development":
         json_formatter = JsonFormatter(
             {
                 "level": "levelname",
@@ -240,5 +240,8 @@ class DBHandler(logging.Handler):
                     "spiff_step": spiff_step,
                 }
             )
-            if len(self.logs) % 1 == 0:
+            # so at some point we are going to insert logs.
+            # we don't want to insert on every log, so we will insert every 100 logs, which is just about as fast as inserting
+            # on every 1,000 logs. if we get deadlocks in the database, this can be changed to 1 in order to insert on every log.
+            if len(self.logs) >= 100:
                 self.bulk_insert_logs()

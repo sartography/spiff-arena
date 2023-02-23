@@ -20,4 +20,4 @@ class TestEnvironmentVarScript(BaseTest):
         with app.app_context():
             script_engine = ProcessInstanceProcessor._script_engine
             result = script_engine._evaluate("get_env()", {})
-            assert result == "testing"
+            assert result == "unit_testing"

@@ -142,12 +142,12 @@ jobs:
           host port: 3306
           container port: 3306
           mysql version: "8.0"
-          mysql database: "spiffworkflow_backend_testing"
+          mysql database: "spiffworkflow_backend_unit_testing"
           mysql root password: password
         if: matrix.database == 'mysql'
 
       - name: Setup Postgres
-        run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_testing -d postgres
+        run: docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
         if: matrix.database == 'postgres'
 
       - name: Run Nox
