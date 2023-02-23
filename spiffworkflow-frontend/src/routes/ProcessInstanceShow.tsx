@@ -65,7 +65,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     useState<ProcessInstance | null>(null);
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
-  const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
+  const [taskToDisplay, setTaskToDisplay] =
+    useState<ProcessInstanceTask | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
   const [processDataToDisplay, setProcessDataToDisplay] =
     useState<ProcessData | null>(null);
@@ -557,11 +558,23 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return <div />;
   };
 
-  const initializeTaskDataToDisplay = (task: any) => {
-    if (task == null) {
+  const processTaskResult = (result: ProcessInstanceTask) => {
+    if (result == null) {
       setTaskDataToDisplay('');
     } else {
-      setTaskDataToDisplay(JSON.stringify(task.data, null, 2));
+      setTaskDataToDisplay(JSON.stringify(result.data, null, 2));
+    }
+  };
+
+  const initializeTaskDataToDisplay = (task: ProcessInstanceTask | null) => {
+    if (task == null || task.state !== 'COMPLETED') {
+      setTaskDataToDisplay('');
+    } else {
+      HttpService.makeCallToBackend({
+        path: `/task-data/${params.process_model_id}/${params.process_instance_id}/${task.task_spiff_step}`,
+        httpMethod: 'GET',
+        successCallback: processTaskResult,
+      });
     }
   };
 
@@ -742,8 +755,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const saveTaskDataResult = (_: any) => {
     setEditingTaskData(false);
     const dataObject = taskDataStringToObject(taskDataToDisplay);
-    const taskToDisplayCopy = { ...taskToDisplay, data: dataObject }; // spread operator
-    setTaskToDisplay(taskToDisplayCopy);
+    if (taskToDisplay) {
+      const taskToDisplayCopy: ProcessInstanceTask = {
+        ...taskToDisplay,
+        data: dataObject,
+      }; // spread operator
+      setTaskToDisplay(taskToDisplayCopy);
+    }
     refreshPage();
   };
 

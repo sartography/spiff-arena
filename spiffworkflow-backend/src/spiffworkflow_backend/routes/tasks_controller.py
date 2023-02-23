@@ -36,6 +36,7 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
@@ -169,6 +170,127 @@ def task_list_for_my_groups(
         page=page,
         per_page=per_page,
     )
+
+
+def task_data_show(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    spiff_step: int = 0,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    step_detail = (
+        db.session.query(SpiffStepDetailsModel)
+        .filter(
+            SpiffStepDetailsModel.process_instance_id == process_instance.id,
+            SpiffStepDetailsModel.spiff_step == spiff_step,
+        )
+        .first()
+    )
+
+    if step_detail is None:
+        raise ApiError(
+            error_code="spiff_step_for_proces_instance_not_found",
+            message=(
+                "The given spiff step for the given process instance could not be"
+                " found."
+            ),
+            status_code=400,
+        )
+
+    # step_details = step_detail_query.all()
+    # bpmn_json = json.loads(process_instance.bpmn_json or "{}")
+    # tasks = bpmn_json["tasks"]
+    # subprocesses = bpmn_json["subprocesses"]
+    #
+    # steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
+    #
+    # # FIXME: never evaluate task data in this call and instead create a new api getter
+    # # that will return the task data for a given step only. We think processing this
+    # # data is what is causing long load times on the processInstanceShowPage.
+    # subprocess_state_overrides = {}
+    # if step_detail.task_id in tasks:
+    #     task_data = (
+    #         step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
+    #     )
+    #     if task_data is None:
+    #         task_data = {}
+    #     tasks[step_detail.task_id]["data"] = task_data
+    #     tasks[step_detail.task_id]["state"] = Task.task_state_name_to_int(
+    #         step_detail.task_state
+    #     )
+    # else:
+    #     for subprocess_id, subprocess_info in subprocesses.items():
+    #         if step_detail.task_id in subprocess_info["tasks"]:
+    #             task_data = (
+    #                 step_detail.task_json["task_data"]
+    #                 | step_detail.task_json["python_env"]
+    #             )
+    #             if task_data is None:
+    #                 task_data = {}
+    #             subprocess_info["tasks"][step_detail.task_id]["data"] = task_data
+    #             subprocess_info["tasks"][step_detail.task_id]["state"] = (
+    #                 Task.task_state_name_to_int(step_detail.task_state)
+    #             )
+    #             subprocess_state_overrides[subprocess_id] = TaskState.WAITING
+    #
+    # for subprocess_info in subprocesses.values():
+    #     for spiff_task_id in subprocess_info["tasks"]:
+    #         if spiff_task_id not in steps_by_id:
+    #             subprocess_info["tasks"][spiff_task_id]["data"] = {}
+    #             subprocess_info["tasks"][spiff_task_id]["state"] = (
+    #                 subprocess_state_overrides.get(spiff_task_id, TaskState.FUTURE)
+    #             )
+    # for spiff_task_id in tasks:
+    #     if spiff_task_id not in steps_by_id:
+    #         tasks[spiff_task_id]["data"] = {}
+    #         tasks[spiff_task_id]["state"] = subprocess_state_overrides.get(
+    #             spiff_task_id, TaskState.FUTURE
+    #         )
+    #
+    # process_instance.bpmn_json = json.dumps(bpmn_json)
+    #
+    # processor = ProcessInstanceProcessor(process_instance)
+    # spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+    #     step_details[-1].bpmn_task_identifier, processor.bpmn_process_instance
+    # )
+    # if spiff_task is not None and spiff_task.state != TaskState.READY:
+    #     spiff_task.complete()
+    #
+    # spiff_tasks = None
+    # if all_tasks:
+    #     spiff_tasks = processor.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
+    # else:
+    #     spiff_tasks = processor.get_all_user_tasks()
+    #
+    # (
+    #     subprocesses_by_child_task_ids,
+    #     task_typename_by_task_id,
+    # ) = processor.get_subprocesses_by_child_task_ids()
+    # processor.get_highest_level_calling_subprocesses_by_child_task_ids(
+    #     subprocesses_by_child_task_ids, task_typename_by_task_id
+    # )
+    #
+    # tasks = []
+    # for spiff_task in spiff_tasks:
+    #     task_spiff_step: Optional[int] = None
+    #     if str(spiff_task.id) in steps_by_id:
+    #         task_spiff_step = steps_by_id[str(spiff_task.id)].spiff_step
+    #     calling_subprocess_task_id = subprocesses_by_child_task_ids.get(
+    #         str(spiff_task.id), None
+    #     )
+    processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+        step_detail.bpmn_task_identifier, processor.bpmn_process_instance
+    )
+    task_data = step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
+    task = ProcessInstanceService.spiff_task_to_api_task(
+        processor,
+        spiff_task,
+        task_spiff_step=spiff_step,
+    )
+    task.data = task_data
+
+    return make_response(jsonify(task), 200)
 
 
 def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task: Task) -> None:
