@@ -332,7 +332,6 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_message_cache(ref: SpecReference) -> None:
         """Assure we have a record in the database of all possible message ids and names."""
-        pass
         # for message_model_identifier in ref.messages.keys():
         #     message_model = MessageModel.query.filter_by(
         #         identifier=message_model_identifier
@@ -374,7 +373,6 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_correlation_cache(ref: SpecReference) -> None:
         """Update_correlation_cache."""
-        pass
         # for correlation_identifier in ref.correlations.keys():
         #     correlation_property_retrieval_expressions = ref.correlations[
         #         correlation_identifier

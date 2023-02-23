@@ -53,8 +53,8 @@ class TestMessageInstance(BaseTest):
             process_instance_id=process_instance.id,
             user_id=process_instance.process_initiator_id,
             message_type="send",
-            name =message_name,
-            payload={"Word":"Eat At Mashita's, delicious!"}
+            name=message_name,
+            payload={"Word": "Eat At Mashita's, delicious!"},
         )
         db.session.add(queued_message)
         db.session.commit()
@@ -138,7 +138,7 @@ class TestMessageInstance(BaseTest):
                 process_instance_id=process_instance.id,
                 user_id=process_instance.process_initiator_id,
                 message_type="BAD_MESSAGE_TYPE",
-                name=message_name
+                name=message_name,
             )
         assert (
             str(exception.value)
@@ -213,5 +213,3 @@ class TestMessageInstance(BaseTest):
         db.session.commit()
         assert queued_message.id is not None
         assert queued_message.failure_cause == "THIS TEST FAILURE"
-
-

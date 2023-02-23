@@ -1,6 +1,4 @@
 """Message_correlation_property."""
-from sqlalchemy import ForeignKey
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 

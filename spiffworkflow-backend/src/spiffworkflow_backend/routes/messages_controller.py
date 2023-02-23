@@ -12,7 +12,7 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel, MessageStatuses
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.services.message_service import MessageService
@@ -37,7 +37,7 @@ def message_instance_list(
             MessageInstanceModel.created_at_in_seconds.desc(),  # type: ignore
             MessageInstanceModel.id.desc(),  # type: ignore
         )
-        .outerjoin(ProcessInstanceModel) # Not all messages were created by a process
+        .outerjoin(ProcessInstanceModel)  # Not all messages were created by a process
         .add_columns(
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.process_model_display_name,
@@ -66,7 +66,6 @@ def message_send(
     body: Dict[str, Any],
 ) -> flask.wrappers.Response:
     """Message_start."""
-
     if "payload" not in body:
         raise (
             ApiError(
@@ -83,10 +82,9 @@ def message_send(
 
     # Create the send message
     message_instance = MessageInstanceModel(
-        process_instance_id=None,
         message_type="send",
         name=message_name,
-        payload=body['payload'],
+        payload=body["payload"],
         user_id=g.user.id,
         correlations=[],
     )
@@ -102,18 +100,21 @@ def message_send(
         db.session.delete(message_instance)
         db.session.commit()
         raise (
-                ApiError(
-                    error_code="message_not_accepted",
-                    message=(
-                        "No running process instances correlate with the given message name of"
-                        f" '{message_name}'.  And this message name is not"
-                        " currently associated with any process Start Event. Nothing to do."
-                    ),
-                    status_code=400,
-                )
+            ApiError(
+                error_code="message_not_accepted",
+                message=(
+                    "No running process instances correlate with the given message"
+                    f" name of '{message_name}'.  And this message name is not"
+                    " currently associated with any process Start Event. Nothing"
+                    " to do."
+                ),
+                status_code=400,
+            )
         )
 
-    process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
+    process_instance = ProcessInstanceModel.query.filter_by(
+        id=receiver_message.process_instance_id
+    ).first()
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=200,

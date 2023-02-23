@@ -91,7 +91,6 @@ class ErrorHandlingService:
 
         # Create the send message
         message_instance = MessageInstanceModel(
-            process_instance_id=None,
             message_type="send",
             name=message_name,
             payload=message_payload,
@@ -102,8 +101,7 @@ class ErrorHandlingService:
         db.session.commit()
 
         process_instance = MessageService.start_process_with_message(
-            message_triggerable_process_model,
-            message_instance
+            message_triggerable_process_model, message_instance
         )
 
         return Response(
