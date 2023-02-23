@@ -12,10 +12,6 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.file import SpecReference
-from spiffworkflow_backend.models.message_correlation_property import (
-    MessageCorrelationPropertyModel,
-)
-from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
@@ -336,39 +332,31 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_message_cache(ref: SpecReference) -> None:
         """Assure we have a record in the database of all possible message ids and names."""
-        for message_model_identifier in ref.messages.keys():
-            message_model = MessageModel.query.filter_by(
-                identifier=message_model_identifier
-            ).first()
-            if message_model is None:
-                message_model = MessageModel(
-                    identifier=message_model_identifier,
-                    name=ref.messages[message_model_identifier],
-                )
-                db.session.add(message_model)
-                db.session.commit()
+        pass
+        # for message_model_identifier in ref.messages.keys():
+        #     message_model = MessageModel.query.filter_by(
+        #         identifier=message_model_identifier
+        #     ).first()
+        #     if message_model is None:
+        #         message_model = MessageModel(
+        #             identifier=message_model_identifier,
+        #             name=ref.messages[message_model_identifier],
+        #         )
+        #         db.session.add(message_model)
+        #         db.session.commit()
 
     @staticmethod
     def update_message_trigger_cache(ref: SpecReference) -> None:
         """Assure we know which messages can trigger the start of a process."""
-        for message_model_identifier in ref.start_messages:
-            message_model = MessageModel.query.filter_by(
-                identifier=message_model_identifier
-            ).first()
-            if message_model is None:
-                raise ProcessModelFileInvalidError(
-                    "Could not find message model with identifier"
-                    f" '{message_model_identifier}'Required by a Start Event in :"
-                    f" {ref.file_name}"
-                )
+        for message_name in ref.start_messages:
             message_triggerable_process_model = (
                 MessageTriggerableProcessModel.query.filter_by(
-                    message_model_id=message_model.id,
+                    message_name=message_name,
                 ).first()
             )
             if message_triggerable_process_model is None:
                 message_triggerable_process_model = MessageTriggerableProcessModel(
-                    message_model_id=message_model.id,
+                    message_name=message_name,
                     process_model_identifier=ref.process_model_id,
                 )
                 db.session.add(message_triggerable_process_model)
@@ -386,33 +374,34 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_correlation_cache(ref: SpecReference) -> None:
         """Update_correlation_cache."""
-        for correlation_identifier in ref.correlations.keys():
-            correlation_property_retrieval_expressions = ref.correlations[
-                correlation_identifier
-            ]["retrieval_expressions"]
-
-            for cpre in correlation_property_retrieval_expressions:
-                message_model_identifier = cpre["messageRef"]
-                message_model = MessageModel.query.filter_by(
-                    identifier=message_model_identifier
-                ).first()
-                if message_model is None:
-                    raise ProcessModelFileInvalidError(
-                        "Could not find message model with identifier"
-                        f" '{message_model_identifier}'specified by correlation"
-                        f" property: {cpre}"
-                    )
-                # fixme:  I think we are currently ignoring the correction properties.
-                message_correlation_property = (
-                    MessageCorrelationPropertyModel.query.filter_by(
-                        identifier=correlation_identifier,
-                        message_model_id=message_model.id,
-                    ).first()
-                )
-                if message_correlation_property is None:
-                    message_correlation_property = MessageCorrelationPropertyModel(
-                        identifier=correlation_identifier,
-                        message_model_id=message_model.id,
-                    )
-                    db.session.add(message_correlation_property)
-                    db.session.commit()
+        pass
+        # for correlation_identifier in ref.correlations.keys():
+        #     correlation_property_retrieval_expressions = ref.correlations[
+        #         correlation_identifier
+        #     ]["retrieval_expressions"]
+        #
+        #     for cpre in correlation_property_retrieval_expressions:
+        #         message_model_identifier = cpre["messageRef"]
+        #         message_model = MessageModel.query.filter_by(
+        #             identifier=message_model_identifier
+        #         ).first()
+        #         if message_model is None:
+        #             raise ProcessModelFileInvalidError(
+        #                 "Could not find message model with identifier"
+        #                 f" '{message_model_identifier}'specified by correlation"
+        #                 f" property: {cpre}"
+        #             )
+        #         message_correlation_property = (
+        #             MessageCorrelationPropertyModel.query.filter_by(
+        #                 identifier=correlation_identifier,
+        #                 message_model_id=message_model.id,
+        #             ).first()
+        #         )
+        #
+        #         if message_correlation_property is None:
+        #             message_correlation_property = MessageCorrelationPropertyModel(
+        #                 identifier=correlation_identifier,
+        #                 message_model_id=message_model.id,
+        #             )
+        #             db.session.add(message_correlation_property)
+        #             db.session.commit()

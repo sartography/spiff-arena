@@ -253,7 +253,7 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
     else:
         api_exception = ApiError(
             error_code=error_code,
-            message=f"{exception.__class__.__name__}",
+            message=f"{exception.__class__.__name__} {str(exception)}",
             sentry_link=sentry_link,
             status_code=status_code,
         )

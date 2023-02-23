@@ -8,7 +8,7 @@ from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.message_model import MessageModel
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
@@ -80,22 +80,30 @@ class ErrorHandlingService:
             f" Error:\n{error.__repr__()}"
         )
         message_payload = {"message_text": message_text, "recipients": recipients}
-        message_identifier = current_app.config[
+        message_name = current_app.config[
             "SPIFFWORKFLOW_BACKEND_SYSTEM_NOTIFICATION_PROCESS_MODEL_MESSAGE_ID"
         ]
-        message_model = MessageModel.query.filter_by(
-            identifier=message_identifier
-        ).first()
         message_triggerable_process_model = (
             MessageTriggerableProcessModel.query.filter_by(
-                message_model_id=message_model.id
+                message_name=message_name
             ).first()
         )
-        process_instance = MessageService.process_message_triggerable_process_model(
+
+        # Create the send message
+        message_instance = MessageInstanceModel(
+            process_instance_id=None,
+            message_type="send",
+            name=message_name,
+            payload=message_payload,
+            user_id=g.user.id,
+            correlations=[],
+        )
+        db.session.add(message_instance)
+        db.session.commit()
+
+        process_instance = MessageService.start_process_with_message(
             message_triggerable_process_model,
-            message_identifier,
-            message_payload,
-            g.user,
+            message_instance
         )
 
         return Response(

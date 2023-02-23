@@ -60,12 +60,8 @@ from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_correlation_property import (
-    MessageCorrelationPropertyModel,
-)
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_instance import MessageModel
+from spiffworkflow_backend.models.message_instance_correlation import MessageInstanceCorrelationModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_metadata import (
@@ -1342,132 +1338,46 @@ class ProcessInstanceProcessor:
         """Process_bpmn_messages."""
         bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
         for bpmn_message in bpmn_messages:
-            # only message sends are in get_bpmn_messages
-            message_model = MessageModel.query.filter_by(name=bpmn_message.name).first()
-            if message_model is None:
-                raise ApiError(
-                    "invalid_message_name",
-                    f"Invalid message name: {bpmn_message.name}.",
-                )
-
-            if not bpmn_message.correlations:
-                raise ApiError(
-                    "message_correlations_missing",
-                    (
-                        "Could not find any message correlations bpmn_message:"
-                        f" {bpmn_message.name}"
-                    ),
-                )
-
-            message_correlations = []
-            for name, value in bpmn_message.correlations.items():
-                message_correlation_property = message_model.get_correlation_property(
-                    name
-                )
-                if message_correlation_property is None:
-                    raise ApiError(
-                        "message_correlations_missing_from_process",
-                        (
-                            "Could not find a known message correlation with"
-                            f" identifier:{name}"
-                        ),
-                    )
-                message_correlations.append(
-                    MessageCorrelationModel(
-                        process_instance_id=self.process_instance_model.id,
-                        message_correlation_property_id=message_correlation_property.id,
-                        name=name,
-                        value=value,
-                    )
-                )
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
+                user_id=self.process_instance_model.process_initiator_id, # TODO: use the correct swimlane user when that is set up
                 message_type="send",
-                message_model_id=message_model.id,
+                name=bpmn_message.name,
                 payload=bpmn_message.payload,
-                message_correlations=message_correlations,
+                correlations=[],
             )
             db.session.add(message_instance)
             db.session.commit()
 
     def queue_waiting_receive_messages(self) -> None:
         """Queue_waiting_receive_messages."""
-        waiting_tasks = self.get_all_waiting_tasks()
-        for waiting_task in waiting_tasks:
-            # if it's not something that can wait for a message, skip it
-            if waiting_task.task_spec.__class__.__name__ not in [
-                "IntermediateCatchEvent",
-                "ReceiveTask",
-            ]:
-                continue
+        waiting_events = self.bpmn_process_instance.waiting_events()
+        waiting_message_events = filter(lambda e: e['event_type'] == "Message", waiting_events)
 
-            # timer events are not related to messaging, so ignore them for these purposes
-            if waiting_task.task_spec.event_definition.__class__.__name__.endswith(
-                "TimerEventDefinition"
-            ):
-                continue
-
-            message_model = MessageModel.query.filter_by(
-                name=waiting_task.task_spec.event_definition.name
-            ).first()
-            if message_model is None:
-                raise ApiError(
-                    "invalid_message_name",
-                    (
-                        "Invalid message name:"
-                        f" {waiting_task.task_spec.event_definition.name}."
-                    ),
-                )
+        for event in waiting_message_events:
 
             # Ensure we are only creating one message instance for each waiting message
-            message_instance = MessageInstanceModel.query.filter_by(
+            if MessageInstanceModel.query.filter_by(
                 process_instance_id=self.process_instance_model.id,
                 message_type="receive",
-                message_model_id=message_model.id,
-            ).first()
-            if message_instance:
+                name=event['name']).count() > 0:
                 continue
 
+            # Create a new Message Instance
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
+                user_id=self.process_instance_model.process_initiator_id,
                 message_type="receive",
-                message_model_id=message_model.id,
+                name=event['name'],
             )
-
-            for (
-                spiff_correlation_property
-            ) in waiting_task.task_spec.event_definition.correlation_properties:
-                message_correlation = next(
-                    (
-                        mc
-                        for mc in message_instance.message_correlations
-                        if mc.name == spiff_correlation_property.name
-                    ),
-                    None,
+            for correlation_property in event['value']:
+                message_correlation = MessageInstanceCorrelationModel (
+                    message_instance_id=message_instance.id,
+                    name=correlation_property.name,
+                    expected_value=correlation_property.expected_value,
+                    retrieval_expression=correlation_property.retrieval_expression
                 )
-                if not message_correlation:
-                    expression = spiff_correlation_property.expression
-                    correlation_value = (
-                        ProcessInstanceProcessor._script_engine.evaluate(
-                            waiting_task, expression
-                        )
-                    )
-                    correlation_name = spiff_correlation_property.name
-                    message_prop = (
-                        MessageCorrelationPropertyModel.query.filter_by(
-                            identifier=correlation_name
-                        )
-                        .filter_by(message_model_id=message_model.id)
-                        .first()
-                    )
-
-                    message_correlation = MessageCorrelationModel(
-                        process_instance_id=self.process_instance_model.id,
-                        message_correlation_property_id=message_prop.id,
-                        name=correlation_name,
-                        value=correlation_value,
-                    )
-                message_instance.message_correlations.append(message_correlation)
+                message_instance.correlations.append(message_correlation)
             db.session.add(message_instance)
             db.session.commit()
 

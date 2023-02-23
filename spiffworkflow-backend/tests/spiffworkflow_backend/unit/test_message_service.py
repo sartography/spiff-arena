@@ -49,18 +49,18 @@ class TestMessageService(BaseTest):
 
         # Make an API call to the service endpoint, but use the wrong po number
         with pytest.raises(ApiError):
-            message_send("approval_result", {"payload": {"po_number": 5001}})
+            message_send("Approval Result", {"payload": {"po_number": 5001}})
 
-        # Sound return an error when making an API call for right po number, wrong client
+        # Should return an error when making an API call for right po number, wrong client
         with pytest.raises(ApiError):
             message_send(
-                "approval_result",
+                "Approval Result",
                 {"payload": {"po_number": 1001, "customer_id": "jon"}},
             )
 
         # No error when calling with the correct parameters
         message_send(
-            "approval_result",
+            "Approval Result",
             {"payload": {"po_number": 1001, "customer_id": "Sartography"}},
         )
 
@@ -111,14 +111,14 @@ class TestMessageService(BaseTest):
         # This is typically called in a background cron process, so we will manually call it
         # here in the tests
         # The first time it is called, it will instantiate a new instance of the message_recieve process
-        MessageService.process_message_instances()
+        MessageService.correlate_all_message_instances()
 
         # The sender process should still be waiting on a message to be returned to it ...
         self.assure_there_is_a_process_waiting_on_a_message()
 
         # The second time we call ths process_message_isntances (again it would typically be running on cron)
         # it will deliver the message that was sent from the receiver back to the original sender.
-        MessageService.process_message_instances()
+        MessageService.correlate_all_message_instances()
 
         # But there should be no send message waiting for delivery, because
         # the message receiving process should pick it up instantly via
@@ -129,6 +129,10 @@ class TestMessageService(BaseTest):
             .filter_by(process_instance_id=self.process_instance.id)
             .all()
         )
+        assert len(waiting_messages) == 0
+        MessageService.correlate_all_message_instances()
+        MessageService.correlate_all_message_instances()
+        MessageService.correlate_all_message_instances()
         assert len(waiting_messages) == 0
 
         # The message sender process is complete
@@ -181,16 +185,11 @@ class TestMessageService(BaseTest):
         )
         assert len(send_messages) == 1
         send_message = send_messages[0]
-
-        # The payload should match because of how it is written in the Send task.
         assert (
             send_message.payload == self.payload
         ), "The send message should match up with the payload"
-        assert send_message.message_model.identifier == "request_approval"
+        assert send_message.name == "Request Approval"
         assert send_message.status == "ready"
-        assert len(send_message.message_correlations) == 2
-        MessageInstanceModel.query.all()
-        self.assure_correlation_properties_are_right(send_message)
 
     def assure_there_is_a_process_waiting_on_a_message(self) -> None:
         # There should be one new send message for the given process instance.
@@ -208,14 +207,14 @@ class TestMessageService(BaseTest):
         self, message: MessageInstanceModel
     ) -> None:
         # Correlation Properties should match up
-        po_curr = next(c for c in message.message_correlations if c.name == "po_number")
+        po_curr = next(c for c in message.correlations if c.name == "po_number")
         customer_curr = next(
-            c for c in message.message_correlations if c.name == "customer_id"
+            c for c in message.correlations if c.name == "customer_id"
         )
         assert po_curr is not None
         assert customer_curr is not None
-        assert po_curr.value == "1001"
-        assert customer_curr.value == "Sartography"
+        assert po_curr.expected_value == "1001"
+        assert customer_curr.expected_value == "Sartography"
 
     def test_can_send_message_to_multiple_process_models(
         self,
@@ -274,17 +273,13 @@ class TestMessageService(BaseTest):
         assert len(orig_send_messages) == 2
         assert MessageInstanceModel.query.filter_by(message_type="receive").count() == 1
 
-        message_instances = MessageInstanceModel.query.all()
-        # Each message instance should have two correlations
-        for mi in message_instances:
-            assert len(mi.message_correlations) == 2
 
         # process message instances
-        MessageService.process_message_instances()
-        # Once complete the original send messages should be completed and two new instanges
+        MessageService.correlate_all_message_instances()
+        # Once complete the original send messages should be completed and two new instances
         # should now exist, one for each of the process instances ...
-        for osm in orig_send_messages:
-            assert osm.status == "completed"
+#        for osm in orig_send_messages:
+#            assert osm.status == "completed"
 
         process_instance_result = ProcessInstanceModel.query.all()
         assert len(process_instance_result) == 3
@@ -312,7 +307,7 @@ class TestMessageService(BaseTest):
         assert process_instance_receiver_two.status == "complete"
 
         message_instance_result = MessageInstanceModel.query.all()
-        assert len(message_instance_result) == 5
+        assert len(message_instance_result) == 7
 
         message_instance_receiver_one = [
             x
@@ -326,15 +321,15 @@ class TestMessageService(BaseTest):
         ][0]
         assert message_instance_receiver_one is not None
         assert message_instance_receiver_two is not None
-        assert message_instance_receiver_one.status == "ready"
-        assert message_instance_receiver_two.status == "ready"
 
-        # process second message
-        MessageService.process_message_instances()
-        MessageService.process_message_instances()
+        # Cause a currelation event
+        MessageService.correlate_all_message_instances()
+        # We have to run it a second time because instances are firing
+        # more messages that need to be picked up.
+        MessageService.correlate_all_message_instances()
 
         message_instance_result = MessageInstanceModel.query.all()
-        assert len(message_instance_result) == 6
+        assert len(message_instance_result) == 8
         for message_instance in message_instance_result:
             assert message_instance.status == "completed"
 

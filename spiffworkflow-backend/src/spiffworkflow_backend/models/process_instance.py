@@ -74,7 +74,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         overlaps="active_human_tasks",
     )  # type: ignore
     message_instances = relationship("MessageInstanceModel", cascade="delete")  # type: ignore
-    message_correlations = relationship("MessageCorrelationModel", cascade="delete")  # type: ignore
     process_metadata = relationship(
         "ProcessInstanceMetadataModel",
         cascade="delete",
@@ -142,6 +141,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     def can_submit_task(self) -> bool:
         """Can_submit_task."""
+        return not self.has_terminal_status() and self.status != "suspended"
+
+    def can_receive_message(self) -> bool:
+        """If this process can currently accept messages."""
         return not self.has_terminal_status() and self.status != "suspended"
 
     def has_terminal_status(self) -> bool:
