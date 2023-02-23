@@ -776,12 +776,12 @@ class ProcessInstanceProcessor:
 
         Rerturns: {process_name: [task_1, task_2, ...], ...}
         """
-        serialized_data = json.loads(self.serialize())
-        processes: dict[str, list[str]] = {serialized_data["spec"]["name"]: []}
-        for task_name, _task_spec in serialized_data["spec"]["task_specs"].items():
-            processes[serialized_data["spec"]["name"]].append(task_name)
-        if "subprocess_specs" in serialized_data:
-            for subprocess_name, subprocess_details in serialized_data[
+        bpmn_json = json.loads(self.process_instance_model.bpmn_json or '{}')
+        processes: dict[str, list[str]] = {bpmn_json["spec"]["name"]: []}
+        for task_name, _task_spec in bpmn_json["spec"]["task_specs"].items():
+            processes[bpmn_json["spec"]["name"]].append(task_name)
+        if "subprocess_specs" in bpmn_json:
+            for subprocess_name, subprocess_details in bpmn_json[
                 "subprocess_specs"
             ].items():
                 processes[subprocess_name] = []
@@ -816,7 +816,7 @@ class ProcessInstanceProcessor:
 
     #################################################################
 
-    def get_all_task_specs(self) -> dict[str, dict]:
+    def get_all_task_specs(self, bpmn_json: dict) -> dict[str, dict]:
         """This looks both at top level task_specs and subprocess_specs in the serialized data.
 
         It returns a dict of all task specs based on the task name like it is in the serialized form.
@@ -824,10 +824,9 @@ class ProcessInstanceProcessor:
         NOTE: this may not fully work for tasks that are NOT call activities since their task_name may not be unique
         but in our current use case we only care about the call activities here.
         """
-        serialized_data = json.loads(self.serialize())
-        spiff_task_json = serialized_data["spec"]["task_specs"] or {}
-        if "subprocess_specs" in serialized_data:
-            for _subprocess_name, subprocess_details in serialized_data[
+        spiff_task_json = bpmn_json["spec"]["task_specs"] or {}
+        if "subprocess_specs" in bpmn_json:
+            for _subprocess_name, subprocess_details in bpmn_json[
                 "subprocess_specs"
             ].items():
                 if "task_specs" in subprocess_details:
@@ -849,8 +848,8 @@ class ProcessInstanceProcessor:
         Also note that subprocess_task_id might in fact be a call activity, because spiff treats
         call activities like subprocesses in terms of the serialization.
         """
-        bpmn_json = json.loads(self.serialize())
-        spiff_task_json = self.get_all_task_specs()
+        bpmn_json = json.loads(self.process_instance_model.bpmn_json or '{}')
+        spiff_task_json = self.get_all_task_specs(bpmn_json)
 
         subprocesses_by_child_task_ids = {}
         task_typename_by_task_id = {}
