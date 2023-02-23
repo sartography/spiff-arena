@@ -4,22 +4,25 @@ from typing import Any
 from typing import List
 from typing import Optional
 
+import sentry_sdk
 from flask import current_app
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.task import MultiInstanceType
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceIsAlreadyLockedError,
+)
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -73,13 +76,20 @@ class ProcessInstanceService:
             .filter(ProcessInstanceModel.status == ProcessInstanceStatus.waiting.value)
             .all()
         )
+        process_instance_lock_prefix = "Background"
         for process_instance in records:
+            locked = False
+            processor = None
             try:
                 current_app.logger.info(
                     f"Processing process_instance {process_instance.id}"
                 )
                 processor = ProcessInstanceProcessor(process_instance)
+                processor.lock_process_instance(process_instance_lock_prefix)
+                locked = True
                 processor.do_engine_steps(save=True)
+            except ProcessInstanceIsAlreadyLockedError:
+                continue
             except Exception as e:
                 db.session.rollback()  # in case the above left the database with a bad transaction
                 process_instance.status = ProcessInstanceStatus.error.value
@@ -91,6 +101,9 @@ class ProcessInstanceService:
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
+            finally:
+                if locked and processor:
+                    processor.unlock_process_instance(process_instance_lock_prefix)
 
     @staticmethod
     def processor_to_process_instance_api(
@@ -160,11 +173,7 @@ class ProcessInstanceService:
                 not hasattr(spiff_task.task_spec, "lane")
                 or spiff_task.task_spec.lane is None
             ):
-                current_user = spiff_task.data["current_user"]
-                return [
-                    current_user["id"],
-                ]
-                # return [processor.process_instance_model.process_initiator_id]
+                return [processor.process_instance_model.process_initiator_id]
 
             if spiff_task.task_spec.lane not in spiff_task.data:
                 return []  # No users are assignable to the task at this moment
@@ -220,7 +229,10 @@ class ProcessInstanceService:
         spiff_task.update_data(dot_dct)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
-        processor.do_engine_steps(save=True)
+
+        with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
+            # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
+            processor.do_engine_steps(save=True)
 
     @staticmethod
     def extract_form_data(latest_data: dict, task: SpiffTask) -> dict:
@@ -290,19 +302,10 @@ class ProcessInstanceService:
         spiff_task: SpiffTask,
         add_docs_and_forms: bool = False,
         calling_subprocess_task_id: Optional[str] = None,
+        task_spiff_step: Optional[int] = None,
     ) -> Task:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.spec_type
-
-        info = spiff_task.task_info()
-        if info["is_looping"]:
-            mi_type = MultiInstanceType.looping
-        elif info["is_sequential_mi"]:
-            mi_type = MultiInstanceType.sequential
-        elif info["is_parallel_mi"]:
-            mi_type = MultiInstanceType.parallel
-        else:
-            mi_type = MultiInstanceType.none
 
         props = {}
         if hasattr(spiff_task.task_spec, "extensions"):
@@ -332,15 +335,13 @@ class ProcessInstanceService:
             task_type,
             spiff_task.get_state_name(),
             lane=lane,
-            multi_instance_type=mi_type,
-            multi_instance_count=info["mi_count"],
-            multi_instance_index=info["mi_index"],
             process_identifier=spiff_task.task_spec._wf_spec.name,
             properties=props,
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),
             call_activity_process_identifier=call_activity_process_identifier,
             calling_subprocess_task_id=calling_subprocess_task_id,
+            task_spiff_step=task_spiff_step,
         )
 
         return task

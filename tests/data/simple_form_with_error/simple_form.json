@@ -1,0 +1,18 @@
+{
+  "title": "Simple form",
+  "description": "A simple form example with some bad Jinja2 Syntax in it {{ x +=- 1}}",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name",
+      "default": "World"
+    },
+    "department": {
+      "type": "string",
+      "title": "Department",
+      "enum": ["Finance", "HR", "IT"]
+    }
+  }
+}

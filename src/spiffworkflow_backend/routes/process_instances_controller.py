@@ -11,12 +11,12 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from SpiffWorkflow.task import TaskState  # type: ignore
 from sqlalchemy import and_
 from sqlalchemy import or_
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
@@ -36,6 +36,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_by_id_or_raise,
@@ -72,6 +73,18 @@ def process_instance_create(
     process_model_identifier = _un_modify_modified_process_model_id(
         modified_process_model_identifier
     )
+
+    process_model = _get_process_model(process_model_identifier)
+    if process_model.primary_file_name is None:
+        raise ApiError(
+            error_code="process_model_missing_primary_bpmn_file",
+            message=(
+                f"Process Model '{process_model_identifier}' does not have a primary"
+                " bpmn file. One must be set in order to instantiate this model."
+            ),
+            status_code=400,
+        )
+
     process_instance = (
         ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model_identifier, g.user
@@ -102,6 +115,7 @@ def process_instance_run(
         )
 
     processor = ProcessInstanceProcessor(process_instance)
+    processor.lock_process_instance("Web")
 
     if do_engine_steps:
         try:
@@ -111,6 +125,7 @@ def process_instance_run(
             raise e
         except Exception as e:
             ErrorHandlingService().handle_error(processor, e)
+            # fixme: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes
             task = processor.bpmn_process_instance.last_task
             raise ApiError.from_task(
                 error_code="unknown_exception",
@@ -118,8 +133,10 @@ def process_instance_run(
                 status_code=400,
                 task=task,
             ) from e
+        finally:
+            processor.unlock_process_instance("Web")
 
-        if not current_app.config["RUN_BACKGROUND_SCHEDULER"]:
+        if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
             MessageService.process_message_instances()
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(
@@ -182,16 +199,18 @@ def process_instance_log_list(
     )
     if not detailed:
         log_query = log_query.filter(
-            # this was the previous implementation, where we only show completed tasks and skipped tasks.
-            # maybe we want to iterate on this in the future (in a third tab under process instance logs?)
-            # or_(
-            #     SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
-            #     SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
-            # )
+            # 1. this was the previous implementation, where we only show completed tasks and skipped tasks.
+            #   maybe we want to iterate on this in the future (in a third tab under process instance logs?)
+            #   or_(
+            #       SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
+            #       SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
+            #   )
+            # 2. We included ["End Event", "Default Start Event"] along with Default Throwing Event, but feb 2023
+            #  we decided to remove them, since they get really chatty when there are lots of subprocesses and call activities.
             and_(
                 SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
                 SpiffLoggingModel.bpmn_task_type.in_(  # type: ignore
-                    ["Default Throwing Event", "End Event", "Default Start Event"]
+                    ["Default Throwing Event"]
                 ),
             )
         )
@@ -541,22 +560,71 @@ def process_instance_task_list(
     get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
+    step_detail_query = db.session.query(SpiffStepDetailsModel).filter(
+        SpiffStepDetailsModel.process_instance_id == process_instance.id,
+    )
+
     if spiff_step > 0:
-        step_detail = (
-            db.session.query(SpiffStepDetailsModel)
-            .filter(
-                SpiffStepDetailsModel.process_instance_id == process_instance.id,
-                SpiffStepDetailsModel.spiff_step == spiff_step,
-            )
-            .first()
+        step_detail_query = step_detail_query.filter(
+            SpiffStepDetailsModel.spiff_step <= spiff_step
         )
-        if step_detail is not None and process_instance.bpmn_json is not None:
-            bpmn_json = json.loads(process_instance.bpmn_json)
-            bpmn_json["tasks"] = step_detail.task_json["tasks"]
-            bpmn_json["subprocesses"] = step_detail.task_json["subprocesses"]
-            process_instance.bpmn_json = json.dumps(bpmn_json)
+
+    step_details = step_detail_query.all()
+    bpmn_json = json.loads(process_instance.bpmn_json or "{}")
+    tasks = bpmn_json["tasks"]
+    subprocesses = bpmn_json["subprocesses"]
+
+    steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
+
+    subprocess_state_overrides = {}
+    for step_detail in step_details:
+        if step_detail.task_id in tasks:
+            task_data = (
+                step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
+            )
+            if task_data is None:
+                task_data = {}
+            tasks[step_detail.task_id]["data"] = task_data
+            tasks[step_detail.task_id]["state"] = Task.task_state_name_to_int(
+                step_detail.task_state
+            )
+        else:
+            for subprocess_id, subprocess_info in subprocesses.items():
+                if step_detail.task_id in subprocess_info["tasks"]:
+                    task_data = (
+                        step_detail.task_json["task_data"]
+                        | step_detail.task_json["python_env"]
+                    )
+                    if task_data is None:
+                        task_data = {}
+                    subprocess_info["tasks"][step_detail.task_id]["data"] = task_data
+                    subprocess_info["tasks"][step_detail.task_id]["state"] = (
+                        Task.task_state_name_to_int(step_detail.task_state)
+                    )
+                    subprocess_state_overrides[subprocess_id] = TaskState.WAITING
+
+    for subprocess_info in subprocesses.values():
+        for spiff_task_id in subprocess_info["tasks"]:
+            if spiff_task_id not in steps_by_id:
+                subprocess_info["tasks"][spiff_task_id]["data"] = {}
+                subprocess_info["tasks"][spiff_task_id]["state"] = (
+                    subprocess_state_overrides.get(spiff_task_id, TaskState.FUTURE)
+                )
+    for spiff_task_id in tasks:
+        if spiff_task_id not in steps_by_id:
+            tasks[spiff_task_id]["data"] = {}
+            tasks[spiff_task_id]["state"] = subprocess_state_overrides.get(
+                spiff_task_id, TaskState.FUTURE
+            )
+
+    process_instance.bpmn_json = json.dumps(bpmn_json)
 
     processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+        step_details[-1].bpmn_task_identifier, processor.bpmn_process_instance
+    )
+    if spiff_task is not None and spiff_task.state != TaskState.READY:
+        spiff_task.complete()
 
     spiff_tasks = None
     if all_tasks:
@@ -564,20 +632,27 @@ def process_instance_task_list(
     else:
         spiff_tasks = processor.get_all_user_tasks()
 
-    subprocesses_by_child_task_ids, task_typename_by_task_id = (
-        processor.get_subprocesses_by_child_task_ids()
-    )
+    (
+        subprocesses_by_child_task_ids,
+        task_typename_by_task_id,
+    ) = processor.get_subprocesses_by_child_task_ids()
     processor.get_highest_level_calling_subprocesses_by_child_task_ids(
         subprocesses_by_child_task_ids, task_typename_by_task_id
     )
 
     tasks = []
     for spiff_task in spiff_tasks:
+        task_spiff_step: Optional[int] = None
+        if str(spiff_task.id) in steps_by_id:
+            task_spiff_step = steps_by_id[str(spiff_task.id)].spiff_step
         calling_subprocess_task_id = subprocesses_by_child_task_ids.get(
             str(spiff_task.id), None
         )
         task = ProcessInstanceService.spiff_task_to_api_task(
-            processor, spiff_task, calling_subprocess_task_id=calling_subprocess_task_id
+            processor,
+            spiff_task,
+            calling_subprocess_task_id=calling_subprocess_task_id,
+            task_spiff_step=task_spiff_step,
         )
         if get_task_data:
             task.data = spiff_task.data
@@ -657,6 +732,9 @@ def _get_process_instance(
             spec_reference.process_model_id
         )
         name_of_file_with_diagram = spec_reference.file_name
+        process_instance.process_model_with_diagram_identifier = (
+            process_model_with_diagram.id
+        )
     else:
         process_model_with_diagram = _get_process_model(process_model_identifier)
         if process_model_with_diagram.primary_file_name:
@@ -678,7 +756,8 @@ def _get_process_instance(
             )
         process_instance.bpmn_xml_file_contents = bpmn_xml_file_contents
 
-    return make_response(jsonify(process_instance), 200)
+    process_instance_as_dict = process_instance.serialized_with_metadata()
+    return make_response(jsonify(process_instance_as_dict), 200)
 
 
 def _find_process_instance_for_me_or_raise(

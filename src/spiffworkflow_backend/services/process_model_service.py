@@ -8,8 +8,7 @@ from typing import List
 from typing import Optional
 from typing import TypeVar
 
-from flask_bpmn.api.api_error import ApiError
-
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
@@ -500,7 +499,10 @@ class ProcessModelService(FileSystemService):
             if name is None:
                 raise ApiError(
                     error_code="missing_name_of_process_model",
-                    message="Missing name of process model. It should be given",
+                    message=(
+                        "Missing name of process model. Path not found:"
+                        f" {json_file_path}"
+                    ),
                 )
 
             process_model_info = ProcessModelInfo(

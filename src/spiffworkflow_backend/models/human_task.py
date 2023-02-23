@@ -4,11 +4,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import Task
@@ -26,9 +26,6 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     """HumanTaskModel."""
 
     __tablename__ = "human_task"
-    __table_args__ = (
-        db.UniqueConstraint("task_id", "process_instance_id", name="human_task_unique"),
-    )
 
     id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(

@@ -1,4 +1,6 @@
 """Test_get_localtime."""
+from operator import itemgetter
+
 from flask.app import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -41,6 +43,11 @@ class TestGetAllPermissions(BaseTest):
         expected_permissions = [
             {
                 "group_identifier": "my_test_group",
+                "uri": "/logs/hey:group:*",
+                "permissions": ["read"],
+            },
+            {
+                "group_identifier": "my_test_group",
                 "uri": "/process-instances/hey:group:*",
                 "permissions": ["create"],
             },
@@ -54,7 +61,16 @@ class TestGetAllPermissions(BaseTest):
                 "uri": "/tasks",
                 "permissions": ["create", "read", "update", "delete"],
             },
+            {
+                "group_identifier": "my_test_group",
+                "uri": "/process-data-file-download/hey:group:*",
+                "permissions": ["read"],
+            },
         ]
 
         permissions = GetAllPermissions().run(script_attributes_context)
-        assert permissions == expected_permissions
+        sorted_permissions = sorted(permissions, key=itemgetter("uri"))
+        sorted_expected_permissions = sorted(
+            expected_permissions, key=itemgetter("uri")
+        )
+        assert sorted_permissions == sorted_expected_permissions

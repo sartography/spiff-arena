@@ -1,4 +1,5 @@
 """__init__."""
+import faulthandler
 import os
 from typing import Any
 
@@ -9,17 +10,16 @@ import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
 from flask.json.provider import DefaultJSONProvider
-from flask_bpmn.api.api_error import api_error_blueprint
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import migrate
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
 from werkzeug.exceptions import NotFound
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
 from spiffworkflow_backend.config import setup_config
+from spiffworkflow_backend.exceptions.api_error import api_error_blueprint
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
-from spiffworkflow_backend.routes.admin_blueprint.admin_blueprint import admin_blueprint
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import migrate
 from spiffworkflow_backend.routes.openid_blueprint.openid_blueprint import (
     openid_blueprint,
 )
@@ -80,6 +80,8 @@ def start_scheduler(
 
 def create_app() -> flask.app.Flask:
     """Create_app."""
+    faulthandler.enable()
+
     # We need to create the sqlite database in a known location.
     # If we rely on the app.instance_path without setting an environment
     # variable, it will be one thing when we run flask db upgrade in the
@@ -106,7 +108,6 @@ def create_app() -> flask.app.Flask:
 
     app.register_blueprint(user_blueprint)
     app.register_blueprint(api_error_blueprint)
-    app.register_blueprint(admin_blueprint, url_prefix="/admin")
     app.register_blueprint(openid_blueprint, url_prefix="/openid")
 
     # preflight options requests will be allowed if they meet the requirements of the url regex.
@@ -114,7 +115,7 @@ def create_app() -> flask.app.Flask:
     # need to continually keep asking for the same path.
     origins_re = [
         r"^https?:\/\/%s(.*)" % o.replace(".", r"\.")
-        for o in app.config["CORS_ALLOW_ORIGINS"]
+        for o in app.config["SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS"]
     ]
     CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
 
@@ -127,7 +128,7 @@ def create_app() -> flask.app.Flask:
 
     # do not start the scheduler twice in flask debug mode
     if (
-        app.config["RUN_BACKGROUND_SCHEDULER"]
+        app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]
         and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
     ):
         start_scheduler(app)
@@ -143,20 +144,45 @@ def create_app() -> flask.app.Flask:
 
 def get_hacked_up_app_for_script() -> flask.app.Flask:
     """Get_hacked_up_app_for_script."""
-    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "development"
+    os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "local_development"
     flask_env_key = "FLASK_SESSION_SECRET_KEY"
     os.environ[flask_env_key] = "whatevs"
-    if "BPMN_SPEC_ABSOLUTE_DIR" not in os.environ:
+    if "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" not in os.environ:
         home = os.environ["HOME"]
         full_process_model_path = (
             f"{home}/projects/github/sartography/sample-process-models"
         )
         if os.path.isdir(full_process_model_path):
-            os.environ["BPMN_SPEC_ABSOLUTE_DIR"] = full_process_model_path
+            os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = (
+                full_process_model_path
+            )
         else:
             raise Exception(f"Could not find {full_process_model_path}")
     app = create_app()
     return app
+
+
+def traces_sampler(sampling_context: Any) -> Any:
+    # always inherit
+    if sampling_context["parent_sampled"] is not None:
+        return sampling_context["parent_sampled"]
+
+    if "wsgi_environ" in sampling_context:
+        wsgi_environ = sampling_context["wsgi_environ"]
+        path_info = wsgi_environ.get("PATH_INFO")
+        request_method = wsgi_environ.get("REQUEST_METHOD")
+
+        # tasks_controller.task_submit
+        # this is the current pain point as of 31 jan 2023.
+        if (
+            path_info
+            and path_info.startswith("/v1.0/tasks/")
+            and request_method == "PUT"
+        ):
+            return 1
+
+    # Default sample rate for all others (replaces traces_sample_rate)
+    return 0.01
 
 
 def configure_sentry(app: flask.app.Flask) -> None:
@@ -174,16 +200,28 @@ def configure_sentry(app: flask.app.Flask) -> None:
                 return None
         return event
 
-    sentry_errors_sample_rate = app.config.get("SENTRY_ERRORS_SAMPLE_RATE")
+    sentry_errors_sample_rate = app.config.get(
+        "SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE"
+    )
     if sentry_errors_sample_rate is None:
-        raise Exception("SENTRY_ERRORS_SAMPLE_RATE is not set somehow")
+        raise Exception(
+            "SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE is not set somehow"
+        )
 
-    sentry_traces_sample_rate = app.config.get("SENTRY_TRACES_SAMPLE_RATE")
+    sentry_traces_sample_rate = app.config.get(
+        "SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE"
+    )
     if sentry_traces_sample_rate is None:
-        raise Exception("SENTRY_TRACES_SAMPLE_RATE is not set somehow")
+        raise Exception(
+            "SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow"
+        )
+
+    # profiling doesn't work on windows, because of an issue like https://github.com/nvdv/vprof/issues/62
+    # but also we commented out profiling because it was causing segfaults (i guess it is marked experimental)
+    # profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
 
     sentry_sdk.init(
-        dsn=app.config.get("SENTRY_DSN"),
+        dsn=app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN"),
         integrations=[
             FlaskIntegration(),
         ],
@@ -195,5 +233,8 @@ def configure_sentry(app: flask.app.Flask) -> None:
         # of transactions for performance monitoring.
         # We recommend adjusting this value to less than 1(00%) in production.
         traces_sample_rate=float(sentry_traces_sample_rate),
+        traces_sampler=traces_sampler,
+        # The profiles_sample_rate setting is relative to the traces_sample_rate setting.
+        # _experiments={"profiles_sample_rate": profiles_sample_rate},
         before_send=before_send,
     )

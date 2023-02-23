@@ -156,31 +156,43 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_explode_permissions_all_on_process_group."""
-        expected_permissions = [
-            ("/logs/some-process-group:some-process-model:*", "read"),
-            ("/process-data/some-process-group:some-process-model:*", "read"),
-            ("/process-groups/some-process-group:some-process-model:*", "create"),
-            ("/process-groups/some-process-group:some-process-model:*", "delete"),
-            ("/process-groups/some-process-group:some-process-model:*", "read"),
-            ("/process-groups/some-process-group:some-process-model:*", "update"),
-            (
-                "/process-instance-suspend/some-process-group:some-process-model:*",
-                "create",
-            ),
-            (
-                "/process-instance-terminate/some-process-group:some-process-model:*",
-                "create",
-            ),
-            ("/process-instances/some-process-group:some-process-model:*", "create"),
-            ("/process-instances/some-process-group:some-process-model:*", "delete"),
-            ("/process-instances/some-process-group:some-process-model:*", "read"),
-            ("/process-models/some-process-group:some-process-model:*", "create"),
-            ("/process-models/some-process-group:some-process-model:*", "delete"),
-            ("/process-models/some-process-group:some-process-model:*", "read"),
-            ("/process-models/some-process-group:some-process-model:*", "update"),
-            ("/task-data/some-process-group:some-process-model:*", "read"),
-            ("/task-data/some-process-group:some-process-model:*", "update"),
-        ]
+        expected_permissions = sorted(
+            [
+                ("/logs/some-process-group:some-process-model:*", "read"),
+                ("/process-data/some-process-group:some-process-model:*", "read"),
+                (
+                    "/process-data-file-download/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                ("/process-groups/some-process-group:some-process-model:*", "create"),
+                ("/process-groups/some-process-group:some-process-model:*", "delete"),
+                ("/process-groups/some-process-group:some-process-model:*", "read"),
+                ("/process-groups/some-process-group:some-process-model:*", "update"),
+                (
+                    "/process-instance-suspend/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
+                    "/process-instance-terminate/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
+                    "/process-instances/some-process-group:some-process-model:*",
+                    "create",
+                ),
+                (
+                    "/process-instances/some-process-group:some-process-model:*",
+                    "delete",
+                ),
+                ("/process-instances/some-process-group:some-process-model:*", "read"),
+                ("/process-models/some-process-group:some-process-model:*", "create"),
+                ("/process-models/some-process-group:some-process-model:*", "delete"),
+                ("/process-models/some-process-group:some-process-model:*", "read"),
+                ("/process-models/some-process-group:some-process-model:*", "update"),
+                ("/task-data/some-process-group:some-process-model:*", "read"),
+                ("/task-data/some-process-group:some-process-model:*", "update"),
+            ]
+        )
         permissions_to_assign = AuthorizationService.explode_permissions(
             "all", "PG:/some-process-group/some-process-model"
         )
@@ -197,6 +209,14 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_explode_permissions_start_on_process_group."""
         expected_permissions = [
+            (
+                "/logs/some-process-group:some-process-model:*",
+                "read",
+            ),
+            (
+                "/process-data-file-download/some-process-group:some-process-model:*",
+                "read",
+            ),
             (
                 "/process-instances/for-me/some-process-group:some-process-model:*",
                 "read",
@@ -218,27 +238,39 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_explode_permissions_all_on_process_model."""
-        expected_permissions = [
-            ("/logs/some-process-group:some-process-model/*", "read"),
-            ("/process-data/some-process-group:some-process-model/*", "read"),
-            (
-                "/process-instance-suspend/some-process-group:some-process-model/*",
-                "create",
-            ),
-            (
-                "/process-instance-terminate/some-process-group:some-process-model/*",
-                "create",
-            ),
-            ("/process-instances/some-process-group:some-process-model/*", "create"),
-            ("/process-instances/some-process-group:some-process-model/*", "delete"),
-            ("/process-instances/some-process-group:some-process-model/*", "read"),
-            ("/process-models/some-process-group:some-process-model/*", "create"),
-            ("/process-models/some-process-group:some-process-model/*", "delete"),
-            ("/process-models/some-process-group:some-process-model/*", "read"),
-            ("/process-models/some-process-group:some-process-model/*", "update"),
-            ("/task-data/some-process-group:some-process-model/*", "read"),
-            ("/task-data/some-process-group:some-process-model/*", "update"),
-        ]
+        expected_permissions = sorted(
+            [
+                ("/logs/some-process-group:some-process-model/*", "read"),
+                (
+                    "/process-data-file-download/some-process-group:some-process-model/*",
+                    "read",
+                ),
+                ("/process-data/some-process-group:some-process-model/*", "read"),
+                (
+                    "/process-instance-suspend/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
+                    "/process-instance-terminate/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
+                    "/process-instances/some-process-group:some-process-model/*",
+                    "create",
+                ),
+                (
+                    "/process-instances/some-process-group:some-process-model/*",
+                    "delete",
+                ),
+                ("/process-instances/some-process-group:some-process-model/*", "read"),
+                ("/process-models/some-process-group:some-process-model/*", "create"),
+                ("/process-models/some-process-group:some-process-model/*", "delete"),
+                ("/process-models/some-process-group:some-process-model/*", "read"),
+                ("/process-models/some-process-group:some-process-model/*", "update"),
+                ("/task-data/some-process-group:some-process-model/*", "read"),
+                ("/task-data/some-process-group:some-process-model/*", "update"),
+            ]
+        )
         permissions_to_assign = AuthorizationService.explode_permissions(
             "all", "PM:/some-process-group/some-process-model"
         )
@@ -255,6 +287,14 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_explode_permissions_start_on_process_model."""
         expected_permissions = [
+            (
+                "/logs/some-process-group:some-process-model/*",
+                "read",
+            ),
+            (
+                "/process-data-file-download/some-process-group:some-process-model/*",
+                "read",
+            ),
             (
                 "/process-instances/for-me/some-process-group:some-process-model/*",
                 "read",
@@ -381,18 +421,27 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_can_refresh_permissions."""
         user = self.find_or_create_user(username="user_one")
+        user_two = self.find_or_create_user(username="user_two")
         admin_user = self.find_or_create_user(username="testadmin1")
 
         # this group is not mentioned so it will get deleted
         GroupService.find_or_create_group("group_two")
         assert GroupModel.query.filter_by(identifier="group_two").first() is not None
 
+        GroupService.find_or_create_group("group_three")
+        assert GroupModel.query.filter_by(identifier="group_three").first() is not None
+
         group_info = [
             {
-                "users": ["user_one"],
+                "users": ["user_one", "user_two"],
                 "name": "group_one",
                 "permissions": [{"actions": ["create", "read"], "uri": "PG:hey"}],
-            }
+            },
+            {
+                "users": ["user_two"],
+                "name": "group_three",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey2"}],
+            },
         ]
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_two").first() is None
@@ -402,12 +451,32 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
         self.assert_user_has_permission(user, "create", "/v1.0/process-groups/hey:yo")
 
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey")
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey:yo")
+        self.assert_user_has_permission(
+            user_two, "create", "/v1.0/process-groups/hey:yo"
+        )
+        assert GroupModel.query.filter_by(identifier="group_three").first() is not None
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2")
+        self.assert_user_has_permission(
+            user_two, "read", "/v1.0/process-groups/hey2:yo"
+        )
+        self.assert_user_has_permission(
+            user_two, "create", "/v1.0/process-groups/hey2:yo"
+        )
+
+        # remove access to 'hey' from user_two
         group_info = [
             {
                 "users": ["user_one"],
                 "name": "group_one",
                 "permissions": [{"actions": ["read"], "uri": "PG:hey"}],
-            }
+            },
+            {
+                "users": ["user_two"],
+                "name": "group_three",
+                "permissions": [{"actions": ["create", "read"], "uri": "PG:hey2"}],
+            },
         ]
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_one").first() is not None
@@ -417,3 +486,15 @@ class TestAuthorizationService(BaseTest):
             user, "create", "/v1.0/process-groups/hey:yo", expected_result=False
         )
         self.assert_user_has_permission(admin_user, "create", "/anything-they-want")
+
+        self.assert_user_has_permission(
+            user_two, "read", "/v1.0/process-groups/hey", expected_result=False
+        )
+        assert GroupModel.query.filter_by(identifier="group_three").first() is not None
+        self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey2")
+        self.assert_user_has_permission(
+            user_two, "read", "/v1.0/process-groups/hey2:yo"
+        )
+        self.assert_user_has_permission(
+            user_two, "create", "/v1.0/process-groups/hey2:yo"
+        )

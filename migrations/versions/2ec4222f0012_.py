@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 907bcf0c3d75
+Revision ID: 2ec4222f0012
 Revises: 
-Create Date: 2022-12-28 13:52:13.030028
+Create Date: 2023-01-24 10:31:26.693063
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '907bcf0c3d75'
+revision = '2ec4222f0012'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -129,6 +129,8 @@ def upgrade():
     sa.Column('bpmn_version_control_type', sa.String(length=50), nullable=True),
     sa.Column('bpmn_version_control_identifier', sa.String(length=255), nullable=True),
     sa.Column('spiff_step', sa.Integer(), nullable=True),
+    sa.Column('locked_by', sa.String(length=80), nullable=True),
+    sa.Column('locked_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['process_initiator_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -204,8 +206,7 @@ def upgrade():
     sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
     sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('task_id', 'process_instance_id', name='human_task_unique')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_human_task_completed'), 'human_task', ['completed'], unique=False)
     op.create_table('message_correlation',
@@ -269,7 +270,8 @@ def upgrade():
     sa.Column('task_json', sa.JSON(), nullable=False),
     sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('process_instance_id', 'spiff_step', name='process_instance_id_spiff_step')
     )
     op.create_table('human_task_user',
     sa.Column('id', sa.Integer(), nullable=False),

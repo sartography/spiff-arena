@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from flask_bpmn.models.db import db
-from flask_bpmn.models.db import SpiffworkflowBaseDBModel
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.user import UserModel
 
@@ -30,3 +31,5 @@ class HumanTaskUserModel(SpiffworkflowBaseDBModel):
         ForeignKey(HumanTaskModel.id), nullable=False, index=True  # type: ignore
     )
     user_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
+
+    human_task = relationship(HumanTaskModel)

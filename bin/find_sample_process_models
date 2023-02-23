@@ -7,19 +7,19 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
+if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 
-  BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../../sample-process-models"
-  if [[ ! -d "$BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-    BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
-    if [[ ! -d "$BPMN_SPEC_ABSOLUTE_DIR" ]]; then
-      >&2 echo "ERROR: Could not find a location for the sample processes. Last tried: $BPMN_SPEC_ABSOLUTE_DIR"
+  SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../../sample-process-models"
+  if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
+    SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${script_dir}/../../sample-process-models"
+    if [[ ! -d "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" ]]; then
+      >&2 echo "ERROR: Could not find a location for the sample processes. Last tried: $SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
       exit 1
     fi
   fi
 
-  pushd "$BPMN_SPEC_ABSOLUTE_DIR" >/dev/null 2>&1
+  pushd "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" >/dev/null 2>&1
   if [[ "$(git rev-parse --abbrev-ref HEAD)" == "main" ]]; then
     >&2 echo "ERROR: please do not use the main branch of sample-process-models. use dev"
     exit 1
@@ -27,4 +27,4 @@ if [[ -z "${BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   popd >/dev/null 2>&1
 fi
 
-realpath "$BPMN_SPEC_ABSOLUTE_DIR"
+realpath "$SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"

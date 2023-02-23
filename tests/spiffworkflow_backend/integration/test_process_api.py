@@ -9,13 +9,13 @@ from typing import Dict
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
-from flask_bpmn.models.db import db
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -922,6 +922,31 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["error_code"] == "process_model_file_cannot_be_found"
 
+    def test_process_model_file_delete_when_primary_file(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user
+        )
+        process_model = ProcessModelService.get_process_model(
+            process_model_id=process_model_identifier
+        )
+        modified_process_model_identifier = process_model_identifier.replace("/", ":")
+
+        response = client.delete(
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/{process_model.primary_file_name}",
+            follow_redirects=True,
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+
+        assert response.status_code == 400
+        assert response.json is not None
+        assert response.json["error_code"] == "process_model_file_cannot_be_deleted"
+
     def test_process_model_file_delete(
         self,
         app: Flask,
@@ -935,8 +960,16 @@ class TestProcessApi(BaseTest):
         )
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
 
+        self.create_spec_file(
+            client,
+            process_model_id=process_model_identifier,
+            file_name="second_file.json",
+            file_data=b"<h1>HEY</h1>",
+            user=with_super_admin_user,
+        )
+
         response = client.delete(
-            f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.bpmn",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.json",
             follow_redirects=True,
             headers=self.logged_in_headers(with_super_admin_user),
         )
@@ -946,7 +979,7 @@ class TestProcessApi(BaseTest):
         assert response.json["ok"]
 
         response = client.get(
-            f"/v1.0/process-models/{modified_process_model_identifier}/files/random_fact.svg",
+            f"/v1.0/process-models/{modified_process_model_identifier}/files/second_file.json",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 404
@@ -1192,10 +1225,6 @@ class TestProcessApi(BaseTest):
         assert response.json["updated_at_in_seconds"] > 0
         assert response.json["status"] == "complete"
         assert response.json["process_model_identifier"] == process_model_identifier
-        assert (
-            response.json["data"]["current_user"]["username"]
-            == with_super_admin_user.username
-        )
         assert response.json["data"]["Mike"] == "Awesome"
         assert response.json["data"]["person"] == "Kevin"
 
@@ -1647,11 +1676,20 @@ class TestProcessApi(BaseTest):
             f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert response.status_code == 200
         assert response.json is not None
         assert (
             response.json["form_schema"]["definitions"]["Color"]["anyOf"][1]["title"]
             == "Green"
         )
+
+        # if you set this in task data:
+        #   form_ui_hidden_fields = ["veryImportantFieldButOnlySometimes", "building.floor"]
+        # you will get this ui schema:
+        assert response.json["form_ui_schema"] == {
+            "building": {"floor": {"ui:widget": "hidden"}},
+            "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
+        }
 
     def test_process_instance_list_with_default_list(
         self,
@@ -2190,10 +2228,10 @@ class TestProcessApi(BaseTest):
         assert process_instance.status == "error"
         processor = ProcessInstanceProcessor(process_instance)
         spiff_task = processor.get_task_by_bpmn_identifier(
-            "script_task_one", processor.bpmn_process_instance
+            "script_task_two", processor.bpmn_process_instance
         )
         assert spiff_task is not None
-        assert spiff_task.data != {}
+        assert spiff_task.data == {"my_var": "THE VAR"}
 
     def test_process_model_file_create(
         self,
@@ -2728,7 +2766,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        end = next(task for task in response.json if task["name"] == "End")
+        end = next(task for task in response.json if task["type"] == "End Event")
         assert end["data"]["result"] == {"message": "message 1"}
 
     def test_manual_complete_task(
@@ -2776,7 +2814,7 @@ class TestProcessApi(BaseTest):
         )
 
         data = {
-            "dateTime": "timedelta(hours=1)",
+            "dateTime": "PT1H",
             "external": True,
             "internal": True,
             "label": "Event_0e4owa3",

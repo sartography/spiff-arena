@@ -9,10 +9,9 @@ import jwt
 import requests
 from flask import current_app
 from flask import redirect
-from flask_bpmn.api.api_error import ApiError
-from flask_bpmn.models.db import db
 from werkzeug.wrappers import Response
 
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 
 
@@ -20,13 +19,31 @@ class MissingAccessTokenError(Exception):
     """MissingAccessTokenError."""
 
 
+class NotAuthorizedError(Exception):
+    pass
+
+
+class RefreshTokenStorageError(Exception):
+    pass
+
+
+class UserNotLoggedInError(Exception):
+    pass
+
+
 # These could be either 'id' OR 'access' tokens and we can't always know which
+
+
 class TokenExpiredError(Exception):
     """TokenExpiredError."""
 
 
 class TokenInvalidError(Exception):
     """TokenInvalidError."""
+
+
+class TokenNotProvidedError(Exception):
+    pass
 
 
 class AuthenticationProviderTypes(enum.Enum):
@@ -46,17 +63,19 @@ class AuthenticationService:
     @staticmethod
     def client_id() -> str:
         """Returns the client id from the config."""
-        return current_app.config.get("OPEN_ID_CLIENT_ID", "")
+        return current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_ID", "")
 
     @staticmethod
     def server_url() -> str:
         """Returns the server url from the config."""
-        return current_app.config.get("OPEN_ID_SERVER_URL", "")
+        return current_app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL", "")
 
     @staticmethod
     def secret_key() -> str:
         """Returns the secret key from the config."""
-        return current_app.config.get("OPEN_ID_CLIENT_SECRET_KEY", "")
+        return current_app.config.get(
+            "SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY", ""
+        )
 
     @classmethod
     def open_id_endpoint_for_name(cls, name: str) -> str:
@@ -137,34 +156,51 @@ class AuthenticationService:
     def validate_id_or_access_token(cls, token: str) -> bool:
         """Https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation."""
         valid = True
-        now = time.time()
+        now = round(time.time())
         try:
             decoded_token = jwt.decode(token, options={"verify_signature": False})
         except Exception as e:
             raise TokenInvalidError("Cannot decode token") from e
 
-        if decoded_token["iss"] != cls.server_url():
+        # give a 5 second leeway to iat in case keycloak server time doesn't match backend server
+        iat_clock_skew_leeway = 5
+
+        iss = decoded_token["iss"]
+        aud = decoded_token["aud"]
+        azp = decoded_token["azp"] if "azp" in decoded_token else None
+        iat = decoded_token["iat"]
+        if iss != cls.server_url():
             valid = False
-        elif (
-            cls.client_id() not in decoded_token["aud"]
-            and "account" not in decoded_token["aud"]
-        ):
+        # aud could be an array or a string
+        elif aud not in (cls.client_id(), "account") and aud != [
+            cls.client_id(),
+            "account",
+        ]:
             valid = False
-        elif "azp" in decoded_token and decoded_token["azp"] not in (
+        elif azp and azp not in (
             cls.client_id(),
             "account",
         ):
             valid = False
-        elif now < decoded_token["iat"]:
+        # make sure issued at time is not in the future
+        elif now + iat_clock_skew_leeway < iat:
             valid = False
 
-        if not valid:
-            return False
-
-        if now > decoded_token["exp"]:
+        if valid and now > decoded_token["exp"]:
             raise TokenExpiredError("Your token is expired. Please Login")
+        elif not valid:
+            current_app.logger.error(
+                "TOKEN INVALID: details: "
+                f"ISS: {iss} "
+                f"AUD: {aud} "
+                f"AZP: {azp} "
+                f"IAT: {iat} "
+                f"SERVER_URL: {cls.server_url()} "
+                f"CLIENT_ID: {cls.client_id()} "
+                f"NOW: {now}"
+            )
 
-        return True
+        return valid
 
     @staticmethod
     def store_refresh_token(user_id: int, refresh_token: str) -> None:
@@ -183,9 +219,8 @@ class AuthenticationService:
             db.session.commit()
         except Exception as e:
             db.session.rollback()
-            raise ApiError(
-                error_code="store_refresh_token_error",
-                message=f"We could not store the refresh token. Original error is {e}",
+            raise RefreshTokenStorageError(
+                f"We could not store the refresh token. Original error is {e}",
             ) from e
 
     @staticmethod

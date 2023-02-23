@@ -14,9 +14,9 @@ from flask import g
 from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
-from flask_bpmn.api.api_error import ApiError
 from werkzeug.datastructures import FileStorage
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
 from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -149,7 +149,30 @@ def process_model_update(
     }
 
     process_model = _get_process_model(process_model_identifier)
+
+    # FIXME: the logic to update the the process id would be better if it could go into the
+    #   process model save method but this causes circular imports with SpecFileService.
+    # All we really need this for is to get the process id from a bpmn file so maybe that could
+    #   all be moved to FileSystemService.
+    update_primary_bpmn_file = False
+    if (
+        "primary_file_name" in body_filtered
+        and "primary_process_id" not in body_filtered
+    ):
+        if process_model.primary_file_name != body_filtered["primary_file_name"]:
+            update_primary_bpmn_file = True
+
     ProcessModelService.update_process_model(process_model, body_filtered)
+
+    # update the file to ensure we get the correct process id if the primary file changed.
+    if update_primary_bpmn_file and process_model.primary_file_name:
+        primary_file_contents = SpecFileService.get_data(
+            process_model, process_model.primary_file_name
+        )
+        SpecFileService.update_file(
+            process_model, process_model.primary_file_name, primary_file_contents
+        )
+
     _commit_and_push_to_git(
         f"User: {g.user.username} updated process model {process_model_identifier}"
     )
@@ -202,10 +225,12 @@ def process_model_publish(
 ) -> flask.wrappers.Response:
     """Process_model_publish."""
     if branch_to_update is None:
-        branch_to_update = current_app.config["GIT_BRANCH_TO_PUBLISH_TO"]
+        branch_to_update = current_app.config[
+            "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH"
+        ]
     if branch_to_update is None:
         raise MissingGitConfigsError(
-            "Missing config for GIT_BRANCH_TO_PUBLISH_TO. "
+            "Missing config for SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_TARGET_BRANCH. "
             "This is required for publishing process models"
         )
     process_model_identifier = _un_modify_modified_process_model_id(
@@ -277,6 +302,18 @@ def process_model_file_delete(
     """Process_model_file_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
+
+    if process_model.primary_file_name == file_name:
+        raise ApiError(
+            error_code="process_model_file_cannot_be_deleted",
+            message=(
+                f"'{file_name}' is the primary bpmn file for"
+                f" '{process_model_identifier}' and cannot be deleted. Please set"
+                " another file as the primary before attempting to delete this one."
+            ),
+            status_code=400,
+        )
+
     try:
         SpecFileService.delete_file(process_model, file_name)
     except FileNotFoundError as exception:
@@ -548,7 +585,7 @@ def _create_or_update_process_model_file(
             ApiError(
                 error_code="process_model_file_invalid",
                 message=(
-                    f"Invalid Process model file cannot be save: {request_file.name}."
+                    f"Invalid Process model file: {request_file.filename}."
                     f" Received error: {str(exception)}"
                 ),
                 status_code=400,
