@@ -8,6 +8,7 @@ from typing import Optional
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
+from spiffworkflow_backend.models.correlation_property_cache import CorrelationPropertyCache
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -373,33 +374,30 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_correlation_cache(ref: SpecReference) -> None:
         """Update_correlation_cache."""
-        # for correlation_identifier in ref.correlations.keys():
-        #     correlation_property_retrieval_expressions = ref.correlations[
-        #         correlation_identifier
-        #     ]["retrieval_expressions"]
-        #
-        #     for cpre in correlation_property_retrieval_expressions:
-        #         message_model_identifier = cpre["messageRef"]
-        #         message_model = MessageModel.query.filter_by(
-        #             identifier=message_model_identifier
-        #         ).first()
-        #         if message_model is None:
-        #             raise ProcessModelFileInvalidError(
-        #                 "Could not find message model with identifier"
-        #                 f" '{message_model_identifier}'specified by correlation"
-        #                 f" property: {cpre}"
-        #             )
-        #         message_correlation_property = (
-        #             MessageCorrelationPropertyModel.query.filter_by(
-        #                 identifier=correlation_identifier,
-        #                 message_model_id=message_model.id,
-        #             ).first()
-        #         )
-        #
-        #         if message_correlation_property is None:
-        #             message_correlation_property = MessageCorrelationPropertyModel(
-        #                 identifier=correlation_identifier,
-        #                 message_model_id=message_model.id,
-        #             )
-        #             db.session.add(message_correlation_property)
-        #             db.session.commit()
+        for name in ref.correlations.keys():
+            correlation_property_retrieval_expressions = ref.correlations[
+                name
+            ]["retrieval_expressions"]
+
+            for cpre in correlation_property_retrieval_expressions:
+                message_name = ref.messages.get(cpre["messageRef"], None)
+                retrieval_expression = cpre["expression"]
+                process_model_id = ref.process_model_id
+
+                existing = (
+                    CorrelationPropertyCache.query.filter_by(
+                        name=name,
+                        message_name=message_name,
+                        process_model_id=process_model_id,
+                        retrieval_expression=retrieval_expression
+                    ).first()
+                )
+                if existing is None:
+                    new_cache = CorrelationPropertyCache(
+                        name=name,
+                        message_name=message_name,
+                        process_model_id=process_model_id,
+                        retrieval_expression=retrieval_expression
+                    )
+                    db.session.add(new_cache)
+                    db.session.commit()
