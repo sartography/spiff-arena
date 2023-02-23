@@ -10,15 +10,11 @@ from flask import jsonify
 from flask import make_response
 from flask.wrappers import Response
 
+from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_model import MessageModel
-from spiffworkflow_backend.models.message_triggerable_process_model import (
-    MessageTriggerableProcessModel,
-)
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel, MessageStatuses
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
-from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.services.message_service import MessageService
 
 
@@ -41,10 +37,8 @@ def message_instance_list(
             MessageInstanceModel.created_at_in_seconds.desc(),  # type: ignore
             MessageInstanceModel.id.desc(),  # type: ignore
         )
-        .join(MessageModel, MessageModel.id == MessageInstanceModel.message_model_id)
-        .join(ProcessInstanceModel)
+        .outerjoin(ProcessInstanceModel) # Not all messages were created by a process
         .add_columns(
-            MessageModel.identifier.label("message_identifier"),
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.process_model_display_name,
         )
@@ -68,19 +62,10 @@ def message_instance_list(
 #   process_instance_id: Optional[int],
 # }
 def message_send(
-    message_identifier: str,
+    message_name: str,
     body: Dict[str, Any],
 ) -> flask.wrappers.Response:
     """Message_start."""
-    message_model = MessageModel.query.filter_by(identifier=message_identifier).first()
-    if message_model is None:
-        raise (
-            ApiError(
-                error_code="unknown_message",
-                message=f"Could not find message with identifier: {message_identifier}",
-                status_code=404,
-            )
-        )
 
     if "payload" not in body:
         raise (
@@ -96,67 +81,39 @@ def message_send(
 
     process_instance = None
 
-    # Is there a running instance that is waiting for this message?
-    message_instances = MessageInstanceModel.query.filter_by(
-        message_model_id=message_model.id
-    ).all()
-
-    # do any waiting message instances have matching correlations?
-    matching_message = None
-    for message_instance in message_instances:
-        if message_instance.correlates_with_dictionary(body["payload"]):
-            matching_message = message_instance
-
-    process_instance = None
-    if matching_message:
-        process_instance = ProcessInstanceModel.query.filter_by(
-            id=matching_message.process_instance_id
-        ).first()
-
-    if (
-        matching_message
-        and process_instance
-        and process_instance.status != ProcessInstanceStatus.waiting.value
-    ):
-        raise ApiError(
-            error_code="message_not_accepted",
-            message=(
-                f"The process that can accept message '{message_identifier}' with the"
-                " given correlation keys is not currently waiting for that message. "
-                f" It is currently in the a '{process_instance.status}' state."
-            ),
-            status_code=400,
-        )
-    elif matching_message and process_instance:
-        MessageService.process_message_receive(
-            message_instance, message_model.name, body["payload"]
-        )
-    else:
-        # We don't have a process model waiting on this message, perhaps some process should be started?
-        message_triggerable_process_model = (
-            MessageTriggerableProcessModel.query.filter_by(
-                message_model_id=message_model.id
-            ).first()
-        )
-        if message_triggerable_process_model is None:
-            raise (
+    # Create the send message
+    message_instance = MessageInstanceModel(
+        process_instance_id=None,
+        message_type="send",
+        name=message_name,
+        payload=body['payload'],
+        user_id=g.user.id,
+        correlations=[],
+    )
+    db.session.add(message_instance)
+    db.session.commit()
+    try:
+        receiver_message = MessageService.correlate_send_message(message_instance)
+    except Exception as e:
+        db.session.delete(message_instance)
+        db.session.commit()
+        raise e
+    if not receiver_message:
+        db.session.delete(message_instance)
+        db.session.commit()
+        raise (
                 ApiError(
-                    error_code="cannot_start_message",
+                    error_code="message_not_accepted",
                     message=(
-                        "No process instances correlate with the given message id of"
-                        f" '{message_identifier}'.  And this message name is not"
-                        " currently associated with any process Start Event."
+                        "No running process instances correlate with the given message name of"
+                        f" '{message_name}'.  And this message name is not"
+                        " currently associated with any process Start Event. Nothing to do."
                     ),
                     status_code=400,
                 )
-            )
-        process_instance = MessageService.process_message_triggerable_process_model(
-            message_triggerable_process_model,
-            message_model.name,
-            body["payload"],
-            g.user,
         )
 
+    process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=200,

@@ -22,7 +22,7 @@
       <bpmn:formalExpression>topica_one</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_response_one">
-      <bpmn:formalExpression>topic_one_a</bpmn:formalExpression>
+      <bpmn:formalExpression>topica_one</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:correlationProperty id="mcp_topicb_one" name="MCP TopicB_one">
@@ -30,7 +30,7 @@
       <bpmn:formalExpression>topicb_one</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_response_one">
-      <bpmn:formalExpression>topic_one_b</bpmn:formalExpression>
+      <bpmn:formalExpression>topicb_one</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:process id="message_send_process" name="Message Send Process" isExecutable="true">

@@ -12,18 +12,18 @@
   </bpmn:collaboration>
   <bpmn:correlationProperty id="mcp_topica_two" name="MCP TopicA Two">
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_send_two">
-      <bpmn:messagePath>topica_two</bpmn:messagePath>
+      <bpmn:formalExpression>topica_two</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_response_two">
-      <bpmn:messagePath>topica_two</bpmn:messagePath>
+      <bpmn:formalExpression>topic_two_a</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:correlationProperty id="mcp_topicb_two" name="MCP TopicB_two">
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_send_two">
-      <bpmn:messagePath>topicb_two</bpmn:messagePath>
+      <bpmn:formalExpression>topicb_two</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
     <bpmn:correlationPropertyRetrievalExpression messageRef="message_response_two">
-      <bpmn:messagePath>topicb_two</bpmn:messagePath>
+      <bpmn:formalExpression>topic_two_b</bpmn:formalExpression>
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:message id="message_send_two" name="Message Send Two">
@@ -34,8 +34,8 @@
   <bpmn:message id="message_response_two" name="Message Response Two">
     <bpmn:extensionElements>
       <spiffworkflow:messagePayload>{
-"topica_two": payload_var_two.topica_two,
-"topicb_two": payload_var_two.topicb_two,
+"topic_two_a": payload_var_two.topica_two,
+"topic_two_b": payload_var_two.topicb_two,
 "second_var_two": second_var_two
 }</spiffworkflow:messagePayload>
     </bpmn:extensionElements>

@@ -6,16 +6,14 @@ from typing import Optional
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.event import listens_for
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, relationship
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.message_correlation_message_instance import (
-    message_correlation_message_instance_table,
-)
-from spiffworkflow_backend.models.message_model import MessageModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.user import UserModel
+from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
 
 
 class MessageTypes(enum.Enum):
@@ -41,22 +39,18 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message_instance"
 
     id: int = db.Column(db.Integer, primary_key=True)
-    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False)  # type: ignore
-    message_model_id: int = db.Column(ForeignKey(MessageModel.id), nullable=False)
-    message_model = db.relationship("MessageModel")
-    message_correlations = db.relationship(
-        "MessageCorrelationModel",
-        secondary=message_correlation_message_instance_table,
-        backref="message_instances",
-        cascade="all,delete",
-    )
-
+    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=True)  # type: ignore
+    name: str = db.Column(db.String(255))
     message_type: str = db.Column(db.String(20), nullable=False)
-    payload: str = db.Column(db.JSON)
+    payload: dict = db.Column(db.JSON)
     status: str = db.Column(db.String(20), nullable=False, default="ready")
+    user_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
+    user = relationship("UserModel")
+    counterpart_id: int = db.Column(db.Integer) # Not enforcing self-referential foreign key so we can delete messages.
     failure_cause: str = db.Column(db.Text())
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
+    correlations = relationship("MessageInstanceCorrelationModel", back_populates="message_instance")
 
     @validates("message_type")
     def validate_message_type(self, key: str, value: Any) -> Any:
@@ -68,29 +62,34 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
         """Validate_status."""
         return self.validate_enum_field(key, value, MessageStatuses)
 
-    def correlation_dictionary(self) -> dict:
-        correlation_dict = {}
-        for c in self.message_correlations:
-            correlation_dict[c.name] = c.value
-        return correlation_dict
-
-    def correlates(self, other_message_instance: Any) -> bool:
-        if other_message_instance.message_model_id != self.message_model_id:
+    def correlates(self, other_message_instance: Any, expression_engine: PythonScriptEngine) -> bool:
+        # This must be a receive message, and the other must be a send (otherwise we reverse the call)
+        # We evaluate the other messages payload and run our correlation's
+        # retrieval expressions against it, then compare it against our
+        # expected values -- IF we don't have an expected value, we accept
+        # any non-erroring result from the retrieval expression.
+        if self.name != other_message_instance.name:
             return False
-        return self.correlates_with_dictionary(
-            other_message_instance.correlation_dictionary()
-        )
-
-    def correlates_with_dictionary(self, dict: dict) -> bool:
-        """Returns true if the given dictionary matches the correlation names and values connected to this instance."""
-        for c in self.message_correlations:
-            # Fixme: Maybe we should look at typing the correlations and not forcing them to strings?
-            if c.name in dict and str(dict[c.name]) == c.value:
-                continue
-            else:
+        if self.message_type == MessageTypes.receive.value:
+            if other_message_instance.message_type != MessageTypes.send.value:
                 return False
-        return True
-
+            payload = other_message_instance.payload
+            for corr in self.correlations:
+                try:
+                    result = expression_engine._evaluate(corr.retrieval_expression, payload)
+                except Exception as e:
+                    # the failure of a payload evaluation may not mean that matches for these
+                    # message instances can't happen with other messages.  So don't error up.
+                    # fixme:  Perhaps log some sort of error.
+                    return False
+                if corr.expected_value is None:
+                    continue  # We will accept any value
+                elif corr.expected_value != str(result): # fixme:  Don't require conversion to string
+                    return False
+            return True
+        elif other_message_instance.message_type == MessageTypes.receive.value:
+            return other_message_instance.correlates(self, expression_engine)
+        return False
 
 # This runs for ALL db flushes for ANY model, not just this one even if it's in the MessageInstanceModel class
 # so this may not be worth it or there may be a better way to do it

@@ -1347,7 +1347,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        message_model_identifier = "request_approval"
+        message_model_identifier = "Request Approval"
         payload = {
             "customer_id": "sartography",
             "po_number": "1001",
@@ -1396,7 +1396,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        message_model_identifier = "approval_result"
+        message_model_identifier = "Approval Result"
         payload = {
             "customer_id": "sartography",
             "po_number": "1001",
@@ -1478,7 +1478,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        message_model_identifier = "approval_result"
+        message_model_identifier = "Approval Result"
         payload = {
             "customer_id": "sartography",
             "po_number": "1001",
@@ -2313,7 +2313,7 @@ class TestProcessApi(BaseTest):
         #     process_model_source_directory="message_send_one_conversation",
         #     bpmn_file_name="message_receiver",
         # )
-        message_model_identifier = "request_approval"
+        message_model_identifier = "Request Approval"
         payload = {
             "customer_id": "sartography",
             "po_number": "1001",
@@ -2330,6 +2330,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         process_instance_id_one = response.json["id"]
 
+        payload['po_number'] = "1002"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
             content_type="application/json",
@@ -2346,7 +2347,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert len(response.json["results"]) == 1
+        assert len(response.json["results"]) == 2  # Two messages, one is the completed receive, the other is new send
         assert (
             response.json["results"][0]["process_instance_id"]
             == process_instance_id_one
@@ -2358,7 +2359,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert len(response.json["results"]) == 1
+        assert len(response.json["results"]) == 2
         assert (
             response.json["results"][0]["process_instance_id"]
             == process_instance_id_two
@@ -2370,7 +2371,9 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert len(response.json["results"]) == 2
+        #   4 -Two messages for each process (a record of the completed receive, and then a send created)
+        # + 2 -Two messages logged for the API Calls used to create the processes.
+        assert len(response.json["results"]) == 6
 
     def test_correct_user_can_get_and_update_a_task(
         self,
