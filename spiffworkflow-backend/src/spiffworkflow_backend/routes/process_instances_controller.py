@@ -514,7 +514,6 @@ def process_instance_task_list_without_task_data_for_me(
         process_instance,
         all_tasks,
         spiff_step,
-        get_task_data=False,
     )
 
 
@@ -531,24 +530,6 @@ def process_instance_task_list_without_task_data(
         process_instance,
         all_tasks,
         spiff_step,
-        get_task_data=False,
-    )
-
-
-def process_instance_task_list_with_task_data(
-    modified_process_model_identifier: str,
-    process_instance_id: int,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
-) -> flask.wrappers.Response:
-    """Process_instance_task_list_with_task_data."""
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    return process_instance_task_list(
-        modified_process_model_identifier,
-        process_instance,
-        all_tasks,
-        spiff_step,
-        get_task_data=True,
     )
 
 
@@ -557,7 +538,6 @@ def process_instance_task_list(
     process_instance: ProcessInstanceModel,
     all_tasks: bool = False,
     spiff_step: int = 0,
-    get_task_data: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     step_detail_query = db.session.query(SpiffStepDetailsModel).filter(
@@ -576,32 +556,15 @@ def process_instance_task_list(
 
     steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
 
-    # FIXME: never evaluate task data in this call and instead create a new api getter
-    # that will return the task data for a given step only. We think processing this
-    # data is what is causing long load times on the processInstanceShowPage.
-    # TaskShow still uses this to get the data for the tabs. We need to update that as well.
     subprocess_state_overrides = {}
     for step_detail in step_details:
         if step_detail.task_id in tasks:
-            task_data = (
-                step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
-            )
-            if task_data is None:
-                task_data = {}
-            tasks[step_detail.task_id]["data"] = task_data
             tasks[step_detail.task_id]["state"] = Task.task_state_name_to_int(
                 step_detail.task_state
             )
         else:
             for subprocess_id, subprocess_info in subprocesses.items():
                 if step_detail.task_id in subprocess_info["tasks"]:
-                    task_data = (
-                        step_detail.task_json["task_data"]
-                        | step_detail.task_json["python_env"]
-                    )
-                    if task_data is None:
-                        task_data = {}
-                    subprocess_info["tasks"][step_detail.task_id]["data"] = task_data
                     subprocess_info["tasks"][step_detail.task_id]["state"] = (
                         Task.task_state_name_to_int(step_detail.task_state)
                     )
@@ -658,8 +621,6 @@ def process_instance_task_list(
             calling_subprocess_task_id=calling_subprocess_task_id,
             task_spiff_step=task_spiff_step,
         )
-        if get_task_data:
-            task.data = spiff_task.data
         tasks.append(task)
 
     return make_response(jsonify(tasks), 200)
