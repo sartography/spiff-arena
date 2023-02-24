@@ -32,7 +32,7 @@ sphinx-autoapi = "^2.0"
 # flask-bpmn = {develop = true, path = "/home/jason/projects/github/sartography/flask-bpmn"}
 # flask-bpmn = {develop = true, path = "/Users/kevin/projects/github/sartography/flask-bpmn"}
 flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
-mysql-connector-python = "^8.0.29"
+mysql-connector-python = "^8.0.32"
 pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
 psycopg2 = "^2.9.3"
