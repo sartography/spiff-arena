@@ -2762,7 +2762,7 @@ class TestProcessApi(BaseTest):
         assert response.json["status"] == "complete"
 
         response = client.get(
-            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}?all_tasks=true",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info?all_tasks=true",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -2834,7 +2834,7 @@ class TestProcessApi(BaseTest):
         )
 
         response = client.get(
-            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert len(response.json) == 1

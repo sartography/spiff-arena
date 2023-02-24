@@ -32,10 +32,10 @@ export default function TaskShow() {
   useEffect(() => {
     const processResult = (result: ProcessInstanceTask) => {
       setTask(result);
-      const url = `/task-data/${modifyProcessIdentifierForPathParam(
+      const url = `/v1.0/process-instances/for-me/${modifyProcessIdentifierForPathParam(
         result.process_model_identifier
-      )}/${params.process_instance_id}`;
-      // if user is unauthorized to get task-data then don't do anything
+      )}/${params.process_instance_id}/task-info`;
+      // if user is unauthorized to get process-instance task-info then don't do anything
       // Checking like this so we can dynamically create the url with the correct process model
       //  instead of passing the process model identifier in through the params
       HttpService.makeCallToBackend({
