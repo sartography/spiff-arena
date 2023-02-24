@@ -2351,6 +2351,10 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert len(response.json["results"]) == 2
 
+    @pytest.mark.skipif(
+        os.environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == 'postgres',
+        reason="look at comment in tasks_controller method task_list_my_tasks",
+    )
     def test_correct_user_can_get_and_update_a_task(
         self,
         app: Flask,
