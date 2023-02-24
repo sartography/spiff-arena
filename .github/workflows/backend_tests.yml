@@ -119,29 +119,6 @@ jobs:
           pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
 
-      # - name: Compute pre-commit cache key
-      #   if: matrix.session == 'pre-commit'
-      #   id: pre-commit-cache
-      #   shell: python
-      #   run: |
-      #     import hashlib
-      #     import sys
-      #
-      #     python = "py{}.{}".format(*sys.version_info[:2])
-      #     payload = sys.version.encode() + sys.executable.encode()
-      #     digest = hashlib.sha256(payload).hexdigest()
-      #     result = "${{ runner.os }}-{}-{}-pre-commit".format(python, digest[:8])
-      #
-      #     print("::set-output name=result::{}".format(result))
-      #
-      # - name: Restore pre-commit cache
-      #   uses: actions/cache@v3.0.11
-      #   if: matrix.session == 'pre-commit'
-      #   with:
-      #     path: ~/.cache/pre-commit
-      #     key: ${{ steps.pre-commit-cache.outputs.result }}-${{ hashFiles('.pre-commit-config.yaml') }}
-      #     restore-keys: |
-      #       ${{ steps.pre-commit-cache.outputs.result }}-
       - name: Setup Mysql
         uses: mirromutth/mysql-action@v1.1
         with:
