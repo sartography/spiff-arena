@@ -15,7 +15,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.3.0
       - name: Log in to the Container registry
         uses: docker/login-action@v2.1.0
         with:
@@ -48,7 +48,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.3.0
       - name: Log in to the Container registry
         uses: docker/login-action@v2.1.0
         with:
@@ -82,7 +82,7 @@ jobs:
       packages: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.3.0
       - name: Log in to the Container registry
         uses: docker/login-action@v2.1.0
         with:

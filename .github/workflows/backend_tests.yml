@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.3.0
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v4.2.0
@@ -167,7 +167,7 @@ jobs:
         working-directory: .
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.3.0
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -188,7 +188,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.3.0
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -210,7 +210,7 @@ jobs:
     needs: [tests, run_pre_commit_checks, check_docker_start_script]
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.3.0
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
@@ -296,7 +296,7 @@ jobs:
 
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3.0.2
+        uses: actions/checkout@v3.3.0
         with:
           # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
           fetch-depth: 0
