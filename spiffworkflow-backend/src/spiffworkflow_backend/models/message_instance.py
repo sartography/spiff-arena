@@ -19,7 +19,7 @@ from spiffworkflow_backend.models.user import UserModel
 
 if TYPE_CHECKING:
     from spiffworkflow_backend.models.message_instance_correlation import (  # noqa: F401
-        MessageInstanceCorrelationModel,
+        MessageInstanceCorrelationRuleModel,
     )
 
 
@@ -49,7 +49,9 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=True)  # type: ignore
     name: str = db.Column(db.String(255))
     message_type: str = db.Column(db.String(20), nullable=False)
+    # Only Send Messages have a payload
     payload: dict = db.Column(db.JSON)
+    correlation_keys: dict = db.Column(db.JSON) # The correlation keys of the process at the time the message was created.
     status: str = db.Column(db.String(20), nullable=False, default="ready")
     user_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
     user = relationship("UserModel")
@@ -59,8 +61,8 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     failure_cause: str = db.Column(db.Text())
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
-    correlations = relationship(
-        "MessageInstanceCorrelationModel", back_populates="message_instance"
+    correlation_rules = relationship(
+        "MessageInstanceCorrelationRuleModel", back_populates="message_instance"
     )
 
     @validates("message_type")
@@ -74,39 +76,58 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
         return self.validate_enum_field(key, value, MessageStatuses)
 
     def correlates(
-        self, other_message_instance: Any, expression_engine: PythonScriptEngine
+        self, other: Any, expression_engine: PythonScriptEngine
     ) -> bool:
-        # This must be a receive message, and the other must be a send (otherwise we reverse the call)
-        # We evaluate the other messages payload and run our correlation's
-        # retrieval expressions against it, then compare it against our
-        # expected values -- IF we don't have an expected value, we accept
-        # any non-erroring result from the retrieval expression.
-        if self.name != other_message_instance.name:
+        """ Returns true if the this Message correlates with the given message.
+
+         This must be a 'receive' message, and the other must be a 'send' or vice/versa. We evaluate
+         the other messages payload and run our correlation's retrieval expressions against it, then
+          compare it against our expected values (as stored in this messages' correlation_keys)
+         IF we don't have an expected value, we accept any non-error result from the retrieval
+         expression. """
+        if self.is_send() and other.is_receive():
+            # Flip the call.
+            return other.correlates(self, expression_engine)  # type: ignore
+
+        if self.name != other.name:
             return False
-        if self.message_type == MessageTypes.receive.value:
-            if other_message_instance.message_type != MessageTypes.send.value:
-                return False
-            payload = other_message_instance.payload
-            for corr in self.correlations:
-                try:
-                    result = expression_engine._evaluate(
-                        corr.retrieval_expression, payload
-                    )
-                except Exception:
-                    # the failure of a payload evaluation may not mean that matches for these
-                    # message instances can't happen with other messages.  So don't error up.
-                    # fixme:  Perhaps log some sort of error.
-                    return False
-                if corr.expected_value is None:
-                    continue  # We will accept any value
-                elif corr.expected_value != str(
-                    result
-                ):  # fixme:  Don't require conversion to string
-                    return False
+        if not self.is_receive():
+            return False
+        if isinstance(self.correlation_keys, dict) and self.correlation_keys == other.correlation_keys:
+            # We know we have a match, and we can just return if we don't have to figure out the key
             return True
-        elif other_message_instance.message_type == MessageTypes.receive.value:
-            return other_message_instance.correlates(self, expression_engine)  # type: ignore
+
+        # Loop over the receives' correlation keys - if any of the keys fully match, then we match.
+        for expected_values in self.correlation_keys.values():
+            if self.payload_matches_expected_values(other.payload, expected_values, expression_engine):
+                return True
         return False
+
+    def is_receive(self):
+        return self.message_type == MessageTypes.receive.value
+
+    def is_send(self):
+        return self.message_type == MessageTypes.send.value
+
+    def payload_matches_expected_values(
+            self, payload: dict,
+            expected_values: dict,
+            expression_engine: PythonScriptEngine) -> bool:
+        """Compares the payload of a 'send' message against a single correlation key's expected values."""
+        for correlation_key in self.correlation_rules:
+            expected_value = expected_values.get(correlation_key.name, None)
+            if expected_value is None: # This key is not required for this instance to match.
+                continue
+            try:
+                result = expression_engine._evaluate(correlation_key.retrieval_expression, payload)
+            except Exception:
+                # the failure of a payload evaluation may not mean that matches for these
+                # message instances can't happen with other messages.  So don't error up.
+                # fixme:  Perhaps log some sort of error.
+                return False
+            if result != expected_value:
+                return False
+        return True
 
 
 # This runs for ALL db flushes for ANY model, not just this one even if it's in the MessageInstanceModel class
