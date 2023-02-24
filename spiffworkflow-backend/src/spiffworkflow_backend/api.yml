@@ -1518,47 +1518,6 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /task-data/{modified_process_model_identifier}/{process_instance_id}:
-    parameters:
-      - name: modified_process_model_identifier
-        in: path
-        required: true
-        description: The modified id of an existing process model
-        schema:
-          type: string
-      - name: process_instance_id
-        in: path
-        required: true
-        description: The unique id of an existing process instance.
-        schema:
-          type: integer
-      - name: all_tasks
-        in: query
-        required: false
-        description: If true, this wil return all tasks associated with the process instance and not just user tasks.
-        schema:
-          type: boolean
-      - name: spiff_step
-        in: query
-        required: false
-        description: If set will return the tasks as they were during a specific step of execution.
-        schema:
-          type: integer
-    get:
-      tags:
-        - Process Instances
-      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_task_list_with_task_data
-      summary: returns the list of all user tasks associated with process instance with the task data
-      responses:
-        "200":
-          description: list of tasks
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Task"
-
   /task-data/{modified_process_model_identifier}/{process_instance_id}/{spiff_step}:
     parameters:
       - name: modified_process_model_identifier
