@@ -86,7 +86,6 @@ def message_send(
         name=message_name,
         payload=body["payload"],
         user_id=g.user.id,
-        correlations=[],
     )
     db.session.add(message_instance)
     db.session.commit()

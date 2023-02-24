@@ -43,7 +43,7 @@ class TestMessageService(BaseTest):
             "amount": "100.00",
         }
 
-        self.start_sender_process(client, with_super_admin_user)
+        self.start_sender_process(client, with_super_admin_user, "test_from_api")
         self.assure_a_message_was_sent()
         self.assure_there_is_a_process_waiting_on_a_message()
 
@@ -105,7 +105,7 @@ class TestMessageService(BaseTest):
         )
 
         # Now start the main process
-        self.start_sender_process(client, with_super_admin_user)
+        self.start_sender_process(client, with_super_admin_user, "test_between_processes")
         self.assure_a_message_was_sent()
 
         # This is typically called in a background cron process, so we will manually call it
@@ -145,9 +145,9 @@ class TestMessageService(BaseTest):
         assert message_receiver_process.status == "complete"
 
     def start_sender_process(
-        self, client: FlaskClient, with_super_admin_user: UserModel
+        self, client: FlaskClient, with_super_admin_user: UserModel, group_name:str = "test_group"
     ) -> None:
-        process_group_id = "test_group"
+        process_group_id = group_name
         self.create_process_group(
             client, with_super_admin_user, process_group_id, process_group_id
         )
@@ -186,7 +186,7 @@ class TestMessageService(BaseTest):
         assert len(send_messages) == 1
         send_message = send_messages[0]
         assert (
-            send_message.payload == self.payload
+                send_message.payload == self.payload
         ), "The send message should match up with the payload"
         assert send_message.name == "Request Approval"
         assert send_message.status == "ready"
@@ -207,12 +207,10 @@ class TestMessageService(BaseTest):
         self, message: MessageInstanceModel
     ) -> None:
         # Correlation Properties should match up
-        po_curr = next(c for c in message.correlations if c.name == "po_number")
-        customer_curr = next(c for c in message.correlations if c.name == "customer_id")
+        po_curr = next(c for c in message.correlation_rules if c.name == "po_number")
+        customer_curr = next(c for c in message.correlation_rules if c.name == "customer_id")
         assert po_curr is not None
         assert customer_curr is not None
-        assert po_curr.expected_value == "1001"
-        assert customer_curr.expected_value == "Sartography"
 
     def test_can_send_message_to_multiple_process_models(
         self,

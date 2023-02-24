@@ -54,7 +54,7 @@ class TestMessageInstance(BaseTest):
             user_id=process_instance.process_initiator_id,
             message_type="send",
             name=message_name,
-            payload={"Word": "Eat At Mashita's, delicious!"},
+            payload={"Word": "Eat At Mashita's, its delicious!"},
         )
         db.session.add(queued_message)
         db.session.commit()
