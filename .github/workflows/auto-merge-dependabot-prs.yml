@@ -19,16 +19,16 @@ permissions:
   contents: write
 
 jobs:
-  # print the context for debugging in case a job gets skipped
-  printJob:
-    name: Print event
-    runs-on: ubuntu-latest
-    steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: |
-          echo "$GITHUB_CONTEXT"
+  # uncomment this to print the context for debugging in case a job is getting skipped
+  # printJob:
+  #   name: Print event
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Dump GitHub context
+  #       env:
+  #         GITHUB_CONTEXT: ${{ toJson(github) }}
+  #       run: |
+  #         echo "$GITHUB_CONTEXT"
 
   dependabot:
     runs-on: ubuntu-latest
