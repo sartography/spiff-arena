@@ -62,7 +62,7 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import (
-    MessageInstanceCorrelationRuleModel
+    MessageInstanceCorrelationRuleModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -1352,7 +1352,7 @@ class ProcessInstanceProcessor:
                 message_type="send",
                 name=bpmn_message.name,
                 payload=bpmn_message.payload,
-                correlation_keys=self.bpmn_process_instance.correlations
+                correlation_keys=self.bpmn_process_instance.correlations,
             )
             db.session.add(message_instance)
             db.session.commit()
@@ -1382,7 +1382,7 @@ class ProcessInstanceProcessor:
                 user_id=self.process_instance_model.process_initiator_id,
                 message_type="receive",
                 name=event["name"],
-                correlation_keys=self.bpmn_process_instance.correlations
+                correlation_keys=self.bpmn_process_instance.correlations,
             )
             for correlation_property in event["value"]:
                 message_correlation = MessageInstanceCorrelationRuleModel(
