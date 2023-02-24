@@ -8,6 +8,24 @@ name: Docker Image For Main Builds
 # because the labels on the docker image itself have the git sha and everything else :)
 # on every tag:
 #   frontend:latest
+#
+# Example docker image labels:
+#     "Labels": {
+#       "description": "Software development platform for building, running, and monitoring executable diagrams",
+#       "org.opencontainers.image.created": "2023-02-24T16:43:00.844Z",
+#       "org.opencontainers.image.description": "",
+#       "org.opencontainers.image.licenses": "LGPL-2.1",
+#       "org.opencontainers.image.revision": "54064a050fbf9f366648f0f2e2c60ce244fcc421",
+#       "org.opencontainers.image.source": "https://github.com/sartography/spiff-arena",
+#       "org.opencontainers.image.title": "spiff-arena",
+#       "org.opencontainers.image.url": "https://github.com/sartography/spiff-arena",
+#       "org.opencontainers.image.version": "main-latest",
+#       "source": "https://github.com/sartography/spiff-arena"
+#   }
+#
+# Git tags for an image:
+#   curl -H "Authorization: Bearer $(echo -n $TOKEN | base64 -w0)" https://ghcr.io/v2/sartography/spiffworkflow-backend/tags/list | jq -r '.tags | sort_by(.)'
+
 
 on:
   push:
@@ -53,6 +71,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Adding markdown
+        run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> $GITHUB_STEP_SUMMARY
 
   create_backend_docker_image:
     runs-on: ubuntu-latest
@@ -92,3 +112,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+      - name: Adding markdown
+        run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> $GITHUB_STEP_SUMMARY
