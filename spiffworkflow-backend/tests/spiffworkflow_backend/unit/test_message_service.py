@@ -105,7 +105,9 @@ class TestMessageService(BaseTest):
         )
 
         # Now start the main process
-        self.start_sender_process(client, with_super_admin_user, "test_between_processes")
+        self.start_sender_process(
+            client, with_super_admin_user, "test_between_processes"
+        )
         self.assure_a_message_was_sent()
 
         # This is typically called in a background cron process, so we will manually call it
@@ -145,7 +147,10 @@ class TestMessageService(BaseTest):
         assert message_receiver_process.status == "complete"
 
     def start_sender_process(
-        self, client: FlaskClient, with_super_admin_user: UserModel, group_name:str = "test_group"
+        self,
+        client: FlaskClient,
+        with_super_admin_user: UserModel,
+        group_name: str = "test_group",
     ) -> None:
         process_group_id = group_name
         self.create_process_group(
@@ -186,7 +191,7 @@ class TestMessageService(BaseTest):
         assert len(send_messages) == 1
         send_message = send_messages[0]
         assert (
-                send_message.payload == self.payload
+            send_message.payload == self.payload
         ), "The send message should match up with the payload"
         assert send_message.name == "Request Approval"
         assert send_message.status == "ready"
@@ -208,7 +213,9 @@ class TestMessageService(BaseTest):
     ) -> None:
         # Correlation Properties should match up
         po_curr = next(c for c in message.correlation_rules if c.name == "po_number")
-        customer_curr = next(c for c in message.correlation_rules if c.name == "customer_id")
+        customer_curr = next(
+            c for c in message.correlation_rules if c.name == "customer_id"
+        )
         assert po_curr is not None
         assert customer_curr is not None
 

@@ -8,7 +8,9 @@ from typing import Optional
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
 
-from spiffworkflow_backend.models.correlation_property_cache import CorrelationPropertyCache
+from spiffworkflow_backend.models.correlation_property_cache import (
+    CorrelationPropertyCache,
+)
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.file import File
 from spiffworkflow_backend.models.file import FileType
@@ -375,29 +377,27 @@ class SpecFileService(FileSystemService):
     def update_correlation_cache(ref: SpecReference) -> None:
         """Update_correlation_cache."""
         for name in ref.correlations.keys():
-            correlation_property_retrieval_expressions = ref.correlations[
-                name
-            ]["retrieval_expressions"]
+            correlation_property_retrieval_expressions = ref.correlations[name][
+                "retrieval_expressions"
+            ]
 
             for cpre in correlation_property_retrieval_expressions:
                 message_name = ref.messages.get(cpre["messageRef"], None)
                 retrieval_expression = cpre["expression"]
                 process_model_id = ref.process_model_id
 
-                existing = (
-                    CorrelationPropertyCache.query.filter_by(
-                        name=name,
-                        message_name=message_name,
-                        process_model_id=process_model_id,
-                        retrieval_expression=retrieval_expression
-                    ).first()
-                )
+                existing = CorrelationPropertyCache.query.filter_by(
+                    name=name,
+                    message_name=message_name,
+                    process_model_id=process_model_id,
+                    retrieval_expression=retrieval_expression,
+                ).first()
                 if existing is None:
                     new_cache = CorrelationPropertyCache(
                         name=name,
                         message_name=message_name,
                         process_model_id=process_model_id,
-                        retrieval_expression=retrieval_expression
+                        retrieval_expression=retrieval_expression,
                     )
                     db.session.add(new_cache)
                     db.session.commit()

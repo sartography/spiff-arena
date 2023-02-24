@@ -94,7 +94,7 @@ class ErrorHandlingService:
             message_type="send",
             name=message_name,
             payload=message_payload,
-            user_id=g.user.id
+            user_id=g.user.id,
         )
         db.session.add(message_instance)
         db.session.commit()
