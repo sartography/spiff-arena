@@ -1,0 +1,94 @@
+name: Docker Image For Main Builds
+# we want to be able to sort by tag name to find the newest and trace back to source control
+# on every commit to main:
+#   frontend:main-20230223164322-b8becd1-45
+#   frontend:main-latest
+# we settled on:
+#   main-2023-02-24_16-16-40
+# because the labels on the docker image itself have the git sha and everything else :)
+# on every tag:
+#   frontend:latest
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create_frontend_docker_image:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: sartography/spiffworkflow-frontend
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.0.2
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date -u +'%Y-%m-%d_%H-%M-%S')"
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4.3.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=-latest
+            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
+
+      - name: Build and push Frontend Docker image
+        uses: docker/build-push-action@v4.0.0
+        with:
+          # this action doesn't seem to respect working-directory so set context
+          context: spiffworkflow-frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  create_backend_docker_image:
+    runs-on: ubuntu-latest
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: sartography/spiffworkflow-backend
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3.0.2
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get current date
+        id: date
+        run: echo "::set-output name=date::$(date -u +'%Y-%m-%d_%H-%M-%S')"
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4.3.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch,suffix=-latest
+            type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
+
+      - name: Build and push Backend Docker image
+        uses: docker/build-push-action@v4.0.0
+        with:
+          # this action doesn't seem to respect working-directory so set context
+          context: spiffworkflow-backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
