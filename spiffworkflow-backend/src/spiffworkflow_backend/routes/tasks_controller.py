@@ -73,8 +73,6 @@ class ReactJsonSchemaSelectOption(TypedDict):
     enum: list[str]
 
 
-# TODO: see comment for before_request
-# @process_api_blueprint.route("/v1.0/tasks", methods=["GET"])
 def task_list_my_tasks(
     process_instance_id: Optional[int] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
@@ -109,6 +107,11 @@ def task_list_my_tasks(
         _get_potential_owner_usernames(assigned_user)
     )
 
+    # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
+    # the postgres fix but it breaks the method for mysql.
+    # error in postgres:
+    #   psycopg2.errors.GroupingError) column \"process_instance.process_model_identifier\" must
+    #   appear in the GROUP BY clause or be used in an aggregate function
     human_tasks = human_task_query.add_columns(
         HumanTaskModel.task_id.label("id"),  # type: ignore
         HumanTaskModel.task_name,
