@@ -49,6 +49,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     task_type: str = db.Column(db.String(50))
     task_status: str = db.Column(db.String(50))
     process_model_display_name: str = db.Column(db.String(255))
+    process_model_identifier: str = db.Column(db.String(255))
     completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     human_task_users = relationship("HumanTaskUserModel", cascade="delete")

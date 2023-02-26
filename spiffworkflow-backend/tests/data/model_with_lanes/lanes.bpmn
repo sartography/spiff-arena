@@ -7,7 +7,7 @@
     <bpmn:laneSet id="LaneSet_17rankp">
       <bpmn:lane id="process_initiator" name="Process Initiator">
         <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>initator_one</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>initiator_one</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>Event_06f4e68</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>initiator_two</bpmn:flowNodeRef>
       </bpmn:lane>
@@ -18,18 +18,19 @@
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1tbyols</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_1tbyols" sourceRef="StartEvent_1" targetRef="initator_one" />
-    <bpmn:sequenceFlow id="Flow_16ppta1" sourceRef="initator_one" targetRef="finance_approval" />
-    <bpmn:manualTask id="initator_one" name="Initiator One">
+    <bpmn:sequenceFlow id="Flow_1tbyols" sourceRef="StartEvent_1" targetRef="initiator_one" />
+    <bpmn:sequenceFlow id="Flow_16ppta1" sourceRef="initiator_one" targetRef="finance_approval" />
+    <bpmn:manualTask id="initiator_one" name="Initiator One">
       <bpmn:extensionElements>
-        <spiffworkflow:instructionsForEndUser>This is initiator user?</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:instructionsForEndUser>This is for the initiator user</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:postScript>user_completing_task = get_last_user_completing_task("misc/category_number_one/lanes", "initiator_one")</spiffworkflow:postScript>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1tbyols</bpmn:incoming>
       <bpmn:outgoing>Flow_16ppta1</bpmn:outgoing>
     </bpmn:manualTask>
     <bpmn:manualTask id="finance_approval" name="Finance Approval">
       <bpmn:extensionElements>
-        <spiffworkflow:instructionsForEndUser>This is finance user?</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:instructionsForEndUser>This is for a Finance Team user</spiffworkflow:instructionsForEndUser>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_16ppta1</bpmn:incoming>
       <bpmn:outgoing>Flow_1cfcauf</bpmn:outgoing>
@@ -41,7 +42,8 @@
     <bpmn:sequenceFlow id="Flow_0x92f7d" sourceRef="initiator_two" targetRef="Event_06f4e68" />
     <bpmn:manualTask id="initiator_two" name="Initiator Two">
       <bpmn:extensionElements>
-        <spiffworkflow:instructionsForEndUser>This is initiator again?</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:instructionsForEndUser>This is initiator again</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:postScript />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1cfcauf</bpmn:incoming>
       <bpmn:outgoing>Flow_0x92f7d</bpmn:outgoing>
@@ -63,7 +65,7 @@
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="159" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1lm1ald_di" bpmnElement="initator_one">
+      <bpmndi:BPMNShape id="Activity_1lm1ald_di" bpmnElement="initiator_one">
         <dc:Bounds x="270" y="137" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>

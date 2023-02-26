@@ -875,11 +875,13 @@ class ProcessInstanceProcessor:
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
         process_model_display_name = ""
+        process_model_identifier = ""
         process_model_info = self.process_model_service.get_process_model(
             self.process_instance_model.process_model_identifier
         )
         if process_model_info is not None:
             process_model_display_name = process_model_info.display_name
+            process_model_identifier = process_model_info.id
 
         self.extract_metadata(process_model_info)
 
@@ -911,6 +913,7 @@ class ProcessInstanceProcessor:
                     human_task = HumanTaskModel(
                         process_instance_id=self.process_instance_model.id,
                         process_model_display_name=process_model_display_name,
+                        process_model_identifier=process_model_identifier,
                         form_file_name=form_file_name,
                         ui_form_file_name=ui_form_file_name,
                         task_id=str(ready_or_waiting_task.id),
