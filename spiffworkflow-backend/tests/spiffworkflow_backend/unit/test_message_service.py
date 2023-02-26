@@ -56,7 +56,9 @@ class TestMessageService(BaseTest):
         processor_sender.do_engine_steps()
         processor_sender.save()
 
-        message_instance_result = MessageInstanceModel.query.all()
+        message_instance_result = MessageInstanceModel.query.order_by(
+            MessageInstanceModel.id
+        ).all()
         assert len(message_instance_result) == 2
         # ensure both message instances are for the same process instance
         # it will be send_message and receive_message_response
@@ -67,11 +69,15 @@ class TestMessageService(BaseTest):
 
         message_instance_sender = message_instance_result[0]
         assert message_instance_sender.process_instance_id == process_instance_sender.id
-        message_correlations = MessageCorrelationModel.query.all()
+        message_correlations = MessageCorrelationModel.query.order_by(
+            MessageCorrelationModel.id
+        ).all()
         assert len(message_correlations) == 2
         assert message_correlations[0].process_instance_id == process_instance_sender.id
         message_correlations_message_instances = (
-            MessageCorrelationMessageInstanceModel.query.all()
+            MessageCorrelationMessageInstanceModel.query.order_by(
+                MessageCorrelationMessageInstanceModel.id
+            ).all()
         )
         assert len(message_correlations_message_instances) == 4
         assert (
@@ -95,7 +101,9 @@ class TestMessageService(BaseTest):
         MessageService.process_message_instances()
         assert message_instance_sender.status == "completed"
 
-        process_instance_result = ProcessInstanceModel.query.all()
+        process_instance_result = ProcessInstanceModel.query.order_by(
+            ProcessInstanceModel.id
+        ).all()
 
         assert len(process_instance_result) == 2
         process_instance_receiver = process_instance_result[1]
@@ -104,7 +112,9 @@ class TestMessageService(BaseTest):
         assert process_instance_receiver.id != process_instance_sender.id
         assert process_instance_receiver.status == "complete"
 
-        message_instance_result = MessageInstanceModel.query.all()
+        message_instance_result = MessageInstanceModel.query.order_by(
+            MessageInstanceModel.id
+        ).all()
         assert len(message_instance_result) == 3
         message_instance_receiver = message_instance_result[1]
         assert message_instance_receiver.id != message_instance_sender.id
