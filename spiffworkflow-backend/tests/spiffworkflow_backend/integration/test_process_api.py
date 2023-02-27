@@ -583,7 +583,7 @@ class TestProcessApi(BaseTest):
         # We should get 5 back, as one of the items in the cache is a decision.
         assert len(response.json) == 5
         simple_form = next(
-            p for p in response.json if p["identifier"] == "Proccess_WithForm"
+            p for p in response.json if p["identifier"] == "Process_WithForm"
         )
         assert simple_form["display_name"] == "Process With Form"
         assert simple_form["process_model_id"] == "test_group_one/simple_form"

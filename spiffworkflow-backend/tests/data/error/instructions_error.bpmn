@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.0.0">
-  <bpmn:process id="Proccess_With_Bad_Form" name="Process With Form" isExecutable="true">
+  <bpmn:process id="Process_With_Bad_Form" name="Process With Form" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_0smvjir</bpmn:outgoing>
     </bpmn:startEvent>
@@ -21,7 +21,7 @@ Department: {{ department }}
     </bpmn:manualTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Proccess_With_Bad_Form">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_With_Bad_Form">
       <bpmndi:BPMNEdge id="Flow_1boyhcj_di" bpmnElement="Flow_1boyhcj">
         <di:waypoint x="340" y="117" />
         <di:waypoint x="382" y="117" />
