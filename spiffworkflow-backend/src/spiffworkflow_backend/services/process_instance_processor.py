@@ -874,14 +874,13 @@ class ProcessInstanceProcessor:
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
+
         process_model_display_name = ""
-        process_model_identifier = ""
         process_model_info = self.process_model_service.get_process_model(
             self.process_instance_model.process_model_identifier
         )
         if process_model_info is not None:
             process_model_display_name = process_model_info.display_name
-            process_model_identifier = process_model_info.id
 
         self.extract_metadata(process_model_info)
 
@@ -893,6 +892,10 @@ class ProcessInstanceProcessor:
                     ready_or_waiting_task
                 )
                 extensions = task_spec.extensions
+
+                # in the xml, it's the id attribute. this identifies the process where the activity lives.
+                # if it's in a subprocess, it's the inner process.
+                bpmn_process_identifier = ready_or_waiting_task.workflow.name
 
                 form_file_name = None
                 ui_form_file_name = None
@@ -913,7 +916,7 @@ class ProcessInstanceProcessor:
                     human_task = HumanTaskModel(
                         process_instance_id=self.process_instance_model.id,
                         process_model_display_name=process_model_display_name,
-                        process_model_identifier=process_model_identifier,
+                        bpmn_process_identifier=bpmn_process_identifier,
                         form_file_name=form_file_name,
                         ui_form_file_name=ui_form_file_name,
                         task_id=str(ready_or_waiting_task.id),
@@ -1744,7 +1747,6 @@ class ProcessInstanceProcessor:
         details_model.end_in_seconds = time.time()
         details_model.task_json = self.get_task_json_from_spiff_task(task)
         db.session.add(details_model)
-
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
 

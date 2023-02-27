@@ -23,7 +23,6 @@
     <bpmn:manualTask id="initiator_one" name="Initiator One">
       <bpmn:extensionElements>
         <spiffworkflow:instructionsForEndUser>This is for the initiator user</spiffworkflow:instructionsForEndUser>
-        <spiffworkflow:postScript>user_completing_task = get_last_user_completing_task("misc/category_number_one/lanes", "initiator_one")</spiffworkflow:postScript>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1tbyols</bpmn:incoming>
       <bpmn:outgoing>Flow_16ppta1</bpmn:outgoing>
