@@ -7,6 +7,7 @@ from typing import Optional
 import sentry_sdk
 from flask import current_app
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from sqlalchemy import or_
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -74,7 +75,13 @@ class ProcessInstanceService:
         """Do_waiting."""
         records = (
             db.session.query(ProcessInstanceModel)
-            .filter(ProcessInstanceModel.status == ProcessInstanceStatus.waiting.value)
+            .filter(
+                or_(
+                    ProcessInstanceModel.status == ProcessInstanceStatus.waiting.value,
+                    ProcessInstanceModel.status
+                    == ProcessInstanceStatus.user_input_required.value,
+                )
+            )
             .all()
         )
         process_instance_lock_prefix = "Background"

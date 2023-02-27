@@ -672,14 +672,6 @@ class ProcessInstanceProcessor:
             "end_in_seconds": end_in_seconds,
         }
 
-    def spiff_step_details(
-        self, spiff_task: Optional[SpiffTask] = None
-    ) -> SpiffStepDetailsModel:
-        """SaveSpiffStepDetails."""
-        details_mapping = self.spiff_step_details_mapping(spiff_task=spiff_task)
-        details_model = SpiffStepDetailsModel(**details_mapping)
-        return details_model
-
     def extract_metadata(self, process_model_info: ProcessModelInfo) -> None:
         """Extract_metadata."""
         metadata_extraction_paths = process_model_info.metadata_extraction_paths
@@ -940,6 +932,7 @@ class ProcessInstanceProcessor:
                     )
                     db.session.add(spiff_step_detail)
                     db.session.commit()
+                    self.log_spiff_step_details(spiff_step_detail_mapping)
 
         if len(human_tasks) > 0:
             for at in human_tasks:
@@ -973,8 +966,10 @@ class ProcessInstanceProcessor:
         """Add a spiff step."""
         if step is None:
             step = self.spiff_step_details_mapping()
-        db.session.add(SpiffStepDetailsModel(**step))
+        spiff_step_detail = SpiffStepDetailsModel(**step)
+        db.session.add(spiff_step_detail)
         db.session.commit()
+        self.log_spiff_step_details(step)
 
     def manual_complete_task(self, task_id: str, execute: bool) -> None:
         """Mark the task complete optionally executing it."""
@@ -1257,6 +1252,7 @@ class ProcessInstanceProcessor:
     # could consider borrowing their "cleanup all my locks when the app quits" idea as well and
     #   implement via https://docs.python.org/3/library/atexit.html
     def lock_process_instance(self, lock_prefix: str) -> None:
+        current_app.config["THREAD_LOCAL_DATA"].locked_by_prefix = lock_prefix
         locked_by = f"{lock_prefix}_{current_app.config['PROCESS_UUID']}"
         current_time_in_seconds = round(time.time())
         lock_expiry_in_seconds = (
@@ -1289,6 +1285,7 @@ class ProcessInstanceProcessor:
             )
 
     def unlock_process_instance(self, lock_prefix: str) -> None:
+        current_app.config["THREAD_LOCAL_DATA"].locked_by_prefix = None
         locked_by = f"{lock_prefix}_{current_app.config['PROCESS_UUID']}"
         if self.process_instance_model.locked_by != locked_by:
             raise ProcessInstanceLockedBySomethingElseError(
@@ -1435,6 +1432,7 @@ class ProcessInstanceProcessor:
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
+            self.log_spiff_step_details(step_details)
             db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
@@ -1444,6 +1442,17 @@ class ProcessInstanceProcessor:
 
             if save:
                 self.save()
+
+    # log the spiff step details so we know what is processing the process
+    # instance when a human task has a timer event.
+    def log_spiff_step_details(self, step_details: Any) -> None:
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        if hasattr(tld, "locked_by_prefix") and len(step_details) > 0:
+            locked_by_prefix = tld.locked_by_prefix
+            message = (
+                f"ADDING SPIFF BULK STEP DETAILS: {locked_by_prefix}: {step_details}"
+            )
+            current_app.logger.debug(message)
 
     def cancel_notify(self) -> None:
         """Cancel_notify."""
