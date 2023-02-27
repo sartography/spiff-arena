@@ -21,13 +21,9 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel  # noqa: F401
 from spiffworkflow_backend.models.spec_reference import (
     SpecReferenceCache,
 )  # noqa: F401
-from spiffworkflow_backend.models.message_correlation_property import (
-    MessageCorrelationPropertyModel,
-)  # noqa: F401
 from spiffworkflow_backend.models.message_instance import (
     MessageInstanceModel,
 )  # noqa: F401
-from spiffworkflow_backend.models.message_model import MessageModel  # noqa: F401
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )  # noqa: F401

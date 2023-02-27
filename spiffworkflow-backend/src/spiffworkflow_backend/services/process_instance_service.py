@@ -8,8 +8,8 @@ import sentry_sdk
 from flask import current_app
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -41,13 +41,14 @@ class ProcessInstanceService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
+        db.session.commit()
         try:
             current_git_revision = GitService.get_current_revision()
         except GitCommandError:
             current_git_revision = ""
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
-            process_initiator=user,
+            process_initiator_id=user.id,
             process_model_identifier=process_model.id,
             process_model_display_name=process_model.display_name,
             start_in_seconds=round(time.time()),

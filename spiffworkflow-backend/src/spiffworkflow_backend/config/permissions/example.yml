@@ -28,6 +28,7 @@ groups:
     users:
       [
         admin@spiffworkflow.org,
+        nelson@spiffworkflow.org
       ]
 
 permissions:

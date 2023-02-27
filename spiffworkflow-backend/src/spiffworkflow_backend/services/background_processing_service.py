@@ -22,4 +22,4 @@ class BackgroundProcessingService:
     def process_message_instances_with_app_context(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
         with self.app.app_context():
-            MessageService.process_message_instances()
+            MessageService.correlate_all_message_instances()

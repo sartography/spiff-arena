@@ -64,17 +64,13 @@ export default function MessageInstanceList() {
           open={!!messageInstanceForModal}
           passiveModal
           onRequestClose={handleCorrelationDisplayClose}
-          modalHeading={`Message ${messageInstanceForModal.id} (${messageInstanceForModal.message_identifier}) ${messageInstanceForModal.message_type} data:`}
+          modalHeading={`Message ${messageInstanceForModal.id} (${messageInstanceForModal.name}) ${messageInstanceForModal.message_type} data:`}
           modalLabel="Details"
         >
           {failureCausePre}
           <p>Correlations:</p>
           <pre>
-            {JSON.stringify(
-              messageInstanceForModal.message_correlations,
-              null,
-              2
-            )}
+            {JSON.stringify(messageInstanceForModal.correlation_keys, null, 2)}
           </pre>
         </Modal>
       );
@@ -95,21 +91,27 @@ export default function MessageInstanceList() {
           </>
         );
       }
+      let processLink = <span>External Call</span>;
+      let instanceLink = <span />;
+      if (row.process_instance_id != null) {
+        processLink = FormatProcessModelDisplayName(row);
+        instanceLink = (
+          <Link
+            data-qa="process-instance-show-link"
+            to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
+              row.process_model_identifier
+            )}/${row.process_instance_id}`}
+          >
+            {row.process_instance_id}
+          </Link>
+        );
+      }
       return (
         <tr key={row.id}>
           <td>{row.id}</td>
-          <td>{FormatProcessModelDisplayName(row)}</td>
-          <td>
-            <Link
-              data-qa="process-instance-show-link"
-              to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
-                row.process_model_identifier
-              )}/${row.process_instance_id}`}
-            >
-              {row.process_instance_id}
-            </Link>
-          </td>
-          <td>{row.message_identifier}</td>
+          <td>{processLink}</td>
+          <td>{instanceLink}</td>
+          <td>{row.name}</td>
           <td>{row.message_type}</td>
           <td>
             <Button

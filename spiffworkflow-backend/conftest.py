@@ -8,8 +8,6 @@ from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -46,11 +44,10 @@ def app() -> Flask:
 
 @pytest.fixture()
 def with_db_and_bpmn_file_cleanup() -> None:
-    """Process_group_resource."""
-    db.session.query(HumanTaskUserModel).delete()
-
-    for model in SpiffworkflowBaseDBModel._all_subclasses():
-        db.session.query(model).delete()
+    """Do it cleanly!"""
+    meta = db.metadata
+    for table in reversed(meta.sorted_tables):
+        db.session.execute(table.delete())
     db.session.commit()
 
     try:
