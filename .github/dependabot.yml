@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: daily
+  # - package-ecosystem: pip
+  #   directory: "/.github/workflows"
+  #   schedule:
+  #     interval: daily
+  # - package-ecosystem: pip
+  #   directory: "/spiffworkflow-backend/docs"
+  #   schedule:
+  #     interval: daily
+  # - package-ecosystem: pip
+  #   directory: "/"
+  #   schedule:
+  #     interval: daily
+  # - package-ecosystem: pip
+  #   directory: "/spiffworkflow-backend"
+  #   schedule:
+  #     interval: daily
+  # - package-ecosystem: npm
+  #   directory: "/.github/workflows"
+  #   schedule:
+  #     interval: daily
+  # - package-ecosystem: npm
+  #   directory: "/spiffworkflow-frontend"
+  #   schedule:
+  #     interval: daily
+  # - package-ecosystem: npm
+  #   directory: "/bpmn-js-spiffworkflow"
+  #   schedule:
+  #     interval: daily

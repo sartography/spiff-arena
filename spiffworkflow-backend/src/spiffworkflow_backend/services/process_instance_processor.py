@@ -444,53 +444,6 @@ class ProcessInstanceProcessor:
             ) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
                 process_instance_model.process_model_identifier
             )
-        else:
-            bpmn_json_length = len(process_instance_model.bpmn_json.encode("utf-8"))
-            megabyte = float(1024**2)
-            json_size = bpmn_json_length / megabyte
-            if json_size > 1:
-                wf_json = json.loads(process_instance_model.bpmn_json)
-                if "spec" in wf_json and "tasks" in wf_json:
-                    task_tree = wf_json["tasks"]
-                    test_spec = wf_json["spec"]
-                    task_size = "{:.2f}".format(
-                        len(json.dumps(task_tree).encode("utf-8")) / megabyte
-                    )
-                    spec_size = "{:.2f}".format(
-                        len(json.dumps(test_spec).encode("utf-8")) / megabyte
-                    )
-                    message = (
-                        "Workflow "
-                        + process_instance_model.process_model_identifier
-                        + f" JSON Size is over 1MB:{json_size:.2f} MB"
-                    )
-                    message += f"\n  Task Size: {task_size}"
-                    message += f"\n  Spec Size: {spec_size}"
-                    current_app.logger.warning(message)
-
-                    def check_sub_specs(
-                        test_spec: dict, indent: int = 0, show_all: bool = False
-                    ) -> None:
-                        """Check_sub_specs."""
-                        for my_spec_name in test_spec["task_specs"]:
-                            my_spec = test_spec["task_specs"][my_spec_name]
-                            my_spec_size = (
-                                len(json.dumps(my_spec).encode("utf-8")) / megabyte
-                            )
-                            if my_spec_size > 0.1 or show_all:
-                                current_app.logger.warning(
-                                    (" " * indent)
-                                    + "Sub-Spec "
-                                    + my_spec["name"]
-                                    + " :"
-                                    + f"{my_spec_size:.2f}"
-                                )
-                                if "spec" in my_spec:
-                                    if my_spec["name"] == "Call_Emails_Process_Email":
-                                        pass
-                                    check_sub_specs(my_spec["spec"], indent + 5)
-
-                    check_sub_specs(test_spec, 5)
 
         self.process_model_identifier = process_instance_model.process_model_identifier
         self.process_model_display_name = (

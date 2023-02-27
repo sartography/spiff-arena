@@ -48,7 +48,6 @@ APScheduler = "*"
 Jinja2 = "^3.1.2"
 RestrictedPython = "^6.0"
 Flask-SQLAlchemy = "^3"
-orjson = "^3.8.0"
 
 # type hinting stuff
 # these need to be in the normal (non dev-dependencies) section

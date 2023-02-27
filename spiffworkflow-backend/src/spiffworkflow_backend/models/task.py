@@ -22,78 +22,7 @@ class MultiInstanceType(enum.Enum):
 class Task:
     """Task."""
 
-    ##########################################################################
-    #    Custom properties and validations defined in Camunda form fields    #
-    ##########################################################################
-
-    # Custom task title
-    PROP_EXTENSIONS_TITLE = "display_name"
-    PROP_EXTENSIONS_CLEAR_DATA = "clear_data"
-
-    # Field Types
-    FIELD_TYPE_STRING = "string"
-    FIELD_TYPE_LONG = "long"
-    FIELD_TYPE_BOOLEAN = "boolean"
-    FIELD_TYPE_DATE = "date"
-    FIELD_TYPE_ENUM = "enum"
-    FIELD_TYPE_TEXTAREA = "textarea"  # textarea: Multiple lines of text
-    FIELD_TYPE_AUTO_COMPLETE = "autocomplete"
-    FIELD_TYPE_FILE = "file"
-    FIELD_TYPE_FILES = "files"  # files: Multiple files
-    FIELD_TYPE_TEL = "tel"  # tel: Phone number
-    FIELD_TYPE_EMAIL = "email"  # email: Email address
-    FIELD_TYPE_URL = "url"  # url: Website address
-
-    FIELD_PROP_AUTO_COMPLETE_MAX = (  # Not used directly, passed in from the front end.
-        "autocomplete_num"
-    )
-
-    # Required field
-    FIELD_CONSTRAINT_REQUIRED = "required"
-
-    # Field properties and expressions Expressions
-    FIELD_PROP_REPEAT = "repeat"
-    FIELD_PROP_READ_ONLY = "read_only"
-    FIELD_PROP_LDAP_LOOKUP = "ldap.lookup"
-    FIELD_PROP_READ_ONLY_EXPRESSION = "read_only_expression"
-    FIELD_PROP_HIDE_EXPRESSION = "hide_expression"
-    FIELD_PROP_REQUIRED_EXPRESSION = "required_expression"
-    FIELD_PROP_LABEL_EXPRESSION = "label_expression"
-    FIELD_PROP_REPEAT_HIDE_EXPRESSION = "repeat_hide_expression"
-    FIELD_PROP_VALUE_EXPRESSION = "value_expression"
-
-    # Enum field options
-    FIELD_PROP_SPREADSHEET_NAME = "spreadsheet.name"
-    FIELD_PROP_DATA_NAME = "data.name"
-    FIELD_PROP_VALUE_COLUMN = "value.column"
-    FIELD_PROP_LABEL_COLUMN = "label.column"
-
-    # Enum field options values pulled from task data
-
-    # Group and Repeat functions
-    FIELD_PROP_GROUP = "group"
-    FIELD_PROP_REPLEAT = "repeat"
-    FIELD_PROP_REPLEAT_TITLE = "repeat_title"
-    FIELD_PROP_REPLEAT_BUTTON = "repeat_button_label"
-
-    # File specific field properties
-    FIELD_PROP_DOC_CODE = "doc_code"  # to associate a file upload field with a doc code
-    FIELD_PROP_FILE_DATA = (  # to associate a bit of data with a specific file upload file.
-        "file_data"
-    )
-
-    # Additional properties
-    FIELD_PROP_ENUM_TYPE = "enum_type"
-    FIELD_PROP_BOOLEAN_TYPE = "boolean_type"
-    FIELD_PROP_TEXT_AREA_ROWS = "rows"
-    FIELD_PROP_TEXT_AREA_COLS = "cols"
-    FIELD_PROP_TEXT_AREA_AUTO = "autosize"
-    FIELD_PROP_PLACEHOLDER = "placeholder"
-    FIELD_PROP_DESCRIPTION = "description"
-    FIELD_PROP_MARKDOWN_DESCRIPTION = "markdown_description"
-    FIELD_PROP_HELP = "help"
-
-    ##########################################################################
+    HUMAN_TASK_TYPES = ["User Task", "Manual Task"]
 
     def __init__(
         self,
@@ -201,20 +130,6 @@ class Task:
             "calling_subprocess_task_id": self.calling_subprocess_task_id,
             "task_spiff_step": self.task_spiff_step,
         }
-
-    @classmethod
-    def valid_property_names(cls) -> list[str]:
-        """Valid_property_names."""
-        return [
-            value for name, value in vars(cls).items() if name.startswith("FIELD_PROP")
-        ]
-
-    @classmethod
-    def valid_field_types(cls) -> list[str]:
-        """Valid_field_types."""
-        return [
-            value for name, value in vars(cls).items() if name.startswith("FIELD_TYPE")
-        ]
 
     @classmethod
     def task_state_name_to_int(cls, task_state_name: str) -> int:

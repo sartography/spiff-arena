@@ -23,10 +23,14 @@ fi
 if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
   KEYCLOAK_BASE_URL=http://localhost:7002
 fi
+if [[ -z "${ADMIN_USERNAME:-}" ]]; then
+  ADMIN_USERNAME="admin"
+fi
+if [[ -z "${ADMIN_PASSWORD:-}" ]]; then
+  ADMIN_PASSWORD="admin"
+fi
 
 REALM_NAME="$keycloak_realm"
-ADMIN_USERNAME="admin"
-ADMIN_PASSWORD="admin"
 SECURE=false
 
 KEYCLOAK_URL=$KEYCLOAK_BASE_URL/realms/$REALM_NAME/protocol/openid-connect/token

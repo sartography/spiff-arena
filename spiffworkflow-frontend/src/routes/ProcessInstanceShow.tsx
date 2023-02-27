@@ -27,6 +27,7 @@ import {
   Modal,
   Dropdown,
   Stack,
+  Loading,
   // @ts-ignore
 } from '@carbon/react';
 import { Can } from '@casl/react';
@@ -65,8 +66,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     useState<ProcessInstance | null>(null);
   const [tasks, setTasks] = useState<ProcessInstanceTask[] | null>(null);
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
-  const [taskToDisplay, setTaskToDisplay] = useState<object | null>(null);
+  const [taskToDisplay, setTaskToDisplay] =
+    useState<ProcessInstanceTask | null>(null);
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
+  const [showTaskDataLoading, setShowTaskDataLoading] =
+    useState<boolean>(false);
+
   const [processDataToDisplay, setProcessDataToDisplay] =
     useState<ProcessData | null>(null);
   const [editingTaskData, setEditingTaskData] = useState<boolean>(false);
@@ -99,7 +104,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     [targetUris.messageInstanceListPath]: ['GET'],
     [targetUris.processInstanceActionPath]: ['DELETE'],
     [targetUris.processInstanceLogListPath]: ['GET'],
-    [targetUris.processInstanceTaskListDataPath]: ['GET', 'PUT'],
+    [targetUris.processInstanceTaskDataPath]: ['GET', 'PUT'],
     [targetUris.processInstanceSendEventPath]: ['POST'],
     [targetUris.processInstanceCompleteTaskPath]: ['POST'],
     [targetUris.processModelShowPath]: ['PUT'],
@@ -145,9 +150,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         taskParams = `${taskParams}&spiff_step=${params.spiff_step}`;
       }
       let taskPath = '';
-      if (ability.can('GET', targetUris.processInstanceTaskListDataPath)) {
-        taskPath = `${targetUris.processInstanceTaskListDataPath}${taskParams}`;
-      } else if (ability.can('GET', taskListPath)) {
+      if (ability.can('GET', taskListPath)) {
         taskPath = `${taskListPath}${taskParams}`;
       }
       if (taskPath) {
@@ -557,11 +560,33 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return <div />;
   };
 
-  const initializeTaskDataToDisplay = (task: any) => {
-    if (task == null) {
+  const processTaskResult = (result: ProcessInstanceTask) => {
+    if (result == null) {
       setTaskDataToDisplay('');
     } else {
-      setTaskDataToDisplay(JSON.stringify(task.data, null, 2));
+      setTaskDataToDisplay(JSON.stringify(result.data, null, 2));
+    }
+    setShowTaskDataLoading(false);
+  };
+
+  const initializeTaskDataToDisplay = (task: ProcessInstanceTask | null) => {
+    if (
+      task &&
+      task.state === 'COMPLETED' &&
+      ability.can('GET', targetUris.processInstanceTaskDataPath)
+    ) {
+      setShowTaskDataLoading(true);
+      HttpService.makeCallToBackend({
+        path: `${targetUris.processInstanceTaskDataPath}/${task.task_spiff_step}`,
+        httpMethod: 'GET',
+        successCallback: processTaskResult,
+        failureCallback: (error: any) => {
+          setTaskDataToDisplay(`ERROR: ${error.message}`);
+          setShowTaskDataLoading(false);
+        },
+      });
+    } else {
+      setTaskDataToDisplay('');
     }
   };
 
@@ -668,7 +693,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const canEditTaskData = (task: any) => {
     return (
       processInstance &&
-      ability.can('PUT', targetUris.processInstanceTaskListDataPath) &&
+      ability.can('PUT', targetUris.processInstanceTaskDataPath) &&
       isCurrentTask(task) &&
       processInstance.status === 'suspended' &&
       showingLastSpiffStep()
@@ -742,8 +767,13 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const saveTaskDataResult = (_: any) => {
     setEditingTaskData(false);
     const dataObject = taskDataStringToObject(taskDataToDisplay);
-    const taskToDisplayCopy = { ...taskToDisplay, data: dataObject }; // spread operator
-    setTaskToDisplay(taskToDisplayCopy);
+    if (taskToDisplay) {
+      const taskToDisplayCopy: ProcessInstanceTask = {
+        ...taskToDisplay,
+        data: dataObject,
+      }; // spread operator
+      setTaskToDisplay(taskToDisplayCopy);
+    }
     refreshPage();
   };
 
@@ -757,7 +787,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceTaskListDataPath}/${taskToUse.id}`,
+      path: `${targetUris.processInstanceTaskDataPath}/${taskToUse.id}`,
       httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
       failureCallback: addError,
@@ -901,6 +931,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const taskDataContainer = () => {
+    let taskDataClassName = '';
+    if (taskDataToDisplay.startsWith('ERROR:')) {
+      taskDataClassName = 'failure-string';
+    }
     return editingTaskData ? (
       <Editor
         height={600}
@@ -910,7 +944,12 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         onChange={(value) => setTaskDataToDisplay(value || '')}
       />
     ) : (
-      <pre>{taskDataToDisplay}</pre>
+      <>
+        {showTaskDataLoading ? (
+          <Loading className="some-class" withOverlay={false} small />
+        ) : null}
+        <pre className={taskDataClassName}>{taskDataToDisplay}</pre>
+      </>
     );
   };
 
