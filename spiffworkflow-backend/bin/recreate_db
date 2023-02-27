@@ -41,13 +41,13 @@ if [[ "${1:-}" == "clean" ]]; then
   # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
   # start postgres in background with one db
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
-    if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_testing -c "select 1"; then
-      docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_testing -d postgres
+    if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1"; then
+      docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
       sleep 4 # classy
     fi
     if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_local_development -c "select 1"; then
-      # create other db. spiffworkflow_backend_testing came with the docker run.
-      docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_testing -c "create database spiffworkflow_backend_local_development;"
+      # create other db. spiffworkflow_backend_unit_testing came with the docker run.
+      docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "create database spiffworkflow_backend_local_development;"
     fi
   fi
 elif [[ "${1:-}" == "migrate" ]]; then

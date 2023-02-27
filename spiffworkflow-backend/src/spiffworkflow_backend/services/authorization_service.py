@@ -482,11 +482,6 @@ class AuthorizationService:
         """Profile, picture, website, gender, birthdate, zoneinfo, locale, and updated_at. """
         """Email."""
         is_new_user = False
-        user_model = (
-            UserModel.query.filter(UserModel.service == user_info["iss"])
-            .filter(UserModel.service_id == user_info["sub"])
-            .first()
-        )
         user_attributes = {}
 
         if "email" in user_info:
@@ -514,6 +509,13 @@ class AuthorizationService:
                 user_attributes[f"tenant_specific_field_{field_number}"] = user_info[
                     tenant_specific_field
                 ]
+
+        # example value for service: http://localhost:7002/realms/spiffworkflow (keycloak url)
+        user_model = (
+            UserModel.query.filter(UserModel.service == user_attributes["service"])
+            .filter(UserModel.username == user_attributes["username"])
+            .first()
+        )
 
         if user_model is None:
             current_app.logger.debug("create_user in login_return")

@@ -10,6 +10,7 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import UserService from '../services/UserService';
 
 type OwnProps = {
   variant: string;
@@ -28,6 +29,8 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}`;
   }
 
+  const userEmail = UserService.getUserEmail();
+
   useEffect(() => {
     const setProcessInstanceLogListFromResult = (result: any) => {
       setProcessInstanceLogs(result.results);
@@ -45,56 +48,91 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     isDetailedView,
   ]);
 
+  const getTableRow = (row: any) => {
+    const tableRow = [];
+    const taskNameCell = (
+      <td>
+        {row.bpmn_task_name ||
+          (row.bpmn_task_type === 'Default Start Event'
+            ? 'Process Started'
+            : '') ||
+          (row.bpmn_task_type === 'End Event' ? 'Process Ended' : '')}
+      </td>
+    );
+    if (isDetailedView) {
+      tableRow.push(
+        <>
+          <td data-qa="paginated-entity-id">{row.id}</td>
+          <td>{row.bpmn_process_identifier}</td>
+          {taskNameCell}
+        </>
+      );
+    } else {
+      tableRow.push(
+        <>
+          {taskNameCell}
+          <td>{row.bpmn_process_identifier}</td>
+        </>
+      );
+    }
+    if (isDetailedView) {
+      tableRow.push(
+        <>
+          <td>{row.bpmn_task_type}</td>
+          <td>{row.message}</td>
+          <td>{row.username === userEmail ? 'me 🔥' : row.username}</td>
+        </>
+      );
+    }
+    tableRow.push(
+      <td>
+        <Link
+          data-qa="process-instance-show-link"
+          to={`${processInstanceShowPageBaseUrl}/${row.process_instance_id}/${row.spiff_step}`}
+        >
+          {convertSecondsToFormattedDateTime(row.timestamp)}
+        </Link>
+      </td>
+    );
+    return <tr key={row.id}>{tableRow}</tr>;
+  };
+
   const buildTable = () => {
     const rows = processInstanceLogs.map((row) => {
-      const rowToUse = row as any;
-      return (
-        <tr key={rowToUse.id}>
-          <td data-qa="paginated-entity-id">{rowToUse.id}</td>
-          <td>
-            {rowToUse.bpmn_task_name ||
-              (rowToUse.bpmn_task_type === 'Default Start Event'
-                ? 'Process Started'
-                : '') ||
-              (rowToUse.bpmn_task_type === 'End Event' ? 'Process Ended' : '')}
-          </td>
-          {isDetailedView && (
-            <>
-              <td>{rowToUse.message}</td>
-              <td>{rowToUse.bpmn_task_identifier}</td>
-              <td>{rowToUse.bpmn_task_type}</td>
-            </>
-          )}
-          <td>{rowToUse.bpmn_process_identifier}</td>
-          <td>{rowToUse.username}</td>
-          <td>
-            <Link
-              data-qa="process-instance-show-link"
-              to={`${processInstanceShowPageBaseUrl}/${rowToUse.process_instance_id}/${rowToUse.spiff_step}`}
-            >
-              {convertSecondsToFormattedDateTime(rowToUse.timestamp)}
-            </Link>
-          </td>
-        </tr>
-      );
+      return getTableRow(row);
     });
+
+    const tableHeaders = [];
+    if (isDetailedView) {
+      tableHeaders.push(
+        <>
+          <th>Id</th>
+          <th>Bpmn Process</th>
+          <th>Task Name</th>
+        </>
+      );
+    } else {
+      tableHeaders.push(
+        <>
+          <th>Event</th>
+          <th>Bpmn Process</th>
+        </>
+      );
+    }
+    if (isDetailedView) {
+      tableHeaders.push(
+        <>
+          <th>Task Type</th>
+          <th>Message</th>
+          <th>User</th>
+        </>
+      );
+    }
+    tableHeaders.push(<th>Timestamp</th>);
     return (
       <Table size="lg">
         <thead>
-          <tr>
-            <th>Id</th>
-            <th>Task Name</th>
-            {isDetailedView && (
-              <>
-                <th>Message</th>
-                <th>Task Identifier</th>
-                <th>Task Type</th>
-              </>
-            )}
-            <th>Bpmn Process Identifier</th>
-            <th>User</th>
-            <th>Timestamp</th>
-          </tr>
+          <tr>{tableHeaders}</tr>
         </thead>
         <tbody>{rows}</tbody>
       </Table>

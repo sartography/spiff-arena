@@ -236,23 +236,6 @@ class ProcessInstanceService:
             processor.do_engine_steps(save=True)
 
     @staticmethod
-    def extract_form_data(latest_data: dict, task: SpiffTask) -> dict:
-        """Extracts data from the latest_data that is directly related to the form that is being submitted."""
-        data = {}
-
-        if hasattr(task.task_spec, "form"):
-            for field in task.task_spec.form.fields:
-                if field.has_property(Task.FIELD_PROP_REPEAT):
-                    group = field.get_property(Task.FIELD_PROP_REPEAT)
-                    if group in latest_data:
-                        data[group] = latest_data[group]
-                else:
-                    value = ProcessInstanceService.get_dot_value(field.id, latest_data)
-                    if value is not None:
-                        ProcessInstanceService.set_dot_value(field.id, value, data)
-        return data
-
-    @staticmethod
     def create_dot_dict(data: dict) -> dict[str, Any]:
         """Create_dot_dict."""
         dot_dict: dict[str, Any] = {}
