@@ -1,8 +1,6 @@
 """Get current user."""
 from typing import Any
 
-from flask import current_app
-
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
@@ -38,14 +36,13 @@ class GetLastUserCompletingTask(Script):
 
         human_task = (
             HumanTaskModel.query.filter_by(
-                bpmn_process_identifier=bpmn_process_identifier, task_name=task_name
+                process_instance_id=script_attributes_context.process_instance_id,
+                bpmn_process_identifier=bpmn_process_identifier,
+                task_name=task_name,
             )
             .order_by(HumanTaskModel.id.desc())  # type: ignore
             .join(UserModel, UserModel.id == HumanTaskModel.completed_by_user_id)
             .first()
         )
 
-        # dump the user using our json encoder and then load it back up as a dict
-        # to remove unwanted field types
-        user_as_json_string = current_app.json.dumps(human_task.completed_by_user)
-        return current_app.json.loads(user_as_json_string)
+        return human_task.completed_by_user.as_dict()

@@ -26,6 +26,7 @@ Department: {{ department }}
           <spiffworkflow:property name="formJsonSchemaFilename" value="simple_form.json" />
           <spiffworkflow:property name="formUiSchemaFilename" value="simple_form_ui.json" />
         </spiffworkflow:properties>
+        <spiffworkflow:postScript>process_initiator_user = get_process_initiator_user()</spiffworkflow:postScript>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0smvjir</bpmn:incoming>
       <bpmn:outgoing>Flow_1ly1khd</bpmn:outgoing>
