@@ -157,7 +157,7 @@ class ApiError(Exception):
                 error_line=exp.error_line,
                 task_trace=exp.task_trace,
             )
-        elif isinstance(exp, WorkflowException):
+        elif isinstance(exp, WorkflowException) and exp.task_spec:
             return ApiError.from_task_spec(error_code, message, exp.task_spec)
         else:
             return ApiError("workflow_error", str(exp))
@@ -253,7 +253,7 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
     else:
         api_exception = ApiError(
             error_code=error_code,
-            message=f"{exception.__class__.__name__}",
+            message=f"{exception.__class__.__name__} {str(exception)}",
             sentry_link=sentry_link,
             status_code=status_code,
         )

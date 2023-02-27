@@ -60,15 +60,10 @@ from spiffworkflow_backend.models.file import FileType
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.message_correlation import MessageCorrelationModel
-from spiffworkflow_backend.models.message_correlation_message_instance import (
-    MessageCorrelationMessageInstanceModel,
-)
-from spiffworkflow_backend.models.message_correlation_property import (
-    MessageCorrelationPropertyModel,
-)
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_instance import MessageModel
+from spiffworkflow_backend.models.message_instance_correlation import (
+    MessageInstanceCorrelationRuleModel,
+)
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_metadata import (
@@ -449,53 +444,6 @@ class ProcessInstanceProcessor:
             ) = ProcessInstanceProcessor.get_process_model_and_subprocesses(
                 process_instance_model.process_model_identifier
             )
-        else:
-            bpmn_json_length = len(process_instance_model.bpmn_json.encode("utf-8"))
-            megabyte = float(1024**2)
-            json_size = bpmn_json_length / megabyte
-            if json_size > 1:
-                wf_json = json.loads(process_instance_model.bpmn_json)
-                if "spec" in wf_json and "tasks" in wf_json:
-                    task_tree = wf_json["tasks"]
-                    test_spec = wf_json["spec"]
-                    task_size = "{:.2f}".format(
-                        len(json.dumps(task_tree).encode("utf-8")) / megabyte
-                    )
-                    spec_size = "{:.2f}".format(
-                        len(json.dumps(test_spec).encode("utf-8")) / megabyte
-                    )
-                    message = (
-                        "Workflow "
-                        + process_instance_model.process_model_identifier
-                        + f" JSON Size is over 1MB:{json_size:.2f} MB"
-                    )
-                    message += f"\n  Task Size: {task_size}"
-                    message += f"\n  Spec Size: {spec_size}"
-                    current_app.logger.warning(message)
-
-                    def check_sub_specs(
-                        test_spec: dict, indent: int = 0, show_all: bool = False
-                    ) -> None:
-                        """Check_sub_specs."""
-                        for my_spec_name in test_spec["task_specs"]:
-                            my_spec = test_spec["task_specs"][my_spec_name]
-                            my_spec_size = (
-                                len(json.dumps(my_spec).encode("utf-8")) / megabyte
-                            )
-                            if my_spec_size > 0.1 or show_all:
-                                current_app.logger.warning(
-                                    (" " * indent)
-                                    + "Sub-Spec "
-                                    + my_spec["name"]
-                                    + " :"
-                                    + f"{my_spec_size:.2f}"
-                                )
-                                if "spec" in my_spec:
-                                    if my_spec["name"] == "Call_Emails_Process_Email":
-                                        pass
-                                    check_sub_specs(my_spec["spec"], indent + 5)
-
-                    check_sub_specs(test_spec, 5)
 
         self.process_model_identifier = process_instance_model.process_model_identifier
         self.process_model_display_name = (
@@ -776,12 +724,12 @@ class ProcessInstanceProcessor:
 
         Rerturns: {process_name: [task_1, task_2, ...], ...}
         """
-        serialized_data = json.loads(self.serialize())
-        processes: dict[str, list[str]] = {serialized_data["spec"]["name"]: []}
-        for task_name, _task_spec in serialized_data["spec"]["task_specs"].items():
-            processes[serialized_data["spec"]["name"]].append(task_name)
-        if "subprocess_specs" in serialized_data:
-            for subprocess_name, subprocess_details in serialized_data[
+        bpmn_json = json.loads(self.process_instance_model.bpmn_json or "{}")
+        processes: dict[str, list[str]] = {bpmn_json["spec"]["name"]: []}
+        for task_name, _task_spec in bpmn_json["spec"]["task_specs"].items():
+            processes[bpmn_json["spec"]["name"]].append(task_name)
+        if "subprocess_specs" in bpmn_json:
+            for subprocess_name, subprocess_details in bpmn_json[
                 "subprocess_specs"
             ].items():
                 processes[subprocess_name] = []
@@ -816,7 +764,7 @@ class ProcessInstanceProcessor:
 
     #################################################################
 
-    def get_all_task_specs(self) -> dict[str, dict]:
+    def get_all_task_specs(self, bpmn_json: dict) -> dict[str, dict]:
         """This looks both at top level task_specs and subprocess_specs in the serialized data.
 
         It returns a dict of all task specs based on the task name like it is in the serialized form.
@@ -824,10 +772,9 @@ class ProcessInstanceProcessor:
         NOTE: this may not fully work for tasks that are NOT call activities since their task_name may not be unique
         but in our current use case we only care about the call activities here.
         """
-        serialized_data = json.loads(self.serialize())
-        spiff_task_json = serialized_data["spec"]["task_specs"] or {}
-        if "subprocess_specs" in serialized_data:
-            for _subprocess_name, subprocess_details in serialized_data[
+        spiff_task_json = bpmn_json["spec"]["task_specs"] or {}
+        if "subprocess_specs" in bpmn_json:
+            for _subprocess_name, subprocess_details in bpmn_json[
                 "subprocess_specs"
             ].items():
                 if "task_specs" in subprocess_details:
@@ -849,8 +796,8 @@ class ProcessInstanceProcessor:
         Also note that subprocess_task_id might in fact be a call activity, because spiff treats
         call activities like subprocesses in terms of the serialization.
         """
-        bpmn_json = json.loads(self.serialize())
-        spiff_task_json = self.get_all_task_specs()
+        bpmn_json = json.loads(self.process_instance_model.bpmn_json or "{}")
+        spiff_task_json = self.get_all_task_specs(bpmn_json)
 
         subprocesses_by_child_task_ids = {}
         task_typename_by_task_id = {}
@@ -922,6 +869,7 @@ class ProcessInstanceProcessor:
             process_instance_id=self.process_instance_model.id, completed=False
         ).all()
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
+
         process_model_display_name = ""
         process_model_info = self.process_model_service.get_process_model(
             self.process_instance_model.process_model_identifier
@@ -939,6 +887,10 @@ class ProcessInstanceProcessor:
                     ready_or_waiting_task
                 )
                 extensions = task_spec.extensions
+
+                # in the xml, it's the id attribute. this identifies the process where the activity lives.
+                # if it's in a subprocess, it's the inner process.
+                bpmn_process_identifier = ready_or_waiting_task.workflow.name
 
                 form_file_name = None
                 ui_form_file_name = None
@@ -959,6 +911,7 @@ class ProcessInstanceProcessor:
                     human_task = HumanTaskModel(
                         process_instance_id=self.process_instance_model.id,
                         process_model_display_name=process_model_display_name,
+                        bpmn_process_identifier=bpmn_process_identifier,
                         form_file_name=form_file_name,
                         ui_form_file_name=ui_form_file_name,
                         task_id=str(ready_or_waiting_task.id),
@@ -1348,157 +1301,56 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-    # messages have one correlation key (possibly wrong)
-    # correlation keys may have many correlation properties
     def process_bpmn_messages(self) -> None:
         """Process_bpmn_messages."""
         bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
         for bpmn_message in bpmn_messages:
-            # only message sends are in get_bpmn_messages
-            message_model = MessageModel.query.filter_by(name=bpmn_message.name).first()
-            if message_model is None:
-                raise ApiError(
-                    "invalid_message_name",
-                    f"Invalid message name: {bpmn_message.name}.",
-                )
-
-            if not bpmn_message.correlations:
-                raise ApiError(
-                    "message_correlations_missing",
-                    (
-                        "Could not find any message correlations bpmn_message:"
-                        f" {bpmn_message.name}"
-                    ),
-                )
-
-            message_correlations = []
-            for (
-                message_correlation_key,
-                message_correlation_properties,
-            ) in bpmn_message.correlations.items():
-                for (
-                    message_correlation_property_identifier,
-                    message_correlation_property_value,
-                ) in message_correlation_properties.items():
-                    message_correlation_property = (
-                        MessageCorrelationPropertyModel.query.filter_by(
-                            identifier=message_correlation_property_identifier,
-                        ).first()
-                    )
-                    if message_correlation_property is None:
-                        raise ApiError(
-                            "message_correlations_missing_from_process",
-                            (
-                                "Could not find a known message correlation with"
-                                f" identifier:{message_correlation_property_identifier}"
-                            ),
-                        )
-                    message_correlations.append(
-                        {
-                            "message_correlation_property": (
-                                message_correlation_property
-                            ),
-                            "name": message_correlation_key,
-                            "value": message_correlation_property_value,
-                        }
-                    )
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
+                user_id=self.process_instance_model.process_initiator_id,  # TODO: use the correct swimlane user when that is set up
                 message_type="send",
-                message_model_id=message_model.id,
+                name=bpmn_message.name,
                 payload=bpmn_message.payload,
+                correlation_keys=self.bpmn_process_instance.correlations,
             )
             db.session.add(message_instance)
-            db.session.commit()
-
-            for message_correlation in message_correlations:
-                message_correlation = MessageCorrelationModel(
-                    process_instance_id=self.process_instance_model.id,
-                    message_correlation_property_id=message_correlation[
-                        "message_correlation_property"
-                    ].id,
-                    name=message_correlation["name"],
-                    value=message_correlation["value"],
-                )
-                db.session.add(message_correlation)
-                db.session.commit()
-                message_correlation_message_instance = (
-                    MessageCorrelationMessageInstanceModel(
-                        message_instance_id=message_instance.id,
-                        message_correlation_id=message_correlation.id,
-                    )
-                )
-                db.session.add(message_correlation_message_instance)
             db.session.commit()
 
     def queue_waiting_receive_messages(self) -> None:
         """Queue_waiting_receive_messages."""
-        waiting_tasks = self.get_all_waiting_tasks()
-        for waiting_task in waiting_tasks:
-            # if it's not something that can wait for a message, skip it
-            if waiting_task.task_spec.__class__.__name__ not in [
-                "IntermediateCatchEvent",
-                "ReceiveTask",
-            ]:
-                continue
+        waiting_events = self.bpmn_process_instance.waiting_events()
+        waiting_message_events = filter(
+            lambda e: e["event_type"] == "Message", waiting_events
+        )
 
-            # timer events are not related to messaging, so ignore them for these purposes
-            if waiting_task.task_spec.event_definition.__class__.__name__.endswith(
-                "TimerEventDefinition"
+        for event in waiting_message_events:
+            # Ensure we are only creating one message instance for each waiting message
+            if (
+                MessageInstanceModel.query.filter_by(
+                    process_instance_id=self.process_instance_model.id,
+                    message_type="receive",
+                    name=event["name"],
+                ).count()
+                > 0
             ):
                 continue
 
-            message_model = MessageModel.query.filter_by(
-                name=waiting_task.task_spec.event_definition.name
-            ).first()
-            if message_model is None:
-                raise ApiError(
-                    "invalid_message_name",
-                    (
-                        "Invalid message name:"
-                        f" {waiting_task.task_spec.event_definition.name}."
-                    ),
-                )
-
-            # Ensure we are only creating one message instance for each waiting message
-            message_instance = MessageInstanceModel.query.filter_by(
-                process_instance_id=self.process_instance_model.id,
-                message_type="receive",
-                message_model_id=message_model.id,
-            ).first()
-            if message_instance:
-                continue
-
+            # Create a new Message Instance
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
+                user_id=self.process_instance_model.process_initiator_id,
                 message_type="receive",
-                message_model_id=message_model.id,
+                name=event["name"],
+                correlation_keys=self.bpmn_process_instance.correlations,
             )
+            for correlation_property in event["value"]:
+                message_correlation = MessageInstanceCorrelationRuleModel(
+                    message_instance_id=message_instance.id,
+                    name=correlation_property.name,
+                    retrieval_expression=correlation_property.retrieval_expression,
+                )
+                message_instance.correlation_rules.append(message_correlation)
             db.session.add(message_instance)
-
-            for (
-                spiff_correlation_property
-            ) in waiting_task.task_spec.event_definition.correlation_properties:
-                # NOTE: we may have to cycle through keys here
-                # not sure yet if it's valid for a property to be associated with multiple keys
-                correlation_key_name = spiff_correlation_property.correlation_keys[0]
-                message_correlation = (
-                    MessageCorrelationModel.query.filter_by(
-                        process_instance_id=self.process_instance_model.id,
-                        name=correlation_key_name,
-                    )
-                    .join(MessageCorrelationPropertyModel)
-                    .filter_by(identifier=spiff_correlation_property.name)
-                    .first()
-                )
-                message_correlation_message_instance = (
-                    MessageCorrelationMessageInstanceModel(
-                        message_instance_id=message_instance.id,
-                        message_correlation_id=message_correlation.id,
-                    )
-                )
-                db.session.add(message_correlation_message_instance)
-
             db.session.commit()
 
     def increment_spiff_step(self) -> None:
@@ -1789,7 +1641,6 @@ class ProcessInstanceProcessor:
         details_model.end_in_seconds = time.time()
         details_model.task_json = self.get_task_json_from_spiff_task(task)
         db.session.add(details_model)
-
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
 
