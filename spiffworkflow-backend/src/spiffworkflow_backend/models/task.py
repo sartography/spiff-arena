@@ -45,6 +45,7 @@ class Task:
         process_model_display_name: Union[str, None] = None,
         process_group_identifier: Union[str, None] = None,
         process_model_identifier: Union[str, None] = None,
+        bpmn_process_identifier: Union[str, None] = None,
         form_schema: Union[dict, None] = None,
         form_ui_schema: Union[dict, None] = None,
         parent: Optional[str] = None,
@@ -76,6 +77,7 @@ class Task:
         self.process_instance_status = process_instance_status
         self.process_group_identifier = process_group_identifier
         self.process_model_identifier = process_model_identifier
+        self.bpmn_process_identifier = bpmn_process_identifier
         self.process_model_display_name = process_model_display_name
         self.form_schema = form_schema
         self.form_ui_schema = form_ui_schema
@@ -122,6 +124,7 @@ class Task:
             "process_model_display_name": self.process_model_display_name,
             "process_group_identifier": self.process_group_identifier,
             "process_model_identifier": self.process_model_identifier,
+            "bpmn_process_identifier": self.bpmn_process_identifier,
             "form_schema": self.form_schema,
             "form_ui_schema": self.form_ui_schema,
             "parent": self.parent,
