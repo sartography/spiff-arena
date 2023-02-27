@@ -125,6 +125,9 @@ jobs:
         with:
           repository: sartography/sample-process-models
           path: sample-process-models
+      - name: Poetry Install
+        if: matrix.database == 'sqlite'
+        run: poetry install
       - name: Setup sqlite
         if: matrix.database == 'sqlite'
         run: |
