@@ -6,6 +6,8 @@ from os import environ
 #   and from_prefixed_env(), though we want to ensure that these variables are all documented, so that
 #   is a benefit of the status quo and having them all in this file explicitly.
 
+FLASK_SESSION_SECRET_KEY = environ.get("FLASK_SESSION_SECRET_KEY")
+
 SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR = environ.get(
     "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"
 )

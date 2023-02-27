@@ -34,6 +34,10 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     lane_assignment_id: int | None = db.Column(ForeignKey(GroupModel.id))
     completed_by_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True)  # type: ignore
 
+    completed_by_user = relationship(
+        "UserModel", foreign_keys=[completed_by_user_id], viewonly=True
+    )
+
     actual_owner_id: int = db.Column(ForeignKey(UserModel.id))  # type: ignore
     # actual_owner: RelationshipProperty[UserModel] = relationship(UserModel)
 
@@ -49,6 +53,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     task_type: str = db.Column(db.String(50))
     task_status: str = db.Column(db.String(50))
     process_model_display_name: str = db.Column(db.String(255))
+    bpmn_process_identifier: str = db.Column(db.String(255))
     completed: bool = db.Column(db.Boolean, default=False, nullable=False, index=True)
 
     human_task_users = relationship("HumanTaskUserModel", cascade="delete")
@@ -74,8 +79,8 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
             new_task.process_model_display_name = task.process_model_display_name
         if hasattr(task, "process_group_identifier"):
             new_task.process_group_identifier = task.process_group_identifier
-        if hasattr(task, "process_model_identifier"):
-            new_task.process_model_identifier = task.process_model_identifier
+        if hasattr(task, "bpmn_process_identifier"):
+            new_task.bpmn_process_identifier = task.bpmn_process_identifier
 
         # human tasks only have status when getting the list on the home page
         # and it comes from the process_instance. it should not be confused with task_status.

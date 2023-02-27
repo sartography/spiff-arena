@@ -10,6 +10,7 @@ from flask.app import Flask
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
+from spiffworkflow_backend.models.task import Task
 
 
 # flask logging formats:
@@ -218,9 +219,13 @@ class DBHandler(logging.Handler):
             bpmn_task_type = record.task_type if hasattr(record, "task_type") else None  # type: ignore
             timestamp = record.created
             message = record.msg if hasattr(record, "msg") else None
-            current_user_id = (
-                record.current_user_id if hasattr(record, "current_user_id") else None  # type: ignore
-            )
+
+            current_user_id = None
+            if bpmn_task_type in Task.HUMAN_TASK_TYPES and hasattr(
+                record, "current_user_id"
+            ):
+                current_user_id = record.current_user_id  # type: ignore
+
             spiff_step = (
                 record.spiff_step  # type: ignore
                 if hasattr(record, "spiff_step") and record.spiff_step is not None  # type: ignore

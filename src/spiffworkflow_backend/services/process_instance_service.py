@@ -8,8 +8,8 @@ import sentry_sdk
 from flask import current_app
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
+from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -41,13 +41,14 @@ class ProcessInstanceService:
         user: UserModel,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
+        db.session.commit()
         try:
             current_git_revision = GitService.get_current_revision()
         except GitCommandError:
             current_git_revision = ""
         process_instance_model = ProcessInstanceModel(
             status=ProcessInstanceStatus.not_started.value,
-            process_initiator=user,
+            process_initiator_id=user.id,
             process_model_identifier=process_model.id,
             process_model_display_name=process_model.display_name,
             start_in_seconds=round(time.time()),
@@ -233,23 +234,6 @@ class ProcessInstanceService:
         with sentry_sdk.start_span(op="task", description="backend_do_engine_steps"):
             # maybe move this out once we have the interstitial page since this is here just so we can get the next human task
             processor.do_engine_steps(save=True)
-
-    @staticmethod
-    def extract_form_data(latest_data: dict, task: SpiffTask) -> dict:
-        """Extracts data from the latest_data that is directly related to the form that is being submitted."""
-        data = {}
-
-        if hasattr(task.task_spec, "form"):
-            for field in task.task_spec.form.fields:
-                if field.has_property(Task.FIELD_PROP_REPEAT):
-                    group = field.get_property(Task.FIELD_PROP_REPEAT)
-                    if group in latest_data:
-                        data[group] = latest_data[group]
-                else:
-                    value = ProcessInstanceService.get_dot_value(field.id, latest_data)
-                    if value is not None:
-                        ProcessInstanceService.set_dot_value(field.id, value, data)
-        return data
 
     @staticmethod
     def create_dot_dict(data: dict) -> dict[str, Any]:
