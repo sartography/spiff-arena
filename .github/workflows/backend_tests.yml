@@ -119,6 +119,10 @@ jobs:
           pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
 
+      - name: Setup sqlite
+        if: matrix.database == 'sqlite'
+        run: ./bin/recreate_db clean rmall
+
       - name: Setup Mysql
         uses: mirromutth/mysql-action@v1.1
         with:
