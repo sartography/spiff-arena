@@ -127,9 +127,9 @@ jobs:
           path: sample-process-models
       - name: Setup sqlite
         if: matrix.database == 'sqlite'
-        env:
-          SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "${GITHUB_WORKSPACE}/sample-process-models"
-        run: ./bin/recreate_db clean rmall
+        run: |
+          export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR="${GITHUB_WORKSPACE}/sample-process-models"
+          ./bin/recreate_db clean rmall
 
       - name: Setup Mysql
         uses: mirromutth/mysql-action@v1.1
