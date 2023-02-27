@@ -100,7 +100,8 @@ def task_list_my_tasks(
 
     if process_instance_id is not None:
         human_task_query = human_task_query.filter(
-            ProcessInstanceModel.id == process_instance_id
+            ProcessInstanceModel.id == process_instance_id,
+            ProcessInstanceModel.status != ProcessInstanceStatus.error.value,
         )
 
     potential_owner_usernames_from_group_concat_or_similar = (
@@ -480,7 +481,10 @@ def _get_tasks(
         .outerjoin(GroupModel, GroupModel.id == HumanTaskModel.lane_assignment_id)
         .join(ProcessInstanceModel)
         .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
-        .filter(HumanTaskModel.completed == False)  # noqa: E712
+        .filter(
+            HumanTaskModel.completed == False,  # noqa: E712
+            ProcessInstanceModel.status != ProcessInstanceStatus.error.value,
+        )
     )
 
     assigned_user = aliased(UserModel)
