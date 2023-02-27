@@ -112,12 +112,13 @@ export interface MessageInstance {
   process_model_identifier: string;
   process_model_display_name: string;
   process_instance_id: number;
-  message_identifier: string;
+  name: string;
   message_type: string;
   failure_cause: string;
   status: string;
   created_at_in_seconds: number;
   message_correlations?: MessageCorrelations;
+  correlation_keys: any;
 }
 
 export interface ReportFilter {
