@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
   <bpmn:collaboration id="Collaboration_0iyw0q7">
-    <bpmn:participant id="Participant_17eqap4" processRef="Proccess_yhito9d" />
+    <bpmn:participant id="Participant_17eqap4" processRef="Process_yhito9d" />
   </bpmn:collaboration>
-  <bpmn:process id="Proccess_yhito9d" isExecutable="true">
+  <bpmn:process id="Process_yhito9d" isExecutable="true">
     <bpmn:laneSet id="LaneSet_17rankp">
       <bpmn:lane id="process_initiator" name="Process Initiator">
         <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>

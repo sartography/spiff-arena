@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 import jwt
 import marshmallow
@@ -81,6 +82,13 @@ class UserModel(SpiffworkflowBaseDBModel):
     #     instance.username = user_info["sub"]
     #
     #     return instance
+
+    def as_dict(self) -> dict[str, Any]:
+        # dump the user using our json encoder and then load it back up as a dict
+        # to remove unwanted field types
+        user_as_json_string = current_app.json.dumps(self)
+        user_dict: dict[str, Any] = current_app.json.loads(user_as_json_string)
+        return user_dict
 
 
 class UserModelSchema(Schema):

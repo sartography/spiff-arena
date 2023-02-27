@@ -1,11 +1,12 @@
 """Test_get_localtime."""
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+
 from flask.app import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -14,8 +15,9 @@ from spiffworkflow_backend.services.process_instance_service import (
 )
 
 
-class TestGetLastUserCompletingTask(BaseTest):
-    def test_get_last_user_completing_task_script_works(
+class TestGetProcessInitiatorUser(BaseTest):
+
+    def test_get_process_initiator_user(
         self,
         app: Flask,
         client: FlaskClient,
@@ -53,17 +55,8 @@ class TestGetLastUserCompletingTask(BaseTest):
             processor, spiff_task, {"name": "HEY"}, initiator_user, human_task
         )
 
-        assert len(process_instance.active_human_tasks) == 1
-        human_task = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task.task_name, processor.bpmn_process_instance
-        )
-        ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user, human_task
-        )
-
         assert spiff_task is not None
         assert (
             initiator_user.username
-            == spiff_task.get_data("user_completing_task")["username"]
+            == spiff_task.get_data("process_initiator_user")["username"]
         )
