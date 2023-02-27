@@ -17,8 +17,8 @@
 # 02110-1301  USA
 
 from SpiffWorkflow.bpmn.specs.events.event_definitions import (
-    MessageEventDefinition, 
-    MultipleEventDefinition, 
+    MessageEventDefinition,
+    MultipleEventDefinition,
     NamedEventDefinition,
     TimerEventDefinition,
 )
@@ -117,7 +117,7 @@ class BpmnWorkflow(Workflow):
                     return sp
         return self.connect_subprocess(wf_spec.name, f'{wf_spec.name}_{len(self.subprocesses)}')
 
-    def catch(self, event_definition, correlations=None):
+    def catch(self, event_definition, correlations=None, external_origin=False):
         """
         Send an event definition to any tasks that catch it.
 
@@ -127,6 +127,10 @@ class BpmnWorkflow(Workflow):
         receive messages while it is running (eg a boundary event), the task
         should call the event_definition's reset method before executing to
         clear out a stale message.
+
+        We might be catching an event that was thrown from some other part of
+        our own workflow, and it needs to continue out, but if it originated
+        externally, we should not pass it on.
 
         :param event_definition: the thrown event
         """
@@ -149,8 +153,8 @@ class BpmnWorkflow(Workflow):
         # Move any tasks that received message to READY
         self.refresh_waiting_tasks()
 
-        # Figure out if we need to create an extenal message
-        if len(tasks) == 0 and isinstance(event_definition, MessageEventDefinition):
+        # Figure out if we need to create an external message
+        if len(tasks) == 0 and isinstance(event_definition, MessageEventDefinition) and not external_origin:
             self.bpmn_messages.append(
                 BpmnMessage(correlations, event_definition.name, event_definition.payload))
 
@@ -162,7 +166,7 @@ class BpmnWorkflow(Workflow):
     def catch_bpmn_message(self, name, payload, correlations=None):
         event_definition = MessageEventDefinition(name)
         event_definition.payload = payload
-        self.catch(event_definition, correlations=correlations)
+        self.catch(event_definition, correlations=correlations, external_origin=True)
 
     def waiting_events(self):
         # Ultimately I'd like to add an event class so that EventDefinitions would not so double duty as both specs
@@ -171,10 +175,15 @@ class BpmnWorkflow(Workflow):
         events = []
         for task in [t for t in self.get_waiting_tasks() if isinstance(t.task_spec, CatchingEvent)]:
             event_definition = task.task_spec.event_definition
+            value = None
+            if isinstance(event_definition, TimerEventDefinition):
+                value = event_definition.timer_value(task)
+            elif isinstance(event_definition, MessageEventDefinition):
+                value = event_definition.correlation_properties
             events.append({
                 'event_type': event_definition.event_type,
                 'name': event_definition.name if isinstance(event_definition, NamedEventDefinition) else None,
-                'value': event_definition.timer_value(task) if isinstance(event_definition, TimerEventDefinition) else None,
+                'value': value
             })
         return events
 

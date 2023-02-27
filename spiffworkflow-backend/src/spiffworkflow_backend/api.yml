@@ -1878,19 +1878,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /messages/{message_identifier}:
+  /messages/{message_name}:
     parameters:
-      - name: message_identifier
+      - name: message_name
         in: path
         required: true
-        description: The unique identifier of the message model.
+        description: The unique name of the message.
         schema:
           type: string
     post:
       tags:
         - Messages
       operationId: spiffworkflow_backend.routes.messages_controller.message_send
-      summary: Instantiate and run a given process model with a message start event matching given identifier
+      summary: Instantiate and run a given process model with a message start event matching given name
       requestBody:
         content:
           application/json:

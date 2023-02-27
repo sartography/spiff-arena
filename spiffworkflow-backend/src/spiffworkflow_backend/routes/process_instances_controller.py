@@ -137,7 +137,7 @@ def process_instance_run(
             processor.unlock_process_instance("Web")
 
         if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
-            MessageService.process_message_instances()
+            MessageService.correlate_all_message_instances()
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(
         processor

@@ -143,16 +143,6 @@ function MessageCorrelationPropertyGroup(props) {
       commandStack,
     },
     {
-      id: `${idPrefix}-correlation-property-id`,
-      component: CorrelationPropertyIdTextField,
-      isEdited: isTextFieldEntryEdited,
-      idPrefix,
-      element,
-      correlationPropertyModdleElement,
-      translate,
-      commandStack,
-    },
-    {
       id: `${idPrefix}-correlation-property-name`,
       component: CorrelationPropertyNameTextField,
       isEdited: isTextFieldEntryEdited,
