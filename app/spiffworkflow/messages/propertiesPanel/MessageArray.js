@@ -97,13 +97,6 @@ function messageGroup(props) {
   const { messageElement, commandStack, translate, idPrefix } = props;
   return [
     {
-      id: `${idPrefix}-id`,
-      component: MessageIdTextField,
-      messageElement,
-      commandStack,
-      translate,
-    },
-    {
       id: `${idPrefix}-name`,
       component: MessageNameTextField,
       messageElement,
