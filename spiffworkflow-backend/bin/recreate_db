@@ -34,9 +34,12 @@ if [[ "${1:-}" == "clean" ]]; then
     exit 1
   fi
 
-  rm -f ./src/instance/*.sqlite3
-  mysql -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"
-  mysql -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_unit_testing"
+  if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" != "mysql" ]]; then
+    rm -f ./src/instance/*.sqlite3
+  else
+    mysql -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"
+    mysql -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_unit_testing"
+  fi
 
   # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
   # start postgres in background with one db
@@ -55,8 +58,10 @@ elif [[ "${1:-}" == "migrate" ]]; then
 fi
 tasks="$tasks upgrade"
 
-mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development"
-mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_unit_testing"
+if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
+  mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development"
+  mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_unit_testing"
+fi
 
 for task in $tasks; do
   SPIFFWORKFLOW_BACKEND_ENV=local_development FLASK_APP=src/spiffworkflow_backend poetry run flask db "$task"
@@ -64,6 +69,8 @@ done
 
 SPIFFWORKFLOW_BACKEND_ENV=unit_testing FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
 if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(local_development|unit_testing)$' <<< "$SPIFFWORKFLOW_BACKEND_ENV"; then
-  mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_$SPIFFWORKFLOW_BACKEND_ENV"
+  if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
+    mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_$SPIFFWORKFLOW_BACKEND_ENV"
+  fi
   FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
 fi
