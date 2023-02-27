@@ -23,6 +23,7 @@ from calendar import monthrange
 from time import timezone as tzoffset
 from copy import deepcopy
 
+from SpiffWorkflow.exceptions import SpiffWorkflowException, WorkflowException
 from SpiffWorkflow.task import TaskState
 
 LOCALTZ = timezone(timedelta(seconds=-1 * tzoffset))
@@ -72,9 +73,9 @@ class EventDefinition(object):
         # We also don't have a more sophisticated method for addressing events to
         # a particular process, but this at least provides a mechanism for distinguishing
         # between processes and subprocesses.
-        if self.external:
+        if self.external and outer_workflow != workflow:
             outer_workflow.catch(event, correlations)
-        if self.internal and (self.external and workflow != outer_workflow):
+        else:
             workflow.catch(event)
 
     def __eq__(self, other):
@@ -160,11 +161,10 @@ class EscalationEventDefinition(NamedEventDefinition):
 class CorrelationProperty:
     """Rules for generating a correlation key when a message is sent or received."""
 
-    def __init__(self, name, expression, correlation_keys):
+    def __init__(self, name, retrieval_expression, correlation_keys, expected_value=None):
         self.name = name                            # This is the property name
-        self.expression = expression                # This is how it's generated
+        self.retrieval_expression = retrieval_expression  # This is how it's generated
         self.correlation_keys = correlation_keys    # These are the keys it's used by
-
 
 class MessageEventDefinition(NamedEventDefinition):
     """The default message event."""
@@ -191,7 +191,7 @@ class MessageEventDefinition(NamedEventDefinition):
         # However, there needs to be something to apply the correlations to in the
         # standard case and this is line with the way Spiff works otherwise
         event.payload = deepcopy(my_task.data)
-        correlations = self.get_correlations(my_task.workflow.script_engine, event.payload)
+        correlations = self.get_correlations(my_task, event.payload)
         my_task.workflow.correlations.update(correlations)
         self._throw(event, my_task.workflow, my_task.workflow.outer_workflow, correlations)
 
@@ -205,14 +205,22 @@ class MessageEventDefinition(NamedEventDefinition):
         if payload is not None:
             my_task.set_data(**payload)
 
-    def get_correlations(self, script_engine, payload):
-        correlations = {}
+    def get_correlations(self, task, payload):
+        correlation_keys = {}
         for property in self.correlation_properties:
             for key in property.correlation_keys:
-                if key not in correlations:
-                    correlations[key] = {}
-                correlations[key][property.name] = script_engine._evaluate(property.expression, payload)
-        return correlations
+                if key not in correlation_keys:
+                    correlation_keys[key] = {}
+                try:
+                    correlation_keys[key][property.name] = task.workflow.script_engine._evaluate(property.retrieval_expression, payload)
+                except WorkflowException as we:
+                    we.add_note(
+                        f"Failed to evaluate correlation property '{property.name}'"
+                        f" invalid expression '{property.retrieval_expression}'")
+                    we.task_spec = task.task_spec
+                    raise we
+        return correlation_keys
+
 
 
 class NoneEventDefinition(EventDefinition):
@@ -351,7 +359,7 @@ class TimerEventDefinition(EventDefinition):
             return TimerEventDefinition.parse_iso_week(expression)
         else:
             return TimerEventDefinition.get_datetime(expression)
- 
+
     @staticmethod
     def parse_iso_recurring_interval(expression):
         components = expression.upper().replace('--', '/').strip('R').split('/')
@@ -510,7 +518,7 @@ class MultipleEventDefinition(EventDefinition):
             if event == other:
                 return True
         return False
-    
+
     def throw(self, my_task):
         # Mutiple events throw all associated events when they fire
         for event_definition in self.event_definitions:
