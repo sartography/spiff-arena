@@ -129,8 +129,7 @@ class TestMessageService(BaseTest):
             MessageInstanceModel.query.filter_by(message_type="receive")
             .filter_by(status="ready")
             .filter_by(process_instance_id=self.process_instance.id)
-            .order_by(
-                MessageInstanceModel.id)
+            .order_by(MessageInstanceModel.id)
             .all()
         )
         assert len(waiting_messages) == 0
@@ -143,11 +142,13 @@ class TestMessageService(BaseTest):
         assert self.process_instance.status == "complete"
 
         # The message receiver process is also complete
-        message_receiver_process = ProcessInstanceModel.query.filter_by(
-            process_model_identifier="test_group/message_receive"
-        ).order_by(
-            MessageInstanceModel.id
-        ).first()
+        message_receiver_process = (
+            ProcessInstanceModel.query.filter_by(
+                process_model_identifier="test_group/message_receive"
+            )
+            .order_by(ProcessInstanceModel.id)
+            .first()
+        )
         assert message_receiver_process.status == "complete"
 
     def start_sender_process(
@@ -291,13 +292,21 @@ class TestMessageService(BaseTest):
 
         process_instance_result = ProcessInstanceModel.query.all()
         assert len(process_instance_result) == 3
-        process_instance_receiver_one = ProcessInstanceModel.query.filter_by(
-            process_model_identifier="test_group/message_receiver_one"
-        ).order_by(MessageInstanceModel.id).first()
+        process_instance_receiver_one = (
+            ProcessInstanceModel.query.filter_by(
+                process_model_identifier="test_group/message_receiver_one"
+            )
+            .order_by(ProcessInstanceModel.id)
+            .first()
+        )
         assert process_instance_receiver_one is not None
-        process_instance_receiver_two = ProcessInstanceModel.query.filter_by(
-            process_model_identifier="test_group/message_receiver_two"
-        ).order_by(MessageInstanceModel.id).first()
+        process_instance_receiver_two = (
+            ProcessInstanceModel.query.filter_by(
+                process_model_identifier="test_group/message_receiver_two"
+            )
+            .order_by(ProcessInstanceModel.id)
+            .first()
+        )
         assert process_instance_receiver_two is not None
 
         # just make sure it's a different process instance
@@ -314,9 +323,11 @@ class TestMessageService(BaseTest):
         assert process_instance_receiver_two.id != process_instance_sender.id
         assert process_instance_receiver_two.status == "complete"
 
-        message_instance_result = MessageInstanceModel.query.order_by(
-            MessageInstanceModel.id
-        ).order_by(MessageInstanceModel.id).all()
+        message_instance_result = (
+            MessageInstanceModel.query.order_by(MessageInstanceModel.id)
+            .order_by(MessageInstanceModel.id)
+            .all()
+        )
         assert len(message_instance_result) == 7
 
         message_instance_receiver_one = [
@@ -338,15 +349,17 @@ class TestMessageService(BaseTest):
         # more messages that need to be picked up.
         MessageService.correlate_all_message_instances()
 
-        message_instance_result = MessageInstanceModel.query.order_by(
-            MessageInstanceModel.id
-        ).order_by(MessageInstanceModel.id).all()
+        message_instance_result = (
+            MessageInstanceModel.query.order_by(MessageInstanceModel.id)
+            .order_by(MessageInstanceModel.id)
+            .all()
+        )
         assert len(message_instance_result) == 8
         for message_instance in message_instance_result:
             assert message_instance.status == "completed"
 
         process_instance_result = ProcessInstanceModel.query.order_by(
-            MessageInstanceModel.id
+            ProcessInstanceModel.id
         ).all()
         assert len(process_instance_result) == 3
         for process_instance in process_instance_result:
