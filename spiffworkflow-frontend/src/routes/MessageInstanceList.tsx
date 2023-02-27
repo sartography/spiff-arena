@@ -70,11 +70,7 @@ export default function MessageInstanceList() {
           {failureCausePre}
           <p>Correlations:</p>
           <pre>
-            {JSON.stringify(
-              messageInstanceForModal.correlation_keys,
-              null,
-              2
-            )}
+            {JSON.stringify(messageInstanceForModal.correlation_keys, null, 2)}
           </pre>
         </Modal>
       );
@@ -95,17 +91,20 @@ export default function MessageInstanceList() {
           </>
         );
       }
-      let processLink = <span>External Call</span>
-      let instanceLink = <span></span>
+      let processLink = <span>External Call</span>;
+      let instanceLink = <span />;
       if (row.process_instance_id != null) {
-        processLink = FormatProcessModelDisplayName(row)
-        instanceLink =
+        processLink = FormatProcessModelDisplayName(row);
+        instanceLink = (
           <Link
             data-qa="process-instance-show-link"
             to={`/admin/process-instances/${modifyProcessIdentifierForPathParam(
-              row.process_model_identifier)}/${row.process_instance_id}`}>
+              row.process_model_identifier
+            )}/${row.process_instance_id}`}
+          >
             {row.process_instance_id}
           </Link>
+        );
       }
       return (
         <tr key={row.id}>

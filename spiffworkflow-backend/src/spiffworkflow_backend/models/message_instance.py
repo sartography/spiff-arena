@@ -104,7 +104,6 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
             # Then there is nothing more to match on -- we accept any message with the given name.
             return True
 
-
         # Loop over the receives' correlation keys - if any of the keys fully match, then we match.
         for expected_values in self.correlation_keys.values():
             if self.payload_matches_expected_values(
