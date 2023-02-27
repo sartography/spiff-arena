@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
-  <bpmn:process id="Proccess_WithForm" name="Process With Form" isExecutable="true">
+  <bpmn:process id="Process_WithForm" name="Process With Form" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_0smvjir</bpmn:outgoing>
     </bpmn:startEvent>
@@ -14,6 +14,7 @@
         <spiffworkflow:instructionsForEndUser>Hello {{ name }}
 Department: {{ department }}
 </spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:postScript>user_completing_task = get_last_user_completing_task("Process_WithForm", "Activity_SimpleForm")</spiffworkflow:postScript>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1ly1khd</bpmn:incoming>
       <bpmn:outgoing>Flow_1boyhcj</bpmn:outgoing>
@@ -25,13 +26,14 @@ Department: {{ department }}
           <spiffworkflow:property name="formJsonSchemaFilename" value="simple_form.json" />
           <spiffworkflow:property name="formUiSchemaFilename" value="simple_form_ui.json" />
         </spiffworkflow:properties>
+        <spiffworkflow:postScript>process_initiator_user = get_process_initiator_user()</spiffworkflow:postScript>
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_0smvjir</bpmn:incoming>
       <bpmn:outgoing>Flow_1ly1khd</bpmn:outgoing>
     </bpmn:userTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Proccess_WithForm">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_WithForm">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="159" width="36" height="36" />
       </bpmndi:BPMNShape>
