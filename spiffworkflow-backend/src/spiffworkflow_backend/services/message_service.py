@@ -1,7 +1,8 @@
 """Message_service."""
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel, MessageTypes
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
+from spiffworkflow_backend.models.message_instance import MessageTypes
 from spiffworkflow_backend.models.message_triggerable_process_model import (
     MessageTriggerableProcessModel,
 )
@@ -42,8 +43,9 @@ class MessageService:
 
         # Find available messages that might match
         available_receive_messages = MessageInstanceModel.query.filter_by(
-            name=message_instance_send.name, status=MessageStatuses.ready.value,
-            message_type=MessageTypes.receive.value
+            name=message_instance_send.name,
+            status=MessageStatuses.ready.value,
+            message_type=MessageTypes.receive.value,
         ).all()
         message_instance_receive: MessageInstanceModel | None = None
         try:
