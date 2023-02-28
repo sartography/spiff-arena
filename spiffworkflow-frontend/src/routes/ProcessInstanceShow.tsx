@@ -999,7 +999,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       (processInstanceMetadata: ProcessInstanceMetadata) => {
         metadataComponents.push(
           <Grid condensed fullWidth>
-            <Column sm={1} md={1} lg={2} className="grid-list-title">
+            <Column sm={3} md={3} lg={5} className="grid-list-title">
               {processInstanceMetadata.key}
             </Column>
             <Column sm={3} md={3} lg={3} className="grid-date">
