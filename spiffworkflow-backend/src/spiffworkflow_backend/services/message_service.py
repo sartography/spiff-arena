@@ -30,7 +30,7 @@ class MessageService:
     @classmethod
     def correlate_send_message(
         cls, message_instance_send: MessageInstanceModel
-    ) -> MessageInstanceModel | None:
+    ) -> Optional[MessageInstanceModel]:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
