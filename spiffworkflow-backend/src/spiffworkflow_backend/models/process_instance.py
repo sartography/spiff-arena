@@ -1,5 +1,7 @@
 """Process_instance."""
 from __future__ import annotations
+from typing import Optional
+from spiffworkflow_backend.models.serialized_bpmn_definition import SerializedBpmnDefinitionModel # noqa: F401
 
 from typing import Any
 from typing import cast
@@ -60,6 +62,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
     process_initiator = relationship("UserModel")
 
+    serialized_bpmn_definition_id: Optional[int] = db.Column(ForeignKey(SerializedBpmnDefinitionModel.id), nullable=True)  # type: ignore
+    serialized_bpmn_definition = relationship("SerializedBpmnDefinitionModel")
+
     active_human_tasks = relationship(
         "HumanTaskModel",
         primaryjoin=(
@@ -78,21 +83,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         "ProcessInstanceMetadataModel",
         cascade="delete",
     )  # type: ignore
-
-    # static
-    #   "subprocess_specs",
-    #   "spec",
-    #   "serializer_version",
-
-    # runtime
-    #   "bpmn_messages",
-    #   "correlations",
-    #   "data",
-    #   "last_task",
-    #   "root",
-    #   "subprocesses",
-    #   "success",
-    #   "tasks"
 
     bpmn_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
     start_in_seconds: int | None = db.Column(db.Integer)

@@ -1,4 +1,8 @@
 """Process_instance_processor."""
+from hashlib import sha256
+from spiffworkflow_backend.models import serialized_bpmn_definition
+from spiffworkflow_backend.models.process_instance_data import ProcessInstanceDataModel
+from spiffworkflow_backend.models.serialized_bpmn_definition import SerializedBpmnDefinitionModel # noqa: F401
 import _strptime  # type: ignore
 import decimal
 import json
@@ -438,7 +442,7 @@ class ProcessInstanceProcessor:
         self.process_model_service = ProcessModelService()
         bpmn_process_spec = None
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None
-        if process_instance_model.bpmn_json is None:
+        if process_instance_model.serialized_bpmn_definition_id is None:
             (
                 bpmn_process_spec,
                 subprocesses,
@@ -515,6 +519,18 @@ class ProcessInstanceProcessor:
             self.bpmn_process_instance
         )
 
+    @classmethod
+    def get_full_bpmn_json(self, process_instance_model: ProcessInstanceModel) -> Optional[dict]:
+        if process_instance_model.serialized_bpmn_definition_id is None:
+            return None
+        serialized_bpmn_definition = process_instance_model.serialized_bpmn_definition
+        process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=process_instance_model.id).first()
+        # if process_instance_data is not None:
+
+        return json.loads(serialized_bpmn_definition.static_json).update(json.loads(process_instance_data.runtime_json))
+
+
+
     def current_user(self) -> Any:
         """Current_user."""
         current_user = None
@@ -550,7 +566,7 @@ class ProcessInstanceProcessor:
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None,
     ) -> BpmnWorkflow:
         """__get_bpmn_process_instance."""
-        if process_instance_model.bpmn_json:
+        if process_instance_model.serialized_bpmn_definition_id:
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
             original_spiff_logger_log_level = spiff_logger.level
@@ -559,7 +575,7 @@ class ProcessInstanceProcessor:
             try:
                 bpmn_process_instance = (
                     ProcessInstanceProcessor._serializer.deserialize_json(
-                        process_instance_model.bpmn_json
+                        json.dumps(ProcessInstanceProcessor.get_full_bpmn_json(process_instance_model))
                     )
                 )
             except Exception as err:
@@ -834,7 +850,17 @@ class ProcessInstanceProcessor:
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
-        self.process_instance_model.bpmn_json = self.serialize()
+        # self.process_instance_model.bpmn_json = self.serialize()
+        bpmn_json = self.serialize()
+
+        if self.process_instance_model.serialized_bpmn_definition_id is None:
+            new_hash = {k: bpmn_json[k] for k in ('spec', 'subprocess_spec', 'serializer_version')}
+            new_hash_digest = sha256(json.dumps(new_hash, sort_keys=True).encode('utf8')).hexdigest()
+            serialized_bpmn_definition = SerializedBpmnDefinitionModel(hash=new_hash_digest).first()
+            if serialized_bpmn_definition is None:
+                serialized_bpmn_definition = SerializedBpmnDefinitionModel(hash=new_hash_digest, static_json=json.dumps(new_hash))
+                db.session.add(serialized_bpmn_definition)
+
 
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())
