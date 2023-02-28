@@ -48,7 +48,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer)
 
     task_id: str = db.Column(db.String(50))
-    task_name: str = db.Column(db.String(50))
+    task_name: str = db.Column(db.String(255))
     task_title: str = db.Column(db.String(50))
     task_type: str = db.Column(db.String(50))
     task_status: str = db.Column(db.String(50))
