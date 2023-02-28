@@ -1,4 +1,6 @@
 """Message_service."""
+from typing import Optional
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance import MessageStatuses
@@ -47,7 +49,7 @@ class MessageService:
             status=MessageStatuses.ready.value,
             message_type=MessageTypes.receive.value,
         ).all()
-        message_instance_receive: MessageInstanceModel | None = None
+        message_instance_receive: Optional[MessageInstanceModel] = None
         try:
             for message_instance in available_receive_messages:
                 if message_instance.correlates(
