@@ -31,6 +31,7 @@ class SpiffStepDetailsModel(SpiffworkflowBaseDBModel):
     task_id: str = db.Column(db.String(50), nullable=False)
     task_state: str = db.Column(db.String(50), nullable=False)
     bpmn_task_identifier: str = db.Column(db.String(255), nullable=False)
+    delta_json: list = deferred(db.Column(db.JSON, nullable=False))  # type: ignore
 
     start_in_seconds: float = db.Column(db.DECIMAL(17, 6), nullable=False)
 

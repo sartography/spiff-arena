@@ -72,6 +72,7 @@ dateparser = "^1.1.2"
 types-dateparser = "^1.1.4.1"
 flask-jwt-extended = "^4.4.4"
 pylint = "^2.15.10"
+json-delta = "^2.0.2"
 
 
 [tool.poetry.dev-dependencies]

@@ -204,6 +204,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         external_methods: Optional[Dict[str, Any]] = None,
     ) -> None:
         # TODO: once integrated look at the tests that fail without Box
+        # context is task.data
         Box.convert_to_box(context)
         self.state.update(self.globals)
         self.state.update(external_methods or {})

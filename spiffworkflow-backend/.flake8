@@ -17,10 +17,10 @@ per-file-ignores =
     # THEN, test_hey.py will NOT be excluding D103
 
     # asserts are ok in tests
-    tests/*:S101,D102,D103
+    tests/*:S101,D101,D102,D103
 
     # prefer naming functions descriptively rather than forcing comments
-    src/*:D102,D103
+    src/*:D101,D102,D103
 
     bin/keycloak_test_server.py:B950,D
     conftest.py:S105
