@@ -79,6 +79,21 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         cascade="delete",
     )  # type: ignore
 
+    # static
+    #   "subprocess_specs",
+    #   "spec",
+    #   "serializer_version",
+
+    # runtime
+    #   "bpmn_messages",
+    #   "correlations",
+    #   "data",
+    #   "last_task",
+    #   "root",
+    #   "subprocesses",
+    #   "success",
+    #   "tasks"
+
     bpmn_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
     start_in_seconds: int | None = db.Column(db.Integer)
     end_in_seconds: int | None = db.Column(db.Integer)
