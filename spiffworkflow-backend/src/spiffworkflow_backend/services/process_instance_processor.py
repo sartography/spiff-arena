@@ -874,18 +874,24 @@ class ProcessInstanceProcessor:
             else:
                 process_instance_data_dict[bpmn_key] = bpmn_dict[bpmn_key]
 
-        if self.process_instance_model.serialized_bpmn_definition_id is None:
-            new_hash_digest = sha256(
-                json.dumps(bpmn_spec_dict, sort_keys=True).encode("utf8")
-            ).hexdigest()
-            serialized_bpmn_definition = SerializedBpmnDefinitionModel.query.filter_by(
-                hash=new_hash_digest
-            ).first()
-            if serialized_bpmn_definition is None:
-                serialized_bpmn_definition = SerializedBpmnDefinitionModel(
-                    hash=new_hash_digest, static_json=json.dumps(bpmn_spec_dict)
-                )
-                db.session.add(serialized_bpmn_definition)
+        # FIXME: always save new hash until we get updated Spiff without loopresettask
+        # if self.process_instance_model.serialized_bpmn_definition_id is None:
+        new_hash_digest = sha256(
+            json.dumps(bpmn_spec_dict, sort_keys=True).encode("utf8")
+        ).hexdigest()
+        serialized_bpmn_definition = SerializedBpmnDefinitionModel.query.filter_by(
+            hash=new_hash_digest
+        ).first()
+        if serialized_bpmn_definition is None:
+            serialized_bpmn_definition = SerializedBpmnDefinitionModel(
+                hash=new_hash_digest, static_json=json.dumps(bpmn_spec_dict)
+            )
+            db.session.add(serialized_bpmn_definition)
+        if (
+            self.process_instance_model.serialized_bpmn_definition_id is None
+            or self.process_instance_model.serialized_bpmn_definition.hash
+            != new_hash_digest
+        ):
             self.process_instance_model.serialized_bpmn_definition = (
                 serialized_bpmn_definition
             )
@@ -1298,6 +1304,8 @@ class ProcessInstanceProcessor:
         if bpmn_process_instance.is_completed():
             return ProcessInstanceStatus.complete
         user_tasks = bpmn_process_instance.get_ready_user_tasks()
+
+        # workflow.waiting_events (includes timers, and timers have a when firing property)
 
         # if the process instance has status "waiting" it will get picked up
         # by background processing. when that happens it can potentially overwrite
