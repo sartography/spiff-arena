@@ -866,10 +866,11 @@ class ProcessInstanceProcessor:
                 serialized_bpmn_definition = SerializedBpmnDefinitionModel(hash=new_hash_digest, static_json=json.dumps(bpmn_spec_dict))
                 db.session.add(serialized_bpmn_definition)
 
-        process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=self.process_instance_model.id)
+        process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=self.process_instance_model.id).first()
         if process_instance_data is None:
             process_instance_data = ProcessInstanceDataModel(process_instance_id=self.process_instance_model.id)
         process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
+        db.session.add(process_instance_data)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
