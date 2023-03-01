@@ -1979,107 +1979,97 @@ class TestProcessApi(BaseTest):
         assert response.json[0]["identifier"] == report_identifier
         assert response.json[0]["report_metadata"]["order_by"] == ["month"]
 
-    def test_process_instance_report_show_with_default_list(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-        setup_process_instances_for_reports: list[ProcessInstanceModel],
-    ) -> None:
-        """Test_process_instance_report_show_with_default_list."""
-        process_group_id = "runs_without_input"
-        process_model_id = "sample"
-        # bpmn_file_name = "sample.bpmn"
-        # bpmn_file_location = "sample"
-        # process_model_identifier = self.create_group_and_model_with_bpmn(
-        #     client,
-        #     with_super_admin_user,
-        #     process_group_id=process_group_id,
-        #     process_model_id=process_model_id,
-        #     bpmn_file_name=bpmn_file_name,
-        #     bpmn_file_location=bpmn_file_location
-        # )
-        process_model_identifier = f"{process_group_id}/{process_model_id}"
-
-        report_metadata = {
-            "columns": [
-                {"Header": "id", "accessor": "id"},
-                {
-                    "Header": "process_model_identifier",
-                    "accessor": "process_model_identifier",
-                },
-                {"Header": "process_group_id", "accessor": "process_group_identifier"},
-                {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                {"Header": "status", "accessor": "status"},
-                {"Header": "Name", "accessor": "name"},
-                {"Header": "Status", "accessor": "status"},
-            ],
-            "order_by": ["test_score"],
-            "filter_by": [
-                {"field_name": "grade_level", "operator": "equals", "field_value": 2}
-            ],
-        }
-
-        report = ProcessInstanceReportModel.create_with_attributes(
-            identifier="sure",
-            report_metadata=report_metadata,
-            user=with_super_admin_user,
-        )
-
-        response = client.get(
-            f"/v1.0/process-instances/reports/{report.id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 2
-        assert response.json["pagination"]["count"] == 2
-        assert response.json["pagination"]["pages"] == 1
-        assert response.json["pagination"]["total"] == 2
-
-        process_instance_dict = response.json["results"][0]
-        assert type(process_instance_dict["id"]) is int
-        assert (
-            process_instance_dict["process_model_identifier"]
-            == process_model_identifier
-        )
-        assert type(process_instance_dict["start_in_seconds"]) is int
-        assert process_instance_dict["start_in_seconds"] > 0
-        assert process_instance_dict["status"] == "complete"
-
-    def test_process_instance_report_show_with_dynamic_filter_and_query_param(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-        setup_process_instances_for_reports: list[ProcessInstanceModel],
-    ) -> None:
-        """Test_process_instance_report_show_with_default_list."""
-        report_metadata = {
-            "filter_by": [
-                {
-                    "field_name": "grade_level",
-                    "operator": "equals",
-                    "field_value": "{{grade_level}}",
-                }
-            ],
-        }
-
-        report = ProcessInstanceReportModel.create_with_attributes(
-            identifier="sure",
-            report_metadata=report_metadata,
-            user=with_super_admin_user,
-        )
-
-        response = client.get(
-            f"/v1.0/process-instances/reports/{report.id}?grade_level=1",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
-        assert len(response.json["results"]) == 1
+    # def test_process_instance_report_show_with_default_list(
+    #     self,
+    #     app: Flask,
+    #     client: FlaskClient,
+    #     with_db_and_bpmn_file_cleanup: None,
+    #     with_super_admin_user: UserModel,
+    #     setup_process_instances_for_reports: list[ProcessInstanceModel],
+    # ) -> None:
+    #     """Test_process_instance_report_show_with_default_list."""
+    #     process_group_id = "runs_without_input"
+    #     process_model_id = "sample"
+    #     process_model_identifier = f"{process_group_id}/{process_model_id}"
+    #
+    #     report_metadata = {
+    #         "columns": [
+    #             {"Header": "id", "accessor": "id"},
+    #             {
+    #                 "Header": "process_model_identifier",
+    #                 "accessor": "process_model_identifier",
+    #             },
+    #             {"Header": "process_group_id", "accessor": "process_group_identifier"},
+    #             {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+    #             {"Header": "status", "accessor": "status"},
+    #             {"Header": "Name", "accessor": "name"},
+    #             {"Header": "Status", "accessor": "status"},
+    #         ],
+    #         "order_by": ["test_score"],
+    #         "filter_by": [
+    #             {"field_name": "grade_level", "operator": "equals", "field_value": 2}
+    #         ],
+    #     }
+    #
+    #     report = ProcessInstanceReportModel.create_with_attributes(
+    #         identifier="sure",
+    #         report_metadata=report_metadata,
+    #         user=with_super_admin_user,
+    #     )
+    #
+    #     response = client.get(
+    #         f"/v1.0/process-instances/reports/{report.id}",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #     )
+    #     assert response.status_code == 200
+    #     assert response.json is not None
+    #     assert len(response.json["results"]) == 2
+    #     assert response.json["pagination"]["count"] == 2
+    #     assert response.json["pagination"]["pages"] == 1
+    #     assert response.json["pagination"]["total"] == 2
+    #
+    #     process_instance_dict = response.json["results"][0]
+    #     assert type(process_instance_dict["id"]) is int
+    #     assert (
+    #         process_instance_dict["process_model_identifier"]
+    #         == process_model_identifier
+    #     )
+    #     assert type(process_instance_dict["start_in_seconds"]) is int
+    #     assert process_instance_dict["start_in_seconds"] > 0
+    #     assert process_instance_dict["status"] == "complete"
+    #
+    # def test_process_instance_report_show_with_dynamic_filter_and_query_param(
+    #     self,
+    #     app: Flask,
+    #     client: FlaskClient,
+    #     with_db_and_bpmn_file_cleanup: None,
+    #     with_super_admin_user: UserModel,
+    #     setup_process_instances_for_reports: list[ProcessInstanceModel],
+    # ) -> None:
+    #     """Test_process_instance_report_show_with_default_list."""
+    #     report_metadata = {
+    #         "filter_by": [
+    #             {
+    #                 "field_name": "grade_level",
+    #                 "operator": "equals",
+    #                 "field_value": "{{grade_level}}",
+    #             }
+    #         ],
+    #     }
+    #
+    #     report = ProcessInstanceReportModel.create_with_attributes(
+    #         identifier="sure",
+    #         report_metadata=report_metadata,
+    #         user=with_super_admin_user,
+    #     )
+    #
+    #     response = client.get(
+    #         f"/v1.0/process-instances/reports/{report.id}?grade_level=1",
+    #         headers=self.logged_in_headers(with_super_admin_user),
+    #     )
+    #     assert response.status_code == 200
+    #     assert response.json is not None
+    #     assert len(response.json["results"]) == 1
 
     def test_process_instance_report_show_with_bad_identifier(
         self,

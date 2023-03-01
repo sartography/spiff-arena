@@ -65,6 +65,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     serialized_bpmn_definition_id: Optional[int] = db.Column(ForeignKey(SerializedBpmnDefinitionModel.id), nullable=True)  # type: ignore
     serialized_bpmn_definition = relationship("SerializedBpmnDefinitionModel")
 
+    # added mostly for the cascade delete
+    process_instance_data = relationship("ProcessInstanceDataModel", cascade="delete")  # type: ignore
+
     active_human_tasks = relationship(
         "HumanTaskModel",
         primaryjoin=(
