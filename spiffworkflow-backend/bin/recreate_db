@@ -55,7 +55,7 @@ if [[ "${1:-}" == "clean" ]]; then
   fi
   tasks="$tasks upgrade"
 elif [[ "${1:-}" == "migrate" ]]; then
-  tasks="$tasks migrate"
+  tasks="$tasks migrate upgrade"
 elif [[ "${1:-}" == "downgrade" ]]; then
   tasks="$tasks downgrade"
 else

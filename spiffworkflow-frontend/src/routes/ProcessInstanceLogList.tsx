@@ -29,8 +29,6 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}`;
   }
 
-  const userEmail = UserService.getUserEmail();
-
   useEffect(() => {
     const setProcessInstanceLogListFromResult = (result: any) => {
       setProcessInstanceLogs(result.results);
@@ -59,11 +57,14 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
           (row.bpmn_task_type === 'End Event' ? 'Process Ended' : '')}
       </td>
     );
+    const bpmnProcessCell = (
+      <td>{row.bpmn_process_name || row.bpmn_process_identifier}</td>
+    );
     if (isDetailedView) {
       tableRow.push(
         <>
           <td data-qa="paginated-entity-id">{row.id}</td>
-          <td>{row.bpmn_process_identifier}</td>
+          {bpmnProcessCell}
           {taskNameCell}
         </>
       );
@@ -71,7 +72,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       tableRow.push(
         <>
           {taskNameCell}
-          <td>{row.bpmn_process_identifier}</td>
+          {bpmnProcessCell}
         </>
       );
     }
@@ -80,7 +81,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         <>
           <td>{row.bpmn_task_type}</td>
           <td>{row.message}</td>
-          <td>{row.username === userEmail ? 'me 🔥' : row.username}</td>
+          <td>{row.username}</td>
         </>
       );
     }
