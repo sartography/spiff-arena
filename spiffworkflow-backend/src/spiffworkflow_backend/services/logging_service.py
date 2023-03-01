@@ -212,7 +212,8 @@ class DBHandler(logging.Handler):
         # if we do not have a process instance id then do not log and assume we are running a script unit test
         # that initializes a BpmnWorkflow without a process instance
         if record and record.process_instance_id:  # type: ignore
-            bpmn_process_identifier = record.workflow  # type: ignore
+            bpmn_process_identifier = record.workflow_spec  # type: ignore
+            bpmn_process_name = record.workflow_name  # type: ignore
             spiff_task_guid = str(record.task_id)  # type: ignore
             bpmn_task_identifier = str(record.task_spec)  # type: ignore
             bpmn_task_name = record.task_name if hasattr(record, "task_name") else None  # type: ignore
@@ -235,6 +236,7 @@ class DBHandler(logging.Handler):
                 {
                     "process_instance_id": record.process_instance_id,  # type: ignore
                     "bpmn_process_identifier": bpmn_process_identifier,
+                    "bpmn_process_name": bpmn_process_name,
                     "spiff_task_guid": spiff_task_guid,
                     "bpmn_task_name": bpmn_task_name,
                     "bpmn_task_identifier": bpmn_task_identifier,
