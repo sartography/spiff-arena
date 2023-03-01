@@ -42,7 +42,6 @@ class TestMessageService(BaseTest):
             "description": "We built a new feature for messages!",
             "amount": "100.00",
         }
-
         self.start_sender_process(client, with_super_admin_user, "test_from_api")
         self.assure_a_message_was_sent()
         self.assure_there_is_a_process_waiting_on_a_message()
@@ -80,6 +79,7 @@ class TestMessageService(BaseTest):
         self,
         app: Flask,
         client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
         """Test messages between two different running processes using a single conversation.

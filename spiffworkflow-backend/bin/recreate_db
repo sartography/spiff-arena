@@ -53,10 +53,14 @@ if [[ "${1:-}" == "clean" ]]; then
       docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "create database spiffworkflow_backend_local_development;"
     fi
   fi
+  tasks="$tasks upgrade"
 elif [[ "${1:-}" == "migrate" ]]; then
   tasks="$tasks migrate"
+elif [[ "${1:-}" == "downgrade" ]]; then
+  tasks="$tasks downgrade"
+else
+  tasks="$tasks upgrade"
 fi
-tasks="$tasks upgrade"
 
 if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
   mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development"
