@@ -1,8 +1,6 @@
 """Process_instance."""
 from __future__ import annotations
 
-from sqlalchemy.orm import deferred
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
@@ -46,5 +44,5 @@ class SerializedBpmnDefinitionModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "serialized_bpmn_definition"
     id: int = db.Column(db.Integer, primary_key=True)
-    hash: str = db.Column(db.String(255), nullable=False, index=True)
-    static_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
+    hash: str = db.Column(db.String(255), nullable=False, index=True, unique=True)
+    static_json: str = db.Column(db.JSON, nullable=False)

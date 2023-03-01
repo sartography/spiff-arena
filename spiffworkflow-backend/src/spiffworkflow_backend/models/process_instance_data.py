@@ -1,9 +1,6 @@
 """Process_instance."""
 from __future__ import annotations
-from sqlalchemy import ForeignKey
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
-from sqlalchemy.orm import deferred
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
@@ -23,7 +20,5 @@ class ProcessInstanceDataModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "process_instance_data"
     id: int = db.Column(db.Integer, primary_key=True)
-    process_instance_id: int = db.Column(
-        ForeignKey(ProcessInstanceModel.id), nullable=False  # type: ignore
-    )
-    runtime_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
+    # this is not deferred because there is no reason to query this model if you do not want the runtime_json
+    runtime_json: str = db.Column(db.JSON, nullable=False)
