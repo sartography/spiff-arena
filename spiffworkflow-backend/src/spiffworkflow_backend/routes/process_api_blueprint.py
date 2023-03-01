@@ -190,20 +190,32 @@ def task_data_update(
     if process_instance:
         if process_instance.status != "suspended":
             raise ProcessInstanceTaskDataCannotBeUpdatedError(
-                "The process instance needs to be suspended to udpate the task-data."
+                "The process instance needs to be suspended to update the task-data."
                 f" It is currently: {process_instance.status}"
             )
 
-        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
+        process_instance_data = process_instance.process_instance_data
+        if process_instance_data is None:
+            raise ApiError(
+                error_code="process_instance_data_not_found",
+                message=(
+                    "Could not find task data related to process instance:"
+                    f" {process_instance.id}"
+                ),
+            )
+        process_instance_data_dict = json.loads(process_instance_data.runtime_json)
+
         if "new_task_data" in body:
             new_task_data_str: str = body["new_task_data"]
             new_task_data_dict = json.loads(new_task_data_str)
-            if task_id in process_instance_bpmn_json_dict["tasks"]:
-                process_instance_bpmn_json_dict["tasks"][task_id][
+            if task_id in process_instance_data_dict["tasks"]:
+                process_instance_data_dict["tasks"][task_id][
                     "data"
                 ] = new_task_data_dict
-                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
-                db.session.add(process_instance)
+                process_instance_data.runtime_json = json.dumps(
+                    process_instance_data_dict
+                )
+                db.session.add(process_instance_data)
                 try:
                     db.session.commit()
                 except Exception as e:
