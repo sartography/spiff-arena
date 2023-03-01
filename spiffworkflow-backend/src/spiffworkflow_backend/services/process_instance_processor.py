@@ -524,7 +524,7 @@ class ProcessInstanceProcessor:
         if process_instance_model.serialized_bpmn_definition_id is None:
             return {}
         serialized_bpmn_definition = process_instance_model.serialized_bpmn_definition
-        process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=process_instance_model.id).first()
+        process_instance_data = process_instance_model.process_instance_data
         loaded_json: dict = json.loads(serialized_bpmn_definition.static_json or '{}')
         loaded_json.update(json.loads(process_instance_data.runtime_json))
         return loaded_json
@@ -847,7 +847,11 @@ class ProcessInstanceProcessor:
                 )
         return subprocesses_by_child_task_ids
 
-    def add_bpmn_json_records(self) -> None:
+    def _add_bpmn_json_records(self) -> None:
+        """Adds serialized_bpmn_definition and process_instance_data records to the db session.
+
+        Expects the save method to commit it.
+        """
         bpmn_dict = json.loads(self.serialize())
         bpmn_dict_keys = ('spec', 'subprocess_specs', 'serializer_version')
         bpmn_spec_dict = {}
@@ -866,16 +870,19 @@ class ProcessInstanceProcessor:
                 db.session.add(serialized_bpmn_definition)
                 self.process_instance_model.serialized_bpmn_definition = serialized_bpmn_definition
 
-        process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=self.process_instance_model.id).first()
-        if process_instance_data is None:
-            process_instance_data = ProcessInstanceDataModel(process_instance_id=self.process_instance_model.id)
+        process_instance_data = None
+        if self.process_instance_model.process_instance_data_id is None:
+            process_instance_data = ProcessInstanceDataModel()
+        else:
+            process_instance_data = self.process_instance_model.process_instance_data
 
         process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
         db.session.add(process_instance_data)
+        self.process_instance_model.process_instance_data = process_instance_data
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
-        self.add_bpmn_json_records()
+        self._add_bpmn_json_records()
 
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())

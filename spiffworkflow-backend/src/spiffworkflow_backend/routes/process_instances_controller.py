@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from spiffworkflow_backend.models.process_instance_data import ProcessInstanceDataModel
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -552,7 +551,7 @@ def process_instance_task_list(
 
     step_details = step_detail_query.all()
 
-    process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=process_instance.id).first()
+    process_instance_data = process_instance.process_instance_data
     process_instance_data_json = "{}" if process_instance_data is None else process_instance_data.runtime_json
     process_instance_data_dict = json.loads(process_instance_data_json)
     tasks = process_instance_data_dict["tasks"]
