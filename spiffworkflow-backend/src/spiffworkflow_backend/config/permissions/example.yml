@@ -30,6 +30,12 @@ groups:
         admin@spiffworkflow.org,
         nelson@spiffworkflow.org
       ]
+  approvers:
+    users:
+      [
+        malala@spiffworkflow.org,
+        oskar@spiffworkflow.org
+      ]
 
 permissions:
   # Admins have access to everything.
