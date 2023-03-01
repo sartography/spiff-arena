@@ -552,7 +552,9 @@ def process_instance_task_list(
     step_details = step_detail_query.all()
 
     process_instance_data = process_instance.process_instance_data
-    process_instance_data_json = "{}" if process_instance_data is None else process_instance_data.runtime_json
+    process_instance_data_json = (
+        "{}" if process_instance_data is None else process_instance_data.runtime_json
+    )
     process_instance_data_dict = json.loads(process_instance_data_json)
     tasks = process_instance_data_dict["tasks"]
     subprocesses = process_instance_data_dict["subprocesses"]
