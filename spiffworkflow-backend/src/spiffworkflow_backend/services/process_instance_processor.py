@@ -573,9 +573,10 @@ class ProcessInstanceProcessor:
             spiff_logger.setLevel(logging.WARNING)
 
             try:
+                full_bpmn_json = ProcessInstanceProcessor.get_full_bpmn_json(process_instance_model)
                 bpmn_process_instance = (
                     ProcessInstanceProcessor._serializer.deserialize_json(
-                        json.dumps(ProcessInstanceProcessor.get_full_bpmn_json(process_instance_model))
+                        json.dumps(full_bpmn_json)
                     )
                 )
             except Exception as err:
