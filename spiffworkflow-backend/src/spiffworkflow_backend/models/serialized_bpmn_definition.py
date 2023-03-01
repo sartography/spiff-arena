@@ -41,7 +41,6 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 #       added[added_key] = b[added_key]
 #   final_tuple = [added, removed, changed]
 class SerializedBpmnDefinitionModel(SpiffworkflowBaseDBModel):
-
     __tablename__ = "serialized_bpmn_definition"
     id: int = db.Column(db.Integer, primary_key=True)
     hash: str = db.Column(db.String(255), nullable=False, index=True, unique=True)

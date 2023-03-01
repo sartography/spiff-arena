@@ -199,7 +199,8 @@ def task_data_update(
             raise ApiError(
                 error_code="process_instance_data_not_found",
                 message=(
-                    f"Could not find task data related to process instance: {process_instance.id}"
+                    "Could not find task data related to process instance:"
+                    f" {process_instance.id}"
                 ),
             )
         process_instance_data_dict = json.loads(process_instance_data.runtime_json)
@@ -211,7 +212,9 @@ def task_data_update(
                 process_instance_data_dict["tasks"][task_id][
                     "data"
                 ] = new_task_data_dict
-                process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
+                process_instance_data.runtime_json = json.dumps(
+                    process_instance_data_dict
+                )
                 db.session.add(process_instance_data)
                 try:
                     db.session.commit()
