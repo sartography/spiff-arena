@@ -525,11 +525,9 @@ class ProcessInstanceProcessor:
             return {}
         serialized_bpmn_definition = process_instance_model.serialized_bpmn_definition
         process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=process_instance_model.id).first()
-        # if process_instance_data is not None:
-
-        return json.loads(serialized_bpmn_definition.static_json).update(json.loads(process_instance_data.runtime_json))
-
-
+        loaded_json: dict = json.loads(serialized_bpmn_definition.static_json or '{}')
+        loaded_json.update(json.loads(process_instance_data.runtime_json))
+        return loaded_json
 
     def current_user(self) -> Any:
         """Current_user."""
@@ -566,7 +564,7 @@ class ProcessInstanceProcessor:
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None,
     ) -> BpmnWorkflow:
         """__get_bpmn_process_instance."""
-        if process_instance_model.serialized_bpmn_definition_id:
+        if process_instance_model.serialized_bpmn_definition_id is not None:
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
             original_spiff_logger_log_level = spiff_logger.level
@@ -866,10 +864,12 @@ class ProcessInstanceProcessor:
             if serialized_bpmn_definition is None:
                 serialized_bpmn_definition = SerializedBpmnDefinitionModel(hash=new_hash_digest, static_json=json.dumps(bpmn_spec_dict))
                 db.session.add(serialized_bpmn_definition)
+                self.process_instance_model.serialized_bpmn_definition = serialized_bpmn_definition
 
         process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=self.process_instance_model.id).first()
         if process_instance_data is None:
             process_instance_data = ProcessInstanceDataModel(process_instance_id=self.process_instance_model.id)
+
         process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
         db.session.add(process_instance_data)
 
