@@ -25,6 +25,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSc
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceTaskDataCannotBeUpdatedError,
 )
+from spiffworkflow_backend.models.process_instance_data import ProcessInstanceDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
@@ -194,16 +195,25 @@ def task_data_update(
                 f" It is currently: {process_instance.status}"
             )
 
-        process_instance_bpmn_json_dict = json.loads(process_instance.bpmn_json)
+        process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=process_instance.id).first()
+        if process_instance_data is None:
+            raise ApiError(
+                error_code="process_instance_data_not_found",
+                message=(
+                    f"Could not find task data related to process instance: {process_instance.id}"
+                ),
+            )
+        process_instance_data_dict = json.loads(process_instance_data.runtime_json)
+
         if "new_task_data" in body:
             new_task_data_str: str = body["new_task_data"]
             new_task_data_dict = json.loads(new_task_data_str)
-            if task_id in process_instance_bpmn_json_dict["tasks"]:
-                process_instance_bpmn_json_dict["tasks"][task_id][
+            if task_id in process_instance_data_dict["tasks"]:
+                process_instance_data_dict["tasks"][task_id][
                     "data"
                 ] = new_task_data_dict
-                process_instance.bpmn_json = json.dumps(process_instance_bpmn_json_dict)
-                db.session.add(process_instance)
+                process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
+                db.session.add(process_instance_data)
                 try:
                     db.session.commit()
                 except Exception as e:
