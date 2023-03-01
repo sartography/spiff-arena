@@ -350,7 +350,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         external_methods: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """_evaluate."""
-        methods = self.__get_augment_methods(task)
+        methods = {}
+        if task:
+            methods = self.__get_augment_methods(task)
         if external_methods:
             methods.update(external_methods)
 
