@@ -520,9 +520,9 @@ class ProcessInstanceProcessor:
         )
 
     @classmethod
-    def get_full_bpmn_json(self, process_instance_model: ProcessInstanceModel) -> Optional[dict]:
+    def get_full_bpmn_json(cls, process_instance_model: ProcessInstanceModel) -> dict:
         if process_instance_model.serialized_bpmn_definition_id is None:
-            return None
+            return {}
         serialized_bpmn_definition = process_instance_model.serialized_bpmn_definition
         process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=process_instance_model.id).first()
         # if process_instance_data is not None:
@@ -848,19 +848,32 @@ class ProcessInstanceProcessor:
                 )
         return subprocesses_by_child_task_ids
 
-    def save(self) -> None:
-        """Saves the current state of this processor to the database."""
-        # self.process_instance_model.bpmn_json = self.serialize()
-        bpmn_json = self.serialize()
+    def add_bpmn_json_records(self) -> None:
+        bpmn_dict = json.loads(self.serialize())
+        bpmn_dict_keys = ('spec', 'subprocess_specs', 'serializer_version')
+        bpmn_spec_dict = {}
+        process_instance_data_dict = {}
+        for bpmn_key in bpmn_dict.keys():
+            if bpmn_key in bpmn_dict_keys:
+                bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
+            else:
+                process_instance_data_dict[bpmn_key] = bpmn_dict[bpmn_key]
 
         if self.process_instance_model.serialized_bpmn_definition_id is None:
-            new_hash = {k: bpmn_json[k] for k in ('spec', 'subprocess_spec', 'serializer_version')}
-            new_hash_digest = sha256(json.dumps(new_hash, sort_keys=True).encode('utf8')).hexdigest()
-            serialized_bpmn_definition = SerializedBpmnDefinitionModel(hash=new_hash_digest).first()
+            new_hash_digest = sha256(json.dumps(bpmn_spec_dict, sort_keys=True).encode('utf8')).hexdigest()
+            serialized_bpmn_definition = SerializedBpmnDefinitionModel.query.filter_by(hash=new_hash_digest).first()
             if serialized_bpmn_definition is None:
-                serialized_bpmn_definition = SerializedBpmnDefinitionModel(hash=new_hash_digest, static_json=json.dumps(new_hash))
+                serialized_bpmn_definition = SerializedBpmnDefinitionModel(hash=new_hash_digest, static_json=json.dumps(bpmn_spec_dict))
                 db.session.add(serialized_bpmn_definition)
 
+        process_instance_data = ProcessInstanceDataModel.query.filter_by(process_instance_id=self.process_instance_model.id)
+        if process_instance_data is None:
+            process_instance_data = ProcessInstanceDataModel(process_instance_id=self.process_instance_model.id)
+        process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
+
+    def save(self) -> None:
+        """Saves the current state of this processor to the database."""
+        self.add_bpmn_json_records()
 
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())
