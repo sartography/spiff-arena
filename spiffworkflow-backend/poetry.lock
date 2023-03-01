@@ -902,14 +902,6 @@ MarkupSafe = ">=2.0"
 i18n = ["Babel (>=2.7)"]
 
 [[package]]
-name = "json-delta"
-version = "2.0.2"
-description = "A diff/patch pair for JSON-serialized data structures."
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "jsonschema"
 version = "4.16.0"
 description = "An implementation of JSON Schema validation for Python"
@@ -2204,7 +2196,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "af711e2941c42b837da47ca8d647b1ae44657bf6805353bc216bb49cb3cbbfae"
+content-hash = "3876acb4e3d947787a3ba8e831844ca0b06bde34dc038be46cabc00aa2a4defe"
 
 [metadata.files]
 alabaster = [
@@ -2609,10 +2601,6 @@ itsdangerous = [
 Jinja2 = [
     {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
     {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
-]
-json-delta = [
-    {file = "json_delta-2.0.2-py2.py3-none-any.whl", hash = "sha256:12bc798354ea722fa04fae21ea06879321c47b0887572c27384accd6ef28efbf"},
-    {file = "json_delta-2.0.2.tar.gz", hash = "sha256:95ea3ff9908fc7d634c27ffec11db8fd8d935aa3e895d7302915d394b10e0321"},
 ]
 jsonschema = [
     {file = "jsonschema-4.16.0-py3-none-any.whl", hash = "sha256:9e74b8f9738d6a946d70705dc692b74b5429cd0960d58e79ffecfc43b2221eb9"},
