@@ -10,6 +10,10 @@ from spiffworkflow_backend.services.process_instance_processor import (
 )
 
 
+class TaskNotGivenToScriptError(Exception):
+    pass
+
+
 class GetDataSizes(Script):
     """GetDataSizes."""
 
@@ -30,6 +34,11 @@ class GetDataSizes(Script):
         **kwargs: Any
     ) -> Any:
         """Run."""
+        if script_attributes_context.task is None:
+            raise TaskNotGivenToScriptError(
+                "The task was not given to script 'get_data_sizes'. "
+                "This script needs to be run from within the context of a task."
+            )
         workflow = script_attributes_context.task.workflow
         task_data_size = ProcessInstanceProcessor.get_task_data_size(workflow)
         task_data_keys_by_task = {

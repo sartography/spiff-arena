@@ -316,7 +316,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 
         super().__init__(environment=environment)
 
-    def __get_augment_methods(self, task: SpiffTask) -> Dict[str, Callable]:
+    def __get_augment_methods(self, task: Optional[SpiffTask]) -> Dict[str, Callable]:
         """__get_augment_methods."""
         tld = current_app.config["THREAD_LOCAL_DATA"]
 
@@ -356,9 +356,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         external_methods: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """_evaluate."""
-        methods = {}
-        if task:
-            methods = self.__get_augment_methods(task)
+        methods = self.__get_augment_methods(task)
         if external_methods:
             methods.update(external_methods)
 
