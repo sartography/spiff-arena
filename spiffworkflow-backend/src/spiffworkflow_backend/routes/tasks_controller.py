@@ -620,7 +620,7 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
                 wfe.error_line = unprocessed_template.split("\n")[tb.tb_lineno - 1]
             tb = tb.tb_next
         wfe.add_note(
-            "Jinja2 template errors can happen when trying to displaying task data"
+            "Jinja2 template errors can happen when trying to display task data"
         )
         raise wfe from error
 

@@ -1,6 +1,7 @@
 """Process_instance_processor."""
 from hashlib import sha256
 from spiffworkflow_backend.models import serialized_bpmn_definition
+from spiffworkflow_backend.models import process_instance_data
 from spiffworkflow_backend.models.process_instance_data import ProcessInstanceDataModel
 from spiffworkflow_backend.models.serialized_bpmn_definition import SerializedBpmnDefinitionModel # noqa: F401
 import _strptime  # type: ignore
@@ -520,7 +521,7 @@ class ProcessInstanceProcessor:
         )
 
     @classmethod
-    def get_full_bpmn_json(cls, process_instance_model: ProcessInstanceModel) -> dict:
+    def _get_full_bpmn_json(cls, process_instance_model: ProcessInstanceModel) -> dict:
         if process_instance_model.serialized_bpmn_definition_id is None:
             return {}
         serialized_bpmn_definition = process_instance_model.serialized_bpmn_definition
@@ -571,7 +572,7 @@ class ProcessInstanceProcessor:
             spiff_logger.setLevel(logging.WARNING)
 
             try:
-                full_bpmn_json = ProcessInstanceProcessor.get_full_bpmn_json(process_instance_model)
+                full_bpmn_json = ProcessInstanceProcessor._get_full_bpmn_json(process_instance_model)
                 bpmn_process_instance = (
                     ProcessInstanceProcessor._serializer.deserialize_json(
                         json.dumps(full_bpmn_json)
@@ -732,12 +733,12 @@ class ProcessInstanceProcessor:
 
         Rerturns: {process_name: [task_1, task_2, ...], ...}
         """
-        bpmn_json = json.loads(self.process_instance_model.serialized_bpmn_definition.static_json or "{}")
-        processes: dict[str, list[str]] = {bpmn_json["spec"]["name"]: []}
-        for task_name, _task_spec in bpmn_json["spec"]["task_specs"].items():
-            processes[bpmn_json["spec"]["name"]].append(task_name)
-        if "subprocess_specs" in bpmn_json:
-            for subprocess_name, subprocess_details in bpmn_json[
+        bpmn_definition_dict = json.loads(self.process_instance_model.serialized_bpmn_definition.static_json or "{}")
+        processes: dict[str, list[str]] = {bpmn_definition_dict["spec"]["name"]: []}
+        for task_name, _task_spec in bpmn_definition_dict["spec"]["task_specs"].items():
+            processes[bpmn_definition_dict["spec"]["name"]].append(task_name)
+        if "subprocess_specs" in bpmn_definition_dict:
+            for subprocess_name, subprocess_details in bpmn_definition_dict[
                 "subprocess_specs"
             ].items():
                 processes[subprocess_name] = []
@@ -772,7 +773,7 @@ class ProcessInstanceProcessor:
 
     #################################################################
 
-    def get_all_task_specs(self, bpmn_json: dict) -> dict[str, dict]:
+    def get_all_task_specs(self) -> dict[str, dict]:
         """This looks both at top level task_specs and subprocess_specs in the serialized data.
 
         It returns a dict of all task specs based on the task name like it is in the serialized form.
@@ -780,9 +781,10 @@ class ProcessInstanceProcessor:
         NOTE: this may not fully work for tasks that are NOT call activities since their task_name may not be unique
         but in our current use case we only care about the call activities here.
         """
-        spiff_task_json = bpmn_json["spec"]["task_specs"] or {}
-        if "subprocess_specs" in bpmn_json:
-            for _subprocess_name, subprocess_details in bpmn_json[
+        bpmn_definition_dict = json.loads(self.process_instance_model.serialized_bpmn_definition.static_json or "{}")
+        spiff_task_json = bpmn_definition_dict["spec"]["task_specs"] or {}
+        if "subprocess_specs" in bpmn_definition_dict:
+            for _subprocess_name, subprocess_details in bpmn_definition_dict[
                 "subprocess_specs"
             ].items():
                 if "task_specs" in subprocess_details:
@@ -804,13 +806,13 @@ class ProcessInstanceProcessor:
         Also note that subprocess_task_id might in fact be a call activity, because spiff treats
         call activities like subprocesses in terms of the serialization.
         """
-        bpmn_json = json.loads(self.process_instance_model.serialized_bpmn_definition.static_json or "{}")
-        spiff_task_json = self.get_all_task_specs(bpmn_json)
+        process_instance_data_dict = json.loads(self.process_instance_model.process_instance_data.runtime_json or '{}')
+        spiff_task_json = self.get_all_task_specs()
 
         subprocesses_by_child_task_ids = {}
         task_typename_by_task_id = {}
-        if "subprocesses" in bpmn_json:
-            for subprocess_id, subprocess_details in bpmn_json["subprocesses"].items():
+        if "subprocesses" in process_instance_data_dict:
+            for subprocess_id, subprocess_details in process_instance_data_dict["subprocesses"].items():
                 for task_id, task_details in subprocess_details["tasks"].items():
                     subprocesses_by_child_task_ids[task_id] = subprocess_id
                     task_name = task_details["task_spec"]
@@ -868,7 +870,7 @@ class ProcessInstanceProcessor:
             if serialized_bpmn_definition is None:
                 serialized_bpmn_definition = SerializedBpmnDefinitionModel(hash=new_hash_digest, static_json=json.dumps(bpmn_spec_dict))
                 db.session.add(serialized_bpmn_definition)
-                self.process_instance_model.serialized_bpmn_definition = serialized_bpmn_definition
+            self.process_instance_model.serialized_bpmn_definition = serialized_bpmn_definition
 
         process_instance_data = None
         if self.process_instance_model.process_instance_data_id is None:
