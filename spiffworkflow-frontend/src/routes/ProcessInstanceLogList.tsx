@@ -10,7 +10,6 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import UserService from '../services/UserService';
 
 type OwnProps = {
   variant: string;
