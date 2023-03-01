@@ -580,6 +580,7 @@ def process_instance_task_list(
                 subprocess_info["tasks"][spiff_task_id]["state"] = (
                     subprocess_state_overrides.get(spiff_task_id, TaskState.FUTURE)
                 )
+
     for spiff_task_id in tasks:
         if spiff_task_id not in steps_by_id:
             tasks[spiff_task_id]["data"] = {}
