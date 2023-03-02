@@ -217,6 +217,17 @@ class ProcessInstanceService:
 
             return lane_uids
 
+    #if (
+    #    isinstance(process_data_value, str)
+    #    and process_data_value.startswith("data:")
+    #):
+    #    parts = process_data_value.split(";")
+    #    mimetype = parts[0][4:]
+    #    filename = parts[1].split("=")[1]
+    #    base64_value = parts[2].split(",")[1]
+    #    file_contents = base64.b64decode(base64_value)
+
+
     @staticmethod
     def separate_file_uploads_from_submitted_data(data: dict[str, Any]) -> (dict[str, Any], dict[str, Any]):
         def is_file_data(value: Any) -> bool:
