@@ -1,4 +1,5 @@
 """Process_instance_service."""
+import re
 import time
 from typing import Any
 from typing import List
@@ -215,6 +216,26 @@ class ProcessInstanceService:
                     )
 
             return lane_uids
+
+    @staticmethod
+    def separate_file_uploads_from_submitted_data(data: dict[str, Any]) -> (dict[str, Any], dict[str, Any]):
+        def is_file_data(value: Any) -> bool:
+            if isinstance(value, str) and value.startswith("data:"):
+                return True
+            if isinstance(value, list) and len(value) > 0 and is_file_data(value[0]):
+                return True
+            return False
+
+        file_uploads = {}
+        other_data = {}
+
+        for k, v in data.items():
+            if is_file_data(v):
+                file_uploads[k] = data[k]
+            else:
+                other_data[k] = data[k]
+
+        return (file_uploads, other_data)
 
     @staticmethod
     def complete_form_task(
