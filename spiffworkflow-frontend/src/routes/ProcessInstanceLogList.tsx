@@ -80,7 +80,11 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         <>
           <td>{row.bpmn_task_type}</td>
           <td>{row.message}</td>
-          <td>{row.username}</td>
+          <td>
+            {row.username || (
+              <span className="system-user-log-entry">system</span>
+            )}
+          </td>
         </>
       );
     }
