@@ -16,7 +16,7 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process"
     id: int = db.Column(db.Integer, primary_key=True)
 
-    parent_process_id: int = db.Column(ForeignKey("BpmnProcessModel.id"), nullable=True)
+    parent_process_id: int = db.Column(ForeignKey("bpmn_process.id"), nullable=True)
 
     properties_json: dict = db.Column(db.JSON, nullable=False)
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)

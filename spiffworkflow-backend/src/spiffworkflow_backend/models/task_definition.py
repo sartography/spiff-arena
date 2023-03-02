@@ -1,4 +1,5 @@
 from __future__ import annotations
+from sqlalchemy.orm import relationship
 from sqlalchemy import UniqueConstraint
 from sqlalchemy import ForeignKey
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
@@ -17,6 +18,7 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
 
     id: int = db.Column(db.Integer, primary_key=True)
     bpmn_process_definition_id: int = db.Column(ForeignKey(BpmnProcessDefinitionModel.id), nullable=False)  # type: ignore
+    bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
     bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     properties_json: dict = db.Column(db.JSON, nullable=False)
