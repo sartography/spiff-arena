@@ -219,8 +219,9 @@ class ProcessInstanceService:
 
             return lane_uids
 
-    @staticmethod
+    @classmethod
     def file_data_model_for_value(
+        cls,
         identifier: str, 
         value: str,
         process_instance_id: int,
@@ -249,6 +250,28 @@ class ProcessInstanceService:
                 pass
 
         return None
+
+    @classmethod
+    def file_data_models_for_data(
+        cls,
+        data: dict[str, Any],
+        process_instance_id: int,
+    ) -> List[ProcessInstanceFileDataModel]:
+        models = []
+
+        for k, v in data.items():
+            if isinstance(v, str):
+                model = cls.file_data_model_for_value(k, v, process_instance_id)
+                if model is not None:
+                    models.append(model)
+            elif isinstance(v, list):
+                for i, list_value in enumerate(v):
+                    model = cls.file_data_model_for_value(k, list_value, process_instance_id)
+                    if model is not None:
+                        model.list_index = i
+                        models.append(model)
+
+        return models
 
 
     @staticmethod

@@ -1,9 +1,12 @@
 """Test_process_instance_processor."""
+from typing import Optional
+
 from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -16,6 +19,18 @@ from spiffworkflow_backend.services.process_instance_service import (
 class TestProcessInstanceService(BaseTest):
     """TestProcessInstanceService."""
 
+    SAMPLE_FILE_DATA = "data:some/mimetype;name=testing.txt;base64,dGVzdGluZwo="
+
+    def _check_sample_file_data_model(self, identifier: str, list_index: Optional[int], model: Optional[ProcessInstanceFileDataModel]) -> None:
+        assert model is not None
+        assert model.identifier == identifier
+        assert model.process_instance_id == 111
+        assert model.list_index == list_index
+        assert model.mimetype == "some/mimetype"
+        assert model.filename == "testing.txt"
+        assert model.contents == b"testing\n"
+        assert model.digest == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
+
     def test_can_create_file_data_model_for_file_data_value(
         self,
         app: Flask,
@@ -24,17 +39,10 @@ class TestProcessInstanceService(BaseTest):
     ) -> None:
         model = ProcessInstanceService.file_data_model_for_value(
             "uploaded_file",
-            "data:some/mimetype;name=testing.txt;base64,dGVzdGluZwo=",
+            self.SAMPLE_FILE_DATA,
             111,
         )
-        assert model is not None
-        assert model.identifier == "uploaded_file"
-        assert model.process_instance_id == 111
-        assert model.list_index is None
-        assert model.mimetype == "some/mimetype"
-        assert model.filename == "testing.txt"
-        assert model.contents == b"testing\n"
-        assert model.digest == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
+        self._check_sample_file_data_model("uploaded_file", None, model)
 
     def test_does_not_create_file_data_model_for_non_file_data_value(
         self,
@@ -48,6 +56,73 @@ class TestProcessInstanceService(BaseTest):
             111,
         )
         assert model is None
+
+    def test_can_create_file_data_models_for_single_file_data_values(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        data = {
+            "uploaded_file": self.SAMPLE_FILE_DATA,
+        }
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
+
+        assert len(models) == 1
+        self._check_sample_file_data_model("uploaded_file", None, models[0])
+
+    def test_can_create_file_data_models_for_multiple_file_data_values(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        data = {
+            "uploaded_files": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
+        }
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
+
+        assert len(models) == 2
+        self._check_sample_file_data_model("uploaded_files", 0, models[0])
+        self._check_sample_file_data_model("uploaded_files", 1, models[1])
+
+    def test_can_create_file_data_models_for_fix_of_file_data_and_non_file_data_values(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        data = {
+            "not_a_file": "just a value",
+            "uploaded_file": self.SAMPLE_FILE_DATA,
+            "not_a_file2": "just a value 2",
+            "uploaded_files": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
+            "not_a_file3": "just a value 3",
+            "uploaded_files2": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
+            "uploaded_file2": self.SAMPLE_FILE_DATA,
+        }
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
+
+        assert len(models) == 6
+        self._check_sample_file_data_model("uploaded_file", None, models[0])
+        self._check_sample_file_data_model("uploaded_files", 0, models[1])
+        self._check_sample_file_data_model("uploaded_files", 1, models[2])
+        self._check_sample_file_data_model("uploaded_files2", 0, models[3])
+        self._check_sample_file_data_model("uploaded_files2", 1, models[4])
+        self._check_sample_file_data_model("uploaded_file2", None, models[5])
+
+    def test_does_not_create_file_data_models_for_non_file_data_values(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        data = {
+            "not_a_file": "just a value",
+        }
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
+
+        assert len(models) == 0
 
     def test_does_not_log_set_data_when_calling_engine_steps_on_waiting_call_activity(
         self,
