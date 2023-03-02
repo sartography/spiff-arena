@@ -16,53 +16,38 @@ from spiffworkflow_backend.services.process_instance_service import (
 class TestProcessInstanceService(BaseTest):
     """TestProcessInstanceService."""
 
-    def test_can_separate_uploaded_file_from_submitted_data(
+    def test_can_create_file_data_model_for_file_data_value(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        data = {
-            "good_key": "hey there",
-            "bad_key": "data:...",
-        }
-        file_uploads, other_data = ProcessInstanceService.separate_file_uploads_from_submitted_data(data)
-        assert len(file_uploads) == 1
-        assert "bad_key" in file_uploads
-        assert len(other_data) == 1
-        assert "good_key" in other_data
+        model = ProcessInstanceService.file_data_model_for_value(
+            "uploaded_file",
+            "data:some/mimetype;name=testing.txt;base64,dGVzdGluZwo=",
+            111,
+        )
+        assert model is not None
+        assert model.identifier == "uploaded_file"
+        assert model.process_instance_id == 111
+        assert model.list_index is None
+        assert model.mimetype == "some/mimetype"
+        assert model.filename == "testing.txt"
+        assert model.contents == b"testing\n"
+        assert model.digest == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
 
-    def test_can_separate_uploaded_files_from_submitted_data(
+    def test_does_not_create_file_data_model_for_non_file_data_value(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        data = {
-            "good_key": "hey there",
-            "bad_key": ["data:...", "data:..."],
-        }
-        file_uploads, other_data = ProcessInstanceService.separate_file_uploads_from_submitted_data(data)
-        assert len(file_uploads) == 1
-        assert "bad_key" in file_uploads
-        assert len(other_data) == 1
-        assert "good_key" in other_data
-
-    def test_separate_file_uploads_does_not_mind_key_types(
-        self,
-        app: Flask,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-    ) -> None:
-        data = {
-            "str_key": "hey there",
-            "int_key": 33,
-            "dict_key": {"a": 1},
-            "list_key": [1, 2, 3],
-        }
-        file_uploads, other_data = ProcessInstanceService.separate_file_uploads_from_submitted_data(data)
-        assert len(file_uploads) == 0
-        assert other_data == data
+        model = ProcessInstanceService.file_data_model_for_value(
+            "not_a_file",
+            "just a value",
+            111,
+        )
+        assert model is None
 
     def test_does_not_log_set_data_when_calling_engine_steps_on_waiting_call_activity(
         self,

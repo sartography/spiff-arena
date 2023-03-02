@@ -1,5 +1,6 @@
 """Process_instance_service."""
-import re
+import base64
+import hashlib
 import time
 from typing import Any
 from typing import List
@@ -16,6 +17,7 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
@@ -217,15 +219,36 @@ class ProcessInstanceService:
 
             return lane_uids
 
-    #if (
-    #    isinstance(process_data_value, str)
-    #    and process_data_value.startswith("data:")
-    #):
-    #    parts = process_data_value.split(";")
-    #    mimetype = parts[0][4:]
-    #    filename = parts[1].split("=")[1]
-    #    base64_value = parts[2].split(",")[1]
-    #    file_contents = base64.b64decode(base64_value)
+    @staticmethod
+    def file_data_model_for_value(
+        identifier: str, 
+        value: str,
+        process_instance_id: int,
+    ) -> Optional[ProcessInstanceFileDataModel]:
+        if value.startswith("data:"):
+            try:
+                parts = value.split(";")
+                mimetype = parts[0][5:]
+                filename = parts[1].split("=")[1]
+                base64_value = parts[2].split(",")[1]
+                contents = base64.b64decode(base64_value)
+                digest = hashlib.sha256(contents).hexdigest()
+                now_in_seconds = round(time.time())
+
+                return ProcessInstanceFileDataModel(
+                    process_instance_id=process_instance_id,
+                    identifier=identifier,
+                    mimetype=mimetype,
+                    filename=filename,
+                    contents=contents,
+                    digest=digest,
+                    updated_at_in_seconds=now_in_seconds,
+                    created_at_in_seconds=now_in_seconds,
+                )
+            except:
+                pass
+
+        return None
 
 
     @staticmethod
