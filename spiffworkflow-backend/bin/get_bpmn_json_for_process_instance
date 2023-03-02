@@ -1,16 +1,22 @@
+#!/usr/bin/env python
+# ^ for syntax highlighting
 """Get the bpmn process json for a given process instance id and store it in /tmp."""
+import json
 import os
 import sys
 
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceProcessor,
+)
 
 
-def main(process_instance_id: str):
+def main(process_instance_id: str) -> None:
     """Main."""
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "local_development"
     if os.environ.get("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR") is None:
-      os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = "hey"
+        os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = "hey"
     flask_env_key = "FLASK_SESSION_SECRET_KEY"
     os.environ[flask_env_key] = "whatevs"
     app = create_app()
@@ -19,16 +25,18 @@ def main(process_instance_id: str):
             id=process_instance_id
         ).first()
 
-        file_path = f"/tmp/{process_instance_id}_bpmn_json.json"
+        file_path = f"/var/tmp/{process_instance_id}_bpmn_json.json"
         if not process_instance:
             raise Exception(
                 f"Could not find a process instance with id: {process_instance_id}"
             )
 
-        with open(
-            file_path, "w", encoding="utf-8"
-        ) as f:
-            f.write(process_instance.bpmn_json)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(
+                json.dumps(
+                    ProcessInstanceProcessor._get_full_bpmn_json(process_instance)
+                )
+            )
         print(f"Saved to {file_path}")
 
 
