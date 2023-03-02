@@ -1,5 +1,10 @@
 """Task."""
 import enum
+from dataclasses import dataclass
+from sqlalchemy import ForeignKey
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from typing import Any
 from typing import Optional
 from typing import Union
@@ -7,7 +12,8 @@ from typing import Union
 import marshmallow
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
-from SpiffWorkflow.task import TaskStateNames  # type: ignore
+from SpiffWorkflow.task import TaskStateNames
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # type: ignore
 
 
 class MultiInstanceType(enum.Enum):
@@ -17,6 +23,36 @@ class MultiInstanceType(enum.Enum):
     looping = "looping"
     parallel = "parallel"
     sequential = "sequential"
+
+
+# properties_json attributes:
+#   "id": "a56e1403-2838-4f03-a31f-f99afe16f38d",
+#   "parent": null,
+#   "children": [
+#     "af6ba340-71e7-46d7-b2d4-e3db1751785d"
+#   ],
+#   "last_state_change": 1677775475.18116,
+#   "state": 32,
+#   "task_spec": "Root",
+#   "triggered": false,
+#   "workflow_name": "Process_category_number_one_call_activity_call_activity_test_bd2e724",
+#   "internal_data": {},
+@dataclass
+class TaskModel(SpiffworkflowBaseDBModel):
+    __tablename__ = "task"
+    id: int = db.Column(db.Integer, primary_key=True)
+    guid: str = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    bpmn_process_id: int = db.Column(
+        ForeignKey(BpmnProcessModel.id), nullable=False  # type: ignore
+    )
+
+    # find this by looking up the "workflow_name" and "task_spec" from the properties_json
+    task_definition_id: int = db.Column(
+        ForeignKey(TaskDefinitionModel.id), nullable=False  # type: ignore
+    )
+    state: str = db.Column(db.String(10), nullable=False)
+    properties_json: dict = db.Column(db.JSON, nullable=False)
+    json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
 
 class Task:
