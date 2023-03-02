@@ -29,6 +29,12 @@
   border-color: none;
 }
 
+/* make this a little less prominent so the actual human beings completing tasks stand out */
+.system-user-log-entry {
+  color: #B0B0B0;
+  font-style: italic;
+}
+
 h1 {
   font-weight: 400;
   font-size: 28px;
