@@ -86,7 +86,6 @@ def process_list() -> Any:
 def _process_data_fetcher(
     process_instance_id: int,
     process_data_identifier: str,
-    modified_process_model_identifier: str,
     download_file_data: bool,
     index: Optional[int] = None,
 ) -> flask.wrappers.Response:
@@ -140,9 +139,8 @@ def process_data_show(
     return _process_data_fetcher(
         process_instance_id,
         process_data_identifier,
-        modified_process_model_identifier,
-        False,
-        None,
+        download_file_data=False,
+        index=None,
     )
 
 
@@ -156,9 +154,8 @@ def process_data_file_download(
     return _process_data_fetcher(
         process_instance_id,
         process_data_identifier,
-        modified_process_model_identifier,
-        True,
-        index,
+        download_file_data=True,
+        index=index,
     )
 
 
