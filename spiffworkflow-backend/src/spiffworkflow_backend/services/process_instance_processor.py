@@ -1090,7 +1090,7 @@ class ProcessInstanceProcessor:
         self.add_step()
         self.save()
         # Saving the workflow seems to reset the status
-        self.suspend()
+        self.suspend(self.process_instance_model)
 
     def reset_process(self, spiff_step: int) -> None:
         """Reset a process to an earlier state."""
@@ -1134,7 +1134,7 @@ class ProcessInstanceProcessor:
                 db.session.delete(row)
 
             self.save()
-            self.suspend()
+            self.suspend(self.process_instance_model)
 
     @staticmethod
     def get_parser() -> MyCustomParser:
@@ -1857,14 +1857,16 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-    def suspend(self) -> None:
+    @classmethod
+    def suspend(cls, process_instance: ProcessInstanceModel) -> None:
         """Suspend."""
-        self.process_instance_model.status = ProcessInstanceStatus.suspended.value
-        db.session.add(self.process_instance_model)
+        process_instance.status = ProcessInstanceStatus.suspended.value
+        db.session.add(process_instance)
         db.session.commit()
 
-    def resume(self) -> None:
+    @classmethod
+    def resume(cls, process_instance: ProcessInstanceModel) -> None:
         """Resume."""
-        self.process_instance_model.status = ProcessInstanceStatus.waiting.value
-        db.session.add(self.process_instance_model)
+        process_instance.status = ProcessInstanceStatus.waiting.value
+        db.session.add(process_instance)
         db.session.commit()
