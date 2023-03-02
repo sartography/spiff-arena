@@ -254,7 +254,10 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
 
     form_schema_file_name = ""
     form_ui_schema_file_name = ""
-    spiff_task = _get_spiff_task_from_process_instance(task_id, process_instance)
+    processor = ProcessInstanceProcessor(process_instance)
+    spiff_task = _get_spiff_task_from_process_instance(
+        task_id, process_instance, processor=processor
+    )
     extensions = spiff_task.task_spec.extensions
 
     if "properties" in extensions:
@@ -263,7 +266,6 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
             form_schema_file_name = properties["formJsonSchemaFilename"]
         if "formUiSchemaFilename" in properties:
             form_ui_schema_file_name = properties["formUiSchemaFilename"]
-    processor = ProcessInstanceProcessor(process_instance)
     task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
     task.data = spiff_task.data
     task.process_model_display_name = process_model.display_name
@@ -612,7 +614,7 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
         )
         raise wfe from template_error
     except Exception as error:
-        type, value, tb = exc_info()
+        _type, _value, tb = exc_info()
         wfe = WorkflowTaskException(str(error), task=spiff_task, exception=error)
         while tb:
             if tb.tb_frame.f_code.co_filename == "<template>":

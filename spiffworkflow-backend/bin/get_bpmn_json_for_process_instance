@@ -1,9 +1,14 @@
+#!/usr/bin/env python
+# ^ for syntax highlighting
+
 """Get the bpmn process json for a given process instance id and store it in /tmp."""
 import os
 import sys
+import json
 
 from spiffworkflow_backend import create_app
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 
 
 def main(process_instance_id: str):
@@ -19,7 +24,7 @@ def main(process_instance_id: str):
             id=process_instance_id
         ).first()
 
-        file_path = f"/tmp/{process_instance_id}_bpmn_json.json"
+        file_path = f"/var/tmp/{process_instance_id}_bpmn_json.json"
         if not process_instance:
             raise Exception(
                 f"Could not find a process instance with id: {process_instance_id}"
@@ -28,7 +33,9 @@ def main(process_instance_id: str):
         with open(
             file_path, "w", encoding="utf-8"
         ) as f:
-            f.write(process_instance.bpmn_json)
+            f.write(
+                json.dumps(ProcessInstanceProcessor._get_full_bpmn_json(process_instance))
+            )
         print(f"Saved to {file_path}")
 
 
