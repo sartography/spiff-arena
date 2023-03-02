@@ -3,6 +3,7 @@ import base64
 import hashlib
 import time
 from typing import Any
+from typing import Generator
 from typing import List
 from typing import Optional
 
@@ -252,6 +253,19 @@ class ProcessInstanceService:
         return None
 
     @classmethod
+    def possible_file_data_values(
+        cls,
+        data: dict[str, Any],
+    ) -> Generator[str, str, Optional[int]]:
+        for identifier, value in data.items():
+            if isinstance(value, str):
+                yield (identifier, value, None)
+            if isinstance(value, list):
+                for list_index, list_value in enumerate(value):
+                    if isinstance(list_value, str):
+                        yield (identifier, list_value, list_index)
+
+    @classmethod
     def file_data_models_for_data(
         cls,
         data: dict[str, Any],
@@ -259,40 +273,13 @@ class ProcessInstanceService:
     ) -> List[ProcessInstanceFileDataModel]:
         models = []
 
-        for k, v in data.items():
-            if isinstance(v, str):
-                model = cls.file_data_model_for_value(k, v, process_instance_id)
-                if model is not None:
-                    models.append(model)
-            elif isinstance(v, list):
-                for i, list_value in enumerate(v):
-                    model = cls.file_data_model_for_value(k, list_value, process_instance_id)
-                    if model is not None:
-                        model.list_index = i
-                        models.append(model)
+        for identifier, value, list_index in cls.possible_file_data_values(data):
+            model = cls.file_data_model_for_value(identifier, value, process_instance_id)
+            if model is not None:
+                model.list_index = list_index
+                models.append(model)
 
         return models
-
-
-    @staticmethod
-    def separate_file_uploads_from_submitted_data(data: dict[str, Any]) -> (dict[str, Any], dict[str, Any]):
-        def is_file_data(value: Any) -> bool:
-            if isinstance(value, str) and value.startswith("data:"):
-                return True
-            if isinstance(value, list) and len(value) > 0 and is_file_data(value[0]):
-                return True
-            return False
-
-        file_uploads = {}
-        other_data = {}
-
-        for k, v in data.items():
-            if is_file_data(v):
-                file_uploads[k] = data[k]
-            else:
-                other_data[k] = data[k]
-
-        return (file_uploads, other_data)
 
     @staticmethod
     def complete_form_task(
