@@ -28,7 +28,7 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
     bpmn_identifier: str = db.Column(
-        db.String(255, collation="utf8mb4_0900_as_cs"), nullable=False, index=True
+        db.String(255), nullable=False, index=True
     )
     properties_json: dict = db.Column(db.JSON, nullable=False)
     typename: str = db.Column(db.String(255), nullable=False)
