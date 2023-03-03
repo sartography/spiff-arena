@@ -21,6 +21,7 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     properties_json: str = db.Column(db.JSON, nullable=False)
 
     # process or subprocess
+    # FIXME: will probably ignore for now since we do not strictly need it
     type: str = db.Column(db.String(32), nullable=False, index=True)
 
     # TODO: remove these from process_instance

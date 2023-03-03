@@ -1,5 +1,6 @@
 """Process_instance."""
 from __future__ import annotations
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 
 from typing import Any
 from typing import cast
@@ -73,6 +74,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         ForeignKey(ProcessInstanceDataModel.id), nullable=True  # type: ignore
     )
     process_instance_data = relationship("ProcessInstanceDataModel", cascade="delete")
+
+    bpmn_process_definition_id: int = db.Column(ForeignKey(BpmnProcessDefinitionModel.id), nullable=True)  # type: ignore
+    bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
     active_human_tasks = relationship(
         "HumanTaskModel",
