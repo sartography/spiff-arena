@@ -99,3 +99,6 @@ a:link {
   padding-bottom: 70px;
   min-height: 100%;
 }
+.djs-palette.two-column.open {
+  width: 96px !important;
+}
