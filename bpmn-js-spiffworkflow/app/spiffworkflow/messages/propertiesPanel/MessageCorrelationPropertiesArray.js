@@ -44,7 +44,7 @@ export function MessageCorrelationPropertiesArray(props) {
       });
       return {
         id,
-        label: correlationPropertyModdleElement.id,
+        label: correlationPropertyModdleElement.name,
         entries,
         autoFocusEntry: id,
         remove: removeFactory({

@@ -12,7 +12,6 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from sqlalchemy import or_
 
 from spiffworkflow_backend import db
 from spiffworkflow_backend.exceptions.api_error import ApiError
@@ -80,17 +79,11 @@ class ProcessInstanceService:
         return cls.create_process_instance(process_model, user)
 
     @staticmethod
-    def do_waiting() -> None:
+    def do_waiting(status_value: str = ProcessInstanceStatus.waiting.value) -> None:
         """Do_waiting."""
         records = (
             db.session.query(ProcessInstanceModel)
-            .filter(
-                or_(
-                    ProcessInstanceModel.status == ProcessInstanceStatus.waiting.value,
-                    ProcessInstanceModel.status
-                    == ProcessInstanceStatus.user_input_required.value,
-                )
-            )
+            .filter(ProcessInstanceModel.status == status_value)
             .all()
         )
         process_instance_lock_prefix = "Background"

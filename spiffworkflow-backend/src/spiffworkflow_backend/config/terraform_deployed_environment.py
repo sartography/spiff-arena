@@ -19,10 +19,14 @@ SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER = (
     == "true"
 )
 
-SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = (
-    f"https://keycloak.{environment_identifier_for_this_config_file_only}"
-    ".spiffworkflow.org/realms/spiffworkflow"
+SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = environ.get(
+    "SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL",
+    default=(
+        f"https://keycloak.{environment_identifier_for_this_config_file_only}"
+        ".spiffworkflow.org/realms/spiffworkflow"
+    ),
 )
+
 SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND = (
     f"https://{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
 )
