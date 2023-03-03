@@ -22,7 +22,8 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
 
     # process or subprocess
     # FIXME: will probably ignore for now since we do not strictly need it
-    type: str = db.Column(db.String(32), nullable=False, index=True)
+    # make this nullable false and index it once we actually start using it
+    type: str = db.Column(db.String(32), nullable=True)
 
     # TODO: remove these from process_instance
     bpmn_version_control_type: str = db.Column(db.String(50))
