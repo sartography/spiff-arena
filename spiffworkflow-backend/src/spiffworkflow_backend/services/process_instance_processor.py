@@ -552,13 +552,13 @@ class ProcessInstanceProcessor:
         # print(f"serialized_bpmn_definition.static_json: {serialized_bpmn_definition.static_json}")
         # loaded_json: dict = json.loads(serialized_bpmn_definition.static_json) # or "{}")
 
-        serialized_bpmn_definition = {}
+        serialized_bpmn_definition: dict = {}
         bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
             id=process_instance_model.bpmn_process_definition_id
         ).first()
         if bpmn_process_definition is not None:
             serialized_bpmn_definition = {
-                "serializer_version": cls.SERIALIZER_VERSION,
+                "serializer_version": process_instance_model.spiff_serializer_version,
                 "spec": {},
                 "subprocess_specs": {},
             }
@@ -570,11 +570,12 @@ class ProcessInstanceProcessor:
                 ).all()
             )
             for (
-                bpmn_process_subprocess_definition
+                bpmn_subprocess_definition
             ) in bpmn_process_subprocess_definitions:
+                spec = cls._get_definition_dict_for_bpmn_process_definition(bpmn_subprocess_definition)
                 serialized_bpmn_definition["subprocess_specs"][
-                    bpmn_process_subprocess_definition.bpmn_identifier
-                ] = cls._get_definition_dict_for_bpmn_process_definition(bpmn_process_subprocess_definition)
+                    bpmn_subprocess_definition.bpmn_identifier
+                ] = spec
         loaded_json: dict = serialized_bpmn_definition
 
         process_instance_data = process_instance_model.process_instance_data
@@ -975,7 +976,6 @@ class ProcessInstanceProcessor:
                 hash=new_hash_digest,
                 bpmn_identifier=process_bpmn_identifier,
                 properties_json=json.dumps(process_bpmn_properties),
-                type="process",
             )
             db.session.add(bpmn_process_definition)
 
@@ -988,7 +988,7 @@ class ProcessInstanceProcessor:
                 )
                 db.session.add(task_definition)
 
-        if bpmn_process_definition_parent:
+        if bpmn_process_definition_parent is not None:
             bpmn_process_definition_relationship = (
                 BpmnProcessDefinitionRelationshipModel.query.filter_by(
                     bpmn_process_definition_parent_id=bpmn_process_definition_parent.id,
@@ -1003,21 +1003,7 @@ class ProcessInstanceProcessor:
                 db.session.add(bpmn_process_definition_relationship)
         return bpmn_process_definition
 
-    def _add_bpmn_json_records_new(self) -> None:
-        """Adds serialized_bpmn_definition and process_instance_data records to the db session.
-
-        Expects the save method to commit it.
-        """
-        bpmn_dict = json.loads(self.serialize())
-        bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
-        bpmn_spec_dict = {}
-        process_instance_data_dict = {}
-        for bpmn_key in bpmn_dict.keys():
-            if bpmn_key in bpmn_dict_keys:
-                bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
-            else:
-                process_instance_data_dict[bpmn_key] = bpmn_dict[bpmn_key]
-
+    def _add_bpmn_process_definitions(self, bpmn_spec_dict: dict) -> None:
         bpmn_process_definition_parent = self._store_bpmn_process_definition(
             bpmn_spec_dict["spec"]
         )
@@ -1029,28 +1015,25 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_parent
         )
 
-        # # FIXME: always save new hash until we get updated Spiff without loopresettask
-        # # if self.process_instance_model.serialized_bpmn_definition_id is None:
-        # new_hash_digest = sha256(
-        #     json.dumps(bpmn_spec_dict, sort_keys=True).encode("utf8")
-        # ).hexdigest()
-        # serialized_bpmn_definition = SerializedBpmnDefinitionModel.query.filter_by(
-        #     hash=new_hash_digest
-        # ).first()
-        # if serialized_bpmn_definition is None:
-        #     serialized_bpmn_definition = SerializedBpmnDefinitionModel(
-        #         hash=new_hash_digest, static_json=json.dumps(bpmn_spec_dict)
-        #     )
-        #     db.session.add(serialized_bpmn_definition)
-        # if (
-        #     self.process_instance_model.serialized_bpmn_definition_id is None
-        #     or self.process_instance_model.serialized_bpmn_definition.hash
-        #     != new_hash_digest
-        # ):
-        #     self.process_instance_model.serialized_bpmn_definition = (
-        #         serialized_bpmn_definition
-        #     )
-        #
+    def _add_bpmn_json_records_new(self) -> None:
+        """Adds serialized_bpmn_definition and process_instance_data records to the db session.
+
+        Expects the save method to commit it.
+        """
+        bpmn_dict = json.loads(self.serialize())
+        bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
+        process_instance_data_dict = {}
+        bpmn_spec_dict = {}
+        for bpmn_key in bpmn_dict.keys():
+            if bpmn_key in bpmn_dict_keys:
+                bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
+            else:
+                process_instance_data_dict[bpmn_key] = bpmn_dict[bpmn_key]
+
+        # FIXME: always save new hash until we get updated Spiff without loopresettask
+        # if self.process_instance_model.bpmn_process_definition_id is None:
+        self._add_bpmn_process_definitions(bpmn_spec_dict)
+
         # process_instance_data = None
         # if self.process_instance_model.process_instance_data_id is None:
         #     process_instance_data = ProcessInstanceDataModel()
@@ -1065,6 +1048,7 @@ class ProcessInstanceProcessor:
         """Saves the current state of this processor to the database."""
         self._add_bpmn_json_records()
         self._add_bpmn_json_records_new()
+        self.process_instance_model.spiff_serializer_version = self.SERIALIZER_VERSION
 
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
         user_tasks = list(self.get_all_user_tasks())

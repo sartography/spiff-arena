@@ -24,14 +24,14 @@
     </bpmn:correlationPropertyRetrievalExpression>
   </bpmn:correlationProperty>
   <bpmn:process id="test_dot_notation" name="Test Dot Notation" isExecutable="true">
-    <bpmn:startEvent id="startHere" name="StartHere">
+    <bpmn:startEvent id="start" name="Start">
       <bpmn:outgoing>Flow_0dbnzbi</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_0dbnzbi" sourceRef="startHere" targetRef="get_data" />
-    <bpmn:endEvent id="endHere" name="End">
+    <bpmn:sequenceFlow id="Flow_0dbnzbi" sourceRef="start" targetRef="get_data" />
+    <bpmn:endEvent id="end" name="End">
       <bpmn:incoming>Flow_0nt355i</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0nt355i" sourceRef="get_data" targetRef="endHere" />
+    <bpmn:sequenceFlow id="Flow_0nt355i" sourceRef="get_data" targetRef="end" />
     <bpmn:userTask id="get_data" name="Get Data">
       <bpmn:extensionElements>
         <spiffworkflow:properties>
@@ -53,13 +53,13 @@
         <di:waypoint x="360" y="230" />
         <di:waypoint x="412" y="230" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Event_1uf4njx_di" bpmnElement="startHere">
+      <bpmndi:BPMNShape id="Event_1uf4njx_di" bpmnElement="start">
         <dc:Bounds x="172" y="212" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="178" y="255" width="24" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_00d0dwr_di" bpmnElement="endHere">
+      <bpmndi:BPMNShape id="Event_00d0dwr_di" bpmnElement="end">
         <dc:Bounds x="412" y="212" width="36" height="36" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="420" y="255" width="20" height="14" />
