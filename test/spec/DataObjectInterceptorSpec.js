@@ -4,7 +4,11 @@ import { BpmnPropertiesPanelModule, BpmnPropertiesProviderModule } from 'bpmn-js
 import {
   inject,
 } from 'bpmn-js/test/helper';
-import {findDataObjects, idToHumanReadableName} from '../../app/spiffworkflow/DataObject/DataObjectHelpers';
+import {
+  findDataObjects,
+  findDataObjectReferenceShapes,
+  idToHumanReadableName,
+} from '../../app/spiffworkflow/DataObject/DataObjectHelpers';
 
 describe('DataObject Interceptor', function() {
 
@@ -111,6 +115,54 @@ describe('DataObject Interceptor', function() {
     // THEN - a new data object is visible in that SubProcess
     dataObjects = findDataObjects(subProcess);
     expect(dataObjects.length).to.equal(1);
+  }));
+
+  it('Data objects in a process should be visible in a subprocess', inject(function(canvas, modeling, elementRegistry) {
+
+    let subProcessShape = elementRegistry.get('my_subprocess');
+    let subProcess = subProcessShape.businessObject;
+    let dataObjects = findDataObjects(subProcess);
+    expect(dataObjects.length).to.equal(0);
+
+    let rootShape = canvas.getRootElement();
+    const dataObjectRefShape = modeling.createShape({ type: 'bpmn:DataObjectReference' },
+      { x: 220, y: 220 }, rootShape);
+
+    dataObjects = findDataObjects(subProcess);
+    expect(dataObjects.length).to.equal(1);
+  }));
+
+  it('Data objects in a subprocess should not be visible in a process', inject(function(canvas, modeling, elementRegistry) {
+
+    let subProcessShape = elementRegistry.get('my_subprocess');
+    let subProcess = subProcessShape.businessObject;
+    const dataObjectRefShape = modeling.createShape({ type: 'bpmn:DataObjectReference' },
+      { x: 220, y: 220 }, subProcessShape);
+
+    let dataObjects = findDataObjects(subProcess);
+    expect(dataObjects.length).to.equal(1);
+
+    let rootShape = canvas.getRootElement();
+    dataObjects = findDataObjects(rootShape);
+    expect(dataObjects.length).to.equal(0);
+  }));
+
+  it('References inside subprocesses should be visible in a process', inject(function(canvas, modeling, elementRegistry) {
+
+    let rootShape = canvas.getRootElement();
+    const refOne = modeling.createShape({ type: 'bpmn:DataObjectReference' },
+      { x: 220, y: 220 }, rootShape);
+
+    let subProcessShape = elementRegistry.get('my_subprocess');
+    let subProcess = subProcessShape.businessObject;
+    const refTwo = modeling.createShape({ type: 'bpmn:DataObjectReference' },
+      { x: 320, y: 220 }, subProcessShape);
+
+    let dataObjects = findDataObjects(subProcess);
+    expect(dataObjects.length).to.equal(1);
+    let references = findDataObjectReferenceShapes(rootShape.children, dataObjects[0].id);
+    expect(references.length).to.equal(2);
+
   }));
 
 });

@@ -5,7 +5,11 @@ import {
 } from '@bpmn-io/properties-panel';
 import { without } from 'min-dash';
 import { is } from 'bpmn-js/lib/util/ModelUtil';
-import {findDataObjects, findDataReferenceShapes, idToHumanReadableName} from '../DataObjectHelpers';
+import {
+  findDataObjects,
+  findDataObjectReferenceShapes,
+  idToHumanReadableName,
+} from '../DataObjectHelpers';
 
 /**
  * Provides a list of data objects, and allows you to add / remove data objects, and change their ids.
@@ -20,7 +24,7 @@ export function DataObjectArray(props) {
   let process;
 
   // This element might be a process, or something that will reference a process.
-  if (is(element.businessObject, 'bpmn:Process')) {
+  if (is(element.businessObject, 'bpmn:Process') || is(element.businessObject, 'bpmn:SubProcess')) {
     process = element.businessObject;
   } else if (element.businessObject.processRef) {
     process = element.businessObject.processRef;
@@ -53,6 +57,7 @@ export function DataObjectArray(props) {
     const newDataObject = moddle.create('bpmn:DataObject');
     const newElements = process.get('flowElements');
     newDataObject.id = moddle.ids.nextPrefixed('DataObject_');
+    newDataObject.$parent = process;
     newElements.push(newDataObject);
     commandStack.execute('element.updateModdleProperties', {
       element,
@@ -79,7 +84,7 @@ function removeFactory(props) {
       },
     });
     // When a data object is removed, remove all references as well.
-    const references = findDataReferenceShapes(element, dataObject.id);
+    const references = findDataObjectReferenceShapes(element.children, dataObject.id);
     for (const ref of references) {
       commandStack.execute('shape.delete', { shape: ref });
     }
@@ -116,7 +121,7 @@ function DataObjectTextField(props) {
     });
 
     // Also update the label of all the references
-    const references = findDataReferenceShapes(element, dataObject.id);
+    const references = findDataObjectReferenceShapes(element.children, dataObject.id);
     for (const ref of references) {
       commandStack.execute('element.updateProperties', {
         element: ref,

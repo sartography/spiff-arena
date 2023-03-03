@@ -3,11 +3,12 @@ import { getDi, is } from 'bpmn-js/lib/util/ModelUtil';
 import { remove as collectionRemove } from 'diagram-js/lib/util/Collections';
 import {
   findDataObjects,
-  findDataReferenceShapes,
+  findDataObjectReferences,
   idToHumanReadableName,
 } from './DataObjectHelpers';
 
 const HIGH_PRIORITY = 1500;
+
 /**
  * This Command Interceptor functions like the BpmnUpdator in BPMN.js - It hooks into events
  * from Diagram.js and updates the underlying BPMN model accordingly.
@@ -20,8 +21,39 @@ const HIGH_PRIORITY = 1500;
  * 4) Don't allow someone to move a DataObjectReference from one process to another process.
  */
 export default class DataObjectInterceptor extends CommandInterceptor {
-  constructor(eventBus, bpmnFactory, commandStack) {
+
+  constructor(eventBus, bpmnFactory, commandStack, bpmnUpdater) {
     super(eventBus);
+
+    /* The default behavior is to move the data object into whatever object the reference is being created in.
+     * If a data object already has a parent, don't change it.
+     */
+    bpmnUpdater.updateSemanticParent = (businessObject, parentBusinessObject) => {
+      // Special case for participant - which is a valid place to drop a data object, but it needs to be added
+      // to the particpant's Process (which isn't directly accessible in BPMN.io
+      let realParent = parentBusinessObject;
+      if (is(realParent, 'bpmn:Participant')) {
+        realParent = realParent.processRef;
+      }
+
+      if (is(businessObject, 'bpmn:DataObjectReference')) {
+        // For data object references, always update the flowElements when a parent is provided
+        // The parent could be null if it's being deleted, and I could probably handle that here instead of
+        // when the shape is deleted, but not interested in refactoring at the moment.
+        if (realParent != null) {
+          const flowElements = realParent.get('flowElements');
+          flowElements.push(businessObject);
+        }
+      } else if (is(businessObject, 'bpmn:DataObject')) {
+        // For data objects, only update the flowElements for new data objects, and set the parent so it doesn't get moved.
+        if (typeof(businessObject.$parent) === 'undefined') {
+          const flowElements = realParent.get('flowElements');
+          flowElements.push(businessObject);
+          businessObject.$parent = realParent;
+        }
+      } else
+        bpmnUpdater.__proto__.updateSemanticParent.call(this, businessObject, parentBusinessObject);
+    };
 
     /**
      * For DataObjectReferences only ...
@@ -52,9 +84,9 @@ export default class DataObjectInterceptor extends CommandInterceptor {
         } else {
           dataObject = bpmnFactory.create('bpmn:DataObject');
         }
-
         // set the reference to the DataObject
         shape.businessObject.dataObjectRef = dataObject;
+        shape.businessObject.$parent = process;
       }
     });
 
@@ -84,38 +116,19 @@ export default class DataObjectInterceptor extends CommandInterceptor {
      */
     this.executed(['shape.delete'], HIGH_PRIORITY, function (event) {
       const { context } = event;
-      const { shape, oldParent } = context;
+      const { shape } = context;
       if (is(shape, 'bpmn:DataObjectReference') && shape.type !== 'label') {
-        const references = findDataReferenceShapes(
-          oldParent,
-          shape.businessObject.dataObjectRef.id
-        );
+        const dataObject = shape.businessObject.dataObjectRef;
+        let flowElements = shape.businessObject.$parent.get('flowElements');
+        collectionRemove(flowElements, shape.businessObject);
+        let references = findDataObjectReferences(flowElements, dataObject.id);
         if (references.length === 0) {
-          return; // Use the default bahavior and delete the data object.
+          let flowElements = dataObject.$parent.get('flowElements');
+          collectionRemove(flowElements, dataObject);
         }
-        // Remove the business Object
-        let containment = '';
-        const { businessObject } = shape;
-        if (is(businessObject, 'bpmn:DataOutputAssociation')) {
-          containment = 'dataOutputAssociations';
-        }
-        if (is(businessObject, 'bpmn:DataInputAssociation')) {
-          containment = 'dataInputAssociations';
-        }
-        const children = businessObject.$parent.get(containment);
-        collectionRemove(children, businessObject);
-
-        // Remove the visible element.
-        const di = getDi(shape);
-        const planeElements = di.$parent.get('planeElement');
-        collectionRemove(planeElements, di);
-        di.$parent = null;
-
-        // Stop the propogation.
-        event.stopPropagation();
       }
     });
   }
 }
 
-DataObjectInterceptor.$inject = ['eventBus', 'bpmnFactory', 'commandStack'];
+DataObjectInterceptor.$inject = ['eventBus', 'bpmnFactory', 'commandStack', 'bpmnUpdater'];
