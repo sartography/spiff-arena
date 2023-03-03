@@ -17,9 +17,7 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     # this is a sha256 hash of spec and serializer_version
     hash: str = db.Column(db.String(255), nullable=False, index=True, unique=True)
 
-    bpmn_identifier: str = db.Column(
-        db.String(255), nullable=False, index=True
-    )
+    bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
 
     properties_json: str = db.Column(db.JSON, nullable=False)
 
