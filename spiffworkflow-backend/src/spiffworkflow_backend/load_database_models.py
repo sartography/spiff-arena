@@ -56,6 +56,9 @@ from spiffworkflow_backend.models.serialized_bpmn_definition import (
 from spiffworkflow_backend.models.process_instance_data import (
     ProcessInstanceDataModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.process_instance_file_data import (
+    ProcessInstanceFileDataModel,
+)  # noqa: F401
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel  # noqa: F401
 from spiffworkflow_backend.models.bpmn_process_definition import (
