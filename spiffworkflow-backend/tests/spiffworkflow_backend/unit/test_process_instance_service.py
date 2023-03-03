@@ -145,19 +145,29 @@ class TestProcessInstanceService(BaseTest):
             "uploaded_files": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
         }
         models = [
-            ProcessInstanceFileDataModel(identifier="uploaded_file", digest="abc", filename="file1"),
             ProcessInstanceFileDataModel(
-                identifier="uploaded_files", list_index=0, digest="def", filename="file2",
+                identifier="uploaded_file", digest="abc", filename="file1"
             ),
             ProcessInstanceFileDataModel(
-                identifier="uploaded_files", list_index=1, digest="ghi", filename="file3",
+                identifier="uploaded_files",
+                list_index=0,
+                digest="def",
+                filename="file2",
+            ),
+            ProcessInstanceFileDataModel(
+                identifier="uploaded_files",
+                list_index=1,
+                digest="ghi",
+                filename="file3",
             ),
         ]
 
         ProcessInstanceService.replace_file_data_with_digest_references(data, models)
 
         assert data == {
-            "uploaded_file": f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:abc:file1",
+            "uploaded_file": (
+                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:abc:file1"
+            ),
             "uploaded_files": [
                 f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:def:file2",
                 f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:ghi:file3",
@@ -193,12 +203,20 @@ class TestProcessInstanceService(BaseTest):
             "not_a_file3": "just a value3",
         }
         models = [
-            ProcessInstanceFileDataModel(identifier="uploaded_file", digest="abc", filename="file1"),
             ProcessInstanceFileDataModel(
-                identifier="uploaded_files", list_index=0, digest="def", filename="file2",
+                identifier="uploaded_file", digest="abc", filename="file1"
             ),
             ProcessInstanceFileDataModel(
-                identifier="uploaded_files", list_index=1, digest="ghi", filename="file3",
+                identifier="uploaded_files",
+                list_index=0,
+                digest="def",
+                filename="file2",
+            ),
+            ProcessInstanceFileDataModel(
+                identifier="uploaded_files",
+                list_index=1,
+                digest="ghi",
+                filename="file3",
             ),
         ]
 
@@ -206,7 +224,9 @@ class TestProcessInstanceService(BaseTest):
 
         assert data == {
             "not_a_file": "just a value",
-            "uploaded_file": f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:abc:file1",
+            "uploaded_file": (
+                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:abc:file1"
+            ),
             "not_a_file2": "just a value2",
             "uploaded_files": [
                 f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:def:file2",

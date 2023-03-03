@@ -250,8 +250,8 @@ class ProcessInstanceService:
                     updated_at_in_seconds=now_in_seconds,
                     created_at_in_seconds=now_in_seconds,
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                print(e)
 
         return None
 
@@ -293,7 +293,9 @@ class ProcessInstanceService:
         models: List[ProcessInstanceFileDataModel],
     ) -> None:
         for model in models:
-            digest_reference = f"{cls.FILE_DATA_DIGEST_PREFIX}:{model.digest}:{model.filename}"
+            digest_reference = (
+                f"{cls.FILE_DATA_DIGEST_PREFIX}:{model.digest}:{model.filename}"
+            )
             if model.list_index is None:
                 data[model.identifier] = digest_reference
             else:

@@ -1,9 +1,7 @@
 """APIs for dealing with process groups, process models, and process instances."""
-import base64
 import json
 from typing import Any
 from typing import Dict
-from typing import Optional
 
 import flask.wrappers
 from flask import Blueprint
@@ -25,7 +23,9 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSc
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceTaskDataCannotBeUpdatedError,
 )
-from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
+from spiffworkflow_backend.models.process_instance_file_data import (
+    ProcessInstanceFileDataModel,
+)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
