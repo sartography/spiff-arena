@@ -149,6 +149,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 #   "data": {}
 # },
 
+
 @dataclass
 class SpiffStepDetailsModel(SpiffworkflowBaseDBModel):
     """SpiffStepDetailsModel."""

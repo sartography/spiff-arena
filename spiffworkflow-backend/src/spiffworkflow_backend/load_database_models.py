@@ -58,10 +58,16 @@ from spiffworkflow_backend.models.process_instance_data import (
 )  # noqa: F401
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel  # noqa: F401
-from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel  # noqa: F401
+from spiffworkflow_backend.models.bpmn_process_definition import (
+    BpmnProcessDefinitionModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import (
+    TaskDefinitionModel,
+)  # noqa: F401
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
-from spiffworkflow_backend.models.bpmn_process_definition_relationship import BpmnProcessDefinitionRelationshipModel  # noqa: F401
+from spiffworkflow_backend.models.bpmn_process_definition_relationship import (
+    BpmnProcessDefinitionRelationshipModel,
+)  # noqa: F401
 
 add_listeners()
