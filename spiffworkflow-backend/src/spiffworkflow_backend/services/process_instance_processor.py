@@ -1,5 +1,5 @@
 """Process_instance_processor."""
-import _strptime
+import _strptime  # type: ignore
 import decimal
 import json
 import logging
@@ -55,7 +55,6 @@ from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from sqlalchemy import text
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models import serialized_bpmn_definition  # type: ignore
 from spiffworkflow_backend.models.bpmn_process_definition import (
     BpmnProcessDefinitionModel,
 )
@@ -529,7 +528,9 @@ class ProcessInstanceProcessor:
         )
 
     @classmethod
-    def _get_definition_dict_for_bpmn_process_definition(cls, bpmn_process_definition: BpmnProcessDefinitionModel) -> dict:
+    def _get_definition_dict_for_bpmn_process_definition(
+        cls, bpmn_process_definition: BpmnProcessDefinitionModel
+    ) -> dict:
         task_definitions = TaskDefinitionModel.query.filter_by(
             bpmn_process_definition_id=bpmn_process_definition.id
         ).all()
@@ -542,7 +543,6 @@ class ProcessInstanceProcessor:
                 task_definition.bpmn_identifier
             ] = json.loads(task_definition.properties_json)
         return bpmn_process_definition_dict
-
 
     @classmethod
     def _get_full_bpmn_json(cls, process_instance_model: ProcessInstanceModel) -> dict:
@@ -562,17 +562,21 @@ class ProcessInstanceProcessor:
                 "spec": {},
                 "subprocess_specs": {},
             }
-            serialized_bpmn_definition['spec'] = cls._get_definition_dict_for_bpmn_process_definition(bpmn_process_definition)
+            serialized_bpmn_definition["spec"] = (
+                cls._get_definition_dict_for_bpmn_process_definition(
+                    bpmn_process_definition
+                )
+            )
 
             bpmn_process_subprocess_definitions = (
                 BpmnProcessDefinitionRelationshipModel.query.filter_by(
                     bpmn_process_definition_parent_id=bpmn_process_definition.id
                 ).all()
             )
-            for (
-                bpmn_subprocess_definition
-            ) in bpmn_process_subprocess_definitions:
-                spec = cls._get_definition_dict_for_bpmn_process_definition(bpmn_subprocess_definition)
+            for bpmn_subprocess_definition in bpmn_process_subprocess_definitions:
+                spec = cls._get_definition_dict_for_bpmn_process_definition(
+                    bpmn_subprocess_definition
+                )
                 serialized_bpmn_definition["subprocess_specs"][
                     bpmn_subprocess_definition.bpmn_identifier
                 ] = spec

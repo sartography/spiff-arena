@@ -8,13 +8,13 @@ from typing import Union
 import marshmallow
 from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
-from SpiffWorkflow.task import TaskStateNames
+from SpiffWorkflow.task import TaskStateNames  # type: ignore
 from sqlalchemy import ForeignKey
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # type: ignore
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 
 class MultiInstanceType(enum.Enum):
