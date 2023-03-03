@@ -37,6 +37,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 class ProcessInstanceService:
     """ProcessInstanceService."""
 
+    FILE_DATA_DIGEST_PREFIX = "FILEDATADIGEST:"
     TASK_STATE_LOCKED = "locked"
 
     @classmethod
@@ -280,6 +281,19 @@ class ProcessInstanceService:
                 models.append(model)
 
         return models
+
+    @classmethod
+    def replace_file_data_with_digest_references(
+        cls,
+        data: dict[str, Any],
+        models: List[ProcessInstanceFileDataModel],
+    ) -> None:
+        for model in models:
+            digest_reference = f"{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
+            if model.list_index is None:
+                data[model.identifier] = digest_reference
+            else:
+                data[model.identifier][model.list_index] = digest_reference
 
     @staticmethod
     def complete_form_task(

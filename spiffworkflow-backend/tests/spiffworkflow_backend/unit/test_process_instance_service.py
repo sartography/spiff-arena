@@ -124,6 +124,79 @@ class TestProcessInstanceService(BaseTest):
 
         assert len(models) == 0
 
+    def test_can_replace_file_data_values_with_digest_references(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        data = {
+            "uploaded_file": self.SAMPLE_FILE_DATA,
+            "uploaded_files": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
+        }
+        models = [
+            ProcessInstanceFileDataModel(identifier="uploaded_file", digest="abc"),
+            ProcessInstanceFileDataModel(identifier="uploaded_files", list_index=0, digest="def"),
+            ProcessInstanceFileDataModel(identifier="uploaded_files", list_index=1, digest="ghi"),
+        ]
+
+        ProcessInstanceService.replace_file_data_with_digest_references(data, models)
+
+        assert data == {
+            "uploaded_file": f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}abc",
+            "uploaded_files": [
+                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}def",
+                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}ghi",
+            ],
+        }
+
+    def test_does_not_replace_non_file_data_values_with_digest_references(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        data = {
+            "not_a_file": "just a value",
+        }
+        models = []
+        ProcessInstanceService.replace_file_data_with_digest_references(data, models)
+
+        assert len(data) == 1
+        assert data["not_a_file"] == "just a value"
+
+    def test_can_replace_file_data_values_with_digest_references_when_non_file_data_values_are_present(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        data = {
+            "not_a_file": "just a value",
+            "uploaded_file": self.SAMPLE_FILE_DATA,
+            "not_a_file2": "just a value2",
+            "uploaded_files": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
+            "not_a_file3": "just a value3",
+        }
+        models = [
+            ProcessInstanceFileDataModel(identifier="uploaded_file", digest="abc"),
+            ProcessInstanceFileDataModel(identifier="uploaded_files", list_index=0, digest="def"),
+            ProcessInstanceFileDataModel(identifier="uploaded_files", list_index=1, digest="ghi"),
+        ]
+
+        ProcessInstanceService.replace_file_data_with_digest_references(data, models)
+
+        assert data == {
+            "not_a_file": "just a value",
+            "uploaded_file": f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}abc",
+            "not_a_file2": "just a value2",
+            "uploaded_files": [
+                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}def",
+                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}ghi",
+            ],
+            "not_a_file3": "just a value3",
+        }
+
     def test_does_not_log_set_data_when_calling_engine_steps_on_waiting_call_activity(
         self,
         app: Flask,
