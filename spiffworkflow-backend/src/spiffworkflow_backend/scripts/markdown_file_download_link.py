@@ -30,10 +30,10 @@ class GetMarkdownFileDownloadLink(Script):
     ) -> Any:
         """Run."""
         # example input:
-        #  "data:some/mimetype;name=testing.txt;base64,7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"
+        #  "data:some/mimetype;name=testing.txt;base64,spifffiledatadigest+7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"
         digest_reference = args[0]
         parts = digest_reference.split(";")
-        digest = parts[2].split(",")[1]
+        digest = parts[2].split(",")[1][-64:]
         label = parts[1].split("=")[1]
         process_model_identifier = script_attributes_context.process_model_identifier
         modified_process_model_identifier = (

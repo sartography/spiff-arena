@@ -41,6 +41,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 class ProcessInstanceService:
     """ProcessInstanceService."""
 
+    FILE_DATA_DIGEST_PREFIX = "spifffiledatadigest+"
     TASK_STATE_LOCKED = "locked"
 
     @classmethod
@@ -237,20 +238,21 @@ class ProcessInstanceService:
                 mimetype = parts[0][5:]
                 filename = unquote(parts[1].split("=")[1])
                 base64_value = parts[2].split(",")[1]
-                contents = base64.b64decode(base64_value)
-                digest = hashlib.sha256(contents).hexdigest()
-                now_in_seconds = round(time.time())
+                if not base64_value.startswith(cls.FILE_DATA_DIGEST_PREFIX):
+                    contents = base64.b64decode(base64_value)
+                    digest = hashlib.sha256(contents).hexdigest()
+                    now_in_seconds = round(time.time())
 
-                return ProcessInstanceFileDataModel(
-                    process_instance_id=process_instance_id,
-                    identifier=identifier,
-                    mimetype=mimetype,
-                    filename=filename,
-                    contents=contents,  # type: ignore
-                    digest=digest,
-                    updated_at_in_seconds=now_in_seconds,
-                    created_at_in_seconds=now_in_seconds,
-                )
+                    return ProcessInstanceFileDataModel(
+                        process_instance_id=process_instance_id,
+                        identifier=identifier,
+                        mimetype=mimetype,
+                        filename=filename,
+                        contents=contents,  # type: ignore
+                        digest=digest,
+                        updated_at_in_seconds=now_in_seconds,
+                        created_at_in_seconds=now_in_seconds,
+                    )
             except Exception as e:
                 print(e)
 
@@ -295,7 +297,7 @@ class ProcessInstanceService:
     ) -> None:
         for model in models:
             digest_reference = (
-                f"data:{model.mimetype};name={model.filename};base64,{model.digest}"
+                f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
             )
             if model.list_index is None:
                 data[model.identifier] = digest_reference
