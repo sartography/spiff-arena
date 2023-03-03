@@ -39,7 +39,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 class ProcessInstanceService:
     """ProcessInstanceService."""
 
-    FILE_DATA_DIGEST_PREFIX = "FILEDATADIGEST:"
+    FILE_DATA_DIGEST_PREFIX = "FILEDATADIGEST"
     TASK_STATE_LOCKED = "locked"
 
     @classmethod
@@ -293,7 +293,7 @@ class ProcessInstanceService:
         models: List[ProcessInstanceFileDataModel],
     ) -> None:
         for model in models:
-            digest_reference = f"{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
+            digest_reference = f"{cls.FILE_DATA_DIGEST_PREFIX}:{model.digest}:{model.filename}"
             if model.list_index is None:
                 data[model.identifier] = digest_reference
             else:

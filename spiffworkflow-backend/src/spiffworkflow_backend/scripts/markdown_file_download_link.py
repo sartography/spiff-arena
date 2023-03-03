@@ -26,16 +26,16 @@ class GetMarkdownFileDownloadLink(Script):
     def run(
         self,
         script_attributes_context: ScriptAttributesContext,
-        *_args: Any,
+        *args: Any,
         **kwargs: Any,
     ) -> Any:
         """Run."""
         # example input:
-        #  "data:application/pdf;name=Harmeet_1234.pdf;base64,JV...."
-        process_data_identifier = kwargs["key"]
-        parts = kwargs["file_data"].split(";")
-        file_index = kwargs["file_index"]
-        label = unquote(parts[1].split("=")[1])
+        #  "FILEDATADIGEST:7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf:somefile.txt"
+        digest_reference = args[0]
+        parts = digest_reference.split(":")
+        digest = digest_reference.split(":")[1]
+        label = unquote(parts[2])
         process_model_identifier = script_attributes_context.process_model_identifier
         modified_process_model_identifier = (
             ProcessModelInfo.modify_process_identifier_for_path_param(
@@ -46,7 +46,7 @@ class GetMarkdownFileDownloadLink(Script):
         url = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
         url += (
             f"/v1.0/process-data-file-download/{modified_process_model_identifier}/"
-            + f"{process_instance_id}/{process_data_identifier}?index={file_index}"
+            + f"{process_instance_id}/{digest}"
         )
         link = f"[{label}]({url})"
 
