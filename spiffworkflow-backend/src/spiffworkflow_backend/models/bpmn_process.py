@@ -22,4 +22,4 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
     # subprocess or top_level_process
-    process_type: str = db.Column(db.String(30), nullable=False)
+    # process_type: str = db.Column(db.String(30), nullable=False)

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 3ad01a365c17
+Revision ID: 25f64177f8ec
 Revises: 
-Create Date: 2023-03-03 11:36:56.060834
+Create Date: 2023-03-03 12:03:28.155345
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '3ad01a365c17'
+revision = '25f64177f8ec'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -23,7 +23,6 @@ def upgrade():
     sa.Column('parent_process_id', sa.Integer(), nullable=True),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('json_data_hash', sa.String(length=255), nullable=False),
-    sa.Column('process_type', sa.String(length=30), nullable=False),
     sa.ForeignKeyConstraint(['parent_process_id'], ['bpmn_process.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -31,7 +30,7 @@ def upgrade():
     op.create_table('bpmn_process_definition',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hash', sa.String(length=255), nullable=False),
-    sa.Column('bpmn_identifier', sa.String(length=255, collation='utf8mb4_0900_as_cs'), nullable=False),
+    sa.Column('bpmn_identifier', sa.String(length=255), nullable=False),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('type', sa.String(length=32), nullable=True),
     sa.Column('bpmn_version_control_type', sa.String(length=50), nullable=True),
@@ -219,7 +218,7 @@ def upgrade():
     op.create_table('task_definition',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bpmn_process_definition_id', sa.Integer(), nullable=False),
-    sa.Column('bpmn_identifier', sa.String(length=255, collation='utf8mb4_0900_as_cs'), nullable=False),
+    sa.Column('bpmn_identifier', sa.String(length=255), nullable=False),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('typename', sa.String(length=255), nullable=False),
     sa.ForeignKeyConstraint(['bpmn_process_definition_id'], ['bpmn_process_definition.id'], ),
