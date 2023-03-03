@@ -250,7 +250,7 @@ class ProcessInstanceService:
                     updated_at_in_seconds=now_in_seconds,
                     created_at_in_seconds=now_in_seconds,
                 )
-            except:
+            except Exception:
                 pass
 
         return None
@@ -299,6 +299,20 @@ class ProcessInstanceService:
             else:
                 data[model.identifier][model.list_index] = digest_reference
 
+    @classmethod
+    def save_file_data_and_replace_with_digest_references(
+        cls,
+        data: dict[str, Any],
+        process_instance_id: int,
+    ) -> None:
+        models = cls.file_data_models_for_data(data, process_instance_id)
+
+        for model in models:
+            db.session.add(model)
+        db.session.commit()
+
+        cls.replace_file_data_with_digest_references(data, models)
+
     @staticmethod
     def complete_form_task(
         processor: ProcessInstanceProcessor,
@@ -314,6 +328,11 @@ class ProcessInstanceService:
         """
         AuthorizationService.assert_user_can_complete_spiff_task(
             processor.process_instance_model.id, spiff_task, user
+        )
+
+        ProcessInstanceService.save_file_data_and_replace_with_digest_references(
+            data,
+            processor.process_instance_model.id,
         )
 
         dot_dct = ProcessInstanceService.create_dot_dict(data)
