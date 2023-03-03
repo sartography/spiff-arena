@@ -2,11 +2,12 @@
 import base64
 import hashlib
 import time
-from urllib.parse import unquote
 from typing import Any
 from typing import Generator
 from typing import List
 from typing import Optional
+from typing import Tuple
+from urllib.parse import unquote
 
 import sentry_sdk
 from flask import current_app
@@ -259,7 +260,7 @@ class ProcessInstanceService:
     def possible_file_data_values(
         cls,
         data: dict[str, Any],
-    ) -> Generator[str, str, Optional[int]]:
+    ) -> Generator[Tuple[str, str, Optional[int]], None, None]:
         for identifier, value in data.items():
             if isinstance(value, str):
                 yield (identifier, value, None)

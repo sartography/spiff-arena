@@ -1,6 +1,5 @@
 """Markdown_file_download_link."""
 from typing import Any
-from urllib.parse import unquote
 
 from flask import current_app
 
