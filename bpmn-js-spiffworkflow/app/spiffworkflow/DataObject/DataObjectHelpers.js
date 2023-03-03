@@ -4,9 +4,9 @@
  * @param container
  */
 
-
-export function findDataObjects(parent) {
-  let dataObjects = [];
+export function findDataObjects(parent, dataObjects) {
+  if (typeof(dataObjects) === 'undefined')
+    dataObjects = [];
   let process;
   if (!parent) {
     return [];
@@ -15,16 +15,13 @@ export function findDataObjects(parent) {
     process = parent.processRef;
   } else {
     process = parent;
+    if (process.$type === 'bpmn:SubProcess')
+      findDataObjects(process.$parent, dataObjects);
   }
-  if (!process.flowElements) {
-    return [];
-  }
-  for (const element of process.flowElements) {
-    if (
-      element.$type === 'bpmn:DataObject' &&
-      dataObjects.indexOf(element) < 0
-    ) {
-      dataObjects.push(element);
+  if (typeof(process.flowElements) !== 'undefined') {
+    for (const element of process.flowElements) {
+      if (element.$type === 'bpmn:DataObject')
+        dataObjects.push(element);
     }
   }
   return dataObjects;
@@ -38,16 +35,26 @@ export function findDataObject(process, id) {
   }
 }
 
-export function findDataReferenceShapes(processShape, id) {
-  let refs = [];
-  for (const shape of processShape.children) {
-    if (shape.type === 'bpmn:DataObjectReference') {
-      if (shape.businessObject.dataObjectRef && shape.businessObject.dataObjectRef.id === id) {
-        refs.push(shape);
-      }
-    }
-  }
-  return refs;
+export function findDataObjectReferences(children, dataObjectId) {
+  return children.flatMap((child) => {
+    if (child.$type == 'bpmn:DataObjectReference' && child.dataObjectRef.id == dataObjectId)
+      return [child];
+    else if (child.$type == 'bpmn:SubProcess')
+      return findDataObjectReferences(child.get('flowElements'), dataObjectId);
+    else
+      return [];
+  });
+}
+
+export function findDataObjectReferenceShapes(children, dataObjectId) {
+  return children.flatMap((child) => {
+    if (child.type == 'bpmn:DataObjectReference' && child.businessObject.dataObjectRef.id == dataObjectId)
+      return [child];
+    else if (child.type == 'bpmn:SubProcess')
+      return findDataObjectReferenceShapes(child.children, dataObjectId);
+    else
+      return [];
+  });
 }
 
 export function idToHumanReadableName(id) {

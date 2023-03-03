@@ -20,7 +20,8 @@ export default function DataObjectPropertiesProvider(
         );
       }
       if (
-        isAny(element, ['bpmn:Process', 'bpmn:SubProcess', 'bpmn:Participant'])
+        isAny(element, ['bpmn:Process', 'bpmn:Participant']) ||
+        (is(element, 'bpmn:SubProcess') && !element.collapsed)
       ) {
         groups.push(
           createDataObjectEditor(
