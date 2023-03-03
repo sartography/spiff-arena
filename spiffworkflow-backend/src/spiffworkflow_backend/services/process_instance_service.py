@@ -2,6 +2,7 @@
 import base64
 import hashlib
 import time
+from urllib.parse import unquote
 from typing import Any
 from typing import Generator
 from typing import List
@@ -39,7 +40,6 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 class ProcessInstanceService:
     """ProcessInstanceService."""
 
-    FILE_DATA_DIGEST_PREFIX = "FILEDATADIGEST"
     TASK_STATE_LOCKED = "locked"
 
     @classmethod
@@ -234,7 +234,7 @@ class ProcessInstanceService:
             try:
                 parts = value.split(";")
                 mimetype = parts[0][5:]
-                filename = parts[1].split("=")[1]
+                filename = unquote(parts[1].split("=")[1])
                 base64_value = parts[2].split(",")[1]
                 contents = base64.b64decode(base64_value)
                 digest = hashlib.sha256(contents).hexdigest()
@@ -294,7 +294,7 @@ class ProcessInstanceService:
     ) -> None:
         for model in models:
             digest_reference = (
-                f"{cls.FILE_DATA_DIGEST_PREFIX}:{model.digest}:{model.filename}"
+                f"data:{model.mimetype};name={model.filename};base64,{model.digest}"
             )
             if model.list_index is None:
                 data[model.identifier] = digest_reference

@@ -22,6 +22,7 @@ class TestProcessInstanceService(BaseTest):
     """TestProcessInstanceService."""
 
     SAMPLE_FILE_DATA = "data:some/mimetype;name=testing.txt;base64,dGVzdGluZwo="
+    SAMPLE_DIGEST_REFERENCE = "data:some/mimetype;name=testing.txt;digest,12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
 
     def _check_sample_file_data_model(
         self,
@@ -144,33 +145,14 @@ class TestProcessInstanceService(BaseTest):
             "uploaded_file": self.SAMPLE_FILE_DATA,
             "uploaded_files": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
         }
-        models = [
-            ProcessInstanceFileDataModel(
-                identifier="uploaded_file", digest="abc", filename="file1"
-            ),
-            ProcessInstanceFileDataModel(
-                identifier="uploaded_files",
-                list_index=0,
-                digest="def",
-                filename="file2",
-            ),
-            ProcessInstanceFileDataModel(
-                identifier="uploaded_files",
-                list_index=1,
-                digest="ghi",
-                filename="file3",
-            ),
-        ]
-
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
         ProcessInstanceService.replace_file_data_with_digest_references(data, models)
 
         assert data == {
-            "uploaded_file": (
-                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:abc:file1"
-            ),
+            "uploaded_file": self.SAMPLE_DIGEST_REFERENCE,
             "uploaded_files": [
-                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:def:file2",
-                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:ghi:file3",
+                self.SAMPLE_DIGEST_REFERENCE,
+                self.SAMPLE_DIGEST_REFERENCE,
             ],
         }
 
@@ -202,35 +184,16 @@ class TestProcessInstanceService(BaseTest):
             "uploaded_files": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
             "not_a_file3": "just a value3",
         }
-        models = [
-            ProcessInstanceFileDataModel(
-                identifier="uploaded_file", digest="abc", filename="file1"
-            ),
-            ProcessInstanceFileDataModel(
-                identifier="uploaded_files",
-                list_index=0,
-                digest="def",
-                filename="file2",
-            ),
-            ProcessInstanceFileDataModel(
-                identifier="uploaded_files",
-                list_index=1,
-                digest="ghi",
-                filename="file3",
-            ),
-        ]
-
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
         ProcessInstanceService.replace_file_data_with_digest_references(data, models)
 
         assert data == {
             "not_a_file": "just a value",
-            "uploaded_file": (
-                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:abc:file1"
-            ),
+            "uploaded_file": self.SAMPLE_DIGEST_REFERENCE,
             "not_a_file2": "just a value2",
             "uploaded_files": [
-                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:def:file2",
-                f"{ProcessInstanceService.FILE_DATA_DIGEST_PREFIX}:ghi:file3",
+                self.SAMPLE_DIGEST_REFERENCE,
+                self.SAMPLE_DIGEST_REFERENCE,
             ],
             "not_a_file3": "just a value3",
         }

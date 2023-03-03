@@ -31,9 +31,9 @@ class GetEncodedFileData(Script):
     ) -> Any:
         """Run."""
         # example input:
-        #  "FILEDATADIGEST:7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf:somefile.txt"
+        #  "data:some/mimetype;name=testing.txt;base64,7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"
         digest_reference = args[0]
-        digest = digest_reference.split(":")[1]
+        digest = digest_reference[-64:]
         process_instance_id = script_attributes_context.process_instance_id
 
         file_data = ProcessInstanceFileDataModel.query.filter_by(
