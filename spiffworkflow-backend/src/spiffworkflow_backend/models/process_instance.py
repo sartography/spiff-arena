@@ -1,6 +1,5 @@
 """Process_instance."""
 from __future__ import annotations
-from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 
 from typing import Any
 from typing import cast
@@ -16,6 +15,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+from spiffworkflow_backend.models.bpmn_process_definition import (
+    BpmnProcessDefinitionModel,
+)
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.process_instance_data import ProcessInstanceDataModel
@@ -75,7 +77,9 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     )
     process_instance_data = relationship("ProcessInstanceDataModel", cascade="delete")
 
-    bpmn_process_definition_id: int = db.Column(ForeignKey(BpmnProcessDefinitionModel.id), nullable=True)  # type: ignore
+    bpmn_process_definition_id: int = db.Column(
+        ForeignKey(BpmnProcessDefinitionModel.id), nullable=True
+    )  # type: ignore
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
     active_human_tasks = relationship(
