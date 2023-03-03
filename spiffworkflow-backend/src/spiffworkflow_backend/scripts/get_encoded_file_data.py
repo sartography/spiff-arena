@@ -1,12 +1,10 @@
 """Get_encoded_file_data."""
 import base64
 from typing import Any
-from urllib.parse import unquote
 
-from flask import current_app
-
-from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
+from spiffworkflow_backend.models.process_instance_file_data import (
+    ProcessInstanceFileDataModel,
+)
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
@@ -37,13 +35,15 @@ class GetEncodedFileData(Script):
         digest_reference = args[0]
         digest = digest_reference.split(":")[1]
         process_instance_id = script_attributes_context.process_instance_id
-        
+
         file_data = ProcessInstanceFileDataModel.query.filter_by(
             digest=digest,
             process_instance_id=process_instance_id,
         ).first()
 
-        base64_value = base64.b64encode(file_data.contents).decode('ascii')
-        encoded_file_data = f"data:{file_data.mimetype};name={file_data.filename};base64,{base64_value}"
+        base64_value = base64.b64encode(file_data.contents).decode("ascii")
+        encoded_file_data = (
+            f"data:{file_data.mimetype};name={file_data.filename};base64,{base64_value}"
+        )
 
         return encoded_file_data
