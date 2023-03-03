@@ -36,7 +36,7 @@ class TestProcessInstanceService(BaseTest):
         assert model.list_index == list_index
         assert model.mimetype == "some/mimetype"
         assert model.filename == "testing.txt"
-        assert model.contents == b"testing\n"
+        assert model.contents == b"testing\n"  # type: ignore
         assert (
             model.digest
             == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
@@ -165,7 +165,7 @@ class TestProcessInstanceService(BaseTest):
         data = {
             "not_a_file": "just a value",
         }
-        models = []
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
         ProcessInstanceService.replace_file_data_with_digest_references(data, models)
 
         assert len(data) == 1

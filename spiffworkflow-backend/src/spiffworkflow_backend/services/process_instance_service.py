@@ -246,7 +246,7 @@ class ProcessInstanceService:
                     identifier=identifier,
                     mimetype=mimetype,
                     filename=filename,
-                    contents=contents,
+                    contents=contents,  # type: ignore
                     digest=digest,
                     updated_at_in_seconds=now_in_seconds,
                     created_at_in_seconds=now_in_seconds,
