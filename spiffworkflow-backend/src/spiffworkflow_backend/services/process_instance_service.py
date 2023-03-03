@@ -296,9 +296,7 @@ class ProcessInstanceService:
         models: List[ProcessInstanceFileDataModel],
     ) -> None:
         for model in models:
-            digest_reference = (
-                f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
-            )
+            digest_reference = f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
             if model.list_index is None:
                 data[model.identifier] = digest_reference
             else:
