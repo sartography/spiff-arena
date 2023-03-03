@@ -48,9 +48,9 @@ class TaskModel(SpiffworkflowBaseDBModel):
     )
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
-    task_definition_id: int = db.Column(
-        ForeignKey(TaskDefinitionModel.id), nullable=False  # type: ignore
-    )
+    # task_definition_id: int = db.Column(
+    #     ForeignKey(TaskDefinitionModel.id), nullable=False  # type: ignore
+    # )
     state: str = db.Column(db.String(10), nullable=False)
     properties_json: dict = db.Column(db.JSON, nullable=False)
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
