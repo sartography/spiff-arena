@@ -1301,10 +1301,11 @@ class TestProcessApi(BaseTest):
         assert create_response.json is not None
         assert create_response.status_code == 201
         process_instance_id = create_response.json["id"]
-        client.post(
+        run_response = client.post(
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
+        assert run_response.status_code == 200
         show_response = client.get(
             f"/v1.0/process-instances/{modified_process_model_identifier}/{process_instance_id}?process_identifier={spec_reference.identifier}",
             headers=self.logged_in_headers(with_super_admin_user),
