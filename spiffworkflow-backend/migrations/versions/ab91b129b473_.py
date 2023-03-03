@@ -1,16 +1,16 @@
 """empty message
 
-Revision ID: ac6b60d7fee9
+Revision ID: ab91b129b473
 Revises: 
-Create Date: 2023-02-27 22:02:11.465980
+Create Date: 2023-03-03 14:00:59.134381
 
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = 'ac6b60d7fee9'
+revision = 'ab91b129b473'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -47,6 +47,18 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uri')
     )
+    op.create_table('process_instance_data',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('runtime_json', sa.JSON(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('serialized_bpmn_definition',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('hash', sa.String(length=255), nullable=False),
+    sa.Column('static_json', sa.JSON(), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_serialized_bpmn_definition_hash'), 'serialized_bpmn_definition', ['hash'], unique=True)
     op.create_table('spec_reference_cache',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('identifier', sa.String(length=255), nullable=True),
@@ -68,6 +80,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
     sa.Column('bpmn_process_identifier', sa.String(length=255), nullable=False),
+    sa.Column('bpmn_process_name', sa.String(length=255), nullable=True),
     sa.Column('bpmn_task_identifier', sa.String(length=255), nullable=False),
     sa.Column('bpmn_task_name', sa.String(length=255), nullable=True),
     sa.Column('bpmn_task_type', sa.String(length=255), nullable=True),
@@ -110,6 +123,8 @@ def upgrade():
     sa.Column('process_model_identifier', sa.String(length=255), nullable=False),
     sa.Column('process_model_display_name', sa.String(length=255), nullable=False),
     sa.Column('process_initiator_id', sa.Integer(), nullable=False),
+    sa.Column('serialized_bpmn_definition_id', sa.Integer(), nullable=True),
+    sa.Column('process_instance_data_id', sa.Integer(), nullable=True),
     sa.Column('bpmn_json', sa.JSON(), nullable=True),
     sa.Column('start_in_seconds', sa.Integer(), nullable=True),
     sa.Column('end_in_seconds', sa.Integer(), nullable=True),
@@ -122,6 +137,8 @@ def upgrade():
     sa.Column('locked_by', sa.String(length=80), nullable=True),
     sa.Column('locked_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['process_initiator_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['process_instance_data_id'], ['process_instance_data.id'], ),
+    sa.ForeignKeyConstraint(['serialized_bpmn_definition_id'], ['serialized_bpmn_definition.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_process_instance_process_model_display_name'), 'process_instance', ['process_model_display_name'], unique=False)
@@ -228,6 +245,21 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('principal_id', 'permission_target_id', 'permission', name='permission_assignment_uniq')
     )
+    op.create_table('process_instance_file_data',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('identifier', sa.String(length=255), nullable=False),
+    sa.Column('list_index', sa.Integer(), nullable=True),
+    sa.Column('mimetype', sa.String(length=255), nullable=False),
+    sa.Column('filename', sa.String(length=255), nullable=False),
+    sa.Column('contents', sa.LargeBinary().with_variant(mysql.LONGBLOB(), 'mysql'), nullable=False),
+    sa.Column('digest', sa.String(length=64), nullable=False),
+    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=False),
+    sa.Column('created_at_in_seconds', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_process_instance_file_data_digest'), 'process_instance_file_data', ['digest'], unique=False)
     op.create_table('process_instance_metadata',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -248,6 +280,7 @@ def upgrade():
     sa.Column('task_id', sa.String(length=50), nullable=False),
     sa.Column('task_state', sa.String(length=50), nullable=False),
     sa.Column('bpmn_task_identifier', sa.String(length=255), nullable=False),
+    sa.Column('delta_json', sa.JSON(), nullable=True),
     sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=False),
     sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
@@ -290,6 +323,8 @@ def downgrade():
     op.drop_table('spiff_step_details')
     op.drop_index(op.f('ix_process_instance_metadata_key'), table_name='process_instance_metadata')
     op.drop_table('process_instance_metadata')
+    op.drop_index(op.f('ix_process_instance_file_data_digest'), table_name='process_instance_file_data')
+    op.drop_table('process_instance_file_data')
     op.drop_table('permission_assignment')
     op.drop_table('message_instance')
     op.drop_index(op.f('ix_human_task_completed'), table_name='human_task')
@@ -311,6 +346,9 @@ def downgrade():
     op.drop_index(op.f('ix_spec_reference_cache_identifier'), table_name='spec_reference_cache')
     op.drop_index(op.f('ix_spec_reference_cache_display_name'), table_name='spec_reference_cache')
     op.drop_table('spec_reference_cache')
+    op.drop_index(op.f('ix_serialized_bpmn_definition_hash'), table_name='serialized_bpmn_definition')
+    op.drop_table('serialized_bpmn_definition')
+    op.drop_table('process_instance_data')
     op.drop_table('permission_target')
     op.drop_index(op.f('ix_message_triggerable_process_model_process_model_identifier'), table_name='message_triggerable_process_model')
     op.drop_table('message_triggerable_process_model')
