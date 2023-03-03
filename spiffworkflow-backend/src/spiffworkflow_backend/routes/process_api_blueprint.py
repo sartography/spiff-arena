@@ -25,6 +25,7 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSc
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceTaskDataCannotBeUpdatedError,
 )
+from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
@@ -87,9 +88,31 @@ def _process_data_fetcher(
     process_instance_id: int,
     process_data_identifier: str,
     download_file_data: bool,
-    index: Optional[int] = None,
 ) -> flask.wrappers.Response:
     """Process_data_show."""
+    if download_file_data:
+        file_data = ProcessInstanceFileDataModel.query.filter_by(
+            digest=process_data_identifier,
+            process_instance_id=process_instance_id,
+        ).first()
+        if file_data is None:
+            raise ApiError(
+                error_code="process_instance_file_data_not_found",
+                message=(
+                    "Could not find file data related to the digest:"
+                    f" {process_data_identifier}"
+                ),
+            )
+        mimetype = file_data.mimetype
+        filename = file_data.filename
+        file_contents = file_data.contents
+
+        return Response(
+            file_contents,
+            mimetype=mimetype,
+            headers={"Content-disposition": f"attachment; filename={filename}"},
+        )
+
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     all_process_data = processor.get_data()
@@ -98,26 +121,6 @@ def _process_data_fetcher(
     if process_data_value is None:
         script_engine_last_result = processor._script_engine.environment.last_result()
         process_data_value = script_engine_last_result.get(process_data_identifier)
-
-    if process_data_value is not None and index is not None:
-        process_data_value = process_data_value[index]
-
-    if (
-        download_file_data
-        and isinstance(process_data_value, str)
-        and process_data_value.startswith("data:")
-    ):
-        parts = process_data_value.split(";")
-        mimetype = parts[0][4:]
-        filename = parts[1].split("=")[1]
-        base64_value = parts[2].split(",")[1]
-        file_contents = base64.b64decode(base64_value)
-
-        return Response(
-            file_contents,
-            mimetype=mimetype,
-            headers={"Content-disposition": f"attachment; filename={filename}"},
-        )
 
     return make_response(
         jsonify(
@@ -140,7 +143,6 @@ def process_data_show(
         process_instance_id,
         process_data_identifier,
         download_file_data=False,
-        index=None,
     )
 
 
@@ -148,14 +150,12 @@ def process_data_file_download(
     process_instance_id: int,
     process_data_identifier: str,
     modified_process_model_identifier: str,
-    index: Optional[int] = None,
 ) -> flask.wrappers.Response:
     """Process_data_file_download."""
     return _process_data_fetcher(
         process_instance_id,
         process_data_identifier,
         download_file_data=True,
-        index=index,
     )
 
 
