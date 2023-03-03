@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Optional
 
 from sqlalchemy import ForeignKey
 
@@ -15,8 +16,9 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 class BpmnProcessModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process"
     id: int = db.Column(db.Integer, primary_key=True)
+    guid: Optional[str] = db.Column(db.String(36), nullable=True, unique=True, index=True)
 
-    parent_process_id: int = db.Column(ForeignKey("bpmn_process.id"), nullable=True)
+    parent_process_id: Optional[int] = db.Column(ForeignKey("bpmn_process.id"), nullable=True)
 
     properties_json: dict = db.Column(db.JSON, nullable=False)
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)

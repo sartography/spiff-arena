@@ -15,11 +15,14 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
 
     # this is a sha256 hash of spec and serializer_version
+    # note that a call activity is its own row in this table, with its own hash,
+    # and therefore it only gets stored once per version, and can be reused
+    # by multiple calling processes.
     hash: str = db.Column(db.String(255), nullable=False, index=True, unique=True)
 
     bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
 
-    properties_json: str = db.Column(db.JSON, nullable=False)
+    properties_json: dict = db.Column(db.JSON, nullable=False)
 
     # process or subprocess
     # FIXME: will probably ignore for now since we do not strictly need it
