@@ -1643,12 +1643,6 @@ paths:
         description: The identifier of the process data.
         schema:
           type: string
-      - name: index
-        in: query
-        required: false
-        description: The optional index of the value if key's value is an array
-        schema:
-          type: integer
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_data_file_download
       summary: Download the file referneced in the process data value.

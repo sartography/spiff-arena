@@ -1,8 +1,13 @@
 """Process_instance_service."""
+import base64
+import hashlib
 import time
 from typing import Any
+from typing import Generator
 from typing import List
 from typing import Optional
+from typing import Tuple
+from urllib.parse import unquote
 
 import sentry_sdk
 from flask import current_app
@@ -14,6 +19,9 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_file_data import (
+    ProcessInstanceFileDataModel,
+)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
@@ -32,6 +40,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 class ProcessInstanceService:
     """ProcessInstanceService."""
 
+    FILE_DATA_DIGEST_PREFIX = "spifffiledatadigest+"
     TASK_STATE_LOCKED = "locked"
 
     @classmethod
@@ -209,6 +218,97 @@ class ProcessInstanceService:
 
             return lane_uids
 
+    @classmethod
+    def file_data_model_for_value(
+        cls,
+        identifier: str,
+        value: str,
+        process_instance_id: int,
+    ) -> Optional[ProcessInstanceFileDataModel]:
+        if value.startswith("data:"):
+            try:
+                parts = value.split(";")
+                mimetype = parts[0][5:]
+                filename = unquote(parts[1].split("=")[1])
+                base64_value = parts[2].split(",")[1]
+                if not base64_value.startswith(cls.FILE_DATA_DIGEST_PREFIX):
+                    contents = base64.b64decode(base64_value)
+                    digest = hashlib.sha256(contents).hexdigest()
+                    now_in_seconds = round(time.time())
+
+                    return ProcessInstanceFileDataModel(
+                        process_instance_id=process_instance_id,
+                        identifier=identifier,
+                        mimetype=mimetype,
+                        filename=filename,
+                        contents=contents,  # type: ignore
+                        digest=digest,
+                        updated_at_in_seconds=now_in_seconds,
+                        created_at_in_seconds=now_in_seconds,
+                    )
+            except Exception as e:
+                print(e)
+
+        return None
+
+    @classmethod
+    def possible_file_data_values(
+        cls,
+        data: dict[str, Any],
+    ) -> Generator[Tuple[str, str, Optional[int]], None, None]:
+        for identifier, value in data.items():
+            if isinstance(value, str):
+                yield (identifier, value, None)
+            if isinstance(value, list):
+                for list_index, list_value in enumerate(value):
+                    if isinstance(list_value, str):
+                        yield (identifier, list_value, list_index)
+
+    @classmethod
+    def file_data_models_for_data(
+        cls,
+        data: dict[str, Any],
+        process_instance_id: int,
+    ) -> List[ProcessInstanceFileDataModel]:
+        models = []
+
+        for identifier, value, list_index in cls.possible_file_data_values(data):
+            model = cls.file_data_model_for_value(
+                identifier, value, process_instance_id
+            )
+            if model is not None:
+                model.list_index = list_index
+                models.append(model)
+
+        return models
+
+    @classmethod
+    def replace_file_data_with_digest_references(
+        cls,
+        data: dict[str, Any],
+        models: List[ProcessInstanceFileDataModel],
+    ) -> None:
+        for model in models:
+            digest_reference = f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
+            if model.list_index is None:
+                data[model.identifier] = digest_reference
+            else:
+                data[model.identifier][model.list_index] = digest_reference
+
+    @classmethod
+    def save_file_data_and_replace_with_digest_references(
+        cls,
+        data: dict[str, Any],
+        process_instance_id: int,
+    ) -> None:
+        models = cls.file_data_models_for_data(data, process_instance_id)
+
+        for model in models:
+            db.session.add(model)
+        db.session.commit()
+
+        cls.replace_file_data_with_digest_references(data, models)
+
     @staticmethod
     def complete_form_task(
         processor: ProcessInstanceProcessor,
@@ -224,6 +324,11 @@ class ProcessInstanceService:
         """
         AuthorizationService.assert_user_can_complete_spiff_task(
             processor.process_instance_model.id, spiff_task, user
+        )
+
+        ProcessInstanceService.save_file_data_and_replace_with_digest_references(
+            data,
+            processor.process_instance_model.id,
         )
 
         dot_dct = ProcessInstanceService.create_dot_dict(data)
