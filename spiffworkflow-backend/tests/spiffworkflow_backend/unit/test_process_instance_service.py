@@ -22,7 +22,7 @@ class TestProcessInstanceService(BaseTest):
     """TestProcessInstanceService."""
 
     SAMPLE_FILE_DATA = "data:some/mimetype;name=testing.txt;base64,dGVzdGluZwo="
-    SAMPLE_DIGEST_REFERENCE = "data:some/mimetype;name=testing.txt;digest,12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
+    SAMPLE_DIGEST_REFERENCE = "data:some/mimetype;name=testing.txt;base64,12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
 
     def _check_sample_file_data_model(
         self,
