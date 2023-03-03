@@ -18,7 +18,9 @@ from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApi
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
+from spiffworkflow_backend.models.process_instance_file_data import (
+    ProcessInstanceFileDataModel,
+)
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
@@ -224,7 +226,7 @@ class ProcessInstanceService:
     @classmethod
     def file_data_model_for_value(
         cls,
-        identifier: str, 
+        identifier: str,
         value: str,
         process_instance_id: int,
     ) -> Optional[ProcessInstanceFileDataModel]:
@@ -275,7 +277,9 @@ class ProcessInstanceService:
         models = []
 
         for identifier, value, list_index in cls.possible_file_data_values(data):
-            model = cls.file_data_model_for_value(identifier, value, process_instance_id)
+            model = cls.file_data_model_for_value(
+                identifier, value, process_instance_id
+            )
             if model is not None:
                 model.list_index = list_index
                 models.append(model)

@@ -5,8 +5,10 @@ from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+from spiffworkflow_backend.models.process_instance_file_data import (
+    ProcessInstanceFileDataModel,
+)
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
-from spiffworkflow_backend.models.process_instance_file_data import ProcessInstanceFileDataModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -21,7 +23,12 @@ class TestProcessInstanceService(BaseTest):
 
     SAMPLE_FILE_DATA = "data:some/mimetype;name=testing.txt;base64,dGVzdGluZwo="
 
-    def _check_sample_file_data_model(self, identifier: str, list_index: Optional[int], model: Optional[ProcessInstanceFileDataModel]) -> None:
+    def _check_sample_file_data_model(
+        self,
+        identifier: str,
+        list_index: Optional[int],
+        model: Optional[ProcessInstanceFileDataModel],
+    ) -> None:
         assert model is not None
         assert model.identifier == identifier
         assert model.process_instance_id == 111
@@ -29,7 +36,10 @@ class TestProcessInstanceService(BaseTest):
         assert model.mimetype == "some/mimetype"
         assert model.filename == "testing.txt"
         assert model.contents == b"testing\n"
-        assert model.digest == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
+        assert (
+            model.digest
+            == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
+        )
 
     def test_can_create_file_data_model_for_file_data_value(
         self,
@@ -136,8 +146,12 @@ class TestProcessInstanceService(BaseTest):
         }
         models = [
             ProcessInstanceFileDataModel(identifier="uploaded_file", digest="abc"),
-            ProcessInstanceFileDataModel(identifier="uploaded_files", list_index=0, digest="def"),
-            ProcessInstanceFileDataModel(identifier="uploaded_files", list_index=1, digest="ghi"),
+            ProcessInstanceFileDataModel(
+                identifier="uploaded_files", list_index=0, digest="def"
+            ),
+            ProcessInstanceFileDataModel(
+                identifier="uploaded_files", list_index=1, digest="ghi"
+            ),
         ]
 
         ProcessInstanceService.replace_file_data_with_digest_references(data, models)
@@ -180,8 +194,12 @@ class TestProcessInstanceService(BaseTest):
         }
         models = [
             ProcessInstanceFileDataModel(identifier="uploaded_file", digest="abc"),
-            ProcessInstanceFileDataModel(identifier="uploaded_files", list_index=0, digest="def"),
-            ProcessInstanceFileDataModel(identifier="uploaded_files", list_index=1, digest="ghi"),
+            ProcessInstanceFileDataModel(
+                identifier="uploaded_files", list_index=0, digest="def"
+            ),
+            ProcessInstanceFileDataModel(
+                identifier="uploaded_files", list_index=1, digest="ghi"
+            ),
         ]
 
         ProcessInstanceService.replace_file_data_with_digest_references(data, models)
