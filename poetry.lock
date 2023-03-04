@@ -62,36 +62,6 @@ files = [
 dev = ["black", "coverage", "isort", "pre-commit", "pyenchant", "pylint"]
 
 [[package]]
-name = "apscheduler"
-version = "3.10.0"
-description = "In-process task scheduler with Cron-like capabilities"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "APScheduler-3.10.0-py3-none-any.whl", hash = "sha256:575299f20073c60a2cc9d4fa5906024cdde33c5c0ce6087c4e3c14be3b50fdd4"},
-    {file = "APScheduler-3.10.0.tar.gz", hash = "sha256:a49fc23269218416f0e41890eea7a75ed6b284f10630dcfe866ab659621a3696"},
-]
-
-[package.dependencies]
-pytz = "*"
-setuptools = ">=0.7"
-six = ">=1.4.0"
-tzlocal = ">=2.0,<3.0.0 || >=4.0.0"
-
-[package.extras]
-doc = ["sphinx", "sphinx-rtd-theme"]
-gevent = ["gevent"]
-mongodb = ["pymongo (>=3.0)"]
-redis = ["redis (>=3.0)"]
-rethinkdb = ["rethinkdb (>=2.4.0)"]
-sqlalchemy = ["sqlalchemy (>=1.4)"]
-testing = ["pytest", "pytest-asyncio", "pytest-cov", "pytest-tornado5"]
-tornado = ["tornado (>=4.3)"]
-twisted = ["twisted"]
-zookeeper = ["kazoo"]
-
-[[package]]
 name = "astroid"
 version = "2.12.12"
 description = "An abstract syntax tree for Python with inference support."
@@ -2112,21 +2082,6 @@ files = [
 ]
 
 [[package]]
-name = "pytz-deprecation-shim"
-version = "0.1.0.post0"
-description = "Shims to make deprecation of pytz easier"
-category = "main"
-optional = false
-python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,>=2.7"
-files = [
-    {file = "pytz_deprecation_shim-0.1.0.post0-py2.py3-none-any.whl", hash = "sha256:8314c9692a636c8eb3bda879b9f119e350e93223ae83e70e80c31675a0fdc1a6"},
-    {file = "pytz_deprecation_shim-0.1.0.post0.tar.gz", hash = "sha256:af097bae1b616dde5c5744441e2ddc69e74dfdcb0c263129610d85b87445a59d"},
-]
-
-[package.dependencies]
-tzdata = {version = "*", markers = "python_version >= \"3.6\""}
-
-[[package]]
 name = "pyupgrade"
 version = "3.1.0"
 description = "A tool to automatically upgrade syntax for newer versions."
@@ -3060,38 +3015,6 @@ files = [
 ]
 
 [[package]]
-name = "tzdata"
-version = "2022.5"
-description = "Provider of IANA time zone data"
-category = "main"
-optional = false
-python-versions = ">=2"
-files = [
-    {file = "tzdata-2022.5-py2.py3-none-any.whl", hash = "sha256:323161b22b7802fdc78f20ca5f6073639c64f1a7227c40cd3e19fd1d0ce6650a"},
-    {file = "tzdata-2022.5.tar.gz", hash = "sha256:e15b2b3005e2546108af42a0eb4ccab4d9e225e2dfbf4f77aad50c70a4b1f3ab"},
-]
-
-[[package]]
-name = "tzlocal"
-version = "4.2"
-description = "tzinfo object for the local timezone"
-category = "main"
-optional = false
-python-versions = ">=3.6"
-files = [
-    {file = "tzlocal-4.2-py3-none-any.whl", hash = "sha256:89885494684c929d9191c57aa27502afc87a579be5cdd3225c77c463ea043745"},
-    {file = "tzlocal-4.2.tar.gz", hash = "sha256:ee5842fa3a795f023514ac2d801c4a81d1743bbe642e3940143326b3a00addd7"},
-]
-
-[package.dependencies]
-pytz-deprecation-shim = "*"
-tzdata = {version = "*", markers = "platform_system == \"Windows\""}
-
-[package.extras]
-devenv = ["black", "pyroma", "pytest-cov", "zest.releaser"]
-test = ["pytest (>=4.3)", "pytest-mock (>=3.3)"]
-
-[[package]]
 name = "unidecode"
 version = "1.3.6"
 description = "ASCII transliterations of Unicode text"
@@ -3306,4 +3229,4 @@ tests-strict = ["cmake (==3.21.2)", "codecov (==2.0.15)", "ninja (==1.10.2)", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "218d9e84c83ac2b9953fa5e18ee39879d2573fc749900887851be6d9ec32e63d"
+content-hash = "299faad8100d66f58158589c7935bfe47836e7f8bbf5dcdf5b4f21ff8f0ab2f4"
