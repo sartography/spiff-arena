@@ -24,13 +24,19 @@ const deleteVideosOnSuccess = (on) => {
   })
 }
 
+let spiffWorkflowFrontendUrl = `http://localhost:${process.env.SPIFFWORKFLOW_FRONTEND_PORT || 7001}`
+
+if (process.env.SPIFFWORKFLOW_FRONTEND_URL) {
+  spiffWorkflowFrontendUrl = process.env.SPIFFWORKFLOW_FRONTEND_URL
+}
+
 const cypressConfig = {
   projectId: 'crax1q',
 
   videoUploadOnPasses: false,
   chromeWebSecurity: false,
   e2e: {
-    baseUrl: `http://localhost:${process.env.SPIFFWORKFLOW_FRONTEND_PORT || 7001}`,
+    baseUrl: spiffWorkflowFrontendUrl,
     setupNodeEvents(on, config) {
       deleteVideosOnSuccess(on)
       require('@cypress/grep/src/plugin')(config);
