@@ -453,8 +453,9 @@ class ProcessInstanceProcessor:
         self.process_instance_model = process_instance_model
         self.process_model_service = ProcessModelService()
         bpmn_process_spec = None
+        self.full_bpmn_process_dict = {}
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None
-        if process_instance_model.serialized_bpmn_definition_id is None:
+        if process_instance_model.bpmn_process_definition_id is None:
             (
                 bpmn_process_spec,
                 subprocesses,
@@ -468,7 +469,7 @@ class ProcessInstanceProcessor:
         )
 
         try:
-            self.bpmn_process_instance = self.__get_bpmn_process_instance(
+            (self.bpmn_process_instance, self.full_bpmn_process_dict) = self.__get_bpmn_process_instance(
                 process_instance_model,
                 bpmn_process_spec,
                 validate_only,
@@ -547,6 +548,23 @@ class ProcessInstanceProcessor:
         return bpmn_process_definition_dict
 
     @classmethod
+    def _set_definition_dict_for_bpmn_subprocess_definitions(
+        cls, bpmn_process_definition: BpmnProcessDefinitionModel, spiff_bpmn_process_dict: dict
+    ) -> None:
+        bpmn_process_subprocess_definitions = (
+            BpmnProcessDefinitionRelationshipModel.query.filter_by(
+                bpmn_process_definition_parent_id=bpmn_process_definition.id
+            ).all()
+        )
+        for bpmn_subprocess_definition in bpmn_process_subprocess_definitions:
+            spec = cls._set_definition_dict_for_bpmn_subprocess_definitions(
+                bpmn_subprocess_definition, spiff_bpmn_process_dict
+            )
+            spiff_bpmn_process_dict["subprocess_specs"][
+                bpmn_subprocess_definition.bpmn_identifier
+            ] = spec
+
+    @classmethod
     def _get_bpmn_process_dict(cls, bpmn_process: BpmnProcessModel) -> dict:
         json_data = JsonDataModel.query.filter_by(hash=bpmn_process.json_data_hash).first()
         bpmn_process_dict = {'data': json_data.data, 'tasks': {}}
@@ -560,14 +578,11 @@ class ProcessInstanceProcessor:
         return bpmn_process_dict
 
     @classmethod
-    def _get_full_bpmn_json(cls, process_instance_model: ProcessInstanceModel) -> dict:
-        if process_instance_model.serialized_bpmn_definition_id is None:
+    def _get_full_bpmn_process_dict(cls, process_instance_model: ProcessInstanceModel) -> dict:
+        if process_instance_model.bpmn_process_definition_id is None:
             return {}
-        # serialized_bpmn_definition = process_instance_model.serialized_bpmn_definition
-        # print(f"serialized_bpmn_definition.static_json: {serialized_bpmn_definition.static_json}")
-        # loaded_json: dict = json.loads(serialized_bpmn_definition.static_json) # or "{}")
 
-        serialized_bpmn_definition: dict = {
+        spiff_bpmn_process_dict: dict = {
             "serializer_version": process_instance_model.spiff_serializer_version,
             "spec": {},
             "subprocess_specs": {},
@@ -575,39 +590,24 @@ class ProcessInstanceProcessor:
         }
         bpmn_process_definition = process_instance_model.bpmn_process_definition
         if bpmn_process_definition is not None:
-            serialized_bpmn_definition["spec"] = (
+            spiff_bpmn_process_dict["spec"] = (
                 cls._get_definition_dict_for_bpmn_process_definition(
                     bpmn_process_definition
                 )
             )
-
-            bpmn_process_subprocess_definitions = (
-                BpmnProcessDefinitionRelationshipModel.query.filter_by(
-                    bpmn_process_definition_parent_id=bpmn_process_definition.id
-                ).all()
-            )
-            for bpmn_subprocess_definition in bpmn_process_subprocess_definitions:
-                spec = cls._get_definition_dict_for_bpmn_process_definition(
-                    bpmn_subprocess_definition
-                )
-                serialized_bpmn_definition["subprocess_specs"][
-                    bpmn_subprocess_definition.bpmn_identifier
-                ] = spec
+            cls._set_definition_dict_for_bpmn_subprocess_definitions(bpmn_process_definition, spiff_bpmn_process_dict)
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
                 bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_process)
-                serialized_bpmn_definition.update(bpmn_process_dict)
+                spiff_bpmn_process_dict.update(bpmn_process_dict)
 
                 bpmn_subprocesses = BpmnProcessModel.query.filter_by(parent_process_id=bpmn_process.id).all()
                 for bpmn_subprocess in bpmn_subprocesses:
                     bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess)
-                    serialized_bpmn_definition['subprocesses'][bpmn_subprocess.guid] = bpmn_process_dict
+                    spiff_bpmn_process_dict['subprocesses'][bpmn_subprocess.guid] = bpmn_process_dict
 
-        # process_instance_data = process_instance_model.process_instance_data
-        # loaded_json.update(json.loads(process_instance_data.runtime_json))
-
-        return serialized_bpmn_definition
+        return spiff_bpmn_process_dict
 
     def current_user(self) -> Any:
         """Current_user."""
@@ -643,22 +643,18 @@ class ProcessInstanceProcessor:
         validate_only: bool = False,
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None,
     ) -> BpmnWorkflow:
-        """__get_bpmn_process_instance."""
-        if process_instance_model.serialized_bpmn_definition_id is not None:
+        full_bpmn_process_dict = {}
+        if process_instance_model.bpmn_process_definition_id is not None:
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
             original_spiff_logger_log_level = spiff_logger.level
             spiff_logger.setLevel(logging.WARNING)
 
             try:
-                full_bpmn_json = ProcessInstanceProcessor._get_full_bpmn_json(
+                full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
                     process_instance_model
                 )
-                bpmn_process_instance = (
-                    ProcessInstanceProcessor._serializer.deserialize_json(
-                        json.dumps(full_bpmn_json)
-                    )
-                )
+                bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(full_bpmn_process_dict)
             except Exception as err:
                 raise err
             finally:
@@ -674,7 +670,7 @@ class ProcessInstanceProcessor:
             bpmn_process_instance.data[
                 ProcessInstanceProcessor.VALIDATION_PROCESS_KEY
             ] = validate_only
-        return bpmn_process_instance
+        return (bpmn_process_instance, full_bpmn_process_dict)
 
     def slam_in_data(self, data: dict) -> None:
         """Slam_in_data."""
@@ -814,9 +810,7 @@ class ProcessInstanceProcessor:
 
         Rerturns: {process_name: [task_1, task_2, ...], ...}
         """
-        bpmn_definition_dict = json.loads(
-            self.process_instance_model.serialized_bpmn_definition.static_json or "{}"
-        )
+        bpmn_definition_dict = self.full_bpmn_process_dict
         processes: dict[str, list[str]] = {bpmn_definition_dict["spec"]["name"]: []}
         for task_name, _task_spec in bpmn_definition_dict["spec"]["task_specs"].items():
             processes[bpmn_definition_dict["spec"]["name"]].append(task_name)
@@ -864,9 +858,7 @@ class ProcessInstanceProcessor:
         NOTE: this may not fully work for tasks that are NOT call activities since their task_name may not be unique
         but in our current use case we only care about the call activities here.
         """
-        bpmn_definition_dict = json.loads(
-            self.process_instance_model.serialized_bpmn_definition.static_json or "{}"
-        )
+        bpmn_definition_dict = self.full_bpmn_process_dict
         spiff_task_json = bpmn_definition_dict["spec"]["task_specs"] or {}
         if "subprocess_specs" in bpmn_definition_dict:
             for _subprocess_name, subprocess_details in bpmn_definition_dict[
@@ -891,9 +883,7 @@ class ProcessInstanceProcessor:
         Also note that subprocess_task_id might in fact be a call activity, because spiff treats
         call activities like subprocesses in terms of the serialization.
         """
-        process_instance_data_dict = json.loads(
-            self.process_instance_model.process_instance_data.runtime_json or "{}"
-        )
+        process_instance_data_dict = self.full_bpmn_process_dict
         spiff_task_json = self.get_all_task_specs()
 
         subprocesses_by_child_task_ids = {}

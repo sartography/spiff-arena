@@ -549,13 +549,11 @@ def process_instance_task_list(
 
     step_details = step_detail_query.all()
 
-    process_instance_data = process_instance.process_instance_data
-    process_instance_data_json = (
-        "{}" if process_instance_data is None else process_instance_data.runtime_json
-    )
-    process_instance_data_dict = json.loads(process_instance_data_json)
-    tasks = process_instance_data_dict["tasks"]
-    subprocesses = process_instance_data_dict["subprocesses"]
+    processor = ProcessInstanceProcessor(process_instance)
+    full_bpmn_process_dict = processor.full_bpmn_process_dict
+
+    tasks = full_bpmn_process_dict["tasks"]
+    subprocesses = full_bpmn_process_dict["subprocesses"]
 
     steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
 
@@ -588,18 +586,17 @@ def process_instance_task_list(
                 spiff_task_id, TaskState.FUTURE
             )
 
-    process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
+    bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(full_bpmn_process_dict)
 
-    processor = ProcessInstanceProcessor(process_instance)
     spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-        step_details[-1].bpmn_task_identifier, processor.bpmn_process_instance
+        step_details[-1].bpmn_task_identifier, bpmn_process_instance
     )
     if spiff_task is not None and spiff_task.state != TaskState.READY:
         spiff_task.complete()
 
     spiff_tasks = None
     if all_tasks:
-        spiff_tasks = processor.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
+        spiff_tasks = bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
     else:
         spiff_tasks = processor.get_all_user_tasks()
 
