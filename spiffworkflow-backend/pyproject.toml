@@ -75,7 +75,7 @@ pylint = "^2.15.10"
 
 
 [tool.poetry.dev-dependencies]
-pytest = "*"
+pytest = "^7.1.2"
 coverage = {extras = ["toml"], version = "^6.1"}
 safety = "^2.3.1"
 mypy = ">=0.961"
@@ -89,7 +89,7 @@ black = ">=21.10b0"
 flake8-bandit = "^2.1.2"
 
 # 1.7.3 broke us. https://github.com/PyCQA/bandit/issues/841
-bandit = "*"
+bandit = "1.7.2"
 
 flake8-bugbear = "^22.10.25"
 flake8-docstrings = "^1.6.0"
