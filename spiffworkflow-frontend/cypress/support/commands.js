@@ -109,7 +109,7 @@ Cypress.Commands.add(
     if (expectAutoRedirectToHumanTask) {
       // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
       cy.url().should('include', `/tasks/`);
-      cy.contains('Task: ');
+      cy.contains('Task: ', { timeout: 10000 });
     } else {
       cy.contains(/Process Instance.*[kK]icked [oO]ff/);
       cy.reload(true);

@@ -1218,7 +1218,7 @@ class ProcessInstanceProcessor:
                     )
                     db.session.add(spiff_step_detail)
                     db.session.commit()
-                    self.log_spiff_step_details(spiff_step_detail_mapping)
+                    # self.log_spiff_step_details(spiff_step_detail_mapping)
 
         if len(human_tasks) > 0:
             for at in human_tasks:
@@ -1255,7 +1255,7 @@ class ProcessInstanceProcessor:
         spiff_step_detail = SpiffStepDetailsModel(**step)
         db.session.add(spiff_step_detail)
         db.session.commit()
-        self.log_spiff_step_details(step)
+        # self.log_spiff_step_details(step)
 
     def manual_complete_task(self, task_id: str, execute: bool) -> None:
         """Mark the task complete optionally executing it."""
@@ -1720,7 +1720,7 @@ class ProcessInstanceProcessor:
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
-            self.log_spiff_step_details(step_details)
+            # self.log_spiff_step_details(step_details)
             db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
