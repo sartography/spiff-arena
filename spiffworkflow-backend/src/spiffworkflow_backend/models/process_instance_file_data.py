@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.dialects.mysql import LONGBLOB
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
@@ -24,7 +25,9 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
     mimetype: str = db.Column(db.String(255), nullable=False)
     filename: str = db.Column(db.String(255), nullable=False)
     # this is not deferred because there is no reason to query this model if you do not want the contents
-    contents: str = db.Column(db.LargeBinary, nullable=False)
+    contents: str = db.Column(
+        db.LargeBinary().with_variant(LONGBLOB, "mysql"), nullable=False
+    )
     digest: str = db.Column(db.String(64), nullable=False, index=True)
 
     updated_at_in_seconds: int = db.Column(db.Integer, nullable=False)

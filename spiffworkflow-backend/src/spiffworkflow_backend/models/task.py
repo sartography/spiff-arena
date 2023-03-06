@@ -14,7 +14,6 @@ from sqlalchemy import ForeignKey
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 
 class MultiInstanceType(enum.Enum):

@@ -1,7 +1,7 @@
 """Process_instance_processor."""
 import _strptime  # type: ignore
-from SpiffWorkflow.task import TaskStateNames # type: ignore
-from spiffworkflow_backend.models.task import TaskModel # noqa: F401
+from SpiffWorkflow.task import TaskStateNames  # type: ignore
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 import decimal
 import json
 import logging
@@ -987,7 +987,8 @@ class ProcessInstanceProcessor:
 
         bpmn_process = None
         if bpmn_process_parent is not None:
-            bpmn_process = BpmnProcessModel.query.filter_by(parent_process_id=bpmn_process_parent.id, guid=bpmn_process_guid).first()
+            bpmn_process = BpmnProcessModel.query.filter_by(
+                parent_process_id=bpmn_process_parent.id, guid=bpmn_process_guid).first()
         elif self.process_instance_model.bpmn_process_id is not None:
             bpmn_process = self.process_instance_model.bpmn_process
 

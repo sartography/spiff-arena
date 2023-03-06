@@ -1,16 +1,16 @@
 """empty message
 
-Revision ID: 55b76c4528c5
+Revision ID: ede2ae7d3c80
 Revises: 
-Create Date: 2023-03-06 11:11:55.431564
+Create Date: 2023-03-06 11:14:40.739641
 
 """
 from alembic import op
 import sqlalchemy as sa
-
+from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '55b76c4528c5'
+revision = 'ede2ae7d3c80'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -303,7 +303,7 @@ def upgrade():
     sa.Column('list_index', sa.Integer(), nullable=True),
     sa.Column('mimetype', sa.String(length=255), nullable=False),
     sa.Column('filename', sa.String(length=255), nullable=False),
-    sa.Column('contents', sa.LargeBinary(), nullable=False),
+    sa.Column('contents', sa.LargeBinary().with_variant(mysql.LONGBLOB(), 'mysql'), nullable=False),
     sa.Column('digest', sa.String(length=64), nullable=False),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=False),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=False),
