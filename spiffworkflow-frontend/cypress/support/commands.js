@@ -41,10 +41,15 @@ Cypress.Commands.add('navigateToAdmin', () => {
   cy.visit('/admin');
 });
 
-Cypress.Commands.add('login', (selector, ...args) => {
+Cypress.Commands.add('login', (username, password) => {
+  // Cypress.Commands.add('login', (selector, ...args) => {
   cy.visit('/admin');
-  const username = Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
-  const password = Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
+  if (!username) {
+    const username =
+      Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
+    const password =
+      Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
+  }
   cy.get('#username').type(username);
   cy.get('#password').type(password);
   if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
@@ -97,7 +102,12 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
   (expectAutoRedirectToHumanTask = false) => {
-    cy.contains('Start').click();
+    // cy.getBySel('start-process-instance').click();
+    // click on button with text Start
+
+    cy.get('button')
+      .contains(/^Start$/)
+      .click();
     if (expectAutoRedirectToHumanTask) {
       // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
       cy.url().should('include', `/tasks/`);

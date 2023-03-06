@@ -126,7 +126,11 @@ export default function ProcessInstanceRun({
   if (checkPermissions) {
     return (
       <Can I="POST" a={processInstanceCreatePath} ability={ability}>
-        <Button onClick={processInstanceCreateAndRun} className={className}>
+        <Button
+          data-qa="start-process-instance"
+          onClick={processInstanceCreateAndRun}
+          className={className}
+        >
           Start
         </Button>
       </Can>
