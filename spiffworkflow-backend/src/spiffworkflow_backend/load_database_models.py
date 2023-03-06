@@ -50,12 +50,6 @@ from spiffworkflow_backend.models.group import GroupModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )  # noqa: F401
-from spiffworkflow_backend.models.serialized_bpmn_definition import (
-    SerializedBpmnDefinitionModel,
-)  # noqa: F401
-from spiffworkflow_backend.models.process_instance_data import (
-    ProcessInstanceDataModel,
-)  # noqa: F401
 from spiffworkflow_backend.models.process_instance_file_data import (
     ProcessInstanceFileDataModel,
 )  # noqa: F401

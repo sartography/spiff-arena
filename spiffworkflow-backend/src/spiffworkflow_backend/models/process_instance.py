@@ -22,10 +22,6 @@ from spiffworkflow_backend.models.bpmn_process_definition import (
 )
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
-from spiffworkflow_backend.models.process_instance_data import ProcessInstanceDataModel
-from spiffworkflow_backend.models.serialized_bpmn_definition import (
-    SerializedBpmnDefinitionModel,
-)  # noqa: F401
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskSchema
 from spiffworkflow_backend.models.user import UserModel
@@ -68,16 +64,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     )
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
     process_initiator = relationship("UserModel")
-
-    serialized_bpmn_definition_id: int | None = db.Column(
-        ForeignKey(SerializedBpmnDefinitionModel.id), nullable=True  # type: ignore
-    )
-    serialized_bpmn_definition = relationship("SerializedBpmnDefinitionModel")
-
-    process_instance_data_id: int | None = db.Column(
-        ForeignKey(ProcessInstanceDataModel.id), nullable=True  # type: ignore
-    )
-    process_instance_data = relationship("ProcessInstanceDataModel", cascade="delete")
 
     bpmn_process_definition_id: Optional[int] = db.Column(
         ForeignKey(BpmnProcessDefinitionModel.id), nullable=True  # type: ignore
