@@ -1,7 +1,5 @@
 """Process_instance."""
 from __future__ import annotations
-from typing import Optional
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 
 from typing import Any
 from typing import cast
@@ -17,6 +15,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import (
     BpmnProcessDefinitionModel,
 )
@@ -65,11 +64,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
     process_initiator = relationship("UserModel")
 
-    bpmn_process_definition_id: Optional[int] = db.Column(
+    bpmn_process_definition_id: int | None = db.Column(
         ForeignKey(BpmnProcessDefinitionModel.id), nullable=True  # type: ignore
     )
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
-    bpmn_process_id: Optional[int] = db.Column(
+    bpmn_process_id: int | None = db.Column(
         ForeignKey(BpmnProcessModel.id), nullable=True  # type: ignore
     )
     bpmn_process = relationship(BpmnProcessModel)

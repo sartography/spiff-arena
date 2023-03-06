@@ -42,13 +42,11 @@ Cypress.Commands.add('navigateToAdmin', () => {
 });
 
 Cypress.Commands.add('login', (username, password) => {
-  // Cypress.Commands.add('login', (selector, ...args) => {
   cy.visit('/admin');
+  console.log('username', username);
   if (!username) {
-    const username =
-      Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
-    const password =
-      Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
+    username = Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
+    password = Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
   }
   cy.get('#username').type(username);
   cy.get('#password').type(password);

@@ -586,7 +586,9 @@ def process_instance_task_list(
                 spiff_task_id, TaskState.FUTURE
             )
 
-    bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(full_bpmn_process_dict)
+    bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(
+        full_bpmn_process_dict
+    )
 
     spiff_task = processor.__class__.get_task_by_bpmn_identifier(
         step_details[-1].bpmn_task_identifier, bpmn_process_instance
