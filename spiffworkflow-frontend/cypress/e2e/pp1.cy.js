@@ -30,8 +30,8 @@ const approveWithUser = (
   cy.logout();
 };
 
-describe('tasks', () => {
-  it.only('can run PP1', () => {
+describe('pp1', () => {
+  it('can run PP1', () => {
     cy.login('core5.contributor', 'core5.contributor');
     cy.visit('/');
     cy.contains('Start New +').click();
