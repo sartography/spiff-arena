@@ -1,24 +1,33 @@
-const submitInputIntoFormField = (taskName, fieldKey, fieldValue) => {
-  cy.contains(`Task: ${taskName}`, { timeout: 10000 });
-  cy.get(fieldKey).clear().type(fieldValue);
-  cy.contains('Submit').click();
-};
+const approveWithUser = (
+  username,
+  processInstanceId,
+  expectAdditionalApprovalInfoPage = false
+) => {
+  cy.login(username, username);
+  cy.visit('/admin/process-instances/find-by-id');
+  cy.get('#process-instance-id-input').type(processInstanceId);
+  cy.get('button')
+    .contains(/^Submit$/)
+    .click();
 
-const checkFormFieldIsReadOnly = (formName, fieldKey) => {
-  cy.contains(`Task: ${formName}`);
-  cy.get(fieldKey).invoke('attr', 'disabled').should('exist');
-};
+  cy.contains('Tasks I can complete', { timeout: 20000 });
+  cy.get('.cds--btn').contains(/^Go$/).click();
 
-const checkTaskHasClass = (taskName, className) => {
-  cy.get(`g[data-element-id=${taskName}]`).should('have.class', className);
-};
-
-const kickOffModelWithForm = () => {
-  cy.navigateToProcessModel(
-    'Acceptance Tests Group One',
-    'Acceptance Tests Model 2'
-  );
-  cy.runPrimaryBpmnFile(true);
+  // approve!
+  cy.get('#root-app').click();
+  cy.get('button')
+    .contains(/^Submit$/)
+    .click();
+  if (expectAdditionalApprovalInfoPage) {
+    cy.contains(expectAdditionalApprovalInfoPage, { timeout: 20000 });
+    cy.get('button')
+      .contains(/^Continue$/)
+      .click();
+  }
+  cy.location({ timeout: 20000 }).should((loc) => {
+    expect(loc.pathname).to.eq('/tasks');
+  });
+  cy.logout();
 };
 
 describe('tasks', () => {
@@ -28,84 +37,68 @@ describe('tasks', () => {
     cy.contains('Start New +').click();
     cy.contains('Raise New Demand Request');
     cy.runPrimaryBpmnFile(true);
+    cy.contains('Procurement').click();
+    // cy.contains('Submit').click();
+    cy.get('button')
+      .contains(/^Submit$/)
+      .click();
+    cy.contains(
+      'Submit a new demand request for the procurement of needed items',
+      { timeout: 20000 }
+    );
 
-    // const groupDisplayName = 'Acceptance Tests Group One';
-    // const modelDisplayName = `Acceptance Tests Model 2`;
-    // const completedTaskClassName = 'completed-task-highlight';
-    // const activeTaskClassName = 'active-task-highlight';
-    //
-    // cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
-    //
-    // submitInputIntoFormField(
-    //   'get_user_generated_number_one',
-    //   '#root_user_generated_number_1',
-    //   2
-    // );
-    // submitInputIntoFormField(
-    //   'get_user_generated_number_two',
-    //   '#root_user_generated_number_2',
-    //   3
-    // );
-    //
-    // cy.contains('Task: get_user_generated_number_three');
-    // cy.getBySel('form-nav-form2').click();
-    // checkFormFieldIsReadOnly(
-    //   'get_user_generated_number_two',
-    //   '#root_user_generated_number_2'
-    // );
-    // cy.getBySel('form-nav-form1').click();
-    // checkFormFieldIsReadOnly(
-    //   'get_user_generated_number_one',
-    //   '#root_user_generated_number_1'
-    // );
-    //
-    // cy.getBySel('form-nav-form3').click();
-    // submitInputIntoFormField(
-    //   'get_user_generated_number_three',
-    //   '#root_user_generated_number_3',
-    //   4
-    // );
-    //
-    // cy.contains('Task: get_user_generated_number_four');
-    // cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
-    // cy.getBySel('process-instance-list-link').click();
-    // cy.assertAtLeastOneItemInPaginatedResults();
-    //
-    // // This should get the first one which should be the one we just completed
-    // cy.getBySel('process-instance-show-link').first().click();
-    // cy.contains('Process Instance Id: ');
-    //
-    // cy.get(`g[data-element-id=form3]`).click();
-    // cy.contains('"user_generated_number_1": 2');
-    // cy.contains('"user_generated_number_2": 3');
-    // cy.contains('"user_generated_number_3": 4');
-    // cy.contains('"user_generated_number_4": 5').should('not.exist');
-    // checkTaskHasClass('form1', completedTaskClassName);
-    // checkTaskHasClass('form2', completedTaskClassName);
-    // checkTaskHasClass('form3', completedTaskClassName);
-    // checkTaskHasClass('form4', activeTaskClassName);
-    // cy.get('.is-visible .cds--modal-close').click();
-    //
-    // cy.navigateToHome();
-    // cy.contains('Tasks').should('exist');
-    //
-    // // FIXME: this will probably need a better way to link to the proper form that we want
-    // cy.contains('Go').click();
-    //
-    // submitInputIntoFormField(
-    //   'get_user_generated_number_four',
-    //   '#root_user_generated_number_4',
-    //   5
-    // );
-    // cy.url().should('include', '/tasks');
-    //
-    // cy.navigateToProcessModel(groupDisplayName, modelDisplayName);
-    // cy.getBySel('process-instance-list-link').click();
-    // cy.assertAtLeastOneItemInPaginatedResults();
-    //
-    // // This should get the first one which should be the one we just completed
-    // cy.getBySel('process-instance-show-link').first().click();
-    // cy.contains('Process Instance Id: ');
-    // cy.contains('Status: complete');
+    cy.url().then((currentUrl) => {
+      // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
+      // extract the digits after /tasks
+      const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
+
+      cy.get('#root_project').select('18564');
+      cy.get('#root_category').select('soft_and_lic');
+      cy.get('#root_purpose').clear().type('need the software for my work');
+      cy.get('#root_criticality').select('High');
+      cy.get('#root_period').clear().type('2023-10-10');
+      cy.get('#root_vendor').clear().type('sartography');
+      cy.get('#root_payment_method').select('Bank Transfer');
+      cy.get('#root_project').select('18564');
+      cy.get('#root_category').select('soft_and_lic');
+      cy.get('button')
+        .contains(/^Submit$/)
+        .click();
+
+      cy.contains('Task: Enter NDR Items', { timeout: 20000 });
+      cy.get('#root_0_sub_category').select('op_src');
+      cy.get('#root_0_item').clear().type('spiffworkflow');
+      cy.get('#root_0_qty').clear().type('1');
+      cy.get('#root_0_currency_type').select('Fiat');
+      cy.get('#root_0_currency').select('AUD');
+      cy.get('#root_0_unit_price').type('100');
+      cy.get('button')
+        .contains(/^Submit$/)
+        .click();
+
+      cy.contains(
+        'Review and provide any supporting information or files for your request.'
+      );
+      cy.contains('Submit the Request').click();
+      cy.get('input[value="Submit the Request"]').click();
+      cy.get('button')
+        .contains(/^Submit$/)
+        .click();
+
+      cy.logout();
+      approveWithUser(
+        'infra.project-lead',
+        processInstanceId,
+        'Task: Reminder: Request Additional Budget'
+      );
+      approveWithUser('ppg.ba.sme', processInstanceId);
+      approveWithUser('security.sme', processInstanceId);
+      approveWithUser(
+        'infra.sme',
+        processInstanceId,
+        'Task: Update Application Landscape'
+      );
+      approveWithUser('legal.sme', processInstanceId);
+    });
   });
 });

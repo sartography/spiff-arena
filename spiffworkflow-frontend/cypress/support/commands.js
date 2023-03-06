@@ -102,8 +102,12 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
   (expectAutoRedirectToHumanTask = false) => {
-    cy.getBySel('start-process-instance').click();
-    // cy.contains('Start').click();
+    // cy.getBySel('start-process-instance').click();
+    // click on button with text Start
+
+    cy.get('button')
+      .contains(/^Start$/)
+      .click();
     if (expectAutoRedirectToHumanTask) {
       // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
       cy.url().should('include', `/tasks/`);
