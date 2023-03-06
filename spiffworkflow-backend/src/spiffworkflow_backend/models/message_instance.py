@@ -6,6 +6,7 @@ from typing import Optional
 from typing import TYPE_CHECKING
 
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
+from flask import current_app
 from sqlalchemy import ForeignKey
 from sqlalchemy.event import listens_for
 from sqlalchemy.orm import relationship
@@ -135,10 +136,15 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
                 result = expression_engine._evaluate(
                     correlation_key.retrieval_expression, payload
                 )
-            except Exception:
+            except Exception as e:
                 # the failure of a payload evaluation may not mean that matches for these
                 # message instances can't happen with other messages.  So don't error up.
                 # fixme:  Perhaps log some sort of error.
+                current_app.logger.warning(
+                    "Error evaluating correlation key when comparing send and receive messages." +
+                    f"Expression {correlation_key.retrieval_expression} failed with the error " +
+                    str(e)
+                )
                 return False
             if result != expected_value:
                 return False

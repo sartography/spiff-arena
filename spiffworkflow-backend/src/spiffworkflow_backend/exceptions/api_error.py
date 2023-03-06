@@ -149,7 +149,7 @@ class ApiError(Exception):
             # Note that WorkflowDataExceptions are also WorkflowTaskExceptions
             return ApiError.from_task(
                 error_code,
-                message,
+                message + ". " + str(exp),
                 exp.task,
                 line_number=exp.line_number,
                 offset=exp.offset,
