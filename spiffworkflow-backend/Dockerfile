@@ -19,7 +19,7 @@ RUN apt-get update \
 # Setup image for installing Python dependencies.
 FROM base AS setup
 
-RUN pip install poetry==1.2.2
+RUN pip install poetry==1.3.2
 RUN useradd _gunicorn --no-create-home --user-group
 
 RUN apt-get update \
