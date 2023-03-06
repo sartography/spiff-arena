@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "spiffworkflow-arean"
+name = "spiffworkflow-arena"
 version = "0.0.0"
 description = "Spiffworkflow Arena"
 authors = ["Jason Lantz <sartography@users.noreply.github.com>"]
 license = "MIT"
-readme = "README.rst"
+readme = "README.md"
 homepage = "https://github.com/sartography/spiffworkflow-arena"
 repository = "https://github.com/sartography/spiffworkflow-arena"
 classifiers = [
