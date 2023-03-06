@@ -193,7 +193,7 @@ jobs:
           python-version: "3.11"
       - name: Install Poetry
         run: |
-          pipx install poetry
+          pipx install --pip-args=--constraint=spiffworkflow-backend/.github/workflows/constraints.txt poetry
           poetry --version
       - name: Poetry Install
         run: poetry install
