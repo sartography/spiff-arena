@@ -31,14 +31,17 @@ const approveWithUser = (
 };
 
 describe('pp1', () => {
-  it.skip('can run PP1', () => {
+  it('can run PP1', () => {
     cy.login('core5.contributor', 'core5.contributor');
     cy.visit('/');
     cy.contains('Start New +').click();
     cy.contains('Raise New Demand Request');
     cy.runPrimaryBpmnFile(true);
-    cy.contains('Procurement').click();
-    // cy.contains('Submit').click();
+    cy.contains('Please select the type of request to Start the process.');
+    // wait a second to ensure we can click the radio button
+    cy.wait(1000);
+    cy.get('input#root-procurement').click();
+    cy.wait(1000);
     cy.get('button')
       .contains(/^Submit$/)
       .click();
@@ -77,7 +80,8 @@ describe('pp1', () => {
         .click();
 
       cy.contains(
-        'Review and provide any supporting information or files for your request.'
+        'Review and provide any supporting information or files for your request.',
+        { timeout: 20000 }
       );
       cy.contains('Submit the Request').click();
       cy.get('input[value="Submit the Request"]').click();
