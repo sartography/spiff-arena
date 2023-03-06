@@ -101,7 +101,7 @@ def verify_token(
                                     refresh_token
                                 )
                             )
-                            if auth_token and "error" not in auth_token:
+                            if auth_token and "error" not in auth_token and "id_token" in auth_token:
                                 tld = current_app.config["THREAD_LOCAL_DATA"]
                                 tld.new_access_token = auth_token["id_token"]
                                 tld.new_id_token = auth_token["id_token"]
