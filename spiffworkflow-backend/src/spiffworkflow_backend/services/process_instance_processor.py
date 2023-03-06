@@ -551,18 +551,26 @@ class ProcessInstanceProcessor:
         bpmn_process_definition: BpmnProcessDefinitionModel,
         spiff_bpmn_process_dict: dict,
     ) -> None:
+        # find all child subprocesses of a process
         bpmn_process_subprocess_definitions = (
-            BpmnProcessDefinitionRelationshipModel.query.filter_by(
-                bpmn_process_definition_parent_id=bpmn_process_definition.id
-            ).all()
+            BpmnProcessDefinitionModel.query.join(
+                BpmnProcessDefinitionRelationshipModel,
+                BpmnProcessDefinitionModel.id
+                == BpmnProcessDefinitionRelationshipModel.bpmn_process_definition_child_id,
+            )
+            .filter_by(bpmn_process_definition_parent_id=bpmn_process_definition.id)
+            .all()
         )
         for bpmn_subprocess_definition in bpmn_process_subprocess_definitions:
-            spec = cls._set_definition_dict_for_bpmn_subprocess_definitions(
-                bpmn_subprocess_definition, spiff_bpmn_process_dict
+            spec = cls._get_definition_dict_for_bpmn_process_definition(
+                bpmn_subprocess_definition
             )
             spiff_bpmn_process_dict["subprocess_specs"][
                 bpmn_subprocess_definition.bpmn_identifier
             ] = spec
+            cls._set_definition_dict_for_bpmn_subprocess_definitions(
+                bpmn_subprocess_definition, spiff_bpmn_process_dict
+            )
 
     @classmethod
     def _get_bpmn_process_dict(cls, bpmn_process: BpmnProcessModel) -> dict:
@@ -1019,7 +1027,7 @@ class ProcessInstanceProcessor:
             bpmn_process = self.process_instance_model.bpmn_process
 
         if bpmn_process is None:
-            bpmn_process = BpmnProcessModel()
+            bpmn_process = BpmnProcessModel(guid=bpmn_process_guid)
 
         bpmn_process.properties_json = bpmn_process_dict
 
@@ -1101,8 +1109,12 @@ class ProcessInstanceProcessor:
 
         subprocesses = process_instance_data_dict.pop("subprocesses")
         bpmn_process_parent = self._add_bpmn_process(process_instance_data_dict)
-        for _subprocess_task_id, subprocess_properties in subprocesses.items():
-            self._add_bpmn_process(subprocess_properties, bpmn_process_parent)
+        for subprocess_task_id, subprocess_properties in subprocesses.items():
+            self._add_bpmn_process(
+                subprocess_properties,
+                bpmn_process_parent,
+                bpmn_process_guid=subprocess_task_id,
+            )
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
