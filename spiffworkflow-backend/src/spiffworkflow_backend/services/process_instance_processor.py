@@ -1,7 +1,5 @@
 """Process_instance_processor."""
 import _strptime  # type: ignore
-from SpiffWorkflow.task import TaskStateNames  # type: ignore
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 import decimal
 import json
 import logging
@@ -53,6 +51,7 @@ from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
+from SpiffWorkflow.task import TaskStateNames
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from sqlalchemy import text
 
@@ -86,6 +85,7 @@ from spiffworkflow_backend.models.script_attributes_context import (
 )
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
@@ -465,11 +465,13 @@ class ProcessInstanceProcessor:
         )
 
         try:
-            (self.bpmn_process_instance, self.full_bpmn_process_dict) = self.__get_bpmn_process_instance(
-                process_instance_model,
-                bpmn_process_spec,
-                validate_only,
-                subprocesses=subprocesses,
+            (self.bpmn_process_instance, self.full_bpmn_process_dict) = (
+                self.__get_bpmn_process_instance(
+                    process_instance_model,
+                    bpmn_process_spec,
+                    validate_only,
+                    subprocesses=subprocesses,
+                )
             )
             self.set_script_engine(self.bpmn_process_instance)
 
@@ -545,7 +547,9 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def _set_definition_dict_for_bpmn_subprocess_definitions(
-        cls, bpmn_process_definition: BpmnProcessDefinitionModel, spiff_bpmn_process_dict: dict
+        cls,
+        bpmn_process_definition: BpmnProcessDefinitionModel,
+        spiff_bpmn_process_dict: dict,
     ) -> None:
         bpmn_process_subprocess_definitions = (
             BpmnProcessDefinitionRelationshipModel.query.filter_by(
@@ -562,19 +566,23 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def _get_bpmn_process_dict(cls, bpmn_process: BpmnProcessModel) -> dict:
-        json_data = JsonDataModel.query.filter_by(hash=bpmn_process.json_data_hash).first()
-        bpmn_process_dict = {'data': json_data.data, 'tasks': {}}
+        json_data = JsonDataModel.query.filter_by(
+            hash=bpmn_process.json_data_hash
+        ).first()
+        bpmn_process_dict = {"data": json_data.data, "tasks": {}}
         bpmn_process_dict.update(bpmn_process.properties_json)
         tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
         for task in tasks:
             json_data = JsonDataModel.query.filter_by(hash=task.json_data_hash).first()
-            bpmn_process_dict['tasks'][task.guid] = task.properties_json
-            bpmn_process_dict['tasks'][task.guid]['data'] = json_data.data
+            bpmn_process_dict["tasks"][task.guid] = task.properties_json
+            bpmn_process_dict["tasks"][task.guid]["data"] = json_data.data
 
         return bpmn_process_dict
 
     @classmethod
-    def _get_full_bpmn_process_dict(cls, process_instance_model: ProcessInstanceModel) -> dict:
+    def _get_full_bpmn_process_dict(
+        cls, process_instance_model: ProcessInstanceModel
+    ) -> dict:
         if process_instance_model.bpmn_process_definition_id is None:
             return {}
 
@@ -582,7 +590,7 @@ class ProcessInstanceProcessor:
             "serializer_version": process_instance_model.spiff_serializer_version,
             "spec": {},
             "subprocess_specs": {},
-            "subprocesses": {}
+            "subprocesses": {},
         }
         bpmn_process_definition = process_instance_model.bpmn_process_definition
         if bpmn_process_definition is not None:
@@ -591,17 +599,23 @@ class ProcessInstanceProcessor:
                     bpmn_process_definition
                 )
             )
-            cls._set_definition_dict_for_bpmn_subprocess_definitions(bpmn_process_definition, spiff_bpmn_process_dict)
+            cls._set_definition_dict_for_bpmn_subprocess_definitions(
+                bpmn_process_definition, spiff_bpmn_process_dict
+            )
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
                 bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_process)
                 spiff_bpmn_process_dict.update(bpmn_process_dict)
 
-                bpmn_subprocesses = BpmnProcessModel.query.filter_by(parent_process_id=bpmn_process.id).all()
+                bpmn_subprocesses = BpmnProcessModel.query.filter_by(
+                    parent_process_id=bpmn_process.id
+                ).all()
                 for bpmn_subprocess in bpmn_subprocesses:
                     bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess)
-                    spiff_bpmn_process_dict['subprocesses'][bpmn_subprocess.guid] = bpmn_process_dict
+                    spiff_bpmn_process_dict["subprocesses"][
+                        bpmn_subprocess.guid
+                    ] = bpmn_process_dict
 
         return spiff_bpmn_process_dict
 
@@ -647,10 +661,16 @@ class ProcessInstanceProcessor:
             spiff_logger.setLevel(logging.WARNING)
 
             try:
-                full_bpmn_process_dict = ProcessInstanceProcessor._get_full_bpmn_process_dict(
-                    process_instance_model
+                full_bpmn_process_dict = (
+                    ProcessInstanceProcessor._get_full_bpmn_process_dict(
+                        process_instance_model
+                    )
                 )
-                bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(full_bpmn_process_dict)
+                bpmn_process_instance = (
+                    ProcessInstanceProcessor._serializer.workflow_from_dict(
+                        full_bpmn_process_dict
+                    )
+                )
             except Exception as err:
                 raise err
             finally:
@@ -981,14 +1001,20 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_parent
         )
 
-    def _add_bpmn_process(self, bpmn_process_dict: dict, bpmn_process_parent: Optional[BpmnProcessModel] = None, bpmn_process_guid: Optional[str] = None) -> BpmnProcessModel:
+    def _add_bpmn_process(
+        self,
+        bpmn_process_dict: dict,
+        bpmn_process_parent: Optional[BpmnProcessModel] = None,
+        bpmn_process_guid: Optional[str] = None,
+    ) -> BpmnProcessModel:
         tasks = bpmn_process_dict.pop("tasks")
         bpmn_process_data = bpmn_process_dict.pop("data")
 
         bpmn_process = None
         if bpmn_process_parent is not None:
             bpmn_process = BpmnProcessModel.query.filter_by(
-                parent_process_id=bpmn_process_parent.id, guid=bpmn_process_guid).first()
+                parent_process_id=bpmn_process_parent.id, guid=bpmn_process_guid
+            ).first()
         elif self.process_instance_model.bpmn_process_id is not None:
             bpmn_process = self.process_instance_model.bpmn_process
 
@@ -997,12 +1023,20 @@ class ProcessInstanceProcessor:
 
         bpmn_process.properties_json = bpmn_process_dict
 
-        bpmn_process_data_json = json.dumps(bpmn_process_data, sort_keys=True).encode("utf8")
+        bpmn_process_data_json = json.dumps(bpmn_process_data, sort_keys=True).encode(
+            "utf8"
+        )
         bpmn_process_data_hash = sha256(bpmn_process_data_json).hexdigest()
         if bpmn_process.json_data_hash != bpmn_process_data_hash:
-            json_data = db.session.query(JsonDataModel.id).filter_by(hash=bpmn_process_data_hash).first()
+            json_data = (
+                db.session.query(JsonDataModel.id)
+                .filter_by(hash=bpmn_process_data_hash)
+                .first()
+            )
             if json_data is None:
-                json_data = JsonDataModel(hash=bpmn_process_data_hash, data=bpmn_process_data)
+                json_data = JsonDataModel(
+                    hash=bpmn_process_data_hash, data=bpmn_process_data
+                )
                 db.session.add(json_data)
             bpmn_process.json_data_hash = bpmn_process_data_hash
 
@@ -1013,15 +1047,16 @@ class ProcessInstanceProcessor:
         db.session.add(bpmn_process)
 
         for task_id, task_properties in tasks.items():
-            task_data_dict = task_properties.pop('data')
-            state_int = task_properties['state']
+            task_data_dict = task_properties.pop("data")
+            state_int = task_properties["state"]
 
             task = TaskModel.query.filter_by(guid=task_id).first()
             if task is None:
                 # bpmn_process_identifier = task_properties['workflow_name']
                 # bpmn_identifier = task_properties['task_spec']
                 #
-                # task_definition = TaskDefinitionModel.query.filter_by(bpmn_identifier=bpmn_identifier).join(BpmnProcessDefinitionModel).filter(BpmnProcessDefinitionModel.bpmn_identifier==bpmn_process_identifier).first()
+                # task_definition = TaskDefinitionModel.query.filter_by(bpmn_identifier=bpmn_identifier)
+                # .join(BpmnProcessDefinitionModel).filter(BpmnProcessDefinitionModel.bpmn_identifier==bpmn_process_identifier).first()
                 # if task_definition is None:
                 #     subprocess_task = TaskModel.query.filter_by(guid=bpmn_process.guid)
                 task = TaskModel(guid=task_id, bpmn_process_id=bpmn_process.id)
@@ -1031,7 +1066,11 @@ class ProcessInstanceProcessor:
             task_data_json = json.dumps(task_data_dict, sort_keys=True).encode("utf8")
             task_data_hash = sha256(task_data_json).hexdigest()
             if task.json_data_hash != task_data_hash:
-                json_data = db.session.query(JsonDataModel.id).filter_by(hash=task_data_hash).first()
+                json_data = (
+                    db.session.query(JsonDataModel.id)
+                    .filter_by(hash=task_data_hash)
+                    .first()
+                )
                 if json_data is None:
                     json_data = JsonDataModel(hash=task_data_hash, data=task_data_dict)
                     db.session.add(json_data)
