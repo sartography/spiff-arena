@@ -169,13 +169,19 @@ class AuthenticationService:
         aud = decoded_token["aud"]
         azp = decoded_token["azp"] if "azp" in decoded_token else None
         iat = decoded_token["iat"]
+
+        valid_audience_values = (cls.client_id(), "account")
+        audience_array_in_token = aud
+        if isinstance(aud, str):
+            audience_array_in_token = [aud]
+        overlapping_aud_values = [
+            x for x in audience_array_in_token if x in valid_audience_values
+        ]
+
         if iss != cls.server_url():
             valid = False
         # aud could be an array or a string
-        elif aud not in (cls.client_id(), "account") and aud != [
-            cls.client_id(),
-            "account",
-        ]:
+        elif len(overlapping_aud_values) < 1:
             valid = False
         elif azp and azp not in (
             cls.client_id(),

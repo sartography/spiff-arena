@@ -20,13 +20,19 @@ set -o errtrace -o errexit -o nounset -o pipefail
 # ./bin/get_token repeat_form_user_1 repeat_form_user_1 # actually has permissions to the resource in this script
 # ./bin/get_token ciadmin1 ciadmin1 '%2Fprocess-models'
 
-if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
-  # KEYCLOAK_BASE_URL=http://localhost:7002
-  KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
-fi
 if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
   # BACKEND_BASE_URL=http://localhost:7000
   BACKEND_BASE_URL=https://api.dev.spiffworkflow.org
+fi
+if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
+  # KEYCLOAK_BASE_URL=http://localhost:7002
+  KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
+  if grep -qE "spiffworkflow.org" <<<"$BACKEND_BASE_URL" ; then
+    env_domain=$(sed -E 's/.*api\.(\w+\.spiffworkflow.org).*/\1/' <<<"${BACKEND_BASE_URL}")
+    KEYCLOAK_BASE_URL="https://keycloak.${env_domain}"
+  elif grep -qE "localhost:7000" <<<"$BACKEND_BASE_URL" ; then
+    KEYCLOAK_BASE_URL="http://localhost:7002"
+  fi
 fi
 if [[ -z "${BACKEND_CLIENT_ID:-}" ]]; then
   export BACKEND_CLIENT_ID=spiffworkflow-backend
@@ -34,8 +40,8 @@ fi
 if [[ -z "${BACKEND_CLIENT_SECRET:-}" ]]; then
   export BACKEND_CLIENT_SECRET="JXeQExm0JhQPLumgHtIIqf52bDalHz0q"  # noqa: S105
 fi
-USERNAME=${1-fin}
-PASSWORD=${2-fin}
+USERNAME=${1-admin}
+PASSWORD=${2-admin}
 REALM_NAME=${3-spiffworkflow}
 
 SECURE=false
@@ -66,8 +72,13 @@ result=$(curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
  -d "password=$PASSWORD" \
  -d 'grant_type=password' \
  -d "client_id=$BACKEND_CLIENT_ID" \
+ -d "audienc111e=${BACKEND_CLIENT_ID}" \
 )
 backend_token=$(jq -r '.access_token' <<< "$result")
+if [[ -z "$backend_token" || "$backend_token" == "null" ]]; then
+  >&2 echo "ERROR: Could not get the backend token. Received result: ${result}"
+  exit 1
+fi
 echo "$backend_token"
 # curl --fail -v "${BACKEND_BASE_URL}/v1.0/process-groups?per_page=1" -H "Authorization: Bearer $backend_token"
 # curl -v -X POST "${BACKEND_BASE_URL}/v1.0/login_with_access_token?access_token=${backend_token}" -H "Authorization: Bearer $backend_token"

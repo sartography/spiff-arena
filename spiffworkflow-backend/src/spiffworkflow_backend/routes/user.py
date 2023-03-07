@@ -129,7 +129,6 @@ def verify_token(
                         message="Cannot get user info from token",
                         status_code=401,
                     ) from e
-
                 if (
                     user_info is not None
                     and "error" not in user_info
