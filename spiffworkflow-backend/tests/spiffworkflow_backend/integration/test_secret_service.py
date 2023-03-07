@@ -72,7 +72,7 @@ class TestSecretService(SecretServiceTestHelpers):
 
         assert test_secret is not None
         assert test_secret.key == self.test_key
-        assert test_secret.value == self.test_value
+        assert SecretService._decrypt(test_secret.value) == self.test_value
         assert test_secret.user_id == with_super_admin_user.id
 
     def test_add_secret_duplicate_key_fails(
@@ -205,7 +205,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         for key in ["key", "value", "user_id"]:
             assert key in secret.keys()
         assert secret["key"] == self.test_key
-        assert secret["value"] == self.test_value
+        assert SecretService._decrypt(secret["value"]) == self.test_value
         assert secret["user_id"] == with_super_admin_user.id
 
     def test_get_secret(
@@ -254,7 +254,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         secret_model = SecretModel.query.filter(
             SecretModel.key == self.test_key
         ).first()
-        assert secret_model.value == "new_secret_value"
+        assert SecretService._decrypt(secret_model.value) == "new_secret_value"
 
     def test_delete_secret(
         self,
