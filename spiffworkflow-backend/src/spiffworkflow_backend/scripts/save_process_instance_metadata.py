@@ -8,7 +8,6 @@ from spiffworkflow_backend.models.process_instance_metadata import (
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
-from spiffworkflow_backend.scripts.script import ProcessInstanceIdMissingError
 from spiffworkflow_backend.scripts.script import Script
 
 
@@ -28,10 +27,8 @@ class SaveProcessInstanceMetadata(Script):
         """Run."""
         metadata_dict = args[0]
         if script_attributes_context.process_instance_id is None:
-            raise ProcessInstanceIdMissingError(
-                "The process instance id was not given to script"
-                " 'save_process_instance_metadata'. This script needs to be run from"
-                " within the context of a process instance."
+            raise self.get_proces_instance_id_is_missing_error(
+                "save_process_instance_metadata"
             )
         for key, value in metadata_dict.items():
             pim = ProcessInstanceMetadataModel.query.filter_by(
