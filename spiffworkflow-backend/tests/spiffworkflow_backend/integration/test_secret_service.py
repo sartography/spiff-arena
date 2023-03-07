@@ -129,7 +129,9 @@ class TestSecretService(SecretServiceTestHelpers):
         )
         new_secret = SecretService.get_secret(self.test_key)
         assert new_secret
-        assert SecretService._decrypt(new_secret.value) == "new_secret_value"  # noqa: S105
+        assert (
+            SecretService._decrypt(new_secret.value) == "new_secret_value"
+        )  # noqa: S105
 
     def test_update_secret_bad_secret_fails(
         self,
