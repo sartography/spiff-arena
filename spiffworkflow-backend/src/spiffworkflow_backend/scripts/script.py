@@ -26,6 +26,14 @@ class ScriptUnauthorizedForUserError(Exception):
     """ScriptUnauthorizedForUserError."""
 
 
+class ProcessInstanceIdMissingError(Exception):
+    pass
+
+
+class ProcessModelIdentifierMissingError(Exception):
+    pass
+
+
 class Script:
     """Provides an abstract class that defines how scripts should work, this must be extended in all Script Tasks."""
 
