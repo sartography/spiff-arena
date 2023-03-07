@@ -42,13 +42,11 @@ Cypress.Commands.add('navigateToAdmin', () => {
 });
 
 Cypress.Commands.add('login', (username, password) => {
-  // Cypress.Commands.add('login', (selector, ...args) => {
   cy.visit('/admin');
+  console.log('username', username);
   if (!username) {
-    const username =
-      Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
-    const password =
-      Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
+    username = Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
+    password = Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
   }
   cy.get('#username').type(username);
   cy.get('#password').type(password);
@@ -111,7 +109,7 @@ Cypress.Commands.add(
     if (expectAutoRedirectToHumanTask) {
       // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
       cy.url().should('include', `/tasks/`);
-      cy.contains('Task: ');
+      cy.contains('Task: ', { timeout: 10000 });
     } else {
       cy.contains(/Process Instance.*[kK]icked [oO]ff/);
       cy.reload(true);

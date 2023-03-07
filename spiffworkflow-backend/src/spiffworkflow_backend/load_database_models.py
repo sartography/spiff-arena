@@ -50,15 +50,21 @@ from spiffworkflow_backend.models.group import GroupModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )  # noqa: F401
-from spiffworkflow_backend.models.serialized_bpmn_definition import (
-    SerializedBpmnDefinitionModel,
-)  # noqa: F401
-from spiffworkflow_backend.models.process_instance_data import (
-    ProcessInstanceDataModel,
-)  # noqa: F401
 from spiffworkflow_backend.models.process_instance_file_data import (
     ProcessInstanceFileDataModel,
 )  # noqa: F401
 
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel  # noqa: F401
+from spiffworkflow_backend.models.bpmn_process_definition import (
+    BpmnProcessDefinitionModel,
+)  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import (
+    TaskDefinitionModel,
+)  # noqa: F401
+from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
+from spiffworkflow_backend.models.bpmn_process_definition_relationship import (
+    BpmnProcessDefinitionRelationshipModel,
+)  # noqa: F401
 
 add_listeners()

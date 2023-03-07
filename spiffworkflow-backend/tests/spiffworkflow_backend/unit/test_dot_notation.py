@@ -13,9 +13,7 @@ from spiffworkflow_backend.services.process_instance_service import (
 
 
 class TestDotNotation(BaseTest):
-    """TestVariousBpmnConstructs."""
-
-    def test_dot_notation(
+    def test_dot_notation_in_message_path(
         self,
         app: Flask,
         client: FlaskClient,
