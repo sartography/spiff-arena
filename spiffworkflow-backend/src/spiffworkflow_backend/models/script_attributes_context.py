@@ -11,5 +11,5 @@ class ScriptAttributesContext:
 
     task: Optional[SpiffTask]
     environment_identifier: str
-    process_instance_id: int
-    process_model_identifier: str
+    process_instance_id: Optional[int]
+    process_model_identifier: Optional[str]

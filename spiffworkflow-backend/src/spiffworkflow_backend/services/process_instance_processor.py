@@ -319,14 +319,13 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     def __get_augment_methods(self, task: Optional[SpiffTask]) -> Dict[str, Callable]:
         """__get_augment_methods."""
         tld = current_app.config.get("THREAD_LOCAL_DATA")
-        if not hasattr(tld, "process_model_identifier"):
-            process_model_identifier = None
-        else:
-            process_model_identifier = tld.process_model_identifier
-        if not hasattr(tld, "process_instance_id"):
-            process_instance_id = None
-        else:
-            process_instance_id = tld.process_instance_id
+        process_model_identifier = None
+        process_instance_id = None
+        if tld:
+            if hasattr(tld, "process_model_identifier"):
+                process_model_identifier = tld.process_model_identifier
+            if hasattr(tld, "process_instance_id"):
+                process_instance_id = tld.process_instance_id
         script_attributes_context = ScriptAttributesContext(
             task=task,
             environment_identifier=current_app.config["ENV_IDENTIFIER"],

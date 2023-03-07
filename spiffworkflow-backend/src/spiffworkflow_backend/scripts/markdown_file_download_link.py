@@ -7,6 +7,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.script_attributes_context import (
     ScriptAttributesContext,
 )
+from spiffworkflow_backend.scripts.script import ProcessModelIdentifierMissingError
 from spiffworkflow_backend.scripts.script import Script
 
 
@@ -36,6 +37,12 @@ class GetMarkdownFileDownloadLink(Script):
         digest = parts[2].split(",")[1][-64:]
         label = parts[1].split("=")[1]
         process_model_identifier = script_attributes_context.process_model_identifier
+        if process_model_identifier is None:
+            raise ProcessModelIdentifierMissingError(
+                "The process model identifier was not given to script"
+                " 'markdown_file_download_link'. This script needs to be run from"
+                " within the context of a process model."
+            )
         modified_process_model_identifier = (
             ProcessModelInfo.modify_process_identifier_for_path_param(
                 process_model_identifier
