@@ -72,7 +72,7 @@ class TestSecretService(SecretServiceTestHelpers):
 
         assert test_secret is not None
         assert test_secret.key == self.test_key
-        assert test_secret.value == self.test_value
+        assert SecretService._decrypt(test_secret.value) == self.test_value
         assert test_secret.user_id == with_super_admin_user.id
 
     def test_add_secret_duplicate_key_fails(
@@ -98,7 +98,7 @@ class TestSecretService(SecretServiceTestHelpers):
 
         secret = SecretService().get_secret(self.test_key)
         assert secret is not None
-        assert secret.value == self.test_value
+        assert SecretService._decrypt(secret.value) == self.test_value
 
     def test_get_secret_bad_key_fails(
         self,
@@ -123,13 +123,15 @@ class TestSecretService(SecretServiceTestHelpers):
         self.add_test_secret(with_super_admin_user)
         secret = SecretService.get_secret(self.test_key)
         assert secret
-        assert secret.value == self.test_value
+        assert SecretService._decrypt(secret.value) == self.test_value
         SecretService.update_secret(
             self.test_key, "new_secret_value", with_super_admin_user.id
         )
         new_secret = SecretService.get_secret(self.test_key)
         assert new_secret
-        assert new_secret.value == "new_secret_value"  # noqa: S105
+        assert (
+            SecretService._decrypt(new_secret.value) == "new_secret_value"
+        )  # noqa: S105
 
     def test_update_secret_bad_secret_fails(
         self,
@@ -205,7 +207,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         for key in ["key", "value", "user_id"]:
             assert key in secret.keys()
         assert secret["key"] == self.test_key
-        assert secret["value"] == self.test_value
+        assert SecretService._decrypt(secret["value"]) == self.test_value
         assert secret["user_id"] == with_super_admin_user.id
 
     def test_get_secret(
@@ -224,7 +226,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         assert secret_response
         assert secret_response.status_code == 200
         assert secret_response.json
-        assert secret_response.json["value"] == self.test_value
+        assert SecretService._decrypt(secret_response.json["value"]) == self.test_value
 
     def test_update_secret(
         self,
@@ -237,7 +239,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         self.add_test_secret(with_super_admin_user)
         secret: Optional[SecretModel] = SecretService.get_secret(self.test_key)
         assert secret
-        assert secret.value == self.test_value
+        assert SecretService._decrypt(secret.value) == self.test_value
         secret_model = SecretModel(
             key=self.test_key,
             value="new_secret_value",
@@ -254,7 +256,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         secret_model = SecretModel.query.filter(
             SecretModel.key == self.test_key
         ).first()
-        assert secret_model.value == "new_secret_value"
+        assert SecretService._decrypt(secret_model.value) == "new_secret_value"
 
     def test_delete_secret(
         self,
@@ -267,7 +269,7 @@ class TestSecretServiceApi(SecretServiceTestHelpers):
         self.add_test_secret(with_super_admin_user)
         secret = SecretService.get_secret(self.test_key)
         assert secret
-        assert secret.value == self.test_value
+        assert SecretService._decrypt(secret.value) == self.test_value
         secret_response = client.delete(
             f"/v1.0/secrets/{self.test_key}",
             headers=self.logged_in_headers(with_super_admin_user),
