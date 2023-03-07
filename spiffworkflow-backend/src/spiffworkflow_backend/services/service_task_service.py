@@ -31,8 +31,8 @@ class ServiceTaskDelegate:
             secret_prefix = "secret:"  # noqa: S105
             if value.startswith(secret_prefix):
                 key = value.removeprefix(secret_prefix)
-                secret = SecretService().get_secret(key)
-                return secret.value
+                secret = SecretService.get_secret(key)
+                return SecretService._decrypt(secret.value)
 
             file_prefix = "file:"
             if value.startswith(file_prefix):
@@ -136,7 +136,7 @@ class ServiceTaskDelegate:
             secret_key = parsed_response["auth"]
             refreshed_token_set = json.dumps(parsed_response["refreshed_token_set"])
             user_id = g.user.id if UserService.has_user() else None
-            SecretService().update_secret(secret_key, refreshed_token_set, user_id)
+            SecretService.update_secret(secret_key, refreshed_token_set, user_id)
             return json.dumps(parsed_response["api_response"])
 
 
