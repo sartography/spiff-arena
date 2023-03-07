@@ -47,8 +47,8 @@ class SecretService:
             ) from e
         return secret_model
 
-    @classmethod
-    def get_secret(cls, key: str) -> SecretModel:
+    @staticmethod
+    def get_secret(key: str) -> SecretModel:
         """Get_secret."""
         secret = db.session.query(SecretModel).filter(SecretModel.key == key).first()
         if isinstance(secret, SecretModel):
