@@ -40,3 +40,4 @@ for attempt in $(seq 1 "$ATTEMPTS" ); do
 
   echo "${success},$(( end_time - start_time ))" >>"$cypress_run_file"
 done
+echo "Recorded stats to ${cypress_run_file}"

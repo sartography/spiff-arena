@@ -532,14 +532,14 @@ def _get_tasks(
         human_tasks_query.add_columns(
             ProcessInstanceModel.process_model_identifier,
             ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-            ProcessInstanceModel.updated_at_in_seconds,
-            ProcessInstanceModel.created_at_in_seconds,
             UserModel.username.label("process_initiator_username"),  # type: ignore
             GroupModel.identifier.label("assigned_user_group_identifier"),
             HumanTaskModel.task_name,
             HumanTaskModel.task_title,
             HumanTaskModel.process_model_display_name,
             HumanTaskModel.process_instance_id,
+            HumanTaskModel.updated_at_in_seconds,
+            HumanTaskModel.created_at_in_seconds,
             potential_owner_usernames_from_group_concat_or_similar,
         )
         .order_by(desc(HumanTaskModel.id))  # type: ignore

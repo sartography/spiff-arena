@@ -11,7 +11,8 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
-from SpiffWorkflow.task import TaskState  # type: ignore
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import or_
 
@@ -536,6 +537,7 @@ def process_instance_task_list(
     process_instance: ProcessInstanceModel,
     all_tasks: bool = False,
     spiff_step: int = 0,
+    most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
     step_detail_query = db.session.query(SpiffStepDetailsModel).filter(
@@ -611,7 +613,21 @@ def process_instance_task_list(
     )
 
     tasks = []
-    for spiff_task in spiff_tasks:
+    spiff_tasks_to_process = spiff_tasks
+
+    if most_recent_tasks_only:
+        spiff_tasks_by_process_id_and_task_name: dict[str, SpiffTask] = {}
+        for spiff_task in spiff_tasks:
+            row_id = f"{spiff_task.task_spec._wf_spec.name}:{spiff_task.task_spec.name}"
+            if (
+                row_id not in spiff_tasks_by_process_id_and_task_name
+                or spiff_task.last_state_change
+                > spiff_tasks_by_process_id_and_task_name[row_id].last_state_change
+            ):
+                spiff_tasks_by_process_id_and_task_name[row_id] = spiff_task
+        spiff_tasks_to_process = spiff_tasks_by_process_id_and_task_name.values()
+
+    for spiff_task in spiff_tasks_to_process:
         task_spiff_step: Optional[int] = None
         if str(spiff_task.id) in steps_by_id:
             task_spiff_step = steps_by_id[str(spiff_task.id)].spiff_step

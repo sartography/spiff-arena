@@ -306,7 +306,7 @@ export default function ProcessModelForm({
     textInputs.push(
       <Select
         id="notification-type"
-        defaultValue="fault"
+        defaultValue={processModel.fault_or_suspend_on_exception}
         labelText="Notification Type"
         onChange={(event: any) => {
           onNotificationTypeChanged(event.target.value);
