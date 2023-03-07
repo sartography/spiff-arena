@@ -142,6 +142,7 @@ jobs:
           mysql version: "8.0"
           mysql database: "spiffworkflow_backend_unit_testing"
           mysql root password: password
+          collation server: 'utf8mb4_0900_as_cs'
         if: matrix.database == 'mysql'
 
       - name: Setup Postgres
@@ -192,7 +193,7 @@ jobs:
           python-version: "3.11"
       - name: Install Poetry
         run: |
-          pipx install poetry
+          pipx install --pip-args=--constraint=spiffworkflow-backend/.github/workflows/constraints.txt poetry
           poetry --version
       - name: Poetry Install
         run: poetry install

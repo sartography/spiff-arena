@@ -7,6 +7,7 @@ from flask.app import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
@@ -46,6 +47,8 @@ def app() -> Flask:
 def with_db_and_bpmn_file_cleanup() -> None:
     """Do it cleanly!"""
     meta = db.metadata
+    db.session.execute(db.update(BpmnProcessModel, values={"parent_process_id": None}))
+
     for table in reversed(meta.sorted_tables):
         db.session.execute(table.delete())
     db.session.commit()

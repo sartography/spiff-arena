@@ -3,6 +3,7 @@ import pytest
 from flask import g
 from flask.app import Flask
 from flask.testing import FlaskClient
+from SpiffWorkflow.task import TaskState  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -260,6 +261,36 @@ class TestProcessInstanceProcessor(BaseTest):
         )
 
         assert process_instance.status == ProcessInstanceStatus.complete.value
+
+    def test_can_load_up_processor_after_running_model_with_call_activities(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_does_not_recreate_human_tasks_on_multiple_saves."""
+        initiator_user = self.find_or_create_user("initiator_user")
+
+        process_model = load_test_spec(
+            process_model_id="test_group/call_activity_nested",
+            process_model_source_directory="call_activity_nested",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        # ensure this does not raise
+        processor = ProcessInstanceProcessor(process_instance)
+
+        # this task will be found within subprocesses
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            "do_nothing", processor.bpmn_process_instance
+        )
+        assert spiff_task is not None
+        assert spiff_task.state == TaskState.COMPLETED
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,

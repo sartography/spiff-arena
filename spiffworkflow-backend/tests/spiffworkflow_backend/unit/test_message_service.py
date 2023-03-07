@@ -71,7 +71,6 @@ class TestMessageService(BaseTest):
             .all()
         )
         assert len(waiting_messages) == 0
-
         # The process has completed
         assert self.process_instance.status == "complete"
 
