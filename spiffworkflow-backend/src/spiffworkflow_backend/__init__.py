@@ -13,6 +13,7 @@ from apscheduler.schedulers.base import BaseScheduler  # type: ignore
 from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
+from flask_simple_crypt import SimpleCrypt  # type: ignore
 from werkzeug.exceptions import NotFound
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
@@ -132,6 +133,11 @@ def create_app() -> flask.app.Flask:
         start_scheduler(app)
 
     configure_sentry(app)
+
+    cipher = SimpleCrypt()
+    app.config["FSC_EXPANSION_COUNT"] = 2048
+    cipher.init_app(app)
+    app.config["CIPHER"] = cipher
 
     app.before_request(verify_token)
     app.before_request(AuthorizationService.check_for_permission)
