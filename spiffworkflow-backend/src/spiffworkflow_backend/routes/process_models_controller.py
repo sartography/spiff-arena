@@ -30,6 +30,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _get_process_mode
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _un_modify_modified_process_model_id,
 )
+from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
 from spiffworkflow_backend.services.process_instance_report_service import (
@@ -200,6 +201,12 @@ def process_model_show(
     process_model.parent_groups = ProcessModelService.get_parent_group_array(
         process_model.id
     )
+    try:
+        current_git_revision = GitService.get_current_revision()
+    except GitCommandError:
+        current_git_revision = ""
+
+    process_model.bpmn_version_control_identifier = current_git_revision
     return make_response(jsonify(process_model), 200)
 
 
