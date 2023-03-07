@@ -43,7 +43,7 @@ def authentication_callback(
     """Authentication_callback."""
     verify_token(request.args.get("token"), force_run=True)
     response = request.args["response"]
-    SecretService().update_secret(
+    SecretService.update_secret(
         f"{service}/{auth_method}", response, g.user.id, create_if_not_exists=True
     )
     return redirect(

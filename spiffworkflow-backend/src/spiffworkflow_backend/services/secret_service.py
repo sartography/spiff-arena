@@ -68,9 +68,9 @@ class SecretService:
         create_if_not_exists: Optional[bool] = False,
     ) -> None:
         """Does this pass pre commit?"""
-        value = cls._encrypt(value)
         secret_model = SecretModel.query.filter(SecretModel.key == key).first()
         if secret_model:
+            value = cls._encrypt(value)
             secret_model.value = value
             db.session.add(secret_model)
             try:
