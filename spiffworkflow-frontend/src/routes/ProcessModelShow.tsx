@@ -498,6 +498,9 @@ export default function ProcessModelShow() {
                   <span>
                     <Button size="sm" kind="ghost">
                       Files
+                      {processModel &&
+                        processModel.bpmn_version_control_identifier &&
+                        ` (revision ${processModel.bpmn_version_control_identifier})`}
                     </Button>
                   </span>
                 </Stack>

@@ -171,6 +171,7 @@ export interface ProcessModel {
   metadata_extraction_paths?: MetadataExtractionPath[];
   fault_or_suspend_on_exception?: string;
   exception_notification_addresses?: string[];
+  bpmn_version_control_identifier?: string;
 }
 
 export interface ProcessGroup {
