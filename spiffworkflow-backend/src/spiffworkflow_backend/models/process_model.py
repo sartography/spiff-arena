@@ -38,8 +38,11 @@ class ProcessModelInfo:
     files: list[File] | None = field(default_factory=list[File])
     fault_or_suspend_on_exception: str = NotificationType.fault.value
     exception_notification_addresses: list[str] = field(default_factory=list)
-    parent_groups: list[ProcessGroupLite] | None = None
     metadata_extraction_paths: list[dict[str, str]] | None = None
+
+    # just for the API
+    parent_groups: list[ProcessGroupLite] | None = None
+    bpmn_version_control_identifier: str | None = None
 
     def __post_init__(self) -> None:
         """__post_init__."""
