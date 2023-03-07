@@ -26,7 +26,6 @@ if [[ -z "${BACKEND_BASE_URL:-}" ]]; then
 fi
 if [[ -z "${KEYCLOAK_BASE_URL:-}" ]]; then
   # KEYCLOAK_BASE_URL=http://localhost:7002
-  KEYCLOAK_BASE_URL=https://keycloak.dev.spiffworkflow.org
   if grep -qE "spiffworkflow.org" <<<"$BACKEND_BASE_URL" ; then
     env_domain=$(sed -E 's/.*api\.(\w+\.spiffworkflow.org).*/\1/' <<<"${BACKEND_BASE_URL}")
     KEYCLOAK_BASE_URL="https://keycloak.${env_domain}"
@@ -72,7 +71,6 @@ result=$(curl -s -X POST "$KEYCLOAK_URL" "$INSECURE" \
  -d "password=$PASSWORD" \
  -d 'grant_type=password' \
  -d "client_id=$BACKEND_CLIENT_ID" \
- -d "audienc111e=${BACKEND_CLIENT_ID}" \
 )
 backend_token=$(jq -r '.access_token' <<< "$result")
 if [[ -z "$backend_token" || "$backend_token" == "null" ]]; then
