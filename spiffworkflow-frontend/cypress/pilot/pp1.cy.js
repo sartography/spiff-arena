@@ -32,7 +32,7 @@ const approveWithUser = (
 
 describe('pp1', () => {
   it('can run PP1', () => {
-    cy.login('core5.contributor', 'core5.contributor');
+    cy.login('core-a1.contributor', 'core-a1.contributor');
     cy.visit('/');
     cy.contains('Start New +').click();
     cy.contains('Raise New Demand Request');
@@ -95,14 +95,14 @@ describe('pp1', () => {
         processInstanceId,
         'Task: Reminder: Request Additional Budget'
       );
-      approveWithUser('ppg.ba.sme', processInstanceId);
-      approveWithUser('security.sme', processInstanceId);
+      approveWithUser('ppg.ba-a1.sme', processInstanceId);
+      approveWithUser('security-a1.sme', processInstanceId);
       approveWithUser(
-        'infra.sme',
+        'infra-a1.sme',
         processInstanceId,
         'Task: Update Application Landscape'
       );
-      approveWithUser('legal.sme', processInstanceId);
+      approveWithUser('legal-a1.sme', processInstanceId);
     });
   });
 });
