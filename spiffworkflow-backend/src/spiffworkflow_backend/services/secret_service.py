@@ -2,7 +2,6 @@
 from typing import Optional
 
 from flask import current_app
-from flask_simple_crypt import SimpleCrypt
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
@@ -16,13 +15,13 @@ class SecretService:
 
     @classmethod
     def _encrypt(cls, value: str) -> str:
-        encrypted_bytes = current_app.config["CIPHER"].encrypt(value)
+        encrypted_bytes: bytes = current_app.config["CIPHER"].encrypt(value)
         return encrypted_bytes.decode(cls.CIPHER_ENCODING)
 
     @classmethod
     def _decrypt(cls, value: str) -> str:
         bytes_to_decrypt = bytes(value, cls.CIPHER_ENCODING)
-        decrypted_bytes = current_app.config["CIPHER"].decrypt(bytes_to_decrypt)
+        decrypted_bytes: bytes = current_app.config["CIPHER"].decrypt(bytes_to_decrypt)
         return decrypted_bytes.decode(cls.CIPHER_ENCODING)
 
     @classmethod
