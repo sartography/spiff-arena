@@ -17,8 +17,26 @@ else
   shift
 fi
 
+if [[ -z "${ATTEMPTS:-}" ]]; then
+  ATTEMPTS=1
+fi
+
 if [[ -z "${CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK:-}" ]]; then
   export CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK=true
 fi
 
-./node_modules/.bin/cypress "$command" -c specPattern="cypress/pilot/**/*.cy.{js,jsx,ts,tsx}" --e2e --browser chrome "$@"
+cypress_run_file="/var/tmp/cypress_run_$(date +%s)"
+echo "Recording stats to ${cypress_run_file}"
+
+for attempt in $(seq 1 "$ATTEMPTS" ); do
+  echo "Running attempt: ${attempt}"
+
+  start_time=$(date +%s)
+  success="false"
+  if ./node_modules/.bin/cypress "$command" -c specPattern="cypress/pilot/**/*.cy.{js,jsx,ts,tsx}" --e2e --browser chrome "$@"; then
+    success="true"
+  fi
+  end_time=$(date +%s)
+
+  echo "${success},$(( end_time - start_time ))" >>"$cypress_run_file"
+done
