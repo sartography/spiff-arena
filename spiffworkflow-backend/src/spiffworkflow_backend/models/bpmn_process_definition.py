@@ -32,3 +32,6 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     # TODO: remove these from process_instance
     bpmn_version_control_type: str = db.Column(db.String(50))
     bpmn_version_control_identifier: str = db.Column(db.String(255))
+
+    updated_at_in_seconds: int = db.Column(db.Integer)
+    created_at_in_seconds: int = db.Column(db.Integer)

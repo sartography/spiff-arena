@@ -26,3 +26,7 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
 
     # subprocess or top_level_process
     # process_type: str = db.Column(db.String(30), nullable=False)
+
+    # FIXME: find out how to set this but it'd be cool
+    start_in_seconds: float = db.Column(db.DECIMAL(17, 6))
+    end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: ede2ae7d3c80
+Revision ID: 389800c352ee
 Revises: 
-Create Date: 2023-03-06 11:14:40.739641
+Create Date: 2023-03-07 10:40:43.709777
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = 'ede2ae7d3c80'
+revision = '389800c352ee'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,6 +24,8 @@ def upgrade():
     sa.Column('parent_process_id', sa.Integer(), nullable=True),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('json_data_hash', sa.String(length=255), nullable=False),
+    sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
+    sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.ForeignKeyConstraint(['parent_process_id'], ['bpmn_process.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -37,6 +39,8 @@ def upgrade():
     sa.Column('type', sa.String(length=32), nullable=True),
     sa.Column('bpmn_version_control_type', sa.String(length=50), nullable=True),
     sa.Column('bpmn_version_control_identifier', sa.String(length=255), nullable=True),
+    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_bpmn_process_definition_bpmn_identifier'), 'bpmn_process_definition', ['bpmn_identifier'], unique=False)
@@ -210,6 +214,8 @@ def upgrade():
     sa.Column('state', sa.String(length=10), nullable=False),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('json_data_hash', sa.String(length=255), nullable=False),
+    sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
+    sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_id'], ['bpmn_process.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -221,6 +227,8 @@ def upgrade():
     sa.Column('bpmn_identifier', sa.String(length=255), nullable=False),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('typename', sa.String(length=255), nullable=False),
+    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_definition_id'], ['bpmn_process_definition.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('bpmn_process_definition_id', 'bpmn_identifier', name='task_definition_unique')

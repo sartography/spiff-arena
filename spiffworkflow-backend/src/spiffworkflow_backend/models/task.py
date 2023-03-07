@@ -54,6 +54,9 @@ class TaskModel(SpiffworkflowBaseDBModel):
     properties_json: dict = db.Column(db.JSON, nullable=False)
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
+    start_in_seconds: float = db.Column(db.DECIMAL(17, 6))
+    end_in_seconds: float | None = db.Column(db.DECIMAL(17, 6))
+
 
 class Task:
     """Task."""
