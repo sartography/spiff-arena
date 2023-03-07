@@ -36,12 +36,20 @@ class GetMarkdownFileDownloadLink(Script):
         digest = parts[2].split(",")[1][-64:]
         label = parts[1].split("=")[1]
         process_model_identifier = script_attributes_context.process_model_identifier
+        if process_model_identifier is None:
+            raise self.get_proces_model_identifier_is_missing_error(
+                "markdown_file_download_link"
+            )
         modified_process_model_identifier = (
             ProcessModelInfo.modify_process_identifier_for_path_param(
                 process_model_identifier
             )
         )
         process_instance_id = script_attributes_context.process_instance_id
+        if process_instance_id is None:
+            raise self.get_proces_instance_id_is_missing_error(
+                "save_process_instance_metadata"
+            )
         url = current_app.config["SPIFFWORKFLOW_BACKEND_URL"]
         url += (
             f"/v1.0/process-data-file-download/{modified_process_model_identifier}/"
