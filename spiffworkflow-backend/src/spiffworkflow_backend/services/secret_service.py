@@ -52,7 +52,6 @@ class SecretService:
         """Get_secret."""
         secret = db.session.query(SecretModel).filter(SecretModel.key == key).first()
         if isinstance(secret, SecretModel):
-            secret.value = cls._decrypt(secret.value)
             return secret
         else:
             raise ApiError(
