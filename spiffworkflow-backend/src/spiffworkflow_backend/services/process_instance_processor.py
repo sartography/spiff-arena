@@ -1680,6 +1680,7 @@ class ProcessInstanceProcessor:
             return self.spiff_step_details_mapping(task, start, end)
 
         step_delegate = StepDetailLoggingDelegate(self.increment_spiff_step, spiff_step_details_mapping_builder)
+        # TODO: make this configurable
         execution_strategy = GreedyExecutionStrategy(step_delegate)
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
@@ -1689,36 +1690,6 @@ class ProcessInstanceProcessor:
             self.save,
         )
         execution_service.do_engine_steps(exit_at, save)
-
-#        try:
-#            self.bpmn_process_instance.refresh_waiting_tasks()
-#
-#            self.bpmn_process_instance.do_engine_steps(
-#                exit_at=exit_at,
-#                will_complete_task=step_delegate.will_complete_task,
-#                did_complete_task=step_delegate.did_complete_task,
-#            )
-#
-#            if self.bpmn_process_instance.is_completed():
-#                self._script_engine.environment.finalize_result(
-#                    self.bpmn_process_instance
-#                )
-#
-#            self.process_bpmn_messages()
-#            self.queue_waiting_receive_messages()
-#        except SpiffWorkflowException as swe:
-#            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
-#
-#        finally:
-#            step_delegate.save()
-#            spiff_logger = logging.getLogger("spiff")
-#            for handler in spiff_logger.handlers:
-#                if hasattr(handler, "bulk_insert_logs"):
-#                    handler.bulk_insert_logs()  # type: ignore
-#            db.session.commit()
-#
-#            if save:
-#                self.save()
 
     # log the spiff step details so we know what is processing the process
     # instance when a human task has a timer event.
