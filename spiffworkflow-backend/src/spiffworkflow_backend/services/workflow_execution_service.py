@@ -11,6 +11,7 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 )
 
 import logging
+import time
 from typing import Callable, Optional
 
 class EngineStepDelegate:
@@ -51,28 +52,28 @@ class StepDetailLoggingEngineStepDelegate(EngineStepDelegate):
             "Transactional Subprocess",
         }
 
-        def should_log(self, task: SpiffTask) -> bool:
-            return (
-                task.task_spec.spec_type in self.tasks_to_log
-                and not task.task_spec.name.endswith(".EndJoin")
-            )
+    def should_log(self, task: SpiffTask) -> bool:
+        return (
+            task.task_spec.spec_type in self.tasks_to_log
+            and not task.task_spec.name.endswith(".EndJoin")
+        )
 
-        def will_complete_task(self, task: SpiffTask) -> None:
-            if self.should_log(task):
-                self.current_task_start_in_seconds = time.time()
-                self.increment_spiff_step()
+    def will_complete_task(self, task: SpiffTask) -> None:
+        if self.should_log(task):
+            self.current_task_start_in_seconds = time.time()
+            self.increment_spiff_step()
 
-        def did_complete_task(self, task: SpiffTask) -> None:
-            if self.should_log(task):
-                self.step_details.append(
-                    self.spiff_step_details_mapping(
-                        task, self.current_task_start_in_seconds, time.time()
-                    )
+    def did_complete_task(self, task: SpiffTask) -> None:
+        if self.should_log(task):
+            self.step_details.append(
+                self.spiff_step_details_mapping(
+                    task, self.current_task_start_in_seconds, time.time()
                 )
+            )
 
     def save(self) -> None:
         db.session.bulk_insert_mappings(SpiffStepDetailsModel, self.step_details)
-        #db.session.commit()
+        db.session.commit()
 
 class ExecutionStrategy:
     """TODO: comment."""

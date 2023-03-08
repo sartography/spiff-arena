@@ -96,6 +96,13 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskDeleg
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 
+from spiffworkflow_backend.services.workflow_execution_service import (
+    EngineStepDelegate,
+    GreedyExecutionStrategy,
+    StepDetailLoggingEngineStepDelegate,
+    WorkflowExecutionService,
+)
+
 SPIFF_SPEC_CONFIG["task_specs"].append(BusinessRuleTaskConverter)
 
 
@@ -1679,54 +1686,21 @@ class ProcessInstanceProcessor:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-        step_details = []
+        # TODO: better name
+        def mapper(task, start, end):
+            self._script_engine.environment.revise_state_with_task_data(task)
+            return self.spiff_step_details_mapping(task, start, end)
 
-        tasks_to_log = {
-            "BPMN Task",
-            "Script Task",
-            "Service Task",
-            "Default Start Event",
-            "Exclusive Gateway",
-            "Call Activity",
-            # "End Join",
-            "End Event",
-            "Default Throwing Event",
-            "Subprocess",
-            "Transactional Subprocess",
-        }
 
-        # making a dictionary to ensure we are not shadowing variables in the other methods
-        current_task_start_in_seconds = {}
-
-        def should_log(task: SpiffTask) -> bool:
-            if (
-                task.task_spec.spec_type in tasks_to_log
-                and not task.task_spec.name.endswith(".EndJoin")
-            ):
-                return True
-            return False
-
-        def will_complete_task(task: SpiffTask) -> None:
-            if should_log(task):
-                current_task_start_in_seconds["time"] = time.time()
-                self.increment_spiff_step()
-
-        def did_complete_task(task: SpiffTask) -> None:
-            if should_log(task):
-                self._script_engine.environment.revise_state_with_task_data(task)
-                step_details.append(
-                    self.spiff_step_details_mapping(
-                        task, current_task_start_in_seconds["time"], time.time()
-                    )
-                )
+        step_delegate = StepDetailLoggingEngineStepDelegate(self.increment_spiff_step, mapper)
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
             self.bpmn_process_instance.do_engine_steps(
                 exit_at=exit_at,
-                will_complete_task=will_complete_task,
-                did_complete_task=did_complete_task,
+                will_complete_task=step_delegate.will_complete_task,
+                did_complete_task=step_delegate.did_complete_task,
             )
 
             if self.bpmn_process_instance.is_completed():
@@ -1740,8 +1714,7 @@ class ProcessInstanceProcessor:
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
-            # self.log_spiff_step_details(step_details)
-            db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
+            step_delegate.save()
             spiff_logger = logging.getLogger("spiff")
             for handler in spiff_logger.handlers:
                 if hasattr(handler, "bulk_insert_logs"):
