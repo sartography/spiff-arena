@@ -145,7 +145,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
         successCallback: setProcessInstance,
       });
-      let taskParams = '?all_tasks=true';
+      let taskParams = '?all_tasks=true&most_recent_tasks_only=true';
       if (typeof params.spiff_step !== 'undefined') {
         taskParams = `${taskParams}&spiff_step=${params.spiff_step}`;
       }
