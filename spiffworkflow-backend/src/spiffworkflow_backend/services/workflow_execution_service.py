@@ -1,6 +1,7 @@
 import logging
 import time
 from typing import Callable
+from typing import List
 
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
@@ -41,9 +42,10 @@ class StepDetailLoggingDelegate(EngineStepDelegate):
         increment_spiff_step: SpiffStepIncrementer,
         spiff_step_details_mapping: SpiffStepDetailsMappingBuilder,
     ):
+        """__init__."""
         self.increment_spiff_step = increment_spiff_step
         self.spiff_step_details_mapping = spiff_step_details_mapping
-        self.step_details = []
+        self.step_details: List[dict] = []
         self.current_task_start_in_seconds = 0.0
         self.tasks_to_log = {
             "BPMN Task",
@@ -87,6 +89,7 @@ class ExecutionStrategy:
     """TODO: comment."""
 
     def __init__(self, delegate: EngineStepDelegate):
+        """__init__."""
         self.delegate = delegate
 
     def do_engine_steps(
@@ -126,6 +129,7 @@ class WorkflowExecutionService:
         process_instance_completer: ProcessInstanceCompleter,
         process_instance_saver: ProcessInstanceSaver,
     ):
+        """__init__."""
         self.bpmn_process_instance = bpmn_process_instance
         self.process_instance_model = process_instance_model
         self.execution_strategy = execution_strategy
@@ -134,7 +138,6 @@ class WorkflowExecutionService:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
