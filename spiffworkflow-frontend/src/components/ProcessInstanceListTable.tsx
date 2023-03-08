@@ -36,6 +36,7 @@ import {
   convertSecondsToFormattedDateString,
   convertSecondsToFormattedDateTime,
   convertSecondsToFormattedTimeHoursMinutes,
+  encodeBase64,
   getPageInfoFromSearchParams,
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessIdentifierForPathParam,
@@ -266,6 +267,17 @@ export default function ProcessInstanceListTable({
         queryParamString += `&report_id=${searchParams.get('report_id')}`;
       } else if (reportIdentifier) {
         queryParamString += `&report_identifier=${reportIdentifier}`;
+      }
+
+      if (searchParams.get('report_columns')) {
+        queryParamString += `&report_columns=${searchParams.get(
+          'report_columns'
+        )}`;
+      }
+      if (searchParams.get('report_filter_by')) {
+        queryParamString += `&report_filter_by=${searchParams.get(
+          'report_filter_by'
+        )}`;
       }
 
       Object.keys(dateParametersToAlwaysFilterBy).forEach(
@@ -529,6 +541,14 @@ export default function ProcessInstanceListTable({
     };
   };
 
+  const reportColumns = () => {
+    return (reportMetadata as any).columns;
+  };
+
+  const reportFilterBy = () => {
+    return (reportMetadata as any).filter_by;
+  };
+
   const applyFilter = (event: any) => {
     event.preventDefault();
     const { page, perPage } = getPageInfoFromSearchParams(
@@ -577,6 +597,11 @@ export default function ProcessInstanceListTable({
     if (processInitiatorSelection) {
       queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
     }
+
+    const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
+    queryParamString += `&report_columns=${reportColumnsBase64}`;
+    const reportFilterByBase64 = encodeBase64(JSON.stringify(reportFilterBy()));
+    queryParamString += `&report_filter_by=${reportFilterByBase64}`;
 
     removeError();
     setProcessInstanceReportJustSaved(null);
@@ -681,10 +706,6 @@ export default function ProcessInstanceListTable({
     removeError();
     setProcessInstanceReportJustSaved(mode || null);
     navigate(`${processInstanceListPathPrefix}${queryParamString}`);
-  };
-
-  const reportColumns = () => {
-    return (reportMetadata as any).columns;
   };
 
   const reportColumnAccessors = () => {

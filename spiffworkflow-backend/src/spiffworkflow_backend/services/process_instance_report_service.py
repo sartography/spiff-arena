@@ -50,6 +50,8 @@ class ProcessInstanceReportFilter:
     with_tasks_assigned_to_my_group: Optional[bool] = None
     with_relation_to_me: Optional[bool] = None
     process_initiator_username: Optional[str] = None
+    report_column_list: Optional[list] = None
+    report_filter_by_list: Optional[list] = None
 
     def to_dict(self) -> dict[str, str]:
         """To_dict."""
@@ -85,6 +87,10 @@ class ProcessInstanceReportFilter:
             d["with_relation_to_me"] = str(self.with_relation_to_me).lower()
         if self.process_initiator_username is not None:
             d["process_initiator_username"] = str(self.process_initiator_username)
+        if self.report_column_list is not None:
+            d["report_column_list"] = str(self.report_column_list)
+        if self.report_filter_by_list is not None:
+            d["report_filter_by_list"] = str(self.report_filter_by_list)
 
         return d
 
@@ -229,6 +235,8 @@ class ProcessInstanceReportService:
         with_tasks_assigned_to_my_group = bool_value("with_tasks_assigned_to_my_group")
         with_relation_to_me = bool_value("with_relation_to_me")
         process_initiator_username = filters.get("process_initiator_username")
+        report_column_list = list_value("report_column_list")
+        report_filter_by_list = list_value("report_filter_by_list")
 
         report_filter = ProcessInstanceReportFilter(
             process_model_identifier=process_model_identifier,
@@ -244,6 +252,8 @@ class ProcessInstanceReportService:
             with_tasks_assigned_to_my_group=with_tasks_assigned_to_my_group,
             with_relation_to_me=with_relation_to_me,
             process_initiator_username=process_initiator_username,
+            report_column_list=report_column_list,
+            report_filter_by_list=report_filter_by_list,
         )
 
         return report_filter
@@ -265,6 +275,8 @@ class ProcessInstanceReportService:
         with_tasks_assigned_to_my_group: Optional[bool] = None,
         with_relation_to_me: Optional[bool] = None,
         process_initiator_username: Optional[str] = None,
+        report_column_list: Optional[list] = None,
+        report_filter_by_list: Optional[list] = None,
     ) -> ProcessInstanceReportFilter:
         """Filter_from_metadata_with_overrides."""
         report_filter = cls.filter_from_metadata(process_instance_report)
@@ -291,6 +303,10 @@ class ProcessInstanceReportService:
             report_filter.with_tasks_completed_by_me = with_tasks_completed_by_me
         if process_initiator_username is not None:
             report_filter.process_initiator_username = process_initiator_username
+        if report_column_list is not None:
+            report_filter.report_column_list = report_column_list
+        if report_filter_by_list is not None:
+            report_filter.report_filter_by_list = report_filter_by_list
         if with_tasks_assigned_to_my_group is not None:
             report_filter.with_tasks_assigned_to_my_group = (
                 with_tasks_assigned_to_my_group
@@ -483,6 +499,15 @@ class ProcessInstanceReportService:
         stock_columns = ProcessInstanceReportService.get_column_names_for_model(
             ProcessInstanceModel
         )
+        if report_filter.report_column_list:
+            process_instance_report.report_metadata["columns"] = (
+                report_filter.report_column_list
+            )
+        if report_filter.report_filter_by_list:
+            process_instance_report.report_metadata["filter_by"] = (
+                report_filter.report_filter_by_list
+            )
+
         for column in process_instance_report.report_metadata["columns"]:
             if column["accessor"] in stock_columns:
                 continue
