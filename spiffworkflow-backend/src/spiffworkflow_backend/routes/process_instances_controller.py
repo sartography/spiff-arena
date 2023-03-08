@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+from uuid import UUID
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -505,6 +506,7 @@ def process_instance_task_list_without_task_data_for_me(
     process_instance_id: int,
     all_tasks: bool = False,
     spiff_step: int = 0,
+    most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
@@ -513,6 +515,7 @@ def process_instance_task_list_without_task_data_for_me(
         process_instance,
         all_tasks,
         spiff_step,
+        most_recent_tasks_only,
     )
 
 
@@ -521,6 +524,7 @@ def process_instance_task_list_without_task_data(
     process_instance_id: int,
     all_tasks: bool = False,
     spiff_step: int = 0,
+    most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -529,6 +533,7 @@ def process_instance_task_list_without_task_data(
         process_instance,
         all_tasks,
         spiff_step,
+        most_recent_tasks_only,
     )
 
 
@@ -561,6 +566,8 @@ def process_instance_task_list(
 
     subprocess_state_overrides = {}
     for step_detail in step_details:
+        # if step_detail.bpmn_task_identifier == 'Activity_0iajzy6':
+        #     print(f"step_detail: {step_detail}")
         if step_detail.task_id in tasks:
             tasks[step_detail.task_id]["state"] = Task.task_state_name_to_int(
                 step_detail.task_state
@@ -583,20 +590,39 @@ def process_instance_task_list(
 
     for spiff_task_id in tasks:
         if spiff_task_id not in steps_by_id:
+            # if tasks[spiff_task_id]['task_spec'] == 'Activity_0iajzy6':
+            #    print(f"tasks[spiff_task_id]: {tasks[spiff_task_id]}") 
             tasks[spiff_task_id]["data"] = {}
+            state_to_set = TaskState.FUTURE
+            if tasks[spiff_task_id]["state"] == TaskState.LIKELY:
+                # print("WE HERE")
+                previous_completed_steps_for_bpmn_task_identifier = [s for s in step_details if s.bpmn_task_identifier == tasks[spiff_task_id]['task_spec'] and s.task_state == "COMPLETED"]
+                # previous_completed_steps_for_bpmn_task_identifier = [s for s in step_details if s.task_state == "COMPLETED"]
+                # print(f"previous_completed_steps_for_bpmn_task_identifier: {previous_completed_steps_for_bpmn_task_identifier}")
+                if len(previous_completed_steps_for_bpmn_task_identifier) > 0:
+                    state_to_set = TaskState.COMPLETED
             tasks[spiff_task_id]["state"] = subprocess_state_overrides.get(
-                spiff_task_id, TaskState.FUTURE
+                spiff_task_id, state_to_set
             )
 
     bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(
         full_bpmn_process_dict
     )
 
-    spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-        step_details[-1].bpmn_task_identifier, bpmn_process_instance
-    )
-    if spiff_task is not None and spiff_task.state != TaskState.READY:
+    last_step_detail_bpmn_task_identifier = step_details[-1].task_id
+    print(f"last_step_detail_bpmn_task_identifier: {last_step_detail_bpmn_task_identifier}")
+    uuid = UUID(last_step_detail_bpmn_task_identifier)
+    spiff_task = processor.bpmn_process_instance.get_task(uuid)
+    print(f"spiff_task: {spiff_task}")
+    # # workflow.complete_task_from_id(uuid)
+    # # spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+    # #     last_step_detail_bpmn_task_identifier, bpmn_process_instance
+    # # )
+    if spiff_task is not None: #and spiff_task.state != TaskState.READY:
+        print("HEY WE HERE")
+        print(f"spiff_task: {spiff_task}")
         spiff_task.complete()
+    print(f"spiff_task2: {spiff_task}")
 
     spiff_tasks = None
     if all_tasks:
@@ -619,6 +645,8 @@ def process_instance_task_list(
         spiff_tasks_by_process_id_and_task_name: dict[str, SpiffTask] = {}
         for spiff_task in spiff_tasks:
             row_id = f"{spiff_task.task_spec._wf_spec.name}:{spiff_task.task_spec.name}"
+            # if spiff_task.task_spec.name == 'Activity_0iajzy6' or spiff_task.task_spec.name == 'Activity_0pv92j7':
+            #     print(f"spiff_task: {spiff_task} - {spiff_task.id}")
             if (
                 row_id not in spiff_tasks_by_process_id_and_task_name
                 or spiff_task.last_state_change
