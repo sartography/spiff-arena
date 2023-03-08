@@ -80,7 +80,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [eventPayload, setEventPayload] = useState<string>('{}');
   const [eventTextEditorEnabled, setEventTextEditorEnabled] =
     useState<boolean>(false);
-  const [displayDetails, setDisplayDetails] = useState<boolean>(false);
   const [showProcessInstanceMetadata, setShowProcessInstanceMetadata] =
     useState<boolean>(false);
 
@@ -304,92 +303,26 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     });
   };
 
-  const detailedViewElement = () => {
-    if (!processInstance) {
-      return null;
-    }
-
-    if (displayDetails) {
-      return (
-        <>
-          <Grid condensed fullWidth>
-            <Button
-              kind="ghost"
-              className="button-link"
-              onClick={() => setDisplayDetails(false)}
-              title="Hide Details"
-            >
-              &laquo; Hide Details
-            </Button>
-          </Grid>
-          <Grid condensed fullWidth>
-            <Column sm={1} md={1} lg={2} className="grid-list-title">
-              Updated At:{' '}
-            </Column>
-            <Column sm={3} md={3} lg={3} className="grid-date">
-              {convertSecondsToFormattedDateTime(
-                processInstance.updated_at_in_seconds
-              )}
-            </Column>
-          </Grid>
-          <Grid condensed fullWidth>
-            <Column sm={1} md={1} lg={2} className="grid-list-title">
-              Created At:{' '}
-            </Column>
-            <Column sm={3} md={3} lg={3} className="grid-date">
-              {convertSecondsToFormattedDateTime(
-                processInstance.created_at_in_seconds
-              )}
-            </Column>
-          </Grid>
-          <Grid condensed fullWidth>
-            <Column sm={1} md={1} lg={2} className="grid-list-title">
-              Process model revision:{' '}
-            </Column>
-            <Column sm={3} md={3} lg={3} className="grid-date">
-              {processInstance.bpmn_version_control_identifier} (
-              {processInstance.bpmn_version_control_type})
-            </Column>
-          </Grid>
-        </>
-      );
-    }
-    return (
-      <Grid condensed fullWidth>
-        <Button
-          kind="ghost"
-          className="button-link"
-          onClick={() => setDisplayDetails(true)}
-          title="Show Details"
-        >
-          View Details &raquo;
-        </Button>
-      </Grid>
-    );
-  };
-
   const getInfoTag = () => {
     if (!processInstance) {
       return null;
     }
-    const currentEndDate = convertSecondsToFormattedDateTime(
-      processInstance.end_in_seconds || 0
-    );
-    let currentEndDateTag;
-    if (currentEndDate) {
-      currentEndDateTag = (
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Completed:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            {convertSecondsToFormattedDateTime(
-              processInstance.end_in_seconds || 0
-            ) || 'N/A'}
-          </Column>
-        </Grid>
-      );
+    let lastUpdatedTimeLabel = 'Updated At';
+    let lastUpdatedTime = processInstance.updated_at_in_seconds;
+    if (processInstance.end_in_seconds) {
+      lastUpdatedTimeLabel = 'Completed';
+      lastUpdatedTime = processInstance.end_in_seconds;
     }
+    const lastUpdatedTimeTag = (
+      <Grid condensed fullWidth>
+        <Column sm={1} md={1} lg={2} className="grid-list-title">
+          {lastUpdatedTimeLabel}:{' '}
+        </Column>
+        <Column sm={3} md={3} lg={3} className="grid-date">
+          {convertSecondsToFormattedDateTime(lastUpdatedTime || 0) || 'N/A'}
+        </Column>
+      </Grid>
+    );
 
     let statusIcon = <InProgress />;
     if (processInstance.status === 'suspended') {
@@ -433,13 +366,30 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           <Column sm={1} md={1} lg={2} className="grid-list-title">
             Started:{' '}
           </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
+          <Column
+            sm={3}
+            md={3}
+            lg={3}
+            className="grid-date"
+            title={`Created At: ${convertSecondsToFormattedDateTime(
+              processInstance.created_at_in_seconds
+            )}`}
+          >
             {convertSecondsToFormattedDateTime(
               processInstance.start_in_seconds || 0
             )}
           </Column>
         </Grid>
-        {currentEndDateTag}
+        {lastUpdatedTimeTag}
+        <Grid condensed fullWidth>
+          <Column sm={1} md={1} lg={2} className="grid-list-title">
+            Process model revision:{' '}
+          </Column>
+          <Column sm={3} md={3} lg={3} className="grid-date">
+            {processInstance.bpmn_version_control_identifier} (
+            {processInstance.bpmn_version_control_type})
+          </Column>
+        </Grid>
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
             Status:{' '}
@@ -450,7 +400,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Tag>
           </Column>
         </Grid>
-        {detailedViewElement()}
         <br />
         <Grid condensed fullWidth>
           <Column sm={2} md={2} lg={2}>
@@ -493,7 +442,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
                     setShowProcessInstanceMetadata(true);
                   }}
                 >
-                  Metadata
+                  Details
                 </Button>
               ) : null}
             </ButtonSet>
@@ -1012,7 +961,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       <Modal
         open={showProcessInstanceMetadata}
-        modalHeading="Metadata"
+        modalHeading="Details"
         passiveModal
         onRequestClose={() => setShowProcessInstanceMetadata(false)}
       >

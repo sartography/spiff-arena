@@ -660,6 +660,18 @@ paths:
         description: The username of the process initiator
         schema:
           type: string
+      - name: report_columns
+        in: query
+        required: false
+        description: Base64 encoded json of report columns.
+        schema:
+          type: string
+      - name: report_filter_by
+        in: query
+        required: false
+        description: Base64 encoded json of report filter by.
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list_for_me
       summary: Returns a list of process instances that are associated with me.
@@ -777,6 +789,18 @@ paths:
         in: query
         required: false
         description: The username of the process initiator
+        schema:
+          type: string
+      - name: report_columns
+        in: query
+        required: false
+        description: Base64 encoded json of report columns.
+        schema:
+          type: string
+      - name: report_filter_by
+        in: query
+        required: false
+        description: Base64 encoded json of report filter by.
         schema:
           type: string
     get:
