@@ -28,7 +28,7 @@ class EngineStepDelegate:
 SpiffStepIncrementer = Callable[[], None]
 SpiffStepDetailsMappingBuilder = Callable[[SpiffTask, float, float], dict]
 
-class StepDetailLoggingEngineStepDelegate(EngineStepDelegate):
+class StepDetailLoggingDelegate(EngineStepDelegate):
     """TODO: comment."""
     def __init__(self,
         increment_spiff_step: SpiffStepIncrementer,
@@ -96,7 +96,7 @@ class GreedyExecutionStrategy(ExecutionStrategy):
         )
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]
-SaveHandler = Callable[[], None]
+ProcessInstanceSaver = Callable[[], None]
 
 class WorkflowExecutionService:
     """TODO: comment."""
@@ -105,13 +105,13 @@ class WorkflowExecutionService:
         process_instance_model: ProcessInstanceModel,
         execution_strategy: ExecutionStrategy, 
         process_instance_completer: ProcessInstanceCompleter,
-        save_handler: SaveHandler,
+        process_instance_saver: ProcessInstanceSaver,
     ):
         self.bpmn_process_instance = bpmn_process_instance
         self.process_instance_model = process_instance_model
         self.execution_strategy = execution_strategy
         self.process_instance_completer = process_instance_completer
-        self.save_handler = save_handler
+        self.process_instance_saver = process_instance_saver
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
@@ -138,7 +138,7 @@ class WorkflowExecutionService:
             db.session.commit()
 
             if save:
-                self.save_handler()
+                self.process_instance_saver()
 
     def process_bpmn_messages(self) -> None:
         """Process_bpmn_messages."""
@@ -191,3 +191,14 @@ class WorkflowExecutionService:
                 message_instance.correlation_rules.append(message_correlation)
             db.session.add(message_instance)
             db.session.commit()
+
+class ProfiledWorkflowExecutionService(WorkflowExecutionService):
+    """TODO: comment."""
+    def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
+        """__do_engine_steps."""
+        import cProfile
+        from pstats import SortKey
+
+        with cProfile.Profile() as pr:
+            super().do_engine_steps(exit_at=exit_at, save=save)
+        pr.print_stats(sort=SortKey.CUMULATIVE)

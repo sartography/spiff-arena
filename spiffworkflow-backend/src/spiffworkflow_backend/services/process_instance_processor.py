@@ -99,7 +99,7 @@ from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import (
     EngineStepDelegate,
     GreedyExecutionStrategy,
-    StepDetailLoggingEngineStepDelegate,
+    StepDetailLoggingDelegate,
     WorkflowExecutionService,
 )
 
@@ -1673,56 +1673,52 @@ class ProcessInstanceProcessor:
         current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
         db.session.add(self.process_instance_model)
 
-    # TODO remove after done with the performance improvements
-    # to use delete the _ prefix here and add it to the real def below
-    def _do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
-        """__do_engine_steps."""
-        import cProfile
-        from pstats import SortKey
-
-        with cProfile.Profile() as pr:
-            self._do_engine_steps(exit_at=exit_at, save=save)
-        pr.print_stats(sort=SortKey.CUMULATIVE)
-
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-        # TODO: better name
-        def mapper(task, start, end):
+        def spiff_step_details_mapping_builder(task: SpiffTask, start: float, end: float) -> dict:
             self._script_engine.environment.revise_state_with_task_data(task)
             return self.spiff_step_details_mapping(task, start, end)
 
+        step_delegate = StepDetailLoggingDelegate(self.increment_spiff_step, spiff_step_details_mapping_builder)
+        execution_strategy = GreedyExecutionStrategy(step_delegate)
+        execution_service = WorkflowExecutionService(
+            self.bpmn_process_instance,
+            self.process_instance_model,
+            execution_strategy,
+            self._script_engine.environment.finalize_result,
+            self.save,
+        )
+        execution_service.do_engine_steps(exit_at, save)
 
-        step_delegate = StepDetailLoggingEngineStepDelegate(self.increment_spiff_step, mapper)
-
-        try:
-            self.bpmn_process_instance.refresh_waiting_tasks()
-
-            self.bpmn_process_instance.do_engine_steps(
-                exit_at=exit_at,
-                will_complete_task=step_delegate.will_complete_task,
-                did_complete_task=step_delegate.did_complete_task,
-            )
-
-            if self.bpmn_process_instance.is_completed():
-                self._script_engine.environment.finalize_result(
-                    self.bpmn_process_instance
-                )
-
-            self.process_bpmn_messages()
-            self.queue_waiting_receive_messages()
-        except SpiffWorkflowException as swe:
-            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
-
-        finally:
-            step_delegate.save()
-            spiff_logger = logging.getLogger("spiff")
-            for handler in spiff_logger.handlers:
-                if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()  # type: ignore
-            db.session.commit()
-
-            if save:
-                self.save()
+#        try:
+#            self.bpmn_process_instance.refresh_waiting_tasks()
+#
+#            self.bpmn_process_instance.do_engine_steps(
+#                exit_at=exit_at,
+#                will_complete_task=step_delegate.will_complete_task,
+#                did_complete_task=step_delegate.did_complete_task,
+#            )
+#
+#            if self.bpmn_process_instance.is_completed():
+#                self._script_engine.environment.finalize_result(
+#                    self.bpmn_process_instance
+#                )
+#
+#            self.process_bpmn_messages()
+#            self.queue_waiting_receive_messages()
+#        except SpiffWorkflowException as swe:
+#            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
+#
+#        finally:
+#            step_delegate.save()
+#            spiff_logger = logging.getLogger("spiff")
+#            for handler in spiff_logger.handlers:
+#                if hasattr(handler, "bulk_insert_logs"):
+#                    handler.bulk_insert_logs()  # type: ignore
+#            db.session.commit()
+#
+#            if save:
+#                self.save()
 
     # log the spiff step details so we know what is processing the process
     # instance when a human task has a timer event.
