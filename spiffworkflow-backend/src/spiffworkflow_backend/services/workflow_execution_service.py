@@ -1,21 +1,24 @@
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+import logging
+import time
+from typing import Callable
+
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
 )
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 
-import logging
-import time
-from typing import Callable, Optional
 
 class EngineStepDelegate:
     """TODO: comment."""
+
     def will_complete_task(self, task: SpiffTask) -> None:
         pass
 
@@ -25,12 +28,16 @@ class EngineStepDelegate:
     def save(self) -> None:
         pass
 
+
 SpiffStepIncrementer = Callable[[], None]
 SpiffStepDetailsMappingBuilder = Callable[[SpiffTask, float, float], dict]
 
+
 class StepDetailLoggingDelegate(EngineStepDelegate):
     """TODO: comment."""
-    def __init__(self,
+
+    def __init__(
+        self,
         increment_spiff_step: SpiffStepIncrementer,
         spiff_step_details_mapping: SpiffStepDetailsMappingBuilder,
     ):
@@ -75,35 +82,47 @@ class StepDetailLoggingDelegate(EngineStepDelegate):
         db.session.bulk_insert_mappings(SpiffStepDetailsModel, self.step_details)
         db.session.commit()
 
+
 class ExecutionStrategy:
     """TODO: comment."""
+
     def __init__(self, delegate: EngineStepDelegate):
         self.delegate = delegate
 
-    def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+    def do_engine_steps(
+        self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
+    ) -> None:
         pass
-    
+
     def save(self) -> None:
         self.delegate.save()
 
+
 class GreedyExecutionStrategy(ExecutionStrategy):
     """TODO: comment."""
-    def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+
+    def do_engine_steps(
+        self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
+    ) -> None:
         bpmn_process_instance.do_engine_steps(
             exit_at=exit_at,
             will_complete_task=self.delegate.will_complete_task,
             did_complete_task=self.delegate.did_complete_task,
         )
 
+
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]
 ProcessInstanceSaver = Callable[[], None]
 
+
 class WorkflowExecutionService:
     """TODO: comment."""
-    def __init__(self,
+
+    def __init__(
+        self,
         bpmn_process_instance: BpmnWorkflow,
         process_instance_model: ProcessInstanceModel,
-        execution_strategy: ExecutionStrategy, 
+        execution_strategy: ExecutionStrategy,
         process_instance_completer: ProcessInstanceCompleter,
         process_instance_saver: ProcessInstanceSaver,
     ):
@@ -192,8 +211,10 @@ class WorkflowExecutionService:
             db.session.add(message_instance)
             db.session.commit()
 
+
 class ProfiledWorkflowExecutionService(WorkflowExecutionService):
     """TODO: comment."""
+
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """__do_engine_steps."""
         import cProfile

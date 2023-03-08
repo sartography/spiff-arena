@@ -95,11 +95,13 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
-
 from spiffworkflow_backend.services.workflow_execution_service import (
-    EngineStepDelegate,
     GreedyExecutionStrategy,
+)
+from spiffworkflow_backend.services.workflow_execution_service import (
     StepDetailLoggingDelegate,
+)
+from spiffworkflow_backend.services.workflow_execution_service import (
     WorkflowExecutionService,
 )
 
@@ -1675,11 +1677,16 @@ class ProcessInstanceProcessor:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-        def spiff_step_details_mapping_builder(task: SpiffTask, start: float, end: float) -> dict:
+
+        def spiff_step_details_mapping_builder(
+            task: SpiffTask, start: float, end: float
+        ) -> dict:
             self._script_engine.environment.revise_state_with_task_data(task)
             return self.spiff_step_details_mapping(task, start, end)
 
-        step_delegate = StepDetailLoggingDelegate(self.increment_spiff_step, spiff_step_details_mapping_builder)
+        step_delegate = StepDetailLoggingDelegate(
+            self.increment_spiff_step, spiff_step_details_mapping_builder
+        )
         # TODO: make this configurable
         execution_strategy = GreedyExecutionStrategy(step_delegate)
         execution_service = WorkflowExecutionService(
