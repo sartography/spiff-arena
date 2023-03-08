@@ -1,4 +1,4 @@
-"""Process_instance_processor."""
+"user_service""Process_instance_processor."""
 import _strptime  # type: ignore
 import decimal
 import json
@@ -95,7 +95,12 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
+from spiffworkflow_backend.services.workflow_execution_service import (
+    EngineStepDelegate,
+    GreedyExecutionStrategy,
+    StepDetailLoggingEngineStepDelegate,
+    WorkflowExecutionService,
+)
 
 SPIFF_SPEC_CONFIG["task_specs"].append(BusinessRuleTaskConverter)
 
@@ -1626,79 +1631,98 @@ class ProcessInstanceProcessor:
             self._do_engine_steps(exit_at=exit_at, save=save)
         pr.print_stats(sort=SortKey.CUMULATIVE)
 
+    def engine_step_delegate(self) -> EngineStepDelegate:
+        def mapping_builder(task: SpiffTask, start: float, end: float) -> dict:
+            self._script_engine.environment.revise_state_with_task_data(task)
+            return self.spiff_step_details_mapping(task, start, end)
+
+        return StepDetailLoggingEngineStepDelegate(self.increment_spiff_step, mapping_builder)
+
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-        step_details = []
 
-        tasks_to_log = {
-            "BPMN Task",
-            "Script Task",
-            "Service Task",
-            "Default Start Event",
-            "Exclusive Gateway",
-            "Call Activity",
-            # "End Join",
-            "End Event",
-            "Default Throwing Event",
-            "Subprocess",
-            "Transactional Subprocess",
-        }
+        # TODO: allow different strategy to be passed in
+        execution_strategy = GreedyExecutionStrategy(self.engine_step_delegate())
+        execution_service = WorkflowExecutionService(
+            self.bpmn_process_instance,
+            self.process_instance_model,
+            execution_strategy,
+            self._script_engine.environment.finalize_result,
+            self.save,
+        )
+        execution_service.do_engine_steps(exit_at, save)
 
-        # making a dictionary to ensure we are not shadowing variables in the other methods
-        current_task_start_in_seconds = {}
-
-        def should_log(task: SpiffTask) -> bool:
-            if (
-                task.task_spec.spec_type in tasks_to_log
-                and not task.task_spec.name.endswith(".EndJoin")
-            ):
-                return True
-            return False
-
-        def will_complete_task(task: SpiffTask) -> None:
-            if should_log(task):
-                current_task_start_in_seconds["time"] = time.time()
-                self.increment_spiff_step()
-
-        def did_complete_task(task: SpiffTask) -> None:
-            if should_log(task):
-                self._script_engine.environment.revise_state_with_task_data(task)
-                step_details.append(
-                    self.spiff_step_details_mapping(
-                        task, current_task_start_in_seconds["time"], time.time()
-                    )
-                )
-
-        try:
-            self.bpmn_process_instance.refresh_waiting_tasks()
-
-            self.bpmn_process_instance.do_engine_steps(
-                exit_at=exit_at,
-                will_complete_task=will_complete_task,
-                did_complete_task=did_complete_task,
-            )
-
-            if self.bpmn_process_instance.is_completed():
-                self._script_engine.environment.finalize_result(
-                    self.bpmn_process_instance
-                )
-
-            self.process_bpmn_messages()
-            self.queue_waiting_receive_messages()
-        except SpiffWorkflowException as swe:
-            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
-
-        finally:
-            # self.log_spiff_step_details(step_details)
-            db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
-            spiff_logger = logging.getLogger("spiff")
-            for handler in spiff_logger.handlers:
-                if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()  # type: ignore
-            db.session.commit()
-
-            if save:
-                self.save()
+#        step_details = []
+#
+#        tasks_to_log = {
+#            "BPMN Task",
+#            "Script Task",
+#            "Service Task",
+#            "Default Start Event",
+#            "Exclusive Gateway",
+#            "Call Activity",
+#            # "End Join",
+#            "End Event",
+#            "Default Throwing Event",
+#            "Subprocess",
+#            "Transactional Subprocess",
+#        }
+#
+#        # making a dictionary to ensure we are not shadowing variables in the other methods
+#        current_task_start_in_seconds = {}
+#
+#        def should_log(task: SpiffTask) -> bool:
+#            if (
+#                task.task_spec.spec_type in tasks_to_log
+#                and not task.task_spec.name.endswith(".EndJoin")
+#            ):
+#                return True
+#            return False
+#
+#        def will_complete_task(task: SpiffTask) -> None:
+#            if should_log(task):
+#                current_task_start_in_seconds["time"] = time.time()
+#                self.increment_spiff_step()
+#
+#        def did_complete_task(task: SpiffTask) -> None:
+#            if should_log(task):
+#                self._script_engine.environment.revise_state_with_task_data(task)
+#                step_details.append(
+#                    self.spiff_step_details_mapping(
+#                        task, current_task_start_in_seconds["time"], time.time()
+#                    )
+#                )
+#
+#        try:
+#            self.bpmn_process_instance.refresh_waiting_tasks()
+#
+#            self.bpmn_process_instance.do_engine_steps(
+#                exit_at=exit_at,
+#                will_complete_task=will_complete_task,
+#                did_complete_task=did_complete_task,
+#            )
+#
+#            if self.bpmn_process_instance.is_completed():
+#                self._script_engine.environment.finalize_result(
+#                    self.bpmn_process_instance
+#                )
+#
+#            self.process_bpmn_messages()
+#            self.queue_waiting_receive_messages()
+#        except SpiffWorkflowException as swe:
+#            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
+#
+#        finally:
+#            # self.log_spiff_step_details(step_details)
+#            db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
+#            spiff_logger = logging.getLogger("spiff")
+#            for handler in spiff_logger.handlers:
+#                if hasattr(handler, "bulk_insert_logs"):
+#                    handler.bulk_insert_logs()  # type: ignore
+#            db.session.commit()
+#
+#            if save:
+#                self.save()
 
     # log the spiff step details so we know what is processing the process
     # instance when a human task has a timer event.

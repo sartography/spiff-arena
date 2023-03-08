@@ -2,18 +2,26 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
+from spiffworkflow_backend.models.message_instance_correlation import (
+    MessageInstanceCorrelationRuleModel,
+)
 
+import logging
 from typing import Callable, Optional
 
 class EngineStepDelegate:
     """TODO: comment."""
-    def will_complete_task(task: SpiffTask) -> None:
+    def will_complete_task(self, task: SpiffTask) -> None:
         pass
 
-    def did_complete_task(task: SpiffTask) -> None:
+    def did_complete_task(self, task: SpiffTask) -> None:
         pass
 
-    def save() -> None:
+    def save(self) -> None:
         pass
 
 SpiffStepIncrementer = Callable[[], None]
@@ -43,48 +51,47 @@ class StepDetailLoggingEngineStepDelegate(EngineStepDelegate):
             "Transactional Subprocess",
         }
 
-        def should_log(task: SpiffTask) -> bool:
+        def should_log(self, task: SpiffTask) -> bool:
             return (
                 task.task_spec.spec_type in self.tasks_to_log
                 and not task.task_spec.name.endswith(".EndJoin")
             )
 
-        def will_complete_task(task: SpiffTask) -> None:
-            if should_log(task):
+        def will_complete_task(self, task: SpiffTask) -> None:
+            if self.should_log(task):
                 self.current_task_start_in_seconds = time.time()
                 self.increment_spiff_step()
 
-        def did_complete_task(task: SpiffTask) -> None:
-            if should_log(task):
-                step_details.append(
+        def did_complete_task(self, task: SpiffTask) -> None:
+            if self.should_log(task):
+                self.step_details.append(
                     self.spiff_step_details_mapping(
                         task, self.current_task_start_in_seconds, time.time()
                     )
                 )
 
-    def save() -> None:
-        db.session.bulk_insert_mappings(SpiffStepDetailsModel, step_details)
-        db.session.commit()
+    def save(self) -> None:
+        db.session.bulk_insert_mappings(SpiffStepDetailsModel, self.step_details)
+        #db.session.commit()
 
 class ExecutionStrategy:
     """TODO: comment."""
-    def __init__(self, bpmn_process_instance: BpmnWorkflow, delegate: EngineStepDelegate):
-        self.bpmn_process_instance = bpmn_process_instance
+    def __init__(self, delegate: EngineStepDelegate):
         self.delegate = delegate
 
-    def do_engine_steps(self, exit_at: None = None) -> None:
+    def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
         pass
     
-    def save() -> None:
+    def save(self) -> None:
         self.delegate.save()
 
 class GreedyExecutionStrategy(ExecutionStrategy):
     """TODO: comment."""
-    def do_engine_steps(self, exit_at: None = None) -> None:
-        self.bpmn_process_instance.do_engine_steps(
+    def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        bpmn_process_instance.do_engine_steps(
             exit_at=exit_at,
-            will_complete_task=will_complete_task,
-            did_complete_task=did_complete_task,
+            will_complete_task=self.delegate.will_complete_task,
+            did_complete_task=self.delegate.did_complete_task,
         )
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]
@@ -104,14 +111,14 @@ class WorkflowExecutionService:
         self.execution_strategy = execution_strategy
         self.process_instance_completer = process_instance_completer
         self.save_handler = save_handler
-    
+
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
-            self.execution_strategy.do_engine_steps(exit_at)
+            self.execution_strategy.do_engine_steps(self.bpmn_process_instance, exit_at)
 
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_completer(self.bpmn_process_instance)
