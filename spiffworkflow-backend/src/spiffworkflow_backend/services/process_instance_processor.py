@@ -95,6 +95,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionService
 
 SPIFF_SPEC_CONFIG["task_specs"].append(BusinessRuleTaskConverter)
 
@@ -1605,58 +1606,6 @@ class ProcessInstanceProcessor:
         self.process_instance_model.locked_at_in_seconds = None
         db.session.add(self.process_instance_model)
         db.session.commit()
-
-    def process_bpmn_messages(self) -> None:
-        """Process_bpmn_messages."""
-        bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
-        for bpmn_message in bpmn_messages:
-            message_instance = MessageInstanceModel(
-                process_instance_id=self.process_instance_model.id,
-                user_id=self.process_instance_model.process_initiator_id,  # TODO: use the correct swimlane user when that is set up
-                message_type="send",
-                name=bpmn_message.name,
-                payload=bpmn_message.payload,
-                correlation_keys=self.bpmn_process_instance.correlations,
-            )
-            db.session.add(message_instance)
-            db.session.commit()
-
-    def queue_waiting_receive_messages(self) -> None:
-        """Queue_waiting_receive_messages."""
-        waiting_events = self.bpmn_process_instance.waiting_events()
-        waiting_message_events = filter(
-            lambda e: e["event_type"] == "Message", waiting_events
-        )
-
-        for event in waiting_message_events:
-            # Ensure we are only creating one message instance for each waiting message
-            if (
-                MessageInstanceModel.query.filter_by(
-                    process_instance_id=self.process_instance_model.id,
-                    message_type="receive",
-                    name=event["name"],
-                ).count()
-                > 0
-            ):
-                continue
-
-            # Create a new Message Instance
-            message_instance = MessageInstanceModel(
-                process_instance_id=self.process_instance_model.id,
-                user_id=self.process_instance_model.process_initiator_id,
-                message_type="receive",
-                name=event["name"],
-                correlation_keys=self.bpmn_process_instance.correlations,
-            )
-            for correlation_property in event["value"]:
-                message_correlation = MessageInstanceCorrelationRuleModel(
-                    message_instance_id=message_instance.id,
-                    name=correlation_property.name,
-                    retrieval_expression=correlation_property.retrieval_expression,
-                )
-                message_instance.correlation_rules.append(message_correlation)
-            db.session.add(message_instance)
-            db.session.commit()
 
     def increment_spiff_step(self) -> None:
         """Spiff_step++."""
