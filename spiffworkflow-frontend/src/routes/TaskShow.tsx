@@ -296,7 +296,7 @@ export default function TaskShow() {
                 task.process_model_identifier
               )}/${params.process_instance_id}`,
             ],
-            [`${task.title || task.id}`],
+            [`Task: ${task.title || task.id}`],
           ]}
         />
         <div>{buildTaskNavigation()}</div>
