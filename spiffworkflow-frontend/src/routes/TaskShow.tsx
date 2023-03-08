@@ -19,6 +19,7 @@ import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessInstanceTask } from '../interfaces';
+import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
 export default function TaskShow() {
   const [task, setTask] = useState<ProcessInstanceTask | null>(null);
@@ -287,6 +288,17 @@ export default function TaskShow() {
 
     return (
       <main>
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            [
+              `Process Instance Id: ${params.process_instance_id}`,
+              `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+                task.process_model_identifier
+              )}/${params.process_instance_id}`,
+            ],
+            [`${task.title || task.id}`],
+          ]}
+        />
         <div>{buildTaskNavigation()}</div>
         <h3>
           Task: {task.title} ({task.process_model_display_name}){statusString}
