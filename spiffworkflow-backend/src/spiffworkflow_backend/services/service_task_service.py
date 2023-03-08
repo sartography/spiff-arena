@@ -32,7 +32,8 @@ class ServiceTaskDelegate:
             if value.startswith(secret_prefix):
                 key = value.removeprefix(secret_prefix)
                 secret = SecretService.get_secret(key)
-                return SecretService._decrypt(secret.value)
+                with sentry_sdk.start_span(op="task", description="decrypt_secret"):
+                    return SecretService._decrypt(secret.value)
 
             file_prefix = "file:"
             if value.startswith(file_prefix):
