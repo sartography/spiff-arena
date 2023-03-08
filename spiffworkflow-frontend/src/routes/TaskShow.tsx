@@ -85,7 +85,6 @@ export default function TaskShow() {
       successCallback: processSubmitResult,
       failureCallback: (error: any) => {
         addError(error);
-        setDisabled(false);
       },
       httpMethod: 'PUT',
       postBody: dataToSubmit,
@@ -270,7 +269,7 @@ export default function TaskShow() {
     return (
       <div className="markdown">
         {/*
-          https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark) 
+          https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
           This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
         */}
         <div data-color-mode="light">
