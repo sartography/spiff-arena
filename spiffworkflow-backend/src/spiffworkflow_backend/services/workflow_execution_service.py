@@ -113,6 +113,13 @@ class GreedyExecutionStrategy(ExecutionStrategy):
             did_complete_task=self.delegate.did_complete_task,
         )
 
+def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> ExecutionStrategy:
+    cls = {
+        "greedy": GreedyExecutionStrategy,
+    }[name]
+    
+    return cls(delegate)
+
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]
 ProcessInstanceSaver = Callable[[], None]

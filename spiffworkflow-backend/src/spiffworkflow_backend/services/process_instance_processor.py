@@ -95,7 +95,7 @@ from spiffworkflow_backend.services.service_task_service import ServiceTaskDeleg
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import (
-    GreedyExecutionStrategy,
+    execution_strategy_named,
 )
 from spiffworkflow_backend.services.workflow_execution_service import (
     StepDetailLoggingDelegate,
@@ -1674,7 +1674,7 @@ class ProcessInstanceProcessor:
         current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
         db.session.add(self.process_instance_model)
 
-    def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
+    def do_engine_steps(self, exit_at: None = None, save: bool = False, execution_strategy_name: str = "greedy") -> None:
         """Do_engine_steps."""
 
         def spiff_step_details_mapping_builder(
@@ -1686,8 +1686,7 @@ class ProcessInstanceProcessor:
         step_delegate = StepDetailLoggingDelegate(
             self.increment_spiff_step, spiff_step_details_mapping_builder
         )
-        # TODO: make this configurable
-        execution_strategy = GreedyExecutionStrategy(step_delegate)
+        execution_strategy = execution_strategy_named(execution_strategy_name, step_delegate)
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,
