@@ -84,6 +84,15 @@ def start_scheduler(
     )
     scheduler.start()
 
+def should_start_scheduler(app: flask.app.Flask) -> bool:
+    if not app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
+        return False
+
+    # do not start the scheduler twice in flask debug mode but support code reloading
+    if app.config["ENV_IDENTIFIER"] != "local_development" or os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        return False
+
+    return True
 
 def create_app() -> flask.app.Flask:
     """Create_app."""
@@ -125,11 +134,7 @@ def create_app() -> flask.app.Flask:
 
     app.json = MyJSONEncoder(app)
 
-    # do not start the scheduler twice in flask debug mode
-    if (
-        app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]
-        and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
-    ):
+    if should_start_scheduler(app):
         start_scheduler(app)
 
     configure_sentry(app)

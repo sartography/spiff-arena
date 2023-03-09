@@ -97,7 +97,8 @@ class ProcessInstanceService:
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.lock_process_instance(process_instance_lock_prefix)
                 locked = True
-                processor.do_engine_steps(save=True)
+                execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_STRATEGY_BACKGROUND"]
+                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
