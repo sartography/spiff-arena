@@ -1,4 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
+import base64
 import json
 from uuid import UUID
 from typing import Any
@@ -117,10 +118,10 @@ def process_instance_run(
         )
 
     processor = ProcessInstanceProcessor(process_instance)
-    processor.lock_process_instance("Web")
 
     if do_engine_steps:
         try:
+            processor.lock_process_instance("Web")
             processor.do_engine_steps(save=True)
         except ApiError as e:
             ErrorHandlingService().handle_error(processor, e)
@@ -252,6 +253,8 @@ def process_instance_list_for_me(
     report_id: Optional[int] = None,
     user_group_identifier: Optional[str] = None,
     process_initiator_username: Optional[str] = None,
+    report_columns: Optional[str] = None,
+    report_filter_by: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list_for_me."""
     return process_instance_list(
@@ -268,6 +271,8 @@ def process_instance_list_for_me(
         report_id=report_id,
         user_group_identifier=user_group_identifier,
         with_relation_to_me=True,
+        report_columns=report_columns,
+        report_filter_by=report_filter_by,
     )
 
 
@@ -286,11 +291,20 @@ def process_instance_list(
     report_id: Optional[int] = None,
     user_group_identifier: Optional[str] = None,
     process_initiator_username: Optional[str] = None,
+    report_columns: Optional[str] = None,
+    report_filter_by: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_list."""
     process_instance_report = ProcessInstanceReportService.report_with_identifier(
         g.user, report_id, report_identifier
     )
+
+    report_column_list = None
+    if report_columns:
+        report_column_list = json.loads(base64.b64decode(report_columns))
+    report_filter_by_list = None
+    if report_filter_by:
+        report_filter_by_list = json.loads(base64.b64decode(report_filter_by))
 
     if user_filter:
         report_filter = ProcessInstanceReportFilter(
@@ -303,6 +317,8 @@ def process_instance_list(
             with_relation_to_me=with_relation_to_me,
             process_status=process_status.split(",") if process_status else None,
             process_initiator_username=process_initiator_username,
+            report_column_list=report_column_list,
+            report_filter_by_list=report_filter_by_list,
         )
     else:
         report_filter = (
@@ -317,6 +333,8 @@ def process_instance_list(
                 process_status=process_status,
                 with_relation_to_me=with_relation_to_me,
                 process_initiator_username=process_initiator_username,
+                report_column_list=report_column_list,
+                report_filter_by_list=report_filter_by_list,
             )
         )
 

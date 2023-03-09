@@ -19,6 +19,7 @@ import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessInstanceTask } from '../interfaces';
+import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
 export default function TaskShow() {
   const [task, setTask] = useState<ProcessInstanceTask | null>(null);
@@ -85,7 +86,6 @@ export default function TaskShow() {
       successCallback: processSubmitResult,
       failureCallback: (error: any) => {
         addError(error);
-        setDisabled(false);
       },
       httpMethod: 'PUT',
       postBody: dataToSubmit,
@@ -270,7 +270,7 @@ export default function TaskShow() {
     return (
       <div className="markdown">
         {/*
-          https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark) 
+          https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
           This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
         */}
         <div data-color-mode="light">
@@ -288,6 +288,17 @@ export default function TaskShow() {
 
     return (
       <main>
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            [
+              `Process Instance Id: ${params.process_instance_id}`,
+              `/admin/process-instances/for-me/${modifyProcessIdentifierForPathParam(
+                task.process_model_identifier
+              )}/${params.process_instance_id}`,
+            ],
+            [`Task: ${task.title || task.id}`],
+          ]}
+        />
         <div>{buildTaskNavigation()}</div>
         <h3>
           Task: {task.title} ({task.process_model_display_name}){statusString}
