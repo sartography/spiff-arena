@@ -19,7 +19,7 @@ from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsMode
 
 
 class EngineStepDelegate:
-    """TODO: comment."""
+    """Interface of sorts for a concrete engine step delegate."""
 
     def will_complete_task(self, task: SpiffTask) -> None:
         pass
@@ -36,7 +36,10 @@ SpiffStepDetailsMappingBuilder = Callable[[SpiffTask, float, float], dict]
 
 
 class StepDetailLoggingDelegate(EngineStepDelegate):
-    """TODO: comment."""
+    """Engine step delegate that takes care of logging spiff step details.
+
+    This separates the concerns of step execution and step logging.
+    """
 
     def __init__(
         self,
@@ -87,7 +90,7 @@ class StepDetailLoggingDelegate(EngineStepDelegate):
 
 
 class ExecutionStrategy:
-    """TODO: comment."""
+    """Interface of sorts for a concrete execution strategy."""
 
     def __init__(self, delegate: EngineStepDelegate):
         """__init__."""
@@ -103,7 +106,7 @@ class ExecutionStrategy:
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
-    """TODO: comment."""
+    """The common execution strategy. This will greedily run all engine step without stopping."""
 
     def do_engine_steps(
         self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
@@ -114,13 +117,24 @@ class GreedyExecutionStrategy(ExecutionStrategy):
             did_complete_task=self.delegate.did_complete_task,
         )
 
+
 class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
-    """TODO: comment."""
+    """For illustration purposes, not currently integrated.
+
+    Would allow the `run` from the UI to execute until a service task then
+    return (to an interstitial page). The background processor when then take over.
+    """
 
     def do_engine_steps(
         self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
     ) -> None:
-        engine_steps = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if bpmn_process_instance._is_engine_task(t.task_spec)])
+        engine_steps = list(
+            [
+                t
+                for t in bpmn_process_instance.get_tasks(TaskState.READY)
+                if bpmn_process_instance._is_engine_task(t.task_spec)
+            ]
+        )
         while engine_steps:
             for task in engine_steps:
                 if task.task_spec.spec_type == "Service Task":
@@ -128,16 +142,24 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
                 self.delegate.will_complete_task(task)
                 task.complete()
                 self.delegate.did_complete_task(task)
-            
-            engine_steps = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if bpmn_process_instance._is_engine_task(t.task_spec)])
-            
 
-def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> ExecutionStrategy:
+            engine_steps = list(
+                [
+                    t
+                    for t in bpmn_process_instance.get_tasks(TaskState.READY)
+                    if bpmn_process_instance._is_engine_task(t.task_spec)
+                ]
+            )
+
+
+def execution_strategy_named(
+    name: str, delegate: EngineStepDelegate
+) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
         "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
     }[name]
-    
+
     return cls(delegate)
 
 
@@ -146,7 +168,7 @@ ProcessInstanceSaver = Callable[[], None]
 
 
 class WorkflowExecutionService:
-    """TODO: comment."""
+    """Provides the driver code for workflow execution."""
 
     def __init__(
         self,
@@ -243,7 +265,7 @@ class WorkflowExecutionService:
 
 
 class ProfiledWorkflowExecutionService(WorkflowExecutionService):
-    """TODO: comment."""
+    """A profiled version of the workflow execution service."""
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """__do_engine_steps."""

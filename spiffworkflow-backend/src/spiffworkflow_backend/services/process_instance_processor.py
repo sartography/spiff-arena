@@ -1674,7 +1674,12 @@ class ProcessInstanceProcessor:
         current_app.config["THREAD_LOCAL_DATA"].spiff_step = spiff_step
         db.session.add(self.process_instance_model)
 
-    def do_engine_steps(self, exit_at: None = None, save: bool = False, execution_strategy_name: str = "greedy") -> None:
+    def do_engine_steps(
+        self,
+        exit_at: None = None,
+        save: bool = False,
+        execution_strategy_name: str = "greedy",
+    ) -> None:
         """Do_engine_steps."""
 
         def spiff_step_details_mapping_builder(
@@ -1686,7 +1691,9 @@ class ProcessInstanceProcessor:
         step_delegate = StepDetailLoggingDelegate(
             self.increment_spiff_step, spiff_step_details_mapping_builder
         )
-        execution_strategy = execution_strategy_named(execution_strategy_name, step_delegate)
+        execution_strategy = execution_strategy_named(
+            execution_strategy_name, step_delegate
+        )
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,
