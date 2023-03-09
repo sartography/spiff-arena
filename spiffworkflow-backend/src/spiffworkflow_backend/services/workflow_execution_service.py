@@ -6,6 +6,7 @@ from typing import List
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.task import TaskState
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
@@ -113,9 +114,28 @@ class GreedyExecutionStrategy(ExecutionStrategy):
             did_complete_task=self.delegate.did_complete_task,
         )
 
+class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
+    """TODO: comment."""
+
+    def do_engine_steps(
+        self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
+    ) -> None:
+        engine_steps = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if bpmn_process_instance._is_engine_task(t.task_spec)])
+        while engine_steps:
+            for task in engine_steps:
+                if task.task_spec.spec_type == "Service Task":
+                    return
+                self.delegate.will_complete_task(task)
+                task.complete()
+                self.delegate.did_complete_task(task)
+            
+            engine_steps = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if bpmn_process_instance._is_engine_task(t.task_spec)])
+            
+
 def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
+        "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
     }[name]
     
     return cls(delegate)
