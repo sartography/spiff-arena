@@ -58,6 +58,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.serializer = serializer
 
     def should_update_task_model(self) -> bool:
+        """We need to figure out if we have previously save task info on this process intance.
+
+        Use the bpmn_process_id to do this.
+        """
         return self.process_instance.bpmn_process_id is not None
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
