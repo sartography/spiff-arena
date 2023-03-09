@@ -122,7 +122,7 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
     """For illustration purposes, not currently integrated.
 
     Would allow the `run` from the UI to execute until a service task then
-    return (to an interstitial page). The background processor when then take over.
+    return (to an interstitial page). The background processor would then take over.
     """
 
     def do_engine_steps(
