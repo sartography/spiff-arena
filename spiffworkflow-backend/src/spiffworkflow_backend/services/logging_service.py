@@ -2,6 +2,7 @@
 import json
 import logging
 import re
+import sys
 from typing import Any
 from typing import Optional
 
@@ -171,6 +172,10 @@ def setup_logger(app: Flask) -> None:
                 the_logger.propagate = False
                 the_logger.addHandler(spiff_logger_filehandler)
             else:
+                if len(the_logger.handlers) < 1:
+                    # it's very verbose, so only add handlers for the obscure loggers when log level is DEBUG
+                    if upper_log_level_string == "DEBUG":
+                        the_logger.addHandler(logging.StreamHandler(sys.stdout))
                 for the_handler in the_logger.handlers:
                     the_handler.setFormatter(log_formatter)
                     the_handler.setLevel(log_level)
