@@ -17,7 +17,12 @@ else
   shift
 fi
 
-if [[ -z "${ATTEMPTS:-}" ]]; then
+if [[ -n "${ATTEMPTS:-}" ]]; then
+  if [[ "$command" == "open" ]]; then
+    echo "ATTEMPTS is ignored when running cypress open"
+    ATTEMPTS=1
+  fi
+else
   ATTEMPTS=1
 fi
 
