@@ -72,6 +72,12 @@ def start_scheduler(
         "interval",
         seconds=10,
     )
+    polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
+    scheduler.add_job(
+        BackgroundProcessingService(app).do_enqueued_engine_steps,
+        "interval",
+        seconds=polling_interval_in_seconds,
+    )
     scheduler.add_job(
         BackgroundProcessingService(app).process_waiting_process_instances,
         "interval",

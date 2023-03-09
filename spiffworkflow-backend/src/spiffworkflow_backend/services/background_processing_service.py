@@ -15,6 +15,11 @@ class BackgroundProcessingService:
         """__init__."""
         self.app = app
 
+    def do_enqueued_engine_steps(self) -> None:
+        """Since this runs in a scheduler, we need to specify the app context as well."""
+        with self.app.app_context():
+            ProcessInstanceService.do_enqueued_engine_steps()
+
     def process_waiting_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
         with self.app.app_context():

@@ -79,6 +79,10 @@ class ProcessInstanceService:
         return cls.create_process_instance(process_model, user)
 
     @staticmethod
+    def do_enqueued_engine_steps() -> None:
+        current_app.logger.info("do_enqueued_engine_steps")
+
+    @staticmethod
     def do_waiting(status_value: str = ProcessInstanceStatus.waiting.value) -> None:
         """Do_waiting."""
         records = (
