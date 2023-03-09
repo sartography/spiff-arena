@@ -10,6 +10,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import (
@@ -291,6 +292,68 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         assert spiff_task is not None
         assert spiff_task.state == TaskState.COMPLETED
+
+    def test_properly_saves_tasks_when_running(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_does_not_recreate_human_tasks_on_multiple_saves."""
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
+        initiator_user = self.find_or_create_user("initiator_user")
+        finance_user_three = self.find_or_create_user("testuser3")
+        assert initiator_user.principal is not None
+        assert finance_user_three.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        assert finance_group is not None
+
+        process_model = load_test_spec(
+            process_model_id="test_group/manual_task",
+            bpmn_file_name="manual_task.bpmn",
+            process_model_source_directory="manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        assert len(process_instance.active_human_tasks) == 1
+        initial_human_task_id = process_instance.active_human_tasks[0].id
+
+        # save again to ensure we go attempt to process the human tasks again
+        processor.save()
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert initial_human_task_id == process_instance.active_human_tasks[0].id
+
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            human_task_one.task_name, processor.bpmn_process_instance
+        )
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_task, {}, initiator_user, human_task_one
+        )
+
+        process_instance_relookup = ProcessInstanceModel.query.filter_by(
+            id=process_instance.id
+        ).first()
+        processor = ProcessInstanceProcessor(process_instance_relookup)
+        assert process_instance_relookup.status == "complete"
+        task = TaskModel.query.filter_by(guid=human_task_one.task_id).first()
+        assert task.state == "COMPLETED"
+        end_event_spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            "end_event_of_manual_task_model", processor.bpmn_process_instance
+        )
+        assert end_event_spiff_task
+        assert end_event_spiff_task.state == TaskState.COMPLETED
+        # # NOTE: also check the spiff task from the new processor
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,
