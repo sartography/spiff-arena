@@ -1,19 +1,13 @@
 """Error_handling_service."""
-import json
 from typing import Union
 
 from flask import current_app
 from flask import g
-from flask.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_triggerable_process_model import (
-    MessageTriggerableProcessModel,
-)
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.message_service import MessageService
@@ -72,18 +66,19 @@ class ErrorHandlingService:
 
     @staticmethod
     def handle_system_notification(
-            error: Union[ApiError, Exception],
-            process_model: ProcessModelInfo,
-            _processor: ProcessInstanceProcessor
-    ) -> Response:
-        """Send a BPMN Message - which may kick off a waiting process. """
+        error: Union[ApiError, Exception],
+        process_model: ProcessModelInfo,
+        _processor: ProcessInstanceProcessor,
+    ) -> None:
+        """Send a BPMN Message - which may kick off a waiting process."""
         message_text = (
             f"There was an exception running process {process_model.id}.\nOriginal"
             f" Error:\n{error.__repr__()}"
         )
-        message_payload = {"message_text": message_text,
-                           "recipients": process_model.exception_notification_addresses
-                           }
+        message_payload = {
+            "message_text": message_text,
+            "recipients": process_model.exception_notification_addresses,
+        }
         user_id = None
         if "user" in g:
             user_id = g.user.id
