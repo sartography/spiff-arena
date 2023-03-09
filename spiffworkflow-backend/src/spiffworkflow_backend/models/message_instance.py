@@ -55,7 +55,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     # The correlation keys of the process at the time the message was created.
     correlation_keys: dict = db.Column(db.JSON)
     status: str = db.Column(db.String(20), nullable=False, default="ready")
-    user_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
+    user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True)  # type: ignore
     user = relationship("UserModel")
     counterpart_id: int = db.Column(
         db.Integer
