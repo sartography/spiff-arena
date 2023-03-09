@@ -1678,7 +1678,7 @@ class ProcessInstanceProcessor:
         self,
         exit_at: None = None,
         save: bool = False,
-        execution_strategy_name: str = "greedy",
+        execution_strategy_name: Optional[str] = None,
     ) -> None:
         """Do_engine_steps."""
 
@@ -1691,6 +1691,10 @@ class ProcessInstanceProcessor:
         step_delegate = StepDetailLoggingDelegate(
             self.increment_spiff_step, spiff_step_details_mapping_builder
         )
+
+        if execution_strategy_name is None:
+            execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_STRATEGY_WEB"]
+
         execution_strategy = execution_strategy_named(
             execution_strategy_name, step_delegate
         )
