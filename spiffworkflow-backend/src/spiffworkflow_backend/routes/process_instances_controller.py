@@ -117,10 +117,10 @@ def process_instance_run(
         )
 
     processor = ProcessInstanceProcessor(process_instance)
-    processor.lock_process_instance("Web")
 
     if do_engine_steps:
         try:
+            processor.lock_process_instance("Web")
             processor.do_engine_steps(save=True)
         except ApiError as e:
             ErrorHandlingService().handle_error(processor, e)
