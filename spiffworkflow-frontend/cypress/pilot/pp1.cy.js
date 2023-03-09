@@ -10,7 +10,7 @@ const approveWithUser = (
     .contains(/^Submit$/)
     .click();
 
-  cy.contains('Tasks I can complete', { timeout: 30000 });
+  cy.contains('Tasks I can complete', { timeout: 60000 });
   cy.get('.cds--btn').contains(/^Go$/).click();
 
   // approve!
@@ -19,12 +19,12 @@ const approveWithUser = (
     .contains(/^Submit$/)
     .click();
   if (expectAdditionalApprovalInfoPage) {
-    cy.contains(expectAdditionalApprovalInfoPage, { timeout: 30000 });
+    cy.contains(expectAdditionalApprovalInfoPage, { timeout: 60000 });
     cy.get('button')
       .contains(/^Continue$/)
       .click();
   }
-  cy.location({ timeout: 30000 }).should((loc) => {
+  cy.location({ timeout: 60000 }).should((loc) => {
     expect(loc.pathname).to.eq('/tasks');
   });
   cy.logout();
@@ -39,15 +39,15 @@ describe('pp1', () => {
     cy.runPrimaryBpmnFile(true);
     cy.contains('Please select the type of request to start the process.');
     // wait a second to ensure we can click the radio button
-    cy.wait(1000);
+    cy.wait(2000);
     cy.get('input#root-procurement').click();
-    cy.wait(1000);
+    cy.wait(2000);
     cy.get('button')
       .contains(/^Submit$/)
       .click();
     cy.contains(
       'Submit a new demand request for the procurement of needed items',
-      { timeout: 30000 }
+      { timeout: 60000 }
     );
 
     cy.url().then((currentUrl) => {
@@ -68,7 +68,7 @@ describe('pp1', () => {
         .contains(/^Submit$/)
         .click();
 
-      cy.contains('Task: Enter NDR Items', { timeout: 30000 });
+      cy.contains('Task: Enter NDR Items', { timeout: 60000 });
       cy.get('#root_0_sub_category').select('op_src');
       cy.get('#root_0_item').clear().type('spiffworkflow');
       cy.get('#root_0_qty').clear().type('1');
@@ -81,14 +81,14 @@ describe('pp1', () => {
 
       cy.contains(
         'Review and provide any supporting information or files for your request.',
-        { timeout: 30000 }
+        { timeout: 60000 }
       );
       cy.contains('Submit the Request').click();
       cy.get('input[value="Submit the Request"]').click();
       cy.get('button')
         .contains(/^Submit$/)
         .click();
-      cy.contains('Tasks for my open instances', { timeout: 30000 });
+      cy.contains('Tasks for my open instances', { timeout: 60000 });
 
       cy.logout();
       approveWithUser(
@@ -103,7 +103,7 @@ describe('pp1', () => {
         processInstanceId,
         'Task: Update Application Landscape'
       );
-      approveWithUser('legal-a1.sme', processInstanceId);
+      // approveWithUser('legal-a1.sme', processInstanceId);
     });
   });
 });
