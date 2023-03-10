@@ -333,26 +333,45 @@ class TestProcessInstanceProcessor(BaseTest):
 
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+        spiff_manual_task = processor.__class__.get_task_by_bpmn_identifier(
             human_task_one.task_name, processor.bpmn_process_instance
         )
         ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {}, initiator_user, human_task_one
+            processor, spiff_manual_task, {}, initiator_user, human_task_one
         )
 
+        # recreate variables to ensure all bpmn json was recreated from scratch from the db
         process_instance_relookup = ProcessInstanceModel.query.filter_by(
             id=process_instance.id
         ).first()
-        processor = ProcessInstanceProcessor(process_instance_relookup)
+        processor_final = ProcessInstanceProcessor(process_instance_relookup)
         assert process_instance_relookup.status == "complete"
-        task = TaskModel.query.filter_by(guid=human_task_one.task_id).first()
-        assert task.state == "COMPLETED"
-        end_event_spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            "end_event_of_manual_task_model", processor.bpmn_process_instance
-        )
-        assert end_event_spiff_task
-        assert end_event_spiff_task.state == TaskState.COMPLETED
-        # # NOTE: also check the spiff task from the new processor
+
+        first_data_set = {'set_in_top_level_script': 1}
+        second_data_set = {**first_data_set, **{'set_in_top_level_subprocess': 1}}
+        third_data_set = {**second_data_set, **{'set_in_test_process_to_call_script': 1}}
+        expected_task_data = {
+            "top_level_script": first_data_set,
+            "manual_task": first_data_set,
+            "top_level_subprocess_script": second_data_set,
+            "top_level_subprocess": second_data_set,
+            "test_process_to_call_script": third_data_set,
+            "top_level_call_activity": third_data_set,
+            "end_event_of_manual_task_model": third_data_set,
+        }
+
+        all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
+        assert len(all_spiff_tasks) > 1
+        for spiff_task in all_spiff_tasks:
+            assert spiff_task.state == TaskState.COMPLETED
+            spiff_task_name = spiff_task.task_spec.name
+            if spiff_task_name in expected_task_data:
+                spiff_task_data = expected_task_data[spiff_task_name]
+                failure_message = (
+                    f"Found unexpected task data on {spiff_task_name}. "
+                    f"Expected: {spiff_task_data}, Found: {spiff_task.data}"
+                )
+                assert spiff_task.data == spiff_task_data, failure_message
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,

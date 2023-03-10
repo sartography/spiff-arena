@@ -1061,16 +1061,9 @@ class ProcessInstanceProcessor:
         # if self.process_instance_model.bpmn_process_definition_id is None:
         self._add_bpmn_process_definitions(bpmn_spec_dict)
 
-        # FIXME: Update tasks in the did_complete_task instead to set the final info.
-        #   We will need to somehow cache all tasks initially though before each task is run.
-        #   Maybe always do this for first run - just need to know it's the first run.
-        # import pdb; pdb.set_trace()
-        # if self.process_instance_model.bpmn_process_id is None:
         subprocesses = process_instance_data_dict.pop("subprocesses")
         bpmn_process_parent = TaskService.add_bpmn_process(process_instance_data_dict, self.process_instance_model)
         for subprocess_task_id, subprocess_properties in subprocesses.items():
-            # import pdb; pdb.set_trace()
-            print(f"subprocess_task_id: {subprocess_task_id}")
             TaskService.add_bpmn_process(
                 subprocess_properties,
                 self.process_instance_model,
