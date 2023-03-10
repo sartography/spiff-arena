@@ -10,6 +10,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import (
@@ -291,6 +292,89 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         assert spiff_task is not None
         assert spiff_task.state == TaskState.COMPLETED
+
+    def test_properly_saves_tasks_when_running(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_does_not_recreate_human_tasks_on_multiple_saves."""
+        self.create_process_group(
+            client, with_super_admin_user, "test_group", "test_group"
+        )
+        initiator_user = self.find_or_create_user("initiator_user")
+        finance_user_three = self.find_or_create_user("testuser3")
+        assert initiator_user.principal is not None
+        assert finance_user_three.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        assert finance_group is not None
+
+        process_model = load_test_spec(
+            process_model_id="test_group/manual_task_with_subprocesses",
+            process_model_source_directory="manual_task_with_subprocesses",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        assert len(process_instance.active_human_tasks) == 1
+        initial_human_task_id = process_instance.active_human_tasks[0].id
+
+        # save again to ensure we go attempt to process the human tasks again
+        processor.save()
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert initial_human_task_id == process_instance.active_human_tasks[0].id
+
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.__class__.get_task_by_bpmn_identifier(
+            human_task_one.task_name, processor.bpmn_process_instance
+        )
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_manual_task, {}, initiator_user, human_task_one
+        )
+
+        # recreate variables to ensure all bpmn json was recreated from scratch from the db
+        process_instance_relookup = ProcessInstanceModel.query.filter_by(
+            id=process_instance.id
+        ).first()
+        processor_final = ProcessInstanceProcessor(process_instance_relookup)
+        assert process_instance_relookup.status == "complete"
+
+        first_data_set = {"set_in_top_level_script": 1}
+        second_data_set = {**first_data_set, **{"set_in_top_level_subprocess": 1}}
+        third_data_set = {
+            **second_data_set,
+            **{"set_in_test_process_to_call_script": 1},
+        }
+        expected_task_data = {
+            "top_level_script": first_data_set,
+            "manual_task": first_data_set,
+            "top_level_subprocess_script": second_data_set,
+            "top_level_subprocess": second_data_set,
+            "test_process_to_call_script": third_data_set,
+            "top_level_call_activity": third_data_set,
+            "end_event_of_manual_task_model": third_data_set,
+        }
+
+        all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
+        assert len(all_spiff_tasks) > 1
+        for spiff_task in all_spiff_tasks:
+            assert spiff_task.state == TaskState.COMPLETED
+            spiff_task_name = spiff_task.task_spec.name
+            if spiff_task_name in expected_task_data:
+                spiff_task_data = expected_task_data[spiff_task_name]
+                failure_message = (
+                    f"Found unexpected task data on {spiff_task_name}. "
+                    f"Expected: {spiff_task_data}, Found: {spiff_task.data}"
+                )
+                assert spiff_task.data == spiff_task_data, failure_message
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,

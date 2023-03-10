@@ -2,7 +2,9 @@ import logging
 import time
 from typing import Callable
 from typing import List
+from typing import Optional
 
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -16,23 +18,97 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 class EngineStepDelegate:
     """Interface of sorts for a concrete engine step delegate."""
 
-    def will_complete_task(self, task: SpiffTask) -> None:
+    def will_complete_task(self, spiff_task: SpiffTask) -> None:
         pass
 
-    def did_complete_task(self, task: SpiffTask) -> None:
+    def did_complete_task(self, spiff_task: SpiffTask) -> None:
         pass
 
-    def save(self) -> None:
+    def save(self, commit: bool = False) -> None:
+        pass
+
+    def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
 
 SpiffStepIncrementer = Callable[[], None]
 SpiffStepDetailsMappingBuilder = Callable[[SpiffTask, float, float], dict]
+
+
+class TaskModelSavingDelegate(EngineStepDelegate):
+    """Engine step delegate that takes care of saving a task model to the database.
+
+    It can also be given another EngineStepDelegate.
+    """
+
+    def __init__(
+        self,
+        serializer: BpmnWorkflowSerializer,
+        process_instance: ProcessInstanceModel,
+        secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
+    ) -> None:
+        self.secondary_engine_step_delegate = secondary_engine_step_delegate
+        self.process_instance = process_instance
+
+        self.current_task_model: Optional[TaskModel] = None
+        self.serializer = serializer
+
+    def should_update_task_model(self) -> bool:
+        """We need to figure out if we have previously save task info on this process intance.
+
+        Use the bpmn_process_id to do this.
+        """
+        return self.process_instance.bpmn_process_id is not None
+        # return False
+
+    def will_complete_task(self, spiff_task: SpiffTask) -> None:
+        if self.should_update_task_model():
+            self.current_task_model = (
+                TaskService.find_or_create_task_model_from_spiff_task(
+                    spiff_task, self.process_instance, self.serializer
+                )
+            )
+            self.current_task_model.start_in_seconds = time.time()
+        if self.secondary_engine_step_delegate:
+            self.secondary_engine_step_delegate.will_complete_task(spiff_task)
+
+    def did_complete_task(self, spiff_task: SpiffTask) -> None:
+        if self.current_task_model and self.should_update_task_model():
+            self.current_task_model.end_in_seconds = time.time()
+            TaskService.update_task_model_and_add_to_db_session(
+                self.current_task_model, spiff_task, self.serializer
+            )
+            db.session.add(self.current_task_model)
+        if self.secondary_engine_step_delegate:
+            self.secondary_engine_step_delegate.did_complete_task(spiff_task)
+
+    def save(self, _commit: bool = True) -> None:
+        if self.secondary_engine_step_delegate:
+            self.secondary_engine_step_delegate.save(commit=False)
+        db.session.commit()
+
+    def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        for waiting_spiff_task in bpmn_process_instance.get_tasks(
+            TaskState.WAITING | TaskState.CANCELLED
+        ):
+            task_model = TaskModel.query.filter_by(
+                guid=str(waiting_spiff_task.id)
+            ).first()
+            if task_model is None:
+                task_model = TaskService.find_or_create_task_model_from_spiff_task(
+                    waiting_spiff_task, self.process_instance, self.serializer
+                )
+            TaskService.update_task_model_and_add_to_db_session(
+                task_model, waiting_spiff_task, self.serializer
+            )
+        db.session.commit()
 
 
 class StepDetailLoggingDelegate(EngineStepDelegate):
@@ -65,28 +141,29 @@ class StepDetailLoggingDelegate(EngineStepDelegate):
             "Transactional Subprocess",
         }
 
-    def should_log(self, task: SpiffTask) -> bool:
+    def should_log(self, spiff_task: SpiffTask) -> bool:
         return (
-            task.task_spec.spec_type in self.tasks_to_log
-            and not task.task_spec.name.endswith(".EndJoin")
+            spiff_task.task_spec.spec_type in self.tasks_to_log
+            and not spiff_task.task_spec.name.endswith(".EndJoin")
         )
 
-    def will_complete_task(self, task: SpiffTask) -> None:
-        if self.should_log(task):
+    def will_complete_task(self, spiff_task: SpiffTask) -> None:
+        if self.should_log(spiff_task):
             self.current_task_start_in_seconds = time.time()
             self.increment_spiff_step()
 
-    def did_complete_task(self, task: SpiffTask) -> None:
-        if self.should_log(task):
+    def did_complete_task(self, spiff_task: SpiffTask) -> None:
+        if self.should_log(spiff_task):
             self.step_details.append(
                 self.spiff_step_details_mapping(
-                    task, self.current_task_start_in_seconds, time.time()
+                    spiff_task, self.current_task_start_in_seconds, time.time()
                 )
             )
 
-    def save(self) -> None:
+    def save(self, commit: bool = True) -> None:
         db.session.bulk_insert_mappings(SpiffStepDetailsModel, self.step_details)
-        db.session.commit()
+        if commit:
+            db.session.commit()
 
 
 class ExecutionStrategy:
@@ -116,6 +193,7 @@ class GreedyExecutionStrategy(ExecutionStrategy):
             will_complete_task=self.delegate.will_complete_task,
             did_complete_task=self.delegate.did_complete_task,
         )
+        self.delegate.after_engine_steps(bpmn_process_instance)
 
 
 class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
@@ -136,12 +214,12 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
             ]
         )
         while engine_steps:
-            for task in engine_steps:
-                if task.task_spec.spec_type == "Service Task":
+            for spiff_task in engine_steps:
+                if spiff_task.task_spec.spec_type == "Service Task":
                     return
-                self.delegate.will_complete_task(task)
-                task.complete()
-                self.delegate.did_complete_task(task)
+                self.delegate.will_complete_task(spiff_task)
+                spiff_task.complete()
+                self.delegate.did_complete_task(spiff_task)
 
             engine_steps = list(
                 [
@@ -150,6 +228,8 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
                     if bpmn_process_instance._is_engine_task(t.task_spec)
                 ]
             )
+
+        self.delegate.after_engine_steps(bpmn_process_instance)
 
 
 def execution_strategy_named(
@@ -224,6 +304,13 @@ class WorkflowExecutionService:
                 correlation_keys=self.bpmn_process_instance.correlations,
             )
             db.session.add(message_instance)
+
+            bpmn_process = self.process_instance_model.bpmn_process
+            if bpmn_process is not None:
+                bpmn_process_correlations = self.bpmn_process_instance.correlations
+                bpmn_process.properties_json["correlations"] = bpmn_process_correlations
+                db.session.add(bpmn_process)
+
             db.session.commit()
 
     def queue_waiting_receive_messages(self) -> None:
@@ -261,6 +348,14 @@ class WorkflowExecutionService:
                 )
                 message_instance.correlation_rules.append(message_correlation)
             db.session.add(message_instance)
+
+            bpmn_process = self.process_instance_model.bpmn_process
+
+            if bpmn_process is not None:
+                bpmn_process_correlations = self.bpmn_process_instance.correlations
+                bpmn_process.properties_json["correlations"] = bpmn_process_correlations
+                db.session.add(bpmn_process)
+
             db.session.commit()
 
 
