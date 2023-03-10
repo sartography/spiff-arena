@@ -96,7 +96,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         for waiting_spiff_task in bpmn_process_instance.get_tasks(
-            TaskState.WAITING | TaskState.CANCELLED
+            TaskState.WAITING | TaskState.CANCELLED | TaskState.READY
         ):
             task_model = TaskModel.query.filter_by(
                 guid=str(waiting_spiff_task.id)
