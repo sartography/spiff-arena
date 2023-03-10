@@ -611,7 +611,6 @@ class ProcessInstanceProcessor:
         ).first()
         bpmn_process_dict = {"data": json_data.data, "tasks": {}}
         bpmn_process_dict.update(bpmn_process.properties_json)
-        print(f"bpmn_process_dict: {bpmn_process_dict}")
         tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
         for task in tasks:
             json_data = JsonDataModel.query.filter_by(hash=task.json_data_hash).first()
