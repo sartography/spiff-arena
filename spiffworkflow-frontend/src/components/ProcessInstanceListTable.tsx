@@ -1265,6 +1265,7 @@ export default function ProcessInstanceListTable({
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <td
+          data-qa={`process-instance-show-link-${column.accessor}`}
           onKeyDown={navigateToProcessModel}
           onClick={navigateToProcessInstance}
         >

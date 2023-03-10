@@ -74,7 +74,7 @@ describe('tasks', () => {
     cy.assertAtLeastOneItemInPaginatedResults();
 
     // This should get the first one which should be the one we just completed
-    cy.getBySel('process-instance-show-link').first().click();
+    cy.getBySel('process-instance-show-link-id').first().click();
     cy.contains('Process Instance Id: ');
 
     cy.get(`g[data-element-id=form3]`).click();
@@ -106,7 +106,7 @@ describe('tasks', () => {
     cy.assertAtLeastOneItemInPaginatedResults();
 
     // This should get the first one which should be the one we just completed
-    cy.getBySel('process-instance-show-link').first().click();
+    cy.getBySel('process-instance-show-link-id').first().click();
     cy.contains('Process Instance Id: ');
     cy.contains('Status: complete');
   });
@@ -120,6 +120,6 @@ describe('tasks', () => {
     kickOffModelWithForm();
 
     cy.navigateToHome();
-    cy.basicPaginationTest('process-instance-show-link');
+    cy.basicPaginationTest('process-instance-show-link-id');
   });
 });
