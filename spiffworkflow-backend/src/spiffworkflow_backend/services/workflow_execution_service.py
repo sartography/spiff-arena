@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Any
 from typing import Callable
 from typing import List
 from typing import Optional
@@ -50,12 +51,14 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         serializer: BpmnWorkflowSerializer,
         process_instance: ProcessInstanceModel,
         secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
+        add_bpmn_process: Any = None,
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
 
         self.current_task_model: Optional[TaskModel] = None
         self.serializer = serializer
+        self.add_bpmn_process = add_bpmn_process
 
     def should_update_task_model(self) -> bool:
         """We need to figure out if we have previously save task info on this process intance.
@@ -63,12 +66,13 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         Use the bpmn_process_id to do this.
         """
         return self.process_instance.bpmn_process_id is not None
+        # return False
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.should_update_task_model():
             self.current_task_model = (
                 TaskService.find_or_create_task_model_from_spiff_task(
-                    spiff_task, self.process_instance
+                    spiff_task, self.process_instance, self.serializer, self.add_bpmn_process
                 )
             )
             self.current_task_model.start_in_seconds = time.time()

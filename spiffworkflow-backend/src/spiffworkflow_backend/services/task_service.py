@@ -1,8 +1,10 @@
 import json
 from hashlib import sha256
+from typing import Tuple
+from typing import Any
 from typing import Optional
 
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer, BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskStateNames
 
@@ -50,49 +52,60 @@ class TaskService:
 
     @classmethod
     def find_or_create_task_model_from_spiff_task(
-        cls, spiff_task: SpiffTask, process_instance: ProcessInstanceModel
+        cls, spiff_task: SpiffTask, process_instance: ProcessInstanceModel,
+        serializer: BpmnWorkflowSerializer, add_bpmn_process: Any
     ) -> TaskModel:
         spiff_task_guid = str(spiff_task.id)
         task_model: Optional[TaskModel] = TaskModel.query.filter_by(
             guid=spiff_task_guid
         ).first()
         if task_model is None:
-            bpmn_process = cls.task_bpmn_process(spiff_task, process_instance)
-            task_model = TaskModel(
-                guid=spiff_task_guid, bpmn_process_id=bpmn_process.id
-            )
-            db.session.add(task_model)
-            db.session.commit()
+            bpmn_process = cls.task_bpmn_process(spiff_task, process_instance, serializer, add_bpmn_process)
+            task_model = TaskModel.query.filter_by(
+                guid=spiff_task_guid
+            ).first()
+            if task_model is None:
+                task_model = TaskModel(
+                    guid=spiff_task_guid, bpmn_process_id=bpmn_process.id
+                )
+                db.session.commit()
         return task_model
 
     @classmethod
-    def task_subprocess_guid(cls, spiff_task: SpiffTask) -> Optional[str]:
+    def task_subprocess(cls, spiff_task: SpiffTask) -> Optional[Tuple[str, BpmnWorkflow]]:
         top_level_workflow = spiff_task.workflow._get_outermost_workflow()
         my_wf = spiff_task.workflow  # This is the workflow the spiff_task is part of
+        my_sp = None
         my_sp_id = None
         if my_wf != top_level_workflow:
             # All the subprocesses are at the top level, so you can just compare them
             for sp_id, sp in top_level_workflow.subprocesses.items():
                 if sp == my_wf:
+                    my_sp = sp
                     my_sp_id = sp_id
                     break
-        return my_sp_id
+        return (str(my_sp_id), my_sp)
 
     @classmethod
     def task_bpmn_process(
-        cls, spiff_task: SpiffTask, process_instance: ProcessInstanceModel
+        cls, spiff_task: SpiffTask, process_instance: ProcessInstanceModel,
+        serializer: BpmnWorkflowSerializer, add_bpmn_process: Any
     ) -> BpmnProcessModel:
-        subprocess_guid = cls.task_subprocess_guid(spiff_task)
-        if subprocess_guid is None:
+        subprocess_guid, subprocess = cls.task_subprocess(spiff_task)
+        if subprocess is None:
             # This is the top level workflow, which has no guid
             return process_instance.bpmn_process
         else:
+            # import pdb; pdb.set_trace()
             bpmn_process: Optional[BpmnProcessModel] = BpmnProcessModel.query.filter_by(
                 guid=subprocess_guid
             ).first()
+            # import pdb; pdb.set_trace()
             if bpmn_process is None:
-                spiff_task_guid = str(spiff_task.id)
-                raise Exception(
-                    f"Could not find bpmn_process for task {spiff_task_guid}"
-                )
+                bpmn_process = add_bpmn_process(serializer.workflow_to_dict(subprocess), process_instance.bpmn_process, subprocess_guid, add_tasks_if_new_bpmn_process=True)
+                db.session.commit()
+                # spiff_task_guid = str(spiff_task.id)
+                # raise Exception(
+                #     f"Could not find bpmn_process for task {spiff_task_guid}"
+                # )
             return bpmn_process
