@@ -103,7 +103,7 @@ describe('pp1', () => {
         processInstanceId,
         'Task: Update Application Landscape'
       );
-      // approveWithUser('legal-a1.sme', processInstanceId);
+      approveWithUser('legal-a1.sme', processInstanceId);
     });
   });
 });
