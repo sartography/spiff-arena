@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 // @ts-ignore
 import { Filter, Close, AddAlt } from '@carbon/icons-react';
@@ -66,7 +61,6 @@ import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
-import { FormatProcessModelDisplayName } from './MiniComponents';
 import { Notification } from './Notification';
 import useAPIError from '../hooks/UseApiError';
 
@@ -1203,28 +1197,13 @@ export default function ProcessInstanceListTable({
     });
 
     const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
-      const modifiedProcessModelId: String =
-        modifyProcessIdentifierForPathParam(row.process_model_identifier);
-      return (
-        <Link
-          data-qa="process-instance-show-link"
-          to={`${processInstanceShowPathPrefix}/${modifiedProcessModelId}/${id}`}
-          title={`View process instance ${id}`}
-        >
-          <span data-qa="paginated-entity-id">{id}</span>
-        </Link>
-      );
+      return <span data-qa="paginated-entity-id">{id}</span>;
     };
     const formatProcessModelIdentifier = (_row: any, identifier: any) => {
-      return (
-        <Link
-          to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
-            identifier
-          )}`}
-        >
-          {identifier}
-        </Link>
-      );
+      return <span>{identifier}</span>;
+    };
+    const formatProcessModelDisplayName = (_row: any, identifier: any) => {
+      return <span>{identifier}</span>;
     };
 
     const formatSecondsForDisplay = (_row: any, seconds: any) => {
@@ -1237,7 +1216,7 @@ export default function ProcessInstanceListTable({
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
-      process_model_display_name: FormatProcessModelDisplayName,
+      process_model_display_name: formatProcessModelDisplayName,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
     };
@@ -1245,21 +1224,66 @@ export default function ProcessInstanceListTable({
       const formatter =
         reportColumnFormatters[column.accessor] ?? defaultFormatter;
       const value = row[column.accessor];
+      const modifiedModelId = modifyProcessIdentifierForPathParam(
+        row.process_model_identifier
+      );
+      const navigateToProcessInstance = () => {
+        navigate(
+          `${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`
+        );
+      };
+      const navigateToProcessModel = () => {
+        navigate(`/admin/process-models/${modifiedModelId}`);
+      };
+
       if (column.accessor === 'status') {
         return (
-          <td data-qa={`process-instance-status-${value}`}>
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+          <td
+            onClick={navigateToProcessInstance}
+            onKeyDown={navigateToProcessInstance}
+            data-qa={`process-instance-status-${value}`}
+          >
             {formatter(row, value)}
           </td>
         );
       }
-      return <td>{formatter(row, value)}</td>;
+      console.log(column.accessor);
+      if (column.accessor === 'process_model_display_name') {
+        const pmStyle = { background: 'rgba(0, 0, 0, .02)' };
+        return (
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+          <td
+            style={pmStyle}
+            onClick={navigateToProcessModel}
+            onKeyDown={navigateToProcessModel}
+          >
+            {formatter(row, value)}
+          </td>
+        );
+      }
+      return (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <td
+          data-qa={`process-instance-show-link-${column.accessor}`}
+          onKeyDown={navigateToProcessModel}
+          onClick={navigateToProcessInstance}
+        >
+          {formatter(row, value)}
+        </td>
+      );
     };
 
     const rows = processInstances.map((row: any) => {
       const currentRow = reportColumns().map((column: any) => {
         return formattedColumn(row, column);
       });
-      return <tr key={row.id}>{currentRow}</tr>;
+      const rowStyle = { cursor: 'pointer' };
+      return (
+        <tr style={rowStyle} key={row.id}>
+          {currentRow}
+        </tr>
+      );
     });
 
     return (
