@@ -1,10 +1,10 @@
 import json
 from hashlib import sha256
-from typing import Tuple
-from typing import Any
 from typing import Optional
+from typing import Tuple
 
-from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer, BpmnWorkflow  # type: ignore
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
+from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskStateNames
 
@@ -20,8 +20,8 @@ class TaskService:
     def update_task_data_on_task_model(
         cls, task_model: TaskModel, task_data_dict: dict
     ) -> None:
-        task_data_json = json.dumps(task_data_dict, sort_keys=True).encode("utf8")
-        task_data_hash = sha256(task_data_json).hexdigest()
+        task_data_json = json.dumps(task_data_dict, sort_keys=True)
+        task_data_hash = sha256(task_data_json.encode("utf8")).hexdigest()
         if task_model.json_data_hash != task_data_hash:
             json_data = (
                 db.session.query(JsonDataModel.id)
@@ -45,34 +45,38 @@ class TaskService:
         This will NOT update start_in_seconds or end_in_seconds.
         """
         new_properties_json = serializer.task_to_dict(spiff_task)
+        spiff_task_data = new_properties_json.pop("data")
         task_model.properties_json = new_properties_json
         task_model.state = TaskStateNames[new_properties_json["state"]]
-        cls.update_task_data_on_task_model(task_model, spiff_task.data)
+        cls.update_task_data_on_task_model(task_model, spiff_task_data)
         db.session.add(task_model)
 
     @classmethod
     def find_or_create_task_model_from_spiff_task(
-        cls, spiff_task: SpiffTask, process_instance: ProcessInstanceModel,
-        serializer: BpmnWorkflowSerializer
+        cls,
+        spiff_task: SpiffTask,
+        process_instance: ProcessInstanceModel,
+        serializer: BpmnWorkflowSerializer,
     ) -> TaskModel:
         spiff_task_guid = str(spiff_task.id)
         task_model: Optional[TaskModel] = TaskModel.query.filter_by(
             guid=spiff_task_guid
         ).first()
         if task_model is None:
-            bpmn_process = cls.task_bpmn_process(spiff_task, process_instance, serializer)
-            task_model = TaskModel.query.filter_by(
-                guid=spiff_task_guid
-            ).first()
+            bpmn_process = cls.task_bpmn_process(
+                spiff_task, process_instance, serializer
+            )
+            task_model = TaskModel.query.filter_by(guid=spiff_task_guid).first()
             if task_model is None:
                 task_model = TaskModel(
                     guid=spiff_task_guid, bpmn_process_id=bpmn_process.id
                 )
-                db.session.commit()
         return task_model
 
     @classmethod
-    def task_subprocess(cls, spiff_task: SpiffTask) -> Tuple[Optional[str], Optional[BpmnWorkflow]]:
+    def task_subprocess(
+        cls, spiff_task: SpiffTask
+    ) -> Tuple[Optional[str], Optional[BpmnWorkflow]]:
         top_level_workflow = spiff_task.workflow._get_outermost_workflow()
         my_wf = spiff_task.workflow  # This is the workflow the spiff_task is part of
         my_sp = None
@@ -88,27 +92,38 @@ class TaskService:
 
     @classmethod
     def task_bpmn_process(
-        cls, spiff_task: SpiffTask, process_instance: ProcessInstanceModel,
-        serializer: BpmnWorkflowSerializer
+        cls,
+        spiff_task: SpiffTask,
+        process_instance: ProcessInstanceModel,
+        serializer: BpmnWorkflowSerializer,
     ) -> BpmnProcessModel:
         subprocess_guid, subprocess = cls.task_subprocess(spiff_task)
+        bpmn_process: Optional[BpmnProcessModel] = None
         if subprocess is None:
+            bpmn_process = process_instance.bpmn_process
             # This is the top level workflow, which has no guid
-            return process_instance.bpmn_process
+            # check for bpmn_process_id because mypy doesn't realize bpmn_process can be None
+            if process_instance.bpmn_process_id is None:
+                bpmn_process = cls.add_bpmn_process(
+                    serializer.workflow_to_dict(
+                        spiff_task.workflow._get_outermost_workflow()
+                    ),
+                    process_instance,
+                )
+                db.session.commit()
         else:
-            # import pdb; pdb.set_trace()
-            bpmn_process: Optional[BpmnProcessModel] = BpmnProcessModel.query.filter_by(
+            bpmn_process = BpmnProcessModel.query.filter_by(
                 guid=subprocess_guid
             ).first()
-            # import pdb; pdb.set_trace()
             if bpmn_process is None:
-                bpmn_process = cls.add_bpmn_process(serializer.workflow_to_dict(subprocess), process_instance, process_instance.bpmn_process, subprocess_guid)
+                bpmn_process = cls.add_bpmn_process(
+                    serializer.workflow_to_dict(subprocess),
+                    process_instance,
+                    process_instance.bpmn_process,
+                    subprocess_guid,
+                )
                 db.session.commit()
-                # spiff_task_guid = str(spiff_task.id)
-                # raise Exception(
-                #     f"Could not find bpmn_process for task {spiff_task_guid}"
-                # )
-            return bpmn_process
+        return bpmn_process
 
     @classmethod
     def add_bpmn_process(
@@ -119,7 +134,7 @@ class TaskService:
         bpmn_process_guid: Optional[str] = None,
     ) -> BpmnProcessModel:
         tasks = bpmn_process_dict.pop("tasks")
-        bpmn_process_data = bpmn_process_dict.pop("data")
+        bpmn_process_data_dict = bpmn_process_dict.pop("data")
 
         bpmn_process = None
         if bpmn_process_parent is not None:
@@ -136,10 +151,10 @@ class TaskService:
 
         bpmn_process.properties_json = bpmn_process_dict
 
-        bpmn_process_data_json = json.dumps(bpmn_process_data, sort_keys=True).encode(
-            "utf8"
-        )
-        bpmn_process_data_hash = sha256(bpmn_process_data_json).hexdigest()
+        bpmn_process_data_json = json.dumps(bpmn_process_data_dict, sort_keys=True)
+        bpmn_process_data_hash = sha256(
+            bpmn_process_data_json.encode("utf8")
+        ).hexdigest()
         if bpmn_process.json_data_hash != bpmn_process_data_hash:
             json_data = (
                 db.session.query(JsonDataModel.id)
@@ -148,7 +163,7 @@ class TaskService:
             )
             if json_data is None:
                 json_data = JsonDataModel(
-                    hash=bpmn_process_data_hash, data=bpmn_process_data
+                    hash=bpmn_process_data_hash, data=bpmn_process_data_dict
                 )
                 db.session.add(json_data)
             bpmn_process.json_data_hash = bpmn_process_data_hash
@@ -173,7 +188,9 @@ class TaskService:
                     # .join(BpmnProcessDefinitionModel).filter(BpmnProcessDefinitionModel.bpmn_identifier==bpmn_process_identifier).first()
                     # if task_definition is None:
                     #     subprocess_task = TaskModel.query.filter_by(guid=bpmn_process.guid)
-                    task_model = TaskModel(guid=task_id, bpmn_process_id=bpmn_process.id)
+                    task_model = TaskModel(
+                        guid=task_id, bpmn_process_id=bpmn_process.id
+                    )
                 task_model.state = TaskStateNames[state_int]
                 task_model.properties_json = task_properties
 
