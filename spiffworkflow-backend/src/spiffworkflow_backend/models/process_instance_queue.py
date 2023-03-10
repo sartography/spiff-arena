@@ -3,7 +3,6 @@ from dataclasses import dataclass
 from typing import Union
 
 from sqlalchemy import ForeignKey
-from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import deferred
 
 from spiffworkflow_backend.models.db import db
@@ -21,10 +20,9 @@ class ProcessInstanceQueueModel(SpiffworkflowBaseDBModel):
     process_instance_id: int = db.Column(
         ForeignKey(ProcessInstanceModel.id), index=True, unique=True, nullable=False  # type: ignore
     )
-    run_at_in_seconds: int = db.Column(db.Integer, index=True)
+    run_at_in_seconds: int = db.Column(db.Integer)
     priority: int = db.Column(db.Integer)
-    attempts: int = db.Column(db.Integer)
     locked_by: Union[str, None] = db.Column(db.String(80), index=True, nullable=True)
-    locked_at_in_seconds: Union[int, None] = db.Column(db.Integer, nullable=True)
+    locked_at_in_seconds: Union[int, None] = db.Column(db.Integer, index=True, nullable=True)
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)

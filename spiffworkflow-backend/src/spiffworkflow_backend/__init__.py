@@ -67,16 +67,20 @@ def start_scheduler(
 ) -> None:
     """Start_scheduler."""
     scheduler = scheduler_class()
-    scheduler.add_job(
-        BackgroundProcessingService(app).process_message_instances_with_app_context,
-        "interval",
-        seconds=10,
-    )
+
     polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
     scheduler.add_job(
         BackgroundProcessingService(app).do_enqueued_engine_steps,
         "interval",
         seconds=polling_interval_in_seconds,
+    )
+    # TODO: add job to release locks to simplify other queries
+    # TODO: add job to run old/low priority instances so they do not get drowned out
+    
+    scheduler.add_job(
+        BackgroundProcessingService(app).process_message_instances_with_app_context,
+        "interval",
+        seconds=10,
     )
     scheduler.add_job(
         BackgroundProcessingService(app).process_waiting_process_instances,
