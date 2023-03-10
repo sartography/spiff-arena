@@ -51,14 +51,12 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         serializer: BpmnWorkflowSerializer,
         process_instance: ProcessInstanceModel,
         secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
-        add_bpmn_process: Any = None,
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
 
         self.current_task_model: Optional[TaskModel] = None
         self.serializer = serializer
-        self.add_bpmn_process = add_bpmn_process
 
     def should_update_task_model(self) -> bool:
         """We need to figure out if we have previously save task info on this process intance.
@@ -72,7 +70,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if self.should_update_task_model():
             self.current_task_model = (
                 TaskService.find_or_create_task_model_from_spiff_task(
-                    spiff_task, self.process_instance, self.serializer, self.add_bpmn_process
+                    spiff_task, self.process_instance, self.serializer
                 )
             )
             self.current_task_model.start_in_seconds = time.time()
