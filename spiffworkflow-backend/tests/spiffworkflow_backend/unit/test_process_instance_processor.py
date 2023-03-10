@@ -347,9 +347,12 @@ class TestProcessInstanceProcessor(BaseTest):
         processor_final = ProcessInstanceProcessor(process_instance_relookup)
         assert process_instance_relookup.status == "complete"
 
-        first_data_set = {'set_in_top_level_script': 1}
-        second_data_set = {**first_data_set, **{'set_in_top_level_subprocess': 1}}
-        third_data_set = {**second_data_set, **{'set_in_test_process_to_call_script': 1}}
+        first_data_set = {"set_in_top_level_script": 1}
+        second_data_set = {**first_data_set, **{"set_in_top_level_subprocess": 1}}
+        third_data_set = {
+            **second_data_set,
+            **{"set_in_test_process_to_call_script": 1},
+        }
         expected_task_data = {
             "top_level_script": first_data_set,
             "manual_task": first_data_set,

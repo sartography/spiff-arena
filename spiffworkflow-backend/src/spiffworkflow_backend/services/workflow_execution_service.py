@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Any
 from typing import Callable
 from typing import List
 from typing import Optional
@@ -33,6 +32,9 @@ class EngineStepDelegate:
         pass
 
     def save(self, commit: bool = False) -> None:
+        pass
+
+    def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
 
@@ -90,6 +92,22 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def save(self, _commit: bool = True) -> None:
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.save(commit=False)
+        db.session.commit()
+
+    def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        for waiting_spiff_task in bpmn_process_instance.get_tasks(
+            TaskState.WAITING | TaskState.CANCELLED
+        ):
+            task_model = TaskModel.query.filter_by(
+                guid=str(waiting_spiff_task.id)
+            ).first()
+            if task_model is None:
+                task_model = TaskService.find_or_create_task_model_from_spiff_task(
+                    waiting_spiff_task, self.process_instance, self.serializer
+                )
+            TaskService.update_task_model_and_add_to_db_session(
+                task_model, waiting_spiff_task, self.serializer
+            )
         db.session.commit()
 
 
@@ -175,6 +193,7 @@ class GreedyExecutionStrategy(ExecutionStrategy):
             will_complete_task=self.delegate.will_complete_task,
             did_complete_task=self.delegate.did_complete_task,
         )
+        self.delegate.after_engine_steps(bpmn_process_instance)
 
 
 class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
@@ -209,6 +228,8 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
                     if bpmn_process_instance._is_engine_task(t.task_spec)
                 ]
             )
+
+        self.delegate.after_engine_steps(bpmn_process_instance)
 
 
 def execution_strategy_named(
@@ -283,6 +304,13 @@ class WorkflowExecutionService:
                 correlation_keys=self.bpmn_process_instance.correlations,
             )
             db.session.add(message_instance)
+
+            bpmn_process = self.process_instance_model.bpmn_process
+            if bpmn_process is not None:
+                bpmn_process_correlations = self.bpmn_process_instance.correlations
+                bpmn_process.properties_json["correlations"] = bpmn_process_correlations
+                db.session.add(bpmn_process)
+
             db.session.commit()
 
     def queue_waiting_receive_messages(self) -> None:
@@ -320,6 +348,14 @@ class WorkflowExecutionService:
                 )
                 message_instance.correlation_rules.append(message_correlation)
             db.session.add(message_instance)
+
+            bpmn_process = self.process_instance_model.bpmn_process
+
+            if bpmn_process is not None:
+                bpmn_process_correlations = self.bpmn_process_instance.correlations
+                bpmn_process.properties_json["correlations"] = bpmn_process_correlations
+                db.session.add(bpmn_process)
+
             db.session.commit()
 
 

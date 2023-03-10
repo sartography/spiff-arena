@@ -50,7 +50,6 @@ from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
-from SpiffWorkflow.task import TaskStateNames
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from sqlalchemy import text
 
@@ -612,6 +611,7 @@ class ProcessInstanceProcessor:
         ).first()
         bpmn_process_dict = {"data": json_data.data, "tasks": {}}
         bpmn_process_dict.update(bpmn_process.properties_json)
+        print(f"bpmn_process_dict: {bpmn_process_dict}")
         tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
         for task in tasks:
             json_data = JsonDataModel.query.filter_by(hash=task.json_data_hash).first()
@@ -1062,7 +1062,9 @@ class ProcessInstanceProcessor:
         self._add_bpmn_process_definitions(bpmn_spec_dict)
 
         subprocesses = process_instance_data_dict.pop("subprocesses")
-        bpmn_process_parent = TaskService.add_bpmn_process(process_instance_data_dict, self.process_instance_model)
+        bpmn_process_parent = TaskService.add_bpmn_process(
+            process_instance_data_dict, self.process_instance_model
+        )
         for subprocess_task_id, subprocess_properties in subprocesses.items():
             TaskService.add_bpmn_process(
                 subprocess_properties,
