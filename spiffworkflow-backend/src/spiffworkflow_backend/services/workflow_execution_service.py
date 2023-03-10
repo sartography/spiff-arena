@@ -106,7 +106,7 @@ class ExecutionStrategy:
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
-    """The common execution strategy. This will greedily run all engine step without stopping."""
+    """The common execution strategy. This will greedily run all engine steps without stopping."""
 
     def do_engine_steps(
         self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
