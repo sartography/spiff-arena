@@ -95,8 +95,13 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         db.session.commit()
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        # excludes FUTURE and COMPLETED. the others were required to get PP1 to go to completion.
         for waiting_spiff_task in bpmn_process_instance.get_tasks(
-            TaskState.WAITING | TaskState.CANCELLED | TaskState.READY
+            TaskState.WAITING
+            | TaskState.CANCELLED
+            | TaskState.READY
+            | TaskState.MAYBE
+            | TaskState.LIKELY
         ):
             task_model = TaskModel.query.filter_by(
                 guid=str(waiting_spiff_task.id)
