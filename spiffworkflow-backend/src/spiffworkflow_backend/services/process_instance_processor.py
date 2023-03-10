@@ -1047,6 +1047,7 @@ class ProcessInstanceProcessor:
         bpmn_process_dict: dict,
         bpmn_process_parent: Optional[BpmnProcessModel] = None,
         bpmn_process_guid: Optional[str] = None,
+        add_tasks_if_new_bpmn_process: bool = True,
     ) -> BpmnProcessModel:
         tasks = bpmn_process_dict.pop("tasks")
         bpmn_process_data = bpmn_process_dict.pop("data")
@@ -1059,7 +1060,9 @@ class ProcessInstanceProcessor:
         elif self.process_instance_model.bpmn_process_id is not None:
             bpmn_process = self.process_instance_model.bpmn_process
 
+        bpmn_process_is_new = False
         if bpmn_process is None:
+            bpmn_process_is_new = True
             bpmn_process = BpmnProcessModel(guid=bpmn_process_guid)
 
         bpmn_process.properties_json = bpmn_process_dict
@@ -1087,25 +1090,27 @@ class ProcessInstanceProcessor:
             bpmn_process.parent_process_id = bpmn_process_parent.id
         db.session.add(bpmn_process)
 
-        for task_id, task_properties in tasks.items():
-            task_data_dict = task_properties.pop("data")
-            state_int = task_properties["state"]
+        if bpmn_process_is_new and add_tasks_if_new_bpmn_process:
+        # if True:
+            for task_id, task_properties in tasks.items():
+                task_data_dict = task_properties.pop("data")
+                state_int = task_properties["state"]
 
-            task_model = TaskModel.query.filter_by(guid=task_id).first()
-            if task_model is None:
-                # bpmn_process_identifier = task_properties['workflow_name']
-                # bpmn_identifier = task_properties['task_spec']
-                #
-                # task_definition = TaskDefinitionModel.query.filter_by(bpmn_identifier=bpmn_identifier)
-                # .join(BpmnProcessDefinitionModel).filter(BpmnProcessDefinitionModel.bpmn_identifier==bpmn_process_identifier).first()
-                # if task_definition is None:
-                #     subprocess_task = TaskModel.query.filter_by(guid=bpmn_process.guid)
-                task_model = TaskModel(guid=task_id, bpmn_process_id=bpmn_process.id)
-            task_model.state = TaskStateNames[state_int]
-            task_model.properties_json = task_properties
+                task_model = TaskModel.query.filter_by(guid=task_id).first()
+                if task_model is None:
+                    # bpmn_process_identifier = task_properties['workflow_name']
+                    # bpmn_identifier = task_properties['task_spec']
+                    #
+                    # task_definition = TaskDefinitionModel.query.filter_by(bpmn_identifier=bpmn_identifier)
+                    # .join(BpmnProcessDefinitionModel).filter(BpmnProcessDefinitionModel.bpmn_identifier==bpmn_process_identifier).first()
+                    # if task_definition is None:
+                    #     subprocess_task = TaskModel.query.filter_by(guid=bpmn_process.guid)
+                    task_model = TaskModel(guid=task_id, bpmn_process_id=bpmn_process.id)
+                task_model.state = TaskStateNames[state_int]
+                task_model.properties_json = task_properties
 
-            TaskService.update_task_data_on_task_model(task_model, task_data_dict)
-            db.session.add(task_model)
+                TaskService.update_task_data_on_task_model(task_model, task_data_dict)
+                db.session.add(task_model)
 
         return bpmn_process
 
@@ -1115,7 +1120,6 @@ class ProcessInstanceProcessor:
         Expects the save method to commit it.
         """
         bpmn_dict = json.loads(self.serialize())
-        # with open('tmp2.json', 'w') as f: f.write(json.dumps(bpmn_dict)
         bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
         process_instance_data_dict = {}
         bpmn_spec_dict = {}
@@ -1132,15 +1136,18 @@ class ProcessInstanceProcessor:
         # FIXME: Update tasks in the did_complete_task instead to set the final info.
         #   We will need to somehow cache all tasks initially though before each task is run.
         #   Maybe always do this for first run - just need to know it's the first run.
-        if self.process_instance_model.bpmn_process_id is None:
-            subprocesses = process_instance_data_dict.pop("subprocesses")
-            bpmn_process_parent = self._add_bpmn_process(process_instance_data_dict)
-            for subprocess_task_id, subprocess_properties in subprocesses.items():
-                self._add_bpmn_process(
-                    subprocess_properties,
-                    bpmn_process_parent,
-                    bpmn_process_guid=subprocess_task_id,
-                )
+        # import pdb; pdb.set_trace()
+        # if self.process_instance_model.bpmn_process_id is None:
+        subprocesses = process_instance_data_dict.pop("subprocesses")
+        bpmn_process_parent = self._add_bpmn_process(process_instance_data_dict)
+        for subprocess_task_id, subprocess_properties in subprocesses.items():
+            # import pdb; pdb.set_trace()
+            print(f"subprocess_task_id: {subprocess_task_id}")
+            self._add_bpmn_process(
+                subprocess_properties,
+                bpmn_process_parent,
+                bpmn_process_guid=subprocess_task_id,
+            )
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
@@ -1693,6 +1700,7 @@ class ProcessInstanceProcessor:
             secondary_engine_step_delegate=step_delegate,
             serializer=self._serializer,
             process_instance=self.process_instance_model,
+            add_bpmn_process=self._add_bpmn_process,
         )
         execution_strategy = execution_strategy_named(
             execution_strategy_name, task_model_delegate

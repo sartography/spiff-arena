@@ -314,9 +314,8 @@ class TestProcessInstanceProcessor(BaseTest):
         assert finance_group is not None
 
         process_model = load_test_spec(
-            process_model_id="test_group/manual_task",
-            bpmn_file_name="manual_task.bpmn",
-            process_model_source_directory="manual_task",
+            process_model_id="test_group/manual_task_with_subprocesses",
+            process_model_source_directory="manual_task_with_subprocesses",
         )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user
