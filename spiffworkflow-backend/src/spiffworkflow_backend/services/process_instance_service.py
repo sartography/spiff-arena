@@ -80,7 +80,9 @@ class ProcessInstanceService:
 
     @staticmethod
     def do_enqueued_engine_steps() -> None:
-        current_app.logger.info("do_enqueued_engine_steps")
+        import threading
+        lock_identifier = f"{current_app.config['PROCESS_UUID']}:{threading.get_ident()}"
+        current_app.logger.info(f"do_enqueued_engine_steps: locked_by = {lock_identifier}")
 
     @staticmethod
     def do_waiting(status_value: str = ProcessInstanceStatus.waiting.value) -> None:
@@ -101,7 +103,7 @@ class ProcessInstanceService:
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.lock_process_instance(process_instance_lock_prefix)
                 locked = True
-                execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_STRATEGY_BACKGROUND"]
+                execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"]
                 processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
             except ProcessInstanceIsAlreadyLockedError:
                 continue

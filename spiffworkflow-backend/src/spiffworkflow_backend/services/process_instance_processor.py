@@ -1274,6 +1274,8 @@ class ProcessInstanceProcessor:
             self.bpmn_process_instance.catch(event_definition)
         except Exception as e:
             print(e)
+
+        # TODO: do_engine_steps without a lock
         self.do_engine_steps(save=True)
 
     def add_step(self, step: Union[dict, None] = None) -> None:
@@ -1693,7 +1695,7 @@ class ProcessInstanceProcessor:
         )
 
         if execution_strategy_name is None:
-            execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_STRATEGY_WEB"]
+            execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
 
         execution_strategy = execution_strategy_named(
             execution_strategy_name, step_delegate
@@ -1730,6 +1732,7 @@ class ProcessInstanceProcessor:
             bpmn_process_instance.signal("cancel")  # generate a cancel signal.
             bpmn_process_instance.catch(CancelEventDefinition())
             # Due to this being static, can't save granular step details in this case
+            # TODO: do_engine_steps without a lock
             bpmn_process_instance.do_engine_steps()
         except WorkflowTaskException as we:
             raise ApiError.from_workflow_exception("task_error", str(we), we) from we
