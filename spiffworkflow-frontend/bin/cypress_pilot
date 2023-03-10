@@ -30,8 +30,14 @@ if [[ -z "${CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK:-}" ]]; then
   export CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK=true
 fi
 
-cypress_run_file="/var/tmp/cypress_run_$(date +%s)"
+cypress_run_file="/var/tmp/cypress_run"
 echo "Recording stats to ${cypress_run_file}"
+
+if [[ ! -f "$cypress_run_file" ]]; then
+  echo "success,duration,start_time,end_time,frontend_url" >"$cypress_run_file"
+fi
+
+frontend_url="${SPIFFWORKFLOW_FRONTEND_URL:localhost}"
 
 for attempt in $(seq 1 "$ATTEMPTS" ); do
   echo "Running attempt: ${attempt}"
@@ -43,6 +49,6 @@ for attempt in $(seq 1 "$ATTEMPTS" ); do
   fi
   end_time=$(date +%s)
 
-  echo "${success},$(( end_time - start_time ))" >>"$cypress_run_file"
+  echo "${success},$(( end_time - start_time )),$(date "-d@${start_time}"),$(date "-d@${end_time}"),${frontend_url}" >>"$cypress_run_file"
 done
 echo "Recorded stats to ${cypress_run_file}"
