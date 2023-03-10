@@ -168,7 +168,7 @@ describe('process-models', () => {
       .click();
     cy.runPrimaryBpmnFile();
 
-    cy.getBySel('process-instance-show-link').click();
+    cy.getBySel('process-instance-show-link-id').click();
     cy.getBySel('process-instance-delete').click();
     cy.contains('Are you sure');
     cy.getBySel('process-instance-delete-modal-confirmation-dialog')
