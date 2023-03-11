@@ -101,7 +101,7 @@ version = "0.1.0"
 description = "Make HTTP Requests available to SpiffWorkflow Service Tasks"
 category = "main"
 optional = false
-python-versions = "^3.11"
+python-versions = "^3.9"
 develop = false
 
 [package.dependencies]
@@ -111,7 +111,7 @@ requests = "^2.28.1"
 type = "git"
 url = "https://github.com/sartography/connector-http.git"
 reference = "HEAD"
-resolved_reference = "337671b38f47bd8a3113bc6fa85b987828c4ee66"
+resolved_reference = "8ae0b27d5a3e79562f3d1da01be2dcadef49a195"
 
 [[package]]
 name = "connector-slack"
@@ -333,7 +333,7 @@ version = "0.1.0"
 description = "A blueprint that can allow (and limit) SpiffWorkflow's Service Tasks access to an organizations API's, such as connections to AWS Services and existing applications."
 category = "main"
 optional = false
-python-versions = "^3.10"
+python-versions = "^3.9"
 develop = false
 
 [package.dependencies]
@@ -344,7 +344,7 @@ Flask-OAuthlib = "^0.9.6"
 type = "git"
 url = "https://github.com/sartography/spiffworkflow-proxy"
 reference = "HEAD"
-resolved_reference = "cfe9b93665e10390a2e64c492c57bd2613364588"
+resolved_reference = "6cb2bbea923946cb2db3bf571a4ce28c776434b9"
 
 [[package]]
 name = "urllib3"
