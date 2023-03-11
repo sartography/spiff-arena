@@ -75,23 +75,24 @@ def start_scheduler(
         seconds=polling_interval_in_seconds,
     )
     # TODO: add job to release locks to simplify other queries
+    # TODO: add job to delete completed entires
     # TODO: add job to run old/low priority instances so they do not get drowned out
     
-    scheduler.add_job(
-        BackgroundProcessingService(app).process_message_instances_with_app_context,
-        "interval",
-        seconds=10,
-    )
-    scheduler.add_job(
-        BackgroundProcessingService(app).process_waiting_process_instances,
-        "interval",
-        seconds=10,
-    )
-    scheduler.add_job(
-        BackgroundProcessingService(app).process_user_input_required_process_instances,
-        "interval",
-        seconds=120,
-    )
+    #scheduler.add_job(
+    #    BackgroundProcessingService(app).process_message_instances_with_app_context,
+    #    "interval",
+    #    seconds=10,
+    #)
+    #scheduler.add_job(
+    #    BackgroundProcessingService(app).process_waiting_process_instances,
+    #    "interval",
+    #    seconds=10,
+    #)
+    #scheduler.add_job(
+    #    BackgroundProcessingService(app).process_user_input_required_process_instances,
+    #    "interval",
+    #    seconds=120,
+    #)
     scheduler.start()
 
 def should_start_scheduler(app: flask.app.Flask) -> bool:

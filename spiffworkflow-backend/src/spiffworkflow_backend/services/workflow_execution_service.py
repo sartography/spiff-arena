@@ -1,4 +1,5 @@
 import logging
+import threading
 import time
 from typing import Callable
 from typing import List
@@ -15,6 +16,7 @@ from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 
 

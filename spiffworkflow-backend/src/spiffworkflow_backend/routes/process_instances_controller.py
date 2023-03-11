@@ -55,6 +55,9 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
+)
 from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportFilter,
 )
@@ -92,6 +95,7 @@ def process_instance_create(
             process_model_identifier, g.user
         )
     )
+    ProcessInstanceQueueService.enqueue(process_instance)
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=201,
