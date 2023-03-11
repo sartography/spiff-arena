@@ -95,25 +95,26 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         db.session.commit()
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        # excludes FUTURE and COMPLETED. the others were required to get PP1 to go to completion.
-        for waiting_spiff_task in bpmn_process_instance.get_tasks(
-            TaskState.WAITING
-            | TaskState.CANCELLED
-            | TaskState.READY
-            | TaskState.MAYBE
-            | TaskState.LIKELY
-        ):
-            task_model = TaskModel.query.filter_by(
-                guid=str(waiting_spiff_task.id)
-            ).first()
-            if task_model is None:
-                task_model = TaskService.find_or_create_task_model_from_spiff_task(
-                    waiting_spiff_task, self.process_instance, self.serializer
+        if self.should_update_task_model():
+            # excludes FUTURE and COMPLETED. the others were required to get PP1 to go to completion.
+            for waiting_spiff_task in bpmn_process_instance.get_tasks(
+                TaskState.WAITING
+                | TaskState.CANCELLED
+                | TaskState.READY
+                | TaskState.MAYBE
+                | TaskState.LIKELY
+            ):
+                task_model = TaskModel.query.filter_by(
+                    guid=str(waiting_spiff_task.id)
+                ).first()
+                if task_model is None:
+                    task_model = TaskService.find_or_create_task_model_from_spiff_task(
+                        waiting_spiff_task, self.process_instance, self.serializer
+                    )
+                TaskService.update_task_model_and_add_to_db_session(
+                    task_model, waiting_spiff_task, self.serializer
                 )
-            TaskService.update_task_model_and_add_to_db_session(
-                task_model, waiting_spiff_task, self.serializer
-            )
-        db.session.commit()
+            db.session.commit()
 
 
 class StepDetailLoggingDelegate(EngineStepDelegate):

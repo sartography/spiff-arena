@@ -1833,6 +1833,7 @@ class ProcessInstanceProcessor:
 
         human_task.completed_by_user_id = user.id
         human_task.completed = True
+        human_task.task_status = spiff_task.get_state_name()
         db.session.add(human_task)
 
         # FIXME: remove when we switch over to using tasks only
