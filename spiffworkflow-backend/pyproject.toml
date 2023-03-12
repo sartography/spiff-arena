@@ -73,6 +73,7 @@ types-dateparser = "^1.1.4.1"
 flask-jwt-extended = "^4.4.4"
 pylint = "^2.15.10"
 flask-simple-crypt = "^0.3.3"
+cryptography = "^39.0.2"
 
 
 [tool.poetry.dev-dependencies]
