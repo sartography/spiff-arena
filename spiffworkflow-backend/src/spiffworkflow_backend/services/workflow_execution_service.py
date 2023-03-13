@@ -12,6 +12,7 @@ from SpiffWorkflow.task import TaskState
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
@@ -58,6 +59,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.process_instance = process_instance
 
         self.current_task_model: Optional[TaskModel] = None
+        self.task_models: dict[str, TaskModel] = {}
+        self.json_data_models: dict[str, JsonDataModel] = {}
         self.serializer = serializer
 
     def should_update_task_model(self) -> bool:
@@ -66,15 +69,17 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         Use the bpmn_process_id to do this.
         """
         return self.process_instance.bpmn_process_id is not None
-        # return False
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.should_update_task_model():
-            self.current_task_model = (
+            _bpmn_process, task_model, new_task_models, new_json_data_models = (
                 TaskService.find_or_create_task_model_from_spiff_task(
                     spiff_task, self.process_instance, self.serializer
                 )
             )
+            self.current_task_model = task_model
+            self.task_models.update(new_task_models)
+            self.json_data_models.update(new_json_data_models)
             self.current_task_model.start_in_seconds = time.time()
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.will_complete_task(spiff_task)
@@ -82,14 +87,18 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.current_task_model and self.should_update_task_model():
             self.current_task_model.end_in_seconds = time.time()
-            TaskService.update_task_model_and_add_to_db_session(
+            json_data = TaskService.update_task_model(
                 self.current_task_model, spiff_task, self.serializer
             )
-            db.session.add(self.current_task_model)
+            if json_data is not None:
+                self.json_data_models[json_data.hash] = json_data
+            self.task_models[self.current_task_model.guid] = self.current_task_model
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
     def save(self, _commit: bool = True) -> None:
+        db.session.bulk_save_objects(self.task_models.values())
+        db.session.bulk_save_objects(self.json_data_models.values())
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.save(commit=False)
         db.session.commit()
@@ -104,17 +113,19 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 | TaskState.MAYBE
                 | TaskState.LIKELY
             ):
-                task_model = TaskModel.query.filter_by(
-                    guid=str(waiting_spiff_task.id)
-                ).first()
-                if task_model is None:
-                    task_model = TaskService.find_or_create_task_model_from_spiff_task(
+                _bpmn_process, task_model, new_task_models, new_json_data_models = (
+                    TaskService.find_or_create_task_model_from_spiff_task(
                         waiting_spiff_task, self.process_instance, self.serializer
                     )
-                TaskService.update_task_model_and_add_to_db_session(
+                )
+                self.task_models.update(new_task_models)
+                self.json_data_models.update(new_json_data_models)
+                json_data = TaskService.update_task_model(
                     task_model, waiting_spiff_task, self.serializer
                 )
-            db.session.commit()
+                self.task_models[task_model.guid] = task_model
+                if json_data is not None:
+                    self.json_data_models[json_data.hash] = json_data
 
 
 class StepDetailLoggingDelegate(EngineStepDelegate):
