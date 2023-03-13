@@ -1084,16 +1084,20 @@ class ProcessInstanceProcessor:
         self._add_bpmn_process_definitions(bpmn_spec_dict)
 
         subprocesses = process_instance_data_dict.pop("subprocesses")
-        bpmn_process_parent = TaskService.add_bpmn_process(
+        bpmn_process_parent, new_task_models, new_json_data_models = TaskService.add_bpmn_process(
             process_instance_data_dict, self.process_instance_model
         )
         for subprocess_task_id, subprocess_properties in subprocesses.items():
-            TaskService.add_bpmn_process(
+            _bpmn_subprocess, subprocess_new_task_models, subprocess_new_json_data_models = TaskService.add_bpmn_process(
                 subprocess_properties,
                 self.process_instance_model,
                 bpmn_process_parent,
                 bpmn_process_guid=subprocess_task_id,
             )
+            new_task_models.update(subprocess_new_task_models)
+            new_json_data_models.update(subprocess_new_json_data_models)
+        db.session.bulk_save_objects(new_task_models.values())
+        db.session.bulk_save_objects(new_json_data_models.values())
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
@@ -1881,9 +1885,11 @@ class ProcessInstanceProcessor:
         db.session.add(details_model)
         # #######
 
-        TaskService.update_task_model_and_add_to_db_session(
+        json_data = TaskService.update_task_model_and_add_to_db_session(
             task_model, spiff_task, self._serializer
         )
+        if json_data is not None:
+            db.session.add(json_data)
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
