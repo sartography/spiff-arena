@@ -87,7 +87,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.current_task_model and self.should_update_task_model():
             self.current_task_model.end_in_seconds = time.time()
-            json_data = TaskService.update_task_model_and_add_to_db_session(
+            json_data = TaskService.update_task_model(
                 self.current_task_model, spiff_task, self.serializer
             )
             if json_data is not None:
@@ -120,7 +120,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 )
                 self.task_models.update(new_task_models)
                 self.json_data_models.update(new_json_data_models)
-                json_data = TaskService.update_task_model_and_add_to_db_session(
+                json_data = TaskService.update_task_model(
                     task_model, waiting_spiff_task, self.serializer
                 )
                 self.task_models[task_model.guid] = task_model
