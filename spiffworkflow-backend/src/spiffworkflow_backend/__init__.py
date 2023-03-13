@@ -32,6 +32,7 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.background_processing_service import (
     BackgroundProcessingService,
 )
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 
 
 class MyJSONEncoder(DefaultJSONProvider):
@@ -144,6 +145,8 @@ def create_app() -> flask.app.Flask:
     app.config["MAIL_APP"] = mail
 
     app.json = MyJSONEncoder(app)
+
+    ProcessInstanceLockService.set_thread_local_locking_context(app, "WEB")
 
     if should_start_scheduler(app):
         start_scheduler(app)

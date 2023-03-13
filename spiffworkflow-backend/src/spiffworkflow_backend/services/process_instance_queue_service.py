@@ -4,6 +4,8 @@ import time
 from typing import Callable
 from typing import List
 
+from flask import current_app
+
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -18,6 +20,7 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 
 
 #
@@ -49,16 +52,18 @@ class ProcessInstanceQueueService:
 
     @staticmethod
     def enqueue(process_instance: ProcessInstanceModel) -> None:
-        # TODO: check if lock is held by thread, if so update else insert
+        queue_item = ProcessInstanceLockService.try_unlock(process_instance.id)
+        
+        if queue_item is None:
+            queue_item = ProcessInstanceQueueModel(process_instance_id=process_instance.id)
+
         # TODO: configurable params (priority/run_at)
-        queue_item = ProcessInstanceQueueModel(
-            process_instance_id=process_instance.id,
-            run_at_in_seconds=round(time.time()),
-            priority=2,
-            status=process_instance.status,
-            locked_by=None,
-            locked_at_in_seconds=None,
-        )
+        queue_item.run_at_in_seconds=round(time.time())
+        queue_item.priority=2
+        queue_item.status=process_instance.status
+        queue_item.locked_by=None
+        queue_item.locked_at_in_seconds=None
+
         db.session.add(queue_item)
         db.session.commit()
 
