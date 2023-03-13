@@ -1,5 +1,6 @@
 import json
 from hashlib import sha256
+from flask import current_app
 from typing import TypedDict
 from typing import Optional
 from typing import Tuple
@@ -15,7 +16,8 @@ from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 
-from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 
 class JsonDataDict(TypedDict):
@@ -28,18 +30,32 @@ class TaskService:
     def insert_or_update_json_data_records(cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]) -> None:
         list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
         if len(list_of_dicts) > 0:
-            # db.session.execute(JsonDataModel.__table__.insert(), list_of_dicts)
-
-            # insert_stmt = insert(my_table).values(
-            #     id='some_existing_id',
-            #     data='inserted value')
-            insert_stmt = insert(JsonDataModel).values(list_of_dicts)
-
-            on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
-                data=insert_stmt.inserted.data,
-                status='U'
-            )
-
+            # >>> from sqlalchemy.dialects.postgresql import insert
+            # >>> insert_stmt = insert(my_table).values(
+            # ...     id='some_existing_id',
+            # ...     data='inserted value')
+            # >>> do_nothing_stmt = insert_stmt.on_conflict_do_nothing(
+            # ...     index_elements=['id']
+            # ... )
+            # >>> print(do_nothing_stmt)
+            # INSERT INTO my_table (id, data) VALUES (%(id)s, %(data)s)
+            # ON CONFLICT (id) DO NOTHING
+            # >>> do_update_stmt = insert_stmt.on_conflict_do_update(
+            # ...     constraint='pk_my_table',
+            # ...     set_=dict(data='updated value')
+            # ... )
+            on_duplicate_key_stmt = None
+            if current_app.config['SPIFFWORKFLOW_BACKEND_DATABASE_TYPE'] == "mysql":
+                insert_stmt = mysql_insert(JsonDataModel).values(list_of_dicts)
+                on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
+                    data=insert_stmt.inserted.data,
+                    status='U'
+                )
+            else:
+                insert_stmt = postgres_insert(JsonDataModel).values(list_of_dicts)
+                on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(
+                    index_elements=['hash']
+                )
             db.session.execute(on_duplicate_key_stmt)
 
     @classmethod
