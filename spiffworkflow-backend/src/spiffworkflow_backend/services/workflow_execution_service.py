@@ -72,8 +72,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.should_update_task_model():
-            _bpmn_process, task_model, new_task_models, new_json_data_models = TaskService.find_or_create_task_model_from_spiff_task(
-                spiff_task, self.process_instance, self.serializer
+            _bpmn_process, task_model, new_task_models, new_json_data_models = (
+                TaskService.find_or_create_task_model_from_spiff_task(
+                    spiff_task, self.process_instance, self.serializer
+                )
             )
             self.current_task_model = task_model
             self.task_models.update(new_task_models)
@@ -111,8 +113,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 | TaskState.MAYBE
                 | TaskState.LIKELY
             ):
-                _bpmn_process, task_model, new_task_models, new_json_data_models = TaskService.find_or_create_task_model_from_spiff_task(
-                    waiting_spiff_task, self.process_instance, self.serializer
+                _bpmn_process, task_model, new_task_models, new_json_data_models = (
+                    TaskService.find_or_create_task_model_from_spiff_task(
+                        waiting_spiff_task, self.process_instance, self.serializer
+                    )
                 )
                 self.task_models.update(new_task_models)
                 self.json_data_models.update(new_json_data_models)

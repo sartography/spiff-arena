@@ -1084,11 +1084,17 @@ class ProcessInstanceProcessor:
         self._add_bpmn_process_definitions(bpmn_spec_dict)
 
         subprocesses = process_instance_data_dict.pop("subprocesses")
-        bpmn_process_parent, new_task_models, new_json_data_models = TaskService.add_bpmn_process(
-            process_instance_data_dict, self.process_instance_model
+        bpmn_process_parent, new_task_models, new_json_data_models = (
+            TaskService.add_bpmn_process(
+                process_instance_data_dict, self.process_instance_model
+            )
         )
         for subprocess_task_id, subprocess_properties in subprocesses.items():
-            _bpmn_subprocess, subprocess_new_task_models, subprocess_new_json_data_models = TaskService.add_bpmn_process(
+            (
+                _bpmn_subprocess,
+                subprocess_new_task_models,
+                subprocess_new_json_data_models,
+            ) = TaskService.add_bpmn_process(
                 subprocess_properties,
                 self.process_instance_model,
                 bpmn_process_parent,
