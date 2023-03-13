@@ -146,6 +146,7 @@ def create_app() -> flask.app.Flask:
     encryption_lib = app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB")
     if encryption_lib == "cryptography":
         from cryptography.fernet import Fernet
+
         app_secret_key = app.config.get("SECRET_KEY")
         app_secret_key_bytes = app_secret_key.encode()
         base64_key = base64.b64encode(app_secret_key_bytes)
