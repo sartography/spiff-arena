@@ -178,8 +178,9 @@ export default function ProcessInstanceListTable({
     useState<string[]>([]);
   const [processInitiatorSelection, setProcessInitiatorSelection] =
     useState<User | null>(null);
-  const [processInitiatorText, setProcessInitiatorText] =
-    useState<string | null>(null);
+  const [processInitiatorText, setProcessInitiatorText] = useState<
+    string | null
+  >(null);
 
   const lastRequestedInitatorSearchTerm = useRef<string>();
 
@@ -607,7 +608,6 @@ export default function ProcessInstanceListTable({
     } else if (processInitiatorText) {
       queryParamString += `&process_initiator_username=${processInitiatorText}`;
     }
-
 
     const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
     queryParamString += `&report_columns=${reportColumnsBase64}`;
@@ -1122,18 +1122,17 @@ export default function ProcessInstanceListTable({
                       selectedItem={processInitiatorSelection}
                     />
                   );
-                } else {
-                  return (
-                    <TextInput
-                      id="process-instance-initiator-search"
-                      placeholder="Enter username"
-                      labelText="Process Initiator"
-                      onChange={(event: any) =>
-                        setProcessInitiatorText(event.target.value)
-                      }
-                    />
-                  );
                 }
+                return (
+                  <TextInput
+                    id="process-instance-initiator-search"
+                    placeholder="Enter username"
+                    labelText="Process Initiator"
+                    onChange={(event: any) =>
+                      setProcessInitiatorText(event.target.value)
+                    }
+                  />
+                );
               }}
             </Can>
           </Column>
