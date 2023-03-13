@@ -37,6 +37,7 @@ import {
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
 } from '../helpers';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
 import PaginationForTable from './PaginationForTable';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -56,6 +57,7 @@ import {
   ReportFilter,
   User,
   ErrorForDisplay,
+  PermissionsToCheck,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
@@ -63,6 +65,8 @@ import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
 import { Notification } from './Notification';
 import useAPIError from '../hooks/UseApiError';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import { Can } from '../contexts/Can';
 
 const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
@@ -106,6 +110,13 @@ export default function ProcessInstanceListTable({
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { addError, removeError } = useAPIError();
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.userSearch]: ['GET'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
+  const canSearchUsers: boolean = ability.can('GET', targetUris.userSearch);
 
   const [processInstances, setProcessInstances] = useState([]);
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
@@ -167,6 +178,9 @@ export default function ProcessInstanceListTable({
     useState<string[]>([]);
   const [processInitiatorSelection, setProcessInitiatorSelection] =
     useState<User | null>(null);
+  const [processInitiatorText, setProcessInitiatorText] =
+    useState<string | null>(null);
+
   const lastRequestedInitatorSearchTerm = useRef<string>();
 
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
@@ -202,7 +216,7 @@ export default function ProcessInstanceListTable({
   };
 
   const searchForProcessInitiator = (inputText: string) => {
-    if (inputText) {
+    if (inputText && canSearchUsers) {
       lastRequestedInitatorSearchTerm.current = inputText;
       HttpService.makeCallToBackend({
         path: `/users/search?username_prefix=${inputText}`,
@@ -590,7 +604,10 @@ export default function ProcessInstanceListTable({
 
     if (processInitiatorSelection) {
       queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
+    } else if (processInitiatorText) {
+      queryParamString += `&process_initiator_username=${processInitiatorText}`;
     }
+
 
     const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
     queryParamString += `&report_columns=${reportColumnsBase64}`;
@@ -1077,24 +1094,48 @@ export default function ProcessInstanceListTable({
             />
           </Column>
           <Column md={4}>
-            <ComboBox
-              onInputChange={searchForProcessInitiator}
-              onChange={(event: any) => {
-                setProcessInitiatorSelection(event.selectedItem);
-              }}
-              id="process-instance-initiator-search"
-              data-qa="process-instance-initiator-search"
-              items={processInstanceInitiatorOptions}
-              itemToString={(processInstanceInitatorOption: User) => {
-                if (processInstanceInitatorOption) {
-                  return processInstanceInitatorOption.username;
+            <Can
+              I="GET"
+              a={targetUris.userSearch}
+              ability={ability}
+              passThrough
+            >
+              {(hasAccess: boolean) => {
+                if (hasAccess) {
+                  return (
+                    <ComboBox
+                      onInputChange={searchForProcessInitiator}
+                      onChange={(event: any) => {
+                        setProcessInitiatorSelection(event.selectedItem);
+                      }}
+                      id="process-instance-initiator-search"
+                      data-qa="process-instance-initiator-search"
+                      items={processInstanceInitiatorOptions}
+                      itemToString={(processInstanceInitatorOption: User) => {
+                        if (processInstanceInitatorOption) {
+                          return processInstanceInitatorOption.username;
+                        }
+                        return null;
+                      }}
+                      placeholder="Start typing username"
+                      titleText="Process Initiator"
+                      selectedItem={processInitiatorSelection}
+                    />
+                  );
+                } else {
+                  return (
+                    <TextInput
+                      id="process-instance-initiator-search"
+                      placeholder="Enter username"
+                      labelText="Process Initiator"
+                      onChange={(event: any) =>
+                        setProcessInitiatorText(event.target.value)
+                      }
+                    />
+                  );
                 }
-                return null;
               }}
-              placeholder="Starting typing username"
-              titleText="Process Initiator"
-              selectedItem={processInitiatorSelection}
-            />
+            </Can>
           </Column>
           <Column md={4}>{processStatusSearch()}</Column>
         </Grid>
@@ -1248,7 +1289,6 @@ export default function ProcessInstanceListTable({
           </td>
         );
       }
-      console.log(column.accessor);
       if (column.accessor === 'process_model_display_name') {
         const pmStyle = { background: 'rgba(0, 0, 0, .02)' };
         return (
