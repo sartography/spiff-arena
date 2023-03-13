@@ -60,7 +60,7 @@ class ProcessInstanceLockService:
 
     @classmethod
     def try_unlock(cls, process_instance_id: int) -> Optional[ProcessInstanceQueueModel]:
-        cls._locked_ids().pop(process_instance_id, None)
+        return cls._locked_ids().pop(process_instance_id, None)
 
     @classmethod
     def has_lock(cls, process_instance_id: int) -> bool:

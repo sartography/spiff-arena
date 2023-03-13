@@ -110,7 +110,6 @@ def process_instance_run(
 ) -> flask.wrappers.Response:
     """Process_instance_run."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    ProcessInstanceQueueService.dequeue(process_instance)
     if process_instance.status != "not_started":
         raise ApiError(
             error_code="process_instance_not_runnable",
@@ -126,6 +125,7 @@ def process_instance_run(
     if do_engine_steps:
         try:
             processor.lock_process_instance("Web")
+            ProcessInstanceQueueService.dequeue(process_instance)
             processor.do_engine_steps(save=True)
         except ApiError as e:
             ErrorHandlingService().handle_error(processor, e)
@@ -141,6 +141,7 @@ def process_instance_run(
                 task=task,
             ) from e
         finally:
+            ProcessInstanceQueueService.enqueue(process_instance)
             processor.unlock_process_instance("Web")
 
         if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:

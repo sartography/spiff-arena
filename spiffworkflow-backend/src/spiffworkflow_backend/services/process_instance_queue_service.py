@@ -70,6 +70,8 @@ class ProcessInstanceQueueService:
 
     @staticmethod
     def dequeue(process_instance: ProcessInstanceModel) -> None:
+        locked_by = ProcessInstanceLockService.locked_by()
+
         db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.process_instance_id==process_instance.id,
             ProcessInstanceQueueModel.locked_by==None,
@@ -77,12 +79,25 @@ class ProcessInstanceQueueService:
             "locked_by": ProcessInstanceLockService.locked_by(),
         })
 
-        #.values(
-        #        locked_by=ProcessInstanceLockService.locked_by(),
-        #        locked_at_in_seconds=rount(time.time())
-        #    ).where(
-        #db.execute(query)
         db.session.commit()
+
+        queue_entry = db.session.query(ProcessInstanceQueueModel).filter(
+            ProcessInstanceQueueModel.process_instance_id==process_instance.id,
+        ).first()
+
+        if queue_entry is None:
+            raise ApiError(
+                    "process_not_in_queue",
+                    "The process instance has not been added to the queue."
+                )
+
+        if queue_entry.locked_by != locked_by:
+            raise ApiError(
+                    "process already locked",
+                    "The process instance has already been locked by another thread."
+                )
+
+        ProcessInstanceLockService.lock(process_instance.id, queue_entry)
         
 
     @staticmethod
