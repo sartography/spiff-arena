@@ -272,6 +272,7 @@ def process_instance_list_for_me(
         with_relation_to_me=True,
         report_columns=report_columns,
         report_filter_by=report_filter_by,
+        process_initiator_username=process_initiator_username,
     )
 
 
