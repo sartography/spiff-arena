@@ -1,23 +1,22 @@
 import json
 from hashlib import sha256
-from flask import current_app
-from typing import TypedDict
 from typing import Optional
 from typing import Tuple
+from typing import TypedDict
 
+from flask import current_app
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskStateNames
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-
-from sqlalchemy.dialects.mysql import insert as mysql_insert
-from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 
 class JsonDataDict(TypedDict):
@@ -27,7 +26,9 @@ class JsonDataDict(TypedDict):
 
 class TaskService:
     @classmethod
-    def insert_or_update_json_data_records(cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]) -> None:
+    def insert_or_update_json_data_records(
+        cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]
+    ) -> None:
         list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
         if len(list_of_dicts) > 0:
             # >>> from sqlalchemy.dialects.postgresql import insert
@@ -45,16 +46,15 @@ class TaskService:
             # ...     set_=dict(data='updated value')
             # ... )
             on_duplicate_key_stmt = None
-            if current_app.config['SPIFFWORKFLOW_BACKEND_DATABASE_TYPE'] == "mysql":
+            if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
                 insert_stmt = mysql_insert(JsonDataModel).values(list_of_dicts)
                 on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
-                    data=insert_stmt.inserted.data,
-                    status='U'
+                    data=insert_stmt.inserted.data, status="U"
                 )
             else:
                 insert_stmt = postgres_insert(JsonDataModel).values(list_of_dicts)
                 on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(
-                    index_elements=['hash']
+                    index_elements=["hash"]
                 )
             db.session.execute(on_duplicate_key_stmt)
 
@@ -86,7 +86,9 @@ class TaskService:
         spiff_task_data = new_properties_json.pop("data")
         task_model.properties_json = new_properties_json
         task_model.state = TaskStateNames[new_properties_json["state"]]
-        json_data_dict = cls._update_task_data_on_task_model(task_model, spiff_task_data)
+        json_data_dict = cls._update_task_data_on_task_model(
+            task_model, spiff_task_data
+        )
         return json_data_dict
 
     @classmethod
@@ -214,7 +216,10 @@ class TaskService:
             bpmn_process_data_json.encode("utf8")
         ).hexdigest()
         if bpmn_process.json_data_hash != bpmn_process_data_hash:
-            new_json_data_dicts[bpmn_process_data_hash] = {"hash": bpmn_process_data_hash, "data": bpmn_process_data_dict}
+            new_json_data_dicts[bpmn_process_data_hash] = {
+                "hash": bpmn_process_data_hash,
+                "data": bpmn_process_data_dict,
+            }
             bpmn_process.json_data_hash = bpmn_process_data_hash
 
         if bpmn_process_parent is None:
@@ -251,6 +256,6 @@ class TaskService:
                 )
                 new_task_models[task_model.guid] = task_model
                 if json_data_dict is not None:
-                    new_json_data_dicts[json_data_dict['hash']] = json_data_dict
+                    new_json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
         return (bpmn_process, new_task_models, new_json_data_dicts)

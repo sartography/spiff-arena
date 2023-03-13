@@ -1915,7 +1915,7 @@ class ProcessInstanceProcessor:
         if json_data_dict is not None:
             json_data = (
                 db.session.query(JsonDataModel.id)
-                .filter_by(hash=json_data_dict['hash'])
+                .filter_by(hash=json_data_dict["hash"])
                 .first()
             )
             if json_data is None:
