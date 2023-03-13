@@ -110,6 +110,7 @@ def process_instance_run(
 ) -> flask.wrappers.Response:
     """Process_instance_run."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    ProcessInstanceQueueService.dequeue(process_instance)
     if process_instance.status != "not_started":
         raise ApiError(
             error_code="process_instance_not_runnable",

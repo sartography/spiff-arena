@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 
 
 class EngineStepDelegate:
@@ -189,6 +190,12 @@ class WorkflowExecutionService:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
+        if not ProcessInstanceLockService.has_lock(self.process_instance_model.id):
+            raise ApiError(
+                "lock_not_obtained",
+                "The current thread has not obtained a lock for this process instance.",
+            )
+            
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 

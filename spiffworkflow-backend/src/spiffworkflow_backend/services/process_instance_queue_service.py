@@ -70,7 +70,20 @@ class ProcessInstanceQueueService:
 
     @staticmethod
     def dequeue(process_instance: ProcessInstanceModel) -> None:
-        pass
+        db.session.query(ProcessInstanceQueueModel).filter(
+            ProcessInstanceQueueModel.process_instance_id==process_instance.id,
+            ProcessInstanceQueueModel.locked_by==None,
+        ).update({
+            "locked_by": ProcessInstanceLockService.locked_by(),
+        })
+
+        #.values(
+        #        locked_by=ProcessInstanceLockService.locked_by(),
+        #        locked_at_in_seconds=rount(time.time())
+        #    ).where(
+        #db.execute(query)
+        db.session.commit()
+        
 
     @staticmethod
     def dequeue_many():

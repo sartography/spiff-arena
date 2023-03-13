@@ -31,8 +31,8 @@ class ProcessInstanceLockService:
     def set_thread_local_locking_context(app: flask.app.Flask, domain: str) -> None:
         app.config["LOCK_SERVICE_CONTEXT"] = [
             domain,
-            app.config["PROCESS_UUID"],
-            threading.get_ident(),
+            str(app.config["PROCESS_UUID"]),
+            str(threading.get_ident()),
         ]
 
     @classmethod
@@ -47,7 +47,8 @@ class ProcessInstanceLockService:
 
     @staticmethod
     def locked_by() -> str:
-        return current_app.config["LOCK_SERVICE_CONTEXT"].join(":")
+        # TODO: probably just do this in `set_thread_local_locking_context`
+        return ":".join(current_app.config["LOCK_SERVICE_CONTEXT"])
 
     @classmethod
     def lock(cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel) -> None:
