@@ -36,7 +36,7 @@ class TaskService:
         return json_data_to_return
 
     @classmethod
-    def update_task_model_and_add_to_db_session(
+    def update_task_model(
         cls,
         task_model: TaskModel,
         spiff_task: SpiffTask,
@@ -45,6 +45,7 @@ class TaskService:
         """Updates properties_json and data on given task_model.
 
         This will NOT update start_in_seconds or end_in_seconds.
+        It also returns the relating json_data object so they can be imported later.
         """
         new_properties_json = serializer.task_to_dict(spiff_task)
         spiff_task_data = new_properties_json.pop("data")
@@ -147,6 +148,11 @@ class TaskService:
         bpmn_process_parent: Optional[BpmnProcessModel] = None,
         bpmn_process_guid: Optional[str] = None,
     ) -> Tuple[BpmnProcessModel, dict[str, TaskModel], dict[str, JsonDataModel]]:
+        """This creates and adds a bpmn_process to the Db session.
+
+        It will also add tasks and relating json_data entries if the bpmn_process is new.
+        It returns tasks and json data records in dictionaries to be added to the session later.
+        """
         tasks = bpmn_process_dict.pop("tasks")
         bpmn_process_data_dict = bpmn_process_dict.pop("data")
 
@@ -189,6 +195,9 @@ class TaskService:
             process_instance.bpmn_process = bpmn_process
         elif bpmn_process.parent_process_id is None:
             bpmn_process.parent_process_id = bpmn_process_parent.id
+
+        # Since we bulk insert tasks later we need to add the bpmn_process to the session
+        # to ensure we have an id.
         db.session.add(bpmn_process)
 
         if bpmn_process_is_new:

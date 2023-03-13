@@ -1891,7 +1891,7 @@ class ProcessInstanceProcessor:
         db.session.add(details_model)
         # #######
 
-        json_data = TaskService.update_task_model_and_add_to_db_session(
+        json_data = TaskService.update_task_model(
             task_model, spiff_task, self._serializer
         )
         if json_data is not None:
