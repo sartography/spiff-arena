@@ -19,7 +19,8 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.services.task_service import JsonDataDict, TaskService
+from spiffworkflow_backend.services.task_service import JsonDataDict
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 class EngineStepDelegate:
@@ -90,7 +91,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 self.current_task_model, spiff_task, self.serializer
             )
             if json_data_dict is not None:
-                self.json_data_dicts[json_data_dict['hash']] = json_data_dict
+                self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
             self.task_models[self.current_task_model.guid] = self.current_task_model
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
@@ -126,7 +127,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 )
                 self.task_models[task_model.guid] = task_model
                 if json_data_dict is not None:
-                    self.json_data_dicts[json_data_dict['hash']] = json_data_dict
+                    self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
 
 class StepDetailLoggingDelegate(EngineStepDelegate):
