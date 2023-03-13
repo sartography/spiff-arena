@@ -31,20 +31,6 @@ class TaskService:
     ) -> None:
         list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
         if len(list_of_dicts) > 0:
-            # >>> from sqlalchemy.dialects.postgresql import insert
-            # >>> insert_stmt = insert(my_table).values(
-            # ...     id='some_existing_id',
-            # ...     data='inserted value')
-            # >>> do_nothing_stmt = insert_stmt.on_conflict_do_nothing(
-            # ...     index_elements=['id']
-            # ... )
-            # >>> print(do_nothing_stmt)
-            # INSERT INTO my_table (id, data) VALUES (%(id)s, %(data)s)
-            # ON CONFLICT (id) DO NOTHING
-            # >>> do_update_stmt = insert_stmt.on_conflict_do_update(
-            # ...     constraint='pk_my_table',
-            # ...     set_=dict(data='updated value')
-            # ... )
             on_duplicate_key_stmt = None
             if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
                 insert_stmt = mysql_insert(JsonDataModel).values(list_of_dicts)
