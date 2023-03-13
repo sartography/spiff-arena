@@ -613,13 +613,36 @@ class ProcessInstanceProcessor:
         ).first()
         bpmn_process_dict = {"data": json_data.data, "tasks": {}}
         bpmn_process_dict.update(bpmn_process.properties_json)
-        tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
-        for task in tasks:
-            json_data = JsonDataModel.query.filter_by(hash=task.json_data_hash).first()
-            bpmn_process_dict["tasks"][task.guid] = task.properties_json
-            bpmn_process_dict["tasks"][task.guid]["data"] = json_data.data
-
+        if get_tasks:
+            tasks = TaskModel.query.filter_by(bpmn_process_id=bpmn_process.id).all()
+            cls._get_tasks_dict(tasks, bpmn_process_dict)
         return bpmn_process_dict
+
+    @classmethod
+    def _get_tasks_dict(
+        cls,
+        tasks: list[TaskModel],
+        spiff_bpmn_process_dict: dict,
+        bpmn_subprocess_id_to_guid_mappings: Optional[dict] = None,
+    ) -> None:
+        json_data_hashes = set()
+        for task in tasks:
+            json_data_hashes.add(task.json_data_hash)
+        json_data_records = JsonDataModel.query.filter(JsonDataModel.hash.in_(json_data_hashes)).all()  # type: ignore
+        json_data_mappings = {}
+        for json_data_record in json_data_records:
+            json_data_mappings[json_data_record.hash] = json_data_record.data
+        for task in tasks:
+            tasks_dict = spiff_bpmn_process_dict["tasks"]
+            if bpmn_subprocess_id_to_guid_mappings:
+                bpmn_subprocess_guid = bpmn_subprocess_id_to_guid_mappings[
+                    task.bpmn_process_id
+                ]
+                tasks_dict = spiff_bpmn_process_dict["subprocesses"][
+                    bpmn_subprocess_guid
+                ]["tasks"]
+            tasks_dict[task.guid] = task.properties_json
+            tasks_dict[task.guid]["data"] = json_data_mappings[task.json_data_hash]
 
     @classmethod
     def _get_full_bpmn_process_dict(
@@ -655,9 +678,11 @@ class ProcessInstanceProcessor:
                 bpmn_subprocesses = BpmnProcessModel.query.filter_by(
                     parent_process_id=bpmn_process.id
                 ).all()
-                bpmn_subprocess_ids = {}
+                bpmn_subprocess_id_to_guid_mappings = {}
                 for bpmn_subprocess in bpmn_subprocesses:
-                    bpmn_subprocess_ids[bpmn_subprocess.id] = bpmn_subprocess.guid
+                    bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = (
+                        bpmn_subprocess.guid
+                    )
                     single_bpmn_process_dict = cls._get_bpmn_process_dict(
                         bpmn_subprocess
                     )
@@ -666,19 +691,11 @@ class ProcessInstanceProcessor:
                     ] = single_bpmn_process_dict
 
                 tasks = TaskModel.query.filter(
-                    TaskModel.bpmn_process_id.in_(bpmn_subprocess_ids.keys())  # type: ignore
+                    TaskModel.bpmn_process_id.in_(bpmn_subprocess_id_to_guid_mappings.keys())  # type: ignore
                 ).all()
-                for task in tasks:
-                    bpmn_subprocess_guid = bpmn_subprocess_ids[task.bpmn_process_id]
-                    json_data = JsonDataModel.query.filter_by(
-                        hash=task.json_data_hash
-                    ).first()
-                    spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess_guid][
-                        "tasks"
-                    ][task.guid] = task.properties_json
-                    spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess_guid][
-                        "tasks"
-                    ][task.guid]["data"] = json_data.data
+                cls._get_tasks_dict(
+                    tasks, spiff_bpmn_process_dict, bpmn_subprocess_id_to_guid_mappings
+                )
 
         return spiff_bpmn_process_dict
 
