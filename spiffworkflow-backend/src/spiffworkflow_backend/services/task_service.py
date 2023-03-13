@@ -59,7 +59,12 @@ class TaskService:
         spiff_task: SpiffTask,
         process_instance: ProcessInstanceModel,
         serializer: BpmnWorkflowSerializer,
-    ) -> Tuple[Optional[BpmnProcessModel], TaskModel, dict[str, TaskModel], dict[str, JsonDataModel]]:
+    ) -> Tuple[
+        Optional[BpmnProcessModel],
+        TaskModel,
+        dict[str, TaskModel],
+        dict[str, JsonDataModel],
+    ]:
         spiff_task_guid = str(spiff_task.id)
         task_model: Optional[TaskModel] = TaskModel.query.filter_by(
             guid=spiff_task_guid
@@ -111,22 +116,26 @@ class TaskService:
             # This is the top level workflow, which has no guid
             # check for bpmn_process_id because mypy doesn't realize bpmn_process can be None
             if process_instance.bpmn_process_id is None:
-                bpmn_process, new_task_models, new_json_data_models = cls.add_bpmn_process(
-                    serializer.workflow_to_dict(
-                        spiff_task.workflow._get_outermost_workflow()
-                    ),
-                    process_instance,
+                bpmn_process, new_task_models, new_json_data_models = (
+                    cls.add_bpmn_process(
+                        serializer.workflow_to_dict(
+                            spiff_task.workflow._get_outermost_workflow()
+                        ),
+                        process_instance,
+                    )
                 )
         else:
             bpmn_process = BpmnProcessModel.query.filter_by(
                 guid=subprocess_guid
             ).first()
             if bpmn_process is None:
-                bpmn_process, new_task_models, new_json_data_models = cls.add_bpmn_process(
-                    serializer.workflow_to_dict(subprocess),
-                    process_instance,
-                    process_instance.bpmn_process,
-                    subprocess_guid,
+                bpmn_process, new_task_models, new_json_data_models = (
+                    cls.add_bpmn_process(
+                        serializer.workflow_to_dict(subprocess),
+                        process_instance,
+                        process_instance.bpmn_process,
+                        subprocess_guid,
+                    )
                 )
         return (bpmn_process, new_task_models, new_json_data_models)
 
@@ -140,6 +149,9 @@ class TaskService:
     ) -> Tuple[BpmnProcessModel, dict[str, TaskModel], dict[str, JsonDataModel]]:
         tasks = bpmn_process_dict.pop("tasks")
         bpmn_process_data_dict = bpmn_process_dict.pop("data")
+
+        new_task_models = {}
+        new_json_data_models = {}
 
         bpmn_process = None
         if bpmn_process_parent is not None:
@@ -170,7 +182,7 @@ class TaskService:
                 json_data = JsonDataModel(
                     hash=bpmn_process_data_hash, data=bpmn_process_data_dict
                 )
-                db.session.add(json_data)
+                new_json_data_models[bpmn_process_data_hash] = json_data
             bpmn_process.json_data_hash = bpmn_process_data_hash
 
         if bpmn_process_parent is None:
@@ -179,8 +191,6 @@ class TaskService:
             bpmn_process.parent_process_id = bpmn_process_parent.id
         db.session.add(bpmn_process)
 
-        new_task_models = {}
-        new_json_data_models = {}
         if bpmn_process_is_new:
             for task_id, task_properties in tasks.items():
                 task_data_dict = task_properties.pop("data")
@@ -201,7 +211,9 @@ class TaskService:
                 task_model.state = TaskStateNames[state_int]
                 task_model.properties_json = task_properties
 
-                json_data = TaskService.update_task_data_on_task_model(task_model, task_data_dict)
+                json_data = TaskService.update_task_data_on_task_model(
+                    task_model, task_data_dict
+                )
                 new_task_models[task_model.guid] = task_model
                 if json_data is not None:
                     new_json_data_models[json_data.hash] = json_data
