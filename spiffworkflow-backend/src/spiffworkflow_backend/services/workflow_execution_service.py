@@ -5,6 +5,8 @@ from typing import Callable
 from typing import List
 from typing import Optional
 
+from flask import current_app
+
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
