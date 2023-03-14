@@ -702,6 +702,14 @@ export default function ProcessInstanceListTable({
     setEndFromTime('');
     setEndToDate('');
     setEndToTime('');
+    setProcessInitiatorSelection(null);
+    setProcessInitiatorText('');
+
+    if (reportMetadata) {
+      reportMetadata.columns = reportMetadata.columns.filter(
+        (column) => !column.filterable
+      );
+    }
   };
 
   const processInstanceReportDidChange = (selection: any, mode?: string) => {
