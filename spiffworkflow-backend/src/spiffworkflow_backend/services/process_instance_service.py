@@ -28,9 +28,6 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceIsAlreadyLockedError,
-)
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
@@ -39,6 +36,7 @@ from spiffworkflow_backend.services.process_instance_processor import (
 )
 from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceQueueService,
+    ProcessInstanceIsAlreadyLockedError,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 

@@ -146,10 +146,6 @@ class MissingProcessInfoError(Exception):
     """MissingProcessInfoError."""
 
 
-# TODO: move to queue service
-class ProcessInstanceIsAlreadyLockedError(Exception):
-    pass
-
 
 class SpiffStepDetailIsMissingError(Exception):
     pass
@@ -1569,11 +1565,11 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
-    # TODO: replace with more granular locking in workflow execution service
+    # TODO: replace with implicit/more granular locking in workflow execution service
     def lock_process_instance(self, lock_prefix: str) -> None:
         ProcessInstanceQueueService.dequeue(self.process_instance_model)
 
-    # TODO: replace with more granular locking in workflow execution service
+    # TODO: replace with implicit/more granular locking in workflow execution service
     def unlock_process_instance(self, lock_prefix: str) -> None:
         ProcessInstanceQueueService.enqueue(self.process_instance_model)
 

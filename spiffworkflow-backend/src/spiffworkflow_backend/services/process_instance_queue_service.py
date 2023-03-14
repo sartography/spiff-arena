@@ -24,29 +24,9 @@ from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsMode
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 
 
-#
-# use cases:
-#
-# process_instance_create:
-#   - no previous entry in the queue
-#   - calls: enqueue (insert)
-#
-# process_instance_run:
-#   - should have an existing entry in the queue from previous `create`
-#   - calls `dequeue`
-#
-# task_submit:
-#   - should have an existing entry in the queue from previous `run`
-#   - calls: dequeue
-#
-# do_engine_steps:
-#   - when done executing, add back to the queue
-#   - calls: enqueue (update)
-#
-# background processors:
-#   - are not tied to a specific process instance id, just need to run things
-#   - calls: dequeue_many (flavors?)
-#
+class ProcessInstanceIsAlreadyLockedError(Exception):
+    pass
+
 
 class ProcessInstanceQueueService:
     """TODO: comment"""
@@ -90,12 +70,11 @@ class ProcessInstanceQueueService:
             ProcessInstanceQueueModel.locked_by==locked_by,
         ).first()
 
-        # TODO: use existing lock exception
         if queue_entry is None:
-            raise ApiError(
-                    "process_not_in_queue",
-                    "The process instance has not been added to the queue."
-                )
+            raise ProcessInstanceIsAlreadyLockedError(
+                f"Cannot lock process instance {process_instance.id}. "
+                "It has already been locked or has not been enqueued."
+            )
 
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
         
@@ -121,5 +100,8 @@ class ProcessInstanceQueueService:
         ).all()
 
         locked_ids = ProcessInstanceLockService.lock_many(queue_entries)
+
+        if len(locked_ids) > 0:
+            current_app.logger.info(f"{locked_by} dequeued_many: {locked_ids}")
 
         return locked_ids

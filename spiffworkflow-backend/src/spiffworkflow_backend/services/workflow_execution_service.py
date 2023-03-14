@@ -154,12 +154,34 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
                 ]
             )
 
+class RunOneExecutionStrategy(ExecutionStrategy):
+    """For illustration purposes, not currently integrated.
+
+    Runs one engine step. Used to test the background processor.
+    """
+
+    def do_engine_steps(
+        self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
+    ) -> None:
+        engine_steps = list(
+            [
+                t
+                for t in bpmn_process_instance.get_tasks(TaskState.READY)
+                if bpmn_process_instance._is_engine_task(t.task_spec)
+            ]
+        )
+        for task in engine_steps:
+            self.delegate.will_complete_task(task)
+            task.complete()
+            self.delegate.did_complete_task(task)
+            return
 
 def execution_strategy_named(
     name: str, delegate: EngineStepDelegate
 ) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
+        "run_one": RunOneExecutionStrategy,
         "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
     }[name]
 
@@ -191,14 +213,15 @@ class WorkflowExecutionService:
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         if not ProcessInstanceLockService.has_lock(self.process_instance_model.id):
-            raise ApiError(
-                "lock_not_obtained",
+            # TODO: can't be an exception yet - believe there are flows that are not locked.
+            current_app.logger.error(
                 "The current thread has not obtained a lock for this process instance.",
             )
             
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
+            # TODO: implicit re-entrant locks here `with_dequeued`
             self.execution_strategy.do_engine_steps(self.bpmn_process_instance, exit_at)
 
             if self.bpmn_process_instance.is_completed():
