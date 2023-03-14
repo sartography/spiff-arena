@@ -27,7 +27,7 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "feature/remove-loop-reset"}
 # SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
@@ -73,6 +73,7 @@ types-dateparser = "^1.1.4.1"
 flask-jwt-extended = "^4.4.4"
 pylint = "^2.15.10"
 flask-simple-crypt = "^0.3.3"
+cryptography = "^39.0.2"
 
 
 [tool.poetry.dev-dependencies]

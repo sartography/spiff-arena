@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 // @ts-ignore
 import { Filter, Close, AddAlt } from '@carbon/icons-react';
@@ -42,6 +37,7 @@ import {
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
 } from '../helpers';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
 import PaginationForTable from './PaginationForTable';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -61,14 +57,16 @@ import {
   ReportFilter,
   User,
   ErrorForDisplay,
+  PermissionsToCheck,
 } from '../interfaces';
 import ProcessModelSearch from './ProcessModelSearch';
 import ProcessInstanceReportSearch from './ProcessInstanceReportSearch';
 import ProcessInstanceListDeleteReport from './ProcessInstanceListDeleteReport';
 import ProcessInstanceListSaveAsReport from './ProcessInstanceListSaveAsReport';
-import { FormatProcessModelDisplayName } from './MiniComponents';
 import { Notification } from './Notification';
 import useAPIError from '../hooks/UseApiError';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import { Can } from '../contexts/Can';
 
 const REFRESH_INTERVAL = 5;
 const REFRESH_TIMEOUT = 600;
@@ -112,6 +110,13 @@ export default function ProcessInstanceListTable({
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { addError, removeError } = useAPIError();
+
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.userSearch]: ['GET'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
+  const canSearchUsers: boolean = ability.can('GET', targetUris.userSearch);
 
   const [processInstances, setProcessInstances] = useState([]);
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
@@ -173,6 +178,10 @@ export default function ProcessInstanceListTable({
     useState<string[]>([]);
   const [processInitiatorSelection, setProcessInitiatorSelection] =
     useState<User | null>(null);
+  const [processInitiatorText, setProcessInitiatorText] = useState<
+    string | null
+  >(null);
+
   const lastRequestedInitatorSearchTerm = useRef<string>();
 
   const dateParametersToAlwaysFilterBy: dateParameters = useMemo(() => {
@@ -208,7 +217,7 @@ export default function ProcessInstanceListTable({
   };
 
   const searchForProcessInitiator = (inputText: string) => {
-    if (inputText) {
+    if (inputText && canSearchUsers) {
       lastRequestedInitatorSearchTerm.current = inputText;
       HttpService.makeCallToBackend({
         path: `/users/search?username_prefix=${inputText}`,
@@ -596,6 +605,8 @@ export default function ProcessInstanceListTable({
 
     if (processInitiatorSelection) {
       queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
+    } else if (processInitiatorText) {
+      queryParamString += `&process_initiator_username=${processInitiatorText}`;
     }
 
     const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
@@ -1083,24 +1094,47 @@ export default function ProcessInstanceListTable({
             />
           </Column>
           <Column md={4}>
-            <ComboBox
-              onInputChange={searchForProcessInitiator}
-              onChange={(event: any) => {
-                setProcessInitiatorSelection(event.selectedItem);
-              }}
-              id="process-instance-initiator-search"
-              data-qa="process-instance-initiator-search"
-              items={processInstanceInitiatorOptions}
-              itemToString={(processInstanceInitatorOption: User) => {
-                if (processInstanceInitatorOption) {
-                  return processInstanceInitatorOption.username;
+            <Can
+              I="GET"
+              a={targetUris.userSearch}
+              ability={ability}
+              passThrough
+            >
+              {(hasAccess: boolean) => {
+                if (hasAccess) {
+                  return (
+                    <ComboBox
+                      onInputChange={searchForProcessInitiator}
+                      onChange={(event: any) => {
+                        setProcessInitiatorSelection(event.selectedItem);
+                      }}
+                      id="process-instance-initiator-search"
+                      data-qa="process-instance-initiator-search"
+                      items={processInstanceInitiatorOptions}
+                      itemToString={(processInstanceInitatorOption: User) => {
+                        if (processInstanceInitatorOption) {
+                          return processInstanceInitatorOption.username;
+                        }
+                        return null;
+                      }}
+                      placeholder="Start typing username"
+                      titleText="Process Initiator"
+                      selectedItem={processInitiatorSelection}
+                    />
+                  );
                 }
-                return null;
+                return (
+                  <TextInput
+                    id="process-instance-initiator-search"
+                    placeholder="Enter username"
+                    labelText="Process Initiator"
+                    onChange={(event: any) =>
+                      setProcessInitiatorText(event.target.value)
+                    }
+                  />
+                );
               }}
-              placeholder="Starting typing username"
-              titleText="Process Initiator"
-              selectedItem={processInitiatorSelection}
-            />
+            </Can>
           </Column>
           <Column md={4}>{processStatusSearch()}</Column>
         </Grid>
@@ -1203,28 +1237,13 @@ export default function ProcessInstanceListTable({
     });
 
     const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
-      const modifiedProcessModelId: String =
-        modifyProcessIdentifierForPathParam(row.process_model_identifier);
-      return (
-        <Link
-          data-qa="process-instance-show-link"
-          to={`${processInstanceShowPathPrefix}/${modifiedProcessModelId}/${id}`}
-          title={`View process instance ${id}`}
-        >
-          <span data-qa="paginated-entity-id">{id}</span>
-        </Link>
-      );
+      return <span data-qa="paginated-entity-id">{id}</span>;
     };
     const formatProcessModelIdentifier = (_row: any, identifier: any) => {
-      return (
-        <Link
-          to={`/admin/process-models/${modifyProcessIdentifierForPathParam(
-            identifier
-          )}`}
-        >
-          {identifier}
-        </Link>
-      );
+      return <span>{identifier}</span>;
+    };
+    const formatProcessModelDisplayName = (_row: any, identifier: any) => {
+      return <span>{identifier}</span>;
     };
 
     const formatSecondsForDisplay = (_row: any, seconds: any) => {
@@ -1237,7 +1256,7 @@ export default function ProcessInstanceListTable({
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
-      process_model_display_name: FormatProcessModelDisplayName,
+      process_model_display_name: formatProcessModelDisplayName,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
     };
@@ -1245,21 +1264,65 @@ export default function ProcessInstanceListTable({
       const formatter =
         reportColumnFormatters[column.accessor] ?? defaultFormatter;
       const value = row[column.accessor];
+      const modifiedModelId = modifyProcessIdentifierForPathParam(
+        row.process_model_identifier
+      );
+      const navigateToProcessInstance = () => {
+        navigate(
+          `${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`
+        );
+      };
+      const navigateToProcessModel = () => {
+        navigate(`/admin/process-models/${modifiedModelId}`);
+      };
+
       if (column.accessor === 'status') {
         return (
-          <td data-qa={`process-instance-status-${value}`}>
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+          <td
+            onClick={navigateToProcessInstance}
+            onKeyDown={navigateToProcessInstance}
+            data-qa={`process-instance-status-${value}`}
+          >
             {formatter(row, value)}
           </td>
         );
       }
-      return <td>{formatter(row, value)}</td>;
+      if (column.accessor === 'process_model_display_name') {
+        const pmStyle = { background: 'rgba(0, 0, 0, .02)' };
+        return (
+          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+          <td
+            style={pmStyle}
+            onClick={navigateToProcessModel}
+            onKeyDown={navigateToProcessModel}
+          >
+            {formatter(row, value)}
+          </td>
+        );
+      }
+      return (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <td
+          data-qa={`process-instance-show-link-${column.accessor}`}
+          onKeyDown={navigateToProcessModel}
+          onClick={navigateToProcessInstance}
+        >
+          {formatter(row, value)}
+        </td>
+      );
     };
 
     const rows = processInstances.map((row: any) => {
       const currentRow = reportColumns().map((column: any) => {
         return formattedColumn(row, column);
       });
-      return <tr key={row.id}>{currentRow}</tr>;
+      const rowStyle = { cursor: 'pointer' };
+      return (
+        <tr style={rowStyle} key={row.id}>
+          {currentRow}
+        </tr>
+      );
     });
 
     return (
