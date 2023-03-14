@@ -91,7 +91,7 @@ class ServiceTaskDelegate:
     def call_connector(name: str, bpmn_params: Any, task_data: Any) -> str:
         """Calls a connector via the configured proxy."""
         call_url = f"{connector_proxy_url()}/v1/do/{name}"
-        current_app.logger.error(f"Calling connector proxy using connector: {name}")
+        current_app.logger.info(f"Calling connector proxy using connector: {name}")
         with sentry_sdk.start_span(op="connector_by_name", description=name):
             with sentry_sdk.start_span(op="call-connector", description=call_url):
                 params = {
