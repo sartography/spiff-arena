@@ -25,6 +25,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -308,6 +309,9 @@ class BaseTest:
         )
         db.session.add(process_instance)
         db.session.commit()
+
+        ProcessInstanceQueueService.enqueue(process_instance)
+
         return process_instance
 
     @classmethod
