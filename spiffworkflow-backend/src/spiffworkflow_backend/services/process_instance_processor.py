@@ -98,9 +98,6 @@ from spiffworkflow_backend.services.workflow_execution_service import (
     execution_strategy_named,
 )
 from spiffworkflow_backend.services.workflow_execution_service import (
-    StepDetailLoggingDelegate,
-)
-from spiffworkflow_backend.services.workflow_execution_service import (
     TaskModelSavingDelegate,
 )
 from spiffworkflow_backend.services.workflow_execution_service import (
@@ -1660,7 +1657,6 @@ class ProcessInstanceProcessor:
         execution_strategy_name: str = "greedy",
     ) -> None:
         """Do_engine_steps."""
-
         # NOTE: Commenting out to test how this changes performance:
         # def spiff_step_details_mapping_builder(
         #     task: SpiffTask, start: float, end: float

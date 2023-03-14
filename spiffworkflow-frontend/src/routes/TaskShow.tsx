@@ -23,7 +23,7 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
 export default function TaskShow() {
   const [task, setTask] = useState<ProcessInstanceTask | null>(null);
-  const [userTasks, setUserTasks] = useState(null);
+  const [userTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
@@ -33,6 +33,8 @@ export default function TaskShow() {
   useEffect(() => {
     const processResult = (result: ProcessInstanceTask) => {
       setTask(result);
+      setDisabled(false);
+      /*  Disable call to load previous tasks -- do not display menu.
       const url = `/v1.0/process-instances/for-me/${modifyProcessIdentifierForPathParam(
         result.process_model_identifier
       )}/${params.process_instance_id}/task-info`;
@@ -52,6 +54,7 @@ export default function TaskShow() {
           addError(error);
         },
       });
+      */
     };
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}`,
