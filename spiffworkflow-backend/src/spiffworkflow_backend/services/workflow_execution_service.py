@@ -4,7 +4,6 @@ from typing import Callable
 from typing import List
 from typing import Optional
 
-from flask import current_app
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
@@ -291,8 +290,14 @@ class WorkflowExecutionService:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-        with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)):
-            raise AssertionError(f"The current thread has not obtained a lock for this process instance ({self.process_instance_model.id}).")
+        with safe_assertion(
+            not ProcessInstanceLockService.has_lock(self.process_instance_model.id)
+        ) as tripped:
+            if tripped:
+                raise AssertionError(
+                    "The current thread has not obtained a lock for this process"
+                    f" instance ({self.process_instance_model.id})."
+                )
 
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()

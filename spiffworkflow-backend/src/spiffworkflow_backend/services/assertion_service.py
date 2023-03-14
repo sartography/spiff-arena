@@ -1,13 +1,15 @@
 """Assertion_service."""
-
 import contextlib
+from typing import Generator
+
 import sentry_sdk
 from flask import current_app
 
+
 @contextlib.contextmanager
-def safe_assertion(condition: bool) -> None:
+def safe_assertion(condition: bool) -> Generator[bool, None, None]:
     try:
-        yield
+        yield True
     except AssertionError as e:
         if not condition:
             sentry_sdk.capture_exception(e)
