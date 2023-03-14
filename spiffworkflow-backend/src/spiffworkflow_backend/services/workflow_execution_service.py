@@ -4,6 +4,7 @@ from typing import Callable
 from typing import List
 from typing import Optional
 
+from flask import current_app
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
@@ -19,6 +20,9 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.services.process_instance_lock_service import (
+    ProcessInstanceLockService,
+)
 from spiffworkflow_backend.services.task_service import JsonDataDict
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -202,7 +206,7 @@ class ExecutionStrategy:
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
-    """The common execution strategy. This will greedily run all engine step without stopping."""
+    """The common execution strategy. This will greedily run all engine steps without stopping."""
 
     def do_engine_steps(
         self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
@@ -286,9 +290,16 @@ class WorkflowExecutionService:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
+        if not ProcessInstanceLockService.has_lock(self.process_instance_model.id):
+            # TODO: can't be an exception yet - believe there are flows that are not locked.
+            current_app.logger.error(
+                "The current thread has not obtained a lock for this process instance.",
+            )
+
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
+            # TODO: implicit re-entrant locks here `with_dequeued`
             self.execution_strategy.do_engine_steps(self.bpmn_process_instance, exit_at)
 
             if self.bpmn_process_instance.is_completed():

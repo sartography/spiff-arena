@@ -29,10 +29,13 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
+    ProcessInstanceProcessor,
+)
+from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceIsAlreadyLockedError,
 )
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
@@ -81,9 +84,15 @@ class ProcessInstanceService:
     @staticmethod
     def do_waiting(status_value: str = ProcessInstanceStatus.waiting.value) -> None:
         """Do_waiting."""
+        locked_process_instance_ids = ProcessInstanceQueueService.dequeue_many(
+            status_value
+        )
+        if len(locked_process_instance_ids) == 0:
+            return
+
         records = (
             db.session.query(ProcessInstanceModel)
-            .filter(ProcessInstanceModel.status == status_value)
+            .filter(ProcessInstanceModel.id.in_(locked_process_instance_ids))  # type: ignore
             .all()
         )
         process_instance_lock_prefix = "Background"
@@ -97,7 +106,12 @@ class ProcessInstanceService:
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.lock_process_instance(process_instance_lock_prefix)
                 locked = True
-                processor.do_engine_steps(save=True)
+                execution_strategy_name = current_app.config[
+                    "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"
+                ]
+                processor.do_engine_steps(
+                    save=True, execution_strategy_name=execution_strategy_name
+                )
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
