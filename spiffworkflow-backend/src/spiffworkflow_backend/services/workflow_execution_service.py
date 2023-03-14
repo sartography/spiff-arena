@@ -291,7 +291,7 @@ class WorkflowExecutionService:
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         with safe_assertion(
-            not ProcessInstanceLockService.has_lock(self.process_instance_model.id)
+            ProcessInstanceLockService.has_lock(self.process_instance_model.id)
         ) as tripped:
             if tripped:
                 raise AssertionError(
