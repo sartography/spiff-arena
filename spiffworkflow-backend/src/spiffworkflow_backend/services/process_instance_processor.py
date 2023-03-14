@@ -1661,17 +1661,19 @@ class ProcessInstanceProcessor:
     ) -> None:
         """Do_engine_steps."""
 
-        def spiff_step_details_mapping_builder(
-            task: SpiffTask, start: float, end: float
-        ) -> dict:
-            self._script_engine.environment.revise_state_with_task_data(task)
-            return self.spiff_step_details_mapping(task, start, end)
-
-        step_delegate = StepDetailLoggingDelegate(
-            self.increment_spiff_step, spiff_step_details_mapping_builder
-        )
+        # NOTE: Commenting out to test how this changes performance:
+        # def spiff_step_details_mapping_builder(
+        #     task: SpiffTask, start: float, end: float
+        # ) -> dict:
+        #     self._script_engine.environment.revise_state_with_task_data(task)
+        #     return self.spiff_step_details_mapping(task, start, end)
+        #
+        # step_delegate = StepDetailLoggingDelegate(
+        #     self.increment_spiff_step, spiff_step_details_mapping_builder
+        # )
         task_model_delegate = TaskModelSavingDelegate(
-            secondary_engine_step_delegate=step_delegate,
+            # secondary_engine_step_delegate=step_delegate,
+            secondary_engine_step_delegate=None,
             serializer=self._serializer,
             process_instance=self.process_instance_model,
         )
