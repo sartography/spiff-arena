@@ -51,7 +51,6 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
-from sqlalchemy import text
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -147,7 +146,6 @@ class PotentialOwnerUserNotFoundError(Exception):
 
 class MissingProcessInfoError(Exception):
     """MissingProcessInfoError."""
-
 
 
 class SpiffStepDetailIsMissingError(Exception):
@@ -1636,7 +1634,9 @@ class ProcessInstanceProcessor:
         )
 
         if execution_strategy_name is None:
-            execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
+            execution_strategy_name = current_app.config[
+                "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"
+            ]
 
         execution_strategy = execution_strategy_named(
             execution_strategy_name, task_model_delegate
@@ -1655,9 +1655,7 @@ class ProcessInstanceProcessor:
     def log_spiff_step_details(self, step_details: Any) -> None:
         if ProcessInstanceLockService.has_lock(self.process_instance_model.id):
             locked_by = ProcessInstanceLockService.locked_by()
-            message = (
-                f"ADDING SPIFF BULK STEP DETAILS: {locked_by}: {step_details}"
-            )
+            message = f"ADDING SPIFF BULK STEP DETAILS: {locked_by}: {step_details}"
             current_app.logger.debug(message)
 
     def cancel_notify(self) -> None:

@@ -1,12 +1,10 @@
 import logging
-import threading
 import time
 from typing import Callable
 from typing import List
 from typing import Optional
 
 from flask import current_app
-
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
@@ -20,10 +18,11 @@ from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
-from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.services.process_instance_lock_service import (
+    ProcessInstanceLockService,
+)
 from spiffworkflow_backend.services.task_service import JsonDataDict
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -296,7 +295,7 @@ class WorkflowExecutionService:
             current_app.logger.error(
                 "The current thread has not obtained a lock for this process instance.",
             )
-            
+
         try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 

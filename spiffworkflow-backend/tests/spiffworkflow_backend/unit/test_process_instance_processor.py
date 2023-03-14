@@ -18,11 +18,11 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.authorization_service import (
     UserDoesNotHaveAccessToTaskError,
 )
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceIsAlreadyLockedError,
-)
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
+)
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceIsAlreadyLockedError,
 )
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
@@ -463,7 +463,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with pytest.raises(ProcessInstanceIsAlreadyLockedError):
             processor.lock_process_instance("TEST")
 
-        #with pytest.raises(ProcessInstanceLockedBySomethingElseError):
+        # with pytest.raises(ProcessInstanceLockedBySomethingElseError):
         #    processor.unlock_process_instance("TEST2")
 
         processor.unlock_process_instance("TEST")

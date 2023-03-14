@@ -1,28 +1,16 @@
-import logging
 import threading
-import time
 from typing import Any
-from typing import Callable
 from typing import List
 from typing import Optional
 
-import flask.app
 from flask import current_app
-
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
 
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_instance_correlation import (
-    MessageInstanceCorrelationRuleModel,
+from spiffworkflow_backend.models.process_instance_queue import (
+    ProcessInstanceQueueModel,
 )
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 
 
 class ProcessInstanceLockService:
@@ -50,7 +38,9 @@ class ProcessInstanceLockService:
         return f"{ctx['domain']}:{ctx['uuid']}:{ctx['thread_id']}"
 
     @classmethod
-    def lock(cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel) -> None:
+    def lock(
+        cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel
+    ) -> None:
         ctx = cls.get_thread_local_locking_context()
         ctx["locks"][process_instance_id] = queue_entry
 
@@ -68,7 +58,9 @@ class ProcessInstanceLockService:
         return ctx["locks"].pop(process_instance_id)
 
     @classmethod
-    def try_unlock(cls, process_instance_id: int) -> Optional[ProcessInstanceQueueModel]:
+    def try_unlock(
+        cls, process_instance_id: int
+    ) -> Optional[ProcessInstanceQueueModel]:
         ctx = cls.get_thread_local_locking_context()
         return ctx["locks"].pop(process_instance_id, None)
 
@@ -76,4 +68,3 @@ class ProcessInstanceLockService:
     def has_lock(cls, process_instance_id: int) -> bool:
         ctx = cls.get_thread_local_locking_context()
         return process_instance_id in ctx["locks"]
-

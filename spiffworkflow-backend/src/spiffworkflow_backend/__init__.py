@@ -70,11 +70,13 @@ def start_scheduler(
     scheduler = scheduler_class()
 
     # TODO: polling intervals for different jobs
-    polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
+    polling_interval_in_seconds = app.config[
+        "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"
+    ]
     # TODO: add job to release locks to simplify other queries
     # TODO: add job to delete completed entires
     # TODO: add job to run old/low priority instances so they do not get drowned out
-    
+
     scheduler.add_job(
         BackgroundProcessingService(app).process_message_instances_with_app_context,
         "interval",
@@ -92,15 +94,20 @@ def start_scheduler(
     )
     scheduler.start()
 
+
 def should_start_scheduler(app: flask.app.Flask) -> bool:
     if not app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
         return False
 
     # do not start the scheduler twice in flask debug mode but support code reloading
-    if app.config["ENV_IDENTIFIER"] != "local_development" or os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+    if (
+        app.config["ENV_IDENTIFIER"] != "local_development"
+        or os.environ.get("WERKZEUG_RUN_MAIN") != "true"
+    ):
         return False
 
     return True
+
 
 class NoOpCipher:
     def encrypt(self, value: str) -> bytes:
