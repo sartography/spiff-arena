@@ -2,9 +2,6 @@ import time
 from typing import List
 
 from flask import current_app
-from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -22,7 +19,7 @@ class ProcessInstanceIsAlreadyLockedError(Exception):
 
 
 class ProcessInstanceQueueService:
-    """TODO: comment"""
+    """TODO: comment."""
 
     @staticmethod
     def enqueue(process_instance: ProcessInstanceModel) -> None:
@@ -52,7 +49,7 @@ class ProcessInstanceQueueService:
 
         db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.process_instance_id == process_instance.id,
-            ProcessInstanceQueueModel.locked_by == None,
+            ProcessInstanceQueueModel.locked_by.is_(None),
         ).update(
             {
                 "locked_by": locked_by,
@@ -87,7 +84,7 @@ class ProcessInstanceQueueService:
         # TODO: configurable params (priority/run_at/limit)
         db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.status == status_value,
-            ProcessInstanceQueueModel.locked_by == None,
+            ProcessInstanceQueueModel.locked_by.is_(None),
         ).update(
             {
                 "locked_by": locked_by,

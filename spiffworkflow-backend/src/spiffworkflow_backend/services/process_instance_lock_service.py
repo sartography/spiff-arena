@@ -4,9 +4,6 @@ from typing import List
 from typing import Optional
 
 from flask import current_app
-from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend.models.process_instance_queue import (
     ProcessInstanceQueueModel,
