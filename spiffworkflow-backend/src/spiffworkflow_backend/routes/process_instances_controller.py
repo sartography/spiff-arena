@@ -30,6 +30,9 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSc
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
+from spiffworkflow_backend.models.process_instance_queue import (
+    ProcessInstanceQueueModel,
+)
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -415,6 +418,9 @@ def process_instance_delete(
         process_instance_id=process_instance.id
     ).delete()
     db.session.query(SpiffStepDetailsModel).filter_by(
+        process_instance_id=process_instance.id
+    ).delete()
+    db.session.query(ProcessInstanceQueueModel).filter_by(
         process_instance_id=process_instance.id
     ).delete()
     db.session.delete(process_instance)
