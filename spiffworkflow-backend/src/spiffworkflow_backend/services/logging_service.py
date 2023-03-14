@@ -161,6 +161,9 @@ def setup_logger(app: Flask) -> None:
         spiff_logger_filehandler.setLevel(spiff_log_level)
         spiff_logger_filehandler.setFormatter(log_formatter)
 
+    # these loggers have been deemed too verbose to be useful
+    garbage_loggers_to_exclude = ["connexion"]
+
     # make all loggers act the same
     for name in logging.root.manager.loggerDict:
         # use a regex so spiffworkflow_backend isn't filtered out
@@ -172,10 +175,15 @@ def setup_logger(app: Flask) -> None:
                 the_logger.propagate = False
                 the_logger.addHandler(spiff_logger_filehandler)
             else:
-                if len(the_logger.handlers) < 1:
-                    # it's very verbose, so only add handlers for the obscure loggers when log level is DEBUG
-                    if upper_log_level_string == "DEBUG":
-                        the_logger.addHandler(logging.StreamHandler(sys.stdout))
+                # it's very verbose, so only add handlers for the obscure loggers when log level is DEBUG
+                if upper_log_level_string == "DEBUG":
+                    if len(the_logger.handlers) < 1:
+                        exclude_logger_name_from_logging = False
+                        for garbage_logger in garbage_loggers_to_exclude:
+                            if name.startswith(garbage_logger):
+                                exclude_logger_name_from_logging = True
+                        if not exclude_logger_name_from_logging:
+                            the_logger.addHandler(logging.StreamHandler(sys.stdout))
                 for the_handler in the_logger.handlers:
                     the_handler.setFormatter(log_formatter)
                     the_handler.setLevel(log_level)
