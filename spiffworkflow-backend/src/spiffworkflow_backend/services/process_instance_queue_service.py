@@ -49,7 +49,7 @@ class ProcessInstanceQueueService:
 
         db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.process_instance_id == process_instance.id,
-            ProcessInstanceQueueModel.locked_by.is_(None),
+            ProcessInstanceQueueModel.locked_by.is_(None),  # type: ignore
         ).update(
             {
                 "locked_by": locked_by,
@@ -84,7 +84,7 @@ class ProcessInstanceQueueService:
         # TODO: configurable params (priority/run_at/limit)
         db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.status == status_value,
-            ProcessInstanceQueueModel.locked_by.is_(None),
+            ProcessInstanceQueueModel.locked_by.is_(None),  # type: ignore
         ).update(
             {
                 "locked_by": locked_by,

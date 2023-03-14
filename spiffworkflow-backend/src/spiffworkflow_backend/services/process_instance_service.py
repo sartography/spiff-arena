@@ -92,7 +92,7 @@ class ProcessInstanceService:
 
         records = (
             db.session.query(ProcessInstanceModel)
-            .filter(ProcessInstanceModel.id.in_(locked_process_instance_ids))
+            .filter(ProcessInstanceModel.id.in_(locked_process_instance_ids))  # type: ignore
             .all()
         )
         process_instance_lock_prefix = "Background"

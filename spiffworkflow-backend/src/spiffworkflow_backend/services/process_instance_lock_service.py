@@ -27,7 +27,7 @@ class ProcessInstanceLockService:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         if not hasattr(tld, "lock_service_context"):
             cls.set_thread_local_locking_context("web")
-        return tld.lock_service_context
+        return tld.lock_service_context  # type: ignore
 
     @classmethod
     def locked_by(cls) -> str:
@@ -42,7 +42,7 @@ class ProcessInstanceLockService:
         ctx["locks"][process_instance_id] = queue_entry
 
     @classmethod
-    def lock_many(cls, queue_entries: List[ProcessInstanceQueueModel]) -> None:
+    def lock_many(cls, queue_entries: List[ProcessInstanceQueueModel]) -> List[int]:
         ctx = cls.get_thread_local_locking_context()
         new_locks = {entry.process_instance_id: entry for entry in queue_entries}
         new_lock_ids = list(new_locks.keys())
@@ -52,14 +52,14 @@ class ProcessInstanceLockService:
     @classmethod
     def unlock(cls, process_instance_id: int) -> ProcessInstanceQueueModel:
         ctx = cls.get_thread_local_locking_context()
-        return ctx["locks"].pop(process_instance_id)
+        return ctx["locks"].pop(process_instance_id)  # type: ignore
 
     @classmethod
     def try_unlock(
         cls, process_instance_id: int
     ) -> Optional[ProcessInstanceQueueModel]:
         ctx = cls.get_thread_local_locking_context()
-        return ctx["locks"].pop(process_instance_id, None)
+        return ctx["locks"].pop(process_instance_id, None)  # type: ignore
 
     @classmethod
     def has_lock(cls, process_instance_id: int) -> bool:
