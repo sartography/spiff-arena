@@ -30,6 +30,9 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSc
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
+from spiffworkflow_backend.models.process_instance_queue import (
+    ProcessInstanceQueueModel,
+)
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
 )
@@ -54,6 +57,9 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
+)
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
 )
 from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportFilter,
@@ -92,6 +98,7 @@ def process_instance_create(
             process_model_identifier, g.user
         )
     )
+    ProcessInstanceQueueService.enqueue(process_instance)
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=201,
@@ -411,6 +418,9 @@ def process_instance_delete(
         process_instance_id=process_instance.id
     ).delete()
     db.session.query(SpiffStepDetailsModel).filter_by(
+        process_instance_id=process_instance.id
+    ).delete()
+    db.session.query(ProcessInstanceQueueModel).filter_by(
         process_instance_id=process_instance.id
     ).delete()
     db.session.delete(process_instance)
