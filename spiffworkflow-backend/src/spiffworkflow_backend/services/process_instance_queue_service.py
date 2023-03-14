@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_queue import ProcessInstanceQueueModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
@@ -70,36 +71,55 @@ class ProcessInstanceQueueService:
 
     @staticmethod
     def dequeue(process_instance: ProcessInstanceModel) -> None:
+        if ProcessInstanceLockService.has_lock(process_instance.id):
+            return
+
         locked_by = ProcessInstanceLockService.locked_by()
 
         db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.process_instance_id==process_instance.id,
             ProcessInstanceQueueModel.locked_by==None,
         ).update({
-            "locked_by": ProcessInstanceLockService.locked_by(),
+            "locked_by": locked_by,
         })
 
         db.session.commit()
 
         queue_entry = db.session.query(ProcessInstanceQueueModel).filter(
             ProcessInstanceQueueModel.process_instance_id==process_instance.id,
+            ProcessInstanceQueueModel.locked_by==locked_by,
         ).first()
 
+        # TODO: use existing lock exception
         if queue_entry is None:
             raise ApiError(
                     "process_not_in_queue",
                     "The process instance has not been added to the queue."
                 )
 
-        if queue_entry.locked_by != locked_by:
-            raise ApiError(
-                    "process already locked",
-                    "The process instance has already been locked by another thread."
-                )
-
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
         
 
     @staticmethod
-    def dequeue_many():
-        pass
+    def dequeue_many(status_value: str = ProcessInstanceStatus.waiting.value) -> List[int]:
+
+        locked_by = ProcessInstanceLockService.locked_by()
+
+        # TODO: configurable params (priority/run_at/limit)
+        db.session.query(ProcessInstanceQueueModel).filter(
+            ProcessInstanceQueueModel.status==status_value,
+            ProcessInstanceQueueModel.locked_by==None,
+        ).update({
+            "locked_by": locked_by,
+        })
+
+        db.session.commit()
+
+        queue_entries = db.session.query(ProcessInstanceQueueModel).filter(
+            ProcessInstanceQueueModel.status==status_value,
+            ProcessInstanceQueueModel.locked_by==locked_by,
+        ).all()
+
+        locked_ids = ProcessInstanceLockService.lock_many(queue_entries)
+
+        return locked_ids

@@ -32,7 +32,6 @@ from spiffworkflow_backend.services.authorization_service import AuthorizationSe
 from spiffworkflow_backend.services.background_processing_service import (
     BackgroundProcessingService,
 )
-from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 
 
 class MyJSONEncoder(DefaultJSONProvider):
@@ -69,31 +68,27 @@ def start_scheduler(
     """Start_scheduler."""
     scheduler = scheduler_class()
 
+    # TODO: polling intervals for different jobs
     polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
-    #scheduler.add_job(
-    #    BackgroundProcessingService(app).do_enqueued_engine_steps,
-    #    "interval",
-    #    seconds=polling_interval_in_seconds,
-    #)
     # TODO: add job to release locks to simplify other queries
     # TODO: add job to delete completed entires
     # TODO: add job to run old/low priority instances so they do not get drowned out
     
-    #scheduler.add_job(
-    #    BackgroundProcessingService(app).process_message_instances_with_app_context,
-    #    "interval",
-    #    seconds=10,
-    #)
-    #scheduler.add_job(
-    #    BackgroundProcessingService(app).process_waiting_process_instances,
-    #    "interval",
-    #    seconds=10,
-    #)
-    #scheduler.add_job(
-    #    BackgroundProcessingService(app).process_user_input_required_process_instances,
-    #    "interval",
-    #    seconds=120,
-    #)
+    scheduler.add_job(
+        BackgroundProcessingService(app).process_message_instances_with_app_context,
+        "interval",
+        seconds=10,
+    )
+    scheduler.add_job(
+        BackgroundProcessingService(app).process_waiting_process_instances,
+        "interval",
+        seconds=polling_interval_in_seconds,
+    )
+    scheduler.add_job(
+        BackgroundProcessingService(app).process_user_input_required_process_instances,
+        "interval",
+        seconds=120,
+    )
     scheduler.start()
 
 def should_start_scheduler(app: flask.app.Flask) -> bool:
@@ -145,8 +140,6 @@ def create_app() -> flask.app.Flask:
     app.config["MAIL_APP"] = mail
 
     app.json = MyJSONEncoder(app)
-
-    ProcessInstanceLockService.set_thread_local_locking_context(app, "WEB")
 
     if should_start_scheduler(app):
         start_scheduler(app)

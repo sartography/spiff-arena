@@ -1,6 +1,7 @@
 import logging
 import threading
 import time
+from typing import Any
 from typing import Callable
 from typing import List
 from typing import Optional
@@ -27,42 +28,52 @@ from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsMode
 class ProcessInstanceLockService:
     """TODO: comment."""
 
-    @staticmethod
-    def set_thread_local_locking_context(app: flask.app.Flask, domain: str) -> None:
-        app.config["LOCK_SERVICE_CONTEXT"] = [
-            domain,
-            str(app.config["PROCESS_UUID"]),
-            str(threading.get_ident()),
-        ]
+    @classmethod
+    def set_thread_local_locking_context(cls, domain: str) -> None:
+        current_app.config["THREAD_LOCAL_DATA"].lock_service_context = {
+            "domain": domain,
+            "uuid": current_app.config["PROCESS_UUID"],
+            "thread_id": threading.get_ident(),
+            "locks": {},
+        }
 
     @classmethod
-    def _locked_ids(cls) -> set[int]:
-        # TODO: want to find the highest entry point after THREAD_LOCAL_DATA has been 
-        # set so this doesn't have to be lazy loaded. __init__ was too early to set 
-        # in `set_thread_local_locking_context`
+    def get_thread_local_locking_context(cls) -> dict[str, Any]:
         tld = current_app.config["THREAD_LOCAL_DATA"]
-        if not hasattr(tld, "locked_process_instance_ids"):
-            tld.locked_process_instance_ids = {}
-        return tld.locked_process_instance_ids
+        if not hasattr(tld, "lock_service_context"):
+            cls.set_thread_local_locking_context("web")
+        return tld.lock_service_context
 
-    @staticmethod
-    def locked_by() -> str:
-        # TODO: probably just do this in `set_thread_local_locking_context`
-        return ":".join(current_app.config["LOCK_SERVICE_CONTEXT"])
+    @classmethod
+    def locked_by(cls) -> str:
+        ctx = cls.get_thread_local_locking_context()
+        return f"{ctx['domain']}:{ctx['uuid']}:{ctx['thread_id']}"
 
     @classmethod
     def lock(cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel) -> None:
-        cls._locked_ids()[process_instance_id] = queue_entry
+        ctx = cls.get_thread_local_locking_context()
+        ctx["locks"][process_instance_id] = queue_entry
+
+    @classmethod
+    def lock_many(cls, queue_entries: List[ProcessInstanceQueueModel]) -> None:
+        ctx = cls.get_thread_local_locking_context()
+        new_locks = {entry.process_instance_id: entry for entry in queue_entries}
+        new_lock_ids = list(new_locks.keys())
+        ctx["locks"].update(new_locks)
+        return new_lock_ids
 
     @classmethod
     def unlock(cls, process_instance_id: int) -> ProcessInstanceQueueModel:
-        cls._locked_ids().pop(process_instance_id)
+        ctx = cls.get_thread_local_locking_context()
+        return ctx["locks"].pop(process_instance_id)
 
     @classmethod
     def try_unlock(cls, process_instance_id: int) -> Optional[ProcessInstanceQueueModel]:
-        return cls._locked_ids().pop(process_instance_id, None)
+        ctx = cls.get_thread_local_locking_context()
+        return ctx["locks"].pop(process_instance_id, None)
 
     @classmethod
     def has_lock(cls, process_instance_id: int) -> bool:
-        return process_instance_id in cls._locked_ids()
+        ctx = cls.get_thread_local_locking_context()
+        return process_instance_id in ctx["locks"]
 

@@ -90,6 +90,12 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_instance_lock_service import (
+    ProcessInstanceLockService,
+)
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
+)
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -140,11 +146,8 @@ class MissingProcessInfoError(Exception):
     """MissingProcessInfoError."""
 
 
+# TODO: move to queue service
 class ProcessInstanceIsAlreadyLockedError(Exception):
-    pass
-
-
-class ProcessInstanceLockedBySomethingElseError(Exception):
     pass
 
 
@@ -1566,55 +1569,13 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
-    # inspiration from https://github.com/collectiveidea/delayed_job_active_record/blob/master/lib/delayed/backend/active_record.rb
-    # could consider borrowing their "cleanup all my locks when the app quits" idea as well and
-    #   implement via https://docs.python.org/3/library/atexit.html
+    # TODO: replace with more granular locking in workflow execution service
     def lock_process_instance(self, lock_prefix: str) -> None:
-        current_app.config["THREAD_LOCAL_DATA"].locked_by_prefix = lock_prefix
-        locked_by = f"{lock_prefix}_{current_app.config['PROCESS_UUID']}"
-        current_time_in_seconds = round(time.time())
-        lock_expiry_in_seconds = (
-            current_time_in_seconds
-            - current_app.config[
-                "SPIFFWORKFLOW_BACKEND_ALLOW_CONFISCATING_LOCK_AFTER_SECONDS"
-            ]
-        )
+        ProcessInstanceQueueService.dequeue(self.process_instance_model)
 
-        query_text = text(
-            "UPDATE process_instance SET locked_at_in_seconds ="
-            " :current_time_in_seconds, locked_by = :locked_by where id = :id AND"
-            " (locked_by IS NULL OR locked_at_in_seconds < :lock_expiry_in_seconds);"
-        ).execution_options(autocommit=True)
-        result = db.engine.execute(
-            query_text,
-            id=self.process_instance_model.id,
-            current_time_in_seconds=current_time_in_seconds,
-            locked_by=locked_by,
-            lock_expiry_in_seconds=lock_expiry_in_seconds,
-        )
-        # it seems like autocommit is working above (we see the statement in debug logs) but sqlalchemy doesn't
-        #   seem to update properly so tell it to commit as well.
-        # if we omit this line then querying the record from a unit test doesn't ever show the record as locked.
-        db.session.commit()
-        if result.rowcount < 1:
-            raise ProcessInstanceIsAlreadyLockedError(
-                f"Cannot lock process instance {self.process_instance_model.id}. "
-                "It has already been locked."
-            )
-
+    # TODO: replace with more granular locking in workflow execution service
     def unlock_process_instance(self, lock_prefix: str) -> None:
-        current_app.config["THREAD_LOCAL_DATA"].locked_by_prefix = None
-        locked_by = f"{lock_prefix}_{current_app.config['PROCESS_UUID']}"
-        if self.process_instance_model.locked_by != locked_by:
-            raise ProcessInstanceLockedBySomethingElseError(
-                f"Cannot unlock process instance {self.process_instance_model.id}."
-                f"It locked by {self.process_instance_model.locked_by}"
-            )
-
-        self.process_instance_model.locked_by = None
-        self.process_instance_model.locked_at_in_seconds = None
-        db.session.add(self.process_instance_model)
-        db.session.commit()
+        ProcessInstanceQueueService.enqueue(self.process_instance_model)
 
     def process_bpmn_messages(self) -> None:
         """Process_bpmn_messages."""
@@ -1712,11 +1673,10 @@ class ProcessInstanceProcessor:
     # log the spiff step details so we know what is processing the process
     # instance when a human task has a timer event.
     def log_spiff_step_details(self, step_details: Any) -> None:
-        tld = current_app.config["THREAD_LOCAL_DATA"]
-        if hasattr(tld, "locked_by_prefix") and len(step_details) > 0:
-            locked_by_prefix = tld.locked_by_prefix
+        if ProcessInstanceLockService.has_lock(self.process_instance_model.id):
+            locked_by = ProcessInstanceLockService.locked_by()
             message = (
-                f"ADDING SPIFF BULK STEP DETAILS: {locked_by_prefix}: {step_details}"
+                f"ADDING SPIFF BULK STEP DETAILS: {locked_by}: {step_details}"
             )
             current_app.logger.debug(message)
 

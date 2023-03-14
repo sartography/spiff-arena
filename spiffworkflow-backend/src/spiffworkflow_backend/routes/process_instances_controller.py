@@ -125,7 +125,6 @@ def process_instance_run(
     if do_engine_steps:
         try:
             processor.lock_process_instance("Web")
-            ProcessInstanceQueueService.dequeue(process_instance)
             processor.do_engine_steps(save=True)
         except ApiError as e:
             ErrorHandlingService().handle_error(processor, e)
@@ -141,7 +140,6 @@ def process_instance_run(
                 task=task,
             ) from e
         finally:
-            ProcessInstanceQueueService.enqueue(process_instance)
             processor.unlock_process_instance("Web")
 
         if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:

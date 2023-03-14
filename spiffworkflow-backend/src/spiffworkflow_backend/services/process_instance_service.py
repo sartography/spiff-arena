@@ -31,8 +31,14 @@ from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceIsAlreadyLockedError,
 )
+from spiffworkflow_backend.services.process_instance_lock_service import (
+    ProcessInstanceLockService,
+)
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
+)
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
@@ -79,17 +85,15 @@ class ProcessInstanceService:
         return cls.create_process_instance(process_model, user)
 
     @staticmethod
-    def do_enqueued_engine_steps() -> None:
-        import threading
-        lock_identifier = f"{current_app.config['PROCESS_UUID']}:{threading.get_ident()}"
-        current_app.logger.info(f"do_enqueued_engine_steps: locked_by = {lock_identifier}")
-
-    @staticmethod
     def do_waiting(status_value: str = ProcessInstanceStatus.waiting.value) -> None:
         """Do_waiting."""
+        locked_process_instance_ids = ProcessInstanceQueueService.dequeue_many(status_value)
+        if len(locked_process_instance_ids) == 0:
+            return
+
         records = (
             db.session.query(ProcessInstanceModel)
-            .filter(ProcessInstanceModel.status == status_value)
+            .filter(ProcessInstanceModel.id.in_(locked_process_instance_ids))
             .all()
         )
         process_instance_lock_prefix = "Background"
