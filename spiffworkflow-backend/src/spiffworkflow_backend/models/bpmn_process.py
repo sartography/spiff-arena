@@ -1,4 +1,5 @@
 from __future__ import annotations
+from sqlalchemy.orm import relationship
 
 from sqlalchemy import ForeignKey
 
@@ -23,6 +24,8 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
 
     properties_json: dict = db.Column(db.JSON, nullable=False)
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+
+    tasks = relationship("TaskModel", cascade="delete")  # type: ignore
 
     # subprocess or top_level_process
     # process_type: str = db.Column(db.String(30), nullable=False)
