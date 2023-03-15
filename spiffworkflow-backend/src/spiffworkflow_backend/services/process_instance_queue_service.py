@@ -1,5 +1,6 @@
 import time
 from typing import List
+from typing import Optional
 
 from flask import current_app
 
@@ -12,6 +13,10 @@ from spiffworkflow_backend.models.process_instance_queue import (
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
+
+
+class ProcessInstanceIsNotEnqueuedError(Exception):
+    pass
 
 
 class ProcessInstanceIsAlreadyLockedError(Exception):
@@ -62,21 +67,51 @@ class ProcessInstanceQueueService:
             db.session.query(ProcessInstanceQueueModel)
             .filter(
                 ProcessInstanceQueueModel.process_instance_id == process_instance.id,
-                ProcessInstanceQueueModel.locked_by == locked_by,
             )
             .first()
         )
 
         if queue_entry is None:
+            raise ProcessInstanceIsNotEnqueuedError(
+                f"{locked_by} cannot lock process instance {process_instance.id}. It"
+                " has not been enqueued."
+            )
+
+        if queue_entry.locked_by != locked_by:
             raise ProcessInstanceIsAlreadyLockedError(
-                f"Cannot lock process instance {process_instance.id}. "
-                "It has already been locked or has not been enqueued."
+                f"{locked_by} cannot lock process instance {process_instance.id}. "
+                f"It has already been locked by {queue_entry.locked_by}."
             )
 
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 
-    @staticmethod
+    @classmethod
+    def entries_with_status(
+        cls,
+        status_value: str = ProcessInstanceStatus.waiting.value,
+        locked_by: Optional[str] = None,
+    ) -> List[ProcessInstanceQueueModel]:
+        return (
+            db.session.query(ProcessInstanceQueueModel)
+            .filter(
+                ProcessInstanceQueueModel.status == status_value,
+                ProcessInstanceQueueModel.locked_by == locked_by,
+            )
+            .all()
+        )
+
+    @classmethod
+    def peek_many(
+        cls,
+        status_value: str = ProcessInstanceStatus.waiting.value,
+    ) -> List[int]:
+        queue_entries = cls.entries_with_status(status_value, None)
+        ids_with_status = [entry.process_instance_id for entry in queue_entries]
+        return ids_with_status
+
+    @classmethod
     def dequeue_many(
+        cls,
         status_value: str = ProcessInstanceStatus.waiting.value,
     ) -> List[int]:
         locked_by = ProcessInstanceLockService.locked_by()
@@ -93,14 +128,7 @@ class ProcessInstanceQueueService:
 
         db.session.commit()
 
-        queue_entries = (
-            db.session.query(ProcessInstanceQueueModel)
-            .filter(
-                ProcessInstanceQueueModel.status == status_value,
-                ProcessInstanceQueueModel.locked_by == locked_by,
-            )
-            .all()
-        )
+        queue_entries = cls.entries_with_status(status_value, locked_by)
 
         locked_ids = ProcessInstanceLockService.lock_many(queue_entries)
 

@@ -704,11 +704,8 @@ export default function ProcessInstanceListTable({
     setEndToTime('');
     setProcessInitiatorSelection(null);
     setProcessInitiatorText('');
-
     if (reportMetadata) {
-      reportMetadata.columns = reportMetadata.columns.filter(
-        (column) => !column.filterable
-      );
+      reportMetadata.filter_by = [];
     }
   };
 
