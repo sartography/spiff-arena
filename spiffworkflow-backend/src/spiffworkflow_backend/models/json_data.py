@@ -34,13 +34,9 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def find_object_by_hash(cls, hash: str) -> JsonDataModel:
-        json_data_model: JsonDataModel | None = JsonDataModel.query.filter_by(
-            hash=hash
-        ).first()
+        json_data_model: JsonDataModel | None = JsonDataModel.query.filter_by(hash=hash).first()
         if json_data_model is None:
-            raise JsonDataModelNotFoundError(
-                f"Could not find a json data model entry with hash: {hash}"
-            )
+            raise JsonDataModelNotFoundError(f"Could not find a json data model entry with hash: {hash}")
         return json_data_model
 
     @classmethod

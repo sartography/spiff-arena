@@ -104,9 +104,7 @@ class TestMessageService(BaseTest):
         )
 
         # Now start the main process
-        self.start_sender_process(
-            client, with_super_admin_user, "test_between_processes"
-        )
+        self.start_sender_process(client, with_super_admin_user, "test_between_processes")
         self.assure_a_message_was_sent()
 
         # This is typically called in a background cron process, so we will manually call it
@@ -142,9 +140,7 @@ class TestMessageService(BaseTest):
 
         # The message receiver process is also complete
         message_receiver_process = (
-            ProcessInstanceModel.query.filter_by(
-                process_model_identifier="test_group/message_receive"
-            )
+            ProcessInstanceModel.query.filter_by(process_model_identifier="test_group/message_receive")
             .order_by(ProcessInstanceModel.id)
             .first()
         )
@@ -157,9 +153,7 @@ class TestMessageService(BaseTest):
         group_name: str = "test_group",
     ) -> None:
         process_group_id = group_name
-        self.create_process_group(
-            client, with_super_admin_user, process_group_id, process_group_id
-        )
+        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model = load_test_spec(
             "test_group/message",
@@ -195,9 +189,7 @@ class TestMessageService(BaseTest):
         )
         assert len(send_messages) == 1
         send_message = send_messages[0]
-        assert (
-            send_message.payload == self.payload
-        ), "The send message should match up with the payload"
+        assert send_message.payload == self.payload, "The send message should match up with the payload"
         assert send_message.name == "Request Approval"
         assert send_message.status == "ready"
 
@@ -214,14 +206,10 @@ class TestMessageService(BaseTest):
         waiting_message = waiting_messages[0]
         self.assure_correlation_properties_are_right(waiting_message)
 
-    def assure_correlation_properties_are_right(
-        self, message: MessageInstanceModel
-    ) -> None:
+    def assure_correlation_properties_are_right(self, message: MessageInstanceModel) -> None:
         # Correlation Properties should match up
         po_curr = next(c for c in message.correlation_rules if c.name == "po_number")
-        customer_curr = next(
-            c for c in message.correlation_rules if c.name == "customer_id"
-        )
+        customer_curr = next(c for c in message.correlation_rules if c.name == "customer_id")
         assert po_curr is not None
         assert customer_curr is not None
 
@@ -234,9 +222,7 @@ class TestMessageService(BaseTest):
     ) -> None:
         """Test_can_send_message_to_multiple_process_models."""
         process_group_id = "test_group_multi"
-        self.create_process_group(
-            client, with_super_admin_user, process_group_id, process_group_id
-        )
+        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_sender = load_test_spec(
             "test_group/message_sender",
@@ -267,18 +253,9 @@ class TestMessageService(BaseTest):
         # At this point, the message_sender process has fired two different messages but those
         # processes have not started, and it is now paused, waiting for to receive a message. so
         # we should have two sends and a receive.
-        assert (
-            MessageInstanceModel.query.filter_by(
-                process_instance_id=process_instance_sender.id
-            ).count()
-            == 3
-        )
-        assert (
-            MessageInstanceModel.query.count() == 3
-        )  # all messages are related to the instance
-        orig_send_messages = MessageInstanceModel.query.filter_by(
-            message_type="send"
-        ).all()
+        assert MessageInstanceModel.query.filter_by(process_instance_id=process_instance_sender.id).count() == 3
+        assert MessageInstanceModel.query.count() == 3  # all messages are related to the instance
+        orig_send_messages = MessageInstanceModel.query.filter_by(message_type="send").all()
         assert len(orig_send_messages) == 2
         assert MessageInstanceModel.query.filter_by(message_type="receive").count() == 1
 
@@ -292,52 +269,36 @@ class TestMessageService(BaseTest):
         process_instance_result = ProcessInstanceModel.query.all()
         assert len(process_instance_result) == 3
         process_instance_receiver_one = (
-            ProcessInstanceModel.query.filter_by(
-                process_model_identifier="test_group/message_receiver_one"
-            )
+            ProcessInstanceModel.query.filter_by(process_model_identifier="test_group/message_receiver_one")
             .order_by(ProcessInstanceModel.id)
             .first()
         )
         assert process_instance_receiver_one is not None
         process_instance_receiver_two = (
-            ProcessInstanceModel.query.filter_by(
-                process_model_identifier="test_group/message_receiver_two"
-            )
+            ProcessInstanceModel.query.filter_by(process_model_identifier="test_group/message_receiver_two")
             .order_by(ProcessInstanceModel.id)
             .first()
         )
         assert process_instance_receiver_two is not None
 
         # just make sure it's a different process instance
-        assert (
-            process_instance_receiver_one.process_model_identifier
-            == "test_group/message_receiver_one"
-        )
+        assert process_instance_receiver_one.process_model_identifier == "test_group/message_receiver_one"
         assert process_instance_receiver_one.id != process_instance_sender.id
         assert process_instance_receiver_one.status == "complete"
-        assert (
-            process_instance_receiver_two.process_model_identifier
-            == "test_group/message_receiver_two"
-        )
+        assert process_instance_receiver_two.process_model_identifier == "test_group/message_receiver_two"
         assert process_instance_receiver_two.id != process_instance_sender.id
         assert process_instance_receiver_two.status == "complete"
 
         message_instance_result = (
-            MessageInstanceModel.query.order_by(MessageInstanceModel.id)
-            .order_by(MessageInstanceModel.id)
-            .all()
+            MessageInstanceModel.query.order_by(MessageInstanceModel.id).order_by(MessageInstanceModel.id).all()
         )
         assert len(message_instance_result) == 7
 
         message_instance_receiver_one = [
-            x
-            for x in message_instance_result
-            if x.process_instance_id == process_instance_receiver_one.id
+            x for x in message_instance_result if x.process_instance_id == process_instance_receiver_one.id
         ][0]
         message_instance_receiver_two = [
-            x
-            for x in message_instance_result
-            if x.process_instance_id == process_instance_receiver_two.id
+            x for x in message_instance_result if x.process_instance_id == process_instance_receiver_two.id
         ][0]
         assert message_instance_receiver_one is not None
         assert message_instance_receiver_two is not None
@@ -349,17 +310,13 @@ class TestMessageService(BaseTest):
         MessageService.correlate_all_message_instances()
 
         message_instance_result = (
-            MessageInstanceModel.query.order_by(MessageInstanceModel.id)
-            .order_by(MessageInstanceModel.id)
-            .all()
+            MessageInstanceModel.query.order_by(MessageInstanceModel.id).order_by(MessageInstanceModel.id).all()
         )
         assert len(message_instance_result) == 8
         for message_instance in message_instance_result:
             assert message_instance.status == "completed"
 
-        process_instance_result = ProcessInstanceModel.query.order_by(
-            ProcessInstanceModel.id
-        ).all()
+        process_instance_result = ProcessInstanceModel.query.order_by(ProcessInstanceModel.id).all()
         assert len(process_instance_result) == 3
         for process_instance in process_instance_result:
             assert process_instance.status == "complete"

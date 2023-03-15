@@ -20,9 +20,7 @@ from flask import request
 from flask import url_for
 from werkzeug.wrappers import Response
 
-openid_blueprint = Blueprint(
-    "openid", __name__, template_folder="templates", static_folder="static"
-)
+openid_blueprint = Blueprint("openid", __name__, template_folder="templates", static_folder="static")
 
 OPEN_ID_CODE = ":this_is_not_secure_do_not_use_in_production"
 
@@ -60,10 +58,7 @@ def auth() -> str:
 def form_submit() -> Any:
     """Handles the login form submission."""
     users = get_users()
-    if (
-        request.values["Uname"] in users
-        and request.values["Pass"] == users[request.values["Uname"]]["password"]
-    ):
+    if request.values["Uname"] in users and request.values["Pass"] == users[request.values["Uname"]]["password"]:
         # Redirect back to the end user with some detailed information
         state = request.values.get("state")
         data = {

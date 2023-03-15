@@ -35,9 +35,7 @@ class ProcessInstanceLockService:
         return f"{ctx['domain']}:{ctx['uuid']}:{ctx['thread_id']}"
 
     @classmethod
-    def lock(
-        cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel
-    ) -> None:
+    def lock(cls, process_instance_id: int, queue_entry: ProcessInstanceQueueModel) -> None:
         ctx = cls.get_thread_local_locking_context()
         ctx["locks"][process_instance_id] = queue_entry
 
@@ -55,9 +53,7 @@ class ProcessInstanceLockService:
         return ctx["locks"].pop(process_instance_id)  # type: ignore
 
     @classmethod
-    def try_unlock(
-        cls, process_instance_id: int
-    ) -> Optional[ProcessInstanceQueueModel]:
+    def try_unlock(cls, process_instance_id: int) -> Optional[ProcessInstanceQueueModel]:
         ctx = cls.get_thread_local_locking_context()
         return ctx["locks"].pop(process_instance_id, None)  # type: ignore
 

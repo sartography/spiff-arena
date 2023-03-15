@@ -19,9 +19,7 @@ class TestLoggingService(BaseTest):
         """Test_process_instance_run."""
         process_group_id = "test_logging_spiff_logger"
         process_model_id = "simple_script"
-        self.create_process_group(
-            client=client, user=with_super_admin_user, process_group_id=process_group_id
-        )
+        self.create_process_group(client=client, user=with_super_admin_user, process_group_id=process_group_id)
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         # create the model
         self.create_process_model_with_api(
@@ -33,9 +31,7 @@ class TestLoggingService(BaseTest):
         )
 
         bpmn_file_name = "simple_script.bpmn"
-        bpmn_file_data_bytes = self.get_test_data_file_contents(
-            bpmn_file_name, "simple_script"
-        )
+        bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, "simple_script")
         # add bpmn to the model
         self.create_spec_file(
             client=client,

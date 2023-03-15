@@ -46,9 +46,7 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
         raise (
             ApiError(
                 error_code="could_not_requests_to_check",
-                message=(
-                    "The key 'requests_to_check' not found at root of request body."
-                ),
+                message="The key 'requests_to_check' not found at root of request body.",
                 status_code=400,
             )
         )
@@ -60,9 +58,7 @@ def permissions_check(body: Dict[str, Dict[str, list[str]]]) -> flask.wrappers.R
             response_dict[target_uri] = {}
 
         for http_method in http_methods:
-            permission_string = AuthorizationService.get_permission_from_http_method(
-                http_method
-            )
+            permission_string = AuthorizationService.get_permission_from_http_method(http_method)
             if permission_string:
                 has_permission = AuthorizationService.user_has_permission(
                     user=g.user,
@@ -98,10 +94,7 @@ def _process_data_fetcher(
         if file_data is None:
             raise ApiError(
                 error_code="process_instance_file_data_not_found",
-                message=(
-                    "Could not find file data related to the digest:"
-                    f" {process_data_identifier}"
-                ),
+                message=f"Could not find file data related to the digest: {process_data_identifier}",
             )
         mimetype = file_data.mimetype
         filename = file_data.filename
@@ -169,9 +162,7 @@ def github_webhook_receive(body: Dict) -> Response:
     auth_header = request.headers.get("X-Hub-Signature-256")
     AuthorizationService.verify_sha256_token(auth_header)
     result = GitService.handle_web_hook(body)
-    return Response(
-        json.dumps({"git_pull": result}), status=200, mimetype="application/json"
-    )
+    return Response(json.dumps({"git_pull": result}), status=200, mimetype="application/json")
 
 
 def task_data_update(
@@ -181,9 +172,7 @@ def task_data_update(
     body: Dict,
 ) -> Response:
     """Update task data."""
-    process_instance = ProcessInstanceModel.query.filter(
-        ProcessInstanceModel.id == int(process_instance_id)
-    ).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
     if process_instance:
         if process_instance.status != "suspended":
             raise ProcessInstanceTaskDataCannotBeUpdatedError(
@@ -195,10 +184,7 @@ def task_data_update(
         if process_instance_data is None:
             raise ApiError(
                 error_code="process_instance_data_not_found",
-                message=(
-                    "Could not find task data related to process instance:"
-                    f" {process_instance.id}"
-                ),
+                message=f"Could not find task data related to process instance: {process_instance.id}",
             )
         process_instance_data_dict = json.loads(process_instance_data.runtime_json)
 
@@ -206,12 +192,8 @@ def task_data_update(
             new_task_data_str: str = body["new_task_data"]
             new_task_data_dict = json.loads(new_task_data_str)
             if task_id in process_instance_data_dict["tasks"]:
-                process_instance_data_dict["tasks"][task_id][
-                    "data"
-                ] = new_task_data_dict
-                process_instance_data.runtime_json = json.dumps(
-                    process_instance_data_dict
-                )
+                process_instance_data_dict["tasks"][task_id]["data"] = new_task_data_dict
+                process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
                 db.session.add(process_instance_data)
                 try:
                     db.session.commit()
@@ -224,18 +206,12 @@ def task_data_update(
             else:
                 raise ApiError(
                     error_code="update_task_data_error",
-                    message=(
-                        f"Could not find Task: {task_id} in Instance:"
-                        f" {process_instance_id}."
-                    ),
+                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
                 )
     else:
         raise ApiError(
             error_code="update_task_data_error",
-            message=(
-                f"Could not update task data for Instance: {process_instance_id}, and"
-                f" Task: {task_id}."
-            ),
+            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_id}.",
         )
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
@@ -268,9 +244,7 @@ def send_bpmn_event(
     body: Dict,
 ) -> Response:
     """Send a bpmn event to a workflow."""
-    process_instance = ProcessInstanceModel.query.filter(
-        ProcessInstanceModel.id == int(process_instance_id)
-    ).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
     if process_instance:
         processor = ProcessInstanceProcessor(process_instance)
         processor.send_bpmn_event(body)
@@ -294,18 +268,14 @@ def manual_complete_task(
 ) -> Response:
     """Mark a task complete without executing it."""
     execute = body.get("execute", True)
-    process_instance = ProcessInstanceModel.query.filter(
-        ProcessInstanceModel.id == int(process_instance_id)
-    ).first()
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
     if process_instance:
         processor = ProcessInstanceProcessor(process_instance)
         processor.manual_complete_task(task_id, execute)
     else:
         raise ApiError(
             error_code="complete_task",
-            message=(
-                f"Could not complete Task {task_id} in Instance {process_instance_id}"
-            ),
+            message=f"Could not complete Task {task_id} in Instance {process_instance_id}",
         )
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
@@ -332,9 +302,7 @@ def _find_process_instance_by_id_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:
     """Find_process_instance_by_id_or_raise."""
-    process_instance_query = ProcessInstanceModel.query.filter_by(
-        id=process_instance_id
-    )
+    process_instance_query = ProcessInstanceModel.query.filter_by(id=process_instance_id)
 
     # we had a frustrating session trying to do joins and access columns from two tables. here's some notes for our future selves:
     # this returns an object that allows you to do: process_instance.UserModel.username

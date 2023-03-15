@@ -63,9 +63,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     failure_cause: str = db.Column(db.Text())
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
-    correlation_rules = relationship(
-        "MessageInstanceCorrelationRuleModel", back_populates="message_instance"
-    )
+    correlation_rules = relationship("MessageInstanceCorrelationRuleModel", back_populates="message_instance")
 
     @validates("message_type")
     def validate_message_type(self, key: str, value: Any) -> Any:
@@ -94,10 +92,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
             return False
         if not self.is_receive():
             return False
-        if (
-            isinstance(self.correlation_keys, dict)
-            and self.correlation_keys == other.correlation_keys
-        ):
+        if isinstance(self.correlation_keys, dict) and self.correlation_keys == other.correlation_keys:
             # We know we have a match, and we can just return if we don't have to figure out the key
             return True
 
@@ -107,9 +102,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
 
         # Loop over the receives' correlation keys - if any of the keys fully match, then we match.
         for expected_values in self.correlation_keys.values():
-            if self.payload_matches_expected_values(
-                other.payload, expected_values, expression_engine
-            ):
+            if self.payload_matches_expected_values(other.payload, expected_values, expression_engine):
                 return True
         return False
 
@@ -128,23 +121,17 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
         """Compares the payload of a 'send' message against a single correlation key's expected values."""
         for correlation_key in self.correlation_rules:
             expected_value = expected_values.get(correlation_key.name, None)
-            if (
-                expected_value is None
-            ):  # This key is not required for this instance to match.
+            if expected_value is None:  # This key is not required for this instance to match.
                 continue
             try:
-                result = expression_engine._evaluate(
-                    correlation_key.retrieval_expression, payload
-                )
+                result = expression_engine._evaluate(correlation_key.retrieval_expression, payload)
             except Exception as e:
                 # the failure of a payload evaluation may not mean that matches for these
                 # message instances can't happen with other messages.  So don't error up.
                 # fixme:  Perhaps log some sort of error.
                 current_app.logger.warning(
-                    "Error evaluating correlation key when comparing send and receive"
-                    " messages."
-                    + f"Expression {correlation_key.retrieval_expression} failed with"
-                    " the error "
+                    "Error evaluating correlation key when comparing send and receive messages."
+                    + f"Expression {correlation_key.retrieval_expression} failed with the error "
                     + str(e)
                 )
                 return False
@@ -168,7 +155,4 @@ def ensure_failure_cause_is_set_if_message_instance_failed(
     for instance in session.new:
         if isinstance(instance, MessageInstanceModel):
             if instance.status == "failed" and instance.failure_cause is None:
-                raise ValueError(
-                    f"{instance.__class__.__name__}: failure_cause must be set if"
-                    " status is failed"
-                )
+                raise ValueError(f"{instance.__class__.__name__}: failure_cause must be set if status is failed")

@@ -15,11 +15,6 @@ class GetSecret(Script):
         """Get_description."""
         return """Returns the value for a previously configured secret."""
 
-    def run(
-        self,
-        script_attributes_context: ScriptAttributesContext,
-        *args: Any,
-        **kwargs: Any
-    ) -> Any:
+    def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
         """Run."""
         return SecretService.get_secret(args[0]).value

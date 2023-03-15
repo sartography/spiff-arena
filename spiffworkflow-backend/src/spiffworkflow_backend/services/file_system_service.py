@@ -84,17 +84,13 @@ class FileSystemService:
     @staticmethod
     def workflow_path(spec: ProcessModelInfo) -> str:
         """Workflow_path."""
-        process_model_path = os.path.join(
-            FileSystemService.root_path(), spec.id_for_file_path()
-        )
+        process_model_path = os.path.join(FileSystemService.root_path(), spec.id_for_file_path())
         return process_model_path
 
     @staticmethod
     def full_path_to_process_model_file(spec: ProcessModelInfo) -> str:
         """Full_path_to_process_model_file."""
-        return os.path.join(
-            FileSystemService.workflow_path(spec), spec.primary_file_name  # type: ignore
-        )
+        return os.path.join(FileSystemService.workflow_path(spec), spec.primary_file_name)  # type: ignore
 
     def next_display_order(self, spec: ProcessModelInfo) -> int:
         """Next_display_order."""
@@ -124,8 +120,7 @@ class FileSystemService:
         if file_extension not in FileType.list():
             raise ApiError(
                 "unknown_extension",
-                "The file you provided does not have an accepted extension:"
-                + file_extension,
+                "The file you provided does not have an accepted extension:" + file_extension,
                 status_code=404,
             )
 
@@ -173,9 +168,7 @@ class FileSystemService:
         content_type = CONTENT_TYPES[file_type.name]
         last_modified = FileSystemService._last_modified(file_path)
         size = os.path.getsize(file_path)
-        file = File.from_file_system(
-            file_name, file_type, content_type, last_modified, size
-        )
+        file = File.from_file_system(file_name, file_type, content_type, last_modified, size)
         return file
 
     @staticmethod
@@ -193,6 +186,4 @@ class FileSystemService:
         stats = item.stat()
         file_size = stats.st_size
         last_modified = FileSystemService._last_modified(item.path)
-        return File.from_file_system(
-            item.name, file_type, content_type, last_modified, file_size
-        )
+        return File.from_file_system(item.name, file_type, content_type, last_modified, file_size)

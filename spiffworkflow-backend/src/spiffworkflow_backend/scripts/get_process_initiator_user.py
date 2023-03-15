@@ -26,9 +26,7 @@ class GetProcessInitiatorUser(Script):
     ) -> Any:
         """Run."""
         process_instance = (
-            ProcessInstanceModel.query.filter_by(
-                id=script_attributes_context.process_instance_id
-            )
+            ProcessInstanceModel.query.filter_by(id=script_attributes_context.process_instance_id)
             .join(UserModel, UserModel.id == ProcessInstanceModel.process_initiator_id)
             .first()
         )

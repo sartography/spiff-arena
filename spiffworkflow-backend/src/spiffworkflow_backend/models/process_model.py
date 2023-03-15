@@ -89,9 +89,7 @@ class ProcessModelInfoSchema(Schema):
     primary_process_id = marshmallow.fields.String(allow_none=True)
     files = marshmallow.fields.List(marshmallow.fields.Nested("FileSchema"))
     fault_or_suspend_on_exception = marshmallow.fields.String()
-    exception_notification_addresses = marshmallow.fields.List(
-        marshmallow.fields.String
-    )
+    exception_notification_addresses = marshmallow.fields.List(marshmallow.fields.String)
     metadata_extraction_paths = marshmallow.fields.List(
         marshmallow.fields.Dict(
             keys=marshmallow.fields.Str(required=False),
@@ -101,8 +99,6 @@ class ProcessModelInfoSchema(Schema):
     )
 
     @post_load
-    def make_spec(
-        self, data: dict[str, str | bool | int | NotificationType], **_: Any
-    ) -> ProcessModelInfo:
+    def make_spec(self, data: dict[str, str | bool | int | NotificationType], **_: Any) -> ProcessModelInfo:
         """Make_spec."""
         return ProcessModelInfo(**data)  # type: ignore

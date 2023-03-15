@@ -28,9 +28,7 @@ class MessageService:
     """MessageService."""
 
     @classmethod
-    def correlate_send_message(
-        cls, message_instance_send: MessageInstanceModel
-    ) -> Optional[MessageInstanceModel]:
+    def correlate_send_message(cls, message_instance_send: MessageInstanceModel) -> Optional[MessageInstanceModel]:
         """Connects the given send message to a 'receive' message if possible.
 
         :param message_instance_send:
@@ -52,18 +50,14 @@ class MessageService:
         message_instance_receive: Optional[MessageInstanceModel] = None
         try:
             for message_instance in available_receive_messages:
-                if message_instance.correlates(
-                    message_instance_send, CustomBpmnScriptEngine()
-                ):
+                if message_instance.correlates(message_instance_send, CustomBpmnScriptEngine()):
                     message_instance_receive = message_instance
 
             if message_instance_receive is None:
                 # Check for a message triggerable process and start that to create a new message_instance_receive
-                message_triggerable_process_model = (
-                    MessageTriggerableProcessModel.query.filter_by(
-                        message_name=message_instance_send.name
-                    ).first()
-                )
+                message_triggerable_process_model = MessageTriggerableProcessModel.query.filter_by(
+                    message_name=message_instance_send.name
+                ).first()
                 if message_triggerable_process_model:
                     receiving_process = MessageService.start_process_with_message(
                         message_triggerable_process_model, message_instance_send
@@ -74,17 +68,10 @@ class MessageService:
                         status="ready",
                     ).first()
             else:
-                receiving_process = (
-                    MessageService.get_process_instance_for_message_instance(
-                        message_instance_receive
-                    )
-                )
+                receiving_process = MessageService.get_process_instance_for_message_instance(message_instance_receive)
 
             # Assure we can send the message, otherwise keep going.
-            if (
-                message_instance_receive is None
-                or not receiving_process.can_receive_message()
-            ):
+            if message_instance_receive is None or not receiving_process.can_receive_message():
                 message_instance_send.status = "ready"
                 message_instance_send.status = "ready"
                 db.session.add(message_instance_send)
@@ -124,9 +111,7 @@ class MessageService:
     @classmethod
     def correlate_all_message_instances(cls) -> None:
         """Look at ALL the Send and Receive Messages and attempt to find correlations."""
-        message_instances_send = MessageInstanceModel.query.filter_by(
-            message_type="send", status="ready"
-        ).all()
+        message_instances_send = MessageInstanceModel.query.filter_by(message_type="send", status="ready").all()
 
         for message_instance_send in message_instances_send:
             cls.correlate_send_message(message_instance_send)
@@ -150,11 +135,9 @@ class MessageService:
         message_instance_receive: MessageInstanceModel,
     ) -> ProcessInstanceModel:
         """Process_message_receive."""
-        process_instance_receive: ProcessInstanceModel = (
-            ProcessInstanceModel.query.filter_by(
-                id=message_instance_receive.process_instance_id
-            ).first()
-        )
+        process_instance_receive: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
+            id=message_instance_receive.process_instance_id
+        ).first()
         if process_instance_receive is None:
             raise MessageServiceError(
                 (
@@ -176,9 +159,7 @@ class MessageService:
     ) -> None:
         """process_message_receive."""
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
-        processor_receive.bpmn_process_instance.catch_bpmn_message(
-            message_model_name, message_payload
-        )
+        processor_receive.bpmn_process_instance.catch_bpmn_message(message_model_name, message_payload)
         processor_receive.do_engine_steps(save=True)
         message_instance_receive.status = MessageStatuses.completed.value
         db.session.add(message_instance_receive)

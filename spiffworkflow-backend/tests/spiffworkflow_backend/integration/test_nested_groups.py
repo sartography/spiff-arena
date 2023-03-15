@@ -49,9 +49,7 @@ class TestNestedGroups(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        process_instance = ProcessInstanceService().get_process_instance(
-            process_instance_id
-        )
+        process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
         assert process_instance
         modified_process_group_id = process_group_id.replace("/", ":")
         response = client.delete(
@@ -61,10 +59,7 @@ class TestNestedGroups(BaseTest):
         assert response.status_code == 400
         assert response.json["error_code"] == "existing_instances"
         assert "We cannot delete the group" in response.json["message"]
-        assert (
-            "there are models with existing instances inside the group"
-            in response.json["message"]
-        )
+        assert "there are models with existing instances inside the group" in response.json["message"]
 
     def test_delete_group_with_running_instance_in_nested_group(
         self,
@@ -110,9 +105,7 @@ class TestNestedGroups(BaseTest):
             f"/v1.0/process-instances/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        process_instance = ProcessInstanceService().get_process_instance(
-            process_instance_id
-        )
+        process_instance = ProcessInstanceService().get_process_instance(process_instance_id)
         assert process_instance
         modified_process_group_id = process_group_id.replace("/", ":")
         response = client.delete(
@@ -122,10 +115,7 @@ class TestNestedGroups(BaseTest):
         assert response.status_code == 400
         assert response.json["error_code"] == "existing_instances"
         assert "We cannot delete the group" in response.json["message"]
-        assert (
-            "there are models with existing instances inside the group"
-            in response.json["message"]
-        )
+        assert "there are models with existing instances inside the group" in response.json["message"]
 
     def test_nested_groups(
         self,
@@ -137,12 +127,8 @@ class TestNestedGroups(BaseTest):
         # /process-groups/{process_group_path}/show
         target_uri = "/v1.0/process-groups/group_a,group_b"
         user = self.find_or_create_user()
-        self.add_permissions_to_user(
-            user, target_uri=target_uri, permission_names=["read"]
-        )
-        response = client.get(  # noqa: F841
-            target_uri, headers=self.logged_in_headers(user)
-        )
+        self.add_permissions_to_user(user, target_uri=target_uri, permission_names=["read"])
+        response = client.get(target_uri, headers=self.logged_in_headers(user))  # noqa: F841
 
     def test_add_nested_group(
         self,
@@ -268,11 +254,7 @@ class TestNestedGroups(BaseTest):
 
         target_uri = "/v1.0/process-groups/group_a"
         user = self.find_or_create_user()
-        self.add_permissions_to_user(
-            user, target_uri=target_uri, permission_names=["read"]
-        )
-        response = client.get(  # noqa: F841
-            target_uri, headers=self.logged_in_headers(user)
-        )
+        self.add_permissions_to_user(user, target_uri=target_uri, permission_names=["read"])
+        response = client.get(target_uri, headers=self.logged_in_headers(user))  # noqa: F841
 
         print("test_process_group_show: ")

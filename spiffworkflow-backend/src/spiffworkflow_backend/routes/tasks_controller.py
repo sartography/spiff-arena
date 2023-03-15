@@ -104,9 +104,7 @@ def task_list_my_tasks(
             ProcessInstanceModel.status != ProcessInstanceStatus.error.value,
         )
 
-    potential_owner_usernames_from_group_concat_or_similar = (
-        _get_potential_owner_usernames(assigned_user)
-    )
+    potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
 
     # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
     # the postgres fix but it breaks the method for mysql.
@@ -147,9 +145,7 @@ def task_list_my_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def task_list_for_my_open_processes(
-    page: int = 1, per_page: int = 100
-) -> flask.wrappers.Response:
+def task_list_for_my_open_processes(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
     """Task_list_for_my_open_processes."""
     return _get_tasks(page=page, per_page=per_page)
 
@@ -194,10 +190,7 @@ def task_data_show(
     if step_detail is None:
         raise ApiError(
             error_code="spiff_step_for_proces_instance_not_found",
-            message=(
-                "The given spiff step for the given process instance could not be"
-                " found."
-            ),
+            message="The given spiff step for the given process instance could not be found.",
             status_code=400,
         )
 
@@ -228,9 +221,7 @@ def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task: Task) -> Non
             for ii, hidden_field_part in enumerate(hidden_field_parts):
                 if hidden_field_part not in relevant_depth_of_ui_schema:
                     relevant_depth_of_ui_schema[hidden_field_part] = {}
-                relevant_depth_of_ui_schema = relevant_depth_of_ui_schema[
-                    hidden_field_part
-                ]
+                relevant_depth_of_ui_schema = relevant_depth_of_ui_schema[hidden_field_part]
                 if len(hidden_field_parts) == ii + 1:
                     relevant_depth_of_ui_schema["ui:widget"] = "hidden"
 
@@ -255,9 +246,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     form_schema_file_name = ""
     form_ui_schema_file_name = ""
     processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = _get_spiff_task_from_process_instance(
-        task_id, process_instance, processor=processor
-    )
+    spiff_task = _get_spiff_task_from_process_instance(task_id, process_instance, processor=processor)
     extensions = spiff_task.task_spec.extensions
 
     if "properties" in extensions:
@@ -276,23 +265,13 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
     refs = SpecFileService.get_references_for_process(process_model_with_form)
     all_processes = [i.identifier for i in refs]
     if task.process_identifier not in all_processes:
-        top_process_name = processor.find_process_model_process_name_by_task_name(
-            task.process_identifier
+        top_process_name = processor.find_process_model_process_name_by_task_name(task.process_identifier)
+        bpmn_file_full_path = ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
+            top_process_name
         )
-        bpmn_file_full_path = (
-            ProcessInstanceProcessor.bpmn_file_full_path_from_bpmn_process_identifier(
-                top_process_name
-            )
-        )
-        relative_path = os.path.relpath(
-            bpmn_file_full_path, start=FileSystemService.root_path()
-        )
+        relative_path = os.path.relpath(bpmn_file_full_path, start=FileSystemService.root_path())
         process_model_relative_path = os.path.dirname(relative_path)
-        process_model_with_form = (
-            ProcessModelService.get_process_model_from_relative_path(
-                process_model_relative_path
-            )
-        )
+        process_model_with_form = ProcessModelService.get_process_model_from_relative_path(process_model_relative_path)
 
     if task.type == "User Task":
         if not form_schema_file_name:
@@ -300,8 +279,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 ApiError(
                     error_code="missing_form_file",
                     message=(
-                        "Cannot find a form file for process_instance_id:"
-                        f" {process_instance_id}, task_id: {task_id}"
+                        f"Cannot find a form file for process_instance_id: {process_instance_id}, task_id: {task_id}"
                     ),
                     status_code=400,
                 )
@@ -338,9 +316,7 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 )
             except WorkflowTaskException as wfe:
                 wfe.add_note("Failed to render instructions for end user.")
-                raise ApiError.from_workflow_exception(
-                    "instructions_error", str(wfe), exp=wfe
-                ) from wfe
+                raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe
     return make_response(jsonify(task), 200)
 
 
@@ -387,12 +363,8 @@ def task_submit_shared(
         )
 
     processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = _get_spiff_task_from_process_instance(
-        task_id, process_instance, processor=processor
-    )
-    AuthorizationService.assert_user_can_complete_spiff_task(
-        process_instance.id, spiff_task, principal.user
-    )
+    spiff_task = _get_spiff_task_from_process_instance(task_id, process_instance, processor=processor)
+    AuthorizationService.assert_user_can_complete_spiff_task(process_instance.id, spiff_task, principal.user)
 
     if spiff_task.state != TaskState.READY:
         raise (
@@ -434,18 +406,14 @@ def task_submit_shared(
     #         next_task = processor.next_task()
 
     next_human_task_assigned_to_me = (
-        HumanTaskModel.query.filter_by(
-            process_instance_id=process_instance_id, completed=False
-        )
+        HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, completed=False)
         .order_by(asc(HumanTaskModel.id))  # type: ignore
         .join(HumanTaskUserModel)
         .filter_by(user_id=principal.user_id)
         .first()
     )
     if next_human_task_assigned_to_me:
-        return make_response(
-            jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200
-        )
+        return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
 
     return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
 
@@ -457,9 +425,7 @@ def task_submit(
     terminate_loop: bool = False,
 ) -> flask.wrappers.Response:
     """Task_submit_user_data."""
-    with sentry_sdk.start_span(
-        op="controller_action", description="tasks_controller.task_submit"
-    ):
+    with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
         return task_submit_shared(process_instance_id, task_id, body, terminate_loop)
 
 
@@ -492,9 +458,7 @@ def _get_tasks(
     assigned_user = aliased(UserModel)
     if processes_started_by_user:
         human_tasks_query = (
-            human_tasks_query.filter(
-                ProcessInstanceModel.process_initiator_id == user_id
-            )
+            human_tasks_query.filter(ProcessInstanceModel.process_initiator_id == user_id)
             .outerjoin(
                 HumanTaskUserModel,
                 HumanTaskModel.id == HumanTaskUserModel.human_task_id,
@@ -502,9 +466,7 @@ def _get_tasks(
             .outerjoin(assigned_user, assigned_user.id == HumanTaskUserModel.user_id)
         )
     else:
-        human_tasks_query = human_tasks_query.filter(
-            ProcessInstanceModel.process_initiator_id != user_id
-        ).join(
+        human_tasks_query = human_tasks_query.filter(ProcessInstanceModel.process_initiator_id != user_id).join(
             HumanTaskUserModel,
             and_(
                 HumanTaskUserModel.user_id == user_id,
@@ -514,9 +476,7 @@ def _get_tasks(
 
         if has_lane_assignment_id:
             if user_group_identifier:
-                human_tasks_query = human_tasks_query.filter(
-                    GroupModel.identifier == user_group_identifier
-                )
+                human_tasks_query = human_tasks_query.filter(GroupModel.identifier == user_group_identifier)
             else:
                 human_tasks_query = human_tasks_query.filter(
                     HumanTaskModel.lane_assignment_id.is_not(None)  # type: ignore
@@ -524,9 +484,7 @@ def _get_tasks(
         else:
             human_tasks_query = human_tasks_query.filter(HumanTaskModel.lane_assignment_id.is_(None))  # type: ignore
 
-    potential_owner_usernames_from_group_concat_or_similar = (
-        _get_potential_owner_usernames(assigned_user)
-    )
+    potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
 
     human_tasks = (
         human_tasks_query.add_columns(
@@ -558,9 +516,7 @@ def _get_tasks(
     return make_response(jsonify(response_json), 200)
 
 
-def _prepare_form_data(
-    form_file: str, spiff_task: SpiffTask, process_model: ProcessModelInfo
-) -> dict:
+def _prepare_form_data(form_file: str, spiff_task: SpiffTask, process_model: ProcessModelInfo) -> dict:
     """Prepare_form_data."""
     if spiff_task.data is None:
         return {}
@@ -576,42 +532,29 @@ def _prepare_form_data(
             raise (
                 ApiError(
                     error_code="error_loading_form",
-                    message=(
-                        f"Could not load form schema from: {form_file}."
-                        f" Error was: {str(exception)}"
-                    ),
+                    message=f"Could not load form schema from: {form_file}. Error was: {str(exception)}",
                     status_code=400,
                 )
             ) from exception
     except WorkflowTaskException as wfe:
         wfe.add_note(f"Error in Json Form File '{form_file}'")
-        api_error = ApiError.from_workflow_exception(
-            "instructions_error", str(wfe), exp=wfe
-        )
+        api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
         api_error.file_name = form_file
         raise api_error
 
 
 def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> str:
     """Render_jinja_template."""
-    jinja_environment = jinja2.Environment(
-        autoescape=True, lstrip_blocks=True, trim_blocks=True
-    )
+    jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
     try:
         template = jinja_environment.from_string(unprocessed_template)
         return template.render(**spiff_task.data)
     except jinja2.exceptions.TemplateError as template_error:
-        wfe = WorkflowTaskException(
-            str(template_error), task=spiff_task, exception=template_error
-        )
+        wfe = WorkflowTaskException(str(template_error), task=spiff_task, exception=template_error)
         if isinstance(template_error, TemplateSyntaxError):
             wfe.line_number = template_error.lineno
-            wfe.error_line = template_error.source.split("\n")[
-                template_error.lineno - 1
-            ]
-        wfe.add_note(
-            "Jinja2 template errors can happen when trying to display task data"
-        )
+            wfe.error_line = template_error.source.split("\n")[template_error.lineno - 1]
+        wfe.add_note("Jinja2 template errors can happen when trying to display task data")
         raise wfe from template_error
     except Exception as error:
         _type, _value, tb = exc_info()
@@ -621,9 +564,7 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
                 wfe.line_number = tb.tb_lineno
                 wfe.error_line = unprocessed_template.split("\n")[tb.tb_lineno - 1]
             tb = tb.tb_next
-        wfe.add_note(
-            "Jinja2 template errors can happen when trying to display task data"
-        )
+        wfe.add_note("Jinja2 template errors can happen when trying to display task data")
         raise wfe from error
 
 
@@ -650,9 +591,7 @@ def _get_spiff_task_from_process_instance(
 
 
 # originally from: https://bitcoden.com/answers/python-nested-dictionary-update-value-where-any-nested-key-matches
-def _update_form_schema_with_task_data_as_needed(
-    in_dict: dict, task: Task, spiff_task: SpiffTask
-) -> None:
+def _update_form_schema_with_task_data_as_needed(in_dict: dict, task: Task, spiff_task: SpiffTask) -> None:
     """Update_nested."""
     if task.data is None:
         return None
@@ -664,12 +603,8 @@ def _update_form_schema_with_task_data_as_needed(
                 if len(value) == 1:
                     first_element_in_value_list = value[0]
                     if isinstance(first_element_in_value_list, str):
-                        if first_element_in_value_list.startswith(
-                            "options_from_task_data_var:"
-                        ):
-                            task_data_var = first_element_in_value_list.replace(
-                                "options_from_task_data_var:", ""
-                            )
+                        if first_element_in_value_list.startswith("options_from_task_data_var:"):
+                            task_data_var = first_element_in_value_list.replace("options_from_task_data_var:", "")
 
                             if task_data_var not in task.data:
                                 wte = WorkflowTaskException(
@@ -691,10 +626,7 @@ def _update_form_schema_with_task_data_as_needed(
 
                             select_options_from_task_data = task.data.get(task_data_var)
                             if isinstance(select_options_from_task_data, list):
-                                if all(
-                                    "value" in d and "label" in d
-                                    for d in select_options_from_task_data
-                                ):
+                                if all("value" in d and "label" in d for d in select_options_from_task_data):
 
                                     def map_function(
                                         task_data_select_option: TaskDataSelectOption,
@@ -744,9 +676,7 @@ def _find_human_task_or_raise(
             process_instance_id=process_instance_id, task_id=task_id, completed=False
         )
     else:
-        human_task_query = HumanTaskModel.query.filter_by(
-            process_instance_id=process_instance_id, task_id=task_id
-        )
+        human_task_query = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_id)
 
     human_task: HumanTaskModel = human_task_query.first()
     if human_task is None:

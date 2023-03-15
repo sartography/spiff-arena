@@ -28,9 +28,7 @@ class BackgroundProcessingService:
         """Since this runs in a scheduler, we need to specify the app context as well."""
         with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:userinput")
-            ProcessInstanceService.do_waiting(
-                ProcessInstanceStatus.user_input_required.value
-            )
+            ProcessInstanceService.do_waiting(ProcessInstanceStatus.user_input_required.value)
 
     def process_message_instances_with_app_context(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""

@@ -52,14 +52,11 @@ class Script:
         """Run."""
         raise ApiError(
             "invalid_script",
-            "This is an internal error. The script you are trying to execute '%s' "
-            % self.__class__.__name__
+            "This is an internal error. The script you are trying to execute '%s' " % self.__class__.__name__
             + "does not properly implement the run function.",
         )
 
-    def get_proces_instance_id_is_missing_error(
-        self, script_name: str
-    ) -> ProcessInstanceIdMissingError:
+    def get_proces_instance_id_is_missing_error(self, script_name: str) -> ProcessInstanceIdMissingError:
         """Return the error so we can raise it from the script and mypy will be happy."""
         raise ProcessInstanceIdMissingError(
             "The process instance id was not given to script"
@@ -67,9 +64,7 @@ class Script:
             " within the context of a process instance."
         )
 
-    def get_proces_model_identifier_is_missing_error(
-        self, script_name: str
-    ) -> ProcessModelIdentifierMissingError:
+    def get_proces_model_identifier_is_missing_error(self, script_name: str) -> ProcessModelIdentifierMissingError:
         """Return the error so we can raise it from the script and mypy will be happy."""
         return ProcessModelIdentifierMissingError(
             "The process model identifier was not given to script"

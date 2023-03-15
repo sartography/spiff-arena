@@ -39,16 +39,12 @@ class SpiffworkflowBaseDBModel(db.Model):  # type: ignore
                 children.append(subclass)
         return result
 
-    def validate_enum_field(
-        self, key: str, value: Any, enum_variable: enum.EnumMeta
-    ) -> Any:
+    def validate_enum_field(self, key: str, value: Any, enum_variable: enum.EnumMeta) -> Any:
         """Validate_enum_field."""
         try:
             m_type = getattr(enum_variable, value, None)
         except Exception as e:
-            raise ValueError(
-                f"{self.__class__.__name__}: invalid {key}: {value}"
-            ) from e
+            raise ValueError(f"{self.__class__.__name__}: invalid {key}: {value}") from e
 
         if m_type is None:
             raise ValueError(f"{self.__class__.__name__}: invalid {key}: {value}")
