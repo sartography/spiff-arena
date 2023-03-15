@@ -57,12 +57,12 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self,
         serializer: BpmnWorkflowSerializer,
         process_instance: ProcessInstanceModel,
+        bpmn_definition_to_task_definitions_mappings: dict,
         secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
-        bpmn_definition_identifiers_to_bpmn_process_id_mappings: Optional[dict] = None,
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
-        self.bpmn_definition_identifiers_to_bpmn_process_id_mappings = bpmn_definition_identifiers_to_bpmn_process_id_mappings
+        self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
 
         self.current_task_model: Optional[TaskModel] = None
         self.task_models: dict[str, TaskModel] = {}
@@ -80,7 +80,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if self.should_update_task_model():
             _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                 TaskService.find_or_create_task_model_from_spiff_task(
-                    spiff_task, self.process_instance, self.serializer, bpmn_definition_identifiers_to_bpmn_process_id_mappings=self.bpmn_definition_identifiers_to_bpmn_process_id_mappings
+                    spiff_task, self.process_instance, self.serializer, bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings
                 )
             )
             self.current_task_model = task_model
@@ -94,7 +94,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if self.current_task_model and self.should_update_task_model():
             self.current_task_model.end_in_seconds = time.time()
             json_data_dict = TaskService.update_task_model(
-                self.current_task_model, spiff_task, self.serializer, bpmn_definition_identifiers_to_bpmn_process_id_mappings=self.bpmn_definition_identifiers_to_bpmn_process_id_mappings
+                self.current_task_model, spiff_task, self.serializer
             )
             if json_data_dict is not None:
                 self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
@@ -123,13 +123,13 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             ):
                 _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                     TaskService.find_or_create_task_model_from_spiff_task(
-                        waiting_spiff_task, self.process_instance, self.serializer, bpmn_definition_identifiers_to_bpmn_process_id_mappings=self.bpmn_definition_identifiers_to_bpmn_process_id_mappings
+                        waiting_spiff_task, self.process_instance, self.serializer, bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings
                     )
                 )
                 self.task_models.update(new_task_models)
                 self.json_data_dicts.update(new_json_data_dicts)
                 json_data_dict = TaskService.update_task_model(
-                    task_model, waiting_spiff_task, self.serializer, bpmn_definition_identifiers_to_bpmn_process_id_mappings=self.bpmn_definition_identifiers_to_bpmn_process_id_mappings
+                    task_model, waiting_spiff_task, self.serializer
                 )
                 self.task_models[task_model.guid] = task_model
                 if json_data_dict is not None:

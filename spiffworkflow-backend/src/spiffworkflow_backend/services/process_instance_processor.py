@@ -462,10 +462,10 @@ class ProcessInstanceProcessor:
         # this caches the bpmn_process_definition_identifier and task_identifier back to the bpmn_process_id
         # in the database. This is to cut down on database queries while adding new tasks to the database.
         # Structure:
-        #   { "bpmn_process_definition_identifier": { "task_identifier": bpmn_process_id } }
+        #   { "bpmn_process_definition_identifier": { "task_identifier": task_definition } }
         # To use from a spiff_task:
         #   [spiff_task.workflow.spec.name][spiff_task.task_spec.name]
-        self.bpmn_definition_identifiers_to_bpmn_process_id_mappings = {}
+        self.bpmn_definition_to_task_definitions_mappings = {}
 
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None
         if process_instance_model.bpmn_process_definition_id is None:
@@ -482,7 +482,7 @@ class ProcessInstanceProcessor:
         )
 
         try:
-            (self.bpmn_process_instance, self.full_bpmn_process_dict, self.bpmn_definition_identifiers_to_bpmn_process_id_mappings) = (
+            (self.bpmn_process_instance, self.full_bpmn_process_dict, self.bpmn_definition_to_task_definitions_mappings) = (
                 self.__get_bpmn_process_instance(
                     process_instance_model,
                     bpmn_process_spec,
@@ -549,18 +549,18 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def _update_bpmn_definition_mappings(
-            cls, bpmn_definition_identifiers_to_bpmn_process_id_mappings: dict, bpmn_process_definition_identifier: str, task_definition: TaskDefinitionModel
+            cls, bpmn_definition_to_task_definitions_mappings: dict, bpmn_process_definition_identifier: str, task_definition: TaskDefinitionModel
     ) -> None:
         # import pdb; pdb.set_trace()
         # if bpmn_process_definition_identifier == 'test_process_to_call' and task_definition.bpmn_identifier == "Root":
             # import pdb; pdb.set_trace()
-        if bpmn_process_definition_identifier not in bpmn_definition_identifiers_to_bpmn_process_id_mappings:
-            bpmn_definition_identifiers_to_bpmn_process_id_mappings[bpmn_process_definition_identifier] = {}
-        bpmn_definition_identifiers_to_bpmn_process_id_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = task_definition
+        if bpmn_process_definition_identifier not in bpmn_definition_to_task_definitions_mappings:
+            bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier] = {}
+        bpmn_definition_to_task_definitions_mappings[bpmn_process_definition_identifier][task_definition.bpmn_identifier] = task_definition
 
     @classmethod
     def _get_definition_dict_for_bpmn_process_definition(
-            cls, bpmn_process_definition: BpmnProcessDefinitionModel, bpmn_definition_identifiers_to_bpmn_process_id_mappings: dict
+            cls, bpmn_process_definition: BpmnProcessDefinitionModel, bpmn_definition_to_task_definitions_mappings: dict
     ) -> dict:
         task_definitions = TaskDefinitionModel.query.filter_by(
             bpmn_process_definition_id=bpmn_process_definition.id
@@ -571,7 +571,7 @@ class ProcessInstanceProcessor:
             bpmn_process_definition_dict["task_specs"][
                 task_definition.bpmn_identifier
             ] = task_definition.properties_json
-            cls._update_bpmn_definition_mappings(bpmn_definition_identifiers_to_bpmn_process_id_mappings, bpmn_process_definition.bpmn_identifier, task_definition)
+            cls._update_bpmn_definition_mappings(bpmn_definition_to_task_definitions_mappings, bpmn_process_definition.bpmn_identifier, task_definition)
         return bpmn_process_definition_dict
 
     @classmethod
@@ -579,7 +579,7 @@ class ProcessInstanceProcessor:
         cls,
         bpmn_process_definition: BpmnProcessDefinitionModel,
         spiff_bpmn_process_dict: dict,
-        bpmn_definition_identifiers_to_bpmn_process_id_mappings: dict,
+        bpmn_definition_to_task_definitions_mappings: dict,
     ) -> None:
         # find all child subprocesses of a process
         bpmn_process_subprocess_definitions = (
@@ -618,7 +618,7 @@ class ProcessInstanceProcessor:
                     task_definition.bpmn_process_definition_id
                 ]
             )
-            cls._update_bpmn_definition_mappings(bpmn_definition_identifiers_to_bpmn_process_id_mappings, bpmn_subprocess_definition_bpmn_identifier, task_definition)
+            cls._update_bpmn_definition_mappings(bpmn_definition_to_task_definitions_mappings, bpmn_subprocess_definition_bpmn_identifier, task_definition)
             spiff_bpmn_process_dict["subprocess_specs"][
                 bpmn_subprocess_definition_bpmn_identifier
             ]["task_specs"][
@@ -667,7 +667,7 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def _get_full_bpmn_process_dict(
-            cls, process_instance_model: ProcessInstanceModel, bpmn_definition_identifiers_to_bpmn_process_id_mappings: dict
+            cls, process_instance_model: ProcessInstanceModel, bpmn_definition_to_task_definitions_mappings: dict
     ) -> dict:
         if process_instance_model.bpmn_process_definition_id is None:
             return {}
@@ -682,11 +682,11 @@ class ProcessInstanceProcessor:
         if bpmn_process_definition is not None:
             spiff_bpmn_process_dict["spec"] = (
                 cls._get_definition_dict_for_bpmn_process_definition(
-                    bpmn_process_definition, bpmn_definition_identifiers_to_bpmn_process_id_mappings
+                    bpmn_process_definition, bpmn_definition_to_task_definitions_mappings
                 )
             )
             cls._set_definition_dict_for_bpmn_subprocess_definitions(
-                bpmn_process_definition, spiff_bpmn_process_dict, bpmn_definition_identifiers_to_bpmn_process_id_mappings
+                bpmn_process_definition, spiff_bpmn_process_dict, bpmn_definition_to_task_definitions_mappings
             )
 
             bpmn_process = process_instance_model.bpmn_process
@@ -755,8 +755,8 @@ class ProcessInstanceProcessor:
         subprocesses: Optional[IdToBpmnProcessSpecMapping] = None,
     ) -> Tuple[BpmnWorkflow, dict, dict]:
         full_bpmn_process_dict = {}
-        bpmn_definition_identifiers_to_bpmn_process_id_mappings = {}
-        print("GET BPMN PROCESS INSTANCE")
+        bpmn_definition_to_task_definitions_mappings = {}
+        # print("GET BPMN PROCESS INSTANCE")
         if process_instance_model.bpmn_process_definition_id is not None:
             # turn off logging to avoid duplicated spiff logs
             spiff_logger = logging.getLogger("spiff")
@@ -766,10 +766,10 @@ class ProcessInstanceProcessor:
             try:
                 full_bpmn_process_dict = (
                     ProcessInstanceProcessor._get_full_bpmn_process_dict(
-                        process_instance_model, bpmn_definition_identifiers_to_bpmn_process_id_mappings
+                        process_instance_model, bpmn_definition_to_task_definitions_mappings
                     )
                 )
-                print("WE GOT FULL BPMN PROCESS DICT")
+                # print("WE GOT FULL BPMN PROCESS DICT")
                 bpmn_process_instance = (
                     ProcessInstanceProcessor._serializer.workflow_from_dict(
                         full_bpmn_process_dict
@@ -782,7 +782,7 @@ class ProcessInstanceProcessor:
 
             ProcessInstanceProcessor.set_script_engine(bpmn_process_instance)
         else:
-            print("WE NO HAVE FULL BPMN YET")
+            # print("WE NO HAVE FULL BPMN YET")
             bpmn_process_instance = (
                 ProcessInstanceProcessor.get_bpmn_process_instance_from_workflow_spec(
                     spec, subprocesses
@@ -792,7 +792,7 @@ class ProcessInstanceProcessor:
             bpmn_process_instance.data[
                 ProcessInstanceProcessor.VALIDATION_PROCESS_KEY
             ] = validate_only
-        return (bpmn_process_instance, full_bpmn_process_dict, bpmn_definition_identifiers_to_bpmn_process_id_mappings)
+        return (bpmn_process_instance, full_bpmn_process_dict, bpmn_definition_to_task_definitions_mappings)
 
     def slam_in_data(self, data: dict) -> None:
         """Slam_in_data."""
@@ -1063,16 +1063,14 @@ class ProcessInstanceProcessor:
         bpmn_process_definition: Optional[BpmnProcessDefinitionModel] = (
             BpmnProcessDefinitionModel.query.filter_by(hash=new_hash_digest).first()
         )
-        print(f"process_bpmn_properties: {process_bpmn_properties}")
+        # print(f"process_bpmn_properties: {process_bpmn_properties}")
         # import pdb; pdb.set_trace()
         # if process_bpmn_identifier == "test_process_to_call":
         #     import pdb; pdb.set_trace()
-        #     print("HEY22")
+        #    # print("HEY22")
 
-        print(f"self.process_instance_model.id: {self.process_instance_model.id}")
+        # print(f"self.process_instance_model.id: {self.process_instance_model.id}")
         if bpmn_process_definition is None:
-            # import pdb; pdb.set_trace()
-            print("NO DEFINITION")
             task_specs = process_bpmn_properties.pop("task_specs")
             bpmn_process_definition = BpmnProcessDefinitionModel(
                 hash=new_hash_digest,
@@ -1090,13 +1088,13 @@ class ProcessInstanceProcessor:
                 )
                 db.session.add(task_definition)
                 if store_bpmn_definition_mappings:
-                    self._update_bpmn_definition_mappings(self.bpmn_definition_identifiers_to_bpmn_process_id_mappings, process_bpmn_identifier, task_definition)
+                    self._update_bpmn_definition_mappings(self.bpmn_definition_to_task_definitions_mappings, process_bpmn_identifier, task_definition)
         elif store_bpmn_definition_mappings:
             # this should only ever happen when new process instances use a pre-existing bpmn process definitions
             # otherwise this should get populated on processor initialization
             task_definitions = TaskDefinitionModel.query.filter_by(bpmn_process_definition_id=bpmn_process_definition.id).all()
             for task_definition in task_definitions:
-                self._update_bpmn_definition_mappings(self.bpmn_definition_identifiers_to_bpmn_process_id_mappings, process_bpmn_identifier, task_definition)
+                self._update_bpmn_definition_mappings(self.bpmn_definition_to_task_definitions_mappings, process_bpmn_identifier, task_definition)
 
         if bpmn_process_definition_parent is not None:
             bpmn_process_definition_relationship = (
@@ -1115,8 +1113,8 @@ class ProcessInstanceProcessor:
 
     def _add_bpmn_process_definitions(self, bpmn_spec_dict: dict) -> None:
         # store only if mappings is currently empty. this also would mean this is a new instance that has never saved before
-        print("WE STORE BPM PROCESS DEF")
-        store_bpmn_definition_mappings = not self.bpmn_definition_identifiers_to_bpmn_process_id_mappings
+        # print("WE STORE BPM PROCESS DEF")
+        store_bpmn_definition_mappings = not self.bpmn_definition_to_task_definitions_mappings
         bpmn_process_definition_parent = self._store_bpmn_process_definition(
                 bpmn_spec_dict["spec"], store_bpmn_definition_mappings=store_bpmn_definition_mappings
         )
@@ -1134,7 +1132,7 @@ class ProcessInstanceProcessor:
 
         Expects the save method to commit it.
         """
-        print("WE SAVE THINGS")
+        # print("WE SAVE THINGS")
         bpmn_dict = self.serialize()
         bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
         process_instance_data_dict = {}
@@ -1149,13 +1147,16 @@ class ProcessInstanceProcessor:
         # if self.process_instance_model.bpmn_process_definition_id is None:
         self._add_bpmn_process_definitions(bpmn_spec_dict)
         # import pdb; pdb.set_trace()
-        print("WE NOW STORE BPMN PROCESS STUFFS")
-        print(f"bpmn_definition_identifiers_to_bpmn_process_id_mappings: {self.bpmn_definition_identifiers_to_bpmn_process_id_mappings}")
+        # print("WE NOW STORE BPMN PROCESS STUFFS")
+        # print(f"bpmn_definition_to_task_definitions_mappings: {self.bpmn_definition_to_task_definitions_mappings}")
 
         subprocesses = process_instance_data_dict.pop("subprocesses")
         bpmn_process_parent, new_task_models, new_json_data_dicts = (
             TaskService.add_bpmn_process(
-                process_instance_data_dict, self.process_instance_model, bpmn_definition_identifiers_to_bpmn_process_id_mappings=self.bpmn_definition_identifiers_to_bpmn_process_id_mappings, spiff_workflow=self.bpmn_process_instance
+                bpmn_process_dict=process_instance_data_dict,
+                process_instance=self.process_instance_model,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+                spiff_workflow=self.bpmn_process_instance
             )
         )
         for subprocess_task_id, subprocess_properties in subprocesses.items():
@@ -1164,11 +1165,11 @@ class ProcessInstanceProcessor:
                 subprocess_new_task_models,
                 subprocess_new_json_data_models,
             ) = TaskService.add_bpmn_process(
-                subprocess_properties,
-                self.process_instance_model,
-                bpmn_process_parent,
+                bpmn_process_dict=subprocess_properties,
+                process_instance=self.process_instance_model,
+                bpmn_process_parent=bpmn_process_parent,
                 bpmn_process_guid=subprocess_task_id,
-                bpmn_definition_identifiers_to_bpmn_process_id_mappings=self.bpmn_definition_identifiers_to_bpmn_process_id_mappings,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
                 spiff_workflow=self.bpmn_process_instance
             )
             new_task_models.update(subprocess_new_task_models)
@@ -1179,7 +1180,7 @@ class ProcessInstanceProcessor:
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
-        print("WE IN SAVE")
+       # print("WE IN SAVE")
         self._add_bpmn_json_records()
         self.process_instance_model.spiff_serializer_version = self.SERIALIZER_VERSION
 
@@ -1307,7 +1308,7 @@ class ProcessInstanceProcessor:
         try:
             self.bpmn_process_instance.catch(event_definition)
         except Exception as e:
-            print(e)
+           print(e)
 
         # TODO: do_engine_steps without a lock
         self.do_engine_steps(save=True)
@@ -1689,7 +1690,7 @@ class ProcessInstanceProcessor:
             secondary_engine_step_delegate=step_delegate,
             serializer=self._serializer,
             process_instance=self.process_instance_model,
-            bpmn_definition_identifiers_to_bpmn_process_id_mappings=self.bpmn_definition_identifiers_to_bpmn_process_id_mappings,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
 
         if execution_strategy_name is None:
