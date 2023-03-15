@@ -71,7 +71,8 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     bpmn_process_id: int | None = db.Column(
         ForeignKey(BpmnProcessModel.id), nullable=True  # type: ignore
     )
-    bpmn_process = relationship(BpmnProcessModel)
+    bpmn_process = relationship(BpmnProcessModel, cascade="delete")
+    tasks = relationship("TaskModel", cascade="delete")  # type: ignore
 
     spiff_serializer_version = db.Column(db.String(50), nullable=True)
 

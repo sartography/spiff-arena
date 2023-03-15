@@ -1894,8 +1894,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "feature/remove-loop-reset"
-resolved_reference = "13034aaf12f62aa3914744ca05bc9a3e3b3c3452"
+reference = "main"
+resolved_reference = "f162aac43af3af18d1a55186aeccea154fb8b05d"
 
 [[package]]
 name = "SQLAlchemy"
@@ -2274,7 +2274,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "7ab6d5021406b573edfdca4f9e0f5e62c41a6f6ea09d34154df72454887e3670"
+content-hash = "b9ea32912509637f1378d060771de7548d93953aa3db12d6a48098f7dc15205f"
 
 [metadata.files]
 alabaster = [

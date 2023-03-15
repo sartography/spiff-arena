@@ -358,41 +358,62 @@ class TestProcessInstanceProcessor(BaseTest):
         processor_final = ProcessInstanceProcessor(process_instance_relookup)
         assert process_instance_relookup.status == "complete"
 
-        # first_data_set = {"set_in_top_level_script": 1}
-        # second_data_set = {**first_data_set, **{"set_in_top_level_subprocess": 1}}
-        # third_data_set = {
-        #     **second_data_set,
-        #     **{"set_in_test_process_to_call_script": 1},
-        # }
-        # expected_task_data = {
-        #     "top_level_script": first_data_set,
-        #     "manual_task": first_data_set,
-        #     "top_level_subprocess_script": second_data_set,
-        #     "top_level_subprocess": second_data_set,
-        #     "test_process_to_call_script": third_data_set,
-        #     "top_level_call_activity": third_data_set,
-        #     "end_event_of_manual_task_model": third_data_set,
-        # }
+        first_data_set = {"set_in_top_level_script": 1}
+        second_data_set = {
+            **first_data_set,
+            **{"set_in_top_level_subprocess": 1, "we_move_on": False},
+        }
+        third_data_set = {
+            **second_data_set,
+            **{"set_in_test_process_to_call_script": 1},
+        }
+        fourth_data_set = {**third_data_set, **{"a": 1, "we_move_on": True}}
+        expected_task_data = {
+            "top_level_script": first_data_set,
+            "manual_task": first_data_set,
+            "top_level_subprocess_script": second_data_set,
+            "top_level_subprocess": second_data_set,
+            "test_process_to_call_script": third_data_set,
+            "top_level_call_activity": third_data_set,
+            "end_event_of_manual_task_model": third_data_set,
+            "top_level_subprocess_script_second": fourth_data_set,
+            "test_process_to_call_script_second": fourth_data_set,
+        }
+
+        spiff_tasks_checked_once: list = []
+
+        # TODO: also check task data here from the spiff_task directly to ensure we hydrated spiff correctly
+        def assert_spiff_task_is_in_process(
+            spiff_task_name: str, bpmn_process_identifier: str
+        ) -> None:
+            if spiff_task.task_spec.name == spiff_task_name:
+                expected_python_env_data = expected_task_data[spiff_task.task_spec.name]
+                if spiff_task.task_spec.name in spiff_tasks_checked_once:
+                    expected_python_env_data = expected_task_data[
+                        f"{spiff_task.task_spec.name}_second"
+                    ]
+                task = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+                assert task.task_definition_id is not None
+                task_definition = task.task_definition
+                assert task_definition.bpmn_identifier == spiff_task_name
+                assert (
+                    task_definition.bpmn_process_definition.bpmn_identifier
+                    == bpmn_process_identifier
+                )
+                assert task.python_env_data() == expected_python_env_data
+                spiff_tasks_checked_once.append(spiff_task.task_spec.name)
 
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
         assert len(all_spiff_tasks) > 1
         for spiff_task in all_spiff_tasks:
             assert spiff_task.state == TaskState.COMPLETED
-            # FIXME: Checking task data cannot work with the feature/remove-loop-reset branch
-            #   of SiffWorkflow. This is because it saves script data to the python_env and NOT
-            #   to task.data. We may need to either create a new column on TaskModel to put the python_env
-            #   data or we could just shove it back onto the task data when adding to the database.
-            #   Right now everything works in practice because the python_env data is on the top level workflow
-            #   and so is always there but is also always the most recent. If we want to replace spiff_step_details
-            #   with TaskModel then we'll need some way to store python_env on each task.
-            # spiff_task_name = spiff_task.task_spec.name
-            # if spiff_task_name in expected_task_data:
-            #     spiff_task_data = expected_task_data[spiff_task_name]
-            #     failure_message = (
-            #         f"Found unexpected task data on {spiff_task_name}. "
-            #         f"Expected: {spiff_task_data}, Found: {spiff_task.data}"
-            #     )
-            #     assert spiff_task.data == spiff_task_data, failure_message
+            assert_spiff_task_is_in_process(
+                "test_process_to_call_script", "test_process_to_call"
+            )
+            assert_spiff_task_is_in_process(
+                "top_level_subprocess_script", "top_level_subprocess"
+            )
+            assert_spiff_task_is_in_process("top_level_script", "top_level_process")
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,
