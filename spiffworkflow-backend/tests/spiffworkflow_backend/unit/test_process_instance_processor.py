@@ -378,24 +378,33 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(all_spiff_tasks) > 1
         for spiff_task in all_spiff_tasks:
             assert spiff_task.state == TaskState.COMPLETED
-            if spiff_task.task_spec.name == 'test_process_to_call_script':
+            if spiff_task.task_spec.name == "test_process_to_call_script":
                 task = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
                 assert task.task_definition_id is not None
                 task_definition = task.task_definition
-                assert task_definition.bpmn_identifier == 'test_process_to_call_script'
-                assert task_definition.bpmn_process_definition.bpmn_identifier == 'test_process_to_call'
-            elif spiff_task.task_spec.name == 'top_level_subprocess_script':
+                assert task_definition.bpmn_identifier == "test_process_to_call_script"
+                assert (
+                    task_definition.bpmn_process_definition.bpmn_identifier
+                    == "test_process_to_call"
+                )
+            elif spiff_task.task_spec.name == "top_level_subprocess_script":
                 task = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
                 assert task.task_definition_id is not None
                 task_definition = task.task_definition
-                assert task_definition.bpmn_identifier == 'top_level_subprocess_script'
-                assert task_definition.bpmn_process_definition.bpmn_identifier == 'top_level_subprocess'
-            if spiff_task.task_spec.name == 'top_level_script':
+                assert task_definition.bpmn_identifier == "top_level_subprocess_script"
+                assert (
+                    task_definition.bpmn_process_definition.bpmn_identifier
+                    == "top_level_subprocess"
+                )
+            if spiff_task.task_spec.name == "top_level_script":
                 task = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
                 assert task.task_definition_id is not None
                 task_definition = task.task_definition
-                assert task_definition.bpmn_identifier == 'top_level_script'
-                assert task_definition.bpmn_process_definition.bpmn_identifier == 'top_level_process'
+                assert task_definition.bpmn_identifier == "top_level_script"
+                assert (
+                    task_definition.bpmn_process_definition.bpmn_identifier
+                    == "top_level_process"
+                )
             # FIXME: Checking task data cannot work with the feature/remove-loop-reset branch
             #   of SiffWorkflow. This is because it saves script data to the python_env and NOT
             #   to task.data. We may need to either create a new column on TaskModel to put the python_env

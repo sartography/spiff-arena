@@ -33,7 +33,6 @@ class TestErrorHandlingService(BaseTest):
         process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
             process_model.id, user
         )
-        print(f"process_instance.id: {process_instance.id}")
         pip = ProcessInstanceProcessor(process_instance)
         with pytest.raises(ApiError) as e:
             pip.do_engine_steps(save=True)
