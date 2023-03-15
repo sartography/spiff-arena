@@ -29,9 +29,7 @@ class UserModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     username: str = db.Column(db.String(255), nullable=False, unique=True)
 
-    service = db.Column(
-        db.String(255), nullable=False, unique=False
-    )  # not 'openid' -- google, aws
+    service = db.Column(db.String(255), nullable=False, unique=False)  # not 'openid' -- google, aws
     service_id = db.Column(db.String(255), nullable=False, unique=False)
     display_name = db.Column(db.String(255))
     email = db.Column(db.String(255))

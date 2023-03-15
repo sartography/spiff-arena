@@ -28,9 +28,7 @@ def message_instance_list(
     message_instances_query = MessageInstanceModel.query
 
     if process_instance_id:
-        message_instances_query = message_instances_query.filter_by(
-            process_instance_id=process_instance_id
-        )
+        message_instances_query = message_instances_query.filter_by(process_instance_id=process_instance_id)
 
     message_instances = (
         message_instances_query.order_by(
@@ -70,10 +68,7 @@ def message_send(
         raise (
             ApiError(
                 error_code="missing_payload",
-                message=(
-                    "Please include a 'payload' in the JSON body that contains the"
-                    " message contents."
-                ),
+                message="Please include a 'payload' in the JSON body that contains the message contents.",
                 status_code=400,
             )
         )
@@ -111,9 +106,7 @@ def message_send(
             )
         )
 
-    process_instance = ProcessInstanceModel.query.filter_by(
-        id=receiver_message.process_instance_id
-    ).first()
+    process_instance = ProcessInstanceModel.query.filter_by(id=receiver_message.process_instance_id).first()
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=200,

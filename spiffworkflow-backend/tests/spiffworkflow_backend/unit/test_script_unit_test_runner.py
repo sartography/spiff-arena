@@ -26,9 +26,7 @@ class TestScriptUnitTestRunner(BaseTest):
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
-        self.create_process_group(
-            client, with_super_admin_user, process_group_id, process_group_id
-        )
+        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
         process_model_id = "simple_script"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         load_test_spec(
@@ -36,14 +34,10 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = (
-            ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
-                process_model_identifier
-            )
+        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
+            process_model_identifier
         )
-        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier(
-            "Activity_CalculateNewData", bpmn_process_instance
-        )
+        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("Activity_CalculateNewData", bpmn_process_instance)
         assert task is not None
 
         input_context: PythonScriptContext = {"a": 1}
@@ -68,9 +62,7 @@ class TestScriptUnitTestRunner(BaseTest):
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
-        self.create_process_group(
-            client, with_super_admin_user, process_group_id, process_group_id
-        )
+        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_id = "simple_script"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -79,14 +71,10 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = (
-            ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
-                process_model_identifier
-            )
+        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
+            process_model_identifier
         )
-        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier(
-            "Activity_CalculateNewData", bpmn_process_instance
-        )
+        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("Activity_CalculateNewData", bpmn_process_instance)
         assert task is not None
 
         input_context: PythonScriptContext = {"a": 1}
@@ -111,9 +99,7 @@ class TestScriptUnitTestRunner(BaseTest):
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
-        self.create_process_group(
-            client, with_super_admin_user, process_group_id, process_group_id
-        )
+        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_id = "script_with_unit_tests"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -122,21 +108,15 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = (
-            ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
-                process_model_identifier
-            )
+        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
+            process_model_identifier
         )
-        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier(
-            "script_with_unit_test_id", bpmn_process_instance
-        )
+        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("script_with_unit_test_id", bpmn_process_instance)
         assert task is not None
 
         expected_output_context: PythonScriptContext = {"hey": True}
 
-        unit_test_result = ScriptUnitTestRunner.run_test(
-            task, "sets_hey_to_true_if_hey_is_false"
-        )
+        unit_test_result = ScriptUnitTestRunner.run_test(task, "sets_hey_to_true_if_hey_is_false")
 
         assert unit_test_result.result
         assert unit_test_result.context == expected_output_context
@@ -152,9 +132,7 @@ class TestScriptUnitTestRunner(BaseTest):
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
-        self.create_process_group(
-            client, with_super_admin_user, process_group_id, process_group_id
-        )
+        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_id = "script_with_unit_tests"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -164,21 +142,15 @@ class TestScriptUnitTestRunner(BaseTest):
             bpmn_file_name=process_model_id,
             process_model_source_directory=process_model_id,
         )
-        bpmn_process_instance = (
-            ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
-                process_model_identifier
-            )
+        bpmn_process_instance = ProcessInstanceProcessor.get_bpmn_process_instance_from_process_model(
+            process_model_identifier
         )
-        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier(
-            "script_with_unit_test_id", bpmn_process_instance
-        )
+        task = ProcessInstanceProcessor.get_task_by_bpmn_identifier("script_with_unit_test_id", bpmn_process_instance)
         assert task is not None
 
         expected_output_context: PythonScriptContext = {"something_else": True}
 
-        unit_test_result = ScriptUnitTestRunner.run_test(
-            task, "sets_something_else_if_no_hey"
-        )
+        unit_test_result = ScriptUnitTestRunner.run_test(task, "sets_something_else_if_no_hey")
 
         assert unit_test_result.result
         assert unit_test_result.context == expected_output_context

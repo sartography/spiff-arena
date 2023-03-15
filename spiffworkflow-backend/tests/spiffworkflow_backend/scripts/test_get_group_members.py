@@ -38,9 +38,7 @@ class TestGetGroupMembers(BaseTest):
         UserService.add_user_to_group(testuser2, group_a)
         UserService.add_user_to_group(testuser3, group_b)
 
-        self.create_process_group(
-            client, with_super_admin_user, "test_group", "test_group"
-        )
+        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             process_model_id="test_group/get_group_members",
             bpmn_file_name="get_group_members.bpmn",

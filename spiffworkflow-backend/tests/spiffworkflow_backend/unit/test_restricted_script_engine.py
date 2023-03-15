@@ -23,9 +23,7 @@ class TestOpenFile(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_form_data_conversion_to_dot_dict."""
-        self.create_process_group(
-            client, with_super_admin_user, "test_group", "test_group"
-        )
+        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             "test_group/dangerous",
             bpmn_file_name="read_etc_passwd.bpmn",
@@ -33,9 +31,7 @@ class TestOpenFile(BaseTest):
         )
         self.find_or_create_user()
 
-        process_instance = self.create_process_instance_from_process_model(
-            process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
 
         with pytest.raises(ApiError) as exception:
@@ -54,9 +50,7 @@ class TestImportModule(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_form_data_conversion_to_dot_dict."""
-        self.create_process_group(
-            client, with_super_admin_user, "test_group", "test_group"
-        )
+        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             "test_group/dangerous",
             bpmn_file_name="read_env.bpmn",
@@ -64,9 +58,7 @@ class TestImportModule(BaseTest):
         )
         self.find_or_create_user()
 
-        process_instance = self.create_process_instance_from_process_model(
-            process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
 
         with pytest.raises(ApiError) as exception:

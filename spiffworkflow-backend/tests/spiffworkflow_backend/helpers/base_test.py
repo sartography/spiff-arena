@@ -54,9 +54,7 @@ class BaseTest:
         )
 
     @staticmethod
-    def logged_in_headers(
-        user: UserModel, _redirect_url: str = "http://some/frontend/url"
-    ) -> Dict[str, str]:
+    def logged_in_headers(user: UserModel, _redirect_url: str = "http://some/frontend/url") -> Dict[str, str]:
         """Logged_in_headers."""
         return dict(Authorization="Bearer " + user.encode_auth_token())
 
@@ -80,9 +78,7 @@ class BaseTest:
         if bpmn_file_location is None:
             bpmn_file_location = process_model_id
 
-        self.create_process_group(
-            client, user, process_group_description, process_group_display_name
-        )
+        self.create_process_group(client, user, process_group_description, process_group_display_name)
 
         self.create_process_model_with_api(
             client,
@@ -108,9 +104,7 @@ class BaseTest:
         display_name: str = "",
     ) -> str:
         """Create_process_group."""
-        process_group = ProcessGroup(
-            id=process_group_id, display_name=display_name, display_order=0, admin=False
-        )
+        process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
         response = client.post(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(user),
@@ -139,9 +133,7 @@ class BaseTest:
             # make sure we have a group
             process_group_id, _ = os.path.split(process_model_id)
             modified_process_group_id = process_group_id.replace("/", ":")
-            process_group_path = os.path.abspath(
-                os.path.join(FileSystemService.root_path(), process_group_id)
-            )
+            process_group_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_group_id))
             if ProcessModelService.is_process_group(process_group_path):
                 if exception_notification_addresses is None:
                     exception_notification_addresses = []
@@ -171,14 +163,9 @@ class BaseTest:
             else:
                 raise Exception("You must create the group first")
         else:
-            raise Exception(
-                "You must include the process_model_id, which must be a path to the"
-                " model"
-            )
+            raise Exception("You must include the process_model_id, which must be a path to the model")
 
-    def get_test_data_file_full_path(
-        self, file_name: str, process_model_test_data_dir: str
-    ) -> str:
+    def get_test_data_file_full_path(self, file_name: str, process_model_test_data_dir: str) -> str:
         """Get_test_data_file_contents."""
         return os.path.join(
             current_app.instance_path,
@@ -190,13 +177,9 @@ class BaseTest:
             file_name,
         )
 
-    def get_test_data_file_contents(
-        self, file_name: str, process_model_test_data_dir: str
-    ) -> bytes:
+    def get_test_data_file_contents(self, file_name: str, process_model_test_data_dir: str) -> bytes:
         """Get_test_data_file_contents."""
-        file_full_path = self.get_test_data_file_full_path(
-            file_name, process_model_test_data_dir
-        )
+        file_full_path = self.get_test_data_file_full_path(file_name, process_model_test_data_dir)
         with open(file_full_path, "rb") as file:
             return file.read()
 
@@ -325,9 +308,7 @@ class BaseTest:
     ) -> UserModel:
         """Create_user_with_permission."""
         user = BaseTest.find_or_create_user(username=username)
-        return cls.add_permissions_to_user(
-            user, target_uri=target_uri, permission_names=permission_names
-        )
+        return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
 
     @classmethod
     def add_permissions_to_user(
@@ -337,9 +318,7 @@ class BaseTest:
         permission_names: Optional[list[str]] = None,
     ) -> UserModel:
         """Add_permissions_to_user."""
-        permission_target = AuthorizationService.find_or_create_permission_target(
-            target_uri
-        )
+        permission_target = AuthorizationService.find_or_create_permission_target(target_uri)
 
         if permission_names is None:
             permission_names = [member.name for member in Permission]
@@ -371,8 +350,6 @@ class BaseTest:
         """Modify_process_identifier_for_path_param."""
         return ProcessModelInfo.modify_process_identifier_for_path_param(identifier)
 
-    def un_modify_modified_process_identifier_for_path_param(
-        self, modified_identifier: str
-    ) -> str:
+    def un_modify_modified_process_identifier_for_path_param(self, modified_identifier: str) -> str:
         """Un_modify_modified_process_model_id."""
         return modified_identifier.replace(":", "/")

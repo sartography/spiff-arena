@@ -13,9 +13,7 @@ class GroupService:
     @classmethod
     def find_or_create_group(cls, group_identifier: str) -> GroupModel:
         """Find_or_create_group."""
-        group: Optional[GroupModel] = GroupModel.query.filter_by(
-            identifier=group_identifier
-        ).first()
+        group: Optional[GroupModel] = GroupModel.query.filter_by(identifier=group_identifier).first()
         if group is None:
             group = GroupModel(identifier=group_identifier)
             db.session.add(group)
@@ -24,9 +22,7 @@ class GroupService:
         return group
 
     @classmethod
-    def add_user_to_group_or_add_to_waiting(
-        cls, username: str, group_identifier: str
-    ) -> None:
+    def add_user_to_group_or_add_to_waiting(cls, username: str, group_identifier: str) -> None:
         """Add_user_to_group_or_add_to_waiting."""
         group = cls.find_or_create_group(group_identifier)
         user = UserModel.query.filter_by(username=username).first()

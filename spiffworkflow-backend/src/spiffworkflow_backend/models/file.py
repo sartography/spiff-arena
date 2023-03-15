@@ -126,6 +126,4 @@ class FileSchema(Schema):
             "process_model_id",
         ]
         unknown = INCLUDE
-        references = marshmallow.fields.List(
-            marshmallow.fields.Nested("SpecReferenceSchema")
-        )
+        references = marshmallow.fields.List(marshmallow.fields.Nested("SpecReferenceSchema"))

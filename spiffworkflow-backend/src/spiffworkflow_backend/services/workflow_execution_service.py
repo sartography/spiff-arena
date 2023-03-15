@@ -62,9 +62,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
-        self.bpmn_definition_to_task_definitions_mappings = (
-            bpmn_definition_to_task_definitions_mappings
-        )
+        self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
 
         self.current_task_model: Optional[TaskModel] = None
         self.task_models: dict[str, TaskModel] = {}
@@ -78,9 +76,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         """
         return self.process_instance.bpmn_process_id is not None
 
-    def _update_json_data_dicts_using_list(
-        self, json_data_dict_list: list[Optional[JsonDataDict]]
-    ) -> None:
+    def _update_json_data_dicts_using_list(self, json_data_dict_list: list[Optional[JsonDataDict]]) -> None:
         for json_data_dict in json_data_dict_list:
             if json_data_dict is not None:
                 self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
@@ -105,9 +101,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.current_task_model and self.should_update_task_model():
             self.current_task_model.end_in_seconds = time.time()
-            json_data_dict_list = TaskService.update_task_model(
-                self.current_task_model, spiff_task, self.serializer
-            )
+            json_data_dict_list = TaskService.update_task_model(self.current_task_model, spiff_task, self.serializer)
             self._update_json_data_dicts_using_list(json_data_dict_list)
             self.task_models[self.current_task_model.guid] = self.current_task_model
         if self.secondary_engine_step_delegate:
@@ -126,11 +120,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if self.should_update_task_model():
             # excludes FUTURE and COMPLETED. the others were required to get PP1 to go to completion.
             for waiting_spiff_task in bpmn_process_instance.get_tasks(
-                TaskState.WAITING
-                | TaskState.CANCELLED
-                | TaskState.READY
-                | TaskState.MAYBE
-                | TaskState.LIKELY
+                TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY
             ):
                 bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                     TaskService.find_or_create_task_model_from_spiff_task(
@@ -142,9 +132,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 )
                 self.task_models.update(new_task_models)
                 self.json_data_dicts.update(new_json_data_dicts)
-                json_data_dict_list = TaskService.update_task_model(
-                    task_model, waiting_spiff_task, self.serializer
-                )
+                json_data_dict_list = TaskService.update_task_model(task_model, waiting_spiff_task, self.serializer)
                 self.task_models[task_model.guid] = task_model
                 self._update_json_data_dicts_using_list(json_data_dict_list)
 
@@ -180,9 +168,8 @@ class StepDetailLoggingDelegate(EngineStepDelegate):
         }
 
     def should_log(self, spiff_task: SpiffTask) -> bool:
-        return (
-            spiff_task.task_spec.spec_type in self.tasks_to_log
-            and not spiff_task.task_spec.name.endswith(".EndJoin")
+        return spiff_task.task_spec.spec_type in self.tasks_to_log and not spiff_task.task_spec.name.endswith(
+            ".EndJoin"
         )
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
@@ -193,9 +180,7 @@ class StepDetailLoggingDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.should_log(spiff_task):
             self.step_details.append(
-                self.spiff_step_details_mapping(
-                    spiff_task, self.current_task_start_in_seconds, time.time()
-                )
+                self.spiff_step_details_mapping(spiff_task, self.current_task_start_in_seconds, time.time())
             )
 
     def save(self, commit: bool = True) -> None:
@@ -211,9 +196,7 @@ class ExecutionStrategy:
         """__init__."""
         self.delegate = delegate
 
-    def do_engine_steps(
-        self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
-    ) -> None:
+    def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
         pass
 
     def save(self) -> None:
@@ -223,9 +206,7 @@ class ExecutionStrategy:
 class GreedyExecutionStrategy(ExecutionStrategy):
     """The common execution strategy. This will greedily run all engine steps without stopping."""
 
-    def do_engine_steps(
-        self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
-    ) -> None:
+    def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
         bpmn_process_instance.do_engine_steps(
             exit_at=exit_at,
             will_complete_task=self.delegate.will_complete_task,
@@ -241,9 +222,7 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
     return (to an interstitial page). The background processor would then take over.
     """
 
-    def do_engine_steps(
-        self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None
-    ) -> None:
+    def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
         engine_steps = list(
             [
                 t
@@ -270,9 +249,7 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
         self.delegate.after_engine_steps(bpmn_process_instance)
 
 
-def execution_strategy_named(
-    name: str, delegate: EngineStepDelegate
-) -> ExecutionStrategy:
+def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
         "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
@@ -305,9 +282,7 @@ class WorkflowExecutionService:
 
     def do_engine_steps(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
-        with safe_assertion(
-            ProcessInstanceLockService.has_lock(self.process_instance_model.id)
-        ) as tripped:
+        with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
             if tripped:
                 raise AssertionError(
                     "The current thread has not obtained a lock for this process"
@@ -364,9 +339,7 @@ class WorkflowExecutionService:
     def queue_waiting_receive_messages(self) -> None:
         """Queue_waiting_receive_messages."""
         waiting_events = self.bpmn_process_instance.waiting_events()
-        waiting_message_events = filter(
-            lambda e: e["event_type"] == "Message", waiting_events
-        )
+        waiting_message_events = filter(lambda e: e["event_type"] == "Message", waiting_events)
 
         for event in waiting_message_events:
             # Ensure we are only creating one message instance for each waiting message

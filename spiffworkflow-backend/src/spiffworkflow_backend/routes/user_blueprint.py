@@ -98,11 +98,7 @@ def create_group(group_name: str) -> flask.wrappers.Response:
     try:
         db.session.add(group)
     except IntegrityError as exception:
-        raise (
-            ApiError(
-                error_code="integrity_error", message=repr(exception), status_code=500
-            )
-        ) from exception
+        raise (ApiError(error_code="integrity_error", message=repr(exception), status_code=500)) from exception
     db.session.commit()
 
     return Response(json.dumps({"id": group.id}), status=201, mimetype=APPLICATION_JSON)
@@ -133,9 +129,7 @@ def assign_user_to_group() -> flask.wrappers.Response:
     user = get_user_from_request()
     group = get_group_from_request()
 
-    user_group_assignment = UserGroupAssignmentModel.query.filter_by(
-        user_id=user.id, group_id=group.id
-    ).first()
+    user_group_assignment = UserGroupAssignmentModel.query.filter_by(user_id=user.id, group_id=group.id).first()
     if user_group_assignment is not None:
         raise (
             ApiError(
@@ -162,9 +156,7 @@ def remove_user_from_group() -> flask.wrappers.Response:
     user = get_user_from_request()
     group = get_group_from_request()
 
-    user_group_assignment = UserGroupAssignmentModel.query.filter_by(
-        user_id=user.id, group_id=group.id
-    ).first()
+    user_group_assignment = UserGroupAssignmentModel.query.filter_by(user_id=user.id, group_id=group.id).first()
     if user_group_assignment is None:
         raise (
             ApiError(

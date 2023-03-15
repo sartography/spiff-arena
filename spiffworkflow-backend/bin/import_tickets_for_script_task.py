@@ -84,9 +84,7 @@ def main():
                 ) in columns_to_data_key_mappings.items():
                     appropriate_index = columns_to_header_index_mappings[column_name]
                     print(f"appropriate_index: {appropriate_index}")
-                    processor.bpmn_process_instance.data[desired_data_key] = row[
-                        appropriate_index
-                    ]
+                    processor.bpmn_process_instance.data[desired_data_key] = row[appropriate_index]
 
                 # you at least need a month, or else this row in the csv is considered garbage
                 month_value = processor.bpmn_process_instance.data["month"]

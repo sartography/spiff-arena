@@ -45,17 +45,11 @@ class TaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "task"
     id: int = db.Column(db.Integer, primary_key=True)
     guid: str = db.Column(db.String(36), nullable=False, unique=True, index=True)
-    bpmn_process_id: int = db.Column(
-        ForeignKey(BpmnProcessModel.id), nullable=False  # type: ignore
-    )
-    process_instance_id: int = db.Column(
-        ForeignKey("process_instance.id"), nullable=False
-    )
+    bpmn_process_id: int = db.Column(ForeignKey(BpmnProcessModel.id), nullable=False)  # type: ignore
+    process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False)
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
-    task_definition_id: int = db.Column(
-        ForeignKey(TaskDefinitionModel.id), nullable=False  # type: ignore
-    )
+    task_definition_id: int = db.Column(ForeignKey(TaskDefinitionModel.id), nullable=False)  # type: ignore
     task_definition = relationship("TaskDefinitionModel")
 
     state: str = db.Column(db.String(10), nullable=False)
@@ -137,15 +131,9 @@ class Task:
         self.form_schema = form_schema
         self.form_ui_schema = form_ui_schema
 
-        self.multi_instance_type = (
-            multi_instance_type  # Some tasks have a repeat behavior.
-        )
-        self.multi_instance_count = (
-            multi_instance_count  # This is the number of times the task could repeat.
-        )
-        self.multi_instance_index = (
-            multi_instance_index  # And the index of the currently repeating task.
-        )
+        self.multi_instance_type = multi_instance_type  # Some tasks have a repeat behavior.
+        self.multi_instance_count = multi_instance_count  # This is the number of times the task could repeat.
+        self.multi_instance_index = multi_instance_index  # And the index of the currently repeating task.
         self.process_identifier = process_identifier
 
         self.properties = properties  # Arbitrary extension properties from BPMN editor.
@@ -243,9 +231,7 @@ class FormFieldSchema(Schema):
     default_value = marshmallow.fields.String(required=False, allow_none=True)
     options = marshmallow.fields.List(marshmallow.fields.Nested(OptionSchema))
     validation = marshmallow.fields.List(marshmallow.fields.Nested(ValidationSchema))
-    properties = marshmallow.fields.List(
-        marshmallow.fields.Nested(FormFieldPropertySchema)
-    )
+    properties = marshmallow.fields.List(marshmallow.fields.Nested(FormFieldPropertySchema))
 
 
 # class FormSchema(Schema):

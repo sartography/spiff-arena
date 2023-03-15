@@ -84,9 +84,7 @@ class ProcessInstanceService:
     @staticmethod
     def do_waiting(status_value: str = ProcessInstanceStatus.waiting.value) -> None:
         """Do_waiting."""
-        process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(
-            status_value
-        )
+        process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(status_value)
         if len(process_instance_ids_to_check) == 0:
             return
 
@@ -100,18 +98,14 @@ class ProcessInstanceService:
             locked = False
             processor = None
             try:
-                current_app.logger.info(
-                    f"Processing process_instance {process_instance.id}"
-                )
+                current_app.logger.info(f"Processing process_instance {process_instance.id}")
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.lock_process_instance(process_instance_lock_prefix)
                 locked = True
                 execution_strategy_name = current_app.config[
                     "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"
                 ]
-                processor.do_engine_steps(
-                    save=True, execution_strategy_name=execution_strategy_name
-                )
+                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
@@ -120,8 +114,7 @@ class ProcessInstanceService:
                 db.session.add(process_instance)
                 db.session.commit()
                 error_message = (
-                    "Error running waiting task for process_instance"
-                    f" {process_instance.id}"
+                    f"Error running waiting task for process_instance {process_instance.id}"
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
@@ -140,9 +133,7 @@ class ProcessInstanceService:
         # navigation = processor.bpmn_process_instance.get_deep_nav_list()
         # ProcessInstanceService.update_navigation(navigation, processor)
         process_model_service = ProcessModelService()
-        process_model = process_model_service.get_process_model(
-            processor.process_model_identifier
-        )
+        process_model = process_model_service.get_process_model(processor.process_model_identifier)
         process_model.display_name if process_model else ""
         process_instance_api = ProcessInstanceApi(
             id=processor.get_process_instance_id(),
@@ -155,34 +146,24 @@ class ProcessInstanceService:
         )
 
         next_task_trying_again = next_task
-        if (
-            not next_task
-        ):  # The Next Task can be requested to be a certain task, useful for parallel tasks.
+        if not next_task:  # The Next Task can be requested to be a certain task, useful for parallel tasks.
             # This may or may not work, sometimes there is no next task to complete.
             next_task_trying_again = processor.next_task()
 
         if next_task_trying_again is not None:
-            process_instance_api.next_task = (
-                ProcessInstanceService.spiff_task_to_api_task(
-                    processor, next_task_trying_again, add_docs_and_forms=True
-                )
+            process_instance_api.next_task = ProcessInstanceService.spiff_task_to_api_task(
+                processor, next_task_trying_again, add_docs_and_forms=True
             )
 
         return process_instance_api
 
     def get_process_instance(self, process_instance_id: int) -> Any:
         """Get_process_instance."""
-        result = (
-            db.session.query(ProcessInstanceModel)
-            .filter(ProcessInstanceModel.id == process_instance_id)
-            .first()
-        )
+        result = db.session.query(ProcessInstanceModel).filter(ProcessInstanceModel.id == process_instance_id).first()
         return result
 
     @staticmethod
-    def get_users_assigned_to_task(
-        processor: ProcessInstanceProcessor, spiff_task: SpiffTask
-    ) -> List[int]:
+    def get_users_assigned_to_task(processor: ProcessInstanceProcessor, spiff_task: SpiffTask) -> List[int]:
         """Get_users_assigned_to_task."""
         if processor.process_instance_model.process_initiator_id is None:
             raise ApiError.from_task(
@@ -193,10 +174,7 @@ class ProcessInstanceService:
 
         # Workflow associated with a study - get all the users
         else:
-            if (
-                not hasattr(spiff_task.task_spec, "lane")
-                or spiff_task.task_spec.lane is None
-            ):
+            if not hasattr(spiff_task.task_spec, "lane") or spiff_task.task_spec.lane is None:
                 return [processor.process_instance_model.process_initiator_id]
 
             if spiff_task.task_spec.lane not in spiff_task.data:
@@ -225,8 +203,7 @@ class ProcessInstanceService:
                 else:
                     raise ApiError.from_task(
                         error_code="task_lane_user_error",
-                        message="Spiff Task %s lane user is not a string or dict"
-                        % spiff_task.task_spec.name,
+                        message="Spiff Task %s lane user is not a string or dict" % spiff_task.task_spec.name,
                         task=spiff_task,
                     )
 
@@ -287,9 +264,7 @@ class ProcessInstanceService:
         models = []
 
         for identifier, value, list_index in cls.possible_file_data_values(data):
-            model = cls.file_data_model_for_value(
-                identifier, value, process_instance_id
-            )
+            model = cls.file_data_model_for_value(identifier, value, process_instance_id)
             if model is not None:
                 model.list_index = list_index
                 models.append(model)
@@ -303,7 +278,9 @@ class ProcessInstanceService:
         models: List[ProcessInstanceFileDataModel],
     ) -> None:
         for model in models:
-            digest_reference = f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
+            digest_reference = (
+                f"data:{model.mimetype};name={model.filename};base64,{cls.FILE_DATA_DIGEST_PREFIX}{model.digest}"
+            )
             if model.list_index is None:
                 data[model.identifier] = digest_reference
             else:
@@ -336,9 +313,7 @@ class ProcessInstanceService:
         Abstracted here because we need to do it multiple times when completing all tasks in
         a multi-instance task.
         """
-        AuthorizationService.assert_user_can_complete_spiff_task(
-            processor.process_instance_model.id, spiff_task, user
-        )
+        AuthorizationService.assert_user_can_complete_spiff_task(processor.process_instance_model.id, spiff_task, user)
 
         ProcessInstanceService.save_file_data_and_replace_with_digest_references(
             data,

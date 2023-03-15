@@ -187,9 +187,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                 {"Header": "priority", "accessor": "priority"},
             ],
             "order": "month asc",
-            "filter_by": [
-                {"field_name": "month", "operator": "equals", "field_value": "3"}
-            ],
+            "filter_by": [{"field_name": "month", "operator": "equals", "field_value": "3"}],
         }
 
     @classmethod
@@ -233,25 +231,19 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         if substitution_variables is not None:
             for key, value in substitution_variables.items():
                 if isinstance(value, str) or isinstance(value, int):
-                    field_value = str(field_value).replace(
-                        "{{" + key + "}}", str(value)
-                    )
+                    field_value = str(field_value).replace("{{" + key + "}}", str(value))
         return field_value
 
     # modeled after https://github.com/suyash248/sqlalchemy-json-querybuilder
     # just supports "equals" operator for now.
     # perhaps we will use the database instead of filtering in memory in the future and then we might use this lib directly.
-    def passes_filter(
-        self, process_instance_dict: dict, substitution_variables: dict
-    ) -> bool:
+    def passes_filter(self, process_instance_dict: dict, substitution_variables: dict) -> bool:
         """Passes_filter."""
         if "filter_by" in self.report_metadata:
             for filter_by in self.report_metadata["filter_by"]:
                 field_name = filter_by["field_name"]
                 operator = filter_by["operator"]
-                field_value = self.with_substitutions(
-                    filter_by["field_value"], substitution_variables
-                )
+                field_value = self.with_substitutions(filter_by["field_value"], substitution_variables)
                 if operator == "equals":
                     if str(process_instance_dict.get(field_name)) != str(field_value):
                         return False
@@ -274,9 +266,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                     sort_value = process_instance_dict.get(order_by_item)
                     comparison_values.append(Reversor(sort_value))
                 else:
-                    sort_value = cast(
-                        Optional[str], process_instance_dict.get(order_by_item)
-                    )
+                    sort_value = cast(Optional[str], process_instance_dict.get(order_by_item))
                     comparison_values.append(sort_value)
             return comparison_values
 
@@ -307,20 +297,14 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
             results = self.order_things(results)
 
         if "columns" in self.report_metadata:
-            column_keys_to_keep = [
-                c["accessor"] for c in self.report_metadata["columns"]
-            ]
+            column_keys_to_keep = [c["accessor"] for c in self.report_metadata["columns"]]
 
             pruned_results = []
             for result in results:
                 dict_you_want = {
-                    your_key: result[your_key]
-                    for your_key in column_keys_to_keep
-                    if result.get(your_key)
+                    your_key: result[your_key] for your_key in column_keys_to_keep if result.get(your_key)
                 }
                 pruned_results.append(dict_you_want)
             results = pruned_results
 
-        return ProcessInstanceReportResult(
-            report_metadata=self.report_metadata, results=results
-        )
+        return ProcessInstanceReportResult(report_metadata=self.report_metadata, results=results)

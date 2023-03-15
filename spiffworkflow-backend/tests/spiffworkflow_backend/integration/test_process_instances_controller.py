@@ -18,21 +18,15 @@ class TestProcessInstancesController(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_user_search_returns_a_user."""
-        user_one = self.create_user_with_permission(
-            username="user_one", target_uri="/process-instances/find-by-id/*"
-        )
-        user_two = self.create_user_with_permission(
-            username="user_two", target_uri="/process-instances/find-by-id/*"
-        )
+        user_one = self.create_user_with_permission(username="user_one", target_uri="/process-instances/find-by-id/*")
+        user_two = self.create_user_with_permission(username="user_two", target_uri="/process-instances/find-by-id/*")
 
         process_model = load_test_spec(
             process_model_id="group/sample",
             bpmn_file_name="sample.bpmn",
             process_model_source_directory="sample",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=user_one
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model, user=user_one)
 
         response = client.get(
             f"/v1.0/process-instances/find-by-id/{process_instance.id}",

@@ -76,13 +76,9 @@ class ProcessInstanceReportFilter:
         if self.has_terminal_status is not None:
             d["has_terminal_status"] = str(self.has_terminal_status).lower()
         if self.with_tasks_completed_by_me is not None:
-            d["with_tasks_completed_by_me"] = str(
-                self.with_tasks_completed_by_me
-            ).lower()
+            d["with_tasks_completed_by_me"] = str(self.with_tasks_completed_by_me).lower()
         if self.with_tasks_assigned_to_my_group is not None:
-            d["with_tasks_assigned_to_my_group"] = str(
-                self.with_tasks_assigned_to_my_group
-            ).lower()
+            d["with_tasks_assigned_to_my_group"] = str(self.with_tasks_assigned_to_my_group).lower()
         if self.with_relation_to_me is not None:
             d["with_relation_to_me"] = str(self.with_relation_to_me).lower()
         if self.process_initiator_username is not None:
@@ -177,8 +173,7 @@ class ProcessInstanceReportService:
         report_metadata = cls.system_metadata_map(report_identifier)
         if report_metadata is None:
             raise ProcessInstanceReportNotFoundError(
-                f"Could not find a report with identifier '{report_identifier}' for"
-                f" user '{user.username}'"
+                f"Could not find a report with identifier '{report_identifier}' for user '{user.username}'"
             )
 
         process_instance_report = ProcessInstanceReportModel(
@@ -190,23 +185,15 @@ class ProcessInstanceReportService:
         return process_instance_report  # type: ignore
 
     @classmethod
-    def filter_by_to_dict(
-        cls, process_instance_report: ProcessInstanceReportModel
-    ) -> dict[str, str]:
+    def filter_by_to_dict(cls, process_instance_report: ProcessInstanceReportModel) -> dict[str, str]:
         """Filter_by_to_dict."""
         metadata = process_instance_report.report_metadata
         filter_by = metadata.get("filter_by", [])
-        filters = {
-            d["field_name"]: d["field_value"]
-            for d in filter_by
-            if "field_name" in d and "field_value" in d
-        }
+        filters = {d["field_name"]: d["field_value"] for d in filter_by if "field_name" in d and "field_value" in d}
         return filters
 
     @classmethod
-    def filter_from_metadata(
-        cls, process_instance_report: ProcessInstanceReportModel
-    ) -> ProcessInstanceReportFilter:
+    def filter_from_metadata(cls, process_instance_report: ProcessInstanceReportModel) -> ProcessInstanceReportFilter:
         """Filter_from_metadata."""
         filters = cls.filter_by_to_dict(process_instance_report)
 
@@ -308,9 +295,7 @@ class ProcessInstanceReportService:
         if report_filter_by_list is not None:
             report_filter.report_filter_by_list = report_filter_by_list
         if with_tasks_assigned_to_my_group is not None:
-            report_filter.with_tasks_assigned_to_my_group = (
-                with_tasks_assigned_to_my_group
-            )
+            report_filter.with_tasks_assigned_to_my_group = with_tasks_assigned_to_my_group
         if with_relation_to_me is not None:
             report_filter.with_relation_to_me = with_relation_to_me
 
@@ -328,17 +313,13 @@ class ProcessInstanceReportService:
             process_instance_dict = process_instance["ProcessInstanceModel"].serialized
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
-                    process_instance_dict[metadata_column["accessor"]] = (
-                        process_instance[metadata_column["accessor"]]
-                    )
+                    process_instance_dict[metadata_column["accessor"]] = process_instance[metadata_column["accessor"]]
 
             results.append(process_instance_dict)
         return results
 
     @classmethod
-    def get_column_names_for_model(
-        cls, model: Type[SpiffworkflowBaseDBModel]
-    ) -> list[str]:
+    def get_column_names_for_model(cls, model: Type[SpiffworkflowBaseDBModel]) -> list[str]:
         """Get_column_names_for_model."""
         return [i.name for i in model.__table__.columns]
 
@@ -374,24 +355,17 @@ class ProcessInstanceReportService:
         """Run_process_instance_report."""
         process_instance_query = ProcessInstanceModel.query
         # Always join that hot user table for good performance at serialization time.
-        process_instance_query = process_instance_query.options(
-            selectinload(ProcessInstanceModel.process_initiator)
-        )
+        process_instance_query = process_instance_query.options(selectinload(ProcessInstanceModel.process_initiator))
 
         if report_filter.process_model_identifier is not None:
             process_model = ProcessModelService.get_process_model(
                 f"{report_filter.process_model_identifier}",
             )
 
-            process_instance_query = process_instance_query.filter_by(
-                process_model_identifier=process_model.id
-            )
+            process_instance_query = process_instance_query.filter_by(process_model_identifier=process_model.id)
 
         # this can never happen. obviously the class has the columns it defines. this is just to appease mypy.
-        if (
-            ProcessInstanceModel.start_in_seconds is None
-            or ProcessInstanceModel.end_in_seconds is None
-        ):
+        if ProcessInstanceModel.start_in_seconds is None or ProcessInstanceModel.end_in_seconds is None:
             raise (
                 ApiError(
                     error_code="unexpected_condition",
@@ -422,9 +396,7 @@ class ProcessInstanceReportService:
             )
 
         if report_filter.initiated_by_me is True:
-            process_instance_query = process_instance_query.filter_by(
-                process_initiator=user
-            )
+            process_instance_query = process_instance_query.filter_by(process_initiator=user)
 
         if report_filter.has_terminal_status is True:
             process_instance_query = process_instance_query.filter(
@@ -432,24 +404,18 @@ class ProcessInstanceReportService:
             )
 
         if report_filter.process_initiator_username is not None:
-            user = UserModel.query.filter_by(
-                username=report_filter.process_initiator_username
-            ).first()
+            user = UserModel.query.filter_by(username=report_filter.process_initiator_username).first()
             process_initiator_id = -1
             if user:
                 process_initiator_id = user.id
-            process_instance_query = process_instance_query.filter_by(
-                process_initiator_id=process_initiator_id
-            )
+            process_instance_query = process_instance_query.filter_by(process_initiator_id=process_initiator_id)
 
         if (
             not report_filter.with_tasks_completed_by_me
             and not report_filter.with_tasks_assigned_to_my_group
             and report_filter.with_relation_to_me is True
         ):
-            process_instance_query = process_instance_query.outerjoin(
-                HumanTaskModel
-            ).outerjoin(
+            process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(
                 HumanTaskUserModel,
                 and_(
                     HumanTaskModel.id == HumanTaskUserModel.human_task_id,
@@ -476,37 +442,23 @@ class ProcessInstanceReportService:
             )
 
         if report_filter.with_tasks_assigned_to_my_group is True:
-            group_model_join_conditions = [
-                GroupModel.id == HumanTaskModel.lane_assignment_id
-            ]
+            group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
             if report_filter.user_group_identifier:
-                group_model_join_conditions.append(
-                    GroupModel.identifier == report_filter.user_group_identifier
-                )
+                group_model_join_conditions.append(GroupModel.identifier == report_filter.user_group_identifier)
             process_instance_query = process_instance_query.join(HumanTaskModel)
-            process_instance_query = process_instance_query.join(
-                GroupModel, and_(*group_model_join_conditions)
-            )
+            process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))
             process_instance_query = process_instance_query.join(
                 UserGroupAssignmentModel,
                 UserGroupAssignmentModel.group_id == GroupModel.id,
             )
-            process_instance_query = process_instance_query.filter(
-                UserGroupAssignmentModel.user_id == user.id
-            )
+            process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
 
         instance_metadata_aliases = {}
-        stock_columns = ProcessInstanceReportService.get_column_names_for_model(
-            ProcessInstanceModel
-        )
+        stock_columns = ProcessInstanceReportService.get_column_names_for_model(ProcessInstanceModel)
         if report_filter.report_column_list:
-            process_instance_report.report_metadata["columns"] = (
-                report_filter.report_column_list
-            )
+            process_instance_report.report_metadata["columns"] = report_filter.report_column_list
         if report_filter.report_filter_by_list:
-            process_instance_report.report_metadata["filter_by"] = (
-                report_filter.report_filter_by_list
-            )
+            process_instance_report.report_metadata["filter_by"] = report_filter.report_filter_by_list
 
         for column in process_instance_report.report_metadata["columns"]:
             if column["accessor"] in stock_columns:
@@ -531,14 +483,10 @@ class ProcessInstanceReportService:
             ]
             if filter_for_column:
                 isouter = False
-                conditions.append(
-                    instance_metadata_alias.value == filter_for_column["field_value"]
-                )
+                conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
             process_instance_query = process_instance_query.join(
                 instance_metadata_alias, and_(*conditions), isouter=isouter
-            ).add_columns(
-                func.max(instance_metadata_alias.value).label(column["accessor"])
-            )
+            ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
 
         order_by_query_array = []
         order_by_array = process_instance_report.report_metadata["order_by"]
@@ -548,22 +496,14 @@ class ProcessInstanceReportService:
             attribute = re.sub("^-", "", order_by_option)
             if attribute in stock_columns:
                 if order_by_option.startswith("-"):
-                    order_by_query_array.append(
-                        getattr(ProcessInstanceModel, attribute).desc()
-                    )
+                    order_by_query_array.append(getattr(ProcessInstanceModel, attribute).desc())
                 else:
-                    order_by_query_array.append(
-                        getattr(ProcessInstanceModel, attribute).asc()
-                    )
+                    order_by_query_array.append(getattr(ProcessInstanceModel, attribute).asc())
             elif attribute in instance_metadata_aliases:
                 if order_by_option.startswith("-"):
-                    order_by_query_array.append(
-                        func.max(instance_metadata_aliases[attribute].value).desc()
-                    )
+                    order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).desc())
                 else:
-                    order_by_query_array.append(
-                        func.max(instance_metadata_aliases[attribute].value).asc()
-                    )
+                    order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).asc())
         # return process_instance_query
         process_instances = (
             process_instance_query.group_by(ProcessInstanceModel.id)

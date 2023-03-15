@@ -38,16 +38,10 @@ class TestMessageInstance(BaseTest):
     ) -> None:
         """Test_can_create_message_instance."""
         message_name = "Message Model One"
-        process_model_identifier = self.setup_message_tests(
-            client, with_super_admin_user
-        )
+        process_model_identifier = self.setup_message_tests(client, with_super_admin_user)
 
-        process_model = ProcessModelService.get_process_model(
-            process_model_id=process_model_identifier
-        )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model, "waiting"
-        )
+        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
+        process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         queued_message = MessageInstanceModel(
             process_instance_id=process_instance.id,
@@ -62,9 +56,7 @@ class TestMessageInstance(BaseTest):
         assert queued_message.status == "ready"
         assert queued_message.failure_cause is None
 
-        queued_message_from_query = MessageInstanceModel.query.filter_by(  # type: ignore
-            id=queued_message.id
-        ).first()
+        queued_message_from_query = MessageInstanceModel.query.filter_by(id=queued_message.id).first()  # type: ignore
         assert queued_message_from_query is not None
 
     def test_cannot_set_invalid_status(
@@ -76,15 +68,9 @@ class TestMessageInstance(BaseTest):
     ) -> None:
         """Test_cannot_set_invalid_status."""
         message_name = "message_model_one"
-        process_model_identifier = self.setup_message_tests(
-            client, with_super_admin_user
-        )
-        process_model = ProcessModelService.get_process_model(
-            process_model_id=process_model_identifier
-        )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model, "waiting"
-        )
+        process_model_identifier = self.setup_message_tests(client, with_super_admin_user)
+        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
+        process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         with pytest.raises(ValueError) as exception:
             MessageInstanceModel(
@@ -94,9 +80,7 @@ class TestMessageInstance(BaseTest):
                 name=message_name,
                 status="BAD_STATUS",
             )
-        assert (
-            str(exception.value) == "MessageInstanceModel: invalid status: BAD_STATUS"
-        )
+        assert str(exception.value) == "MessageInstanceModel: invalid status: BAD_STATUS"
 
         queued_message = MessageInstanceModel(
             process_instance_id=process_instance.id,
@@ -109,9 +93,7 @@ class TestMessageInstance(BaseTest):
 
         with pytest.raises(ValueError) as exception:
             queued_message.status = "BAD_STATUS"
-        assert (
-            str(exception.value) == "MessageInstanceModel: invalid status: BAD_STATUS"
-        )
+        assert str(exception.value) == "MessageInstanceModel: invalid status: BAD_STATUS"
 
     def test_cannot_set_invalid_message_type(
         self,
@@ -122,16 +104,10 @@ class TestMessageInstance(BaseTest):
     ) -> None:
         """Test_cannot_set_invalid_message_type."""
         message_name = "message_model_one"
-        process_model_identifier = self.setup_message_tests(
-            client, with_super_admin_user
-        )
+        process_model_identifier = self.setup_message_tests(client, with_super_admin_user)
 
-        process_model = ProcessModelService.get_process_model(
-            process_model_id=process_model_identifier
-        )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model, "waiting"
-        )
+        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
+        process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         with pytest.raises(ValueError) as exception:
             MessageInstanceModel(
@@ -140,10 +116,7 @@ class TestMessageInstance(BaseTest):
                 message_type="BAD_MESSAGE_TYPE",
                 name=message_name,
             )
-        assert (
-            str(exception.value)
-            == "MessageInstanceModel: invalid message_type: BAD_MESSAGE_TYPE"
-        )
+        assert str(exception.value) == "MessageInstanceModel: invalid message_type: BAD_MESSAGE_TYPE"
 
         queued_message = MessageInstanceModel(
             process_instance_id=process_instance.id,
@@ -156,10 +129,7 @@ class TestMessageInstance(BaseTest):
 
         with pytest.raises(ValueError) as exception:
             queued_message.message_type = "BAD_MESSAGE_TYPE"
-        assert (
-            str(exception.value)
-            == "MessageInstanceModel: invalid message_type: BAD_MESSAGE_TYPE"
-        )
+        assert str(exception.value) == "MessageInstanceModel: invalid message_type: BAD_MESSAGE_TYPE"
 
     def test_force_failure_cause_if_status_is_failure(
         self,
@@ -170,16 +140,10 @@ class TestMessageInstance(BaseTest):
     ) -> None:
         """Test_force_failure_cause_if_status_is_failure."""
         message_name = "message_model_one"
-        process_model_identifier = self.setup_message_tests(
-            client, with_super_admin_user
-        )
+        process_model_identifier = self.setup_message_tests(client, with_super_admin_user)
 
-        process_model = ProcessModelService.get_process_model(
-            process_model_id=process_model_identifier
-        )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model, "waiting"
-        )
+        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
+        process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         queued_message = MessageInstanceModel(
             process_instance_id=process_instance.id,
@@ -191,10 +155,7 @@ class TestMessageInstance(BaseTest):
         db.session.add(queued_message)
         with pytest.raises(ValueError) as exception:
             db.session.commit()
-        assert (
-            str(exception.value)
-            == "MessageInstanceModel: failure_cause must be set if status is failed"
-        )
+        assert str(exception.value) == "MessageInstanceModel: failure_cause must be set if status is failed"
         assert queued_message.id is None
         db.session.remove()  # type: ignore
 

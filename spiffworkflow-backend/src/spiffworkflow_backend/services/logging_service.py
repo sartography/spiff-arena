@@ -63,10 +63,7 @@ class JsonFormatter(logging.Formatter):
 
         KeyError is raised if an unknown attribute is provided in the fmt_dict.
         """
-        return {
-            fmt_key: record.__dict__[fmt_val]
-            for fmt_key, fmt_val in self.fmt_dict.items()
-        }
+        return {fmt_key: record.__dict__[fmt_val] for fmt_key, fmt_val in self.fmt_dict.items()}
 
     def format(self, record: logging.LogRecord) -> str:
         """Mostly the same as the parent's class method.
@@ -124,15 +121,12 @@ def setup_logger(app: Flask) -> None:
 
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(
-            f"Log level given is invalid: '{upper_log_level_string}'. Valid options are"
-            f" {log_levels}"
+            f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}"
         )
 
     log_level = getattr(logging, upper_log_level_string)
     spiff_log_level = getattr(logging, upper_log_level_string)
-    log_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     app.logger.debug("Printing log to create app logger")
 
@@ -235,9 +229,7 @@ class DBHandler(logging.Handler):
             message = record.msg if hasattr(record, "msg") else None
 
             current_user_id = None
-            if bpmn_task_type in Task.HUMAN_TASK_TYPES and hasattr(
-                record, "current_user_id"
-            ):
+            if bpmn_task_type in Task.HUMAN_TASK_TYPES and hasattr(record, "current_user_id"):
                 current_user_id = record.current_user_id  # type: ignore
 
             spiff_step = (

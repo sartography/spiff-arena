@@ -27,12 +27,7 @@ class GetDataSizes(Script):
         return """Returns a dictionary of information about the size of task data and
             the python environment for the currently running process."""
 
-    def run(
-        self,
-        script_attributes_context: ScriptAttributesContext,
-        *_args: Any,
-        **kwargs: Any
-    ) -> Any:
+    def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
         """Run."""
         if script_attributes_context.task is None:
             raise TaskNotGivenToScriptError(
@@ -42,8 +37,7 @@ class GetDataSizes(Script):
         workflow = script_attributes_context.task.workflow
         task_data_size = ProcessInstanceProcessor.get_task_data_size(workflow)
         task_data_keys_by_task = {
-            t.task_spec.name: sorted(t.data.keys())
-            for t in ProcessInstanceProcessor.get_tasks_with_data(workflow)
+            t.task_spec.name: sorted(t.data.keys()) for t in ProcessInstanceProcessor.get_tasks_with_data(workflow)
         }
         python_env_size = ProcessInstanceProcessor.get_python_env_size(workflow)
         python_env_keys = workflow.script_engine.environment.user_defined_state().keys()

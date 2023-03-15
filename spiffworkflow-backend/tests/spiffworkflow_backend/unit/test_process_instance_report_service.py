@@ -99,9 +99,7 @@ class TestProcessInstanceReportFilter(BaseTest):
 class TestProcessInstanceReportService(BaseTest):
     """TestProcessInstanceReportService."""
 
-    def _filter_from_metadata(
-        self, report_metadata: dict
-    ) -> ProcessInstanceReportFilter:
+    def _filter_from_metadata(self, report_metadata: dict) -> ProcessInstanceReportFilter:
         """Docstring."""
         report = ProcessInstanceReportModel(
             identifier="test",
@@ -313,9 +311,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata(
             {
                 "columns": [],
-                "filter_by": [
-                    {"field_name": "process_model_identifier", "field_value": "bob"}
-                ],
+                "filter_by": [{"field_name": "process_model_identifier", "field_value": "bob"}],
             }
         )
 
@@ -543,9 +539,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [
-                    {"field_name": "process_model_identifier", "field_value": "bob"}
-                ],
+                "filter_by": [{"field_name": "process_model_identifier", "field_value": "bob"}],
             },
             process_model_identifier="joe",
         )
@@ -660,9 +654,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_filter = self._filter_from_metadata_with_overrides(
             {
                 "columns": [],
-                "filter_by": [
-                    {"field_name": "process_status", "field_value": "joe,bob"}
-                ],
+                "filter_by": [{"field_name": "process_status", "field_value": "joe,bob"}],
             },
             process_status="sue",
         )
@@ -766,31 +758,19 @@ class TestProcessInstanceReportService(BaseTest):
         user_two = self.find_or_create_user(username="user_two")
 
         # Several processes to ensure they do not return in the result
-        self.create_process_instance_from_process_model(
-            process_model=process_model, status="complete", user=user_one
-        )
-        self.create_process_instance_from_process_model(
-            process_model=process_model, status="complete", user=user_one
-        )
-        self.create_process_instance_from_process_model(
-            process_model=process_model, status="waiting", user=user_one
-        )
-        self.create_process_instance_from_process_model(
-            process_model=process_model, status="complete", user=user_two
-        )
-        self.create_process_instance_from_process_model(
-            process_model=process_model, status="complete", user=user_two
-        )
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
+        self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_one)
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(
             user=user_one,
             report_identifier="system_report_completed_instances_initiated_by_me",
         )
-        report_filter = (
-            ProcessInstanceReportService.filter_from_metadata_with_overrides(
-                process_instance_report=process_instance_report,
-                process_model_identifier=process_model.id,
-            )
+        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
+            process_instance_report=process_instance_report,
+            process_model_identifier=process_model.id,
         )
         response_json = ProcessInstanceReportService.run_process_instance_report(
             report_filter=report_filter,
@@ -821,30 +801,18 @@ class TestProcessInstanceReportService(BaseTest):
         user_two = self.find_or_create_user(username="user_two")
 
         # Several processes to ensure they do not return in the result
-        process_instance_created_by_user_one_one = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="complete", user=user_one
-            )
-        )
-        self.create_process_instance_from_process_model(
+        process_instance_created_by_user_one_one = self.create_process_instance_from_process_model(
             process_model=process_model, status="complete", user=user_one
         )
-        process_instance_created_by_user_one_three = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="waiting", user=user_one
-            )
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
+        process_instance_created_by_user_one_three = self.create_process_instance_from_process_model(
+            process_model=process_model, status="waiting", user=user_one
         )
-        process_instance_created_by_user_two_one = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="complete", user=user_two
-            )
-        )
-        self.create_process_instance_from_process_model(
+        process_instance_created_by_user_two_one = self.create_process_instance_from_process_model(
             process_model=process_model, status="complete", user=user_two
         )
-        self.create_process_instance_from_process_model(
-            process_model=process_model, status="waiting", user=user_two
-        )
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+        self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_two)
 
         human_task_for_user_one_one = HumanTaskModel(
             process_instance_id=process_instance_created_by_user_one_one.id,
@@ -880,15 +848,11 @@ class TestProcessInstanceReportService(BaseTest):
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(
             user=user_one,
-            report_identifier=(
-                "system_report_completed_instances_with_tasks_completed_by_me"
-            ),
+            report_identifier="system_report_completed_instances_with_tasks_completed_by_me",
         )
-        report_filter = (
-            ProcessInstanceReportService.filter_from_metadata_with_overrides(
-                process_instance_report=process_instance_report,
-                process_model_identifier=process_model.id,
-            )
+        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
+            process_instance_report=process_instance_report,
+            process_model_identifier=process_model.id,
         )
         response_json = ProcessInstanceReportService.run_process_instance_report(
             report_filter=report_filter,
@@ -898,10 +862,7 @@ class TestProcessInstanceReportService(BaseTest):
 
         assert len(response_json["results"]) == 1
         assert response_json["results"][0]["process_initiator_id"] == user_two.id
-        assert (
-            response_json["results"][0]["id"]
-            == process_instance_created_by_user_two_one.id
-        )
+        assert response_json["results"][0]["id"] == process_instance_created_by_user_two_one.id
         assert response_json["results"][0]["status"] == "complete"
 
     def test_can_filter_by_completed_instances_with_tasks_completed_by_my_groups(
@@ -931,30 +892,18 @@ class TestProcessInstanceReportService(BaseTest):
         UserService.add_user_to_group(user_three, user_group_two)
 
         # Several processes to ensure they do not return in the result
-        process_instance_created_by_user_one_one = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="complete", user=user_one
-            )
-        )
-        self.create_process_instance_from_process_model(
+        process_instance_created_by_user_one_one = self.create_process_instance_from_process_model(
             process_model=process_model, status="complete", user=user_one
         )
-        process_instance_created_by_user_one_three = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="waiting", user=user_one
-            )
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_one)
+        process_instance_created_by_user_one_three = self.create_process_instance_from_process_model(
+            process_model=process_model, status="waiting", user=user_one
         )
-        process_instance_created_by_user_two_one = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="complete", user=user_two
-            )
-        )
-        self.create_process_instance_from_process_model(
+        process_instance_created_by_user_two_one = self.create_process_instance_from_process_model(
             process_model=process_model, status="complete", user=user_two
         )
-        self.create_process_instance_from_process_model(
-            process_model=process_model, status="waiting", user=user_two
-        )
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+        self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_two)
 
         human_task_for_user_group_one_one = HumanTaskModel(
             process_instance_id=process_instance_created_by_user_one_one.id,
@@ -985,15 +934,11 @@ class TestProcessInstanceReportService(BaseTest):
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(
             user=user_one,
-            report_identifier=(
-                "system_report_completed_instances_with_tasks_completed_by_my_groups"
-            ),
+            report_identifier="system_report_completed_instances_with_tasks_completed_by_my_groups",
         )
-        report_filter = (
-            ProcessInstanceReportService.filter_from_metadata_with_overrides(
-                process_instance_report=process_instance_report,
-                process_model_identifier=process_model.id,
-            )
+        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
+            process_instance_report=process_instance_report,
+            process_model_identifier=process_model.id,
         )
         response_json = ProcessInstanceReportService.run_process_instance_report(
             report_filter=report_filter,
@@ -1003,16 +948,10 @@ class TestProcessInstanceReportService(BaseTest):
 
         assert len(response_json["results"]) == 2
         assert response_json["results"][0]["process_initiator_id"] == user_two.id
-        assert (
-            response_json["results"][0]["id"]
-            == process_instance_created_by_user_two_one.id
-        )
+        assert response_json["results"][0]["id"] == process_instance_created_by_user_two_one.id
         assert response_json["results"][0]["status"] == "complete"
         assert response_json["results"][1]["process_initiator_id"] == user_one.id
-        assert (
-            response_json["results"][1]["id"]
-            == process_instance_created_by_user_one_one.id
-        )
+        assert response_json["results"][1]["id"] == process_instance_created_by_user_one_one.id
         assert response_json["results"][1]["status"] == "complete"
 
     def test_can_filter_by_with_relation_to_me(
@@ -1042,32 +981,20 @@ class TestProcessInstanceReportService(BaseTest):
         UserService.add_user_to_group(user_three, user_group_two)
 
         # Several processes to ensure they do not return in the result
-        process_instance_created_by_user_one_one = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="complete", user=user_one
-            )
+        process_instance_created_by_user_one_one = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_one
         )
-        process_instance_created_by_user_one_two = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="complete", user=user_one
-            )
+        process_instance_created_by_user_one_two = self.create_process_instance_from_process_model(
+            process_model=process_model, status="complete", user=user_one
         )
-        process_instance_created_by_user_one_three = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="waiting", user=user_one
-            )
+        process_instance_created_by_user_one_three = self.create_process_instance_from_process_model(
+            process_model=process_model, status="waiting", user=user_one
         )
-        process_instance_created_by_user_two_one = (
-            self.create_process_instance_from_process_model(
-                process_model=process_model, status="complete", user=user_two
-            )
-        )
-        self.create_process_instance_from_process_model(
+        process_instance_created_by_user_two_one = self.create_process_instance_from_process_model(
             process_model=process_model, status="complete", user=user_two
         )
-        self.create_process_instance_from_process_model(
-            process_model=process_model, status="waiting", user=user_two
-        )
+        self.create_process_instance_from_process_model(process_model=process_model, status="complete", user=user_two)
+        self.create_process_instance_from_process_model(process_model=process_model, status="waiting", user=user_two)
 
         human_task_for_user_group_one_one = HumanTaskModel(
             process_instance_id=process_instance_created_by_user_one_one.id,
@@ -1098,15 +1025,11 @@ class TestProcessInstanceReportService(BaseTest):
 
         UserService.add_user_to_human_tasks_if_appropriate(user_one)
 
-        process_instance_report = ProcessInstanceReportService.report_with_identifier(
-            user=user_one
-        )
-        report_filter = (
-            ProcessInstanceReportService.filter_from_metadata_with_overrides(
-                process_instance_report=process_instance_report,
-                process_model_identifier=process_model.id,
-                with_relation_to_me=True,
-            )
+        process_instance_report = ProcessInstanceReportService.report_with_identifier(user=user_one)
+        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
+            process_instance_report=process_instance_report,
+            process_model_identifier=process_model.id,
+            with_relation_to_me=True,
         )
         response_json = ProcessInstanceReportService.run_process_instance_report(
             report_filter=report_filter,
@@ -1116,19 +1039,7 @@ class TestProcessInstanceReportService(BaseTest):
 
         assert len(response_json["results"]) == 4
         process_instance_ids_in_results = [r["id"] for r in response_json["results"]]
-        assert (
-            process_instance_created_by_user_one_one.id
-            in process_instance_ids_in_results
-        )
-        assert (
-            process_instance_created_by_user_one_two.id
-            in process_instance_ids_in_results
-        )
-        assert (
-            process_instance_created_by_user_one_three.id
-            in process_instance_ids_in_results
-        )
-        assert (
-            process_instance_created_by_user_two_one.id
-            in process_instance_ids_in_results
-        )
+        assert process_instance_created_by_user_one_one.id in process_instance_ids_in_results
+        assert process_instance_created_by_user_one_two.id in process_instance_ids_in_results
+        assert process_instance_created_by_user_one_three.id in process_instance_ids_in_results
+        assert process_instance_created_by_user_two_one.id in process_instance_ids_in_results

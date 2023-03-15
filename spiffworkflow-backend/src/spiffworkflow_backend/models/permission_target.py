@@ -35,7 +35,5 @@ class PermissionTargetModel(SpiffworkflowBaseDBModel):
     def validate_uri(self, key: str, value: str) -> str:
         """Validate_uri."""
         if re.search(r"%.", value):
-            raise InvalidPermissionTargetUriError(
-                f"Wildcard must appear at end: {value}"
-            )
+            raise InvalidPermissionTargetUriError(f"Wildcard must appear at end: {value}")
         return value

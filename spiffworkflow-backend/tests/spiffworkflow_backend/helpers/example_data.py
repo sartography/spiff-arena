@@ -77,13 +77,9 @@ class ExampleDataLoader:
             try:
                 file = open(file_path, "rb")
                 data = file.read()
-                file_info = SpecFileService.add_file(
-                    process_model_info=spec, file_name=filename, binary_data=data
-                )
+                file_info = SpecFileService.add_file(process_model_info=spec, file_name=filename, binary_data=data)
                 if is_primary:
-                    references = SpecFileService.get_references_for_file(
-                        file_info, spec
-                    )
+                    references = SpecFileService.get_references_for_file(file_info, spec)
                     spec.primary_process_id = references[0].identifier
                     spec.primary_file_name = filename
                     ProcessModelService.save_process_model(spec)

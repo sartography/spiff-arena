@@ -55,12 +55,8 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     __tablename__ = "process_instance"
     id: int = db.Column(db.Integer, primary_key=True)
-    process_model_identifier: str = db.Column(
-        db.String(255), nullable=False, index=True
-    )
-    process_model_display_name: str = db.Column(
-        db.String(255), nullable=False, index=True
-    )
+    process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
+    process_model_display_name: str = db.Column(db.String(255), nullable=False, index=True)
     process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
     process_initiator = relationship("UserModel")
 
@@ -68,9 +64,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         ForeignKey(BpmnProcessDefinitionModel.id), nullable=True  # type: ignore
     )
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
-    bpmn_process_id: int | None = db.Column(
-        ForeignKey(BpmnProcessModel.id), nullable=True  # type: ignore
-    )
+    bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True)  # type: ignore
     bpmn_process = relationship(BpmnProcessModel, cascade="delete")
     tasks = relationship("TaskModel", cascade="delete")  # type: ignore
 
@@ -79,8 +73,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     active_human_tasks = relationship(
         "HumanTaskModel",
         primaryjoin=(
-            "and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id,"
-            " HumanTaskModel.completed == False)"
+            "and_(HumanTaskModel.process_instance_id==ProcessInstanceModel.id, HumanTaskModel.completed == False)"
         ),
     )  # type: ignore
 
@@ -242,9 +235,7 @@ class ProcessInstanceApiSchema(Schema):
     next_task = marshmallow.fields.Nested(TaskSchema, dump_only=True, required=False)
 
     @marshmallow.post_load
-    def make_process_instance(
-        self, data: dict[str, Any], **kwargs: dict
-    ) -> ProcessInstanceApi:
+    def make_process_instance(self, data: dict[str, Any], **kwargs: dict) -> ProcessInstanceApi:
         """Make_process_instance."""
         keys = [
             "id",

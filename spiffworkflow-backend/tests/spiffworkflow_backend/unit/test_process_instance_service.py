@@ -37,10 +37,7 @@ class TestProcessInstanceService(BaseTest):
         assert model.mimetype == "some/mimetype"
         assert model.filename == "testing.txt"
         assert model.contents == b"testing\n"  # type: ignore
-        assert (
-            model.digest
-            == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
-        )
+        assert model.digest == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
 
     def test_can_create_file_data_model_for_file_data_value(
         self,
@@ -215,9 +212,7 @@ class TestProcessInstanceService(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
 
-        process_instance_logs = SpiffLoggingModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
+        process_instance_logs = SpiffLoggingModel.query.filter_by(process_instance_id=process_instance.id).all()
         initial_length = len(process_instance_logs)
 
         # ensure we have something in the logs
@@ -225,7 +220,5 @@ class TestProcessInstanceService(BaseTest):
 
         # logs should NOT increase after running this a second time since it's just waiting on a human task
         processor.do_engine_steps(save=True)
-        process_instance_logs = SpiffLoggingModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
+        process_instance_logs = SpiffLoggingModel.query.filter_by(process_instance_id=process_instance.id).all()
         assert len(process_instance_logs) == initial_length

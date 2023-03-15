@@ -12,18 +12,14 @@ from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 class TestSpiffLogging(BaseTest):
     """TestSpiffLogging."""
 
-    def test_timestamps_are_stored_correctly(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
-    ) -> None:
+    def test_timestamps_are_stored_correctly(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         """Test_timestamps_are_stored_correctly."""
         process_model = load_test_spec(
             "call_activity_test",
             process_model_source_directory="call_activity_same_directory",
         )
 
-        process_instance = self.create_process_instance_from_process_model(
-            process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
         bpmn_process_identifier = "test_process_identifier"
         spiff_task_guid = "test_spiff_task_guid"
         bpmn_task_identifier = "test_bpmn_task_identifier"

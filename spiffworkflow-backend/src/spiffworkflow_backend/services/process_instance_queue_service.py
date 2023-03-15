@@ -31,9 +31,7 @@ class ProcessInstanceQueueService:
         queue_item = ProcessInstanceLockService.try_unlock(process_instance.id)
 
         if queue_item is None:
-            queue_item = ProcessInstanceQueueModel(
-                process_instance_id=process_instance.id
-            )
+            queue_item = ProcessInstanceQueueModel(process_instance_id=process_instance.id)
 
         # TODO: configurable params (priority/run_at)
         queue_item.run_at_in_seconds = round(time.time())
@@ -73,8 +71,7 @@ class ProcessInstanceQueueService:
 
         if queue_entry is None:
             raise ProcessInstanceIsNotEnqueuedError(
-                f"{locked_by} cannot lock process instance {process_instance.id}. It"
-                " has not been enqueued."
+                f"{locked_by} cannot lock process instance {process_instance.id}. It has not been enqueued."
             )
 
         if queue_entry.locked_by != locked_by:
