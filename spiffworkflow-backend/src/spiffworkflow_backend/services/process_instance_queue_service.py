@@ -84,8 +84,30 @@ class ProcessInstanceQueueService:
 
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 
-    @staticmethod
-    def dequeue_many(
+    @classmethod
+    def entries_with_status(cls,
+        status_value: str = ProcessInstanceStatus.waiting.value,
+        locked_by: str = None,
+    ) -> List[ProcessInstanceQueueModel]:
+        return (
+            db.session.query(ProcessInstanceQueueModel)
+            .filter(
+                ProcessInstanceQueueModel.status == status_value,
+                ProcessInstanceQueueModel.locked_by == locked_by,
+            )
+            .all()
+        )
+        
+    @classmethod
+    def peek_many(cls,
+        status_value: str = ProcessInstanceStatus.waiting.value,
+    ) -> List[int]:
+        queue_entries = cls.entries_with_status(status_value, None)
+        ids_with_status = {entry.process_instance_id: entry for entry in queue_entries}
+        return ids_with_status
+        
+    @classmethod
+    def dequeue_many(cls,
         status_value: str = ProcessInstanceStatus.waiting.value,
     ) -> List[int]:
         locked_by = ProcessInstanceLockService.locked_by()
@@ -102,14 +124,7 @@ class ProcessInstanceQueueService:
 
         db.session.commit()
 
-        queue_entries = (
-            db.session.query(ProcessInstanceQueueModel)
-            .filter(
-                ProcessInstanceQueueModel.status == status_value,
-                ProcessInstanceQueueModel.locked_by == locked_by,
-            )
-            .all()
-        )
+        queue_entries = cls.entries_with_status(status_value, locked_by)
 
         locked_ids = ProcessInstanceLockService.lock_many(queue_entries)
 
