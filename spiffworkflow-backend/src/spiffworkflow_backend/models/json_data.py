@@ -1,5 +1,4 @@
 from __future__ import annotations
-from typing import Optional
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
@@ -35,11 +34,14 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def find_object_by_hash(cls, hash: str) -> JsonDataModel:
-        json_data_model: Optional[JsonDataModel] = JsonDataModel.query.filter_by(hash=hash).first()
+        json_data_model: JsonDataModel | None = JsonDataModel.query.filter_by(
+            hash=hash
+        ).first()
         if json_data_model is None:
-            raise JsonDataModelNotFoundError(f"Could not find a json data model entry with hash: {hash}")
+            raise JsonDataModelNotFoundError(
+                f"Could not find a json data model entry with hash: {hash}"
+            )
         return json_data_model
-
 
     @classmethod
     def find_data_dict_by_hash(cls, hash: str) -> dict:
