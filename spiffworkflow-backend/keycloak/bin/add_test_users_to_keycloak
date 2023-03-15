@@ -86,6 +86,7 @@ while read -r input_line; do
       custom_attribute_one=$(awk -F ',' '{print $2}' <<<"$input_line")
       first_line_processed="true"
     elif [[ -n "$input_line" ]]; then
+      echo "Importing: $input_line"
       user_email=$(awk -F ',' '{print $1}' <<<"$input_line")
       username=$(awk -F '@' '{print $1}' <<<"$user_email")
       user_attribute_one=$(awk -F ',' '{print $2}' <<<"$input_line")
