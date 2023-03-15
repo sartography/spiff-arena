@@ -55,11 +55,14 @@ from spiffworkflow_backend.services.error_handling_service import ErrorHandlingS
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
+from spiffworkflow_backend.services.process_instance_lock_service import ProcessInstanceLockService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceQueueService,
+    ProcessInstanceIsNotEnqueuedError,
+    ProcessInstanceIsAlreadyLockedError,
 )
 from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportFilter,
@@ -129,7 +132,7 @@ def process_instance_run(
         try:
             processor.lock_process_instance("Web")
             processor.do_engine_steps(save=True)
-        except ApiError as e:
+        except (ApiError, ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
             ErrorHandlingService().handle_error(processor, e)
             raise e
         except Exception as e:
@@ -143,7 +146,8 @@ def process_instance_run(
                 task=task,
             ) from e
         finally:
-            processor.unlock_process_instance("Web")
+            if ProcessInstanceLockService.has_lock(process_instance.id):
+                processor.unlock_process_instance("Web")
 
         if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
             MessageService.correlate_all_message_instances()
