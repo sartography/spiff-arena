@@ -78,6 +78,12 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         """
         return self.process_instance.bpmn_process_id is not None
 
+    def _update_json_data_dicts_using_list(self, json_data_dict_list: list[Optional[JsonDataDict]]) -> None:
+        for json_data_dict in json_data_dict_list:
+            if json_data_dict is not None:
+                self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
+
+
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.should_update_task_model():
             _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
@@ -98,11 +104,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.current_task_model and self.should_update_task_model():
             self.current_task_model.end_in_seconds = time.time()
-            json_data_dict = TaskService.update_task_model(
+            json_data_dict_list = TaskService.update_task_model(
                 self.current_task_model, spiff_task, self.serializer
             )
-            if json_data_dict is not None:
-                self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
+            self._update_json_data_dicts_using_list(json_data_dict_list)
             self.task_models[self.current_task_model.guid] = self.current_task_model
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
@@ -126,7 +131,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 | TaskState.MAYBE
                 | TaskState.LIKELY
             ):
-                _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
+                bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                     TaskService.find_or_create_task_model_from_spiff_task(
                         waiting_spiff_task,
                         self.process_instance,
@@ -136,12 +141,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 )
                 self.task_models.update(new_task_models)
                 self.json_data_dicts.update(new_json_data_dicts)
-                json_data_dict = TaskService.update_task_model(
+                json_data_dict_list = TaskService.update_task_model(
                     task_model, waiting_spiff_task, self.serializer
                 )
                 self.task_models[task_model.guid] = task_model
-                if json_data_dict is not None:
-                    self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
+                self._update_json_data_dicts_using_list(json_data_dict_list)
 
 
 class StepDetailLoggingDelegate(EngineStepDelegate):

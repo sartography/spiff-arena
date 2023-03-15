@@ -15,6 +15,7 @@ from sqlalchemy.orm import relationship
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 
@@ -59,10 +60,18 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     state: str = db.Column(db.String(10), nullable=False)
     properties_json: dict = db.Column(db.JSON, nullable=False)
+
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+    python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
     start_in_seconds: float = db.Column(db.DECIMAL(17, 6))
     end_in_seconds: Union[float, None] = db.Column(db.DECIMAL(17, 6))
+
+    def python_env_data(self) -> dict:
+        return JsonDataModel.find_data_dict_by_hash(self.python_env_data_hash)
+
+    def json_data(self) -> dict:
+        return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
 
 
 class Task:

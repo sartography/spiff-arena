@@ -1957,18 +1957,19 @@ class ProcessInstanceProcessor:
         db.session.add(details_model)
         # #######
 
-        json_data_dict = TaskService.update_task_model(
+        json_data_dict_list = TaskService.update_task_model(
             task_model, spiff_task, self._serializer
         )
-        if json_data_dict is not None:
-            json_data = (
-                db.session.query(JsonDataModel.id)
-                .filter_by(hash=json_data_dict["hash"])
-                .first()
-            )
-            if json_data is None:
-                json_data = JsonDataModel(**json_data_dict)
-                db.session.add(json_data)
+        for json_data_dict in json_data_dict_list:
+            if json_data_dict is not None:
+                json_data = (
+                    db.session.query(JsonDataModel.id)
+                    .filter_by(hash=json_data_dict["hash"])
+                    .first()
+                )
+                if json_data is None:
+                    json_data = JsonDataModel(**json_data_dict)
+                    db.session.add(json_data)
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
