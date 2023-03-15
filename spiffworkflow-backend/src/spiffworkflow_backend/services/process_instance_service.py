@@ -84,15 +84,15 @@ class ProcessInstanceService:
     @staticmethod
     def do_waiting(status_value: str = ProcessInstanceStatus.waiting.value) -> None:
         """Do_waiting."""
-        locked_process_instance_ids = ProcessInstanceQueueService.dequeue_many(
+        process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(
             status_value
         )
-        if len(locked_process_instance_ids) == 0:
+        if len(process_instance_ids_to_check) == 0:
             return
 
         records = (
             db.session.query(ProcessInstanceModel)
-            .filter(ProcessInstanceModel.id.in_(locked_process_instance_ids))  # type: ignore
+            .filter(ProcessInstanceModel.id.in_(process_instance_ids_to_check))  # type: ignore
             .all()
         )
         process_instance_lock_prefix = "Background"
