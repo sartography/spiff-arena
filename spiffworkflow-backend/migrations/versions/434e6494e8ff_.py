@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 389800c352ee
+Revision ID: 434e6494e8ff
 Revises: 
-Create Date: 2023-03-07 10:40:43.709777
+Create Date: 2023-03-15 12:25:48.665481
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '389800c352ee'
+revision = '434e6494e8ff'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -166,8 +166,6 @@ def upgrade():
     sa.Column('bpmn_version_control_type', sa.String(length=50), nullable=True),
     sa.Column('bpmn_version_control_identifier', sa.String(length=255), nullable=True),
     sa.Column('spiff_step', sa.Integer(), nullable=True),
-    sa.Column('locked_by', sa.String(length=80), nullable=True),
-    sa.Column('locked_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_definition_id'], ['bpmn_process_definition.id'], ),
     sa.ForeignKeyConstraint(['bpmn_process_id'], ['bpmn_process.id'], ),
     sa.ForeignKeyConstraint(['process_initiator_id'], ['user.id'], ),
@@ -207,20 +205,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('key')
     )
-    op.create_table('task',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('guid', sa.String(length=36), nullable=False),
-    sa.Column('bpmn_process_id', sa.Integer(), nullable=False),
-    sa.Column('state', sa.String(length=10), nullable=False),
-    sa.Column('properties_json', sa.JSON(), nullable=False),
-    sa.Column('json_data_hash', sa.String(length=255), nullable=False),
-    sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
-    sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
-    sa.ForeignKeyConstraint(['bpmn_process_id'], ['bpmn_process.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_task_guid'), 'task', ['guid'], unique=True)
-    op.create_index(op.f('ix_task_json_data_hash'), 'task', ['json_data_hash'], unique=False)
     op.create_table('task_definition',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bpmn_process_definition_id', sa.Integer(), nullable=False),
@@ -284,7 +268,7 @@ def upgrade():
     sa.Column('payload', sa.JSON(), nullable=True),
     sa.Column('correlation_keys', sa.JSON(), nullable=True),
     sa.Column('status', sa.String(length=20), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
     sa.Column('counterpart_id', sa.Integer(), nullable=True),
     sa.Column('failure_cause', sa.Text(), nullable=True),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
@@ -331,6 +315,23 @@ def upgrade():
     sa.UniqueConstraint('process_instance_id', 'key', name='process_instance_metadata_unique')
     )
     op.create_index(op.f('ix_process_instance_metadata_key'), 'process_instance_metadata', ['key'], unique=False)
+    op.create_table('process_instance_queue',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('run_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('priority', sa.Integer(), nullable=True),
+    sa.Column('locked_by', sa.String(length=80), nullable=True),
+    sa.Column('locked_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('status', sa.String(length=50), nullable=True),
+    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_process_instance_queue_locked_at_in_seconds'), 'process_instance_queue', ['locked_at_in_seconds'], unique=False)
+    op.create_index(op.f('ix_process_instance_queue_locked_by'), 'process_instance_queue', ['locked_by'], unique=False)
+    op.create_index(op.f('ix_process_instance_queue_process_instance_id'), 'process_instance_queue', ['process_instance_id'], unique=True)
+    op.create_index(op.f('ix_process_instance_queue_status'), 'process_instance_queue', ['status'], unique=False)
     op.create_table('spiff_step_details',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -346,6 +347,26 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('process_instance_id', 'spiff_step', name='process_instance_id_spiff_step')
     )
+    op.create_table('task',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('guid', sa.String(length=36), nullable=False),
+    sa.Column('bpmn_process_id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('task_definition_id', sa.Integer(), nullable=False),
+    sa.Column('state', sa.String(length=10), nullable=False),
+    sa.Column('properties_json', sa.JSON(), nullable=False),
+    sa.Column('json_data_hash', sa.String(length=255), nullable=False),
+    sa.Column('python_env_data_hash', sa.String(length=255), nullable=False),
+    sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
+    sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
+    sa.ForeignKeyConstraint(['bpmn_process_id'], ['bpmn_process.id'], ),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.ForeignKeyConstraint(['task_definition_id'], ['task_definition.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_task_guid'), 'task', ['guid'], unique=True)
+    op.create_index(op.f('ix_task_json_data_hash'), 'task', ['json_data_hash'], unique=False)
+    op.create_index(op.f('ix_task_python_env_data_hash'), 'task', ['python_env_data_hash'], unique=False)
     op.create_table('human_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('human_task_id', sa.Integer(), nullable=False),
@@ -379,7 +400,16 @@ def downgrade():
     op.drop_index(op.f('ix_human_task_user_user_id'), table_name='human_task_user')
     op.drop_index(op.f('ix_human_task_user_human_task_id'), table_name='human_task_user')
     op.drop_table('human_task_user')
+    op.drop_index(op.f('ix_task_python_env_data_hash'), table_name='task')
+    op.drop_index(op.f('ix_task_json_data_hash'), table_name='task')
+    op.drop_index(op.f('ix_task_guid'), table_name='task')
+    op.drop_table('task')
     op.drop_table('spiff_step_details')
+    op.drop_index(op.f('ix_process_instance_queue_status'), table_name='process_instance_queue')
+    op.drop_index(op.f('ix_process_instance_queue_process_instance_id'), table_name='process_instance_queue')
+    op.drop_index(op.f('ix_process_instance_queue_locked_by'), table_name='process_instance_queue')
+    op.drop_index(op.f('ix_process_instance_queue_locked_at_in_seconds'), table_name='process_instance_queue')
+    op.drop_table('process_instance_queue')
     op.drop_index(op.f('ix_process_instance_metadata_key'), table_name='process_instance_metadata')
     op.drop_table('process_instance_metadata')
     op.drop_index(op.f('ix_process_instance_file_data_digest'), table_name='process_instance_file_data')
@@ -392,9 +422,6 @@ def downgrade():
     op.drop_table('user_group_assignment')
     op.drop_index(op.f('ix_task_definition_bpmn_identifier'), table_name='task_definition')
     op.drop_table('task_definition')
-    op.drop_index(op.f('ix_task_json_data_hash'), table_name='task')
-    op.drop_index(op.f('ix_task_guid'), table_name='task')
-    op.drop_table('task')
     op.drop_table('secret')
     op.drop_table('refresh_token')
     op.drop_index(op.f('ix_process_instance_report_identifier'), table_name='process_instance_report')
