@@ -15,6 +15,9 @@ from flask import request
 from flask.wrappers import Response
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
+from sqlalchemy import and_
+from sqlalchemy import or_
+
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -70,8 +73,6 @@ from spiffworkflow_backend.services.process_instance_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from sqlalchemy import and_
-from sqlalchemy import or_
 
 
 def process_instance_create(
