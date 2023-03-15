@@ -14,6 +14,10 @@ from spiffworkflow_backend.services.process_instance_lock_service import (
 )
 
 
+class ProcessInstanceIsNotEnqueuedError(Exception):
+    pass
+
+
 class ProcessInstanceIsAlreadyLockedError(Exception):
     pass
 
@@ -62,15 +66,20 @@ class ProcessInstanceQueueService:
             db.session.query(ProcessInstanceQueueModel)
             .filter(
                 ProcessInstanceQueueModel.process_instance_id == process_instance.id,
-                ProcessInstanceQueueModel.locked_by == locked_by,
             )
             .first()
         )
 
         if queue_entry is None:
+            raise ProcessInstanceIsNotEnqueuedError(
+                f"{locked_by} cannot lock process instance {process_instance.id}. It"
+                " has not been enqueued."
+            )
+
+        if queue_entry.locked_by != locked_by:
             raise ProcessInstanceIsAlreadyLockedError(
-                f"Cannot lock process instance {process_instance.id}. "
-                "It has already been locked or has not been enqueued."
+                f"{locked_by} cannot lock process instance {process_instance.id}. "
+                f"It has already been locked by {queue_entry.locked_by}."
             )
 
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
