@@ -66,5 +66,8 @@ from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.bpmn_process_definition_relationship import (
     BpmnProcessDefinitionRelationshipModel,
 )  # noqa: F401
+from spiffworkflow_backend.models.process_instance_queue import (
+    ProcessInstanceQueueModel,
+)  # noqa: F401
 
 add_listeners()

@@ -31,6 +31,18 @@ Requires at root:
 - .pre-commit-config.yaml
 - pyproject.toml
 
+Run cypress automated browser tests
+-----------------------------------
+
+Get the app running so you can access the frontend at http://localhost:7001 in your browser.
+
+First install nodejs, ideally the version in .tool-versions (but likely other versions will work).
+
+Then:
+
+    cd spiffworkflow-frontend
+    npm install
+    ./bin/run_cypress_tests_locally
 
 License
 -------

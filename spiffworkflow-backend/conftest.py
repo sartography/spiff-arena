@@ -37,7 +37,7 @@ from spiffworkflow_backend import create_app  # noqa: E402
 def app() -> Flask:
     """App."""
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "unit_testing"
-    os.environ["FLASK_SESSION_SECRET_KEY"] = "super_secret_key"
+    os.environ["FLASK_SESSION_SECRET_KEY"] = "e7711a3ba96c46c68e084a86952de16f"
     app = create_app()
 
     return app

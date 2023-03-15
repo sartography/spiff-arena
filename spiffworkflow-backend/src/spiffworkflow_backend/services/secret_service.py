@@ -15,7 +15,16 @@ class SecretService:
 
     @classmethod
     def _encrypt(cls, value: str) -> str:
-        encrypted_bytes: bytes = current_app.config["CIPHER"].encrypt(value)
+        encrypted_bytes: bytes = b""
+        if (
+            current_app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB")
+            == "cryptography"
+        ):
+            # cryptography needs a bytes object
+            value_as_bytes = str.encode(value)
+            encrypted_bytes = current_app.config["CIPHER"].encrypt(value_as_bytes)
+        else:
+            encrypted_bytes = current_app.config["CIPHER"].encrypt(value)
         return encrypted_bytes.decode(cls.CIPHER_ENCODING)
 
     @classmethod

@@ -2,6 +2,7 @@
 select = B,B9,C,D,DAR,E,F,N,RST,S,W
 ignore = E203,E501,RST201,RST203,RST301,W503,S410,S320
 max-line-length = 120
+extend-ignore = E203
 max-complexity = 30
 docstring-convention = google
 rst-roles = class,const,func,meth,mod,ref
@@ -17,10 +18,10 @@ per-file-ignores =
     # THEN, test_hey.py will NOT be excluding D103
 
     # asserts are ok in tests
-    spiffworkflow-backend/tests/*:S101,D100,D101,D102,D103
+    spiffworkflow-backend/tests/*:S101,D100,D101,D102,D103,D107
 
     # prefer naming functions descriptively rather than forcing comments
-    spiffworkflow-backend/src/*:D100,D101,D102,D103
+    spiffworkflow-backend/src/*:D100,D101,D102,D103,D107
 
     spiffworkflow-backend/bin/keycloak_test_server.py:B950,D
     spiffworkflow-backend/conftest.py:S105

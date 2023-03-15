@@ -2,39 +2,52 @@
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
   <bpmn:process id="Process_ManualTask" name="Manual Task" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
-      <bpmn:outgoing>Flow_1xlck7g</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0stlaxe</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_1xlck7g" sourceRef="StartEvent_1" targetRef="Activity_Hello" />
-    <bpmn:endEvent id="Event_0ia26nb">
+    <bpmn:endEvent id="end_event_of_manual_task_model">
       <bpmn:incoming>Flow_0nnh2x9</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0nnh2x9" sourceRef="Activity_Hello" targetRef="Event_0ia26nb" />
+    <bpmn:sequenceFlow id="Flow_0nnh2x9" sourceRef="Activity_Hello" targetRef="end_event_of_manual_task_model" />
     <bpmn:manualTask id="Activity_Hello" name="Hello">
       <bpmn:extensionElements>
         <spiffworkflow:instructionsForEndUser>## Hello</spiffworkflow:instructionsForEndUser>
       </bpmn:extensionElements>
-      <bpmn:incoming>Flow_1xlck7g</bpmn:incoming>
+      <bpmn:incoming>Flow_1pmem7s</bpmn:incoming>
       <bpmn:outgoing>Flow_0nnh2x9</bpmn:outgoing>
     </bpmn:manualTask>
+    <bpmn:sequenceFlow id="Flow_0stlaxe" sourceRef="StartEvent_1" targetRef="the_script" />
+    <bpmn:sequenceFlow id="Flow_1pmem7s" sourceRef="the_script" targetRef="Activity_Hello" />
+    <bpmn:scriptTask id="the_script">
+      <bpmn:incoming>Flow_0stlaxe</bpmn:incoming>
+      <bpmn:outgoing>Flow_1pmem7s</bpmn:outgoing>
+      <bpmn:script>the_new_var = "HEY"</bpmn:script>
+    </bpmn:scriptTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_ManualTask">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="159" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0ia26nb_di" bpmnElement="Event_0ia26nb">
-        <dc:Bounds x="432" y="159" width="36" height="36" />
+      <bpmndi:BPMNShape id="Event_0ia26nb_di" bpmnElement="end_event_of_manual_task_model">
+        <dc:Bounds x="592" y="159" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1rcj16n_di" bpmnElement="Activity_Hello">
+        <dc:Bounds x="420" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1vokg57_di" bpmnElement="the_script">
         <dc:Bounds x="270" y="137" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1xlck7g_di" bpmnElement="Flow_1xlck7g">
+      <bpmndi:BPMNEdge id="Flow_0nnh2x9_di" bpmnElement="Flow_0nnh2x9">
+        <di:waypoint x="520" y="177" />
+        <di:waypoint x="592" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0stlaxe_di" bpmnElement="Flow_0stlaxe">
         <di:waypoint x="215" y="177" />
         <di:waypoint x="270" y="177" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0nnh2x9_di" bpmnElement="Flow_0nnh2x9">
+      <bpmndi:BPMNEdge id="Flow_1pmem7s_di" bpmnElement="Flow_1pmem7s">
         <di:waypoint x="370" y="177" />
-        <di:waypoint x="432" y="177" />
+        <di:waypoint x="420" y="177" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

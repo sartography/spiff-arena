@@ -29,6 +29,7 @@ export const useUriListForPermissions = () => {
       processModelPublishPath: `/v1.0/process-models/${params.process_model_id}/publish`,
       processModelShowPath: `/v1.0/process-models/${params.process_model_id}`,
       secretListPath: `/v1.0/secrets`,
+      userSearch: `/v1.0/users/search`,
     };
   }, [params]);
 
