@@ -600,7 +600,7 @@ def process_instance_task_list(
         last_change = step_details[-1].end_in_seconds or 0
         for spiff_task in tasks.values():
             restore_task(spiff_task, last_change)
-        for spiff_task_id, subprocess in subprocesses.items():
+        for subprocess in subprocesses.values():
             for spiff_task in subprocess["tasks"].values():
                 restore_task(spiff_task, last_change)
 
