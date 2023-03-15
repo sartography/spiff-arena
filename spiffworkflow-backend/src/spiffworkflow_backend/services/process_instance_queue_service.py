@@ -1,5 +1,6 @@
 import time
 from typing import List
+from typing import Optional
 
 from flask import current_app
 
@@ -85,9 +86,10 @@ class ProcessInstanceQueueService:
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 
     @classmethod
-    def entries_with_status(cls,
+    def entries_with_status(
+        cls,
         status_value: str = ProcessInstanceStatus.waiting.value,
-        locked_by: str = None,
+        locked_by: Optional[str] = None,
     ) -> List[ProcessInstanceQueueModel]:
         return (
             db.session.query(ProcessInstanceQueueModel)
@@ -97,17 +99,19 @@ class ProcessInstanceQueueService:
             )
             .all()
         )
-        
+
     @classmethod
-    def peek_many(cls,
+    def peek_many(
+        cls,
         status_value: str = ProcessInstanceStatus.waiting.value,
     ) -> List[int]:
         queue_entries = cls.entries_with_status(status_value, None)
-        ids_with_status = {entry.process_instance_id: entry for entry in queue_entries}
+        ids_with_status = [entry.process_instance_id for entry in queue_entries]
         return ids_with_status
-        
+
     @classmethod
-    def dequeue_many(cls,
+    def dequeue_many(
+        cls,
         status_value: str = ProcessInstanceStatus.waiting.value,
     ) -> List[int]:
         locked_by = ProcessInstanceLockService.locked_by()
