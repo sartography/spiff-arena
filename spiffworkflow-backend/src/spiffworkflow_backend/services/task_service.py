@@ -26,6 +26,8 @@ class JsonDataDict(TypedDict):
 
 
 class TaskService:
+    PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
+
     @classmethod
     def insert_or_update_json_data_records(
         cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]
@@ -51,7 +53,7 @@ class TaskService:
         task_model: TaskModel,
         spiff_task: SpiffTask,
         serializer: BpmnWorkflowSerializer,
-    ) -> Optional[JsonDataDict]:
+    ) -> list[Optional[JsonDataDict]]:
         """Updates properties_json and data on given task_model.
 
         This will NOT update start_in_seconds or end_in_seconds.
@@ -59,12 +61,16 @@ class TaskService:
         """
         new_properties_json = serializer.task_to_dict(spiff_task)
         spiff_task_data = new_properties_json.pop("data")
+        python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task)
         task_model.properties_json = new_properties_json
         task_model.state = TaskStateNames[new_properties_json["state"]]
         json_data_dict = cls._update_task_data_on_task_model(
-            task_model, spiff_task_data
+            task_model, spiff_task_data, "json_data_hash"
         )
-        return json_data_dict
+        python_env_dict = cls._update_task_data_on_task_model(
+            task_model, python_env_data_dict, "python_env_data_hash"
+        )
+        return [json_data_dict, python_env_dict]
 
     @classmethod
     def find_or_create_task_model_from_spiff_task(
@@ -241,10 +247,10 @@ class TaskService:
 
                 task_data_dict = task_properties.pop("data")
                 state_int = task_properties["state"]
+                spiff_task = spiff_workflow.get_task(UUID(task_id))
 
                 task_model = TaskModel.query.filter_by(guid=task_id).first()
                 if task_model is None:
-                    spiff_task = spiff_workflow.get_task(UUID(task_id))
                     task_model = cls._create_task(
                         bpmn_process,
                         process_instance,
@@ -253,26 +259,33 @@ class TaskService:
                     )
                 task_model.state = TaskStateNames[state_int]
                 task_model.properties_json = task_properties
+                new_task_models[task_model.guid] = task_model
 
                 json_data_dict = TaskService._update_task_data_on_task_model(
-                    task_model, task_data_dict
+                    task_model, task_data_dict, "json_data_hash"
                 )
-                new_task_models[task_model.guid] = task_model
                 if json_data_dict is not None:
                     new_json_data_dicts[json_data_dict["hash"]] = json_data_dict
+
+                python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task)
+                python_env_dict = TaskService._update_task_data_on_task_model(
+                    task_model, python_env_data_dict, "python_env_data_hash"
+                )
+                if python_env_dict is not None:
+                    new_json_data_dicts[python_env_dict["hash"]] = python_env_dict
 
         return (bpmn_process, new_task_models, new_json_data_dicts)
 
     @classmethod
     def _update_task_data_on_task_model(
-        cls, task_model: TaskModel, task_data_dict: dict
+            cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
     ) -> Optional[JsonDataDict]:
         task_data_json = json.dumps(task_data_dict, sort_keys=True)
         task_data_hash: str = sha256(task_data_json.encode("utf8")).hexdigest()
         json_data_dict: Optional[JsonDataDict] = None
-        if task_model.json_data_hash != task_data_hash:
+        if getattr(task_model, task_model_data_column) != task_data_hash:
             json_data_dict = {"hash": task_data_hash, "data": task_data_dict}
-            task_model.json_data_hash = task_data_hash
+            setattr(task_model, task_model_data_column, task_data_hash)
         return json_data_dict
 
     @classmethod
@@ -293,3 +306,7 @@ class TaskService:
             task_definition_id=task_definition.id,
         )
         return task_model
+
+    @classmethod
+    def _get_python_env_data_dict_from_spiff_task(cls, spiff_task: SpiffTask) -> dict:
+        return spiff_task.workflow.script_engine.environment.user_defined_state()

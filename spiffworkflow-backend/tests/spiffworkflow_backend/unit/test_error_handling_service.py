@@ -99,6 +99,7 @@ class TestErrorHandlingService(BaseTest):
         # Both send and receive messages should be generated, matched
         # and considered complete.
         messages = db.session.query(MessageInstanceModel).all()
+        # import pdb; pdb.set_trace()
         assert 2 == len(messages)
         assert "completed" == messages[0].status
         assert "completed" == messages[1].status

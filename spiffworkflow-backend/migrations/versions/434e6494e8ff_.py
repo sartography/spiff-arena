@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 99f1b5156b06
+Revision ID: 434e6494e8ff
 Revises: 
-Create Date: 2023-03-14 17:23:22.667853
+Create Date: 2023-03-15 12:25:48.665481
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '99f1b5156b06'
+revision = '434e6494e8ff'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -356,6 +356,7 @@ def upgrade():
     sa.Column('state', sa.String(length=10), nullable=False),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('json_data_hash', sa.String(length=255), nullable=False),
+    sa.Column('python_env_data_hash', sa.String(length=255), nullable=False),
     sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_id'], ['bpmn_process.id'], ),
@@ -365,6 +366,7 @@ def upgrade():
     )
     op.create_index(op.f('ix_task_guid'), 'task', ['guid'], unique=True)
     op.create_index(op.f('ix_task_json_data_hash'), 'task', ['json_data_hash'], unique=False)
+    op.create_index(op.f('ix_task_python_env_data_hash'), 'task', ['python_env_data_hash'], unique=False)
     op.create_table('human_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('human_task_id', sa.Integer(), nullable=False),
@@ -398,6 +400,7 @@ def downgrade():
     op.drop_index(op.f('ix_human_task_user_user_id'), table_name='human_task_user')
     op.drop_index(op.f('ix_human_task_user_human_task_id'), table_name='human_task_user')
     op.drop_table('human_task_user')
+    op.drop_index(op.f('ix_task_python_env_data_hash'), table_name='task')
     op.drop_index(op.f('ix_task_json_data_hash'), table_name='task')
     op.drop_index(op.f('ix_task_guid'), table_name='task')
     op.drop_table('task')
