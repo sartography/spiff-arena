@@ -1,7 +1,7 @@
 from __future__ import annotations
-from sqlalchemy.orm import relationship
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel

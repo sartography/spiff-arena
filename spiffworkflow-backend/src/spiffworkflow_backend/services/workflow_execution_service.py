@@ -62,7 +62,9 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
-        self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
+        self.bpmn_definition_to_task_definitions_mappings = (
+            bpmn_definition_to_task_definitions_mappings
+        )
 
         self.current_task_model: Optional[TaskModel] = None
         self.task_models: dict[str, TaskModel] = {}
@@ -80,7 +82,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if self.should_update_task_model():
             _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                 TaskService.find_or_create_task_model_from_spiff_task(
-                    spiff_task, self.process_instance, self.serializer, bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings
+                    spiff_task,
+                    self.process_instance,
+                    self.serializer,
+                    bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
                 )
             )
             self.current_task_model = task_model
@@ -123,7 +128,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             ):
                 _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                     TaskService.find_or_create_task_model_from_spiff_task(
-                        waiting_spiff_task, self.process_instance, self.serializer, bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings
+                        waiting_spiff_task,
+                        self.process_instance,
+                        self.serializer,
+                        bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
                     )
                 )
                 self.task_models.update(new_task_models)

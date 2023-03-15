@@ -1,8 +1,5 @@
 """Task."""
 import enum
-
-from sqlalchemy.orm import relationship
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
@@ -13,10 +10,12 @@ from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
 from SpiffWorkflow.task import TaskStateNames  # type: ignore
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 
 class MultiInstanceType(enum.Enum):
