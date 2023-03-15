@@ -4,6 +4,7 @@ import json
 from typing import Any
 from typing import Dict
 from typing import Optional
+from uuid import UUID
 
 import flask.wrappers
 from flask import current_app
@@ -548,6 +549,7 @@ def process_instance_task_list_without_task_data_for_me(
     process_instance_id: int,
     all_tasks: bool = False,
     spiff_step: int = 0,
+    most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
@@ -556,6 +558,7 @@ def process_instance_task_list_without_task_data_for_me(
         process_instance,
         all_tasks,
         spiff_step,
+        most_recent_tasks_only,
     )
 
 
@@ -564,6 +567,7 @@ def process_instance_task_list_without_task_data(
     process_instance_id: int,
     all_tasks: bool = False,
     spiff_step: int = 0,
+    most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -572,6 +576,7 @@ def process_instance_task_list_without_task_data(
         process_instance,
         all_tasks,
         spiff_step,
+        most_recent_tasks_only,
     )
 
 
@@ -596,50 +601,33 @@ def process_instance_task_list(
 
     processor = ProcessInstanceProcessor(process_instance)
     full_bpmn_process_dict = processor.full_bpmn_process_dict
-
     tasks = full_bpmn_process_dict["tasks"]
     subprocesses = full_bpmn_process_dict["subprocesses"]
 
     steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
 
-    subprocess_state_overrides = {}
-    for step_detail in step_details:
-        if step_detail.task_id in tasks:
-            tasks[step_detail.task_id]["state"] = Task.task_state_name_to_int(
-                step_detail.task_state
-            )
-        else:
-            for subprocess_id, subprocess_info in subprocesses.items():
-                if step_detail.task_id in subprocess_info["tasks"]:
-                    subprocess_info["tasks"][step_detail.task_id]["state"] = (
-                        Task.task_state_name_to_int(step_detail.task_state)
-                    )
-                    subprocess_state_overrides[subprocess_id] = TaskState.WAITING
+    def restore_task(spiff_task: dict[str, Any], step_ended: float) -> None:
+        if spiff_task["last_state_change"] > step_ended:
+            spiff_task["state"] = Task.task_state_name_to_int("FUTURE")
+            spiff_task["data"] = {}
 
-    for subprocess_info in subprocesses.values():
-        for spiff_task_id in subprocess_info["tasks"]:
-            if spiff_task_id not in steps_by_id:
-                subprocess_info["tasks"][spiff_task_id]["data"] = {}
-                subprocess_info["tasks"][spiff_task_id]["state"] = (
-                    subprocess_state_overrides.get(spiff_task_id, TaskState.FUTURE)
-                )
-
-    for spiff_task_id in tasks:
-        if spiff_task_id not in steps_by_id:
-            tasks[spiff_task_id]["data"] = {}
-            tasks[spiff_task_id]["state"] = subprocess_state_overrides.get(
-                spiff_task_id, TaskState.FUTURE
-            )
+    if spiff_step > 0:
+        last_change = step_details[-1].end_in_seconds or 0
+        for spiff_task in tasks.values():
+            restore_task(spiff_task, last_change)
+        for subprocess in subprocesses.values():
+            for spiff_task in subprocess["tasks"].values():
+                restore_task(spiff_task, last_change)
 
     bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(
         full_bpmn_process_dict
     )
-
-    spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-        step_details[-1].bpmn_task_identifier, bpmn_process_instance
-    )
-    if spiff_task is not None and spiff_task.state != TaskState.READY:
-        spiff_task.complete()
+    if spiff_step > 0:
+        bpmn_process_instance.complete_task_from_id(UUID(step_details[-1].task_id))
+        for subprocess_id, subprocess in bpmn_process_instance.subprocesses.items():
+            if not subprocess.is_completed():
+                task = bpmn_process_instance.get_task(subprocess_id)
+                task._set_state(TaskState.WAITING)
 
     spiff_tasks = None
     if all_tasks:
@@ -655,21 +643,24 @@ def process_instance_task_list(
         subprocesses_by_child_task_ids, task_typename_by_task_id
     )
 
-    tasks = []
     spiff_tasks_to_process = spiff_tasks
-
     if most_recent_tasks_only:
         spiff_tasks_by_process_id_and_task_name: dict[str, SpiffTask] = {}
-        for spiff_task in spiff_tasks:
+        current_tasks = {}
+        for spiff_task in spiff_tasks_to_process:
             row_id = f"{spiff_task.task_spec._wf_spec.name}:{spiff_task.task_spec.name}"
+            if spiff_task.state in [TaskState.READY, TaskState.WAITING]:
+                current_tasks[row_id] = spiff_task
             if (
                 row_id not in spiff_tasks_by_process_id_and_task_name
-                or spiff_task.last_state_change
-                > spiff_tasks_by_process_id_and_task_name[row_id].last_state_change
+                or spiff_task.state
+                > spiff_tasks_by_process_id_and_task_name[row_id].state
             ):
                 spiff_tasks_by_process_id_and_task_name[row_id] = spiff_task
+        spiff_tasks_by_process_id_and_task_name.update(current_tasks)
         spiff_tasks_to_process = spiff_tasks_by_process_id_and_task_name.values()
 
+    response = []
     for spiff_task in spiff_tasks_to_process:
         task_spiff_step: Optional[int] = None
         if str(spiff_task.id) in steps_by_id:
@@ -683,9 +674,11 @@ def process_instance_task_list(
             calling_subprocess_task_id=calling_subprocess_task_id,
             task_spiff_step=task_spiff_step,
         )
-        tasks.append(task)
+        if task.state in ["MAYBE", "LIKELY"]:
+            task.state = "FUTURE"
+        response.append(task)
 
-    return make_response(jsonify(tasks), 200)
+    return make_response(jsonify(response), 200)
 
 
 def process_instance_reset(

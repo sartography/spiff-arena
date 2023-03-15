@@ -913,6 +913,12 @@ paths:
         description: If set will return the tasks as they were during a specific step of execution.
         schema:
           type: integer
+      - name: most_recent_tasks_only
+        in: query
+        required: false
+        description: If true, this wil return only the most recent tasks.
+        schema:
+          type: boolean
     get:
       tags:
         - Process Instances
@@ -960,6 +966,12 @@ paths:
         description: If set will return the tasks as they were during a specific step of execution.
         schema:
           type: integer
+      - name: most_recent_tasks_only
+        in: query
+        required: false
+        description: If true, this wil return only the most recent tasks.
+        schema:
+          type: boolean
     get:
       tags:
         - Process Instances
