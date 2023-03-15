@@ -1,5 +1,8 @@
 """Task."""
 import enum
+
+from sqlalchemy.orm import relationship
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
@@ -45,11 +48,16 @@ class TaskModel(SpiffworkflowBaseDBModel):
     bpmn_process_id: int = db.Column(
         ForeignKey(BpmnProcessModel.id), nullable=False  # type: ignore
     )
+    process_instance_id: int = db.Column(
+        ForeignKey("process_instance.id"), nullable=False
+    )
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
-    # task_definition_id: int = db.Column(
-    #     ForeignKey(TaskDefinitionModel.id), nullable=False  # type: ignore
-    # )
+    task_definition_id: int = db.Column(
+        ForeignKey(TaskDefinitionModel.id), nullable=False  # type: ignore
+    )
+    task_definition = relationship("TaskDefinitionModel")
+
     state: str = db.Column(db.String(10), nullable=False)
     properties_json: dict = db.Column(db.JSON, nullable=False)
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
