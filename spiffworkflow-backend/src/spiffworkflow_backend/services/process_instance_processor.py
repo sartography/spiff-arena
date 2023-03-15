@@ -1184,6 +1184,7 @@ class ProcessInstanceProcessor:
                 process_instance=self.process_instance_model,
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
                 spiff_workflow=self.bpmn_process_instance,
+                serializer=self._serializer,
             )
         )
         for subprocess_task_id, subprocess_properties in subprocesses.items():
@@ -1198,6 +1199,7 @@ class ProcessInstanceProcessor:
                 bpmn_process_guid=subprocess_task_id,
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
                 spiff_workflow=self.bpmn_process_instance,
+                serializer=self._serializer,
             )
             new_task_models.update(subprocess_new_task_models)
             new_json_data_dicts.update(subprocess_new_json_data_models)
@@ -1812,8 +1814,7 @@ class ProcessInstanceProcessor:
         """Serialize."""
         self.check_task_data_size()
         self.preserve_script_engine_state()
-        # return self._serializer.workflow_to_dict(self.bpmn_process_instance)  # type: ignore
-        return json.loads(self._serializer.serialize_json(self.bpmn_process_instance))  # type: ignore
+        return self._serializer.workflow_to_dict(self.bpmn_process_instance)  # type: ignore
 
     def next_user_tasks(self) -> list[SpiffTask]:
         """Next_user_tasks."""

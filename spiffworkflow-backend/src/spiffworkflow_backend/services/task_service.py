@@ -38,7 +38,7 @@ class TaskService:
             if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
                 insert_stmt = mysql_insert(JsonDataModel).values(list_of_dicts)
                 on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(
-                    data=insert_stmt.inserted.data, status="U"
+                    data=insert_stmt.inserted.data
                 )
             else:
                 insert_stmt = postgres_insert(JsonDataModel).values(list_of_dicts)
@@ -61,7 +61,9 @@ class TaskService:
         """
         new_properties_json = serializer.task_to_dict(spiff_task)
         spiff_task_data = new_properties_json.pop("data")
-        python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task)
+        python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(
+            spiff_task, serializer
+        )
         task_model.properties_json = new_properties_json
         task_model.state = TaskStateNames[new_properties_json["state"]]
         json_data_dict = cls._update_task_data_on_task_model(
@@ -153,6 +155,7 @@ class TaskService:
                         process_instance=process_instance,
                         bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
                         spiff_workflow=spiff_workflow,
+                        serializer=serializer,
                     )
                 )
         else:
@@ -169,6 +172,7 @@ class TaskService:
                         bpmn_process_guid=subprocess_guid,
                         bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
                         spiff_workflow=spiff_workflow,
+                        serializer=serializer,
                     )
                 )
         return (bpmn_process, new_task_models, new_json_data_dicts)
@@ -180,6 +184,7 @@ class TaskService:
         process_instance: ProcessInstanceModel,
         bpmn_definition_to_task_definitions_mappings: dict,
         spiff_workflow: BpmnWorkflow,
+        serializer: BpmnWorkflowSerializer,
         bpmn_process_parent: Optional[BpmnProcessModel] = None,
         bpmn_process_guid: Optional[str] = None,
     ) -> Tuple[BpmnProcessModel, dict[str, TaskModel], dict[str, JsonDataDict]]:
@@ -267,7 +272,9 @@ class TaskService:
                 if json_data_dict is not None:
                     new_json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
-                python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task)
+                python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(
+                    spiff_task, serializer
+                )
                 python_env_dict = TaskService._update_task_data_on_task_model(
                     task_model, python_env_data_dict, "python_env_data_hash"
                 )
@@ -278,7 +285,7 @@ class TaskService:
 
     @classmethod
     def _update_task_data_on_task_model(
-            cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
+        cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
     ) -> Optional[JsonDataDict]:
         task_data_json = json.dumps(task_data_dict, sort_keys=True)
         task_data_hash: str = sha256(task_data_json.encode("utf8")).hexdigest()
@@ -308,5 +315,12 @@ class TaskService:
         return task_model
 
     @classmethod
-    def _get_python_env_data_dict_from_spiff_task(cls, spiff_task: SpiffTask) -> dict:
-        return spiff_task.workflow.script_engine.environment.user_defined_state()
+    def _get_python_env_data_dict_from_spiff_task(
+        cls, spiff_task: SpiffTask, serializer: BpmnWorkflowSerializer
+    ) -> dict:
+        user_defined_state = (
+            spiff_task.workflow.script_engine.environment.user_defined_state()
+        )
+        # this helps to convert items like datetime objects to be json serializable
+        converted_data: dict = serializer.data_converter.convert(user_defined_state)
+        return converted_data

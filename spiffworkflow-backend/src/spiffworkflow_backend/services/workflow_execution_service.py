@@ -78,11 +78,12 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         """
         return self.process_instance.bpmn_process_id is not None
 
-    def _update_json_data_dicts_using_list(self, json_data_dict_list: list[Optional[JsonDataDict]]) -> None:
+    def _update_json_data_dicts_using_list(
+        self, json_data_dict_list: list[Optional[JsonDataDict]]
+    ) -> None:
         for json_data_dict in json_data_dict_list:
             if json_data_dict is not None:
                 self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
-
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.should_update_task_model():
