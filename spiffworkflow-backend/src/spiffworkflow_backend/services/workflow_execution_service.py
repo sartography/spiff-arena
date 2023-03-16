@@ -78,7 +78,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
-            self._update_task_model_with_spiff_task(spiff_task)
+            task_model = self._update_task_model_with_spiff_task(spiff_task)
+            if self.current_task_start_in_seconds is None:
+                raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
+            task_model.start_in_seconds = self.current_task_start_in_seconds
+            task_model.end_in_seconds = time.time()
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
@@ -117,7 +121,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             if json_data_dict is not None:
                 self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
-    def _update_task_model_with_spiff_task(self, spiff_task: SpiffTask) -> None:
+    def _update_task_model_with_spiff_task(self, spiff_task: SpiffTask) -> TaskModel:
         bpmn_process, task_model, new_task_models, new_json_data_dicts = (
             TaskService.find_or_create_task_model_from_spiff_task(
                 spiff_task,
@@ -136,6 +140,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if bpmn_process_json_data is not None:
             json_data_dict_list.append(bpmn_process_json_data)
         self._update_json_data_dicts_using_list(json_data_dict_list)
+
+        return task_model
 
 
 class StepDetailLoggingDelegate(EngineStepDelegate):
