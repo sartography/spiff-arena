@@ -91,10 +91,8 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-    ProcessInstanceIsAlreadyLockedError,
-)
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -1461,7 +1459,9 @@ class ProcessInstanceProcessor:
 
     # TODO: replace with implicit/more granular locking in workflow execution service
     # TODO: remove the retry logic once all user_input_required's don't need to be locked to check timers
-    def lock_process_instance(self, lock_prefix: str, retry_count: int = 0, retry_interval_in_seconds: int = 0) -> None:
+    def lock_process_instance(
+        self, lock_prefix: str, retry_count: int = 0, retry_interval_in_seconds: int = 0
+    ) -> None:
         try:
             ProcessInstanceQueueService.dequeue(self.process_instance_model)
         except ProcessInstanceIsAlreadyLockedError as e:
