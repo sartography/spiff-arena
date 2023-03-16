@@ -126,7 +126,9 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
         )
-        bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(bpmn_process or task_model.bpmn_process, spiff_task.workflow.data)
+        bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(
+            bpmn_process or task_model.bpmn_process, spiff_task.workflow.data
+        )
         self.task_models.update(new_task_models)
         self.json_data_dicts.update(new_json_data_dicts)
         json_data_dict_list = TaskService.update_task_model(task_model, spiff_task, self.serializer)

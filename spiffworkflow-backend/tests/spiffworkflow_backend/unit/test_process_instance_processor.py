@@ -5,11 +5,11 @@ import pytest
 from flask import g
 from flask.app import Flask
 from flask.testing import FlaskClient
-from SpiffWorkflow.task import TaskState
-from spiffworkflow_backend.exceptions.api_error import ApiError  # type: ignore
+from SpiffWorkflow.task import TaskState  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -319,7 +319,7 @@ class TestProcessInstanceProcessor(BaseTest):
             **{"set_in_test_process_to_call_script": 1},
         }
         fourth_data_set = {**third_data_set, **{"a": 1, "we_move_on": True}}
-        fifth_data_set = {**fourth_data_set, **{'validate_only': False, 'set_top_level_process_script_after_gate': 1}}
+        fifth_data_set = {**fourth_data_set, **{"validate_only": False, "set_top_level_process_script_after_gate": 1}}
         expected_task_data = {
             "top_level_script": first_data_set,
             "manual_task": first_data_set,
@@ -499,7 +499,9 @@ class TestProcessInstanceProcessor(BaseTest):
         process_instance_final = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor_final = ProcessInstanceProcessor(process_instance_final)
 
-        spiff_task = processor_final.get_task_by_bpmn_identifier("script_task_two", processor_final.bpmn_process_instance)
+        spiff_task = processor_final.get_task_by_bpmn_identifier(
+            "script_task_two", processor_final.bpmn_process_instance
+        )
         assert spiff_task is not None
         assert spiff_task.state == TaskState.WAITING
         assert spiff_task.data == {"my_var": "THE VAR"}

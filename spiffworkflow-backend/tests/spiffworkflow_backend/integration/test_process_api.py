@@ -1,6 +1,5 @@
 """Test Process Api Blueprint."""
 import io
-from SpiffWorkflow.task import TaskState
 import json
 import os
 import time
@@ -10,6 +9,7 @@ from typing import Dict
 import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
+from SpiffWorkflow.task import TaskState  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 

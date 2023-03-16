@@ -204,7 +204,7 @@ class TaskService:
 
         bpmn_process_json_data = cls.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_data_dict)
         if bpmn_process_json_data is not None:
-            new_json_data_dicts[bpmn_process_json_data['hash']] = bpmn_process_json_data
+            new_json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
 
         if bpmn_process_parent is None:
             process_instance.bpmn_process = bpmn_process
