@@ -404,10 +404,10 @@ class ProcessInstanceReportService:
             )
 
         if report_filter.process_initiator_username is not None:
-            user = UserModel.query.filter_by(username=report_filter.process_initiator_username).first()
+            initiator = UserModel.query.filter_by(username=report_filter.process_initiator_username).first()
             process_initiator_id = -1
-            if user:
-                process_initiator_id = user.id
+            if initiator:
+                process_initiator_id = initiator.id
             process_instance_query = process_instance_query.filter_by(process_initiator_id=process_initiator_id)
 
         if (
