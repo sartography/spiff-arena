@@ -202,14 +202,9 @@ class TaskService:
 
         bpmn_process.properties_json = bpmn_process_dict
 
-        bpmn_process_data_json = json.dumps(bpmn_process_data_dict, sort_keys=True)
-        bpmn_process_data_hash = sha256(bpmn_process_data_json.encode("utf8")).hexdigest()
-        if bpmn_process.json_data_hash != bpmn_process_data_hash:
-            new_json_data_dicts[bpmn_process_data_hash] = {
-                "hash": bpmn_process_data_hash,
-                "data": bpmn_process_data_dict,
-            }
-            bpmn_process.json_data_hash = bpmn_process_data_hash
+        bpmn_process_json_data = cls.update_task_data_on_bpmn_process(bpmn_process, bpmn_process_data_dict)
+        if bpmn_process_json_data is not None:
+            new_json_data_dicts[bpmn_process_json_data['hash']] = bpmn_process_json_data
 
         if bpmn_process_parent is None:
             process_instance.bpmn_process = bpmn_process
@@ -260,6 +255,18 @@ class TaskService:
                     new_json_data_dicts[python_env_dict["hash"]] = python_env_dict
 
         return (bpmn_process, new_task_models, new_json_data_dicts)
+
+    @classmethod
+    def update_task_data_on_bpmn_process(
+        cls, bpmn_process: BpmnProcessModel, bpmn_process_data_dict: dict
+    ) -> Optional[JsonDataDict]:
+        bpmn_process_data_json = json.dumps(bpmn_process_data_dict, sort_keys=True)
+        bpmn_process_data_hash: str = sha256(bpmn_process_data_json.encode("utf8")).hexdigest()
+        json_data_dict: Optional[JsonDataDict] = None
+        if bpmn_process.json_data_hash != bpmn_process_data_hash:
+            json_data_dict = {"hash": bpmn_process_data_hash, "data": bpmn_process_data_dict}
+            bpmn_process.json_data_hash = bpmn_process_data_hash
+        return json_data_dict
 
     @classmethod
     def _update_task_data_on_task_model(

@@ -1,5 +1,6 @@
 """Test Process Api Blueprint."""
 import io
+from SpiffWorkflow.task import TaskState
 import json
 import os
 import time
@@ -2067,7 +2068,7 @@ class TestProcessApi(BaseTest):
         # TODO: make sure the system notification process is run on exceptions
         ...
 
-    def test_task_data_is_set_even_if_process_instance_errors(
+    def test_task_data_is_set_even_if_process_instance_errors_through_the_api(
         self,
         app: Flask,
         client: FlaskClient,
@@ -2093,6 +2094,7 @@ class TestProcessApi(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         spiff_task = processor.get_task_by_bpmn_identifier("script_task_two", processor.bpmn_process_instance)
         assert spiff_task is not None
+        assert spiff_task.state == TaskState.WAITING
         assert spiff_task.data == {"my_var": "THE VAR"}
 
     def test_process_model_file_create(

@@ -326,6 +326,10 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 
         environment = CustomScriptEngineEnvironment(default_globals)
 
+        # right now spiff is executing script tasks on ready so doing this
+        # so we know when something fails and we can save it to our database.
+        self.failing_spiff_task: Optional[SpiffTask] = None
+
         super().__init__(environment=environment)
 
     def __get_augment_methods(self, task: Optional[SpiffTask]) -> Dict[str, Callable]:
@@ -385,11 +389,14 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
     def execute(self, task: SpiffTask, script: str, external_methods: Any = None) -> None:
         """Execute."""
         try:
+            # reset failing task just in case
+            self.failing_spiff_task = None
             methods = self.__get_augment_methods(task)
             if external_methods:
                 methods.update(external_methods)
             super().execute(task, script, methods)
         except WorkflowException as e:
+            self.failing_spiff_task = task
             raise e
         except Exception as e:
             raise self.create_task_exec_exception(task, script, e) from e
@@ -1558,7 +1565,6 @@ class ProcessInstanceProcessor:
             serializer=self._serializer,
             process_instance=self.process_instance_model,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            # script_engine=self._script_engine,
         )
 
         if execution_strategy_name is None:
@@ -1572,7 +1578,13 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.finalize_result,
             self.save,
         )
-        execution_service.do_engine_steps(exit_at, save)
+        try:
+            execution_service.do_engine_steps(exit_at, save)
+        finally:
+            # clear out failling spiff tasks here since the ProcessInstanceProcessor creates an instance of the
+            #   script engine on a class variable.
+            if hasattr(self._script_engine, "failing_spiff_task") and self._script_engine.failing_spiff_task is not None:
+                self._script_engine.failing_spiff_task = None
 
     # log the spiff step details so we know what is processing the process
     # instance when a human task has a timer event.
