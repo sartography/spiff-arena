@@ -1,5 +1,7 @@
 """Test_process_instance_processor."""
 from uuid import UUID
+from spiffworkflow_backend.models import bpmn_process_definition
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 
 import pytest
 from flask import g
@@ -341,15 +343,18 @@ class TestProcessInstanceProcessor(BaseTest):
                 expected_python_env_data = expected_task_data[spiff_task.task_spec.name]
                 if spiff_task.task_spec.name in spiff_tasks_checked_once:
                     expected_python_env_data = expected_task_data[f"{spiff_task.task_spec.name}_second"]
-                task = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-                assert task.task_definition_id is not None
-                task_definition = task.task_definition
+                task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+
+                assert task_model.start_in_seconds is not None
+                assert task_model.end_in_seconds is not None
+                assert task_model.task_definition_id is not None
+                task_definition = task_model.task_definition
                 assert task_definition.bpmn_identifier == spiff_task_name
                 assert task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
-                message = f"{base_failure_message} Expected: {expected_python_env_data}. Received: {task.json_data()}"
+                message = f"{base_failure_message} Expected: {expected_python_env_data}. Received: {task_model.json_data()}"
                 # TODO: if we split out env data again we will need to use it here instead of json_data
-                # assert task.python_env_data() == expected_python_env_data, message
-                assert task.json_data() == expected_python_env_data, message
+                # assert task_model.python_env_data() == expected_python_env_data, message
+                assert task_model.json_data() == expected_python_env_data, message
                 spiff_tasks_checked_once.append(spiff_task.task_spec.name)
 
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
@@ -359,6 +364,14 @@ class TestProcessInstanceProcessor(BaseTest):
             assert_spiff_task_is_in_process("test_process_to_call_script", "test_process_to_call")
             assert_spiff_task_is_in_process("top_level_subprocess_script", "top_level_subprocess")
             assert_spiff_task_is_in_process("top_level_script", "top_level_process")
+
+            if spiff_task.task_spec.name == 'top_level_call_activity':
+                # the task id / guid of the call activity gets used as the guid of the bpmn process that it calls
+                bpmn_process = BpmnProcessModel.query.filter_by(guid=str(spiff_task.id)).first()
+                assert bpmn_process is not None
+                bpmn_process_definition = bpmn_process.bpmn_process_definition
+                assert bpmn_process_definition is not None
+                assert bpmn_process_definition.bpmn_identifier == 'test_process_to_call'
 
         assert processor.get_data() == fifth_data_set
 
