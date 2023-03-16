@@ -235,6 +235,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
             # since the task data is not directly mutated when the script executes, need to determine which keys
             # have been deleted from the environment and remove them from task data if present.
             context_keys_to_drop = context.keys() - self.state.keys()
+            # import pdb; pdb.set_trace()
 
             for key_to_drop in context_keys_to_drop:
                 context.pop(key_to_drop)
@@ -1037,6 +1038,10 @@ class ProcessInstanceProcessor:
 
         Expects the save method to commit it.
         """
+        # if self.process_instance_model.bpmn_process_definition_id is not None:
+        #     return None
+
+        # we may have to already process bpmn_defintions if we ever care about the Root task again
         bpmn_dict = self.serialize()
         bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
         process_instance_data_dict = {}
@@ -1047,9 +1052,8 @@ class ProcessInstanceProcessor:
             else:
                 process_instance_data_dict[bpmn_key] = bpmn_dict[bpmn_key]
 
-        # we may have to already process bpmn_defintions if we ever care about the Root task again
-        if self.process_instance_model.bpmn_process_definition_id is None:
-            self._add_bpmn_process_definitions(bpmn_spec_dict)
+        # if self.process_instance_model.bpmn_process_definition_id is not None:
+        self._add_bpmn_process_definitions(bpmn_spec_dict)
 
         subprocesses = process_instance_data_dict.pop("subprocesses")
         bpmn_process_parent, new_task_models, new_json_data_dicts = TaskService.add_bpmn_process(
@@ -1144,13 +1148,19 @@ class ProcessInstanceProcessor:
                         human_tasks.remove(at)
 
                 if human_task is None:
+                    task_guid = str(ready_or_waiting_task.id)
+                    task_model = TaskModel.query.filter_by(guid=task_guid).first()
+                    if task_model is None:
+                        raise TaskNotFoundError(f"Could not find task for human task with guid: {task_guid}")
+
                     human_task = HumanTaskModel(
                         process_instance_id=self.process_instance_model.id,
                         process_model_display_name=process_model_display_name,
                         bpmn_process_identifier=bpmn_process_identifier,
                         form_file_name=form_file_name,
                         ui_form_file_name=ui_form_file_name,
-                        task_id=str(ready_or_waiting_task.id),
+                        task_model_id=task_model.id,
+                        task_id=task_guid,
                         task_name=ready_or_waiting_task.task_spec.name,
                         task_title=ready_or_waiting_task.task_spec.description,
                         task_type=ready_or_waiting_task.task_spec.__class__.__name__,
@@ -1536,12 +1546,15 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.revise_state_with_task_data(task)
             return self.spiff_step_details_mapping(task, start, end)
 
+        # self._add_bpmn_json_records()
+
         step_delegate = StepDetailLoggingDelegate(self.increment_spiff_step, spiff_step_details_mapping_builder)
         task_model_delegate = TaskModelSavingDelegate(
             secondary_engine_step_delegate=step_delegate,
             serializer=self._serializer,
             process_instance=self.process_instance_model,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            script_engine=self._script_engine,
         )
 
         if execution_strategy_name is None:

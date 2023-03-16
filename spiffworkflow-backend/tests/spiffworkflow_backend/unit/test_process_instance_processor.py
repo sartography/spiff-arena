@@ -335,6 +335,7 @@ class TestProcessInstanceProcessor(BaseTest):
         # TODO: also check task data here from the spiff_task directly to ensure we hydrated spiff correctly
         def assert_spiff_task_is_in_process(spiff_task_name: str, bpmn_process_identifier: str) -> None:
             if spiff_task.task_spec.name == spiff_task_name:
+                base_failure_message = f"Failed on {bpmn_process_identifier} - {spiff_task_name}."
                 expected_python_env_data = expected_task_data[spiff_task.task_spec.name]
                 if spiff_task.task_spec.name in spiff_tasks_checked_once:
                     expected_python_env_data = expected_task_data[f"{spiff_task.task_spec.name}_second"]
@@ -343,7 +344,7 @@ class TestProcessInstanceProcessor(BaseTest):
                 task_definition = task.task_definition
                 assert task_definition.bpmn_identifier == spiff_task_name
                 assert task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
-                assert task.python_env_data() == expected_python_env_data
+                assert task.python_env_data() == expected_python_env_data, f"{base_failure_message} Expected: {expected_python_env_data}. Received: {task.python_env_data()}"
                 spiff_tasks_checked_once.append(spiff_task.task_spec.name)
 
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()

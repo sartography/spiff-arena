@@ -19,6 +19,10 @@ from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 
+class TaskNotFoundError(Exception):
+    pass
+
+
 class MultiInstanceType(enum.Enum):
     """MultiInstanceType."""
 

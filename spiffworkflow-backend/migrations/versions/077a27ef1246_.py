@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 434e6494e8ff
+Revision ID: 077a27ef1246
 Revises: 
-Create Date: 2023-03-15 12:25:48.665481
+Create Date: 2023-03-15 16:36:23.278887
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '434e6494e8ff'
+revision = '077a27ef1246'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -235,31 +235,6 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username', 'group_id', name='user_group_assignment_staged_unique')
     )
-    op.create_table('human_task',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
-    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
-    sa.Column('actual_owner_id', sa.Integer(), nullable=True),
-    sa.Column('form_file_name', sa.String(length=50), nullable=True),
-    sa.Column('ui_form_file_name', sa.String(length=50), nullable=True),
-    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
-    sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
-    sa.Column('task_id', sa.String(length=50), nullable=True),
-    sa.Column('task_name', sa.String(length=255), nullable=True),
-    sa.Column('task_title', sa.String(length=50), nullable=True),
-    sa.Column('task_type', sa.String(length=50), nullable=True),
-    sa.Column('task_status', sa.String(length=50), nullable=True),
-    sa.Column('process_model_display_name', sa.String(length=255), nullable=True),
-    sa.Column('bpmn_process_identifier', sa.String(length=255), nullable=True),
-    sa.Column('completed', sa.Boolean(), nullable=False),
-    sa.ForeignKeyConstraint(['actual_owner_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
-    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_human_task_completed'), 'human_task', ['completed'], unique=False)
     op.create_table('message_instance',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=True),
@@ -367,17 +342,33 @@ def upgrade():
     op.create_index(op.f('ix_task_guid'), 'task', ['guid'], unique=True)
     op.create_index(op.f('ix_task_json_data_hash'), 'task', ['json_data_hash'], unique=False)
     op.create_index(op.f('ix_task_python_env_data_hash'), 'task', ['python_env_data_hash'], unique=False)
-    op.create_table('human_task_user',
+    op.create_table('human_task',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('human_task_id', sa.Integer(), nullable=False),
-    sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['human_task_id'], ['human_task.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('human_task_id', 'user_id', name='human_task_user_unique')
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('lane_assignment_id', sa.Integer(), nullable=True),
+    sa.Column('completed_by_user_id', sa.Integer(), nullable=True),
+    sa.Column('actual_owner_id', sa.Integer(), nullable=True),
+    sa.Column('form_file_name', sa.String(length=50), nullable=True),
+    sa.Column('ui_form_file_name', sa.String(length=50), nullable=True),
+    sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
+    sa.Column('task_model_id', sa.Integer(), nullable=True),
+    sa.Column('task_id', sa.String(length=50), nullable=True),
+    sa.Column('task_name', sa.String(length=255), nullable=True),
+    sa.Column('task_title', sa.String(length=50), nullable=True),
+    sa.Column('task_type', sa.String(length=50), nullable=True),
+    sa.Column('task_status', sa.String(length=50), nullable=True),
+    sa.Column('process_model_display_name', sa.String(length=255), nullable=True),
+    sa.Column('bpmn_process_identifier', sa.String(length=255), nullable=True),
+    sa.Column('completed', sa.Boolean(), nullable=False),
+    sa.ForeignKeyConstraint(['actual_owner_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['completed_by_user_id'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['lane_assignment_id'], ['group.id'], ),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.ForeignKeyConstraint(['task_model_id'], ['task.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_human_task_user_human_task_id'), 'human_task_user', ['human_task_id'], unique=False)
-    op.create_index(op.f('ix_human_task_user_user_id'), 'human_task_user', ['user_id'], unique=False)
+    op.create_index(op.f('ix_human_task_completed'), 'human_task', ['completed'], unique=False)
     op.create_table('message_instance_correlation_rule',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message_instance_id', sa.Integer(), nullable=False),
@@ -390,16 +381,29 @@ def upgrade():
     sa.UniqueConstraint('message_instance_id', 'name', name='message_instance_id_name_unique')
     )
     op.create_index(op.f('ix_message_instance_correlation_rule_message_instance_id'), 'message_instance_correlation_rule', ['message_instance_id'], unique=False)
+    op.create_table('human_task_user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('human_task_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['human_task_id'], ['human_task.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('human_task_id', 'user_id', name='human_task_user_unique')
+    )
+    op.create_index(op.f('ix_human_task_user_human_task_id'), 'human_task_user', ['human_task_id'], unique=False)
+    op.create_index(op.f('ix_human_task_user_user_id'), 'human_task_user', ['user_id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f('ix_message_instance_correlation_rule_message_instance_id'), table_name='message_instance_correlation_rule')
-    op.drop_table('message_instance_correlation_rule')
     op.drop_index(op.f('ix_human_task_user_user_id'), table_name='human_task_user')
     op.drop_index(op.f('ix_human_task_user_human_task_id'), table_name='human_task_user')
     op.drop_table('human_task_user')
+    op.drop_index(op.f('ix_message_instance_correlation_rule_message_instance_id'), table_name='message_instance_correlation_rule')
+    op.drop_table('message_instance_correlation_rule')
+    op.drop_index(op.f('ix_human_task_completed'), table_name='human_task')
+    op.drop_table('human_task')
     op.drop_index(op.f('ix_task_python_env_data_hash'), table_name='task')
     op.drop_index(op.f('ix_task_json_data_hash'), table_name='task')
     op.drop_index(op.f('ix_task_guid'), table_name='task')
@@ -416,8 +420,6 @@ def downgrade():
     op.drop_table('process_instance_file_data')
     op.drop_table('permission_assignment')
     op.drop_table('message_instance')
-    op.drop_index(op.f('ix_human_task_completed'), table_name='human_task')
-    op.drop_table('human_task')
     op.drop_table('user_group_assignment_waiting')
     op.drop_table('user_group_assignment')
     op.drop_index(op.f('ix_task_definition_bpmn_identifier'), table_name='task_definition')
