@@ -1583,7 +1583,10 @@ class ProcessInstanceProcessor:
         finally:
             # clear out failling spiff tasks here since the ProcessInstanceProcessor creates an instance of the
             #   script engine on a class variable.
-            if hasattr(self._script_engine, "failing_spiff_task") and self._script_engine.failing_spiff_task is not None:
+            if (
+                hasattr(self._script_engine, "failing_spiff_task")
+                and self._script_engine.failing_spiff_task is not None
+            ):
                 self._script_engine.failing_spiff_task = None
 
     # log the spiff step details so we know what is processing the process
