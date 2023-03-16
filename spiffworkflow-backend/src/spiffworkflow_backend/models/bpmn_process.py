@@ -3,6 +3,7 @@ from __future__ import annotations
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
@@ -17,6 +18,11 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process"
     id: int = db.Column(db.Integer, primary_key=True)
     guid: str | None = db.Column(db.String(36), nullable=True, unique=True, index=True)
+
+    bpmn_process_definition_id: int = db.Column(
+        ForeignKey(BpmnProcessDefinitionModel.id), nullable=False  # type: ignore
+    )
+    bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
     parent_process_id: int | None = db.Column(ForeignKey("bpmn_process.id"), nullable=True)
 

@@ -211,6 +211,11 @@ class TaskService:
         elif bpmn_process.parent_process_id is None:
             bpmn_process.parent_process_id = bpmn_process_parent.id
 
+        bpmn_process_definition = bpmn_definition_to_task_definitions_mappings[spiff_workflow.spec.name][
+            "bpmn_process_definition"
+        ]
+        bpmn_process.bpmn_process_definition = bpmn_process_definition
+
         # Since we bulk insert tasks later we need to add the bpmn_process to the session
         # to ensure we have an id.
         db.session.add(bpmn_process)

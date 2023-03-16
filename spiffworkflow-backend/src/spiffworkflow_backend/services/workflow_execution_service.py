@@ -294,7 +294,6 @@ class WorkflowExecutionService:
                 )
 
         try:
-            # import pdb; pdb.set_trace()
             self.bpmn_process_instance.refresh_waiting_tasks()
 
             # TODO: implicit re-entrant locks here `with_dequeued`
