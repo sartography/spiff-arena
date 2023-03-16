@@ -119,7 +119,7 @@ def task_list_my_tasks(
         HumanTaskModel.process_model_display_name,
         HumanTaskModel.process_instance_id,
         func.max(ProcessInstanceModel.process_model_identifier).label("process_model_identifier"),
-        func.max(ProcessInstanceModel.status).label("process_instance_status"),  # type: ignore
+        func.max(ProcessInstanceModel.status).label("process_instance_status"),
         func.max(ProcessInstanceModel.updated_at_in_seconds).label("updated_at_in_seconds"),
         func.max(ProcessInstanceModel.created_at_in_seconds).label("created_at_in_seconds"),
         func.max(process_initiator_user.username).label("process_initiator_username"),
@@ -484,10 +484,12 @@ def _get_tasks(
     process_instance_status_column = ProcessInstanceModel.status.label("process_instance_status")  # type: ignore
     user_username_column = UserModel.username.label("process_initiator_username")  # type: ignore
     group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")
-    if current_app.config['SPIFFWORKFLOW_BACKEND_DATABASE_TYPE'] == 'postgres':
-        process_model_identifier_column = func.max(ProcessInstanceModel.process_model_identifier).label("process_model_identifier")
-        process_instance_status_column = func.max(ProcessInstanceModel.status).label("process_instance_status")  # type: ignore
-        user_username_column = func.max(UserModel.username).label("process_initiator_username")  # type: ignore
+    if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "postgres":
+        process_model_identifier_column = func.max(ProcessInstanceModel.process_model_identifier).label(
+            "process_model_identifier"
+        )
+        process_instance_status_column = func.max(ProcessInstanceModel.status).label("process_instance_status")
+        user_username_column = func.max(UserModel.username).label("process_initiator_username")
         group_identifier_column = func.max(GroupModel.identifier).label("assigned_user_group_identifier")
 
     human_tasks = (
