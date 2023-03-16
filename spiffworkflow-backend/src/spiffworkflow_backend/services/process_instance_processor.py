@@ -225,6 +225,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     ) -> None:
         # TODO: once integrated look at the tests that fail without Box
         # context is task.data
+        # import pdb; pdb.set_trace()
         Box.convert_to_box(context)
         self.state.update(self.globals)
         self.state.update(external_methods or {})
@@ -234,16 +235,20 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         finally:
             # since the task data is not directly mutated when the script executes, need to determine which keys
             # have been deleted from the environment and remove them from task data if present.
-            context_keys_to_drop = context.keys() - self.state.keys()
             # import pdb; pdb.set_trace()
+            context_keys_to_drop = context.keys() - self.state.keys()
 
+            # import pdb; pdb.set_trace()
             for key_to_drop in context_keys_to_drop:
                 context.pop(key_to_drop)
+            # import pdb; pdb.set_trace()
 
             self.state = self.user_defined_state(external_methods)
 
+            # import pdb; pdb.set_trace()
             # the task data needs to be updated with the current state so data references can be resolved properly.
             # the state will be removed later once the task is completed.
+            import pdb; pdb.set_trace()
             context.update(self.state)
 
     def user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -1038,8 +1043,8 @@ class ProcessInstanceProcessor:
 
         Expects the save method to commit it.
         """
-        # if self.process_instance_model.bpmn_process_definition_id is not None:
-        #     return None
+        if self.process_instance_model.bpmn_process_definition_id is not None:
+            return None
 
         # we may have to already process bpmn_defintions if we ever care about the Root task again
         bpmn_dict = self.serialize()
@@ -1052,40 +1057,40 @@ class ProcessInstanceProcessor:
             else:
                 process_instance_data_dict[bpmn_key] = bpmn_dict[bpmn_key]
 
-        # if self.process_instance_model.bpmn_process_definition_id is not None:
+        # if self.process_instance_model.bpmn_process_definition_id is None:
         self._add_bpmn_process_definitions(bpmn_spec_dict)
 
-        subprocesses = process_instance_data_dict.pop("subprocesses")
-        bpmn_process_parent, new_task_models, new_json_data_dicts = TaskService.add_bpmn_process(
-            bpmn_process_dict=process_instance_data_dict,
-            process_instance=self.process_instance_model,
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            spiff_workflow=self.bpmn_process_instance,
-            serializer=self._serializer,
-        )
-        for subprocess_task_id, subprocess_properties in subprocesses.items():
-            (
-                _bpmn_subprocess,
-                subprocess_new_task_models,
-                subprocess_new_json_data_models,
-            ) = TaskService.add_bpmn_process(
-                bpmn_process_dict=subprocess_properties,
-                process_instance=self.process_instance_model,
-                bpmn_process_parent=bpmn_process_parent,
-                bpmn_process_guid=subprocess_task_id,
-                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-                spiff_workflow=self.bpmn_process_instance,
-                serializer=self._serializer,
-            )
-            new_task_models.update(subprocess_new_task_models)
-            new_json_data_dicts.update(subprocess_new_json_data_models)
-        db.session.bulk_save_objects(new_task_models.values())
-
-        TaskService.insert_or_update_json_data_records(new_json_data_dicts)
+        # subprocesses = process_instance_data_dict.pop("subprocesses")
+        # bpmn_process_parent, new_task_models, new_json_data_dicts = TaskService.add_bpmn_process(
+        #     bpmn_process_dict=process_instance_data_dict,
+        #     process_instance=self.process_instance_model,
+        #     bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        #     spiff_workflow=self.bpmn_process_instance,
+        #     serializer=self._serializer,
+        # )
+        # for subprocess_task_id, subprocess_properties in subprocesses.items():
+        #     (
+        #         _bpmn_subprocess,
+        #         subprocess_new_task_models,
+        #         subprocess_new_json_data_models,
+        #     ) = TaskService.add_bpmn_process(
+        #         bpmn_process_dict=subprocess_properties,
+        #         process_instance=self.process_instance_model,
+        #         bpmn_process_parent=bpmn_process_parent,
+        #         bpmn_process_guid=subprocess_task_id,
+        #         bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        #         spiff_workflow=self.bpmn_process_instance,
+        #         serializer=self._serializer,
+        #     )
+        #     new_task_models.update(subprocess_new_task_models)
+        #     new_json_data_dicts.update(subprocess_new_json_data_models)
+        # db.session.bulk_save_objects(new_task_models.values())
+        #
+        # TaskService.insert_or_update_json_data_records(new_json_data_dicts)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
-        self._add_bpmn_json_records()
+        # self._add_bpmn_json_records()
         self.process_instance_model.spiff_serializer_version = self.SERIALIZER_VERSION
 
         complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
@@ -1546,7 +1551,7 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.revise_state_with_task_data(task)
             return self.spiff_step_details_mapping(task, start, end)
 
-        # self._add_bpmn_json_records()
+        self._add_bpmn_json_records()
 
         step_delegate = StepDetailLoggingDelegate(self.increment_spiff_step, spiff_step_details_mapping_builder)
         task_model_delegate = TaskModelSavingDelegate(
