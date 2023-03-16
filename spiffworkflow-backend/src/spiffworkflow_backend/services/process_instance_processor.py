@@ -225,7 +225,6 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
     ) -> None:
         # TODO: once integrated look at the tests that fail without Box
         # context is task.data
-        # import pdb; pdb.set_trace()
         Box.convert_to_box(context)
         self.state.update(self.globals)
         self.state.update(external_methods or {})
@@ -235,20 +234,15 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         finally:
             # since the task data is not directly mutated when the script executes, need to determine which keys
             # have been deleted from the environment and remove them from task data if present.
-            # import pdb; pdb.set_trace()
             context_keys_to_drop = context.keys() - self.state.keys()
 
-            # import pdb; pdb.set_trace()
             for key_to_drop in context_keys_to_drop:
                 context.pop(key_to_drop)
-            # import pdb; pdb.set_trace()
 
             self.state = self.user_defined_state(external_methods)
 
-            # import pdb; pdb.set_trace()
             # the task data needs to be updated with the current state so data references can be resolved properly.
             # the state will be removed later once the task is completed.
-            import pdb; pdb.set_trace()
             context.update(self.state)
 
     def user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -291,7 +285,12 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 self.state[result_variable] = task.data.pop(result_variable)
 
 
-class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
+# SpiffWorkflow at revision f162aac43af3af18d1a55186aeccea154fb8b05d runs script tasks on ready
+# which means that our will_complete_task hook does not have the correct env state when it runs
+# so save everything to task data for now until we can figure out a better way to hook into that.
+# Revision 6cad2981712bb61eca23af1adfafce02d3277cb9 is the last revision that can run with this.
+# class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
+class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):
     pass
 
 
@@ -1559,7 +1558,7 @@ class ProcessInstanceProcessor:
             serializer=self._serializer,
             process_instance=self.process_instance_model,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            script_engine=self._script_engine,
+            # script_engine=self._script_engine,
         )
 
         if execution_strategy_name is None:
