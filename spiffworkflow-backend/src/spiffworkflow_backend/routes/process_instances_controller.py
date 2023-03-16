@@ -42,7 +42,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
-from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import Task, TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_by_id_or_raise,
@@ -205,28 +205,40 @@ def process_instance_log_list(
     # to make sure the process instance exists
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
-    log_query = SpiffLoggingModel.query.filter(SpiffLoggingModel.process_instance_id == process_instance.id)
-    if not detailed:
-        log_query = log_query.filter(
-            # 1. this was the previous implementation, where we only show completed tasks and skipped tasks.
-            #   maybe we want to iterate on this in the future (in a third tab under process instance logs?)
-            #   or_(
-            #       SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
-            #       SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
-            #   )
-            # 2. We included ["End Event", "Default Start Event"] along with Default Throwing Event, but feb 2023
-            #  we decided to remove them, since they get really chatty when there are lots of subprocesses and call activities.
-            and_(
-                SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
-                SpiffLoggingModel.bpmn_task_type.in_(["Default Throwing Event"]),  # type: ignore
-            )
-        )
-
+    # log_query = SpiffLoggingModel.query.filter(SpiffLoggingModel.process_instance_id == process_instance.id)
+    # if not detailed:
+    #     log_query = log_query.filter(
+    #         # 1. this was the previous implementation, where we only show completed tasks and skipped tasks.
+    #         #   maybe we want to iterate on this in the future (in a third tab under process instance logs?)
+    #         #   or_(
+    #         #       SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
+    #         #       SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
+    #         #   )
+    #         # 2. We included ["End Event", "Default Start Event"] along with Default Throwing Event, but feb 2023
+    #         #  we decided to remove them, since they get really chatty when there are lots of subprocesses and call activities.
+    #         and_(
+    #             SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
+    #             SpiffLoggingModel.bpmn_task_type.in_(["Default Throwing Event"]),  # type: ignore
+    #         )
+    #     )
+    #
+    # logs = (
+    #     log_query.order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
+    #     .join(
+    #         UserModel, UserModel.id == SpiffLoggingModel.current_user_id, isouter=True
+    #     )  # isouter since if we don't have a user, we still want the log
+    #     .add_columns(
+    #         UserModel.username,
+    #     )
+    #     .paginate(page=page, per_page=per_page, error_out=False)
+    # )
+    log_query = TaskModel.query.filter_by(process_instance_id=process_instance.id)
     logs = (
-        log_query.order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
-        .join(
-            UserModel, UserModel.id == SpiffLoggingModel.current_user_id, isouter=True
-        )  # isouter since if we don't have a user, we still want the log
+        log_query.order_by(TaskModel.end_in_seconds.desc())  # type: ignore
+        .outerjoin(HumanTaskModel, HumanTaskModel.task_model_id == TaskModel.id)
+        .outerjoin(
+            UserModel, UserModel.id == HumanTaskModel.completed_by_user_id
+        )
         .add_columns(
             UserModel.username,
         )

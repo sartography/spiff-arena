@@ -58,13 +58,16 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         serializer: BpmnWorkflowSerializer,
         process_instance: ProcessInstanceModel,
         bpmn_definition_to_task_definitions_mappings: dict,
+        script_engine,
         secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
+        self.script_engine = script_engine
 
         self.current_task_model: Optional[TaskModel] = None
+        self.current_task_start_in_seconds: Optional[float] = None
         self.task_models: dict[str, TaskModel] = {}
         self.json_data_dicts: dict[str, JsonDataDict] = {}
         self.serializer = serializer
@@ -75,6 +78,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         Use the bpmn_process_id to do this.
         """
         return self.process_instance.bpmn_process_id is not None
+        # return True
 
     def _update_json_data_dicts_using_list(self, json_data_dict_list: list[Optional[JsonDataDict]]) -> None:
         for json_data_dict in json_data_dict_list:
@@ -83,6 +87,28 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self.should_update_task_model():
+            # _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
+            #     TaskService.find_or_create_task_model_from_spiff_task(
+            #         spiff_task,
+            #         self.process_instance,
+            #         self.serializer,
+            #         bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            #     )
+            # )
+            # self.current_task_model = task_model
+            # self.task_models.update(new_task_models)
+            # self.json_data_dicts.update(new_json_data_dicts)
+            # self.current_task_model.start_in_seconds = time.time()
+            self.current_task_start_in_seconds = time.time()
+        if self.secondary_engine_step_delegate:
+            self.secondary_engine_step_delegate.will_complete_task(spiff_task)
+
+    def did_complete_task(self, spiff_task: SpiffTask) -> None:
+        # if self.current_task_model and self.should_update_task_model():
+        if self.should_update_task_model():
+            # if spiff_task.task_spec.name == 'top_level_script':
+            #     import pdb; pdb.set_trace()
+            spiff_task.workflow.script_engine.environment.revise_state_with_task_data(spiff_task)
             _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                 TaskService.find_or_create_task_model_from_spiff_task(
                     spiff_task,
@@ -91,19 +117,13 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                     bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
                 )
             )
-            self.current_task_model = task_model
+            task_model.start_in_seconds = self.current_task_start_in_seconds or time.time()
+            task_model.end_in_seconds = time.time()
+            json_data_dict_list = TaskService.update_task_model(task_model, spiff_task, self.serializer)
+            self._update_json_data_dicts_using_list(json_data_dict_list)
             self.task_models.update(new_task_models)
             self.json_data_dicts.update(new_json_data_dicts)
-            self.current_task_model.start_in_seconds = time.time()
-        if self.secondary_engine_step_delegate:
-            self.secondary_engine_step_delegate.will_complete_task(spiff_task)
-
-    def did_complete_task(self, spiff_task: SpiffTask) -> None:
-        if self.current_task_model and self.should_update_task_model():
-            self.current_task_model.end_in_seconds = time.time()
-            json_data_dict_list = TaskService.update_task_model(self.current_task_model, spiff_task, self.serializer)
-            self._update_json_data_dicts_using_list(json_data_dict_list)
-            self.task_models[self.current_task_model.guid] = self.current_task_model
+            self.task_models[task_model.guid] = task_model
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
@@ -122,7 +142,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             for waiting_spiff_task in bpmn_process_instance.get_tasks(
                 TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY
             ):
-                bpmn_process, task_model, new_task_models, new_json_data_dicts = (
+                _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                     TaskService.find_or_create_task_model_from_spiff_task(
                         waiting_spiff_task,
                         self.process_instance,

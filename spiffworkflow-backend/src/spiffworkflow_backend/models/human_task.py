@@ -11,7 +11,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import Task, TaskModel
 from spiffworkflow_backend.models.user import UserModel
 
 
@@ -43,6 +43,8 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
 
+    # task_id came first which is why it's a string and task_model_id is the int and foreignkey
+    task_model_id: int = db.Column(ForeignKey(TaskModel.id), nullable=True)  # type: ignore
     task_id: str = db.Column(db.String(50))
     task_name: str = db.Column(db.String(255))
     task_title: str = db.Column(db.String(50))
