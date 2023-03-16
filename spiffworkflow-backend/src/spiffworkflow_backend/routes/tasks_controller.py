@@ -107,6 +107,7 @@ def task_list_my_tasks(
     potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
 
     # FIXME: this breaks postgres. Look at commit c147cdb47b1481f094b8c3d82dc502fe961f4977 for
+    # UPDATE: maybe fixed in postgres and mysql. remove comment if so.
     # the postgres fix but it breaks the method for mysql.
     # error in postgres:
     #   psycopg2.errors.GroupingError) column \"process_instance.process_model_identifier\" must
@@ -117,19 +118,12 @@ def task_list_my_tasks(
         HumanTaskModel.task_title,
         HumanTaskModel.process_model_display_name,
         HumanTaskModel.process_instance_id,
-        ProcessInstanceModel.process_model_identifier,
-        ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-        ProcessInstanceModel.updated_at_in_seconds,
-        ProcessInstanceModel.created_at_in_seconds,
-        process_initiator_user.username.label("process_initiator_username"),
-        GroupModel.identifier.label("assigned_user_group_identifier"),
-        # func.max does not seem to return columns so we need to call both
-        func.max(ProcessInstanceModel.process_model_identifier),
-        func.max(ProcessInstanceModel.status.label("process_instance_status")),  # type: ignore
-        func.max(ProcessInstanceModel.updated_at_in_seconds),
-        func.max(ProcessInstanceModel.created_at_in_seconds),
-        func.max(process_initiator_user.username.label("process_initiator_username")),
-        func.max(GroupModel.identifier.label("assigned_user_group_identifier")),
+        func.max(ProcessInstanceModel.process_model_identifier).label("process_model_identifier"),
+        func.max(ProcessInstanceModel.status).label("process_instance_status"),  # type: ignore
+        func.max(ProcessInstanceModel.updated_at_in_seconds).label("updated_at_in_seconds"),
+        func.max(ProcessInstanceModel.created_at_in_seconds).label("created_at_in_seconds"),
+        func.max(process_initiator_user.username).label("process_initiator_username"),
+        func.max(GroupModel.identifier).label("assigned_user_group_identifier"),
         potential_owner_usernames_from_group_concat_or_similar,
     ).paginate(page=page, per_page=per_page, error_out=False)
 
@@ -486,12 +480,22 @@ def _get_tasks(
 
     potential_owner_usernames_from_group_concat_or_similar = _get_potential_owner_usernames(assigned_user)
 
+    process_model_identifier_column = ProcessInstanceModel.process_model_identifier
+    process_instance_status_column = ProcessInstanceModel.status.label("process_instance_status")  # type: ignore
+    user_username_column = UserModel.username.label("process_initiator_username")  # type: ignore
+    group_identifier_column = GroupModel.identifier.label("assigned_user_group_identifier")
+    if current_app.config['SPIFFWORKFLOW_BACKEND_DATABASE_TYPE'] == 'postgres':
+        process_model_identifier_column = func.max(ProcessInstanceModel.process_model_identifier).label("process_model_identifier")
+        process_instance_status_column = func.max(ProcessInstanceModel.status).label("process_instance_status")  # type: ignore
+        user_username_column = func.max(UserModel.username).label("process_initiator_username")  # type: ignore
+        group_identifier_column = func.max(GroupModel.identifier).label("assigned_user_group_identifier")
+
     human_tasks = (
         human_tasks_query.add_columns(
-            ProcessInstanceModel.process_model_identifier,
-            ProcessInstanceModel.status.label("process_instance_status"),  # type: ignore
-            UserModel.username.label("process_initiator_username"),  # type: ignore
-            GroupModel.identifier.label("assigned_user_group_identifier"),
+            process_model_identifier_column,
+            process_instance_status_column,
+            user_username_column,
+            group_identifier_column,
             HumanTaskModel.task_name,
             HumanTaskModel.task_title,
             HumanTaskModel.process_model_display_name,
