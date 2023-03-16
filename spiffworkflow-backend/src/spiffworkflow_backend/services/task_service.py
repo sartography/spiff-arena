@@ -171,12 +171,12 @@ class TaskService:
         tasks = bpmn_process_dict.pop("tasks")
         bpmn_process_data_dict = bpmn_process_dict.pop("data")
 
-        if 'subprocesses' in bpmn_process_dict:
-            bpmn_process_dict.pop('subprocesses')
-        if 'spec' in bpmn_process_dict:
-            bpmn_process_dict.pop('spec')
-        if 'subprocess_specs' in bpmn_process_dict:
-            bpmn_process_dict.pop('subprocess_specs')
+        if "subprocesses" in bpmn_process_dict:
+            bpmn_process_dict.pop("subprocesses")
+        if "spec" in bpmn_process_dict:
+            bpmn_process_dict.pop("spec")
+        if "subprocess_specs" in bpmn_process_dict:
+            bpmn_process_dict.pop("subprocess_specs")
 
         new_task_models = {}
         new_json_data_dicts: dict[str, JsonDataDict] = {}

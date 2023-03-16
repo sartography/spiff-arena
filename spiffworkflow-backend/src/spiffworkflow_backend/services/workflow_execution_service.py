@@ -58,13 +58,13 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         serializer: BpmnWorkflowSerializer,
         process_instance: ProcessInstanceModel,
         bpmn_definition_to_task_definitions_mappings: dict,
-        script_engine,
+        # script_engine,
         secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
-        self.script_engine = script_engine
+        # self.script_engine = script_engine
 
         self.current_task_model: Optional[TaskModel] = None
         self.current_task_start_in_seconds: Optional[float] = None
@@ -106,8 +106,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         # if self.current_task_model and self.should_update_task_model():
         if self.should_update_task_model():
-            if spiff_task.task_spec.name == 'top_level_script':
-                import pdb; pdb.set_trace()
+            # if spiff_task.task_spec.name == 'top_level_script':
+            # import pdb; pdb.set_trace()
             # spiff_task.workflow.script_engine.environment.revise_state_with_task_data(spiff_task)
             _bpmn_process, task_model, new_task_models, new_json_data_dicts = (
                 TaskService.find_or_create_task_model_from_spiff_task(

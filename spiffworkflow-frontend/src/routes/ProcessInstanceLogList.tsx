@@ -29,6 +29,11 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   }
 
   useEffect(() => {
+    // Clear out any previous results to avoid a "flicker" effect where columns
+    // are updated above the incorrect data.
+    setProcessInstanceLogs([]);
+    setPagination(null);
+
     const setProcessInstanceLogListFromResult = (result: any) => {
       setProcessInstanceLogs(result.results);
       setPagination(result.pagination);

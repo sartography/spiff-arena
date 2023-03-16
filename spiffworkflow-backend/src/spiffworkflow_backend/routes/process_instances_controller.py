@@ -42,7 +42,8 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
-from spiffworkflow_backend.models.task import Task, TaskModel
+from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_by_id_or_raise,
@@ -236,9 +237,7 @@ def process_instance_log_list(
     logs = (
         log_query.order_by(TaskModel.end_in_seconds.desc())  # type: ignore
         .outerjoin(HumanTaskModel, HumanTaskModel.task_model_id == TaskModel.id)
-        .outerjoin(
-            UserModel, UserModel.id == HumanTaskModel.completed_by_user_id
-        )
+        .outerjoin(UserModel, UserModel.id == HumanTaskModel.completed_by_user_id)
         .add_columns(
             UserModel.username,
         )
