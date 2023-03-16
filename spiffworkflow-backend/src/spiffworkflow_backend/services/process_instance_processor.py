@@ -285,7 +285,12 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
                 self.state[result_variable] = task.data.pop(result_variable)
 
 
-class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
+# SpiffWorkflow at revision f162aac43af3af18d1a55186aeccea154fb8b05d runs script tasks on ready
+# which means that our will_complete_task hook does not have the correct env state when it runs
+# so save everything to task data for now until we can figure out a better way to hook into that.
+# Revision 6cad2981712bb61eca23af1adfafce02d3277cb9 is the last revision that can run with this.
+# class CustomScriptEngineEnvironment(NonTaskDataBasedScriptEngineEnvironment):
+class CustomScriptEngineEnvironment(BoxedTaskDataBasedScriptEngineEnvironment):
     pass
 
 

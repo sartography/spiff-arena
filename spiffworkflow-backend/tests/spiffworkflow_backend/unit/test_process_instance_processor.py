@@ -343,7 +343,8 @@ class TestProcessInstanceProcessor(BaseTest):
                 task_definition = task.task_definition
                 assert task_definition.bpmn_identifier == spiff_task_name
                 assert task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
-                assert task.python_env_data() == expected_python_env_data
+                # assert task.python_env_data() == expected_python_env_data
+                assert task.json_data() == expected_python_env_data
                 spiff_tasks_checked_once.append(spiff_task.task_spec.name)
 
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
