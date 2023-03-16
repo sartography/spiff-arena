@@ -93,6 +93,7 @@ from spiffworkflow_backend.services.process_instance_lock_service import (
 )
 from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceQueueService,
+    ProcessInstanceIsAlreadyLockedError,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
@@ -1459,8 +1460,21 @@ class ProcessInstanceProcessor:
         return the_status
 
     # TODO: replace with implicit/more granular locking in workflow execution service
-    def lock_process_instance(self, lock_prefix: str) -> None:
-        ProcessInstanceQueueService.dequeue(self.process_instance_model)
+    # TODO: remove the retry logic once all user_input_required's don't need to be locked to check timers
+    def lock_process_instance(self, lock_prefix: str, retry_count: int = 0, retry_interval_in_seconds: int = 0) -> None:
+        try:
+            ProcessInstanceQueueService.dequeue(self.process_instance_model)
+        except ProcessInstanceIsAlreadyLockedError as e:
+            if retry_count > 0:
+                current_app.logger.info(
+                    f"process_instance_id {self.process_instance_model.id} is locked. "
+                    f"will retry {retry_count} times with delay of {retry_interval_in_seconds}."
+                )
+                if retry_interval_in_seconds > 0:
+                    time.sleep(retry_interval_in_seconds)
+                self.lock_process_instance(lock_prefix, retry_count - 1, retry_interval_in_seconds)
+            else:
+                raise e
 
     # TODO: replace with implicit/more granular locking in workflow execution service
     def unlock_process_instance(self, lock_prefix: str) -> None:

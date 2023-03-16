@@ -378,8 +378,11 @@ def task_submit_shared(
         only_tasks_that_can_be_completed=True,
     )
 
+    retry_times = current_app.config["SPIFFWORKFLOW_BACKEND_USER_INPUT_REQUIRED_LOCK_RETRY_TIMES"]
+    retry_interval_in_seconds = current_app.config["SPIFFWORKFLOW_BACKEND_USER_INPUT_REQUIRED_LOCK_RETRY_INTERVAL_IN_SECONDS"]
+    
     with sentry_sdk.start_span(op="task", description="complete_form_task"):
-        processor.lock_process_instance("Web")
+        processor.lock_process_instance("Web", retry_times, retry_interval_in_seconds)
         ProcessInstanceService.complete_form_task(
             processor=processor,
             spiff_task=spiff_task,
