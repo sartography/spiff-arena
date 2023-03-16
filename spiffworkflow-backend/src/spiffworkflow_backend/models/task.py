@@ -50,6 +50,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     guid: str = db.Column(db.String(36), nullable=False, unique=True, index=True)
     bpmn_process_id: int = db.Column(ForeignKey(BpmnProcessModel.id), nullable=False)  # type: ignore
+    bpmn_process = relationship(BpmnProcessModel)
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False)
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
