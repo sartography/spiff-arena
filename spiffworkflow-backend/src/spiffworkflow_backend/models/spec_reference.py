@@ -45,7 +45,7 @@ class SpecReferenceCache(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     identifier = db.Column(db.String(255), index=True)
     display_name = db.Column(db.String(255), index=True)
-    process_model_id = db.Column(db.String(255))
+    process_model_id = db.Column(db.String(255), index=True)
     type = db.Column(db.String(255), index=True)  # either 'process' or 'decision'
     file_name = db.Column(db.String(255))
     relative_path = db.Column(db.String(255))

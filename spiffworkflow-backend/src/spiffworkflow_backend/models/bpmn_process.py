@@ -17,7 +17,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 class BpmnProcessModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process"
     id: int = db.Column(db.Integer, primary_key=True)
-    guid: str | None = db.Column(db.String(36), nullable=True, unique=True, index=True)
+    guid: str | None = db.Column(db.String(36), nullable=True, unique=True)
 
     bpmn_process_definition_id: int = db.Column(
         ForeignKey(BpmnProcessDefinitionModel.id), nullable=False, index=True  # type: ignore
@@ -30,9 +30,6 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
     tasks = relationship("TaskModel", back_populates="bpmn_process", cascade="delete")  # type: ignore
-
-    # subprocess or top_level_process
-    # process_type: str = db.Column(db.String(30), nullable=False)
 
     # FIXME: find out how to set this but it'd be cool
     start_in_seconds: float = db.Column(db.DECIMAL(17, 6))

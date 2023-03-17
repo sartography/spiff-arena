@@ -18,7 +18,7 @@ class CorrelationPropertyCache(SpiffworkflowBaseDBModel):
 
     __tablename__ = "correlation_property_cache"
     id = db.Column(db.Integer, primary_key=True)
-    name: str = db.Column(db.String(50), nullable=False)
-    message_name: str = db.Column(db.String(50), nullable=False)
+    name: str = db.Column(db.String(50), nullable=False, index=True)
+    message_name: str = db.Column(db.String(50), nullable=False, index=True)
     process_model_id: str = db.Column(db.String(255), nullable=False)
     retrieval_expression: str = db.Column(db.String(255))

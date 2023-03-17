@@ -48,7 +48,7 @@ class MultiInstanceType(enum.Enum):
 class TaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "task"
     id: int = db.Column(db.Integer, primary_key=True)
-    guid: str = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    guid: str = db.Column(db.String(36), nullable=False, unique=True)
     bpmn_process_id: int = db.Column(ForeignKey(BpmnProcessModel.id), nullable=False, index=True)  # type: ignore
     bpmn_process = relationship(BpmnProcessModel, back_populates="tasks")
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
@@ -57,7 +57,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     task_definition_id: int = db.Column(ForeignKey(TaskDefinitionModel.id), nullable=False, index=True)  # type: ignore
     task_definition = relationship("TaskDefinitionModel")
 
-    state: str = db.Column(db.String(10), nullable=False)
+    state: str = db.Column(db.String(10), nullable=False, index=True)
     properties_json: dict = db.Column(db.JSON, nullable=False)
 
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
