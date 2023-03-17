@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Table, Tabs, TabList, Tab } from '@carbon/react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
@@ -94,16 +94,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         </>
       );
     }
-    tableRow.push(
-      <td>
-        <Link
-          data-qa="process-instance-show-link"
-          to={`${processInstanceShowPageBaseUrl}/${row.process_instance_id}/${row.spiff_step}`}
-        >
-          {convertSecondsToFormattedDateTime(row.timestamp)}
-        </Link>
-      </td>
-    );
+    tableRow.push(<td>{convertSecondsToFormattedDateTime(row.timestamp)}</td>);
     return <tr key={row.id}>{tableRow}</tr>;
   };
 
