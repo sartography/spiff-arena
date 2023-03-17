@@ -23,13 +23,15 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
 
     id: int = db.Column(db.Integer, primary_key=True)
     bpmn_process_definition_id: int = db.Column(
-        ForeignKey(BpmnProcessDefinitionModel.id), nullable=False  # type: ignore
+        ForeignKey(BpmnProcessDefinitionModel.id), nullable=False, index=True  # type: ignore
     )
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
     bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
+    bpmn_name: str = db.Column(db.String(255), nullable=True, index=True)
+    typename: str = db.Column(db.String(255), nullable=False, index=True)
+
     properties_json: dict = db.Column(db.JSON, nullable=False)
-    typename: str = db.Column(db.String(255), nullable=False)
 
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)

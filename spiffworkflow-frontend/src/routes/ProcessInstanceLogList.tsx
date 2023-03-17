@@ -54,15 +54,16 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     const tableRow = [];
     const taskNameCell = (
       <td>
-        {row.bpmn_task_name ||
-          (row.bpmn_task_type === 'Default Start Event'
-            ? 'Process Started'
-            : '') ||
-          (row.bpmn_task_type === 'End Event' ? 'Process Ended' : '')}
+        {row.task_definition_name ||
+          (row.bpmn_task_type === 'StartEvent' ? 'Process Started' : '') ||
+          (row.bpmn_task_type === 'EndEvent' ? 'Process Ended' : '')}
       </td>
     );
     const bpmnProcessCell = (
-      <td>{row.bpmn_process_name || row.bpmn_process_identifier}</td>
+      <td>
+        {row.bpmn_process_definition_name ||
+          row.bpmn_process_definition_identifier}
+      </td>
     );
     if (isDetailedView) {
       tableRow.push(
@@ -84,7 +85,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       tableRow.push(
         <>
           <td>{row.bpmn_task_type}</td>
-          <td>{row.message}</td>
+          <td>{row.event_type}</td>
           <td>
             {row.username || (
               <span className="system-user-log-entry">system</span>
@@ -132,7 +133,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       tableHeaders.push(
         <>
           <th>Task Type</th>
-          <th>Message</th>
+          <th>Event</th>
           <th>User</th>
         </>
       );
@@ -178,7 +179,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 setSearchParams(searchParams);
               }}
             >
-              Simple
+              Milestones
             </Tab>
             <Tab
               title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
@@ -188,7 +189,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 setSearchParams(searchParams);
               }}
             >
-              Detailed
+              Events
             </Tab>
           </TabList>
         </Tabs>

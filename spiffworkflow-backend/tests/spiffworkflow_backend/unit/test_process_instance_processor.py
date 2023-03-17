@@ -9,6 +9,8 @@ from SpiffWorkflow.task import TaskState  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -318,6 +320,7 @@ class TestProcessInstanceProcessor(BaseTest):
             **{"set_in_test_process_to_call_script": 1},
         }
         fourth_data_set = {**third_data_set, **{"a": 1, "we_move_on": True}}
+        fifth_data_set = {**fourth_data_set, **{"validate_only": False, "set_top_level_process_script_after_gate": 1}}
         expected_task_data = {
             "top_level_script": first_data_set,
             "manual_task": first_data_set,
@@ -333,17 +336,29 @@ class TestProcessInstanceProcessor(BaseTest):
         spiff_tasks_checked_once: list = []
 
         # TODO: also check task data here from the spiff_task directly to ensure we hydrated spiff correctly
-        def assert_spiff_task_is_in_process(spiff_task_name: str, bpmn_process_identifier: str) -> None:
-            if spiff_task.task_spec.name == spiff_task_name:
+        def assert_spiff_task_is_in_process(spiff_task_identifier: str, bpmn_process_identifier: str) -> None:
+            if spiff_task.task_spec.name == spiff_task_identifier:
+                base_failure_message = f"Failed on {bpmn_process_identifier} - {spiff_task_identifier}."
                 expected_python_env_data = expected_task_data[spiff_task.task_spec.name]
                 if spiff_task.task_spec.name in spiff_tasks_checked_once:
                     expected_python_env_data = expected_task_data[f"{spiff_task.task_spec.name}_second"]
-                task = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-                assert task.task_definition_id is not None
-                task_definition = task.task_definition
-                assert task_definition.bpmn_identifier == spiff_task_name
+                task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+
+                assert task_model.start_in_seconds is not None
+                assert task_model.end_in_seconds is not None
+                assert task_model.task_definition_id is not None
+
+                task_definition = task_model.task_definition
+                assert task_definition.bpmn_identifier == spiff_task_identifier
+                assert task_definition.bpmn_name == spiff_task_identifier.replace("_", " ").title()
                 assert task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
-                assert task.python_env_data() == expected_python_env_data
+
+                message = (
+                    f"{base_failure_message} Expected: {expected_python_env_data}. Received: {task_model.json_data()}"
+                )
+                # TODO: if we split out env data again we will need to use it here instead of json_data
+                # assert task_model.python_env_data() == expected_python_env_data, message
+                assert task_model.json_data() == expected_python_env_data, message
                 spiff_tasks_checked_once.append(spiff_task.task_spec.name)
 
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
@@ -353,6 +368,17 @@ class TestProcessInstanceProcessor(BaseTest):
             assert_spiff_task_is_in_process("test_process_to_call_script", "test_process_to_call")
             assert_spiff_task_is_in_process("top_level_subprocess_script", "top_level_subprocess")
             assert_spiff_task_is_in_process("top_level_script", "top_level_process")
+
+            if spiff_task.task_spec.name == "top_level_call_activity":
+                # the task id / guid of the call activity gets used as the guid of the bpmn process that it calls
+                bpmn_process = BpmnProcessModel.query.filter_by(guid=str(spiff_task.id)).first()
+                assert bpmn_process is not None
+                bpmn_process_definition = bpmn_process.bpmn_process_definition
+                assert bpmn_process_definition is not None
+                assert bpmn_process_definition.bpmn_identifier == "test_process_to_call"
+                assert bpmn_process_definition.bpmn_name == "Test Process To Call"
+
+        assert processor.get_data() == fifth_data_set
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,
@@ -466,3 +492,34 @@ class TestProcessInstanceProcessor(BaseTest):
 
         # EDIT: when using feature/remove-loop-reset branch of SpiffWorkflow, these should be different.
         assert human_task_two.task_id != human_task_one.task_id
+
+    def test_task_data_is_set_even_if_process_instance_errors(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """Test_task_data_is_set_even_if_process_instance_errors."""
+        process_model = load_test_spec(
+            process_model_id="group/error_with_task_data",
+            bpmn_file_name="script_error_with_task_data.bpmn",
+            process_model_source_directory="error",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+
+        processor = ProcessInstanceProcessor(process_instance)
+        with pytest.raises(ApiError):
+            processor.do_engine_steps(save=True)
+
+        process_instance_final = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor_final = ProcessInstanceProcessor(process_instance_final)
+
+        spiff_task = processor_final.get_task_by_bpmn_identifier(
+            "script_task_two", processor_final.bpmn_process_instance
+        )
+        assert spiff_task is not None
+        assert spiff_task.state == TaskState.WAITING
+        assert spiff_task.data == {"my_var": "THE VAR"}

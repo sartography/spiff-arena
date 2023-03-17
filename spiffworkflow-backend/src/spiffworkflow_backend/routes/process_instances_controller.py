@@ -19,6 +19,7 @@ from sqlalchemy import and_
 from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -28,6 +29,7 @@ from spiffworkflow_backend.models.process_instance import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
@@ -40,9 +42,10 @@ from spiffworkflow_backend.models.process_instance_report import (
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
-from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_by_id_or_raise,
@@ -237,30 +240,35 @@ def process_instance_log_list(
     # to make sure the process instance exists
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
-    log_query = SpiffLoggingModel.query.filter(SpiffLoggingModel.process_instance_id == process_instance.id)
+    log_query = (
+        ProcessInstanceEventModel.query.filter_by(process_instance_id=process_instance.id)
+        .outerjoin(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
+        .outerjoin(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+        .outerjoin(
+            BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id
+        )
+    )
     if not detailed:
         log_query = log_query.filter(
-            # 1. this was the previous implementation, where we only show completed tasks and skipped tasks.
-            #   maybe we want to iterate on this in the future (in a third tab under process instance logs?)
-            #   or_(
-            #       SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
-            #       SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
-            #   )
-            # 2. We included ["End Event", "Default Start Event"] along with Default Throwing Event, but feb 2023
-            #  we decided to remove them, since they get really chatty when there are lots of subprocesses and call activities.
             and_(
-                SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
-                SpiffLoggingModel.bpmn_task_type.in_(["Default Throwing Event"]),  # type: ignore
+                TaskModel.state.in_(["COMPLETED"]),  # type: ignore
+                TaskDefinitionModel.typename.in_(["IntermediateThrowEvent"]),  # type: ignore
             )
         )
 
     logs = (
-        log_query.order_by(SpiffLoggingModel.timestamp.desc())  # type: ignore
-        .join(
-            UserModel, UserModel.id == SpiffLoggingModel.current_user_id, isouter=True
-        )  # isouter since if we don't have a user, we still want the log
+        log_query.order_by(
+            ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc()  # type: ignore
+        )
+        .outerjoin(UserModel, UserModel.id == ProcessInstanceEventModel.user_id)
         .add_columns(
+            TaskModel.guid.label("spiff_task_guid"),  # type: ignore
             UserModel.username,
+            BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
+            BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
+            TaskDefinitionModel.bpmn_identifier.label("task_definition_identifier"),  # type: ignore
+            TaskDefinitionModel.bpmn_name.label("task_definition_name"),  # type: ignore
+            TaskDefinitionModel.typename.label("bpmn_task_type"),  # type: ignore
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
@@ -441,7 +449,6 @@ def process_instance_delete(
 
     # (Pdb) db.session.delete
     # <bound method delete of <sqlalchemy.orm.scoping.scoped_session object at 0x103eaab30>>
-    db.session.query(SpiffLoggingModel).filter_by(process_instance_id=process_instance.id).delete()
     db.session.query(SpiffStepDetailsModel).filter_by(process_instance_id=process_instance.id).delete()
     db.session.query(ProcessInstanceQueueModel).filter_by(process_instance_id=process_instance.id).delete()
     db.session.delete(process_instance)

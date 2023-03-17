@@ -17,24 +17,28 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
     ProcessEntityNotFoundError,
 )
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceTaskDataCannotBeUpdatedError,
 )
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_file_data import (
     ProcessInstanceFileDataModel,
 )
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 process_api_blueprint = Blueprint("process_api", __name__)
@@ -180,34 +184,33 @@ def task_data_update(
                 f" It is currently: {process_instance.status}"
             )
 
-        process_instance_data = process_instance.process_instance_data
-        if process_instance_data is None:
+        task_model = TaskModel.query.filter_by(guid=task_id).first()
+        if task_model is None:
             raise ApiError(
-                error_code="process_instance_data_not_found",
-                message=f"Could not find task data related to process instance: {process_instance.id}",
+                error_code="update_task_data_error",
+                message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
             )
-        process_instance_data_dict = json.loads(process_instance_data.runtime_json)
 
         if "new_task_data" in body:
             new_task_data_str: str = body["new_task_data"]
             new_task_data_dict = json.loads(new_task_data_str)
-            if task_id in process_instance_data_dict["tasks"]:
-                process_instance_data_dict["tasks"][task_id]["data"] = new_task_data_dict
-                process_instance_data.runtime_json = json.dumps(process_instance_data_dict)
-                db.session.add(process_instance_data)
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    raise ApiError(
-                        error_code="update_task_data_error",
-                        message=f"Could not update the Instance. Original error is {e}",
-                    ) from e
-            else:
+            json_data_dict = TaskService.update_task_data_on_task_model(
+                task_model, new_task_data_dict, "json_data_hash"
+            )
+            if json_data_dict is not None:
+                json_data = JsonDataModel(**json_data_dict)
+                db.session.add(json_data)
+                ProcessInstanceProcessor.add_event_to_process_instance(
+                    process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_id
+                )
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
                 raise ApiError(
                     error_code="update_task_data_error",
-                    message=f"Could not find Task: {task_id} in Instance: {process_instance_id}.",
-                )
+                    message=f"Could not update the Instance. Original error is {e}",
+                ) from e
     else:
         raise ApiError(
             error_code="update_task_data_error",
