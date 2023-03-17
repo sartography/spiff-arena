@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 05153ab6a6b8
+Revision ID: 2596a98f760b
 Revises: 
-Create Date: 2023-03-17 12:22:43.449203
+Create Date: 2023-03-17 15:49:31.968141
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '05153ab6a6b8'
+revision = '2596a98f760b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -87,21 +87,6 @@ def upgrade():
     op.create_index(op.f('ix_spec_reference_cache_display_name'), 'spec_reference_cache', ['display_name'], unique=False)
     op.create_index(op.f('ix_spec_reference_cache_identifier'), 'spec_reference_cache', ['identifier'], unique=False)
     op.create_index(op.f('ix_spec_reference_cache_type'), 'spec_reference_cache', ['type'], unique=False)
-    op.create_table('spiff_logging',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('bpmn_process_identifier', sa.String(length=255), nullable=False),
-    sa.Column('bpmn_process_name', sa.String(length=255), nullable=True),
-    sa.Column('bpmn_task_identifier', sa.String(length=255), nullable=False),
-    sa.Column('bpmn_task_name', sa.String(length=255), nullable=True),
-    sa.Column('bpmn_task_type', sa.String(length=255), nullable=True),
-    sa.Column('spiff_task_guid', sa.String(length=50), nullable=False),
-    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
-    sa.Column('message', sa.String(length=255), nullable=True),
-    sa.Column('current_user_id', sa.Integer(), nullable=True),
-    sa.Column('spiff_step', sa.Integer(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
-    )
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=255), nullable=False),
@@ -465,7 +450,6 @@ def downgrade():
     op.drop_index(op.f('ix_bpmn_process_guid'), table_name='bpmn_process')
     op.drop_table('bpmn_process')
     op.drop_table('user')
-    op.drop_table('spiff_logging')
     op.drop_index(op.f('ix_spec_reference_cache_type'), table_name='spec_reference_cache')
     op.drop_index(op.f('ix_spec_reference_cache_identifier'), table_name='spec_reference_cache')
     op.drop_index(op.f('ix_spec_reference_cache_display_name'), table_name='spec_reference_cache')
