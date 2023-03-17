@@ -16,7 +16,9 @@ class ProcessInstanceMetadataModel(SpiffworkflowBaseDBModel):
     __table_args__ = (db.UniqueConstraint("process_instance_id", "key", name="process_instance_metadata_unique"),)
 
     id: int = db.Column(db.Integer, primary_key=True)
-    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False)  # type: ignore
+    process_instance_id: int = db.Column(
+        ForeignKey(ProcessInstanceModel.id), nullable=False, index=True  # type: ignore
+    )
     key: str = db.Column(db.String(255), nullable=False, index=True)
     value: str = db.Column(db.String(255), nullable=False)
 

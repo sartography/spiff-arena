@@ -10,7 +10,6 @@ from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import deferred
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
@@ -57,16 +56,17 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     process_model_display_name: str = db.Column(db.String(255), nullable=False, index=True)
-    process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
+    process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
     process_initiator = relationship("UserModel")
 
     bpmn_process_definition_id: int | None = db.Column(
-        ForeignKey(BpmnProcessDefinitionModel.id), nullable=True  # type: ignore
+        ForeignKey(BpmnProcessDefinitionModel.id), nullable=True, index=True  # type: ignore
     )
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
-    bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True)  # type: ignore
+    bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True, index=True)  # type: ignore
     bpmn_process = relationship(BpmnProcessModel, cascade="delete")
     tasks = relationship("TaskModel", cascade="delete")  # type: ignore
+    process_instance_events = relationship("ProcessInstanceEventModel", cascade="delete")  # type: ignore
 
     spiff_serializer_version = db.Column(db.String(50), nullable=True)
 
@@ -88,12 +88,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         cascade="delete",
     )  # type: ignore
 
-    bpmn_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
-    start_in_seconds: int | None = db.Column(db.Integer)
-    end_in_seconds: int | None = db.Column(db.Integer)
+    start_in_seconds: int | None = db.Column(db.Integer, index=True)
+    end_in_seconds: int | None = db.Column(db.Integer, index=True)
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
-    status: str = db.Column(db.String(50))
+    status: str = db.Column(db.String(50), index=True)
 
     bpmn_version_control_type: str = db.Column(db.String(50))
     bpmn_version_control_identifier: str = db.Column(db.String(255))

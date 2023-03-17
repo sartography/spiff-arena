@@ -18,16 +18,12 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     # note that a call activity is its own row in this table, with its own hash,
     # and therefore it only gets stored once per version, and can be reused
     # by multiple calling processes.
-    hash: str = db.Column(db.String(255), nullable=False, index=True, unique=True)
+    hash: str = db.Column(db.String(255), nullable=False, unique=True)
 
     bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
+    bpmn_name: str = db.Column(db.String(255), nullable=True, index=True)
 
     properties_json: dict = db.Column(db.JSON, nullable=False)
-
-    # process or subprocess
-    # FIXME: will probably ignore for now since we do not strictly need it
-    # make this nullable false and index it once we actually start using it
-    type: str = db.Column(db.String(32), nullable=True)
 
     # TODO: remove these from process_instance
     bpmn_version_control_type: str = db.Column(db.String(50))

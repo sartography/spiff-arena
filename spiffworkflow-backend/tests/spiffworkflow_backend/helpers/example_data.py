@@ -41,7 +41,7 @@ class ExampleDataLoader:
 
         bpmn_file_name_with_extension = bpmn_file_name
         if not bpmn_file_name_with_extension:
-            bpmn_file_name_with_extension = process_model_id
+            bpmn_file_name_with_extension = os.path.basename(process_model_id)
 
         if not bpmn_file_name_with_extension.endswith(".bpmn"):
             bpmn_file_name_with_extension += ".bpmn"
@@ -65,7 +65,7 @@ class ExampleDataLoader:
             file_name_matcher,
         )
 
-        files = glob.glob(file_glob)
+        files = sorted(glob.glob(file_glob))
         for file_path in files:
             if os.path.isdir(file_path):
                 continue  # Don't try to process sub directories

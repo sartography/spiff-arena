@@ -17,7 +17,9 @@ class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
     __tablename__ = "process_instance_file_data"
 
     id: int = db.Column(db.Integer, primary_key=True)
-    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False)  # type: ignore
+    process_instance_id: int = db.Column(
+        ForeignKey(ProcessInstanceModel.id), nullable=False, index=True  # type: ignore
+    )
     identifier: str = db.Column(db.String(255), nullable=False)
     list_index: Optional[int] = db.Column(db.Integer, nullable=True)
     mimetype: str = db.Column(db.String(255), nullable=False)

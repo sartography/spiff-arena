@@ -28,6 +28,7 @@ flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
+# SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "6cad2981712bb61eca23af1adfafce02d3277cb9"}
 # SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
@@ -126,7 +127,9 @@ filterwarnings = [
     "ignore:'_request_ctx_stack' is deprecated and will be removed in Flask 2.3",
     "ignore:Setting 'json_encoder' on the app or a blueprint is deprecated and will be removed in Flask 2.3",
     "ignore:'JSONEncoder' is deprecated and will be removed in Flask 2.3",
-    "ignore:'app.json_encoder' is deprecated and will be removed in Flask 2.3"
+    "ignore:'app.json_encoder' is deprecated and will be removed in Flask 2.3",
+    # SpiffWorkflow/bpmn/PythonScriptEngineEnvironment.py
+    'ignore:The usage of Box has been deprecated'
 ]
 
 [tool.coverage.paths]

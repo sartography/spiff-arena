@@ -30,4 +30,4 @@ class HumanTaskUserModel(SpiffworkflowBaseDBModel):
     human_task_id = db.Column(ForeignKey(HumanTaskModel.id), nullable=False, index=True)  # type: ignore
     user_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
 
-    human_task = relationship(HumanTaskModel)
+    human_task = relationship(HumanTaskModel, back_populates="human_task_users")
