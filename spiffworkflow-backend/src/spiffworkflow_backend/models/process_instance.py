@@ -61,7 +61,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     process_initiator = relationship("UserModel")
 
     bpmn_process_definition_id: int | None = db.Column(
-        ForeignKey(BpmnProcessDefinitionModel.id), nullable=True  # type: ignore
+        ForeignKey(BpmnProcessDefinitionModel.id), nullable=True, index=True  # type: ignore
     )
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
     bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True)  # type: ignore
@@ -90,7 +90,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     )  # type: ignore
 
     bpmn_json: str | None = deferred(db.Column(db.JSON))  # type: ignore
-    start_in_seconds: int | None = db.Column(db.Integer)
+    start_in_seconds: int | None = db.Column(db.Integer, index=True)
     end_in_seconds: int | None = db.Column(db.Integer)
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
