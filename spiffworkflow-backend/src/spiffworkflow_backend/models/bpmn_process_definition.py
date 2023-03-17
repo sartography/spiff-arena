@@ -21,6 +21,7 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     hash: str = db.Column(db.String(255), nullable=False, index=True, unique=True)
 
     bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
+    bpmn_name: str = db.Column(db.String(255), nullable=True, index=True)
 
     properties_json: dict = db.Column(db.JSON, nullable=False)
 

@@ -996,6 +996,7 @@ class ProcessInstanceProcessor:
         store_bpmn_definition_mappings: bool = False,
     ) -> BpmnProcessDefinitionModel:
         process_bpmn_identifier = process_bpmn_properties["name"]
+        process_bpmn_name = process_bpmn_properties["description"]
         new_hash_digest = sha256(json.dumps(process_bpmn_properties, sort_keys=True).encode("utf8")).hexdigest()
         bpmn_process_definition: Optional[BpmnProcessDefinitionModel] = BpmnProcessDefinitionModel.query.filter_by(
             hash=new_hash_digest
@@ -1006,6 +1007,7 @@ class ProcessInstanceProcessor:
             bpmn_process_definition = BpmnProcessDefinitionModel(
                 hash=new_hash_digest,
                 bpmn_identifier=process_bpmn_identifier,
+                bpmn_name=process_bpmn_name,
                 properties_json=process_bpmn_properties,
             )
             db.session.add(bpmn_process_definition)
@@ -1016,9 +1018,11 @@ class ProcessInstanceProcessor:
             )
 
             for task_bpmn_identifier, task_bpmn_properties in task_specs.items():
+                task_bpmn_name = task_bpmn_properties["description"]
                 task_definition = TaskDefinitionModel(
                     bpmn_process_definition=bpmn_process_definition,
                     bpmn_identifier=task_bpmn_identifier,
+                    bpmn_name=task_bpmn_name,
                     properties_json=task_bpmn_properties,
                     typename=task_bpmn_properties["typename"],
                 )

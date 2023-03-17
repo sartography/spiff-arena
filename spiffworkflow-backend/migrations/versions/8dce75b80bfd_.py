@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 8ee0f1c23cc7
+Revision ID: 8dce75b80bfd
 Revises: 
-Create Date: 2023-03-16 16:24:47.364768
+Create Date: 2023-03-17 09:08:24.146736
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '8ee0f1c23cc7'
+revision = '8dce75b80bfd'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -22,6 +22,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hash', sa.String(length=255), nullable=False),
     sa.Column('bpmn_identifier', sa.String(length=255), nullable=False),
+    sa.Column('bpmn_name', sa.String(length=255), nullable=True),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('type', sa.String(length=32), nullable=True),
     sa.Column('bpmn_version_control_type', sa.String(length=50), nullable=True),
@@ -31,6 +32,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_bpmn_process_definition_bpmn_identifier'), 'bpmn_process_definition', ['bpmn_identifier'], unique=False)
+    op.create_index(op.f('ix_bpmn_process_definition_bpmn_name'), 'bpmn_process_definition', ['bpmn_name'], unique=False)
     op.create_index(op.f('ix_bpmn_process_definition_hash'), 'bpmn_process_definition', ['hash'], unique=True)
     op.create_table('correlation_property_cache',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -187,6 +189,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bpmn_process_definition_id', sa.Integer(), nullable=False),
     sa.Column('bpmn_identifier', sa.String(length=255), nullable=False),
+    sa.Column('bpmn_name', sa.String(length=255), nullable=True),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('typename', sa.String(length=255), nullable=False),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
@@ -196,6 +199,7 @@ def upgrade():
     sa.UniqueConstraint('bpmn_process_definition_id', 'bpmn_identifier', name='task_definition_unique')
     )
     op.create_index(op.f('ix_task_definition_bpmn_identifier'), 'task_definition', ['bpmn_identifier'], unique=False)
+    op.create_index(op.f('ix_task_definition_bpmn_name'), 'task_definition', ['bpmn_name'], unique=False)
     op.create_table('user_group_assignment',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -427,6 +431,7 @@ def downgrade():
     op.drop_table('permission_assignment')
     op.drop_table('user_group_assignment_waiting')
     op.drop_table('user_group_assignment')
+    op.drop_index(op.f('ix_task_definition_bpmn_name'), table_name='task_definition')
     op.drop_index(op.f('ix_task_definition_bpmn_identifier'), table_name='task_definition')
     op.drop_table('task_definition')
     op.drop_table('secret')
@@ -453,6 +458,7 @@ def downgrade():
     op.drop_table('group')
     op.drop_table('correlation_property_cache')
     op.drop_index(op.f('ix_bpmn_process_definition_hash'), table_name='bpmn_process_definition')
+    op.drop_index(op.f('ix_bpmn_process_definition_bpmn_name'), table_name='bpmn_process_definition')
     op.drop_index(op.f('ix_bpmn_process_definition_bpmn_identifier'), table_name='bpmn_process_definition')
     op.drop_table('bpmn_process_definition')
     # ### end Alembic commands ###
