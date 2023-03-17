@@ -47,7 +47,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     __tablename__ = "message_instance"
 
     id: int = db.Column(db.Integer, primary_key=True)
-    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=True)  # type: ignore
+    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=True, index=True)  # type: ignore
     name: str = db.Column(db.String(255))
     message_type: str = db.Column(db.String(20), nullable=False)
     # Only Send Messages have a payload
@@ -55,7 +55,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     # The correlation keys of the process at the time the message was created.
     correlation_keys: dict = db.Column(db.JSON)
     status: str = db.Column(db.String(20), nullable=False, default="ready")
-    user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True)  # type: ignore
+    user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
     user = relationship("UserModel")
     counterpart_id: int = db.Column(
         db.Integer

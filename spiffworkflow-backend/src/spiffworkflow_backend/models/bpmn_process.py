@@ -20,11 +20,11 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
     guid: str | None = db.Column(db.String(36), nullable=True, unique=True, index=True)
 
     bpmn_process_definition_id: int = db.Column(
-        ForeignKey(BpmnProcessDefinitionModel.id), nullable=False  # type: ignore
+        ForeignKey(BpmnProcessDefinitionModel.id), nullable=False, index=True  # type: ignore
     )
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
-    parent_process_id: int | None = db.Column(ForeignKey("bpmn_process.id"), nullable=True)
+    parent_process_id: int | None = db.Column(ForeignKey("bpmn_process.id"), nullable=True, index=True)
 
     properties_json: dict = db.Column(db.JSON, nullable=False)
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)

@@ -29,13 +29,13 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "human_task"
 
     id: int = db.Column(db.Integer, primary_key=True)
-    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False)  # type: ignore
-    lane_assignment_id: int | None = db.Column(ForeignKey(GroupModel.id))
-    completed_by_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True)  # type: ignore
+    process_instance_id: int = db.Column(ForeignKey(ProcessInstanceModel.id), nullable=False, index=True)  # type: ignore
+    lane_assignment_id: int | None = db.Column(ForeignKey(GroupModel.id), index=True)
+    completed_by_user_id: int = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
 
     completed_by_user = relationship("UserModel", foreign_keys=[completed_by_user_id], viewonly=True)
 
-    actual_owner_id: int = db.Column(ForeignKey(UserModel.id))  # type: ignore
+    actual_owner_id: int = db.Column(ForeignKey(UserModel.id), index=True)  # type: ignore
     # actual_owner: RelationshipProperty[UserModel] = relationship(UserModel)
 
     form_file_name: str | None = db.Column(db.String(50))
@@ -45,7 +45,7 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds: int = db.Column(db.Integer)
 
     # task_id came first which is why it's a string and task_model_id is the int and foreignkey
-    task_model_id: int = db.Column(ForeignKey(TaskModel.id), nullable=True)  # type: ignore
+    task_model_id: int = db.Column(ForeignKey(TaskModel.id), nullable=True, index=True)  # type: ignore
     task_id: str = db.Column(db.String(50))
     task_name: str = db.Column(db.String(255))
     task_title: str = db.Column(db.String(50))

@@ -57,14 +57,14 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     process_model_display_name: str = db.Column(db.String(255), nullable=False, index=True)
-    process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False)  # type: ignore
+    process_initiator_id: int = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
     process_initiator = relationship("UserModel")
 
     bpmn_process_definition_id: int | None = db.Column(
         ForeignKey(BpmnProcessDefinitionModel.id), nullable=True, index=True  # type: ignore
     )
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
-    bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True)  # type: ignore
+    bpmn_process_id: int | None = db.Column(ForeignKey(BpmnProcessModel.id), nullable=True, index=True)  # type: ignore
     bpmn_process = relationship(BpmnProcessModel, cascade="delete")
     tasks = relationship("TaskModel", cascade="delete")  # type: ignore
     process_instance_events = relationship("ProcessInstanceEventModel", cascade="delete")  # type: ignore
