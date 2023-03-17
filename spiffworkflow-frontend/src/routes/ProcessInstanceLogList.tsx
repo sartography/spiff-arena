@@ -191,16 +191,6 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
             >
               Events
             </Tab>
-            {/*
-              Suspend
-              Resumed
-              Terminated
-
-              Skipped?
-              Rewind?
-              Execute?
-              Edit?
-            */}
           </TabList>
         </Tabs>
         <br />
