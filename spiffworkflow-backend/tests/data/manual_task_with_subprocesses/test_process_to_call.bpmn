@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
-  <bpmn:process id="test_process_to_call" isExecutable="true">
+  <bpmn:process id="test_process_to_call" name="Test Process To Call" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_06g687y</bpmn:outgoing>
     </bpmn:startEvent>
@@ -9,7 +9,7 @@
       <bpmn:incoming>Flow_01e21r0</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_01e21r0" sourceRef="test_process_to_call_script" targetRef="Event_1nn875f" />
-    <bpmn:scriptTask id="test_process_to_call_script">
+    <bpmn:scriptTask id="test_process_to_call_script" name="Test Process To Call Script">
       <bpmn:incoming>Flow_06g687y</bpmn:incoming>
       <bpmn:outgoing>Flow_01e21r0</bpmn:outgoing>
       <bpmn:script>set_in_test_process_to_call_script = 1</bpmn:script>

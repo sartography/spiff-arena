@@ -16,7 +16,7 @@
       <bpmn:outgoing>Flow_09gjylo</bpmn:outgoing>
     </bpmn:manualTask>
     <bpmn:sequenceFlow id="Flow_0stlaxe" sourceRef="StartEvent_1" targetRef="top_level_script" />
-    <bpmn:scriptTask id="top_level_script">
+    <bpmn:scriptTask id="top_level_script" name="Top Level Script">
       <bpmn:incoming>Flow_0stlaxe</bpmn:incoming>
       <bpmn:outgoing>Flow_1fktmf7</bpmn:outgoing>
       <bpmn:script>set_in_top_level_script = 1</bpmn:script>
@@ -35,7 +35,7 @@
         <bpmn:incoming>Flow_1b4o55k</bpmn:incoming>
       </bpmn:endEvent>
       <bpmn:sequenceFlow id="Flow_1b4o55k" sourceRef="top_level_subprocess_script" targetRef="Event_0zi0szr" />
-      <bpmn:scriptTask id="top_level_subprocess_script">
+      <bpmn:scriptTask id="top_level_subprocess_script" name="Top Level Subprocess Script">
         <bpmn:incoming>Flow_00k1tii</bpmn:incoming>
         <bpmn:outgoing>Flow_1b4o55k</bpmn:outgoing>
         <bpmn:script>set_in_top_level_subprocess = 1

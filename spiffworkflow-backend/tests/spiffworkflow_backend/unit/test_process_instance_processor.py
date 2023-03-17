@@ -336,9 +336,9 @@ class TestProcessInstanceProcessor(BaseTest):
         spiff_tasks_checked_once: list = []
 
         # TODO: also check task data here from the spiff_task directly to ensure we hydrated spiff correctly
-        def assert_spiff_task_is_in_process(spiff_task_name: str, bpmn_process_identifier: str) -> None:
-            if spiff_task.task_spec.name == spiff_task_name:
-                base_failure_message = f"Failed on {bpmn_process_identifier} - {spiff_task_name}."
+        def assert_spiff_task_is_in_process(spiff_task_identifier: str, bpmn_process_identifier: str) -> None:
+            if spiff_task.task_spec.name == spiff_task_identifier:
+                base_failure_message = f"Failed on {bpmn_process_identifier} - {spiff_task_identifier}."
                 expected_python_env_data = expected_task_data[spiff_task.task_spec.name]
                 if spiff_task.task_spec.name in spiff_tasks_checked_once:
                     expected_python_env_data = expected_task_data[f"{spiff_task.task_spec.name}_second"]
@@ -347,9 +347,12 @@ class TestProcessInstanceProcessor(BaseTest):
                 assert task_model.start_in_seconds is not None
                 assert task_model.end_in_seconds is not None
                 assert task_model.task_definition_id is not None
+
                 task_definition = task_model.task_definition
-                assert task_definition.bpmn_identifier == spiff_task_name
+                assert task_definition.bpmn_identifier == spiff_task_identifier
+                assert task_definition.bpmn_name == spiff_task_identifier.replace("_", " ").title()
                 assert task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
+
                 message = (
                     f"{base_failure_message} Expected: {expected_python_env_data}. Received: {task_model.json_data()}"
                 )
@@ -373,6 +376,7 @@ class TestProcessInstanceProcessor(BaseTest):
                 bpmn_process_definition = bpmn_process.bpmn_process_definition
                 assert bpmn_process_definition is not None
                 assert bpmn_process_definition.bpmn_identifier == "test_process_to_call"
+                assert bpmn_process_definition.bpmn_name == "Test Process To Call"
 
         assert processor.get_data() == fifth_data_set
 

@@ -28,6 +28,8 @@ class TaskDefinitionModel(SpiffworkflowBaseDBModel):
     bpmn_process_definition = relationship(BpmnProcessDefinitionModel)
 
     bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
+    bpmn_name: str = db.Column(db.String(255), nullable=True, index=True)
+
     properties_json: dict = db.Column(db.JSON, nullable=False)
     typename: str = db.Column(db.String(255), nullable=False)
 

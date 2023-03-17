@@ -235,20 +235,41 @@ def process_instance_log_list(
     #     )
     #     .paginate(page=page, per_page=per_page, error_out=False)
     # )
-    log_query = TaskModel.query.filter_by(process_instance_id=process_instance.id)
-    logs = (
-        log_query.order_by(TaskModel.end_in_seconds.desc())  # type: ignore
+    log_query = (
+        TaskModel.query.filter_by(process_instance_id=process_instance.id)
         .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
         .join(
             BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id
         )
+    )
+    if not detailed:
+        log_query = log_query.filter(
+            # 1. this was the previous implementation, where we only show completed tasks and skipped tasks.
+            #   maybe we want to iterate on this in the future (in a third tab under process instance logs?)
+            #   or_(
+            #       SpiffLoggingModel.message.in_(["State change to COMPLETED"]),  # type: ignore
+            #       SpiffLoggingModel.message.like("Skipped task %"),  # type: ignore
+            #   )
+            # 2. We included ["End Event", "Default Start Event"] along with Default Throwing Event, but feb 2023
+            #  we decided to remove them, since they get really chatty when there are lots of subprocesses and call activities.
+            and_(
+                TaskModel.state.in_(["COMPLETED"]),  # type: ignore
+                TaskDefinitionModel.typename.in_(["IntermediateThrowEvent"]),  # type: ignore
+            )
+        )
+
+    logs = (
+        log_query.order_by(TaskModel.end_in_seconds.desc())  # type: ignore
         .outerjoin(HumanTaskModel, HumanTaskModel.task_model_id == TaskModel.id)
         .outerjoin(UserModel, UserModel.id == HumanTaskModel.completed_by_user_id)
         .add_columns(
             TaskModel.guid.label("spiff_task_guid"),  # type: ignore
             UserModel.username,
             BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
+            BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
             TaskDefinitionModel.bpmn_identifier.label("task_definition_identifier"),  # type: ignore
+            TaskDefinitionModel.bpmn_name.label("task_definition_name"),  # type: ignore
+            TaskDefinitionModel.typename.label("bpmn_type"),  # type: ignore
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
