@@ -91,9 +91,8 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-)
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
+from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -1276,7 +1275,7 @@ class ProcessInstanceProcessor:
         self.add_step()
         self.save()
         # Saving the workflow seems to reset the status
-        self.suspend(self.process_instance_model)
+        self.suspend()
 
     def reset_process(self, spiff_step: int) -> None:
         """Reset a process to an earlier state."""
@@ -1319,7 +1318,7 @@ class ProcessInstanceProcessor:
                 db.session.delete(row)
 
             self.save()
-            self.suspend(self.process_instance_model)
+            self.suspend()
 
     @staticmethod
     def get_parser() -> MyCustomParser:
@@ -1485,8 +1484,23 @@ class ProcessInstanceProcessor:
         return the_status
 
     # TODO: replace with implicit/more granular locking in workflow execution service
-    def lock_process_instance(self, lock_prefix: str) -> None:
-        ProcessInstanceQueueService.dequeue(self.process_instance_model)
+    # TODO: remove the retry logic once all user_input_required's don't need to be locked to check timers
+    def lock_process_instance(
+        self, lock_prefix: str, retry_count: int = 0, retry_interval_in_seconds: int = 0
+    ) -> None:
+        try:
+            ProcessInstanceQueueService.dequeue(self.process_instance_model)
+        except ProcessInstanceIsAlreadyLockedError as e:
+            if retry_count > 0:
+                current_app.logger.info(
+                    f"process_instance_id {self.process_instance_model.id} is locked. "
+                    f"will retry {retry_count} times with delay of {retry_interval_in_seconds}."
+                )
+                if retry_interval_in_seconds > 0:
+                    time.sleep(retry_interval_in_seconds)
+                self.lock_process_instance(lock_prefix, retry_count - 1, retry_interval_in_seconds)
+            else:
+                raise e
 
     # TODO: replace with implicit/more granular locking in workflow execution service
     def unlock_process_instance(self, lock_prefix: str) -> None:
@@ -1923,16 +1937,14 @@ class ProcessInstanceProcessor:
         db.session.add(self.process_instance_model)
         db.session.commit()
 
-    @classmethod
-    def suspend(cls, process_instance: ProcessInstanceModel) -> None:
+    def suspend(self) -> None:
         """Suspend."""
-        process_instance.status = ProcessInstanceStatus.suspended.value
-        db.session.add(process_instance)
+        self.process_instance_model.status = ProcessInstanceStatus.suspended.value
+        db.session.add(self.process_instance_model)
         db.session.commit()
 
-    @classmethod
-    def resume(cls, process_instance: ProcessInstanceModel) -> None:
+    def resume(self) -> None:
         """Resume."""
-        process_instance.status = ProcessInstanceStatus.waiting.value
-        db.session.add(process_instance)
+        self.process_instance_model.status = ProcessInstanceStatus.waiting.value
+        db.session.add(self.process_instance_model)
         db.session.commit()
