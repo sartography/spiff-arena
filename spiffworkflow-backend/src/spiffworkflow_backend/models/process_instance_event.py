@@ -30,7 +30,7 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
 
     # use task guid so we can bulk insert without worrying about whether or not the task has an id yet
     task_guid: str | None = db.Column(db.String(36), nullable=True, index=True)
-    process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False)
+    process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
 
     event_type: str = db.Column(db.String(50), nullable=False, index=True)
     timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False, index=True)

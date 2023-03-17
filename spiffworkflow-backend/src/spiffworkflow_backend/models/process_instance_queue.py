@@ -17,7 +17,7 @@ class ProcessInstanceQueueModel(SpiffworkflowBaseDBModel):
 
     id: int = db.Column(db.Integer, primary_key=True)
     process_instance_id: int = db.Column(
-        ForeignKey(ProcessInstanceModel.id), index=True, unique=True, nullable=False  # type: ignore
+        ForeignKey(ProcessInstanceModel.id), index=True, unique=True, nullable=False, index=True  # type: ignore
     )
     run_at_in_seconds: int = db.Column(db.Integer)
     priority: int = db.Column(db.Integer)
