@@ -170,7 +170,17 @@ def process_instance_terminate(
     """Process_instance_run."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
-    processor.terminate()
+    
+    try:
+        processor.lock_process_instance("Web")
+        processor.terminate()
+    except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
+        ErrorHandlingService().handle_error(processor, e)
+        raise e
+    finally:
+        if ProcessInstanceLockService.has_lock(process_instance.id):
+            processor.unlock_process_instance("Web")
+
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
@@ -180,6 +190,7 @@ def process_instance_suspend(
 ) -> flask.wrappers.Response:
     """Process_instance_suspend."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance)
     ProcessInstanceProcessor.suspend(process_instance)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -190,6 +201,7 @@ def process_instance_resume(
 ) -> flask.wrappers.Response:
     """Process_instance_resume."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance)
     ProcessInstanceProcessor.resume(process_instance)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 

@@ -25,6 +25,7 @@ from spiffworkflow_backend.models.process_instance_file_data import (
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
@@ -95,6 +96,13 @@ class ProcessInstanceService:
         )
         process_instance_lock_prefix = "Background"
         for process_instance in records:
+            with safe_assertion(process_instance.status == status_value) as false_assumption:
+                if false_assumption:
+                    raise AssertionError(
+                        f"Queue assumed process instance {process_instance.id} has status of {status_value} "
+                        f"when it really is {process_instance.status}" 
+                    )
+            
             locked = False
             processor = None
             try:
