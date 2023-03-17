@@ -139,6 +139,7 @@ export default function ProcessInstanceListTable({
   const [startToTimeInvalid, setStartToTimeInvalid] = useState<boolean>(false);
   const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
+  const [requiresRefilter, setRequiresRefilter] = useState<boolean>(false);
 
   const processInstanceListPathPrefix =
     variant === 'all'
@@ -243,6 +244,7 @@ export default function ProcessInstanceListTable({
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
     function setProcessInstancesFromResult(result: any) {
+      setRequiresRefilter(false);
       const processInstancesFromApi = result.results;
       setProcessInstances(processInstancesFromApi);
       setPagination(result.pagination);
@@ -793,6 +795,7 @@ export default function ProcessInstanceListTable({
       );
       Object.assign(reportMetadataCopy, { columns: newColumns });
       setReportMetadata(reportMetadataCopy);
+      setRequiresRefilter(true);
     }
   };
 
@@ -864,6 +867,7 @@ export default function ProcessInstanceListTable({
       setReportMetadata(reportMetadataCopy);
       setReportColumnToOperateOn(null);
       setShowReportColumnForm(false);
+      setRequiresRefilter(true);
     }
   };
 
@@ -891,6 +895,7 @@ export default function ProcessInstanceListTable({
       );
     }
     setReportColumnToOperateOn(reportColumnForEditing);
+    setRequiresRefilter(true);
   };
 
   // options includes item and inputValue
@@ -912,6 +917,7 @@ export default function ProcessInstanceListTable({
       };
       reportColumnToOperateOnCopy.filter_field_value = event.target.value;
       setReportColumnToOperateOn(reportColumnToOperateOnCopy);
+      setRequiresRefilter(true);
     }
   };
 
@@ -950,6 +956,7 @@ export default function ProcessInstanceListTable({
         value={reportColumnToOperateOn ? reportColumnToOperateOn.Header : ''}
         onChange={(event: any) => {
           if (reportColumnToOperateOn) {
+            setRequiresRefilter(true);
             const reportColumnToOperateOnCopy = {
               ...reportColumnToOperateOn,
             };
@@ -1091,9 +1098,10 @@ export default function ProcessInstanceListTable({
         <Grid fullWidth className="with-bottom-margin">
           <Column md={8}>
             <ProcessModelSearch
-              onChange={(selection: any) =>
-                setProcessModelSelection(selection.selectedItem)
-              }
+              onChange={(selection: any) => {
+                setProcessModelSelection(selection.selectedItem);
+                setRequiresRefilter(true);
+              }}
               processModels={processModelAvailableItems}
               selectedItem={processModelSelection}
             />
@@ -1112,6 +1120,7 @@ export default function ProcessInstanceListTable({
                       onInputChange={searchForProcessInitiator}
                       onChange={(event: any) => {
                         setProcessInitiatorSelection(event.selectedItem);
+                        setRequiresRefilter(true);
                       }}
                       id="process-instance-initiator-search"
                       data-qa="process-instance-initiator-search"
@@ -1133,9 +1142,10 @@ export default function ProcessInstanceListTable({
                     id="process-instance-initiator-search"
                     placeholder="Enter username"
                     labelText="Process Initiator"
-                    onChange={(event: any) =>
-                      setProcessInitiatorText(event.target.value)
-                    }
+                    onChange={(event: any) => {
+                      setProcessInitiatorText(event.target.value);
+                      setRequiresRefilter(true);
+                    }}
                   />
                 );
               }}
@@ -1150,8 +1160,14 @@ export default function ProcessInstanceListTable({
               'start-from',
               startFromDate,
               startFromTime,
-              setStartFromDate,
-              setStartFromTime,
+              (val: string) => {
+                setStartFromDate(val);
+                setRequiresRefilter(true);
+              },
+              (val: string) => {
+                setStartFromTime(val);
+                setRequiresRefilter(true);
+              },
               startFromTimeInvalid,
               setStartFromTimeInvalid
             )}
@@ -1162,8 +1178,14 @@ export default function ProcessInstanceListTable({
               'start-to',
               startToDate,
               startToTime,
-              setStartToDate,
-              setStartToTime,
+              (val: string) => {
+                setStartToDate(val);
+                setRequiresRefilter(true);
+              },
+              (val: string) => {
+                setStartToTime(val);
+                setRequiresRefilter(true);
+              },
               startToTimeInvalid,
               setStartToTimeInvalid
             )}
@@ -1174,8 +1196,14 @@ export default function ProcessInstanceListTable({
               'end-from',
               endFromDate,
               endFromTime,
-              setEndFromDate,
-              setEndFromTime,
+              (val: string) => {
+                setEndFromDate(val);
+                setRequiresRefilter(true);
+              },
+              (val: string) => {
+                setEndFromTime(val);
+                setRequiresRefilter(true);
+              },
               endFromTimeInvalid,
               setEndFromTimeInvalid
             )}
@@ -1186,8 +1214,14 @@ export default function ProcessInstanceListTable({
               'end-to',
               endToDate,
               endToTime,
-              setEndToDate,
-              setEndToTime,
+              (val: string) => {
+                setEndToDate(val);
+                setRequiresRefilter(true);
+              },
+              (val: string) => {
+                setEndToTime(val);
+                setRequiresRefilter(true);
+              },
               endToTimeInvalid,
               setEndToTimeInvalid
             )}
@@ -1205,6 +1239,7 @@ export default function ProcessInstanceListTable({
               </Button>
               <Button
                 kind="secondary"
+                disabled={!requiresRefilter}
                 onClick={applyFilter}
                 data-qa="filter-button"
                 className="narrow-button"
@@ -1415,11 +1450,14 @@ export default function ProcessInstanceListTable({
       // eslint-disable-next-line prefer-destructuring
       perPage = perPageOptions[1];
     }
-    return (
-      <>
-        {reportColumnForm()}
-        {processInstanceReportSaveTag()}
-        {filterComponent()}
+    let resultsTable = (
+      <h2>
+        Please press the filter button when you have completed updating the
+        filters.
+      </h2>
+    );
+    if (!requiresRefilter) {
+      resultsTable = (
         <PaginationForTable
           page={page}
           perPage={perPage}
@@ -1429,6 +1467,14 @@ export default function ProcessInstanceListTable({
           perPageOptions={perPageOptions}
           paginationClassName={paginationClassName}
         />
+      );
+    }
+    return (
+      <>
+        {reportColumnForm()}
+        {processInstanceReportSaveTag()}
+        {filterComponent()}
+        {resultsTable}
       </>
     );
   }
