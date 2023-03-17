@@ -60,8 +60,8 @@ class TaskService:
         python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task, serializer)
         task_model.properties_json = new_properties_json
         task_model.state = TaskStateNames[new_properties_json["state"]]
-        json_data_dict = cls._update_task_data_on_task_model(task_model, spiff_task_data, "json_data_hash")
-        python_env_dict = cls._update_task_data_on_task_model(task_model, python_env_data_dict, "python_env_data_hash")
+        json_data_dict = cls.update_task_data_on_task_model(task_model, spiff_task_data, "json_data_hash")
+        python_env_dict = cls.update_task_data_on_task_model(task_model, python_env_data_dict, "python_env_data_hash")
         return [json_data_dict, python_env_dict]
 
     @classmethod
@@ -246,14 +246,14 @@ class TaskService:
                 task_model.properties_json = task_properties
                 new_task_models[task_model.guid] = task_model
 
-                json_data_dict = TaskService._update_task_data_on_task_model(
+                json_data_dict = TaskService.update_task_data_on_task_model(
                     task_model, task_data_dict, "json_data_hash"
                 )
                 if json_data_dict is not None:
                     new_json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
                 python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task, serializer)
-                python_env_dict = TaskService._update_task_data_on_task_model(
+                python_env_dict = TaskService.update_task_data_on_task_model(
                     task_model, python_env_data_dict, "python_env_data_hash"
                 )
                 if python_env_dict is not None:
@@ -274,7 +274,7 @@ class TaskService:
         return json_data_dict
 
     @classmethod
-    def _update_task_data_on_task_model(
+    def update_task_data_on_task_model(
         cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
     ) -> Optional[JsonDataDict]:
         task_data_json = json.dumps(task_data_dict, sort_keys=True)

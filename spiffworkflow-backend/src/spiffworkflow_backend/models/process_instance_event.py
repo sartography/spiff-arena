@@ -1,13 +1,14 @@
 from __future__ import annotations
-from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
+
 from typing import Any
-from sqlalchemy.orm import validates
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import validates
 
+from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.user import UserModel
 
 
 # event types take the form [SUBJECT]_[PAST_TENSE_VERB] since subject is not always the same.
