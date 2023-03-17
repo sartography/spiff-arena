@@ -18,6 +18,7 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.assertion_service import safe_assertion
@@ -146,9 +147,9 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self._update_json_data_dicts_using_list(json_data_dict_list)
 
         if task_model.state == "COMPLETED" or task_failed:
-            event_type = "task_completed"
+            event_type = ProcessInstanceEventType.task_completed.value
             if task_failed:
-                event_type = "task_errored"
+                event_type = ProcessInstanceEventType.task_failed.value
 
             # FIXME: some failed tasks will currently not have either timestamp since we only hook into spiff when tasks complete
             #   which script tasks execute when READY.

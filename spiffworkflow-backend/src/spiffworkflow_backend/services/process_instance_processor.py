@@ -1818,7 +1818,10 @@ class ProcessInstanceProcessor:
                     db.session.add(json_data)
 
         self.add_event_to_process_instance(
-            self.process_instance_model, ProcessInstanceEventType.task_completed.value, task_guid=task_model.guid
+            self.process_instance_model,
+            ProcessInstanceEventType.task_completed.value,
+            task_guid=task_model.guid,
+            user_id=user.id,
         )
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
@@ -1970,10 +1973,13 @@ class ProcessInstanceProcessor:
 
     @classmethod
     def add_event_to_process_instance(
-        cls, process_instance: ProcessInstanceModel, event_type: str, task_guid: Optional[str] = None
+        cls,
+        process_instance: ProcessInstanceModel,
+        event_type: str,
+        task_guid: Optional[str] = None,
+        user_id: Optional[int] = None,
     ) -> None:
-        user_id = None
-        if g.user:
+        if user_id is None and hasattr(g, "user") and g.user:
             user_id = g.user.id
         process_instance_event = ProcessInstanceEventModel(
             process_instance_id=process_instance.id, event_type=event_type, timestamp=time.time(), user_id=user_id
