@@ -59,7 +59,7 @@ class TestLoggingService(BaseTest):
         assert log_response.status_code == 200
         assert log_response.json
         logs: list = log_response.json["results"]
-        assert len(logs) == 9
+        assert len(logs) == 4
 
         for log in logs:
             assert log["process_instance_id"] == process_instance.id
@@ -71,7 +71,7 @@ class TestLoggingService(BaseTest):
                 "bpmn_process_definition_name",
                 "task_definition_identifier",
                 "task_definition_name",
-                "bpmn_type",
+                "bpmn_task_type",
             ]:
                 assert key in log.keys()
 
@@ -129,4 +129,4 @@ class TestLoggingService(BaseTest):
 
         for log in logs:
             assert log["process_instance_id"] == process_instance.id
-            assert log["bpmn_type"] == "IntermediateThrowEvent"
+            assert log["bpmn_task_type"] == "IntermediateThrowEvent"

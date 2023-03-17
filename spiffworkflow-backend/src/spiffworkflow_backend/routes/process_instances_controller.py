@@ -257,9 +257,13 @@ def process_instance_log_list(
                 TaskDefinitionModel.typename.in_(["IntermediateThrowEvent"]),  # type: ignore
             )
         )
+    else:
+        log_query = log_query.filter(
+            TaskModel.state.in_(["COMPLETED"]),  # type: ignore
+        )
 
     logs = (
-        log_query.order_by(TaskModel.end_in_seconds.desc())  # type: ignore
+        log_query.order_by(TaskModel.end_in_seconds.desc(), TaskModel.id.desc())  # type: ignore
         .outerjoin(HumanTaskModel, HumanTaskModel.task_model_id == TaskModel.id)
         .outerjoin(UserModel, UserModel.id == HumanTaskModel.completed_by_user_id)
         .add_columns(
@@ -269,7 +273,7 @@ def process_instance_log_list(
             BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
             TaskDefinitionModel.bpmn_identifier.label("task_definition_identifier"),  # type: ignore
             TaskDefinitionModel.bpmn_name.label("task_definition_name"),  # type: ignore
-            TaskDefinitionModel.typename.label("bpmn_type"),  # type: ignore
+            TaskDefinitionModel.typename.label("bpmn_task_type"),  # type: ignore
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )
