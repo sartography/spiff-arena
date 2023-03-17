@@ -1066,7 +1066,22 @@ class ProcessInstanceProcessor:
                 db.session.add(bpmn_process_definition_relationship)
         return bpmn_process_definition
 
-    def _add_bpmn_process_definitions(self, bpmn_spec_dict: dict) -> None:
+    def _add_bpmn_process_definitions(self) -> None:
+        """Adds serialized_bpmn_definition records to the db session.
+
+        Expects the calling method to commit it.
+        """
+        if self.process_instance_model.bpmn_process_definition_id is not None:
+            return None
+
+        # we may have to already process bpmn_defintions if we ever care about the Root task again
+        bpmn_dict = self.serialize()
+        bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
+        bpmn_spec_dict = {}
+        for bpmn_key in bpmn_dict.keys():
+            if bpmn_key in bpmn_dict_keys:
+                bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
+
         # store only if mappings is currently empty. this also would mean this is a new instance that has never saved before
         store_bpmn_definition_mappings = not self.bpmn_definition_to_task_definitions_mappings
         bpmn_process_definition_parent = self._store_bpmn_process_definition(
@@ -1080,27 +1095,6 @@ class ProcessInstanceProcessor:
                 store_bpmn_definition_mappings=store_bpmn_definition_mappings,
             )
         self.process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
-
-    def _add_bpmn_process_defintions(self) -> None:
-        """Adds serialized_bpmn_definition records to the db session.
-
-        Expects the calling method to commit it.
-        """
-        if self.process_instance_model.bpmn_process_definition_id is not None:
-            return None
-
-        # we may have to already process bpmn_defintions if we ever care about the Root task again
-        bpmn_dict = self.serialize()
-        bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
-        process_instance_data_dict = {}
-        bpmn_spec_dict = {}
-        for bpmn_key in bpmn_dict.keys():
-            if bpmn_key in bpmn_dict_keys:
-                bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
-            else:
-                process_instance_data_dict[bpmn_key] = bpmn_dict[bpmn_key]
-
-        self._add_bpmn_process_definitions(bpmn_spec_dict)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
@@ -1240,6 +1234,7 @@ class ProcessInstanceProcessor:
 
     def manual_complete_task(self, task_id: str, execute: bool) -> None:
         """Mark the task complete optionally executing it."""
+        spiff_tasks_updated = {}
         spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
         if execute:
@@ -1253,10 +1248,14 @@ class ProcessInstanceProcessor:
                 # We have to get to the actual start event
                 for task in self.bpmn_process_instance.get_tasks(workflow=subprocess):
                     task.complete()
+                    spiff_tasks_updated[task.id] = task
                     if isinstance(task.task_spec, StartEvent):
                         break
             else:
                 spiff_task.complete()
+                spiff_tasks_updated[spiff_task.id] = spiff_task
+                for child in spiff_task.children:
+                    spiff_tasks_updated[child.id] = child
             event_type = ProcessInstanceEventType.task_executed_manually.value
         else:
             spiff_logger = logging.getLogger("spiff")
@@ -1264,20 +1263,50 @@ class ProcessInstanceProcessor:
             spiff_task._set_state(TaskState.COMPLETED)
             for child in spiff_task.children:
                 child.task_spec._update(child)
+                spiff_tasks_updated[child.id] = child
             spiff_task.workflow.last_task = spiff_task
+            spiff_tasks_updated[spiff_task.id] = spiff_task
 
         if isinstance(spiff_task.task_spec, EndEvent):
             for task in self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK, workflow=spiff_task.workflow):
                 task.complete()
+                spiff_tasks_updated[task.id] = task
 
         # A subworkflow task will become ready when its workflow is complete.  Engine steps would normally
         # then complete it, but we have to do it ourselves here.
         for task in self.bpmn_process_instance.get_tasks(TaskState.READY):
             if isinstance(task.task_spec, SubWorkflowTask):
                 task.complete()
+                spiff_tasks_updated[task.id] = task
 
         self.increment_spiff_step()
         self.add_step()
+
+        for updated_spiff_task in spiff_tasks_updated.values():
+            bpmn_process, task_model, new_task_models, new_json_data_dicts = (
+                TaskService.find_or_create_task_model_from_spiff_task(
+                    updated_spiff_task,
+                    self.process_instance_model,
+                    self._serializer,
+                    bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+                )
+            )
+            bpmn_process_to_use = bpmn_process or task_model.bpmn_process
+            bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(
+                bpmn_process_to_use, updated_spiff_task.workflow.data
+            )
+            db.session.add(bpmn_process_to_use)
+            json_data_dict_list = TaskService.update_task_model(task_model, updated_spiff_task, self._serializer)
+            for json_data_dict in json_data_dict_list:
+                if json_data_dict is not None:
+                    new_json_data_dicts[json_data_dict["hash"]] = json_data_dict
+            if bpmn_process_json_data is not None:
+                new_json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+
+            new_task_models[task_model.guid] = task_model
+            db.session.bulk_save_objects(new_task_models.values())
+            TaskService.insert_or_update_json_data_records(new_json_data_dicts)
+
         self.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
         self.save()
         # Saving the workflow seems to reset the status
@@ -1582,7 +1611,7 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.revise_state_with_task_data(task)
             return self.spiff_step_details_mapping(task, start, end)
 
-        self._add_bpmn_process_defintions()
+        self._add_bpmn_process_definitions()
 
         step_delegate = StepDetailLoggingDelegate(self.increment_spiff_step, spiff_step_details_mapping_builder)
         task_model_delegate = TaskModelSavingDelegate(

@@ -31,6 +31,7 @@ from spiffworkflow_backend.models.process_instance_report import (
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
@@ -2694,8 +2695,19 @@ class TestProcessApi(BaseTest):
             f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{task['id']}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
+            data=json.dumps({"execute": False}),
         )
         assert response.json["status"] == "suspended"
+        task_model = TaskModel.query.filter_by(guid=task["id"]).first()
+        assert task_model is not None
+        assert task_model.state == "COMPLETED"
+
+        response = client.get(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert len(response.json) == 1
 
     def setup_initial_groups_for_move_tests(self, client: FlaskClient, with_super_admin_user: UserModel) -> None:
         """Setup_initial_groups_for_move_tests."""
