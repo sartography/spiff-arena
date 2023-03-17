@@ -1,16 +1,16 @@
 """Test_logging_service."""
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
+)
+from spiffworkflow_backend.services.process_instance_service import (
+    ProcessInstanceService,
 )
 
 
@@ -71,5 +71,5 @@ class TestLoggingService(BaseTest):
             ]:
                 assert key in log.keys()
 
-            if log['task_definition_identifier'] == 'Activity_SimpleForm':
-                assert log['username'] == initiator_user.username
+            if log["task_definition_identifier"] == "Activity_SimpleForm":
+                assert log["username"] == initiator_user.username

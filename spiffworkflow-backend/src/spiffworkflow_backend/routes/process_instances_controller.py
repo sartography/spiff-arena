@@ -1,7 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import base64
-from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 import json
 from typing import Any
 from typing import Dict
@@ -21,6 +19,7 @@ from sqlalchemy import and_
 from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -46,6 +45,7 @@ from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_process_instance_by_id_or_raise,
@@ -239,14 +239,16 @@ def process_instance_log_list(
     logs = (
         log_query.order_by(TaskModel.end_in_seconds.desc())  # type: ignore
         .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
-        .join(BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id)
+        .join(
+            BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id
+        )
         .outerjoin(HumanTaskModel, HumanTaskModel.task_model_id == TaskModel.id)
         .outerjoin(UserModel, UserModel.id == HumanTaskModel.completed_by_user_id)
         .add_columns(
-            TaskModel.guid.label('spiff_task_guid'),
+            TaskModel.guid.label("spiff_task_guid"),  # type: ignore
             UserModel.username,
-            BpmnProcessDefinitionModel.bpmn_identifier.label('bpmn_process_definition_identifier'),
-            TaskDefinitionModel.bpmn_identifier.label('task_definition_identifier'),
+            BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
+            TaskDefinitionModel.bpmn_identifier.label("task_definition_identifier"),  # type: ignore
         )
         .paginate(page=page, per_page=per_page, error_out=False)
     )

@@ -1,7 +1,5 @@
 """Test_process_instance_processor."""
 from uuid import UUID
-from spiffworkflow_backend.models import bpmn_process_definition
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 
 import pytest
 from flask import g
@@ -12,6 +10,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -351,7 +350,9 @@ class TestProcessInstanceProcessor(BaseTest):
                 task_definition = task_model.task_definition
                 assert task_definition.bpmn_identifier == spiff_task_name
                 assert task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
-                message = f"{base_failure_message} Expected: {expected_python_env_data}. Received: {task_model.json_data()}"
+                message = (
+                    f"{base_failure_message} Expected: {expected_python_env_data}. Received: {task_model.json_data()}"
+                )
                 # TODO: if we split out env data again we will need to use it here instead of json_data
                 # assert task_model.python_env_data() == expected_python_env_data, message
                 assert task_model.json_data() == expected_python_env_data, message
@@ -365,13 +366,13 @@ class TestProcessInstanceProcessor(BaseTest):
             assert_spiff_task_is_in_process("top_level_subprocess_script", "top_level_subprocess")
             assert_spiff_task_is_in_process("top_level_script", "top_level_process")
 
-            if spiff_task.task_spec.name == 'top_level_call_activity':
+            if spiff_task.task_spec.name == "top_level_call_activity":
                 # the task id / guid of the call activity gets used as the guid of the bpmn process that it calls
                 bpmn_process = BpmnProcessModel.query.filter_by(guid=str(spiff_task.id)).first()
                 assert bpmn_process is not None
                 bpmn_process_definition = bpmn_process.bpmn_process_definition
                 assert bpmn_process_definition is not None
-                assert bpmn_process_definition.bpmn_identifier == 'test_process_to_call'
+                assert bpmn_process_definition.bpmn_identifier == "test_process_to_call"
 
         assert processor.get_data() == fifth_data_set
 
