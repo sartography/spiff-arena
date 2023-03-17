@@ -170,7 +170,7 @@ def process_instance_terminate(
     """Process_instance_run."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
-    
+
     try:
         processor.lock_process_instance("Web")
         processor.terminate()
@@ -191,7 +191,7 @@ def process_instance_suspend(
     """Process_instance_suspend."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
-    
+
     try:
         processor.lock_process_instance("Web")
         processor.suspend()
@@ -212,7 +212,7 @@ def process_instance_resume(
     """Process_instance_resume."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
-    
+
     try:
         processor.lock_process_instance("Web")
         processor.resume()

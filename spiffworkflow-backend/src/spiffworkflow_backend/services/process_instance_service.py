@@ -100,9 +100,9 @@ class ProcessInstanceService:
                 if false_assumption:
                     raise AssertionError(
                         f"Queue assumed process instance {process_instance.id} has status of {status_value} "
-                        f"when it really is {process_instance.status}" 
+                        f"when it really is {process_instance.status}"
                     )
-            
+
             locked = False
             processor = None
             try:
