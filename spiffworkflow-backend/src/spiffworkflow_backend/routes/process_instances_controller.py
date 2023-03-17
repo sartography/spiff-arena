@@ -266,8 +266,9 @@ def process_instance_log_list(
         )
 
     logs = (
-        log_query.order_by(ProcessInstanceEventModel.timestamp.desc(),
-                           ProcessInstanceEventModel.id.desc())  # type: ignore
+        log_query.order_by(
+            ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc()  # type: ignore
+        )
         .outerjoin(UserModel, UserModel.id == ProcessInstanceEventModel.user_id)
         .add_columns(
             TaskModel.guid.label("spiff_task_guid"),  # type: ignore

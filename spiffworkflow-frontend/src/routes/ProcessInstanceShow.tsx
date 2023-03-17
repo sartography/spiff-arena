@@ -381,40 +381,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </Column>
         </Grid>
         {lastUpdatedTimeTag}
-        {/*
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Suspended at:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            2023-03-17 10:12:05 (by jason)
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Resumed at:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            2023-03-17 10:13:05 (by jason)
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Suspended at:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            2023-03-17 10:14:05 (by jason)
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Terminated at:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            2023-03-17 10:15:05 (by jason)
-          </Column>
-        </Grid>
-        */}
         <Grid condensed fullWidth>
           <Column sm={1} md={1} lg={2} className="grid-list-title">
             Process model revision:{' '}
@@ -434,43 +400,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             </Tag>
           </Column>
         </Grid>
-
-        {/*
-        <br />
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Suspended at:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            2023-03-17 10:12:05 (by jason)
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Resumed at:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            2023-03-17 10:13:05 (by jason)
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Suspended at:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            2023-03-17 10:14:05 (by jason)
-          </Column>
-        </Grid>
-        <Grid condensed fullWidth>
-          <Column sm={1} md={1} lg={2} className="grid-list-title">
-            Terminated at:{' '}
-          </Column>
-          <Column sm={3} md={3} lg={3} className="grid-date">
-            2023-03-17 10:15:05 (by jason)
-          </Column>
-        </Grid>
-        */}
-
         <br />
         <Grid condensed fullWidth>
           <Column sm={2} md={2} lg={2}>

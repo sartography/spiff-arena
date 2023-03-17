@@ -1,7 +1,5 @@
 """Process_instance_processor."""
 import _strptime  # type: ignore
-from flask import g
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel, ProcessInstanceEventType
 import decimal
 import json
 import logging
@@ -25,6 +23,7 @@ from uuid import UUID
 import dateparser
 import pytz
 from flask import current_app
+from flask import g
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
@@ -75,6 +74,8 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
@@ -1240,6 +1241,7 @@ class ProcessInstanceProcessor:
     def manual_complete_task(self, task_id: str, execute: bool) -> None:
         """Mark the task complete optionally executing it."""
         spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
+        event_type = ProcessInstanceEventType.task_skipped.value
         if execute:
             current_app.logger.info(
                 f"Manually executing Task {spiff_task.task_spec.name} of process"
@@ -1255,6 +1257,7 @@ class ProcessInstanceProcessor:
                         break
             else:
                 spiff_task.complete()
+            event_type = ProcessInstanceEventType.task_executed_manually.value
         else:
             spiff_logger = logging.getLogger("spiff")
             spiff_logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
@@ -1275,6 +1278,7 @@ class ProcessInstanceProcessor:
 
         self.increment_spiff_step()
         self.add_step()
+        self.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
         self.save()
         # Saving the workflow seems to reset the status
         self.suspend()
@@ -1813,8 +1817,9 @@ class ProcessInstanceProcessor:
                     json_data = JsonDataModel(**json_data_dict)
                     db.session.add(json_data)
 
-        self.add_event_to_process_instance(self.process_instance_model,
-                                           ProcessInstanceEventType.task_completed.value, task_guid=task_model.guid)
+        self.add_event_to_process_instance(
+            self.process_instance_model, ProcessInstanceEventType.task_completed.value, task_guid=task_model.guid
+        )
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
@@ -1940,33 +1945,39 @@ class ProcessInstanceProcessor:
         self.save()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
-        self.add_event_to_process_instance(self.process_instance_model,
-                                           ProcessInstanceEventType.process_instance_terminated.value)
+        self.add_event_to_process_instance(
+            self.process_instance_model, ProcessInstanceEventType.process_instance_terminated.value
+        )
         db.session.commit()
 
     def suspend(self) -> None:
         """Suspend."""
         self.process_instance_model.status = ProcessInstanceStatus.suspended.value
         db.session.add(self.process_instance_model)
-        self.add_event_to_process_instance(self.process_instance_model,
-                                           ProcessInstanceEventType.process_instance_suspended.value)
+        self.add_event_to_process_instance(
+            self.process_instance_model, ProcessInstanceEventType.process_instance_suspended.value
+        )
         db.session.commit()
 
     def resume(self) -> None:
         """Resume."""
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
-        self.add_event_to_process_instance(self.process_instance_model,
-                                           ProcessInstanceEventType.process_instance_resumed.value)
+        self.add_event_to_process_instance(
+            self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
+        )
         db.session.commit()
 
     @classmethod
-    def add_event_to_process_instance(cls, process_instance: ProcessInstanceModel, event_type: str, task_guid: Optional[str] = None) -> None:
+    def add_event_to_process_instance(
+        cls, process_instance: ProcessInstanceModel, event_type: str, task_guid: Optional[str] = None
+    ) -> None:
         user_id = None
         if g.user:
             user_id = g.user.id
         process_instance_event = ProcessInstanceEventModel(
-            process_instance_id=process_instance.id, event_type=event_type, timestamp=time.time(), user_id=user_id)
+            process_instance_id=process_instance.id, event_type=event_type, timestamp=time.time(), user_id=user_id
+        )
         if task_guid:
             process_instance_event.task_guid = task_guid
         db.session.add(process_instance_event)

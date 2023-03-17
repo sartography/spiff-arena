@@ -154,7 +154,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             #   which script tasks execute when READY.
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
             process_instance_event = ProcessInstanceEventModel(
-                task_guid=task_model.guid, process_instance_id=self.process_instance.id, event_type=event_type, timestamp=timestamp)
+                task_guid=task_model.guid,
+                process_instance_id=self.process_instance.id,
+                event_type=event_type,
+                timestamp=timestamp,
+            )
             self.process_instance_events[task_model.guid] = process_instance_event
 
         return task_model
