@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 2596a98f760b
+Revision ID: b652c232839f
 Revises: 
-Create Date: 2023-03-17 15:49:31.968141
+Create Date: 2023-03-17 16:50:32.774216
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '2596a98f760b'
+revision = 'b652c232839f'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -24,16 +24,15 @@ def upgrade():
     sa.Column('bpmn_identifier', sa.String(length=255), nullable=False),
     sa.Column('bpmn_name', sa.String(length=255), nullable=True),
     sa.Column('properties_json', sa.JSON(), nullable=False),
-    sa.Column('type', sa.String(length=32), nullable=True),
     sa.Column('bpmn_version_control_type', sa.String(length=50), nullable=True),
     sa.Column('bpmn_version_control_identifier', sa.String(length=255), nullable=True),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('hash')
     )
     op.create_index(op.f('ix_bpmn_process_definition_bpmn_identifier'), 'bpmn_process_definition', ['bpmn_identifier'], unique=False)
     op.create_index(op.f('ix_bpmn_process_definition_bpmn_name'), 'bpmn_process_definition', ['bpmn_name'], unique=False)
-    op.create_index(op.f('ix_bpmn_process_definition_hash'), 'bpmn_process_definition', ['hash'], unique=True)
     op.create_table('correlation_property_cache',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=50), nullable=False),
@@ -42,19 +41,23 @@ def upgrade():
     sa.Column('retrieval_expression', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_correlation_property_cache_message_name'), 'correlation_property_cache', ['message_name'], unique=False)
+    op.create_index(op.f('ix_correlation_property_cache_name'), 'correlation_property_cache', ['name'], unique=False)
     op.create_table('group',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=255), nullable=True),
     sa.Column('identifier', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_group_identifier'), 'group', ['identifier'], unique=False)
+    op.create_index(op.f('ix_group_name'), 'group', ['name'], unique=False)
     op.create_table('json_data',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('hash', sa.String(length=255), nullable=False),
     sa.Column('data', sa.JSON(), nullable=False),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('hash')
     )
-    op.create_index(op.f('ix_json_data_hash'), 'json_data', ['hash'], unique=True)
     op.create_table('message_triggerable_process_model',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message_name', sa.String(length=255), nullable=True),
@@ -63,6 +66,7 @@ def upgrade():
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_message_triggerable_process_model_message_name'), 'message_triggerable_process_model', ['message_name'], unique=False)
     op.create_index(op.f('ix_message_triggerable_process_model_process_model_identifier'), 'message_triggerable_process_model', ['process_model_identifier'], unique=False)
     op.create_table('permission_target',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -86,14 +90,15 @@ def upgrade():
     )
     op.create_index(op.f('ix_spec_reference_cache_display_name'), 'spec_reference_cache', ['display_name'], unique=False)
     op.create_index(op.f('ix_spec_reference_cache_identifier'), 'spec_reference_cache', ['identifier'], unique=False)
+    op.create_index(op.f('ix_spec_reference_cache_process_model_id'), 'spec_reference_cache', ['process_model_id'], unique=False)
     op.create_index(op.f('ix_spec_reference_cache_type'), 'spec_reference_cache', ['type'], unique=False)
     op.create_table('user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=255), nullable=False),
+    sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('service', sa.String(length=255), nullable=False),
     sa.Column('service_id', sa.String(length=255), nullable=False),
     sa.Column('display_name', sa.String(length=255), nullable=True),
-    sa.Column('email', sa.String(length=255), nullable=True),
     sa.Column('tenant_specific_field_1', sa.String(length=255), nullable=True),
     sa.Column('tenant_specific_field_2', sa.String(length=255), nullable=True),
     sa.Column('tenant_specific_field_3', sa.String(length=255), nullable=True),
@@ -103,6 +108,9 @@ def upgrade():
     sa.UniqueConstraint('service', 'service_id', name='service_key'),
     sa.UniqueConstraint('username')
     )
+    op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=False)
+    op.create_index(op.f('ix_user_service'), 'user', ['service'], unique=False)
+    op.create_index(op.f('ix_user_service_id'), 'user', ['service_id'], unique=False)
     op.create_table('bpmn_process',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('guid', sa.String(length=36), nullable=True),
@@ -114,10 +122,12 @@ def upgrade():
     sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_definition_id'], ['bpmn_process_definition.id'], ),
     sa.ForeignKeyConstraint(['parent_process_id'], ['bpmn_process.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('guid')
     )
-    op.create_index(op.f('ix_bpmn_process_guid'), 'bpmn_process', ['guid'], unique=True)
+    op.create_index(op.f('ix_bpmn_process_bpmn_process_definition_id'), 'bpmn_process', ['bpmn_process_definition_id'], unique=False)
     op.create_index(op.f('ix_bpmn_process_json_data_hash'), 'bpmn_process', ['json_data_hash'], unique=False)
+    op.create_index(op.f('ix_bpmn_process_parent_process_id'), 'bpmn_process', ['parent_process_id'], unique=False)
     op.create_table('bpmn_process_definition_relationship',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bpmn_process_definition_parent_id', sa.Integer(), nullable=False),
@@ -127,6 +137,8 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('bpmn_process_definition_parent_id', 'bpmn_process_definition_child_id', name='bpmn_process_definition_relationship_unique')
     )
+    op.create_index(op.f('ix_bpmn_process_definition_relationship_bpmn_process_definition_parent_id'), 'bpmn_process_definition_relationship', ['bpmn_process_definition_parent_id'], unique=False)
+    op.create_index(op.f('ix_bpmn_process_definition_relationship_bpmn_process_definition_child_id'), 'bpmn_process_definition_relationship', ['bpmn_process_definition_child_id'], unique=False)
     op.create_table('principal',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=True),
@@ -170,13 +182,14 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('key')
     )
+    op.create_index(op.f('ix_secret_user_id'), 'secret', ['user_id'], unique=False)
     op.create_table('task_definition',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bpmn_process_definition_id', sa.Integer(), nullable=False),
     sa.Column('bpmn_identifier', sa.String(length=255), nullable=False),
     sa.Column('bpmn_name', sa.String(length=255), nullable=True),
-    sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('typename', sa.String(length=255), nullable=False),
+    sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_definition_id'], ['bpmn_process_definition.id'], ),
@@ -185,6 +198,8 @@ def upgrade():
     )
     op.create_index(op.f('ix_task_definition_bpmn_identifier'), 'task_definition', ['bpmn_identifier'], unique=False)
     op.create_index(op.f('ix_task_definition_bpmn_name'), 'task_definition', ['bpmn_name'], unique=False)
+    op.create_index(op.f('ix_task_definition_bpmn_process_definition_id'), 'task_definition', ['bpmn_process_definition_id'], unique=False)
+    op.create_index(op.f('ix_task_definition_typename'), 'task_definition', ['typename'], unique=False)
     op.create_table('user_group_assignment',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -194,6 +209,8 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('user_id', 'group_id', name='user_group_assignment_unique')
     )
+    op.create_index(op.f('ix_user_group_assignment_group_id'), 'user_group_assignment', ['group_id'], unique=False)
+    op.create_index(op.f('ix_user_group_assignment_user_id'), 'user_group_assignment', ['user_id'], unique=False)
     op.create_table('user_group_assignment_waiting',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('username', sa.String(length=255), nullable=False),
@@ -202,6 +219,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('username', 'group_id', name='user_group_assignment_staged_unique')
     )
+    op.create_index(op.f('ix_user_group_assignment_waiting_group_id'), 'user_group_assignment_waiting', ['group_id'], unique=False)
     op.create_table('permission_assignment',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('principal_id', sa.Integer(), nullable=False),
@@ -213,6 +231,8 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('principal_id', 'permission_target_id', 'permission', name='permission_assignment_uniq')
     )
+    op.create_index(op.f('ix_permission_assignment_permission_target_id'), 'permission_assignment', ['permission_target_id'], unique=False)
+    op.create_index(op.f('ix_permission_assignment_principal_id'), 'permission_assignment', ['principal_id'], unique=False)
     op.create_table('process_instance',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_model_identifier', sa.String(length=255), nullable=False),
@@ -221,7 +241,6 @@ def upgrade():
     sa.Column('bpmn_process_definition_id', sa.Integer(), nullable=True),
     sa.Column('bpmn_process_id', sa.Integer(), nullable=True),
     sa.Column('spiff_serializer_version', sa.String(length=50), nullable=True),
-    sa.Column('bpmn_json', sa.JSON(), nullable=True),
     sa.Column('start_in_seconds', sa.Integer(), nullable=True),
     sa.Column('end_in_seconds', sa.Integer(), nullable=True),
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
@@ -235,8 +254,14 @@ def upgrade():
     sa.ForeignKeyConstraint(['process_initiator_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_process_instance_bpmn_process_definition_id'), 'process_instance', ['bpmn_process_definition_id'], unique=False)
+    op.create_index(op.f('ix_process_instance_bpmn_process_id'), 'process_instance', ['bpmn_process_id'], unique=False)
+    op.create_index(op.f('ix_process_instance_end_in_seconds'), 'process_instance', ['end_in_seconds'], unique=False)
+    op.create_index(op.f('ix_process_instance_process_initiator_id'), 'process_instance', ['process_initiator_id'], unique=False)
     op.create_index(op.f('ix_process_instance_process_model_display_name'), 'process_instance', ['process_model_display_name'], unique=False)
     op.create_index(op.f('ix_process_instance_process_model_identifier'), 'process_instance', ['process_model_identifier'], unique=False)
+    op.create_index(op.f('ix_process_instance_start_in_seconds'), 'process_instance', ['start_in_seconds'], unique=False)
+    op.create_index(op.f('ix_process_instance_status'), 'process_instance', ['status'], unique=False)
     op.create_table('message_instance',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=True),
@@ -254,6 +279,9 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_message_instance_process_instance_id'), 'message_instance', ['process_instance_id'], unique=False)
+    op.create_index(op.f('ix_message_instance_status'), 'message_instance', ['status'], unique=False)
+    op.create_index(op.f('ix_message_instance_user_id'), 'message_instance', ['user_id'], unique=False)
     op.create_table('process_instance_event',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('task_guid', sa.String(length=36), nullable=True),
@@ -266,6 +294,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_process_instance_event_event_type'), 'process_instance_event', ['event_type'], unique=False)
+    op.create_index(op.f('ix_process_instance_event_process_instance_id'), 'process_instance_event', ['process_instance_id'], unique=False)
     op.create_index(op.f('ix_process_instance_event_task_guid'), 'process_instance_event', ['task_guid'], unique=False)
     op.create_index(op.f('ix_process_instance_event_timestamp'), 'process_instance_event', ['timestamp'], unique=False)
     op.create_index(op.f('ix_process_instance_event_user_id'), 'process_instance_event', ['user_id'], unique=False)
@@ -284,6 +313,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_process_instance_file_data_digest'), 'process_instance_file_data', ['digest'], unique=False)
+    op.create_index(op.f('ix_process_instance_file_data_process_instance_id'), 'process_instance_file_data', ['process_instance_id'], unique=False)
     op.create_table('process_instance_metadata',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -296,6 +326,7 @@ def upgrade():
     sa.UniqueConstraint('process_instance_id', 'key', name='process_instance_metadata_unique')
     )
     op.create_index(op.f('ix_process_instance_metadata_key'), 'process_instance_metadata', ['key'], unique=False)
+    op.create_index(op.f('ix_process_instance_metadata_process_instance_id'), 'process_instance_metadata', ['process_instance_id'], unique=False)
     op.create_table('process_instance_queue',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -307,11 +338,11 @@ def upgrade():
     sa.Column('updated_at_in_seconds', sa.Integer(), nullable=True),
     sa.Column('created_at_in_seconds', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('process_instance_id')
     )
     op.create_index(op.f('ix_process_instance_queue_locked_at_in_seconds'), 'process_instance_queue', ['locked_at_in_seconds'], unique=False)
     op.create_index(op.f('ix_process_instance_queue_locked_by'), 'process_instance_queue', ['locked_by'], unique=False)
-    op.create_index(op.f('ix_process_instance_queue_process_instance_id'), 'process_instance_queue', ['process_instance_id'], unique=True)
     op.create_index(op.f('ix_process_instance_queue_status'), 'process_instance_queue', ['status'], unique=False)
     op.create_table('spiff_step_details',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -328,6 +359,7 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('process_instance_id', 'spiff_step', name='process_instance_id_spiff_step')
     )
+    op.create_index(op.f('ix_spiff_step_details_process_instance_id'), 'spiff_step_details', ['process_instance_id'], unique=False)
     op.create_table('task',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('guid', sa.String(length=36), nullable=False),
@@ -343,11 +375,15 @@ def upgrade():
     sa.ForeignKeyConstraint(['bpmn_process_id'], ['bpmn_process.id'], ),
     sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
     sa.ForeignKeyConstraint(['task_definition_id'], ['task_definition.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('guid')
     )
-    op.create_index(op.f('ix_task_guid'), 'task', ['guid'], unique=True)
+    op.create_index(op.f('ix_task_bpmn_process_id'), 'task', ['bpmn_process_id'], unique=False)
     op.create_index(op.f('ix_task_json_data_hash'), 'task', ['json_data_hash'], unique=False)
+    op.create_index(op.f('ix_task_process_instance_id'), 'task', ['process_instance_id'], unique=False)
     op.create_index(op.f('ix_task_python_env_data_hash'), 'task', ['python_env_data_hash'], unique=False)
+    op.create_index(op.f('ix_task_state'), 'task', ['state'], unique=False)
+    op.create_index(op.f('ix_task_task_definition_id'), 'task', ['task_definition_id'], unique=False)
     op.create_table('human_task',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -374,7 +410,12 @@ def upgrade():
     sa.ForeignKeyConstraint(['task_model_id'], ['task.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_human_task_actual_owner_id'), 'human_task', ['actual_owner_id'], unique=False)
     op.create_index(op.f('ix_human_task_completed'), 'human_task', ['completed'], unique=False)
+    op.create_index(op.f('ix_human_task_completed_by_user_id'), 'human_task', ['completed_by_user_id'], unique=False)
+    op.create_index(op.f('ix_human_task_lane_assignment_id'), 'human_task', ['lane_assignment_id'], unique=False)
+    op.create_index(op.f('ix_human_task_process_instance_id'), 'human_task', ['process_instance_id'], unique=False)
+    op.create_index(op.f('ix_human_task_task_model_id'), 'human_task', ['task_model_id'], unique=False)
     op.create_table('message_instance_correlation_rule',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('message_instance_id', sa.Integer(), nullable=False),
@@ -387,6 +428,7 @@ def upgrade():
     sa.UniqueConstraint('message_instance_id', 'name', name='message_instance_id_name_unique')
     )
     op.create_index(op.f('ix_message_instance_correlation_rule_message_instance_id'), 'message_instance_correlation_rule', ['message_instance_id'], unique=False)
+    op.create_index(op.f('ix_message_instance_correlation_rule_name'), 'message_instance_correlation_rule', ['name'], unique=False)
     op.create_table('human_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('human_task_id', sa.Integer(), nullable=False),
@@ -406,62 +448,101 @@ def downgrade():
     op.drop_index(op.f('ix_human_task_user_user_id'), table_name='human_task_user')
     op.drop_index(op.f('ix_human_task_user_human_task_id'), table_name='human_task_user')
     op.drop_table('human_task_user')
+    op.drop_index(op.f('ix_message_instance_correlation_rule_name'), table_name='message_instance_correlation_rule')
     op.drop_index(op.f('ix_message_instance_correlation_rule_message_instance_id'), table_name='message_instance_correlation_rule')
     op.drop_table('message_instance_correlation_rule')
+    op.drop_index(op.f('ix_human_task_task_model_id'), table_name='human_task')
+    op.drop_index(op.f('ix_human_task_process_instance_id'), table_name='human_task')
+    op.drop_index(op.f('ix_human_task_lane_assignment_id'), table_name='human_task')
+    op.drop_index(op.f('ix_human_task_completed_by_user_id'), table_name='human_task')
     op.drop_index(op.f('ix_human_task_completed'), table_name='human_task')
+    op.drop_index(op.f('ix_human_task_actual_owner_id'), table_name='human_task')
     op.drop_table('human_task')
+    op.drop_index(op.f('ix_task_task_definition_id'), table_name='task')
+    op.drop_index(op.f('ix_task_state'), table_name='task')
     op.drop_index(op.f('ix_task_python_env_data_hash'), table_name='task')
+    op.drop_index(op.f('ix_task_process_instance_id'), table_name='task')
     op.drop_index(op.f('ix_task_json_data_hash'), table_name='task')
-    op.drop_index(op.f('ix_task_guid'), table_name='task')
+    op.drop_index(op.f('ix_task_bpmn_process_id'), table_name='task')
     op.drop_table('task')
+    op.drop_index(op.f('ix_spiff_step_details_process_instance_id'), table_name='spiff_step_details')
     op.drop_table('spiff_step_details')
     op.drop_index(op.f('ix_process_instance_queue_status'), table_name='process_instance_queue')
-    op.drop_index(op.f('ix_process_instance_queue_process_instance_id'), table_name='process_instance_queue')
     op.drop_index(op.f('ix_process_instance_queue_locked_by'), table_name='process_instance_queue')
     op.drop_index(op.f('ix_process_instance_queue_locked_at_in_seconds'), table_name='process_instance_queue')
     op.drop_table('process_instance_queue')
+    op.drop_index(op.f('ix_process_instance_metadata_process_instance_id'), table_name='process_instance_metadata')
     op.drop_index(op.f('ix_process_instance_metadata_key'), table_name='process_instance_metadata')
     op.drop_table('process_instance_metadata')
+    op.drop_index(op.f('ix_process_instance_file_data_process_instance_id'), table_name='process_instance_file_data')
     op.drop_index(op.f('ix_process_instance_file_data_digest'), table_name='process_instance_file_data')
     op.drop_table('process_instance_file_data')
     op.drop_index(op.f('ix_process_instance_event_user_id'), table_name='process_instance_event')
     op.drop_index(op.f('ix_process_instance_event_timestamp'), table_name='process_instance_event')
     op.drop_index(op.f('ix_process_instance_event_task_guid'), table_name='process_instance_event')
+    op.drop_index(op.f('ix_process_instance_event_process_instance_id'), table_name='process_instance_event')
     op.drop_index(op.f('ix_process_instance_event_event_type'), table_name='process_instance_event')
     op.drop_table('process_instance_event')
+    op.drop_index(op.f('ix_message_instance_user_id'), table_name='message_instance')
+    op.drop_index(op.f('ix_message_instance_status'), table_name='message_instance')
+    op.drop_index(op.f('ix_message_instance_process_instance_id'), table_name='message_instance')
     op.drop_table('message_instance')
+    op.drop_index(op.f('ix_process_instance_status'), table_name='process_instance')
+    op.drop_index(op.f('ix_process_instance_start_in_seconds'), table_name='process_instance')
     op.drop_index(op.f('ix_process_instance_process_model_identifier'), table_name='process_instance')
     op.drop_index(op.f('ix_process_instance_process_model_display_name'), table_name='process_instance')
+    op.drop_index(op.f('ix_process_instance_process_initiator_id'), table_name='process_instance')
+    op.drop_index(op.f('ix_process_instance_end_in_seconds'), table_name='process_instance')
+    op.drop_index(op.f('ix_process_instance_bpmn_process_id'), table_name='process_instance')
+    op.drop_index(op.f('ix_process_instance_bpmn_process_definition_id'), table_name='process_instance')
     op.drop_table('process_instance')
+    op.drop_index(op.f('ix_permission_assignment_principal_id'), table_name='permission_assignment')
+    op.drop_index(op.f('ix_permission_assignment_permission_target_id'), table_name='permission_assignment')
     op.drop_table('permission_assignment')
+    op.drop_index(op.f('ix_user_group_assignment_waiting_group_id'), table_name='user_group_assignment_waiting')
     op.drop_table('user_group_assignment_waiting')
+    op.drop_index(op.f('ix_user_group_assignment_user_id'), table_name='user_group_assignment')
+    op.drop_index(op.f('ix_user_group_assignment_group_id'), table_name='user_group_assignment')
     op.drop_table('user_group_assignment')
+    op.drop_index(op.f('ix_task_definition_typename'), table_name='task_definition')
+    op.drop_index(op.f('ix_task_definition_bpmn_process_definition_id'), table_name='task_definition')
     op.drop_index(op.f('ix_task_definition_bpmn_name'), table_name='task_definition')
     op.drop_index(op.f('ix_task_definition_bpmn_identifier'), table_name='task_definition')
     op.drop_table('task_definition')
+    op.drop_index(op.f('ix_secret_user_id'), table_name='secret')
     op.drop_table('secret')
     op.drop_table('refresh_token')
     op.drop_index(op.f('ix_process_instance_report_identifier'), table_name='process_instance_report')
     op.drop_index(op.f('ix_process_instance_report_created_by_id'), table_name='process_instance_report')
     op.drop_table('process_instance_report')
     op.drop_table('principal')
+    op.drop_index(op.f('ix_bpmn_process_definition_relationship_bpmn_process_definition_child_id'), table_name='bpmn_process_definition_relationship')
+    op.drop_index(op.f('ix_bpmn_process_definition_relationship_bpmn_process_definition_parent_id'), table_name='bpmn_process_definition_relationship')
     op.drop_table('bpmn_process_definition_relationship')
+    op.drop_index(op.f('ix_bpmn_process_parent_process_id'), table_name='bpmn_process')
     op.drop_index(op.f('ix_bpmn_process_json_data_hash'), table_name='bpmn_process')
-    op.drop_index(op.f('ix_bpmn_process_guid'), table_name='bpmn_process')
+    op.drop_index(op.f('ix_bpmn_process_bpmn_process_definition_id'), table_name='bpmn_process')
     op.drop_table('bpmn_process')
+    op.drop_index(op.f('ix_user_service_id'), table_name='user')
+    op.drop_index(op.f('ix_user_service'), table_name='user')
+    op.drop_index(op.f('ix_user_email'), table_name='user')
     op.drop_table('user')
     op.drop_index(op.f('ix_spec_reference_cache_type'), table_name='spec_reference_cache')
+    op.drop_index(op.f('ix_spec_reference_cache_process_model_id'), table_name='spec_reference_cache')
     op.drop_index(op.f('ix_spec_reference_cache_identifier'), table_name='spec_reference_cache')
     op.drop_index(op.f('ix_spec_reference_cache_display_name'), table_name='spec_reference_cache')
     op.drop_table('spec_reference_cache')
     op.drop_table('permission_target')
     op.drop_index(op.f('ix_message_triggerable_process_model_process_model_identifier'), table_name='message_triggerable_process_model')
+    op.drop_index(op.f('ix_message_triggerable_process_model_message_name'), table_name='message_triggerable_process_model')
     op.drop_table('message_triggerable_process_model')
-    op.drop_index(op.f('ix_json_data_hash'), table_name='json_data')
     op.drop_table('json_data')
+    op.drop_index(op.f('ix_group_name'), table_name='group')
+    op.drop_index(op.f('ix_group_identifier'), table_name='group')
     op.drop_table('group')
+    op.drop_index(op.f('ix_correlation_property_cache_name'), table_name='correlation_property_cache')
+    op.drop_index(op.f('ix_correlation_property_cache_message_name'), table_name='correlation_property_cache')
     op.drop_table('correlation_property_cache')
-    op.drop_index(op.f('ix_bpmn_process_definition_hash'), table_name='bpmn_process_definition')
     op.drop_index(op.f('ix_bpmn_process_definition_bpmn_name'), table_name='bpmn_process_definition')
     op.drop_index(op.f('ix_bpmn_process_definition_bpmn_identifier'), table_name='bpmn_process_definition')
     op.drop_table('bpmn_process_definition')

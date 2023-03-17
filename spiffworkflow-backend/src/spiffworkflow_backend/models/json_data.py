@@ -29,7 +29,7 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
 
     # this is a sha256 hash of spec and serializer_version
-    hash: str = db.Column(db.String(255), nullable=False, index=True, unique=True)
+    hash: str = db.Column(db.String(255), nullable=False, unique=True)
     data: dict = db.Column(db.JSON, nullable=False)
 
     @classmethod
