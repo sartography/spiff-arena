@@ -17,6 +17,7 @@ from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.assertion_service import safe_assertion
@@ -63,12 +64,14 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
+        self.serializer = serializer
 
         self.current_task_model: Optional[TaskModel] = None
         self.current_task_start_in_seconds: Optional[float] = None
+
         self.task_models: dict[str, TaskModel] = {}
         self.json_data_dicts: dict[str, JsonDataDict] = {}
-        self.serializer = serializer
+        self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
@@ -90,9 +93,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         script_engine = bpmn_process_instance.script_engine
         if hasattr(script_engine, "failing_spiff_task") and script_engine.failing_spiff_task is not None:
             failing_spiff_task = script_engine.failing_spiff_task
-            self._update_task_model_with_spiff_task(failing_spiff_task)
+            self._update_task_model_with_spiff_task(failing_spiff_task, task_failed=True)
 
         db.session.bulk_save_objects(self.task_models.values())
+        db.session.bulk_save_objects(self.process_instance_events.values())
 
         TaskService.insert_or_update_json_data_records(self.json_data_dicts)
 
@@ -121,7 +125,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             if json_data_dict is not None:
                 self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
-    def _update_task_model_with_spiff_task(self, spiff_task: SpiffTask) -> TaskModel:
+    def _update_task_model_with_spiff_task(self, spiff_task: SpiffTask, task_failed: bool = False) -> TaskModel:
         bpmn_process, task_model, new_task_models, new_json_data_dicts = (
             TaskService.find_or_create_task_model_from_spiff_task(
                 spiff_task,
@@ -140,6 +144,18 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if bpmn_process_json_data is not None:
             json_data_dict_list.append(bpmn_process_json_data)
         self._update_json_data_dicts_using_list(json_data_dict_list)
+
+        if task_model.state == "COMPLETED" or task_failed:
+            event_type = "task_completed"
+            if task_failed:
+                event_type = "task_errored"
+
+            # FIXME: some failed tasks will currently not have either timestamp since we only hook into spiff when tasks complete
+            #   which script tasks execute when READY.
+            timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
+            process_instance_event = ProcessInstanceEventModel(
+                task_guid=task_model.guid, process_instance_id=self.process_instance.id, event_type=event_type, timestamp=timestamp)
+            self.process_instance_events[task_model.guid] = process_instance_event
 
         return task_model
 

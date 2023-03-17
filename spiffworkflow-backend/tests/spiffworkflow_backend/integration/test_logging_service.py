@@ -64,8 +64,8 @@ class TestLoggingService(BaseTest):
         for log in logs:
             assert log["process_instance_id"] == process_instance.id
             for key in [
-                "start_in_seconds",
-                "end_in_seconds",
+                "event_type",
+                "timestamp",
                 "spiff_task_guid",
                 "bpmn_process_definition_identifier",
                 "bpmn_process_definition_name",

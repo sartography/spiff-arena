@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 8dce75b80bfd
+Revision ID: 05153ab6a6b8
 Revises: 
-Create Date: 2023-03-17 09:08:24.146736
+Create Date: 2023-03-17 12:22:43.449203
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '8dce75b80bfd'
+revision = '05153ab6a6b8'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -269,6 +269,21 @@ def upgrade():
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('process_instance_event',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('task_guid', sa.String(length=36), nullable=True),
+    sa.Column('process_instance_id', sa.Integer(), nullable=False),
+    sa.Column('event_type', sa.String(length=50), nullable=False),
+    sa.Column('timestamp', sa.DECIMAL(precision=17, scale=6), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_process_instance_event_event_type'), 'process_instance_event', ['event_type'], unique=False)
+    op.create_index(op.f('ix_process_instance_event_task_guid'), 'process_instance_event', ['task_guid'], unique=False)
+    op.create_index(op.f('ix_process_instance_event_timestamp'), 'process_instance_event', ['timestamp'], unique=False)
+    op.create_index(op.f('ix_process_instance_event_user_id'), 'process_instance_event', ['user_id'], unique=False)
     op.create_table('process_instance_file_data',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_id', sa.Integer(), nullable=False),
@@ -424,6 +439,11 @@ def downgrade():
     op.drop_table('process_instance_metadata')
     op.drop_index(op.f('ix_process_instance_file_data_digest'), table_name='process_instance_file_data')
     op.drop_table('process_instance_file_data')
+    op.drop_index(op.f('ix_process_instance_event_user_id'), table_name='process_instance_event')
+    op.drop_index(op.f('ix_process_instance_event_timestamp'), table_name='process_instance_event')
+    op.drop_index(op.f('ix_process_instance_event_task_guid'), table_name='process_instance_event')
+    op.drop_index(op.f('ix_process_instance_event_event_type'), table_name='process_instance_event')
+    op.drop_table('process_instance_event')
     op.drop_table('message_instance')
     op.drop_index(op.f('ix_process_instance_process_model_identifier'), table_name='process_instance')
     op.drop_index(op.f('ix_process_instance_process_model_display_name'), table_name='process_instance')

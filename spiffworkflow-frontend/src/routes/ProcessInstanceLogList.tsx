@@ -85,6 +85,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       tableRow.push(
         <>
           <td>{row.bpmn_task_type}</td>
+          <td>{row.event_type}</td>
           <td>
             {row.username || (
               <span className="system-user-log-entry">system</span>
@@ -99,7 +100,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
           data-qa="process-instance-show-link"
           to={`${processInstanceShowPageBaseUrl}/${row.process_instance_id}/${row.spiff_step}`}
         >
-          {convertSecondsToFormattedDateTime(row.end_in_seconds)}
+          {convertSecondsToFormattedDateTime(row.timestamp)}
         </Link>
       </td>
     );
@@ -132,6 +133,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       tableHeaders.push(
         <>
           <th>Task Type</th>
+          <th>Event</th>
           <th>User</th>
         </>
       );
@@ -177,7 +179,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 setSearchParams(searchParams);
               }}
             >
-              Simple
+              Milestones
             </Tab>
             <Tab
               title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
@@ -187,8 +189,18 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 setSearchParams(searchParams);
               }}
             >
-              Detailed
+              Events
             </Tab>
+            {/*
+              Suspend
+              Resumed
+              Terminated
+
+              Skipped?
+              Rewind?
+              Execute?
+              Edit?
+            */}
           </TabList>
         </Tabs>
         <br />

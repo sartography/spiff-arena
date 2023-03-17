@@ -1,5 +1,7 @@
 """Process_instance_processor."""
 import _strptime  # type: ignore
+from flask import g
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel, ProcessInstanceEventType
 import decimal
 import json
 import logging
@@ -1811,6 +1813,9 @@ class ProcessInstanceProcessor:
                     json_data = JsonDataModel(**json_data_dict)
                     db.session.add(json_data)
 
+        self.add_event_to_process_instance(self.process_instance_model,
+                                           ProcessInstanceEventType.task_completed.value, task_guid=task_model.guid)
+
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
 
@@ -1935,16 +1940,33 @@ class ProcessInstanceProcessor:
         self.save()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
+        self.add_event_to_process_instance(self.process_instance_model,
+                                           ProcessInstanceEventType.process_instance_terminated.value)
         db.session.commit()
 
     def suspend(self) -> None:
         """Suspend."""
         self.process_instance_model.status = ProcessInstanceStatus.suspended.value
         db.session.add(self.process_instance_model)
+        self.add_event_to_process_instance(self.process_instance_model,
+                                           ProcessInstanceEventType.process_instance_suspended.value)
         db.session.commit()
 
     def resume(self) -> None:
         """Resume."""
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
+        self.add_event_to_process_instance(self.process_instance_model,
+                                           ProcessInstanceEventType.process_instance_resumed.value)
         db.session.commit()
+
+    @classmethod
+    def add_event_to_process_instance(cls, process_instance: ProcessInstanceModel, event_type: str, task_guid: Optional[str] = None) -> None:
+        user_id = None
+        if g.user:
+            user_id = g.user.id
+        process_instance_event = ProcessInstanceEventModel(
+            process_instance_id=process_instance.id, event_type=event_type, timestamp=time.time(), user_id=user_id)
+        if task_guid:
+            process_instance_event.task_guid = task_guid
+        db.session.add(process_instance_event)
