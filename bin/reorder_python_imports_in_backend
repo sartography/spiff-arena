@@ -7,4 +7,5 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+# this intends to replicate the behavior of the pre-commit hook
 poetry run reorder-python-imports --application-directories=spiffworkflow-backend/src $(find spiffworkflow-backend/src -name '*.py' -type f -not -path '*load_database_models.py' -not -path '*/migrations/*')
