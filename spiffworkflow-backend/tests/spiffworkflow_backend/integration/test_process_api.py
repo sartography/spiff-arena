@@ -1418,7 +1418,7 @@ class TestProcessApi(BaseTest):
         )
         processor.save()
 
-        processor.suspend(process_instance)
+        processor.suspend()
         payload["description"] = "Message To Suspended"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
@@ -1430,7 +1430,7 @@ class TestProcessApi(BaseTest):
         assert response.json
         assert response.json["error_code"] == "message_not_accepted"
 
-        processor.resume(process_instance)
+        processor.resume()
         payload["description"] = "Message To Resumed"
         response = client.post(
             f"/v1.0/messages/{message_model_identifier}",
