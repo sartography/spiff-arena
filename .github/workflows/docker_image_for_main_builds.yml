@@ -54,7 +54,7 @@ jobs:
 
       - name: Get current date
         id: date
-        run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
+        run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4.3.0
@@ -72,8 +72,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-      - name: Adding markdown
-        run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> $GITHUB_STEP_SUMMARY
+      - run: echo 'TAGS' >> "$GITHUB_STEP_SUMMARY"
+      - run: echo 'for tag in ${{ steps.meta.outputs.tags }}; do echo "* $tag"; done' >> "$GITHUB_STEP_SUMMARY"
 
   create_backend_docker_image:
     runs-on: ubuntu-latest
@@ -95,7 +95,7 @@ jobs:
 
       - name: Get current date
         id: date
-        run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> $GITHUB_OUTPUT
+        run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4.3.0
@@ -114,4 +114,4 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       - name: Adding markdown
-        run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> $GITHUB_STEP_SUMMARY
+        run: echo 'TAGS ${{ steps.meta.outputs.tags }}' >> "$GITHUB_STEP_SUMMARY"
