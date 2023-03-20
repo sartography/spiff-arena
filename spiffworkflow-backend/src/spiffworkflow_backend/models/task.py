@@ -78,6 +78,7 @@ class Task:
 
     HUMAN_TASK_TYPES = ["User Task", "Manual Task"]
 
+
     def __init__(
         self,
         id: str,
