@@ -69,7 +69,9 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
 
     # TODO: polling intervals for different jobs
     polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
-    user_input_required_polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS"]
+    user_input_required_polling_interval_in_seconds = app.config[
+        "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS"
+    ]
     # TODO: add job to release locks to simplify other queries
     # TODO: add job to delete completed entires
     # TODO: add job to run old/low priority instances so they do not get drowned out

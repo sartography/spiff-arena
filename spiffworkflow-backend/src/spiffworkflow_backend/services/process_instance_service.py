@@ -98,7 +98,7 @@ class ProcessInstanceService:
             return True
 
         return status_value == "user_input_required" and not cls.ready_user_task_has_associated_timer(processor)
-    
+
     @classmethod
     def do_waiting(cls, status_value: str = ProcessInstanceStatus.waiting.value) -> None:
         """Do_waiting."""
@@ -121,7 +121,7 @@ class ProcessInstanceService:
                 if cls.can_optimistically_skip(processor, status_value):
                     current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
                     continue
-                
+
                 processor.lock_process_instance(process_instance_lock_prefix)
                 locked = True
                 db.session.refresh(process_instance)
