@@ -145,8 +145,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         successCallback: setProcessInstance,
       });
       let taskParams = '?all_tasks=true&most_recent_tasks_only=true';
-      if (typeof params.spiff_step !== 'undefined') {
-        taskParams = `${taskParams}&spiff_step=${params.spiff_step}`;
+      if (typeof params.to_task_guid !== 'undefined') {
+        taskParams = `${taskParams}&to_task_guid=${params.to_task_guid}`;
       }
       const bpmnProcessGuid = searchParams.get('bpmn_process_guid');
       if (bpmnProcessGuid) {
@@ -231,7 +231,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const currentSpiffStep = () => {
-    if (processInstance && typeof params.spiff_step === 'undefined') {
+    if (processInstance && typeof params.to_task_guid === 'undefined') {
       return processInstance.spiff_step || 0;
     }
 
@@ -246,7 +246,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return processInstance && currentSpiffStep() === processInstance.spiff_step;
   };
 
-  const spiffStepLink = (label: any, spiffStep: number) => {
+  const completionViewLink = (label: any, taskGuid: string) => {
     const processIdentifier = searchParams.get('process_identifier');
     const callActivityTaskId = searchParams.get('bpmn_process_guid');
     const queryParamArray = [];
@@ -265,27 +265,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`${processInstanceShowPageBaseUrl}/${spiffStep}${queryParams}`}
+        to={`${processInstanceShowPageBaseUrl}/${taskGuid}${queryParams}`}
       >
         {label}
       </Link>
     );
-  };
-
-  const previousStepLink = () => {
-    if (showingFirstSpiffStep()) {
-      return null;
-    }
-
-    return spiffStepLink(<CaretLeft />, currentSpiffStep() - 1);
-  };
-
-  const nextStepLink = () => {
-    if (showingLastSpiffStep()) {
-      return null;
-    }
-
-    return spiffStepLink(<CaretRight />, currentSpiffStep() + 1);
   };
 
   const returnToLastSpiffStep = () => {
@@ -782,10 +766,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     if (task.typename === 'CallActivity') {
-    console.log('task', task)
+      console.log('task', task);
       const taskDefinitionPropertiesJson: TaskDefinitionPropertiesJson =
         task.task_definition_properties_json;
-        console.log('taskDefinitionPropertiesJson', taskDefinitionPropertiesJson)
+      console.log('taskDefinitionPropertiesJson', taskDefinitionPropertiesJson);
       buttons.push(
         <Link
           data-qa="go-to-call-activity-result"
@@ -993,19 +977,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
-          {taskToUse.task_spiff_step ? (
-            <div>
-              <Stack orientation="horizontal" gap={2}>
-                Task completed at step:{' '}
-                {spiffStepLink(
-                  `${taskToUse.task_spiff_step}`,
-                  taskToUse.task_spiff_step
-                )}
-              </Stack>
-              <br />
-              <br />
-            </div>
-          ) : null}
+          <div>
+            <Stack orientation="horizontal" gap={2}>
+              {completionViewLink(
+                'View state at task completion',
+                taskToUse.guid
+              )}
+            </Stack>
+            <br />
+            <br />
+          </div>
           {selectingEvent
             ? eventSelector(candidateEvents)
             : taskDataContainer()}
@@ -1013,23 +994,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
     return null;
-  };
-
-  const stepsElement = () => {
-    if (!processInstance) {
-      return null;
-    }
-    return (
-      <Grid condensed fullWidth>
-        <Column sm={3} md={3} lg={3}>
-          <Stack orientation="horizontal" gap={3} className="smaller-text">
-            {previousStepLink()}
-            Step {currentSpiffStep()} of {processInstance.spiff_step}
-            {nextStepLink()}
-          </Stack>
-        </Column>
-      </Grid>
-    );
   };
 
   const buttonIcons = () => {
@@ -1119,7 +1083,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {taskUpdateDisplayArea()}
         {processDataDisplayArea()}
         {processInstanceMetadataArea()}
-        {stepsElement()}
         <br />
         <ReactDiagramEditor
           processModelId={processModelId || ''}
