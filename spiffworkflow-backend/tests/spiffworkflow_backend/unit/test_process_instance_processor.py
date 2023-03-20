@@ -326,11 +326,11 @@ class TestProcessInstanceProcessor(BaseTest):
             "manual_task": first_data_set,
             "top_level_subprocess_script": second_data_set,
             "top_level_subprocess": second_data_set,
-            "test_process_to_call_script": third_data_set,
+            "test_process_to_call_subprocess_script": third_data_set,
             "top_level_call_activity": third_data_set,
             "end_event_of_manual_task_model": third_data_set,
             "top_level_subprocess_script_second": fourth_data_set,
-            "test_process_to_call_script_second": fourth_data_set,
+            "test_process_to_call_subprocess_script_second": fourth_data_set,
         }
 
         spiff_tasks_checked_once: list = []
@@ -365,7 +365,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(all_spiff_tasks) > 1
         for spiff_task in all_spiff_tasks:
             assert spiff_task.state == TaskState.COMPLETED
-            assert_spiff_task_is_in_process("test_process_to_call_script", "test_process_to_call")
+            assert_spiff_task_is_in_process("test_process_to_call_subprocess_script", "test_process_to_call_subprocess")
             assert_spiff_task_is_in_process("top_level_subprocess_script", "top_level_subprocess")
             assert_spiff_task_is_in_process("top_level_script", "top_level_process")
 
@@ -377,6 +377,21 @@ class TestProcessInstanceProcessor(BaseTest):
                 assert bpmn_process_definition is not None
                 assert bpmn_process_definition.bpmn_identifier == "test_process_to_call"
                 assert bpmn_process_definition.bpmn_name == "Test Process To Call"
+
+            # Check that the direct parent of the called activity subprocess task is the
+            #   name of the process that was called from the activity.
+            if spiff_task.task_spec.name == "test_process_to_call_subprocess_script":
+                task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+                assert task_model is not None
+                bpmn_process = task_model.bpmn_process
+                assert bpmn_process is not None
+                bpmn_process_definition = bpmn_process.bpmn_process_definition
+                assert bpmn_process_definition is not None
+                assert bpmn_process_definition.bpmn_identifier == "test_process_to_call_subprocess"
+                assert bpmn_process.direct_parent_process_id is not None
+                direct_parent_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
+                assert direct_parent_process is not None
+                assert direct_parent_process.bpmn_process_definition.bpmn_identifier == "test_process_to_call"
 
         assert processor.get_data() == fifth_data_set
 

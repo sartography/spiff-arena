@@ -21,17 +21,26 @@ export interface RecentProcessModel {
   processModelDisplayName: string;
 }
 
+export interface TaskDefinitionPropertiesJson {
+  spec: string;
+}
+
 export interface Task {
+  id: number;
   guid: string;
   bpmn_identifier: string;
 
   bpmn_name?: string;
 
-  calling_subprocess_task_guid: string;
+  bpmn_process_direct_parent_guid: string;
+  bpmn_process_definition_identifier: string;
   data: any;
   state: string;
   typename: string;
-  call_activity_process_bpmn_identifier?: string;
+  task_definition_properties_json: TaskDefinitionPropertiesJson;
+
+  // TOOD: DELETE THIS!
+  task_spiff_step?: number;
 }
 
 export interface ProcessInstanceTask {

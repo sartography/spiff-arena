@@ -919,6 +919,12 @@ paths:
         description: If true, this wil return only the most recent tasks.
         schema:
           type: boolean
+      - name: bpmn_process_guid
+        in: query
+        required: false
+        description: The guid of the bpmn process to get the tasks for.
+        schema:
+          type: string
     get:
       tags:
         - Process Instances
@@ -972,6 +978,12 @@ paths:
         description: If true, this wil return only the most recent tasks.
         schema:
           type: boolean
+      - name: bpmn_process_guid
+        in: query
+        required: false
+        description: The guid of the bpmn process to get the tasks for.
+        schema:
+          type: string
     get:
       tags:
         - Process Instances
