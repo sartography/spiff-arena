@@ -182,6 +182,10 @@ export default function ProcessInstanceListTable({
   const [processInitiatorText, setProcessInitiatorText] = useState<
     string | null
   >(null);
+  const [
+    processInitiatorNotFoundErrorText,
+    setProcessInitiatorNotFoundErrorText,
+  ] = useState<string>('');
 
   const lastRequestedInitatorSearchTerm = useRef<string>();
 
@@ -560,8 +564,17 @@ export default function ProcessInstanceListTable({
     return (reportMetadata as any).filter_by;
   };
 
+  const navigateToNewReport = (queryParamString: string) => {
+    removeError();
+    setProcessInstanceReportJustSaved(null);
+    setProcessInstanceFilters({});
+    navigate(`${processInstanceListPathPrefix}?${queryParamString}`);
+  };
+
   const applyFilter = (event: any) => {
     event.preventDefault();
+    setProcessInitiatorNotFoundErrorText('');
+
     const { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       undefined,
@@ -605,21 +618,33 @@ export default function ProcessInstanceListTable({
       queryParamString += `&report_id=${processInstanceReportSelection.id}`;
     }
 
-    if (processInitiatorSelection) {
-      queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
-    } else if (processInitiatorText) {
-      queryParamString += `&process_initiator_username=${processInitiatorText}`;
-    }
-
     const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
     queryParamString += `&report_columns=${reportColumnsBase64}`;
     const reportFilterByBase64 = encodeBase64(JSON.stringify(reportFilterBy()));
     queryParamString += `&report_filter_by=${reportFilterByBase64}`;
 
-    removeError();
-    setProcessInstanceReportJustSaved(null);
-    setProcessInstanceFilters({});
-    navigate(`${processInstanceListPathPrefix}?${queryParamString}`);
+    if (processInitiatorSelection) {
+      queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
+      navigateToNewReport(queryParamString);
+    } else if (processInitiatorText) {
+      HttpService.makeCallToBackend({
+        path: targetUris.userExists,
+        httpMethod: 'POST',
+        postBody: { username: processInitiatorText },
+        successCallback: (result: any) => {
+          if (result.user_found) {
+            queryParamString += `&process_initiator_username=${processInitiatorText}`;
+            navigateToNewReport(queryParamString);
+          } else {
+            setProcessInitiatorNotFoundErrorText(
+              `The provided username is invalid. Please type the exact username.`
+            );
+          }
+        },
+      });
+    } else {
+      navigateToNewReport(queryParamString);
+    }
   };
 
   const dateComponent = (
@@ -1143,6 +1168,8 @@ export default function ProcessInstanceListTable({
                     id="process-instance-initiator-search"
                     placeholder="Enter username"
                     labelText="Process Initiator"
+                    invalid={processInitiatorNotFoundErrorText !== ''}
+                    invalidText={processInitiatorNotFoundErrorText}
                     onChange={(event: any) => {
                       setProcessInitiatorText(event.target.value);
                       setRequiresRefilter(true);
