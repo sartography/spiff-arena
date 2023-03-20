@@ -565,6 +565,7 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/service-tasks"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/user-groups/for-current-user"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/users/exists/by-username"))
         permissions_to_assign.append(
             PermissionToAssign(permission="read", target_uri="/process-instances/find-by-id/*")
         )

@@ -1538,6 +1538,25 @@ paths:
                 items:
                   $ref: "#/components/schemas/User"
 
+  /users/exists/by-username:
+    post:
+      tags:
+        - Users
+      operationId: spiffworkflow_backend.routes.users_controller.user_exists_by_username
+      summary: Returns a true if user exists by username.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/User"
+      responses:
+        "200":
+          description: true if user exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /user-groups/for-current-user:
     get:
       tags:
