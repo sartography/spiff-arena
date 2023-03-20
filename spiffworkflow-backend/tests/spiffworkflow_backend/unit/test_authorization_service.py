@@ -288,6 +288,7 @@ class TestAuthorizationService(BaseTest):
             ("/tasks/*", "read"),
             ("/tasks/*", "update"),
             ("/user-groups/for-current-user", "read"),
+            ("/users/exists/by-username", "create"),
         ]
         permissions_to_assign = AuthorizationService.explode_permissions("all", "BASIC")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
