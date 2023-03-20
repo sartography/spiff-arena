@@ -683,6 +683,7 @@ export default function ProcessInstanceListTable({
         items={processStatusAllOptions}
         onChange={(selection: any) => {
           setProcessStatusSelection(selection.selectedItems);
+          setRequiresRefilter(true);
         }}
         itemToString={(item: any) => {
           return item || '';
@@ -1450,14 +1451,18 @@ export default function ProcessInstanceListTable({
       // eslint-disable-next-line prefer-destructuring
       perPage = perPageOptions[1];
     }
-    let resultsTable = (
-      <h2>
-        Please press the filter button when you have completed updating the
-        filters.
-      </h2>
-    );
-    if (!requiresRefilter) {
-      resultsTable = (
+    let refilterTextComponent = null;
+    if (requiresRefilter) {
+      refilterTextComponent = (
+        <h2>
+          Please press the filter button when you have completed updating the
+          filters.
+        </h2>
+      );
+    }
+    const resultsTable = (
+      <>
+        {refilterTextComponent}
         <PaginationForTable
           page={page}
           perPage={perPage}
@@ -1467,8 +1472,8 @@ export default function ProcessInstanceListTable({
           perPageOptions={perPageOptions}
           paginationClassName={paginationClassName}
         />
-      );
-    }
+      </>
+    );
     return (
       <>
         {reportColumnForm()}
