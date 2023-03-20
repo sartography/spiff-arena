@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import base64
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 import json
 from typing import Any
 from typing import Dict
@@ -635,6 +636,18 @@ def process_instance_task_list(
     #             task = bpmn_process_instance.get_task(subprocess_id)
     #             task._set_state(TaskState.WAITING)
 
+    # guid: string;
+    # bpmn_identifier: string;
+    #
+    # bpmn_name?: string;
+    #
+    # state: string;
+    # typename: string;
+
+    # calling_subprocess_task_guid: string;
+    # call_activity_process_bpmn_identifier?: string;
+
+
     task_model_query = db.session.query(TaskModel).filter(
         TaskModel.process_instance_id == process_instance.id,
     )
@@ -651,6 +664,23 @@ def process_instance_task_list(
             )
         task_model_query = task_model_query.filter(TaskModel.end_in_seconds <= to_task_model.end_in_seconds)
 
+    task_model_query = (
+        task_model_query.order_by(
+            ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc()  # type: ignore
+        )
+        .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
+        .join(BpmnProcessModel, BpmnProcessModel.id == TaskModel.bpmn_process_id)
+        .join(
+            BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id
+        )
+        .add_columns(
+            BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
+            BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
+            TaskDefinitionModel.bpmn_identifier.label("task_definition_identifier"),  # type: ignore
+            TaskDefinitionModel.bpmn_name.label("task_definition_name"),  # type: ignore
+            TaskDefinitionModel.typename.label("bpmn_task_type"),  # type: ignore
+        )
+    )
     task_models = task_model_query.all()
 
     # processor = ProcessInstanceProcessor(process_instance)

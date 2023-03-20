@@ -21,8 +21,21 @@ export interface RecentProcessModel {
   processModelDisplayName: string;
 }
 
+export interface Task {
+  guid: string;
+  bpmn_identifier: string;
+
+  bpmn_name?: string;
+
+  calling_subprocess_task_guid: string;
+  data: any;
+  state: string;
+  typename: string;
+  call_activity_process_bpmn_identifier?: string;
+}
+
 export interface ProcessInstanceTask {
-  id: number;
+  id: string;
   task_id: string;
 
   calling_subprocess_task_id: string;
