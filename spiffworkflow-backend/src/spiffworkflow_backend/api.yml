@@ -1585,7 +1585,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/Task"
 
-  /task-data/{modified_process_model_identifier}/{process_instance_id}/{spiff_step}:
+  /task-data/{modified_process_model_identifier}/{process_instance_id}/{task_guid}:
     parameters:
       - name: modified_process_model_identifier
         in: path
@@ -1599,12 +1599,12 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
-      - name: spiff_step
+      - name: task_guid
         in: path
         required: true
-        description: If set will return the tasks as they were during a specific step of execution.
+        description: The guid of the task to show.
         schema:
-          type: integer
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.tasks_controller.task_data_show
       summary: Get task data for a single task in a spiff step.
@@ -1638,12 +1638,12 @@ paths:
         description: The unique id of the task.
         schema:
           type: string
-      - name: spiff_step
-        in: query
-        required: false
-        description: If set will return the tasks as they were during a specific step of execution.
+      - name: task_guid
+        in: path
+        required: true
+        description: The guid of the task to show.
         schema:
-          type: integer
+          type: string
     put:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.task_data_update
       summary: Update the task data for requested instance and task
