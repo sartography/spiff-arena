@@ -732,6 +732,7 @@ export default function ProcessInstanceListTable({
     setEndToTime('');
     setProcessInitiatorSelection(null);
     setProcessInitiatorText('');
+    setRequiresRefilter(true);
     if (reportMetadata) {
       reportMetadata.filter_by = [];
     }
@@ -1481,10 +1482,10 @@ export default function ProcessInstanceListTable({
     let refilterTextComponent = null;
     if (requiresRefilter) {
       refilterTextComponent = (
-        <h2>
-          Please press the filter button when you have completed updating the
+        <p className="please-press-filter-button">
+          * Please press the filter button when you have completed updating the
           filters.
-        </h2>
+        </p>
       );
     }
     const resultsTable = (
