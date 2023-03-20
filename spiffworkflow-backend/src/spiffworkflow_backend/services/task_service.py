@@ -13,7 +13,7 @@ from SpiffWorkflow.task import TaskStateNames
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel, BpmnProcessNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -144,7 +144,7 @@ class TaskService:
                 bpmn_process, new_task_models, new_json_data_dicts = cls.add_bpmn_process(
                     bpmn_process_dict=serializer.workflow_to_dict(subprocess),
                     process_instance=process_instance,
-                    bpmn_process_parent=process_instance.bpmn_process,
+                    top_level_process=process_instance.bpmn_process,
                     bpmn_process_guid=subprocess_guid,
                     bpmn_definition_to_task_definitions_mappings=bpmn_definition_to_task_definitions_mappings,
                     spiff_workflow=spiff_workflow,
@@ -160,7 +160,7 @@ class TaskService:
         bpmn_definition_to_task_definitions_mappings: dict,
         spiff_workflow: BpmnWorkflow,
         serializer: BpmnWorkflowSerializer,
-        bpmn_process_parent: Optional[BpmnProcessModel] = None,
+        top_level_process: Optional[BpmnProcessModel] = None,
         bpmn_process_guid: Optional[str] = None,
     ) -> Tuple[BpmnProcessModel, dict[str, TaskModel], dict[str, JsonDataDict]]:
         """This creates and adds a bpmn_process to the Db session.
@@ -182,9 +182,9 @@ class TaskService:
         new_json_data_dicts: dict[str, JsonDataDict] = {}
 
         bpmn_process = None
-        if bpmn_process_parent is not None:
+        if top_level_process is not None:
             bpmn_process = BpmnProcessModel.query.filter_by(
-                parent_process_id=bpmn_process_parent.id, guid=bpmn_process_guid
+                top_level_process_id=top_level_process.id, guid=bpmn_process_guid
             ).first()
         elif process_instance.bpmn_process_id is not None:
             bpmn_process = process_instance.bpmn_process
@@ -193,6 +193,28 @@ class TaskService:
         if bpmn_process is None:
             bpmn_process_is_new = True
             bpmn_process = BpmnProcessModel(guid=bpmn_process_guid)
+
+            bpmn_process_definition = bpmn_definition_to_task_definitions_mappings[spiff_workflow.spec.name][
+                "bpmn_process_definition"
+            ]
+            bpmn_process.bpmn_process_definition = bpmn_process_definition
+
+            if top_level_process is not None:
+                subprocesses = spiff_workflow._get_outermost_workflow().subprocesses
+                direct_bpmn_process_parent = top_level_process
+                for subprocess_guid, subprocess in subprocesses.items():
+                    if subprocess == spiff_workflow.outer_workflow:
+                        direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(guid=str(subprocess_guid)).first()
+                        if direct_bpmn_process_parent is None:
+                            raise BpmnProcessNotFoundError(
+                                f"Could not find bpmn process with guid: {str(subprocess_guid)} "
+                                f"while searching for direct parent process of {bpmn_process_guid}."
+                            )
+
+                if direct_bpmn_process_parent is None:
+                    raise BpmnProcessNotFoundError(f"Could not find a direct bpmn process parent for guid: {bpmn_process_guid}")
+
+                bpmn_process.direct_parent_process_id = direct_bpmn_process_parent.id
 
         # Point the root id to the Start task instead of the Root task
         # since we are ignoring the Root task.
@@ -206,15 +228,10 @@ class TaskService:
         if bpmn_process_json_data is not None:
             new_json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
 
-        if bpmn_process_parent is None:
+        if top_level_process is None:
             process_instance.bpmn_process = bpmn_process
-        elif bpmn_process.parent_process_id is None:
-            bpmn_process.parent_process_id = bpmn_process_parent.id
-
-        bpmn_process_definition = bpmn_definition_to_task_definitions_mappings[spiff_workflow.spec.name][
-            "bpmn_process_definition"
-        ]
-        bpmn_process.bpmn_process_definition = bpmn_process_definition
+        elif bpmn_process.top_level_process_id is None:
+            bpmn_process.top_level_process_id = top_level_process.id
 
         # Since we bulk insert tasks later we need to add the bpmn_process to the session
         # to ensure we have an id.
@@ -284,6 +301,14 @@ class TaskService:
             json_data_dict = {"hash": task_data_hash, "data": task_data_dict}
             setattr(task_model, task_model_data_column, task_data_hash)
         return json_data_dict
+
+    @classmethod
+    def bpmn_process_and_descendants(cls, bpmn_processes: list[BpmnProcessModel]) -> list[BpmnProcessModel]:
+        bpmn_process_ids = [p.id for p in bpmn_processes]
+        direct_children = BpmnProcessModel.query.filter(BpmnProcessModel.direct_parent_process_id.in_(bpmn_process_ids)).all()  # type: ignore
+        if len(direct_children) > 0:
+            return bpmn_processes + cls.bpmn_process_and_descendants(direct_children)
+        return bpmn_processes
 
     @classmethod
     def _create_task(

@@ -1,5 +1,7 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import base64
+from spiffworkflow_backend.services.task_service import TaskService
+from sqlalchemy.orm import aliased
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 import json
 from typing import Any
@@ -560,6 +562,7 @@ def process_instance_task_list_without_task_data_for_me(
     all_tasks: bool = False,
     spiff_step: int = 0,
     most_recent_tasks_only: bool = False,
+    bpmn_process_guid: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
@@ -569,6 +572,7 @@ def process_instance_task_list_without_task_data_for_me(
         all_tasks=all_tasks,
         spiff_step=spiff_step,
         most_recent_tasks_only=most_recent_tasks_only,
+        bpmn_process_guid=bpmn_process_guid
     )
 
 
@@ -578,6 +582,7 @@ def process_instance_task_list_without_task_data(
     all_tasks: bool = False,
     spiff_step: int = 0,
     most_recent_tasks_only: bool = False,
+    bpmn_process_guid: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -587,12 +592,14 @@ def process_instance_task_list_without_task_data(
         all_tasks=all_tasks,
         spiff_step=spiff_step,
         most_recent_tasks_only=most_recent_tasks_only,
+        bpmn_process_guid=bpmn_process_guid
     )
 
 
 def process_instance_task_list(
     _modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,
+    bpmn_process_guid: Optional[str] = None,
     all_tasks: bool = False,
     spiff_step: int = 0,
     to_task_guid: Optional[str] = None,
@@ -644,9 +651,14 @@ def process_instance_task_list(
     # state: string;
     # typename: string;
 
-    # calling_subprocess_task_guid: string;
-    # call_activity_process_bpmn_identifier?: string;
+    # calling_subprocess_task_guid: string; -> bpmn_process_direct_parent_guid
+    # call_activity_process_bpmn_identifier?: string; -> bpmn_process_direct_parent_bpmn_identifier
 
+    bpmn_process_ids = []
+    if bpmn_process_guid:
+        bpmn_process = BpmnProcessModel.query.filter_by(guid=bpmn_process_guid).first()
+        bpmn_processes = TaskService.bpmn_process_and_descendants([bpmn_process])
+        bpmn_process_ids = [p.id for p in bpmn_processes]
 
     task_model_query = db.session.query(TaskModel).filter(
         TaskModel.process_instance_id == process_instance.id,
@@ -664,23 +676,39 @@ def process_instance_task_list(
             )
         task_model_query = task_model_query.filter(TaskModel.end_in_seconds <= to_task_model.end_in_seconds)
 
+    bpmn_process_alias = aliased(BpmnProcessModel)
+    direct_parent_bpmn_process_alias = aliased(BpmnProcessModel)
+    direct_parent_bpmn_process_definition_alias = aliased(BpmnProcessDefinitionModel)
+
     task_model_query = (
         task_model_query.order_by(
-            ProcessInstanceEventModel.timestamp.desc(), ProcessInstanceEventModel.id.desc()  # type: ignore
+            TaskModel.id.desc()  # type: ignore
         )
         .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
-        .join(BpmnProcessModel, BpmnProcessModel.id == TaskModel.bpmn_process_id)
+        .join(bpmn_process_alias, bpmn_process_alias.id == TaskModel.bpmn_process_id)
+        .outerjoin(direct_parent_bpmn_process_alias, direct_parent_bpmn_process_alias.id == bpmn_process_alias.direct_parent_process_id)
+        .outerjoin(direct_parent_bpmn_process_definition_alias, direct_parent_bpmn_process_definition_alias.id == direct_parent_bpmn_process_alias.bpmn_process_definition_id)
         .join(
             BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id
         )
         .add_columns(
             BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
             BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
-            TaskDefinitionModel.bpmn_identifier.label("task_definition_identifier"),  # type: ignore
-            TaskDefinitionModel.bpmn_name.label("task_definition_name"),  # type: ignore
-            TaskDefinitionModel.typename.label("bpmn_task_type"),  # type: ignore
+            direct_parent_bpmn_process_alias.guid.label("bpmn_process_direct_parent_guid"),
+            direct_parent_bpmn_process_definition_alias.bpmn_identifier.label("bpmn_process_direct_parent_bpmn_identifier"),
+            TaskDefinitionModel.bpmn_identifier,
+            TaskDefinitionModel.bpmn_name,
+            TaskDefinitionModel.typename,
+            TaskDefinitionModel.properties_json.label('task_definition_properties_json'),  # type: ignore
         )
     )
+
+    if len(bpmn_process_ids) > 0:
+        print(f"bpmn_process_ids: {bpmn_process_ids}")
+        task_model_query = (
+            task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
+        )
+
     task_models = task_model_query.all()
 
     # processor = ProcessInstanceProcessor(process_instance)

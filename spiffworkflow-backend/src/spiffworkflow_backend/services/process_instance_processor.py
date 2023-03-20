@@ -687,7 +687,7 @@ class ProcessInstanceProcessor:
                 single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_process, get_tasks=True)
                 spiff_bpmn_process_dict.update(single_bpmn_process_dict)
 
-                bpmn_subprocesses = BpmnProcessModel.query.filter_by(parent_process_id=bpmn_process.id).all()
+                bpmn_subprocesses = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id).all()
                 bpmn_subprocess_id_to_guid_mappings = {}
                 for bpmn_subprocess in bpmn_subprocesses:
                     bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = bpmn_subprocess.guid

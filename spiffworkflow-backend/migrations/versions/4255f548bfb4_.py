@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: b652c232839f
+Revision ID: 4255f548bfb4
 Revises: 
-Create Date: 2023-03-17 16:50:32.774216
+Create Date: 2023-03-20 13:00:28.655387
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = 'b652c232839f'
+revision = '4255f548bfb4'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -115,19 +115,22 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('guid', sa.String(length=36), nullable=True),
     sa.Column('bpmn_process_definition_id', sa.Integer(), nullable=False),
-    sa.Column('parent_process_id', sa.Integer(), nullable=True),
+    sa.Column('top_level_process_id', sa.Integer(), nullable=True),
+    sa.Column('direct_parent_process_id', sa.Integer(), nullable=True),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('json_data_hash', sa.String(length=255), nullable=False),
     sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_definition_id'], ['bpmn_process_definition.id'], ),
-    sa.ForeignKeyConstraint(['parent_process_id'], ['bpmn_process.id'], ),
+    sa.ForeignKeyConstraint(['direct_parent_process_id'], ['bpmn_process.id'], ),
+    sa.ForeignKeyConstraint(['top_level_process_id'], ['bpmn_process.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('guid')
     )
     op.create_index(op.f('ix_bpmn_process_bpmn_process_definition_id'), 'bpmn_process', ['bpmn_process_definition_id'], unique=False)
+    op.create_index(op.f('ix_bpmn_process_direct_parent_process_id'), 'bpmn_process', ['direct_parent_process_id'], unique=False)
     op.create_index(op.f('ix_bpmn_process_json_data_hash'), 'bpmn_process', ['json_data_hash'], unique=False)
-    op.create_index(op.f('ix_bpmn_process_parent_process_id'), 'bpmn_process', ['parent_process_id'], unique=False)
+    op.create_index(op.f('ix_bpmn_process_top_level_process_id'), 'bpmn_process', ['top_level_process_id'], unique=False)
     op.create_table('bpmn_process_definition_relationship',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bpmn_process_definition_parent_id', sa.Integer(), nullable=False),
@@ -519,8 +522,9 @@ def downgrade():
     op.drop_index(op.f('ix_bpmn_process_definition_relationship_bpmn_process_definition_child_id'), table_name='bpmn_process_definition_relationship')
     op.drop_index(op.f('ix_bpmn_process_definition_relationship_bpmn_process_definition_parent_id'), table_name='bpmn_process_definition_relationship')
     op.drop_table('bpmn_process_definition_relationship')
-    op.drop_index(op.f('ix_bpmn_process_parent_process_id'), table_name='bpmn_process')
+    op.drop_index(op.f('ix_bpmn_process_top_level_process_id'), table_name='bpmn_process')
     op.drop_index(op.f('ix_bpmn_process_json_data_hash'), table_name='bpmn_process')
+    op.drop_index(op.f('ix_bpmn_process_direct_parent_process_id'), table_name='bpmn_process')
     op.drop_index(op.f('ix_bpmn_process_bpmn_process_definition_id'), table_name='bpmn_process')
     op.drop_table('bpmn_process')
     op.drop_index(op.f('ix_user_service_id'), table_name='user')
