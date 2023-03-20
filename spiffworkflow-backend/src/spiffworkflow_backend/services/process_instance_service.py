@@ -96,13 +96,6 @@ class ProcessInstanceService:
         )
         process_instance_lock_prefix = "Background"
         for process_instance in records:
-            with safe_assertion(process_instance.status == status_value) as false_assumption:
-                if false_assumption:
-                    raise AssertionError(
-                        f"Queue assumed process instance {process_instance.id} has status of {status_value} "
-                        f"when it really is {process_instance.status}"
-                    )
-
             locked = False
             processor = None
             try:
@@ -110,10 +103,12 @@ class ProcessInstanceService:
                 processor = ProcessInstanceProcessor(process_instance)
                 processor.lock_process_instance(process_instance_lock_prefix)
                 locked = True
-                execution_strategy_name = current_app.config[
-                    "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"
-                ]
-                processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                db.session.refresh(process_instance)
+                if process_instance.status == status_value:
+                    execution_strategy_name = current_app.config[
+                        "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"
+                    ]
+                    processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
