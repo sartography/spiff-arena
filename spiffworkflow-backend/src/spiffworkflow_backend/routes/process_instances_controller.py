@@ -563,11 +563,11 @@ def process_instance_task_list_without_task_data_for_me(
     """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
     return process_instance_task_list(
-        modified_process_model_identifier,
-        process_instance,
-        all_tasks,
-        spiff_step,
-        most_recent_tasks_only,
+        _modified_process_model_identifier=modified_process_model_identifier,
+        process_instance=process_instance,
+        all_tasks=all_tasks,
+        spiff_step=spiff_step,
+        most_recent_tasks_only=most_recent_tasks_only,
     )
 
 
@@ -581,11 +581,11 @@ def process_instance_task_list_without_task_data(
     """Process_instance_task_list_without_task_data."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     return process_instance_task_list(
-        modified_process_model_identifier,
-        process_instance,
-        all_tasks,
-        spiff_step,
-        most_recent_tasks_only,
+        _modified_process_model_identifier=modified_process_model_identifier,
+        process_instance=process_instance,
+        all_tasks=all_tasks,
+        spiff_step=spiff_step,
+        most_recent_tasks_only=most_recent_tasks_only,
     )
 
 
@@ -594,93 +594,140 @@ def process_instance_task_list(
     process_instance: ProcessInstanceModel,
     all_tasks: bool = False,
     spiff_step: int = 0,
+    to_task_guid: Optional[str] = None,
     most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list."""
-    step_detail_query = db.session.query(SpiffStepDetailsModel).filter(
-        SpiffStepDetailsModel.process_instance_id == process_instance.id,
+    # step_detail_query = db.session.query(SpiffStepDetailsModel).filter(
+    #     SpiffStepDetailsModel.process_instance_id == process_instance.id,
+    # )
+    #
+    # if spiff_step > 0:
+    #     step_detail_query = step_detail_query.filter(SpiffStepDetailsModel.spiff_step <= spiff_step)
+    #
+    # step_details = step_detail_query.all()
+    #
+    # processor = ProcessInstanceProcessor(process_instance)
+    # full_bpmn_process_dict = processor.full_bpmn_process_dict
+    # tasks = full_bpmn_process_dict["tasks"]
+    # subprocesses = full_bpmn_process_dict["subprocesses"]
+    #
+    # steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
+    #
+    # def restore_task(spiff_task: dict[str, Any], step_ended: float) -> None:
+    #     if spiff_task["last_state_change"] > step_ended:
+    #         spiff_task["state"] = Task.task_state_name_to_int("FUTURE")
+    #         spiff_task["data"] = {}
+    #
+    # if spiff_step > 0:
+    #     last_change = step_details[-1].end_in_seconds or 0
+    #     for spiff_task in tasks.values():
+    #         restore_task(spiff_task, last_change)
+    #     for subprocess in subprocesses.values():
+    #         for spiff_task in subprocess["tasks"].values():
+    #             restore_task(spiff_task, last_change)
+    #
+    # bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(full_bpmn_process_dict)
+    # if spiff_step > 0:
+    #     bpmn_process_instance.complete_task_from_id(UUID(step_details[-1].task_id))
+    #     for subprocess_id, subprocess in bpmn_process_instance.subprocesses.items():
+    #         if not subprocess.is_completed():
+    #             task = bpmn_process_instance.get_task(subprocess_id)
+    #             task._set_state(TaskState.WAITING)
+
+    task_model_query = db.session.query(TaskModel).filter(
+        TaskModel.process_instance_id == process_instance.id,
     )
 
-    if spiff_step > 0:
-        step_detail_query = step_detail_query.filter(SpiffStepDetailsModel.spiff_step <= spiff_step)
+    if to_task_guid is not None:
+        to_task_model = TaskModel.query.filter_by(guid=to_task_guid, process_instance_id=process_instance.id).first()
+        if to_task_model is None:
+            raise ApiError(
+                error_code="task_not_found",
+                message=(
+                    f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'"
+                ),
+                status_code=400,
+            )
+        task_model_query = task_model_query.filter(TaskModel.end_in_seconds <= to_task_model.end_in_seconds)
 
-    step_details = step_detail_query.all()
+    task_models = task_model_query.all()
 
-    processor = ProcessInstanceProcessor(process_instance)
-    full_bpmn_process_dict = processor.full_bpmn_process_dict
-    tasks = full_bpmn_process_dict["tasks"]
-    subprocesses = full_bpmn_process_dict["subprocesses"]
+    # processor = ProcessInstanceProcessor(process_instance)
+    # full_bpmn_process_dict = processor.full_bpmn_process_dict
+    # tasks = full_bpmn_process_dict["tasks"]
+    # subprocesses = full_bpmn_process_dict["subprocesses"]
+    #
+    # steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
+    #
+    # def restore_task(spiff_task: dict[str, Any], step_ended: float) -> None:
+    #     if spiff_task["last_state_change"] > step_ended:
+    #         spiff_task["state"] = Task.task_state_name_to_int("FUTURE")
+    #         spiff_task["data"] = {}
+    #
+    # if spiff_step > 0:
+    #     last_change = step_details[-1].end_in_seconds or 0
+    #     for spiff_task in tasks.values():
+    #         restore_task(spiff_task, last_change)
+    #     for subprocess in subprocesses.values():
+    #         for spiff_task in subprocess["tasks"].values():
+    #             restore_task(spiff_task, last_change)
+    #
+    # bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(full_bpmn_process_dict)
+    # if spiff_step > 0:
+    #     bpmn_process_instance.complete_task_from_id(UUID(step_details[-1].task_id))
+    #     for subprocess_id, subprocess in bpmn_process_instance.subprocesses.items():
+    #         if not subprocess.is_completed():
+    #             task = bpmn_process_instance.get_task(subprocess_id)
+    #             task._set_state(TaskState.WAITING)
 
-    steps_by_id = {step_detail.task_id: step_detail for step_detail in step_details}
+    # spiff_tasks = None
+    # if all_tasks:
+    #     spiff_tasks = bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
+    # else:
+    #     spiff_tasks = processor.get_all_user_tasks()
+    #
+    # (
+    #     subprocesses_by_child_task_ids,
+    #     task_typename_by_task_id,
+    # ) = processor.get_subprocesses_by_child_task_ids()
+    # processor.get_highest_level_calling_subprocesses_by_child_task_ids(
+    #     subprocesses_by_child_task_ids, task_typename_by_task_id
+    # )
+    #
+    # spiff_tasks_to_process = spiff_tasks
+    # if most_recent_tasks_only:
+    #     spiff_tasks_by_process_id_and_task_name: dict[str, SpiffTask] = {}
+    #     current_tasks = {}
+    #     for spiff_task in spiff_tasks_to_process:
+    #         row_id = f"{spiff_task.task_spec._wf_spec.name}:{spiff_task.task_spec.name}"
+    #         if spiff_task.state in [TaskState.READY, TaskState.WAITING]:
+    #             current_tasks[row_id] = spiff_task
+    #         if (
+    #             row_id not in spiff_tasks_by_process_id_and_task_name
+    #             or spiff_task.state > spiff_tasks_by_process_id_and_task_name[row_id].state
+    #         ):
+    #             spiff_tasks_by_process_id_and_task_name[row_id] = spiff_task
+    #     spiff_tasks_by_process_id_and_task_name.update(current_tasks)
+    #     spiff_tasks_to_process = spiff_tasks_by_process_id_and_task_name.values()
+    #
+    # response = []
+    # for spiff_task in spiff_tasks_to_process:
+    #     task_spiff_step: Optional[int] = None
+    #     if str(spiff_task.id) in steps_by_id:
+    #         task_spiff_step = steps_by_id[str(spiff_task.id)].spiff_step
+    #     calling_subprocess_task_id = subprocesses_by_child_task_ids.get(str(spiff_task.id), None)
+    #     task = ProcessInstanceService.spiff_task_to_api_task(
+    #         processor,
+    #         spiff_task,
+    #         calling_subprocess_task_id=calling_subprocess_task_id,
+    #         task_spiff_step=task_spiff_step,
+    #     )
+    #     if task.state in ["MAYBE", "LIKELY"]:
+    #         task.state = "FUTURE"
+    #     response.append(task)
 
-    def restore_task(spiff_task: dict[str, Any], step_ended: float) -> None:
-        if spiff_task["last_state_change"] > step_ended:
-            spiff_task["state"] = Task.task_state_name_to_int("FUTURE")
-            spiff_task["data"] = {}
-
-    if spiff_step > 0:
-        last_change = step_details[-1].end_in_seconds or 0
-        for spiff_task in tasks.values():
-            restore_task(spiff_task, last_change)
-        for subprocess in subprocesses.values():
-            for spiff_task in subprocess["tasks"].values():
-                restore_task(spiff_task, last_change)
-
-    bpmn_process_instance = ProcessInstanceProcessor._serializer.workflow_from_dict(full_bpmn_process_dict)
-    if spiff_step > 0:
-        bpmn_process_instance.complete_task_from_id(UUID(step_details[-1].task_id))
-        for subprocess_id, subprocess in bpmn_process_instance.subprocesses.items():
-            if not subprocess.is_completed():
-                task = bpmn_process_instance.get_task(subprocess_id)
-                task._set_state(TaskState.WAITING)
-
-    spiff_tasks = None
-    if all_tasks:
-        spiff_tasks = bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
-    else:
-        spiff_tasks = processor.get_all_user_tasks()
-
-    (
-        subprocesses_by_child_task_ids,
-        task_typename_by_task_id,
-    ) = processor.get_subprocesses_by_child_task_ids()
-    processor.get_highest_level_calling_subprocesses_by_child_task_ids(
-        subprocesses_by_child_task_ids, task_typename_by_task_id
-    )
-
-    spiff_tasks_to_process = spiff_tasks
-    if most_recent_tasks_only:
-        spiff_tasks_by_process_id_and_task_name: dict[str, SpiffTask] = {}
-        current_tasks = {}
-        for spiff_task in spiff_tasks_to_process:
-            row_id = f"{spiff_task.task_spec._wf_spec.name}:{spiff_task.task_spec.name}"
-            if spiff_task.state in [TaskState.READY, TaskState.WAITING]:
-                current_tasks[row_id] = spiff_task
-            if (
-                row_id not in spiff_tasks_by_process_id_and_task_name
-                or spiff_task.state > spiff_tasks_by_process_id_and_task_name[row_id].state
-            ):
-                spiff_tasks_by_process_id_and_task_name[row_id] = spiff_task
-        spiff_tasks_by_process_id_and_task_name.update(current_tasks)
-        spiff_tasks_to_process = spiff_tasks_by_process_id_and_task_name.values()
-
-    response = []
-    for spiff_task in spiff_tasks_to_process:
-        task_spiff_step: Optional[int] = None
-        if str(spiff_task.id) in steps_by_id:
-            task_spiff_step = steps_by_id[str(spiff_task.id)].spiff_step
-        calling_subprocess_task_id = subprocesses_by_child_task_ids.get(str(spiff_task.id), None)
-        task = ProcessInstanceService.spiff_task_to_api_task(
-            processor,
-            spiff_task,
-            calling_subprocess_task_id=calling_subprocess_task_id,
-            task_spiff_step=task_spiff_step,
-        )
-        if task.state in ["MAYBE", "LIKELY"]:
-            task.state = "FUTURE"
-        response.append(task)
-
-    return make_response(jsonify(response), 200)
+    return make_response(jsonify(task_models), 200)
 
 
 def process_instance_reset(
