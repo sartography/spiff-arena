@@ -563,6 +563,7 @@ def process_instance_task_list_without_task_data_for_me(
     spiff_step: int = 0,
     most_recent_tasks_only: bool = False,
     bpmn_process_guid: Optional[str] = None,
+    to_task_guid: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data_for_me."""
     process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
@@ -572,7 +573,8 @@ def process_instance_task_list_without_task_data_for_me(
         all_tasks=all_tasks,
         spiff_step=spiff_step,
         most_recent_tasks_only=most_recent_tasks_only,
-        bpmn_process_guid=bpmn_process_guid
+        bpmn_process_guid=bpmn_process_guid,
+        to_task_guid=to_task_guid,
     )
 
 
@@ -583,6 +585,7 @@ def process_instance_task_list_without_task_data(
     spiff_step: int = 0,
     most_recent_tasks_only: bool = False,
     bpmn_process_guid: Optional[str] = None,
+    to_task_guid: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Process_instance_task_list_without_task_data."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -592,7 +595,8 @@ def process_instance_task_list_without_task_data(
         all_tasks=all_tasks,
         spiff_step=spiff_step,
         most_recent_tasks_only=most_recent_tasks_only,
-        bpmn_process_guid=bpmn_process_guid
+        bpmn_process_guid=bpmn_process_guid,
+        to_task_guid=to_task_guid,
     )
 
 

@@ -907,12 +907,6 @@ paths:
         description: If true, this wil return all tasks associated with the process instance and not just user tasks.
         schema:
           type: boolean
-      - name: spiff_step
-        in: query
-        required: false
-        description: If set will return the tasks as they were during a specific step of execution.
-        schema:
-          type: integer
       - name: most_recent_tasks_only
         in: query
         required: false
@@ -923,6 +917,12 @@ paths:
         in: query
         required: false
         description: The guid of the bpmn process to get the tasks for.
+        schema:
+          type: string
+      - name: to_task_guid
+        in: query
+        required: false
+        description: Get the tasks only up to the given guid.
         schema:
           type: string
     get:
@@ -966,12 +966,6 @@ paths:
         description: If true, this wil return all tasks associated with the process instance and not just user tasks.
         schema:
           type: boolean
-      - name: spiff_step
-        in: query
-        required: false
-        description: If set will return the tasks as they were during a specific step of execution.
-        schema:
-          type: integer
       - name: most_recent_tasks_only
         in: query
         required: false
@@ -982,6 +976,12 @@ paths:
         in: query
         required: false
         description: The guid of the bpmn process to get the tasks for.
+        schema:
+          type: string
+      - name: to_task_guid
+        in: query
+        required: false
+        description: Get the tasks only up to the given guid.
         schema:
           type: string
     get:
