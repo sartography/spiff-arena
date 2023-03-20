@@ -66,6 +66,8 @@ class TaskModel(SpiffworkflowBaseDBModel):
     start_in_seconds: float = db.Column(db.DECIMAL(17, 6))
     end_in_seconds: Union[float, None] = db.Column(db.DECIMAL(17, 6))
 
+    data: Optional[dict] = None
+
     def python_env_data(self) -> dict:
         return JsonDataModel.find_data_dict_by_hash(self.python_env_data_hash)
 

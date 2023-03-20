@@ -523,7 +523,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     ) {
       setShowTaskDataLoading(true);
       HttpService.makeCallToBackend({
-        path: `${targetUris.processInstanceTaskDataPath}/${task.id}`,
+        path: `${targetUris.processInstanceTaskDataPath}/${task.guid}`,
         httpMethod: 'GET',
         successCallback: processTaskResult,
         failureCallback: (error: any) => {
