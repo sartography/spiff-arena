@@ -1,13 +1,9 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import base64
-from spiffworkflow_backend.services.task_service import TaskService
-from sqlalchemy.orm import aliased
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 import json
 from typing import Any
 from typing import Dict
 from typing import Optional
-from uuid import UUID
 
 import flask.wrappers
 from flask import current_app
@@ -16,12 +12,12 @@ from flask import jsonify
 from flask import make_response
 from flask import request
 from flask.wrappers import Response
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
-from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
 from sqlalchemy import or_
+from sqlalchemy.orm import aliased
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -46,7 +42,6 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
-from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
@@ -88,6 +83,7 @@ from spiffworkflow_backend.services.process_instance_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 def process_instance_create(
@@ -625,9 +621,7 @@ def process_instance_task_list(
         if to_task_model is None:
             raise ApiError(
                 error_code="task_not_found",
-                message=(
-                    f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'"
-                ),
+                message=f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'",
                 status_code=400,
             )
         task_model_query = task_model_query.filter(TaskModel.end_in_seconds <= to_task_model.end_in_seconds)
@@ -637,13 +631,18 @@ def process_instance_task_list(
     direct_parent_bpmn_process_definition_alias = aliased(BpmnProcessDefinitionModel)
 
     task_model_query = (
-        task_model_query.order_by(
-            TaskModel.id.desc()  # type: ignore
-        )
+        task_model_query.order_by(TaskModel.id.desc())  # type: ignore
         .join(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
         .join(bpmn_process_alias, bpmn_process_alias.id == TaskModel.bpmn_process_id)
-        .outerjoin(direct_parent_bpmn_process_alias, direct_parent_bpmn_process_alias.id == bpmn_process_alias.direct_parent_process_id)
-        .outerjoin(direct_parent_bpmn_process_definition_alias, direct_parent_bpmn_process_definition_alias.id == direct_parent_bpmn_process_alias.bpmn_process_definition_id)
+        .outerjoin(
+            direct_parent_bpmn_process_alias,
+            direct_parent_bpmn_process_alias.id == bpmn_process_alias.direct_parent_process_id,
+        )
+        .outerjoin(
+            direct_parent_bpmn_process_definition_alias,
+            direct_parent_bpmn_process_definition_alias.id
+            == direct_parent_bpmn_process_alias.bpmn_process_definition_id,
+        )
         .join(
             BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id
         )
@@ -651,28 +650,27 @@ def process_instance_task_list(
             BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
             BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
             direct_parent_bpmn_process_alias.guid.label("bpmn_process_direct_parent_guid"),
-            direct_parent_bpmn_process_definition_alias.bpmn_identifier.label("bpmn_process_direct_parent_bpmn_identifier"),
+            direct_parent_bpmn_process_definition_alias.bpmn_identifier.label(
+                "bpmn_process_direct_parent_bpmn_identifier"
+            ),
             TaskDefinitionModel.bpmn_identifier,
             TaskDefinitionModel.bpmn_name,
             TaskDefinitionModel.typename,
-            TaskDefinitionModel.properties_json.label('task_definition_properties_json'),  # type: ignore
+            TaskDefinitionModel.properties_json.label("task_definition_properties_json"),  # type: ignore
             TaskModel.guid,
             TaskModel.state,
         )
     )
 
     if len(bpmn_process_ids) > 0:
-        task_model_query = (
-            task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
-        )
+        task_model_query = task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
 
     task_models = task_model_query.all()
-    # import pdb; pdb.set_trace()
     if to_task_guid is not None:
         task_models_dict = json.loads(current_app.json.dumps(task_models))
         for task_model in task_models_dict:
-            if task_model['guid'] == to_task_guid and task_model['state'] == "COMPLETED":
-                task_model['state'] = "READY"
+            if task_model["guid"] == to_task_guid and task_model["state"] == "COMPLETED":
+                task_model["state"] = "READY"
         return make_response(jsonify(task_models_dict), 200)
 
     return make_response(jsonify(task_models), 200)

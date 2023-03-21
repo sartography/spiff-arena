@@ -13,7 +13,8 @@ from SpiffWorkflow.task import TaskStateNames
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel, BpmnProcessNotFoundError
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -204,7 +205,9 @@ class TaskService:
                 direct_bpmn_process_parent = top_level_process
                 for subprocess_guid, subprocess in subprocesses.items():
                     if subprocess == spiff_workflow.outer_workflow:
-                        direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(guid=str(subprocess_guid)).first()
+                        direct_bpmn_process_parent = BpmnProcessModel.query.filter_by(
+                            guid=str(subprocess_guid)
+                        ).first()
                         if direct_bpmn_process_parent is None:
                             raise BpmnProcessNotFoundError(
                                 f"Could not find bpmn process with guid: {str(subprocess_guid)} "
@@ -212,7 +215,9 @@ class TaskService:
                             )
 
                 if direct_bpmn_process_parent is None:
-                    raise BpmnProcessNotFoundError(f"Could not find a direct bpmn process parent for guid: {bpmn_process_guid}")
+                    raise BpmnProcessNotFoundError(
+                        f"Could not find a direct bpmn process parent for guid: {bpmn_process_guid}"
+                    )
 
                 bpmn_process.direct_parent_process_id = direct_bpmn_process_parent.id
 
@@ -305,7 +310,9 @@ class TaskService:
     @classmethod
     def bpmn_process_and_descendants(cls, bpmn_processes: list[BpmnProcessModel]) -> list[BpmnProcessModel]:
         bpmn_process_ids = [p.id for p in bpmn_processes]
-        direct_children = BpmnProcessModel.query.filter(BpmnProcessModel.direct_parent_process_id.in_(bpmn_process_ids)).all()  # type: ignore
+        direct_children = BpmnProcessModel.query.filter(
+            BpmnProcessModel.direct_parent_process_id.in_(bpmn_process_ids)  # type: ignore
+        ).all()
         if len(direct_children) > 0:
             return bpmn_processes + cls.bpmn_process_and_descendants(direct_children)
         return bpmn_processes
