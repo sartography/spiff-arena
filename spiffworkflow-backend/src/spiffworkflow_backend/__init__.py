@@ -69,6 +69,9 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
 
     # TODO: polling intervals for different jobs
     polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
+    user_input_required_polling_interval_in_seconds = app.config[
+        "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS"
+    ]
     # TODO: add job to release locks to simplify other queries
     # TODO: add job to delete completed entires
     # TODO: add job to run old/low priority instances so they do not get drowned out
@@ -86,7 +89,7 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
     scheduler.add_job(
         BackgroundProcessingService(app).process_user_input_required_process_instances,
         "interval",
-        seconds=120,
+        seconds=user_input_required_polling_interval_in_seconds,
     )
     scheduler.start()
 
@@ -239,12 +242,16 @@ def configure_sentry(app: flask.app.Flask) -> None:
     if sentry_traces_sample_rate is None:
         raise Exception("SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow")
 
+    sentry_env_identifier = app.config["ENV_IDENTIFIER"]
+    if app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER"):
+        sentry_env_identifier = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER")
+
     sentry_configs = {
         "dsn": app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN"),
         "integrations": [
             FlaskIntegration(),
         ],
-        "environment": app.config["ENV_IDENTIFIER"],
+        "environment": sentry_env_identifier,
         # sample_rate is the errors sample rate. we usually set it to 1 (100%)
         # so we get all errors in sentry.
         "sample_rate": float(sentry_errors_sample_rate),
