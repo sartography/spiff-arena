@@ -1273,7 +1273,7 @@ export default function ProcessInstanceListTable({
                 data-qa="filter-button"
                 className="narrow-button"
               >
-                Filter
+                Apply
               </Button>
             </ButtonSet>
           </Column>
@@ -1483,7 +1483,7 @@ export default function ProcessInstanceListTable({
     if (requiresRefilter) {
       refilterTextComponent = (
         <p className="please-press-filter-button">
-          * Please press the filter button when you have completed updating the
+          * Please press the Apply button when you have completed updating the
           filters.
         </p>
       );
