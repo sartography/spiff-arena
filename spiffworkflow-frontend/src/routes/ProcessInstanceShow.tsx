@@ -7,12 +7,10 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 import {
-  CaretRight,
   TrashCan,
   StopOutline,
   PauseOutline,
   PlayOutline,
-  CaretLeft,
   InProgress,
   Checkmark,
   Warning,

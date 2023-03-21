@@ -365,7 +365,9 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(all_spiff_tasks) > 1
         for spiff_task in all_spiff_tasks:
             assert spiff_task.state == TaskState.COMPLETED
-            assert_spiff_task_is_in_process("test_process_to_call_subprocess_script", "test_process_to_call_subprocess")
+            assert_spiff_task_is_in_process(
+                "test_process_to_call_subprocess_script", "test_process_to_call_subprocess"
+            )
             assert_spiff_task_is_in_process("top_level_subprocess_script", "top_level_subprocess")
             assert_spiff_task_is_in_process("top_level_script", "top_level_process")
 
@@ -389,7 +391,9 @@ class TestProcessInstanceProcessor(BaseTest):
                 assert bpmn_process_definition is not None
                 assert bpmn_process_definition.bpmn_identifier == "test_process_to_call_subprocess"
                 assert bpmn_process.direct_parent_process_id is not None
-                direct_parent_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
+                direct_parent_process = BpmnProcessModel.query.filter_by(
+                    id=bpmn_process.direct_parent_process_id
+                ).first()
                 assert direct_parent_process is not None
                 assert direct_parent_process.bpmn_process_definition.bpmn_identifier == "test_process_to_call"
 

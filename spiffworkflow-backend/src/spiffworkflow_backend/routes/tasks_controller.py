@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 import os
 import uuid
 from sys import exc_info
@@ -37,8 +36,8 @@ from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_principal_or_raise,
@@ -176,9 +175,7 @@ def task_data_show(
     if task_model is None:
         raise ApiError(
             error_code="task_not_found",
-            message=(
-                f"Cannot find a task with guid '{task_guid}' for process instance '{process_instance_id}'"
-            ),
+            message=f"Cannot find a task with guid '{task_guid}' for process instance '{process_instance_id}'",
             status_code=400,
         )
     task_model.data = task_model.json_data()
