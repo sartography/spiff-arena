@@ -242,12 +242,16 @@ def configure_sentry(app: flask.app.Flask) -> None:
     if sentry_traces_sample_rate is None:
         raise Exception("SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow")
 
+    sentry_env_identifier = app.config["ENV_IDENTIFIER"]
+    if app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER"):
+        sentry_env_identifier = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER")
+
     sentry_configs = {
         "dsn": app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN"),
         "integrations": [
             FlaskIntegration(),
         ],
-        "environment": app.config["ENV_IDENTIFIER"],
+        "environment": sentry_env_identifier,
         # sample_rate is the errors sample rate. we usually set it to 1 (100%)
         # so we get all errors in sentry.
         "sample_rate": float(sentry_errors_sample_rate),
