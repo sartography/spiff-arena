@@ -11,6 +11,7 @@ from urllib.parse import unquote
 
 import sentry_sdk
 from flask import current_app
+from SpiffWorkflow.bpmn.specs.events.IntermediateEvent import _BoundaryEventParent  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend import db
@@ -81,8 +82,25 @@ class ProcessInstanceService:
         process_model = ProcessModelService.get_process_model(process_model_identifier)
         return cls.create_process_instance(process_model, user)
 
-    @staticmethod
-    def do_waiting(status_value: str = ProcessInstanceStatus.waiting.value) -> None:
+    @classmethod
+    def ready_user_task_has_associated_timer(cls, processor: ProcessInstanceProcessor) -> bool:
+        for ready_user_task in processor.bpmn_process_instance.get_ready_user_tasks():
+            if isinstance(ready_user_task.parent.task_spec, _BoundaryEventParent):
+                return True
+        return False
+
+    @classmethod
+    def can_optimistically_skip(cls, processor: ProcessInstanceProcessor, status_value: str) -> bool:
+        if not current_app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_ALLOW_OPTIMISTIC_CHECKS"]:
+            return False
+
+        if processor.process_instance_model.status != status_value:
+            return True
+
+        return status_value == "user_input_required" and not cls.ready_user_task_has_associated_timer(processor)
+
+    @classmethod
+    def do_waiting(cls, status_value: str = ProcessInstanceStatus.waiting.value) -> None:
         """Do_waiting."""
         process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(status_value)
         if len(process_instance_ids_to_check) == 0:
@@ -100,6 +118,10 @@ class ProcessInstanceService:
             try:
                 current_app.logger.info(f"Processing process_instance {process_instance.id}")
                 processor = ProcessInstanceProcessor(process_instance)
+                if cls.can_optimistically_skip(processor, status_value):
+                    current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
+                    continue
+
                 processor.lock_process_instance(process_instance_lock_prefix)
                 locked = True
                 db.session.refresh(process_instance)
