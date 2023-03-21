@@ -455,9 +455,9 @@ class ProcessInstanceReportService:
 
         instance_metadata_aliases = {}
         stock_columns = ProcessInstanceReportService.get_column_names_for_model(ProcessInstanceModel)
-        if report_filter.report_column_list:
+        if isinstance(report_filter.report_column_list, list):
             process_instance_report.report_metadata["columns"] = report_filter.report_column_list
-        if report_filter.report_filter_by_list:
+        if isinstance(report_filter.report_filter_by_list, list):
             process_instance_report.report_metadata["filter_by"] = report_filter.report_filter_by_list
 
         for column in process_instance_report.report_metadata["columns"]:
