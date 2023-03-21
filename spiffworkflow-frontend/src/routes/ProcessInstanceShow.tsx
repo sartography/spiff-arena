@@ -42,12 +42,14 @@ import {
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
+  EventDefinition,
   PermissionsToCheck,
   ProcessData,
   ProcessInstance,
   ProcessInstanceMetadata,
   Task,
   TaskDefinitionPropertiesJson,
+  TaskIds,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
@@ -215,14 +217,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const getTaskIds = () => {
-    const taskIds = { completed: [], readyOrWaiting: [] };
+    const taskIds: TaskIds = { completed: [], readyOrWaiting: [] };
     if (tasks) {
       tasks.forEach(function getUserTasksElement(task: Task) {
         if (task.state === 'COMPLETED') {
-          (taskIds.completed as any).push(task);
+          taskIds.completed.push(task);
         }
         if (task.state === 'READY' || task.state === 'WAITING') {
-          (taskIds.readyOrWaiting as any).push(task);
+          taskIds.readyOrWaiting.push(task);
         }
         return null;
       });
@@ -230,20 +232,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return taskIds;
   };
 
-  const currentSpiffStep = () => {
-    if (processInstance && typeof params.to_task_guid === 'undefined') {
-      return processInstance.spiff_step || 0;
-    }
-
-    return Number(params.spiff_step);
-  };
-
-  const showingFirstSpiffStep = () => {
-    return currentSpiffStep() === 1;
+  const currentToTaskGuid = () => {
+    return params.to_task_guid;
   };
 
   const showingLastSpiffStep = () => {
-    return processInstance && currentSpiffStep() === processInstance.spiff_step;
+    return (
+      processInstance && currentToTaskGuid() === processInstance.spiff_step
+    );
   };
 
   const completionViewLink = (label: any, taskGuid: string) => {
@@ -278,7 +274,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const resetProcessInstance = () => {
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceResetPath}/${currentSpiffStep()}`,
+      path: `${targetUris.processInstanceResetPath}/${currentToTaskGuid()}`,
       successCallback: returnToLastSpiffStep,
       httpMethod: 'POST',
     });
@@ -580,7 +576,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
   const getTaskById = (taskId: string) => {
     if (tasks !== null) {
-      return tasks.find((task: any) => task.id === taskId);
+      return tasks.find((task: Task) => task.guid === taskId) || null;
     }
     return null;
   };
@@ -589,24 +585,29 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     console.log('result', result);
   };
 
+  const getParentTaskFromTask = (task: Task) => {
+    return task.properties_json.parent;
+  };
+
   const createScriptUnitTest = () => {
     if (taskToDisplay) {
-      const taskToUse: any = taskToDisplay;
-      const previousTask: any = getTaskById(taskToUse.parent);
+      const previousTask: Task | null = getTaskById(
+        getParentTaskFromTask(taskToDisplay)
+      );
       HttpService.makeCallToBackend({
         path: `/process-models/${modifiedProcessModelId}/script-unit-tests`,
         httpMethod: 'POST',
         successCallback: processScriptUnitTestCreateResult,
         postBody: {
-          bpmn_task_identifier: taskToUse.bpmn_identifier,
-          input_json: previousTask.data,
-          expected_output_json: taskToUse.data,
+          bpmn_task_identifier: taskToDisplay.bpmn_identifier,
+          input_json: previousTask ? previousTask.data : '',
+          expected_output_json: taskToDisplay.data,
         },
       });
     }
   };
 
-  const isCurrentTask = (task: any) => {
+  const isCurrentTask = (task: Task) => {
     const subprocessTypes = [
       'Subprocess',
       'Call Activity',
@@ -619,7 +620,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canEditTaskData = (task: any) => {
+  const canEditTaskData = (task: Task) => {
     return (
       processInstance &&
       ability.can('PUT', targetUris.processInstanceTaskDataPath) &&
@@ -629,7 +630,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canSendEvent = (task: any) => {
+  const canSendEvent = (task: Task) => {
     // We actually could allow this for any waiting events
     const taskTypes = ['Event Based Gateway'];
     return (
@@ -642,7 +643,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canCompleteTask = (task: any) => {
+  const canCompleteTask = (task: Task) => {
     return (
       processInstance &&
       processInstance.status === 'suspended' &&
@@ -652,7 +653,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canResetProcess = (task: any) => {
+  const canResetProcess = (task: Task) => {
     return (
       ability.can('POST', targetUris.processInstanceResetPath) &&
       processInstance &&
@@ -662,8 +663,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const getEvents = (task: any) => {
-    const handleMessage = (eventDefinition: any) => {
+  const getEvents = (task: Task) => {
+    const handleMessage = (eventDefinition: EventDefinition) => {
       if (eventDefinition.typename === 'MessageEventDefinition') {
         const newEvent = eventDefinition;
         delete newEvent.message_var;
@@ -673,7 +674,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       return eventDefinition;
     };
     if (task.event_definition && task.event_definition.event_definitions)
-      return task.event_definition.event_definitions.map((e: any) =>
+      return task.event_definition.event_definitions.map((e: EventDefinition) =>
         handleMessage(e)
       );
     if (task.event_definition) return [handleMessage(task.event_definition)];
@@ -710,11 +711,10 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (!taskToDisplay) {
       return;
     }
-    console.log('saveTaskData');
     removeError();
 
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
-    const taskToUse: any = { ...taskToDisplay, data: taskDataToDisplay };
+    const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceTaskDataPath}/${taskToUse.id}`,
       httpMethod: 'PUT',
@@ -739,13 +739,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const completeTask = (execute: boolean) => {
-    const taskToUse: any = taskToDisplay;
-    HttpService.makeCallToBackend({
-      path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToUse.id}`,
-      httpMethod: 'POST',
-      successCallback: returnToLastSpiffStep,
-      postBody: { execute },
-    });
+    if (taskToDisplay) {
+      HttpService.makeCallToBackend({
+        path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToDisplay.guid}`,
+        httpMethod: 'POST',
+        successCallback: returnToLastSpiffStep,
+        postBody: { execute },
+      });
+    }
   };
 
   const taskDisplayButtons = (task: Task) => {

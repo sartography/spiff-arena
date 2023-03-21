@@ -21,8 +21,20 @@ export interface RecentProcessModel {
   processModelDisplayName: string;
 }
 
+export interface TaskPropertiesJson {
+  parent: string;
+}
+
 export interface TaskDefinitionPropertiesJson {
   spec: string;
+}
+
+export interface EventDefinition {
+  typename: string;
+  payload: any;
+  event_definitions: [EventDefinition];
+
+  message_var?: string;
 }
 
 export interface Task {
@@ -37,10 +49,18 @@ export interface Task {
   data: any;
   state: string;
   typename: string;
+  properties_json: TaskPropertiesJson;
   task_definition_properties_json: TaskDefinitionPropertiesJson;
+
+  event_definition?: EventDefinition;
 
   // TOOD: DELETE THIS!
   task_spiff_step?: number;
+}
+
+export interface TaskIds {
+  completed: Task[];
+  readyOrWaiting: Task[];
 }
 
 export interface ProcessInstanceTask {
