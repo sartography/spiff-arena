@@ -342,11 +342,11 @@ class TaskService:
         python_env_data_hash: Optional[str] = None,
     ) -> None:
         if json_data_hash is None:
-            TaskService.update_task_data_on_task_model(task_model, {}, "json_data_hash")
+            cls.update_task_data_on_task_model(task_model, {}, "json_data_hash")
         else:
             task_model.json_data_hash = json_data_hash
         if python_env_data_hash is None:
-            TaskService.update_task_data_on_task_model(task_model, {}, "python_env_data")
+            cls.update_task_data_on_task_model(task_model, {}, "python_env_data")
         else:
             task_model.python_env_data_hash = python_env_data_hash
 
