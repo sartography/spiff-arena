@@ -298,11 +298,21 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
-        # process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        # processor = ProcessInstanceProcessor(process_instance)
-        # human_task_one = process_instance.active_human_tasks[0]
-        # spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
-        # ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        processor.suspend()
+        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.id), commit=True)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
+        import pdb; pdb.set_trace()
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        import pdb; pdb.set_trace()
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+
+        import pdb; pdb.set_trace()
 
     def test_properly_saves_tasks_when_running(
         self,

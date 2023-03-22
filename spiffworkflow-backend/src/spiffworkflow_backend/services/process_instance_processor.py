@@ -1338,52 +1338,63 @@ class ProcessInstanceProcessor:
                     TaskModel.end_in_seconds.is_(None),  # type: ignore
                 ),
                 TaskModel.process_instance_id == process_instance.id,
-                TaskModel.bpmn_process_id.in_(parent_bpmn_processes_ids),  # type: ignore
+                # TaskModel.bpmn_process_id.in_(parent_bpmn_processes_ids),  # type: ignore
             )
         )
         tasks_to_update = tasks_to_update_query.all()
 
         # run all queries before making changes to task_model
         if commit:
-            tasks_to_delete_query = db.session.query(TaskModel).filter(
-                and_(
-                    or_(
-                        TaskModel.end_in_seconds > to_task_model.end_in_seconds,
-                        TaskModel.end_in_seconds.is_not(None),  # type: ignore
-                    ),
-                    TaskModel.process_instance_id == process_instance.id,
-                    TaskModel.guid.not_in(task_models_of_parent_bpmn_processes_guids),  # type: ignore
-                    TaskModel.bpmn_process_id.not_in(parent_bpmn_processes_ids),  # type: ignore
-                )
-            )
+            # tasks_to_delete_query = db.session.query(TaskModel).filter(
+            #     and_(
+            #         or_(
+            #             TaskModel.end_in_seconds > to_task_model.end_in_seconds,
+            #             TaskModel.end_in_seconds.is_not(None),  # type: ignore
+            #         ),
+            #         TaskModel.process_instance_id == process_instance.id,
+            #         TaskModel.guid.not_in(task_models_of_parent_bpmn_processes_guids),  # type: ignore
+            #         TaskModel.bpmn_process_id.not_in(parent_bpmn_processes_ids),  # type: ignore
+            #     )
+            # )
+            #
+            # tasks_to_delete = tasks_to_delete_query.all()
+            #
+            # # delete any later tasks from to_task_model and delete bpmn processes that may be
+            # # link directly to one of those tasks.
+            # tasks_to_delete_guids = [t.guid for t in tasks_to_delete]
+            # tasks_to_delete_ids = [t.id for t in tasks_to_delete]
+            # bpmn_processes_to_delete = BpmnProcessModel.query.filter(
+            #     BpmnProcessModel.guid.in_(tasks_to_delete_guids)  # type: ignore
+            # ).order_by(BpmnProcessModel.id.desc()).all()
+            # human_tasks_to_delete = HumanTaskModel.query.filter(
+            #     HumanTaskModel.task_model_id.in_(tasks_to_delete_ids)  # type: ignore
+            # ).all()
+            #
+            #
+            # import pdb; pdb.set_trace()
+            # # ensure the correct order for foreign keys
+            # for human_task_to_delete in human_tasks_to_delete:
+            #     db.session.delete(human_task_to_delete)
+            # db.session.commit()
+            # for task_to_delete in tasks_to_delete:
+            #     db.session.delete(task_to_delete)
+            # db.session.commit()
+            # for bpmn_process_to_delete in bpmn_processes_to_delete:
+            #     db.session.delete(bpmn_process_to_delete)
+            # db.session.commit()
 
-            tasks_to_delete = tasks_to_delete_query.all()
-
-            # delete any later tasks from to_task_model and delete bpmn processes that may be
-            # link directly to one of those tasks.
-            tasks_to_delete_guids = [t.guid for t in tasks_to_delete]
-            tasks_to_delete_ids = [t.id for t in tasks_to_delete]
-            bpmn_processes_to_delete = BpmnProcessModel.query.filter(
-                BpmnProcessModel.guid.in_(tasks_to_delete_guids)  # type: ignore
-            ).all()
-            human_tasks_to_delete = HumanTaskModel.query.filter(
-                HumanTaskModel.task_model_id.in_(tasks_to_delete_ids)  # type: ignore
-            ).all()
-
-            # ensure the correct order for foreign keys
-            for human_task_to_delete in human_tasks_to_delete:
-                db.session.delete(human_task_to_delete)
-            db.session.commit()
-            for task_to_delete in tasks_to_delete:
-                db.session.delete(task_to_delete)
-            db.session.commit()
-            for bpmn_process_to_delete in bpmn_processes_to_delete:
-                db.session.delete(bpmn_process_to_delete)
-            db.session.commit()
 
             related_human_task = HumanTaskModel.query.filter_by(task_model_id=to_task_model.id).first()
             if related_human_task is not None:
                 db.session.delete(related_human_task)
+
+            tasks_to_update_ids = [t.id for t in tasks_to_update]
+            human_tasks_to_delete = HumanTaskModel.query.filter(
+                HumanTaskModel.task_model_id.in_(tasks_to_update_ids)  # type: ignore
+            ).all()
+            for human_task_to_delete in human_tasks_to_delete:
+                db.session.delete(human_task_to_delete)
+            db.session.commit()
 
         for task_to_update in tasks_to_update:
             TaskService.reset_task_model(task_to_update, state="FUTURE", commit=commit)
