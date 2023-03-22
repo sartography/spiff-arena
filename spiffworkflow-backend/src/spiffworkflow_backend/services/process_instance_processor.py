@@ -52,6 +52,8 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+from sqlalchemy import and_
+from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -85,7 +87,8 @@ from spiffworkflow_backend.models.script_attributes_context import (
 )
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
@@ -151,10 +154,6 @@ class MissingProcessInfoError(Exception):
 
 
 class SpiffStepDetailIsMissingError(Exception):
-    pass
-
-
-class TaskNotFoundError(Exception):
     pass
 
 
@@ -1312,48 +1311,103 @@ class ProcessInstanceProcessor:
         # Saving the workflow seems to reset the status
         self.suspend()
 
-    def reset_process(self, spiff_step: int) -> None:
+    @classmethod
+    def reset_process(
+        cls, process_instance: ProcessInstanceModel, to_task_guid: str, commit: Optional[bool] = False
+    ) -> None:
         """Reset a process to an earlier state."""
-        spiff_logger = logging.getLogger("spiff")
-        spiff_logger.info(
-            f"Process reset from step {spiff_step}",
-            extra=self.bpmn_process_instance.log_info(),
+        cls.add_event_to_process_instance(
+            process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
 
-        step_detail = (
-            db.session.query(SpiffStepDetailsModel)
-            .filter(
-                SpiffStepDetailsModel.process_instance_id == self.process_instance_model.id,
-                SpiffStepDetailsModel.spiff_step == spiff_step,
+        to_task_model = TaskModel.query.filter_by(guid=to_task_guid, process_instance_id=process_instance.id).first()
+        if to_task_model is None:
+            raise TaskNotFoundError(
+                f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'"
             )
-            .first()
+
+        parent_bpmn_processes, task_models_of_parent_bpmn_processes = TaskService.task_models_of_parent_bpmn_processes(
+            to_task_model
         )
-        if step_detail is not None:
-            self.increment_spiff_step()
-            self.add_step(
-                {
-                    "process_instance_id": self.process_instance_model.id,
-                    "spiff_step": self.process_instance_model.spiff_step or 1,
-                    "task_json": step_detail.task_json,
-                    "timestamp": round(time.time()),
-                }
+        task_models_of_parent_bpmn_processes_guids = [p.guid for p in task_models_of_parent_bpmn_processes if p.guid]
+        parent_bpmn_processes_ids = [p.id for p in parent_bpmn_processes]
+        tasks_to_update_query = db.session.query(TaskModel).filter(
+            and_(
+                or_(
+                    TaskModel.end_in_seconds > to_task_model.end_in_seconds,
+                    TaskModel.end_in_seconds.is_not(None),  # type: ignore
+                ),
+                TaskModel.process_instance_id == process_instance.id,
+                TaskModel.bpmn_process_id.in_(parent_bpmn_processes_ids),  # type: ignore
+            )
+        )
+        tasks_to_update = tasks_to_update_query.all()
+
+        # run all queries before making changes to task_model
+        if commit:
+            tasks_to_delete_query = db.session.query(TaskModel).filter(
+                and_(
+                    or_(
+                        TaskModel.end_in_seconds > to_task_model.end_in_seconds,
+                        TaskModel.end_in_seconds.is_not(None),  # type: ignore
+                    ),
+                    TaskModel.process_instance_id == process_instance.id,
+                    TaskModel.guid.not_in(task_models_of_parent_bpmn_processes_guids),  # type: ignore
+                    TaskModel.bpmn_process_id.not_in(parent_bpmn_processes_ids),  # type: ignore
+                )
             )
 
-            dct = self._serializer.workflow_to_dict(self.bpmn_process_instance)
-            dct["tasks"] = step_detail.task_json["tasks"]
-            dct["subprocesses"] = step_detail.task_json["subprocesses"]
-            self.bpmn_process_instance = self._serializer.workflow_from_dict(dct)
+            tasks_to_delete = tasks_to_delete_query.all()
 
-            # Cascade does not seems to work on filters, only directly through the session
-            tasks = self.bpmn_process_instance.get_tasks(TaskState.NOT_FINISHED_MASK)
-            rows = HumanTaskModel.query.filter(
-                HumanTaskModel.task_id.in_(str(t.id) for t in tasks)  # type: ignore
+            # delete any later tasks from to_task_model and delete bpmn processes that may be
+            # link directly to one of those tasks.
+            tasks_to_delete_guids = [t.guid for t in tasks_to_delete]
+            tasks_to_delete_ids = [t.id for t in tasks_to_delete]
+            bpmn_processes_to_delete = BpmnProcessModel.query.filter(
+                BpmnProcessModel.guid.in_(tasks_to_delete_guids)  # type: ignore
             ).all()
-            for row in rows:
-                db.session.delete(row)
+            human_tasks_to_delete = HumanTaskModel.query.filter(
+                HumanTaskModel.task_model_id.in_(tasks_to_delete_ids)  # type: ignore
+            ).all()
 
-            self.save()
-            self.suspend()
+            # ensure the correct order for foreign keys
+            for human_task_to_delete in human_tasks_to_delete:
+                db.session.delete(human_task_to_delete)
+            db.session.commit()
+            for task_to_delete in tasks_to_delete:
+                db.session.delete(task_to_delete)
+            db.session.commit()
+            for bpmn_process_to_delete in bpmn_processes_to_delete:
+                db.session.delete(bpmn_process_to_delete)
+            db.session.commit()
+
+            related_human_task = HumanTaskModel.query.filter_by(task_model_id=to_task_model.id).first()
+            if related_human_task is not None:
+                db.session.delete(related_human_task)
+
+        for task_to_update in tasks_to_update:
+            TaskService.reset_task_model(task_to_update, state="FUTURE", commit=commit)
+
+        parent_task_model = TaskModel.query.filter_by(guid=to_task_model.properties_json["parent"]).first()
+        if parent_task_model is None:
+            raise TaskNotFoundError(
+                f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'"
+            )
+
+        TaskService.reset_task_model(
+            to_task_model,
+            state="READY",
+            json_data_hash=parent_task_model.json_data_hash,
+            python_env_data_hash=parent_task_model.python_env_data_hash,
+            commit=commit,
+        )
+        for task_model in task_models_of_parent_bpmn_processes:
+            TaskService.reset_task_model(task_model, state="WAITING", commit=commit)
+
+        if commit:
+            processor = ProcessInstanceProcessor(process_instance)
+            processor.save()
+            processor.suspend()
 
     @staticmethod
     def get_parser() -> MyCustomParser:
