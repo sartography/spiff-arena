@@ -555,8 +555,6 @@ def process_instance_report_show(
 def process_instance_task_list_without_task_data_for_me(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
     most_recent_tasks_only: bool = False,
     bpmn_process_guid: Optional[str] = None,
     to_task_guid: Optional[str] = None,
@@ -566,8 +564,6 @@ def process_instance_task_list_without_task_data_for_me(
     return process_instance_task_list(
         _modified_process_model_identifier=modified_process_model_identifier,
         process_instance=process_instance,
-        all_tasks=all_tasks,
-        spiff_step=spiff_step,
         most_recent_tasks_only=most_recent_tasks_only,
         bpmn_process_guid=bpmn_process_guid,
         to_task_guid=to_task_guid,
@@ -577,8 +573,6 @@ def process_instance_task_list_without_task_data_for_me(
 def process_instance_task_list_without_task_data(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
     most_recent_tasks_only: bool = False,
     bpmn_process_guid: Optional[str] = None,
     to_task_guid: Optional[str] = None,
@@ -588,8 +582,6 @@ def process_instance_task_list_without_task_data(
     return process_instance_task_list(
         _modified_process_model_identifier=modified_process_model_identifier,
         process_instance=process_instance,
-        all_tasks=all_tasks,
-        spiff_step=spiff_step,
         most_recent_tasks_only=most_recent_tasks_only,
         bpmn_process_guid=bpmn_process_guid,
         to_task_guid=to_task_guid,
@@ -600,8 +592,6 @@ def process_instance_task_list(
     _modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,
     bpmn_process_guid: Optional[str] = None,
-    all_tasks: bool = False,
-    spiff_step: int = 0,
     to_task_guid: Optional[str] = None,
     most_recent_tasks_only: bool = False,
 ) -> flask.wrappers.Response:
@@ -679,12 +669,11 @@ def process_instance_task_list(
 def process_instance_reset(
     process_instance_id: int,
     modified_process_model_identifier: str,
-    spiff_step: int = 0,
+    to_task_guid: str,
 ) -> flask.wrappers.Response:
     """Reset a process instance to a particular step."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
-    processor.reset_process(spiff_step)
+    ProcessInstanceProcessor.reset_process(process_instance, to_task_guid, commit=True)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 

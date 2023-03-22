@@ -9,6 +9,7 @@ from flask import current_app
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.task import TaskStateNames
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
@@ -316,6 +317,56 @@ class TaskService:
         if len(direct_children) > 0:
             return bpmn_processes + cls.bpmn_process_and_descendants(direct_children)
         return bpmn_processes
+
+    @classmethod
+    def task_models_of_parent_bpmn_processes(
+        cls, task_model: TaskModel
+    ) -> Tuple[list[BpmnProcessModel], list[TaskModel]]:
+        bpmn_process = task_model.bpmn_process
+        task_models: list[TaskModel] = []
+        bpmn_processes: list[BpmnProcessModel] = [bpmn_process]
+        if bpmn_process.guid is not None:
+            parent_task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
+            if parent_task_model is not None:
+                b, t = cls.task_models_of_parent_bpmn_processes(parent_task_model)
+                return (bpmn_processes + b, [parent_task_model] + t)
+        return (bpmn_processes, task_models)
+
+    @classmethod
+    def reset_task_model(
+        cls,
+        task_model: TaskModel,
+        state: str,
+        commit: Optional[bool] = True,
+        json_data_hash: Optional[str] = None,
+        python_env_data_hash: Optional[str] = None,
+    ) -> None:
+        if json_data_hash is None:
+            TaskService.update_task_data_on_task_model(task_model, {}, "json_data_hash")
+        else:
+            task_model.json_data_hash = json_data_hash
+        if python_env_data_hash is None:
+            TaskService.update_task_data_on_task_model(task_model, {}, "python_env_data")
+        else:
+            task_model.python_env_data_hash = python_env_data_hash
+
+        new_properties_json = task_model.properties_json
+        task_model.state = state
+        task_model.start_in_seconds = None
+        task_model.end_in_seconds = None
+
+        if commit:
+            db.session.add(task_model)
+            db.session.commit()
+
+        new_properties_json["state"] = getattr(TaskState, state)
+        task_model.properties_json = new_properties_json
+
+        if commit:
+            # if we commit the properties json at the same time as the other items
+            # the json gets reset for some reason.
+            db.session.add(task_model)
+            db.session.commit()
 
     @classmethod
     def _create_task(
