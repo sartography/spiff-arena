@@ -107,6 +107,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         if self._should_update_task_model():
+            # TODO: also include children of the last task processed. This may help with task resets
+            #   if we have to set their states to FUTURE.
             # excludes FUTURE and COMPLETED. the others were required to get PP1 to go to completion.
             for waiting_spiff_task in bpmn_process_instance.get_tasks(
                 TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY
