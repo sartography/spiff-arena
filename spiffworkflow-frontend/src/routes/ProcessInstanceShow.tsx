@@ -68,6 +68,9 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const [tasks, setTasks] = useState<Task[] | null>(null);
   const [tasksCallHadError, setTasksCallHadError] = useState<boolean>(false);
   const [taskToDisplay, setTaskToDisplay] = useState<Task | null>(null);
+  const [taskToTimeTravelTo, setTaskToTimeTravelTo] = useState<Task | null>(
+    null
+  );
   const [taskDataToDisplay, setTaskDataToDisplay] = useState<string>('');
   const [showTaskDataLoading, setShowTaskDataLoading] =
     useState<boolean>(false);
@@ -127,45 +130,58 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   }
 
   useEffect(() => {
-    if (permissionsLoaded) {
-      const processTaskFailure = () => {
-        setTasksCallHadError(true);
-      };
-      let queryParams = '';
-      const processIdentifier = searchParams.get('process_identifier');
-      if (processIdentifier) {
-        queryParams = `?process_identifier=${processIdentifier}`;
-      }
-      let apiPath = '/process-instances/for-me';
-      if (variant === 'all') {
-        apiPath = '/process-instances';
-      }
-      HttpService.makeCallToBackend({
-        path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
-        successCallback: setProcessInstance,
-      });
-      let taskParams = '?most_recent_tasks_only=true';
-      if (typeof params.to_task_guid !== 'undefined') {
-        taskParams = `${taskParams}&to_task_guid=${params.to_task_guid}`;
-      }
-      const bpmnProcessGuid = searchParams.get('bpmn_process_guid');
-      if (bpmnProcessGuid) {
-        taskParams = `${taskParams}&bpmn_process_guid=${bpmnProcessGuid}`;
-      }
-      let taskPath = '';
-      if (ability.can('GET', taskListPath)) {
-        taskPath = `${taskListPath}${taskParams}`;
-      }
-      if (taskPath) {
-        HttpService.makeCallToBackend({
-          path: taskPath,
-          successCallback: setTasks,
-          failureCallback: processTaskFailure,
-        });
-      } else {
-        setTasksCallHadError(true);
-      }
+    if (!permissionsLoaded) {
+      return undefined;
     }
+    const processTaskFailure = () => {
+      setTasksCallHadError(true);
+    };
+    const processTasksSuccess = (results: Task[]) => {
+      if (params.to_task_guid) {
+        const matchingTask = results.find(
+          (task: Task) => task.guid === params.to_task_guid
+        );
+        if (matchingTask) {
+          setTaskToTimeTravelTo(matchingTask);
+        }
+      }
+      setTasks(results);
+    };
+    let queryParams = '';
+    const processIdentifier = searchParams.get('process_identifier');
+    if (processIdentifier) {
+      queryParams = `?process_identifier=${processIdentifier}`;
+    }
+    let apiPath = '/process-instances/for-me';
+    if (variant === 'all') {
+      apiPath = '/process-instances';
+    }
+    HttpService.makeCallToBackend({
+      path: `${apiPath}/${modifiedProcessModelId}/${params.process_instance_id}${queryParams}`,
+      successCallback: setProcessInstance,
+    });
+    let taskParams = '?most_recent_tasks_only=true';
+    if (typeof params.to_task_guid !== 'undefined') {
+      taskParams = `${taskParams}&to_task_guid=${params.to_task_guid}`;
+    }
+    const bpmnProcessGuid = searchParams.get('bpmn_process_guid');
+    if (bpmnProcessGuid) {
+      taskParams = `${taskParams}&bpmn_process_guid=${bpmnProcessGuid}`;
+    }
+    let taskPath = '';
+    if (ability.can('GET', taskListPath)) {
+      taskPath = `${taskListPath}${taskParams}`;
+    }
+    if (taskPath) {
+      HttpService.makeCallToBackend({
+        path: taskPath,
+        successCallback: processTasksSuccess,
+        failureCallback: processTaskFailure,
+      });
+    } else {
+      setTasksCallHadError(true);
+    }
+    return undefined;
   }, [
     targetUris,
     params,
@@ -231,14 +247,17 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const currentToTaskGuid = () => {
-    return params.to_task_guid;
+    if (taskToTimeTravelTo) {
+      return taskToTimeTravelTo.guid;
+    }
+    return null;
   };
 
-  // right now this just assume if to_task_guid was passed in then
+  // right now this just assume if taskToTimeTravelTo was passed in then
   // this cannot be the active task.
   // we may need a better way to figure this out.
   const showingActiveTask = () => {
-    return !params.to_task_guid;
+    return !taskToTimeTravelTo;
   };
 
   const completionViewLink = (label: any, taskGuid: string) => {
@@ -983,7 +1002,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             <div>
               <Stack orientation="horizontal" gap={2}>
                 {completionViewLink(
-                  'View state at task completion',
+                  'View process instance at the time when this task was active.',
                   taskToUse.guid
                 )}
               </Stack>
@@ -1035,21 +1054,31 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const viewMostRecentStateComponent = () => {
-    if (showingActiveTask()) {
+    if (!taskToTimeTravelTo) {
       return null;
     }
-
+    const title = `${taskToTimeTravelTo.id}: ${taskToTimeTravelTo.guid}: ${taskToTimeTravelTo.bpmn_identifier}`;
     return (
       <>
         <Grid condensed fullWidth>
-          <Column md={6} lg={8} sm={4}>
-            <Link
-              reloadDocument
-              data-qa="process-instance-view-active-task-link"
-              to={processInstanceShowPageBaseUrl}
-            >
-              View at most recent state
-            </Link>
+          <Column md={8} lg={16} sm={4}>
+            <p>
+              Viewing process instance at the time when{' '}
+              <span title={title}>
+                <strong>
+                  {taskToTimeTravelTo.bpmn_name ||
+                    taskToTimeTravelTo.bpmn_identifier}
+                </strong>
+              </span>{' '}
+              was active.{' '}
+              <Link
+                reloadDocument
+                data-qa="process-instance-view-active-task-link"
+                to={processInstanceShowPageBaseUrl}
+              >
+                View current process instance state.
+              </Link>
+            </p>
           </Column>
         </Grid>
         <br />

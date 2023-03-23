@@ -1232,6 +1232,7 @@ class ProcessInstanceProcessor:
     def manual_complete_task(self, task_id: str, execute: bool) -> None:
         """Mark the task complete optionally executing it."""
         spiff_tasks_updated = {}
+        start_in_seconds = time.time()
         spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
         if execute:
@@ -1263,6 +1264,8 @@ class ProcessInstanceProcessor:
                 spiff_tasks_updated[child.id] = child
             spiff_task.workflow.last_task = spiff_task
             spiff_tasks_updated[spiff_task.id] = spiff_task
+
+        end_in_seconds = time.time()
 
         if isinstance(spiff_task.task_spec, EndEvent):
             for task in self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK, workflow=spiff_task.workflow):
@@ -1299,6 +1302,11 @@ class ProcessInstanceProcessor:
                     new_json_data_dicts[json_data_dict["hash"]] = json_data_dict
             if bpmn_process_json_data is not None:
                 new_json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+
+            # spiff_task should be the main task we are completing and only it should get the timestamps
+            if task_model.guid == str(spiff_task.id):
+                task_model.start_in_seconds = start_in_seconds
+                task_model.end_in_seconds = end_in_seconds
 
             new_task_models[task_model.guid] = task_model
             db.session.bulk_save_objects(new_task_models.values())
