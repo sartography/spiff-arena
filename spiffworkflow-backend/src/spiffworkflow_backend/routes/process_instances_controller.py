@@ -606,6 +606,8 @@ def process_instance_task_list(
         TaskModel.process_instance_id == process_instance.id,
     )
 
+    to_task_model: Optional[TaskModel] = None
+    task_models_of_parent_bpmn_processes_guids: list[str] = []
     if to_task_guid is not None:
         to_task_model = TaskModel.query.filter_by(guid=to_task_guid, process_instance_id=process_instance.id).first()
         if to_task_model is None:
@@ -614,7 +616,28 @@ def process_instance_task_list(
                 message=f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'",
                 status_code=400,
             )
-        task_model_query = task_model_query.filter(TaskModel.end_in_seconds <= to_task_model.end_in_seconds)
+
+        if to_task_model.state != "COMPLETED":
+            # TODO: find a better term for viewing at task state
+            raise ApiError(
+                error_code="task_cannot_be_viewed_at",
+                message=(
+                    f"Desired task with guid '{to_task_guid}' for process instance '{process_instance.id}' was never"
+                    " completed and therefore cannot be viewed at."
+                ),
+                status_code=400,
+            )
+
+        _parent_bpmn_processes, task_models_of_parent_bpmn_processes = (
+            TaskService.task_models_of_parent_bpmn_processes(to_task_model)
+        )
+        task_models_of_parent_bpmn_processes_guids = [p.guid for p in task_models_of_parent_bpmn_processes if p.guid]
+        task_model_query = task_model_query.filter(
+            or_(
+                TaskModel.end_in_seconds <= to_task_model.end_in_seconds,  # type: ignore
+                TaskModel.guid.in_(task_models_of_parent_bpmn_processes_guids),  # type: ignore
+            )
+        )
 
     bpmn_process_alias = aliased(BpmnProcessModel)
     direct_parent_bpmn_process_alias = aliased(BpmnProcessModel)
@@ -649,6 +672,9 @@ def process_instance_task_list(
             TaskDefinitionModel.properties_json.label("task_definition_properties_json"),  # type: ignore
             TaskModel.guid,
             TaskModel.state,
+            TaskModel.properties_json,
+            TaskModel.end_in_seconds,
+            TaskModel.start_in_seconds,
         )
     )
 
@@ -656,11 +682,18 @@ def process_instance_task_list(
         task_model_query = task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
 
     task_models = task_model_query.all()
-    if to_task_guid is not None:
+    if to_task_model is not None:
         task_models_dict = json.loads(current_app.json.dumps(task_models))
         for task_model in task_models_dict:
-            if task_model["guid"] == to_task_guid and task_model["state"] == "COMPLETED":
-                task_model["state"] = "READY"
+            end_in_seconds = float(task_model["end_in_seconds"])
+            if to_task_model.guid == task_model["guid"] and task_model["state"] == "COMPLETED":
+                TaskService.reset_task_model_dict(task_model, state="READY")
+            elif (
+                end_in_seconds is None
+                or to_task_model.end_in_seconds is None
+                or to_task_model.end_in_seconds < end_in_seconds
+            ) and task_model["guid"] in task_models_of_parent_bpmn_processes_guids:
+                TaskService.reset_task_model_dict(task_model, state="WAITING")
         return make_response(jsonify(task_models_dict), 200)
 
     return make_response(jsonify(task_models), 200)

@@ -333,6 +333,17 @@ class TaskService:
         return (bpmn_processes, task_models)
 
     @classmethod
+    def reset_task_model_dict(
+        cls,
+        task_model: dict,
+        state: str,
+    ) -> None:
+        task_model["state"] = state
+        task_model["start_in_seconds"] = None
+        task_model["end_in_seconds"] = None
+        task_model["properties_json"]["state"] = getattr(TaskState, state)
+
+    @classmethod
     def reset_task_model(
         cls,
         task_model: TaskModel,

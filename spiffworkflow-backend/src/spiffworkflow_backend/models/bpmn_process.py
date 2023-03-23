@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -18,6 +20,7 @@ class BpmnProcessNotFoundError(Exception):
 #   "success", # boolean
 #   "bpmn_messages", # if top-level process
 #   "correlations", # if top-level process
+@dataclass
 class BpmnProcessModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process"
     id: int = db.Column(db.Integer, primary_key=True)
