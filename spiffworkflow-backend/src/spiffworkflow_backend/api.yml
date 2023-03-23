@@ -1590,7 +1590,7 @@ paths:
       - name: task_guid
         in: path
         required: true
-        description: The guid of the task to show.
+        description: The unique id of the task.
         schema:
           type: string
     get:
@@ -1605,35 +1605,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Task"
-
-  /task-data/{modified_process_model_identifier}/{process_instance_id}/{task_id}:
-    parameters:
-      - name: modified_process_model_identifier
-        in: path
-        required: true
-        description: The modified id of an existing process model
-        schema:
-          type: string
-      - name: process_instance_id
-        in: path
-        required: true
-        description: The unique id of an existing process instance.
-        schema:
-          type: integer
-      - name: task_id
-        in: path
-        required: true
-        description: The unique id of the task.
-        schema:
-          type: string
-      - name: task_guid
-        in: path
-        required: true
-        description: The guid of the task to show.
-        schema:
-          type: string
     put:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.task_data_update
+      operationId: spiffworkflow_backend.routes.tasks_controller.task_data_update
       summary: Update the task data for requested instance and task
       tags:
         - Process Instances
@@ -1738,7 +1711,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Workflow"
 
-  /task-complete/{modified_process_model_identifier}/{process_instance_id}/{task_id}:
+  /task-complete/{modified_process_model_identifier}/{process_instance_id}/{task_guid}:
     parameters:
       - name: modified_process_model_identifier
         in: path
@@ -1752,14 +1725,14 @@ paths:
         description: The unique id of the process instance
         schema:
           type: string
-      - name: task_id
+      - name: task_guid
         in: path
         required: true
         description: The unique id of the task.
         schema:
           type: string
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.manual_complete_task
+      operationId: spiffworkflow_backend.routes.tasks_controller.manual_complete_task
       summary: Mark a task complete without executing it
       tags:
         - Process Instances
@@ -1838,9 +1811,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/ServiceTask"
 
-  /tasks/{process_instance_id}/{task_id}:
+  /tasks/{process_instance_id}/{task_guid}:
     parameters:
-      - name: task_id
+      - name: task_guid
         in: path
         required: true
         description: The unique id of an existing process group.

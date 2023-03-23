@@ -218,6 +218,7 @@ def process_instance_resume(
     try:
         processor.lock_process_instance("Web")
         processor.resume()
+        processor.do_engine_steps(save=True)
     except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
