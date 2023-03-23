@@ -1,7 +1,6 @@
 import logging
 import time
 from typing import Callable
-from typing import List
 from typing import Optional
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -19,7 +18,6 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import (
@@ -43,10 +41,6 @@ class EngineStepDelegate:
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
-
-
-SpiffStepIncrementer = Callable[[], None]
-SpiffStepDetailsMappingBuilder = Callable[[SpiffTask, float, float], dict]
 
 
 class TaskModelSavingDelegate(EngineStepDelegate):
@@ -165,58 +159,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.process_instance_events[task_model.guid] = process_instance_event
 
         return task_model
-
-
-class StepDetailLoggingDelegate(EngineStepDelegate):
-    """Engine step delegate that takes care of logging spiff step details.
-
-    This separates the concerns of step execution and step logging.
-    """
-
-    def __init__(
-        self,
-        increment_spiff_step: SpiffStepIncrementer,
-        spiff_step_details_mapping: SpiffStepDetailsMappingBuilder,
-    ):
-        """__init__."""
-        self.increment_spiff_step = increment_spiff_step
-        self.spiff_step_details_mapping = spiff_step_details_mapping
-        self.step_details: List[dict] = []
-        self.current_task_start_in_seconds = 0.0
-        self.tasks_to_log = {
-            "BPMN Task",
-            "Script Task",
-            "Service Task",
-            "Default Start Event",
-            "Exclusive Gateway",
-            "Call Activity",
-            # "End Join",
-            "End Event",
-            "Default Throwing Event",
-            "Subprocess",
-            "Transactional Subprocess",
-        }
-
-    def should_log(self, spiff_task: SpiffTask) -> bool:
-        return spiff_task.task_spec.spec_type in self.tasks_to_log and not spiff_task.task_spec.name.endswith(
-            ".EndJoin"
-        )
-
-    def will_complete_task(self, spiff_task: SpiffTask) -> None:
-        if self.should_log(spiff_task):
-            self.current_task_start_in_seconds = time.time()
-            self.increment_spiff_step()
-
-    def did_complete_task(self, spiff_task: SpiffTask) -> None:
-        if self.should_log(spiff_task):
-            self.step_details.append(
-                self.spiff_step_details_mapping(spiff_task, self.current_task_start_in_seconds, time.time())
-            )
-
-    def save(self, _bpmn_process_instance: BpmnWorkflow, commit: bool = True) -> None:
-        db.session.bulk_insert_mappings(SpiffStepDetailsModel, self.step_details)
-        if commit:
-            db.session.commit()
 
 
 class ExecutionStrategy:

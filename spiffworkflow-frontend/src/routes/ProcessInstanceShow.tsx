@@ -286,14 +286,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const returnToLastSpiffStep = () => {
+  const returnToProcessInstance = () => {
     window.location.href = processInstanceShowPageBaseUrl;
   };
 
   const resetProcessInstance = () => {
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceResetPath}/${currentToTaskGuid()}`,
-      successCallback: returnToLastSpiffStep,
+      successCallback: returnToProcessInstance,
       httpMethod: 'POST',
     });
   };
@@ -763,7 +763,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       HttpService.makeCallToBackend({
         path: `/task-complete/${modifiedProcessModelId}/${params.process_instance_id}/${taskToDisplay.guid}`,
         httpMethod: 'POST',
-        successCallback: returnToLastSpiffStep,
+        successCallback: returnToProcessInstance,
         postBody: { execute },
       });
     }

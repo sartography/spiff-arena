@@ -53,9 +53,6 @@ export interface Task {
   task_definition_properties_json: TaskDefinitionPropertiesJson;
 
   event_definition?: EventDefinition;
-
-  // TOOD: DELETE THIS!
-  task_spiff_step?: number;
 }
 
 export interface TaskIds {
@@ -88,7 +85,6 @@ export interface ProcessInstanceTask {
   type: string;
   updated_at_in_seconds: number;
 
-  task_spiff_step?: number;
   potential_owner_usernames?: string;
   assigned_user_group_identifier?: string;
 }
@@ -132,7 +128,6 @@ export interface ProcessInstance {
   end_in_seconds: number | null;
   process_initiator_username: string;
   bpmn_xml_file_contents?: string;
-  spiff_step?: number;
   created_at_in_seconds: number;
   updated_at_in_seconds: number;
   bpmn_version_control_identifier: string;
