@@ -55,8 +55,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     const tableRow = [];
     const taskNameCell = (
       <td>
-        {logEntry.spiff_task_guid ||
-          logEntry.task_definition_name ||
+        {logEntry.task_definition_name ||
           (logEntry.bpmn_task_type === 'StartEvent' ? 'Process Started' : '') ||
           (logEntry.bpmn_task_type === 'EndEvent' ? 'Process Ended' : '')}
       </td>
@@ -96,17 +95,24 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         </>
       );
     }
-    // tableRow.push(<td>{convertSecondsToFormattedDateTime(logEntry.timestamp)}</td>);
-    tableRow.push(
-      <td>
-        <Link
-          data-qa="process-instance-show-link"
-          to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
-        >
-          {convertSecondsToFormattedDateTime(logEntry.timestamp)}
-        </Link>
-      </td>
+
+    let timestampComponent = (
+      <td>{convertSecondsToFormattedDateTime(logEntry.timestamp)}</td>
     );
+    if (logEntry.spiff_task_guid) {
+      timestampComponent = (
+        <td>
+          <Link
+            data-qa="process-instance-show-link"
+            to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
+            title="View state when task was completed"
+          >
+            {convertSecondsToFormattedDateTime(logEntry.timestamp)}
+          </Link>
+        </td>
+      );
+    }
+    tableRow.push(timestampComponent);
 
     return <tr key={logEntry.id}>{tableRow}</tr>;
   };
