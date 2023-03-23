@@ -4,10 +4,12 @@ import faulthandler
 import os
 import sys
 from typing import Any
+from prometheus_flask_exporter import PrometheusMetrics
 
 import connexion  # type: ignore
 import flask.app
 import flask.json
+import json
 import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
@@ -125,6 +127,16 @@ def create_app() -> flask.app.Flask:
     connexion_app = connexion.FlaskApp(__name__, server_args={"instance_path": os.environ.get("FLASK_INSTANCE_PATH")})
     app = connexion_app.app
     app.config["CONNEXION_APP"] = connexion_app
+    metrics = PrometheusMetrics(app)
+    info = metrics.info('dynamic_info', 'Something dynamic')
+    info.set(42.1)
+    # metrics.register_endpoint('/metricss')
+
+    app.config["PROMETHEUS_METRICS"] = metrics
+    app_version_data = {}
+    with open("app_version.json", 'r') as f:
+        app_version_data = json.load(f)
+    metrics.info('app_info', 'Application info', version='1.0.3')
     app.config["SESSION_TYPE"] = "filesystem"
 
     setup_config(app)
