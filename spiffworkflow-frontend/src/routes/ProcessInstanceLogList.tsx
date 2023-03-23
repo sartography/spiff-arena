@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Table, Tabs, TabList, Tab } from '@carbon/react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
@@ -10,6 +10,7 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { ProcessInstanceLogEntry } from '../interfaces';
 
 type OwnProps = {
   variant: string;
@@ -50,25 +51,26 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     isDetailedView,
   ]);
 
-  const getTableRow = (row: any) => {
+  const getTableRow = (logEntry: ProcessInstanceLogEntry) => {
     const tableRow = [];
     const taskNameCell = (
       <td>
-        {row.task_definition_name ||
-          (row.bpmn_task_type === 'StartEvent' ? 'Process Started' : '') ||
-          (row.bpmn_task_type === 'EndEvent' ? 'Process Ended' : '')}
+        {logEntry.spiff_task_guid ||
+          logEntry.task_definition_name ||
+          (logEntry.bpmn_task_type === 'StartEvent' ? 'Process Started' : '') ||
+          (logEntry.bpmn_task_type === 'EndEvent' ? 'Process Ended' : '')}
       </td>
     );
     const bpmnProcessCell = (
       <td>
-        {row.bpmn_process_definition_name ||
-          row.bpmn_process_definition_identifier}
+        {logEntry.bpmn_process_definition_name ||
+          logEntry.bpmn_process_definition_identifier}
       </td>
     );
     if (isDetailedView) {
       tableRow.push(
         <>
-          <td data-qa="paginated-entity-id">{row.id}</td>
+          <td data-qa="paginated-entity-id">{logEntry.id}</td>
           {bpmnProcessCell}
           {taskNameCell}
         </>
@@ -84,24 +86,37 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     if (isDetailedView) {
       tableRow.push(
         <>
-          <td>{row.bpmn_task_type}</td>
-          <td>{row.event_type}</td>
+          <td>{logEntry.bpmn_task_type}</td>
+          <td>{logEntry.event_type}</td>
           <td>
-            {row.username || (
+            {logEntry.username || (
               <span className="system-user-log-entry">system</span>
             )}
           </td>
         </>
       );
     }
-    tableRow.push(<td>{convertSecondsToFormattedDateTime(row.timestamp)}</td>);
-    return <tr key={row.id}>{tableRow}</tr>;
+    // tableRow.push(<td>{convertSecondsToFormattedDateTime(logEntry.timestamp)}</td>);
+    tableRow.push(
+      <td>
+        <Link
+          data-qa="process-instance-show-link"
+          to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
+        >
+          {convertSecondsToFormattedDateTime(logEntry.timestamp)}
+        </Link>
+      </td>
+    );
+
+    return <tr key={logEntry.id}>{tableRow}</tr>;
   };
 
   const buildTable = () => {
-    const rows = processInstanceLogs.map((row) => {
-      return getTableRow(row);
-    });
+    const rows = processInstanceLogs.map(
+      (logEntry: ProcessInstanceLogEntry) => {
+        return getTableRow(logEntry);
+      }
+    );
 
     const tableHeaders = [];
     if (isDetailedView) {
