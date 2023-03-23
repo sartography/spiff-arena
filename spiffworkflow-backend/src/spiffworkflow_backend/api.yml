@@ -1595,7 +1595,7 @@ paths:
           type: string
     get:
       operationId: spiffworkflow_backend.routes.tasks_controller.task_data_show
-      summary: Get task data for a single task in a spiff step.
+      summary: Get task data for a single task.
       tags:
         - Process Instances
       responses:
