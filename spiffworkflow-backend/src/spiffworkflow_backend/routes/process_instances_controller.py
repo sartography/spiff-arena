@@ -218,7 +218,6 @@ def process_instance_resume(
     try:
         processor.lock_process_instance("Web")
         processor.resume()
-        processor.do_engine_steps(save=True)
     except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
@@ -673,7 +672,6 @@ def process_instance_task_list(
             TaskDefinitionModel.properties_json.label("task_definition_properties_json"),  # type: ignore
             TaskModel.guid,
             TaskModel.state,
-            TaskModel.properties_json,
             TaskModel.end_in_seconds,
             TaskModel.start_in_seconds,
         )
