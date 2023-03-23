@@ -608,7 +608,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const isCurrentTask = (task: Task) => {
     const subprocessTypes = [
       'Subprocess',
-      'Call Activity',
+      'CallActivity',
       'Transactional Subprocess',
     ];
     return (

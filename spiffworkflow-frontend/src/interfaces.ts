@@ -300,3 +300,20 @@ export interface JsonSchemaForm {
   process_model_id: string;
   required: string[];
 }
+
+export interface ProcessInstanceLogEntry {
+  bpmn_process_definition_identifier: string;
+  bpmn_process_definition_name: string;
+  bpmn_task_type: string;
+  event_type: string;
+  spiff_task_guid: string;
+  task_definition_identifier: string;
+  task_guid: string;
+  timestamp: number;
+  id: number;
+  process_instance_id: number;
+
+  task_definition_name?: string;
+  user_id?: number;
+  username?: string;
+}
