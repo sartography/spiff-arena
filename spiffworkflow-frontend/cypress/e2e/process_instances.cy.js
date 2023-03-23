@@ -162,7 +162,7 @@ describe('process-instances', () => {
     cy.getBySel('process-instance-log-list-link').click();
     cy.getBySel('process-instance-log-detailed').click();
     cy.contains('process_model_one');
-    cy.contains('State change to COMPLETED');
+    cy.contains('task_completed');
     cy.basicPaginationTest();
   });
 
@@ -184,9 +184,12 @@ describe('process-instances', () => {
         cy.getBySel(`process-instance-status-${processStatus}`);
         // there should really only be one, but in CI there are sometimes more
         cy.get('div[aria-label="Clear all selected items"]:first').click();
+        cy.wait(1000);
         cy.get('div[aria-label="Clear all selected items"]').should(
           'not.exist'
         );
+        // it seems like the state isn't clearing as quickly as the clear label so let's wait
+        cy.wait(1000);
       }
     });
 
