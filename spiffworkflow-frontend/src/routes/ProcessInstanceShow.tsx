@@ -605,7 +605,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
   };
 
-  const isCurrentTask = (task: Task) => {
+  const isActiveTask = (task: Task) => {
     const subprocessTypes = [
       'Subprocess',
       'CallActivity',
@@ -622,7 +622,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return (
       processInstance &&
       ability.can('PUT', targetUris.processInstanceTaskDataPath) &&
-      isCurrentTask(task) &&
+      isActiveTask(task) &&
       processInstance.status === 'suspended' &&
       showingLastSpiffStep()
     );
@@ -646,7 +646,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       processInstance &&
       processInstance.status === 'suspended' &&
       ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
-      isCurrentTask(task) &&
+      isActiveTask(task) &&
       showingLastSpiffStep()
     );
   };
@@ -976,16 +976,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
-          <div>
-            <Stack orientation="horizontal" gap={2}>
-              {completionViewLink(
-                'View state at task completion',
-                taskToUse.guid
-              )}
-            </Stack>
-            <br />
-            <br />
-          </div>
+          {taskToUse.state == 'COMPLETED' ? (
+            <div>
+              <Stack orientation="horizontal" gap={2}>
+                {completionViewLink(
+                  'View state at task completion',
+                  taskToUse.guid
+                )}
+              </Stack>
+              <br />
+              <br />
+            </div>
+          ) : null}
           {selectingEvent
             ? eventSelector(candidateEvents)
             : taskDataContainer()}
@@ -1027,6 +1029,36 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       );
     }
     return elements;
+  };
+
+  // right now this just assume if to_task_guid was passed in then
+  // this cannot be the active task.
+  // we may need a better way to figure this out.
+  const showingActiveTask = () => {
+    return !!params.to_task_guid;
+  };
+
+  const viewMostRecentStateComponent = () => {
+    if (!showingActiveTask()) {
+      return null;
+    }
+
+    return (
+      <>
+        <Grid condensed fullWidth>
+          <Column md={6} lg={8} sm={4}>
+            <Link
+              reloadDocument
+              data-qa="process-instance-view-active-task-link"
+              to={processInstanceShowPageBaseUrl}
+            >
+              View at most recent state
+            </Link>
+          </Column>
+        </Grid>
+        <br />
+      </>
+    );
   };
 
   if (processInstance && (tasks || tasksCallHadError)) {
@@ -1083,6 +1115,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
         {processDataDisplayArea()}
         {processInstanceMetadataArea()}
         <br />
+        {viewMostRecentStateComponent()}
         <ReactDiagramEditor
           processModelId={processModelId || ''}
           diagramXML={processInstance.bpmn_xml_file_contents || ''}
