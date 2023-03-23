@@ -234,10 +234,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return params.to_task_guid;
   };
 
-  const showingLastSpiffStep = () => {
-    return (
-      processInstance && currentToTaskGuid() === processInstance.spiff_step
-    );
+  // right now this just assume if to_task_guid was passed in then
+  // this cannot be the active task.
+  // we may need a better way to figure this out.
+  const showingActiveTask = () => {
+    return !params.to_task_guid;
   };
 
   const completionViewLink = (label: any, taskGuid: string) => {
@@ -496,7 +497,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   const initializeTaskDataToDisplay = (task: Task | null) => {
     if (
       task &&
-      task.state === 'COMPLETED' &&
+      (task.state === 'COMPLETED' || task.state === 'READY') &&
       ability.can('GET', targetUris.processInstanceTaskDataPath)
     ) {
       setShowTaskDataLoading(true);
@@ -624,7 +625,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       ability.can('PUT', targetUris.processInstanceTaskDataPath) &&
       isActiveTask(task) &&
       processInstance.status === 'suspended' &&
-      showingLastSpiffStep()
+      showingActiveTask()
     );
   };
 
@@ -637,7 +638,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       ability.can('POST', targetUris.processInstanceSendEventPath) &&
       taskTypes.filter((t) => t === task.typename).length > 0 &&
       task.state === 'WAITING' &&
-      showingLastSpiffStep()
+      showingActiveTask()
     );
   };
 
@@ -647,18 +648,20 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       processInstance.status === 'suspended' &&
       ability.can('POST', targetUris.processInstanceCompleteTaskPath) &&
       isActiveTask(task) &&
-      showingLastSpiffStep()
+      showingActiveTask()
     );
   };
 
-  const canResetProcess = (task: Task) => {
-    return (
-      ability.can('POST', targetUris.processInstanceResetPath) &&
-      processInstance &&
-      processInstance.status === 'suspended' &&
-      task.state === 'READY' &&
-      !showingLastSpiffStep()
-    );
+  const canResetProcess = (_task: Task) => {
+    // disabling this feature for now
+    return false;
+    // return (
+    //   ability.can('POST', targetUris.processInstanceResetPath) &&
+    //   processInstance &&
+    //   processInstance.status === 'suspended' &&
+    //   task.state === 'READY' &&
+    //   !showingActiveTask()
+    // );
   };
 
   const getEvents = (task: Task) => {
@@ -714,7 +717,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     // taskToUse is copy of taskToDisplay, with taskDataToDisplay in data attribute
     const taskToUse: Task = { ...taskToDisplay, data: taskDataToDisplay };
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceTaskDataPath}/${taskToUse.id}`,
+      path: `${targetUris.processInstanceTaskDataPath}/${taskToUse.guid}`,
       httpMethod: 'PUT',
       successCallback: saveTaskDataResult,
       failureCallback: addError,
@@ -976,7 +979,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
-          {taskToUse.state == 'COMPLETED' ? (
+          {taskToUse.state === 'COMPLETED' ? (
             <div>
               <Stack orientation="horizontal" gap={2}>
                 {completionViewLink(
@@ -1031,15 +1034,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return elements;
   };
 
-  // right now this just assume if to_task_guid was passed in then
-  // this cannot be the active task.
-  // we may need a better way to figure this out.
-  const showingActiveTask = () => {
-    return !!params.to_task_guid;
-  };
-
   const viewMostRecentStateComponent = () => {
-    if (!showingActiveTask()) {
+    if (showingActiveTask()) {
       return null;
     }
 
