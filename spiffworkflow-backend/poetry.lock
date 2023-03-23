@@ -1259,6 +1259,29 @@ python-versions = ">=3.7"
 tomli = {version = ">=1.1.0", markers = "python_version < \"3.11\""}
 
 [[package]]
+name = "prometheus-client"
+version = "0.16.0"
+description = "Python client for the Prometheus monitoring system."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+twisted = ["twisted"]
+
+[[package]]
+name = "prometheus-flask-exporter"
+version = "0.22.3"
+description = "Prometheus metrics exporter for Flask"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+flask = "*"
+prometheus-client = "*"
+
+[[package]]
 name = "prompt-toolkit"
 version = "3.0.31"
 description = "Library for building powerful interactive command lines in Python"
@@ -1895,7 +1918,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "f162aac43af3af18d1a55186aeccea154fb8b05d"
+resolved_reference = "3c3345c85dd7f3b7112ad04aaa6487abbd2e9414"
 
 [[package]]
 name = "SQLAlchemy"
@@ -2274,7 +2297,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "b9ea32912509637f1378d060771de7548d93953aa3db12d6a48098f7dc15205f"
+content-hash = "d851a6df0cc4fbb77d658455deb8bc3cb9c82fa7789ea581f20b373a96ae6078"
 
 [metadata.files]
 alabaster = [
@@ -3055,6 +3078,14 @@ pre-commit = [
 pre-commit-hooks = [
     {file = "pre_commit_hooks-4.3.0-py2.py3-none-any.whl", hash = "sha256:9ccaf7c98794659d345080ee1ea0256a55ae059675045eebdbbc17c0be8c7e4b"},
     {file = "pre_commit_hooks-4.3.0.tar.gz", hash = "sha256:fda598a4c834d030727e6a615722718b47510f4bed72df4c949f95ba9f5aaf88"},
+]
+prometheus-client = [
+    {file = "prometheus_client-0.16.0-py3-none-any.whl", hash = "sha256:0836af6eb2c8f4fed712b2f279f6c0a8bbab29f9f4aa15276b91c7cb0d1616ab"},
+    {file = "prometheus_client-0.16.0.tar.gz", hash = "sha256:a03e35b359f14dd1630898543e2120addfdeacd1a6069c1367ae90fd93ad3f48"},
+]
+prometheus-flask-exporter = [
+    {file = "prometheus_flask_exporter-0.22.3-py3-none-any.whl", hash = "sha256:16e6a3a7ce0089fc7c78a6956cdf28c184c3ac518e2b46a2a8e410b68d3a84a3"},
+    {file = "prometheus_flask_exporter-0.22.3.tar.gz", hash = "sha256:32b152aeb7970cbf04616627fc5bf20d82b0918e54c54f80dc8aaef3349fd333"},
 ]
 prompt-toolkit = [
     {file = "prompt_toolkit-3.0.31-py3-none-any.whl", hash = "sha256:9696f386133df0fc8ca5af4895afe5d78f5fcfe5258111c2a79a1c3e41ffa96d"},
