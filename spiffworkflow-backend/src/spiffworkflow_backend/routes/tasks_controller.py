@@ -218,8 +218,9 @@ def task_data_update(
                 task_model, new_task_data_dict, "json_data_hash"
             )
             if json_data_dict is not None:
-                json_data = JsonDataModel(**json_data_dict)
-                db.session.add(json_data)
+                TaskService.insert_or_update_json_data_records({json_data_dict['hash']: json_data_dict})
+                # json_data = JsonDataModel(**json_data_dict)
+                # db.session.add(json_data)
                 ProcessInstanceProcessor.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_guid
                 )
