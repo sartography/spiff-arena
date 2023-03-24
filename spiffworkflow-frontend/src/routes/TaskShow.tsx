@@ -8,6 +8,7 @@ import {
   Tabs,
   Grid,
   Column,
+  ComboBox,
   Button,
   // @ts-ignore
 } from '@carbon/react';
@@ -243,8 +244,28 @@ export default function TaskShow() {
       return getFieldsWithDateValidations(jsonSchema, formData, errors);
     };
 
-    const typeAheadWidget = (props: any) => {
-      return <h1>{props.value} is here</h1>;
+    const typeAheadWidget = (config: any) => {
+      // return <h1>{config.options.category} is here</h1>;
+      return (
+        <ComboBox
+          // onInputChange={searchForProcessInitiator}
+          // onChange={(event: any) => {
+          //  setProcessInitiatorSelection(event.selectedItem);
+          //  setRequiresRefilter(true);
+          //}}
+          id={config.id}
+          //items={processInstanceInitiatorOptions}
+          //itemToString={(processInstanceInitatorOption: User) => {
+          //  if (processInstanceInitatorOption) {
+          //    return processInstanceInitatorOption.username;
+          //  }
+          //  return null;
+          //}}
+          placeholder="Start typing"
+          titleText="Type ahead widget"
+          //selectedItem={processInitiatorSelection}
+        />
+      );
     };
 
     const widgets = { typeAhead: typeAheadWidget };
