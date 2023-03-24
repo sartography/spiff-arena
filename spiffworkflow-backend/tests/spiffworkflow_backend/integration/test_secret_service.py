@@ -34,7 +34,7 @@ class SecretServiceTestHelpers(BaseTest):
 
     def add_test_process(self, client: FlaskClient, user: UserModel) -> ProcessModelInfo:
         """Add_test_process."""
-        self.create_process_group(
+        self.create_process_group_with_api(
             client,
             user,
             self.test_process_group_id,
