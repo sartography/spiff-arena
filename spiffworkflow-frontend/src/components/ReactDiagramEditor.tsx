@@ -60,14 +60,14 @@ import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from './ButtonWithConfirmation';
 import { getBpmnProcessIdentifiers, makeid } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck, ProcessInstanceTask } from '../interfaces';
+import { PermissionsToCheck, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 type OwnProps = {
   processModelId: string;
   diagramType: string;
-  readyOrWaitingProcessInstanceTasks?: ProcessInstanceTask[] | null;
-  completedProcessInstanceTasks?: ProcessInstanceTask[] | null;
+  readyOrWaitingProcessInstanceTasks?: Task[] | null;
+  completedProcessInstanceTasks?: Task[] | null;
   saveDiagram?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
   isPrimaryFile?: boolean;
@@ -364,18 +364,18 @@ export default function ReactDiagramEditor({
 
     function highlightBpmnIoElement(
       canvas: any,
-      processInstanceTask: ProcessInstanceTask,
+      task: Task,
       bpmnIoClassName: string,
       bpmnProcessIdentifiers: string[]
     ) {
-      if (checkTaskCanBeHighlighted(processInstanceTask.name)) {
+      if (checkTaskCanBeHighlighted(task.bpmn_identifier)) {
         try {
           if (
             bpmnProcessIdentifiers.includes(
-              processInstanceTask.process_identifier
+              task.bpmn_process_definition_identifier
             )
           ) {
-            canvas.addMarker(processInstanceTask.name, bpmnIoClassName);
+            canvas.addMarker(task.bpmn_identifier, bpmnIoClassName);
           }
         } catch (bpmnIoError: any) {
           // the task list also contains task for processes called from call activities which will

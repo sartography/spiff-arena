@@ -22,11 +22,10 @@
       <bpmn:script>set_in_top_level_script = 1</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:sequenceFlow id="Flow_1fktmf7" sourceRef="top_level_script" targetRef="manual_task" />
-    <bpmn:sequenceFlow id="Flow_1i7syph" sourceRef="top_level_subprocess" targetRef="top_level_call_activity" />
     <bpmn:sequenceFlow id="Flow_09gjylo" sourceRef="manual_task" targetRef="top_level_subprocess" />
     <bpmn:subProcess id="top_level_subprocess">
       <bpmn:incoming>Flow_09gjylo</bpmn:incoming>
-      <bpmn:outgoing>Flow_1i7syph</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0yxus36</bpmn:outgoing>
       <bpmn:startEvent id="Event_0g7txdo">
         <bpmn:outgoing>Flow_00k1tii</bpmn:outgoing>
       </bpmn:startEvent>
@@ -48,7 +47,7 @@ except:
       </bpmn:scriptTask>
     </bpmn:subProcess>
     <bpmn:callActivity id="top_level_call_activity" calledElement="test_process_to_call">
-      <bpmn:incoming>Flow_1i7syph</bpmn:incoming>
+      <bpmn:incoming>Flow_0yxus36</bpmn:incoming>
       <bpmn:outgoing>Flow_187mcqe</bpmn:outgoing>
     </bpmn:callActivity>
     <bpmn:exclusiveGateway id="Gateway_0p8naw0" default="Flow_1t9ywmr">
@@ -67,6 +66,7 @@ except:
       <bpmn:script>set_top_level_process_script_after_gate = 1</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:sequenceFlow id="Flow_1t9ywmr" sourceRef="Gateway_0p8naw0" targetRef="manual_task" />
+    <bpmn:sequenceFlow id="Flow_0yxus36" sourceRef="top_level_subprocess" targetRef="top_level_call_activity" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="top_level_process">
@@ -102,10 +102,6 @@ except:
         <di:waypoint x="370" y="177" />
         <di:waypoint x="400" y="177" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1i7syph_di" bpmnElement="Flow_1i7syph">
-        <di:waypoint x="630" y="177" />
-        <di:waypoint x="680" y="177" />
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_09gjylo_di" bpmnElement="Flow_09gjylo">
         <di:waypoint x="500" y="177" />
         <di:waypoint x="530" y="177" />
@@ -127,6 +123,10 @@ except:
         <di:waypoint x="860" y="100" />
         <di:waypoint x="450" y="100" />
         <di:waypoint x="450" y="137" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0yxus36_di" bpmnElement="Flow_0yxus36">
+        <di:waypoint x="630" y="177" />
+        <di:waypoint x="680" y="177" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

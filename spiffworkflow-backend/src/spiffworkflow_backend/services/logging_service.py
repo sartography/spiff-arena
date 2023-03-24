@@ -6,7 +6,6 @@ import sys
 from typing import Any
 from typing import Optional
 
-from flask import g
 from flask.app import Flask
 
 
@@ -86,28 +85,6 @@ class JsonFormatter(logging.Formatter):
             message_dict["stack_info"] = self.formatStack(record.stack_info)
 
         return json.dumps(message_dict, default=str)
-
-
-class SpiffFilter(logging.Filter):
-    """SpiffFilter."""
-
-    def __init__(self, app: Flask):
-        """__init__."""
-        self.app = app
-        super().__init__()
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        """Filter."""
-        tld = self.app.config["THREAD_LOCAL_DATA"]
-        process_instance_id = ""
-        if hasattr(tld, "process_instance_id"):
-            process_instance_id = tld.process_instance_id
-        setattr(record, "process_instance_id", process_instance_id)  # noqa: B010
-        if hasattr(tld, "spiff_step"):
-            setattr(record, "spiff_step", tld.spiff_step)  # noqa: 8010
-        if hasattr(g, "user") and g.user:
-            setattr(record, "current_user_id", g.user.id)  # noqa: B010
-        return True
 
 
 def setup_logger(app: Flask) -> None:
