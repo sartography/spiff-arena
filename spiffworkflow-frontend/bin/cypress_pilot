@@ -56,6 +56,9 @@ for attempt in $(seq 1 "$ATTEMPTS" ); do
     formatted_end_time=$(date "-d@${end_time}" +"%Y-%m-%dT%H-%M-%S")
   fi
 
-  echo "${success},$(( end_time - start_time )),${formatted_start_time},${formatted_end_time},${frontend_url}" >>"$cypress_run_file"
+  if [[ "$command" != "open" ]]; then
+    echo "Recording stats to ${cypress_run_file}"
+    echo "${success},$(( end_time - start_time )),${formatted_start_time},${formatted_end_time},${frontend_url}" >>"$cypress_run_file"
+  fi
 done
 echo "Recorded stats to ${cypress_run_file}"
