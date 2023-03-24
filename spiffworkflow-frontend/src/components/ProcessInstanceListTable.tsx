@@ -140,6 +140,7 @@ export default function ProcessInstanceListTable({
   const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
   const [requiresRefilter, setRequiresRefilter] = useState<boolean>(false);
+  const [lastColumnFilter, setLastColumnFilter] = useState<string>('');
 
   const processInstanceListPathPrefix =
     variant === 'all'
@@ -1105,10 +1106,18 @@ export default function ProcessInstanceListTable({
       return null;
     }
 
-    // get the columns anytime we display the filter options if they are empty
-    if (availableReportColumns.length < 1) {
+    let queryParamString = '';
+    if (processModelSelection) {
+      queryParamString += `?process_model_identifier=${processModelSelection.id}`;
+    }
+    // get the columns anytime we display the filter options if they are empty.
+    // and if the columns are not empty, check if the columns are stale
+    // because we selected a different process model in the filter options.
+    const columnFilterIsStale = lastColumnFilter !== queryParamString;
+    if (availableReportColumns.length < 1 || columnFilterIsStale) {
+      setLastColumnFilter(queryParamString);
       HttpService.makeCallToBackend({
-        path: `/process-instances/reports/columns`,
+        path: `/process-instances/reports/columns${queryParamString}`,
         successCallback: setAvailableReportColumns,
       });
     }
