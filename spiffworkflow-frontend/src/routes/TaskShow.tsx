@@ -245,18 +245,32 @@ export default function TaskShow() {
     };
 
     const typeAheadWidget = (config: any) => {
+      const { category } = config.options;
+      const pathForCategory = (inputText: string) => {
+        // TODO: temp until connectory-proxy api is available unless we want to use
+        //  this for the process initiator search also
+        if (category === 'users') {
+          return `/users/search?username_prefix=${inputText}`;
+        }
+
+        return `/connector-proxy/type-ahead/${category}?prefix=${inputText}&limit=100`;
+      };
+
       // TODO: move to component and useRef?
+      // TODO: make these any instead of strings
       let lastSearchTerm = '';
-      let results: string[] = [];
+      let items: string[] = [];
+      let selectedItem: string | null = null;
+
       const handleTypeAheadResult = (result: any, inputText: string) => {
         if (lastSearchTerm === inputText) {
           // setProcessInstanceInitiatorOptions(result.users);
-          results = [];
+          items = [];
           result.users.forEach((user: any) => {
-            results.push(user.username);
-            // if (user.username === inputText) {
-            //   setProcessInitiatorSelection(user);
-            // }
+            items.push(user.username);
+            if (user.username === inputText) {
+              selectedItem = user.username;
+            }
           });
         }
       };
@@ -265,7 +279,7 @@ export default function TaskShow() {
         if (inputText) {
           lastSearchTerm = inputText;
           HttpService.makeCallToBackend({
-            path: `/users/search?username_prefix=${inputText}`,
+            path: pathForCategory(inputText),
             successCallback: (result: any) =>
               handleTypeAheadResult(result, inputText),
           });
@@ -275,21 +289,21 @@ export default function TaskShow() {
       return (
         <ComboBox
           onInputChange={typeAheadSearch}
-          // onChange={(event: any) => {
-          //  setProcessInitiatorSelection(event.selectedItem);
-          //  setRequiresRefilter(true);
-          // }}
+          onChange={(event: any) => {
+            selectedItem = event.selectedItem;
+          }}
           id={config.id}
-          items={results}
-          // itemToString={(processInstanceInitatorOption: User) => {
-          //  if (processInstanceInitatorOption) {
-          //    return processInstanceInitatorOption.username;
-          //  }
-          //  return null;
-          // }}
+          items={items}
+          itemToString={(item: any) => {
+            // TODO: implement when not storing strings
+            if (item) {
+              return item;
+            }
+            return null;
+          }}
           placeholder="Start typing"
           titleText="Type ahead widget"
-          // selectedItem={processInitiatorSelection}
+          selectedItem={selectedItem}
         />
       );
     };
