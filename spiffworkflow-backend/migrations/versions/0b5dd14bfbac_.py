@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: b652c232839f
+Revision ID: 0b5dd14bfbac
 Revises: 
-Create Date: 2023-03-17 16:50:32.774216
+Create Date: 2023-03-23 16:25:33.288500
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = 'b652c232839f'
+revision = '0b5dd14bfbac'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -115,19 +115,22 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('guid', sa.String(length=36), nullable=True),
     sa.Column('bpmn_process_definition_id', sa.Integer(), nullable=False),
-    sa.Column('parent_process_id', sa.Integer(), nullable=True),
+    sa.Column('top_level_process_id', sa.Integer(), nullable=True),
+    sa.Column('direct_parent_process_id', sa.Integer(), nullable=True),
     sa.Column('properties_json', sa.JSON(), nullable=False),
     sa.Column('json_data_hash', sa.String(length=255), nullable=False),
     sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_definition_id'], ['bpmn_process_definition.id'], ),
-    sa.ForeignKeyConstraint(['parent_process_id'], ['bpmn_process.id'], ),
+    sa.ForeignKeyConstraint(['direct_parent_process_id'], ['bpmn_process.id'], ),
+    sa.ForeignKeyConstraint(['top_level_process_id'], ['bpmn_process.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('guid')
     )
     op.create_index(op.f('ix_bpmn_process_bpmn_process_definition_id'), 'bpmn_process', ['bpmn_process_definition_id'], unique=False)
+    op.create_index(op.f('ix_bpmn_process_direct_parent_process_id'), 'bpmn_process', ['direct_parent_process_id'], unique=False)
     op.create_index(op.f('ix_bpmn_process_json_data_hash'), 'bpmn_process', ['json_data_hash'], unique=False)
-    op.create_index(op.f('ix_bpmn_process_parent_process_id'), 'bpmn_process', ['parent_process_id'], unique=False)
+    op.create_index(op.f('ix_bpmn_process_top_level_process_id'), 'bpmn_process', ['top_level_process_id'], unique=False)
     op.create_table('bpmn_process_definition_relationship',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('bpmn_process_definition_parent_id', sa.Integer(), nullable=False),
@@ -248,7 +251,6 @@ def upgrade():
     sa.Column('status', sa.String(length=50), nullable=True),
     sa.Column('bpmn_version_control_type', sa.String(length=50), nullable=True),
     sa.Column('bpmn_version_control_identifier', sa.String(length=255), nullable=True),
-    sa.Column('spiff_step', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['bpmn_process_definition_id'], ['bpmn_process_definition.id'], ),
     sa.ForeignKeyConstraint(['bpmn_process_id'], ['bpmn_process.id'], ),
     sa.ForeignKeyConstraint(['process_initiator_id'], ['user.id'], ),
@@ -344,22 +346,6 @@ def upgrade():
     op.create_index(op.f('ix_process_instance_queue_locked_at_in_seconds'), 'process_instance_queue', ['locked_at_in_seconds'], unique=False)
     op.create_index(op.f('ix_process_instance_queue_locked_by'), 'process_instance_queue', ['locked_by'], unique=False)
     op.create_index(op.f('ix_process_instance_queue_status'), 'process_instance_queue', ['status'], unique=False)
-    op.create_table('spiff_step_details',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('process_instance_id', sa.Integer(), nullable=False),
-    sa.Column('spiff_step', sa.Integer(), nullable=False),
-    sa.Column('task_json', sa.JSON(), nullable=False),
-    sa.Column('task_id', sa.String(length=50), nullable=False),
-    sa.Column('task_state', sa.String(length=50), nullable=False),
-    sa.Column('bpmn_task_identifier', sa.String(length=255), nullable=False),
-    sa.Column('delta_json', sa.JSON(), nullable=True),
-    sa.Column('start_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=False),
-    sa.Column('end_in_seconds', sa.DECIMAL(precision=17, scale=6), nullable=True),
-    sa.ForeignKeyConstraint(['process_instance_id'], ['process_instance.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('process_instance_id', 'spiff_step', name='process_instance_id_spiff_step')
-    )
-    op.create_index(op.f('ix_spiff_step_details_process_instance_id'), 'spiff_step_details', ['process_instance_id'], unique=False)
     op.create_table('task',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('guid', sa.String(length=36), nullable=False),
@@ -465,8 +451,6 @@ def downgrade():
     op.drop_index(op.f('ix_task_json_data_hash'), table_name='task')
     op.drop_index(op.f('ix_task_bpmn_process_id'), table_name='task')
     op.drop_table('task')
-    op.drop_index(op.f('ix_spiff_step_details_process_instance_id'), table_name='spiff_step_details')
-    op.drop_table('spiff_step_details')
     op.drop_index(op.f('ix_process_instance_queue_status'), table_name='process_instance_queue')
     op.drop_index(op.f('ix_process_instance_queue_locked_by'), table_name='process_instance_queue')
     op.drop_index(op.f('ix_process_instance_queue_locked_at_in_seconds'), table_name='process_instance_queue')
@@ -519,8 +503,9 @@ def downgrade():
     op.drop_index(op.f('ix_bpmn_process_definition_relationship_bpmn_process_definition_child_id'), table_name='bpmn_process_definition_relationship')
     op.drop_index(op.f('ix_bpmn_process_definition_relationship_bpmn_process_definition_parent_id'), table_name='bpmn_process_definition_relationship')
     op.drop_table('bpmn_process_definition_relationship')
-    op.drop_index(op.f('ix_bpmn_process_parent_process_id'), table_name='bpmn_process')
+    op.drop_index(op.f('ix_bpmn_process_top_level_process_id'), table_name='bpmn_process')
     op.drop_index(op.f('ix_bpmn_process_json_data_hash'), table_name='bpmn_process')
+    op.drop_index(op.f('ix_bpmn_process_direct_parent_process_id'), table_name='bpmn_process')
     op.drop_index(op.f('ix_bpmn_process_bpmn_process_definition_id'), table_name='bpmn_process')
     op.drop_table('bpmn_process')
     op.drop_index(op.f('ix_user_service_id'), table_name='user')
