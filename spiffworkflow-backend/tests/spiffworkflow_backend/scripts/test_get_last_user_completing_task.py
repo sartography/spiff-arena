@@ -23,7 +23,7 @@ class TestGetLastUserCompletingTask(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_sets_permission_correctly_on_human_task."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
