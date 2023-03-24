@@ -2619,9 +2619,9 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        end_task = next(task for task in response.json if task["type"] == "End Event")
+        end_task = next(task for task in response.json if task["bpmn_identifier"] == "Event_174a838")
         response = client.get(
-            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{end_task['task_spiff_step']}",
+            f"/v1.0/task-data/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{end_task['guid']}",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
@@ -2688,17 +2688,17 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert len(response.json) == 1
-        task = response.json[0]
+        assert len(response.json) == 9
+        human_task = next(task for task in response.json if task["bpmn_identifier"] == "manual_task_one")
 
         response = client.post(
-            f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{task['id']}",
+            f"/v1.0/task-complete/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/{human_task['guid']}",
             headers=self.logged_in_headers(with_super_admin_user),
             content_type="application/json",
             data=json.dumps({"execute": False}),
         )
         assert response.json["status"] == "suspended"
-        task_model = TaskModel.query.filter_by(guid=task["id"]).first()
+        task_model = TaskModel.query.filter_by(guid=human_task["guid"]).first()
         assert task_model is not None
         assert task_model.state == "COMPLETED"
 
@@ -2707,7 +2707,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert len(response.json) == 1
+        assert len(response.json) == 9
 
     def setup_initial_groups_for_move_tests(self, client: FlaskClient, with_super_admin_user: UserModel) -> None:
         """Setup_initial_groups_for_move_tests."""

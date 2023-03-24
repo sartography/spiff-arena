@@ -47,7 +47,8 @@ def app() -> Flask:
 def with_db_and_bpmn_file_cleanup() -> None:
     """Do it cleanly!"""
     meta = db.metadata
-    db.session.execute(db.update(BpmnProcessModel, values={"parent_process_id": None}))
+    db.session.execute(db.update(BpmnProcessModel, values={"top_level_process_id": None}))
+    db.session.execute(db.update(BpmnProcessModel, values={"direct_parent_process_id": None}))
 
     for table in reversed(meta.sorted_tables):
         db.session.execute(table.delete())

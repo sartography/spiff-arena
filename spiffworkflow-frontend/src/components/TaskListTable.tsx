@@ -141,7 +141,7 @@ export default function TaskListTable({
       rowElements.push(
         <td>
           <Link
-            data-qa="process-instance-show-link"
+            data-qa="process-instance-show-link-id"
             to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
             title={`View process instance ${processInstanceTask.process_instance_id}`}
           >
