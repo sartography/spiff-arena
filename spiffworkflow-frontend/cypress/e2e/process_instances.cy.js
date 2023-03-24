@@ -182,14 +182,14 @@ describe('process-instances', () => {
         cy.url().should('include', `status=${processStatus}`);
         cy.assertAtLeastOneItemInPaginatedResults();
         cy.getBySel(`process-instance-status-${processStatus}`);
+
+        // maybe waiting a bit before trying to click makes this work consistently?
+        cy.wait(1000);
         // there should really only be one, but in CI there are sometimes more
         cy.get('div[aria-label="Clear all selected items"]:first').click();
-        cy.wait(1000);
         cy.get('div[aria-label="Clear all selected items"]').should(
           'not.exist'
         );
-        // it seems like the state isn't clearing as quickly as the clear label so let's wait
-        cy.wait(1000);
       }
     });
 
