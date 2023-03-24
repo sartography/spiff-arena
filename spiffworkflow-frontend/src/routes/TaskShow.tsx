@@ -243,6 +243,12 @@ export default function TaskShow() {
       return getFieldsWithDateValidations(jsonSchema, formData, errors);
     };
 
+    const typeAheadWidget = (props: any) => {
+      return <h1>{props.value} is here</h1>;
+    };
+
+    const widgets = { typeAhead: typeAheadWidget };
+
     return (
       <Grid fullWidth condensed>
         <Column sm={4} md={5} lg={8}>
@@ -252,6 +258,7 @@ export default function TaskShow() {
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
+            widgets={widgets}
             validator={validator}
             customValidate={customValidate}
           >
