@@ -34,10 +34,15 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance import (
+    ProcessInstanceTaskDataCannotBeUpdatedError,
+)
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
 from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_principal_or_raise,
@@ -56,6 +61,7 @@ from spiffworkflow_backend.services.process_instance_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 class TaskDataSelectOption(TypedDict):
@@ -169,58 +175,99 @@ def task_list_for_my_groups(
 def task_data_show(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    spiff_step: int = 0,
+    task_guid: int = 0,
 ) -> flask.wrappers.Response:
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    step_detail = (
-        db.session.query(SpiffStepDetailsModel)
-        .filter(
-            SpiffStepDetailsModel.process_instance_id == process_instance.id,
-            SpiffStepDetailsModel.spiff_step == spiff_step,
-        )
-        .first()
-    )
-
-    if step_detail is None:
+    task_model = TaskModel.query.filter_by(guid=task_guid, process_instance_id=process_instance_id).first()
+    if task_model is None:
         raise ApiError(
-            error_code="spiff_step_for_proces_instance_not_found",
-            message="The given spiff step for the given process instance could not be found.",
+            error_code="task_not_found",
+            message=f"Cannot find a task with guid '{task_guid}' for process instance '{process_instance_id}'",
             status_code=400,
         )
+    task_model.data = task_model.json_data()
+    return make_response(jsonify(task_model), 200)
 
-    processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-        step_detail.bpmn_task_identifier, processor.bpmn_process_instance
+
+def task_data_update(
+    process_instance_id: str,
+    modified_process_model_identifier: str,
+    task_guid: str,
+    body: Dict,
+) -> Response:
+    """Update task data."""
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    if process_instance:
+        if process_instance.status != "suspended":
+            raise ProcessInstanceTaskDataCannotBeUpdatedError(
+                "The process instance needs to be suspended to update the task-data."
+                f" It is currently: {process_instance.status}"
+            )
+
+        task_model = TaskModel.query.filter_by(guid=task_guid).first()
+        if task_model is None:
+            raise ApiError(
+                error_code="update_task_data_error",
+                message=f"Could not find Task: {task_guid} in Instance: {process_instance_id}.",
+            )
+
+        if "new_task_data" in body:
+            new_task_data_str: str = body["new_task_data"]
+            new_task_data_dict = json.loads(new_task_data_str)
+            json_data_dict = TaskService.update_task_data_on_task_model(
+                task_model, new_task_data_dict, "json_data_hash"
+            )
+            if json_data_dict is not None:
+                TaskService.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
+                # json_data = JsonDataModel(**json_data_dict)
+                # db.session.add(json_data)
+                ProcessInstanceProcessor.add_event_to_process_instance(
+                    process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_guid
+                )
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                raise ApiError(
+                    error_code="update_task_data_error",
+                    message=f"Could not update the Instance. Original error is {e}",
+                ) from e
+    else:
+        raise ApiError(
+            error_code="update_task_data_error",
+            message=f"Could not update task data for Instance: {process_instance_id}, and Task: {task_guid}.",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
     )
-    task_data = step_detail.task_json["task_data"] | step_detail.task_json["python_env"]
-    task = ProcessInstanceService.spiff_task_to_api_task(
-        processor,
-        spiff_task,
-        task_spiff_step=spiff_step,
+
+
+def manual_complete_task(
+    modified_process_model_identifier: str,
+    process_instance_id: str,
+    task_guid: str,
+    body: Dict,
+) -> Response:
+    """Mark a task complete without executing it."""
+    execute = body.get("execute", True)
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    if process_instance:
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.manual_complete_task(task_guid, execute)
+    else:
+        raise ApiError(
+            error_code="complete_task",
+            message=f"Could not complete Task {task_guid} in Instance {process_instance_id}",
+        )
+    return Response(
+        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
+        status=200,
+        mimetype="application/json",
     )
-    task.data = task_data
-
-    return make_response(jsonify(task), 200)
 
 
-def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task: Task) -> None:
-    if task.form_ui_schema is None:
-        task.form_ui_schema = {}
-
-    if task.data and "form_ui_hidden_fields" in task.data:
-        hidden_fields = task.data["form_ui_hidden_fields"]
-        for hidden_field in hidden_fields:
-            hidden_field_parts = hidden_field.split(".")
-            relevant_depth_of_ui_schema = task.form_ui_schema
-            for ii, hidden_field_part in enumerate(hidden_field_parts):
-                if hidden_field_part not in relevant_depth_of_ui_schema:
-                    relevant_depth_of_ui_schema[hidden_field_part] = {}
-                relevant_depth_of_ui_schema = relevant_depth_of_ui_schema[hidden_field_part]
-                if len(hidden_field_parts) == ii + 1:
-                    relevant_depth_of_ui_schema["ui:widget"] = "hidden"
-
-
-def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response:
+def task_show(process_instance_id: int, task_guid: str) -> flask.wrappers.Response:
     """Task_show."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
@@ -235,12 +282,12 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
         process_instance.process_model_identifier,
     )
 
-    _find_human_task_or_raise(process_instance_id, task_id)
+    _find_human_task_or_raise(process_instance_id, task_guid)
 
     form_schema_file_name = ""
     form_ui_schema_file_name = ""
     processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = _get_spiff_task_from_process_instance(task_id, process_instance, processor=processor)
+    spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
     extensions = spiff_task.task_spec.extensions
 
     if "properties" in extensions:
@@ -273,7 +320,8 @@ def task_show(process_instance_id: int, task_id: str) -> flask.wrappers.Response
                 ApiError(
                     error_code="missing_form_file",
                     message=(
-                        f"Cannot find a form file for process_instance_id: {process_instance_id}, task_id: {task_id}"
+                        f"Cannot find a form file for process_instance_id: {process_instance_id}, task_guid:"
+                        f" {task_guid}"
                     ),
                     status_code=400,
                 )
@@ -340,7 +388,7 @@ def process_data_show(
 
 def task_submit_shared(
     process_instance_id: int,
-    task_id: str,
+    task_guid: str,
     body: Dict[str, Any],
     terminate_loop: bool = False,
 ) -> flask.wrappers.Response:
@@ -357,7 +405,7 @@ def task_submit_shared(
         )
 
     processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = _get_spiff_task_from_process_instance(task_id, process_instance, processor=processor)
+    spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
     AuthorizationService.assert_user_can_complete_spiff_task(process_instance.id, spiff_task, principal.user)
 
     if spiff_task.state != TaskState.READY:
@@ -374,7 +422,7 @@ def task_submit_shared(
 
     human_task = _find_human_task_or_raise(
         process_instance_id=process_instance_id,
-        task_id=task_id,
+        task_guid=task_guid,
         only_tasks_that_can_be_completed=True,
     )
 
@@ -419,13 +467,13 @@ def task_submit_shared(
 
 def task_submit(
     process_instance_id: int,
-    task_id: str,
+    task_guid: str,
     body: Dict[str, Any],
     terminate_loop: bool = False,
 ) -> flask.wrappers.Response:
     """Task_submit_user_data."""
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
-        return task_submit_shared(process_instance_id, task_id, body, terminate_loop)
+        return task_submit_shared(process_instance_id, task_guid, body, terminate_loop)
 
 
 def _get_tasks(
@@ -580,14 +628,14 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
 
 
 def _get_spiff_task_from_process_instance(
-    task_id: str,
+    task_guid: str,
     process_instance: ProcessInstanceModel,
     processor: Union[ProcessInstanceProcessor, None] = None,
 ) -> SpiffTask:
     """Get_spiff_task_from_process_instance."""
     if processor is None:
         processor = ProcessInstanceProcessor(process_instance)
-    task_uuid = uuid.UUID(task_id)
+    task_uuid = uuid.UUID(task_guid)
     spiff_task = processor.bpmn_process_instance.get_task(task_uuid)
 
     if spiff_task is None:
@@ -679,15 +727,15 @@ def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
 
 def _find_human_task_or_raise(
     process_instance_id: int,
-    task_id: str,
+    task_guid: str,
     only_tasks_that_can_be_completed: bool = False,
 ) -> HumanTaskModel:
     if only_tasks_that_can_be_completed:
         human_task_query = HumanTaskModel.query.filter_by(
-            process_instance_id=process_instance_id, task_id=task_id, completed=False
+            process_instance_id=process_instance_id, task_id=task_guid, completed=False
         )
     else:
-        human_task_query = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_id)
+        human_task_query = HumanTaskModel.query.filter_by(process_instance_id=process_instance_id, task_id=task_guid)
 
     human_task: HumanTaskModel = human_task_query.first()
     if human_task is None:
@@ -695,10 +743,27 @@ def _find_human_task_or_raise(
             ApiError(
                 error_code="no_human_task",
                 message=(
-                    f"Cannot find a task to complete for task id '{task_id}' and"
+                    f"Cannot find a task to complete for task id '{task_guid}' and"
                     f" process instance {process_instance_id}."
                 ),
                 status_code=500,
             )
         )
     return human_task
+
+
+def _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task: Task) -> None:
+    if task.form_ui_schema is None:
+        task.form_ui_schema = {}
+
+    if task.data and "form_ui_hidden_fields" in task.data:
+        hidden_fields = task.data["form_ui_hidden_fields"]
+        for hidden_field in hidden_fields:
+            hidden_field_parts = hidden_field.split(".")
+            relevant_depth_of_ui_schema = task.form_ui_schema
+            for ii, hidden_field_part in enumerate(hidden_field_parts):
+                if hidden_field_part not in relevant_depth_of_ui_schema:
+                    relevant_depth_of_ui_schema[hidden_field_part] = {}
+                relevant_depth_of_ui_schema = relevant_depth_of_ui_schema[hidden_field_part]
+                if len(hidden_field_parts) == ii + 1:
+                    relevant_depth_of_ui_schema["ui:widget"] = "hidden"

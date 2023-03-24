@@ -27,7 +27,7 @@
     </bpmn:intermediateCatchEvent>
     <bpmn:sequenceFlow id="Flow_0tzaigt" sourceRef="Gateway_0n53kj7" targetRef="Event_0himdx6" />
     <bpmn:sequenceFlow id="Flow_1vld4r2" sourceRef="Gateway_0n53kj7" targetRef="Event_0e4owa3" />
-    <bpmn:sequenceFlow id="Flow_13ai5vv" sourceRef="Event_0e4owa3" targetRef="Activity_0uum4kq" />
+    <bpmn:sequenceFlow id="Flow_13ai5vv" sourceRef="Event_0e4owa3" targetRef="manual_task_one" />
     <bpmn:endEvent id="Event_0vmxgb9">
       <bpmn:incoming>Flow_1q47ol8</bpmn:incoming>
     </bpmn:endEvent>
@@ -36,7 +36,7 @@
     <bpmn:endEvent id="Event_174a838">
       <bpmn:incoming>Flow_1w3n49n</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1vwnf3n" sourceRef="Activity_0uum4kq" targetRef="Event_1ixib8a" />
+    <bpmn:sequenceFlow id="Flow_1vwnf3n" sourceRef="manual_task_one" targetRef="Event_1ixib8a" />
     <bpmn:intermediateCatchEvent id="Event_0e4owa3">
       <bpmn:incoming>Flow_1vld4r2</bpmn:incoming>
       <bpmn:outgoing>Flow_13ai5vv</bpmn:outgoing>
@@ -44,7 +44,7 @@
         <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">"PT1H"</bpmn:timeDuration>
       </bpmn:timerEventDefinition>
     </bpmn:intermediateCatchEvent>
-    <bpmn:manualTask id="Activity_0uum4kq" name="Any Task">
+    <bpmn:manualTask id="manual_task_one" name="Any Task">
       <bpmn:extensionElements>
         <spiffworkflow:instructionsForEndUser>Click the button.</spiffworkflow:instructionsForEndUser>
       </bpmn:extensionElements>
@@ -91,7 +91,7 @@
       <bpmndi:BPMNShape id="Event_0e4owa3_di" bpmnElement="Event_0e4owa3">
         <dc:Bounds x="392" y="272" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_104jmxm_di" bpmnElement="Activity_0uum4kq">
+      <bpmndi:BPMNShape id="Activity_104jmxm_di" bpmnElement="manual_task_one">
         <dc:Bounds x="480" y="250" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
