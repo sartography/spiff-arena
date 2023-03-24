@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
 
@@ -245,25 +245,51 @@ export default function TaskShow() {
     };
 
     const typeAheadWidget = (config: any) => {
-      // return <h1>{config.options.category} is here</h1>;
+      // TODO: move to component and useRef?
+      let lastSearchTerm = '';
+      let results: string[] = [];
+      const handleTypeAheadResult = (result: any, inputText: string) => {
+        if (lastSearchTerm === inputText) {
+          // setProcessInstanceInitiatorOptions(result.users);
+          results = [];
+          result.users.forEach((user: any) => {
+            results.push(user.username);
+            // if (user.username === inputText) {
+            //   setProcessInitiatorSelection(user);
+            // }
+          });
+        }
+      };
+
+      const typeAheadSearch = (inputText: string) => {
+        if (inputText) {
+          lastSearchTerm = inputText;
+          HttpService.makeCallToBackend({
+            path: `/users/search?username_prefix=${inputText}`,
+            successCallback: (result: any) =>
+              handleTypeAheadResult(result, inputText),
+          });
+        }
+      };
+
       return (
         <ComboBox
-          // onInputChange={searchForProcessInitiator}
+          onInputChange={typeAheadSearch}
           // onChange={(event: any) => {
           //  setProcessInitiatorSelection(event.selectedItem);
           //  setRequiresRefilter(true);
-          //}}
+          // }}
           id={config.id}
-          //items={processInstanceInitiatorOptions}
-          //itemToString={(processInstanceInitatorOption: User) => {
+          items={results}
+          // itemToString={(processInstanceInitatorOption: User) => {
           //  if (processInstanceInitatorOption) {
           //    return processInstanceInitatorOption.username;
           //  }
           //  return null;
-          //}}
+          // }}
           placeholder="Start typing"
           titleText="Type ahead widget"
-          //selectedItem={processInitiatorSelection}
+          // selectedItem={processInitiatorSelection}
         />
       );
     };
