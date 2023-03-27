@@ -89,6 +89,12 @@ while read -r input_line; do
       echo "Importing: $input_line"
       user_email=$(awk -F ',' '{print $1}' <<<"$input_line")
       username=$(awk -F '@' '{print $1}' <<<"$user_email")
+
+      if [[ "$username" == "$ADMIN_USERNAME" || "$user_email" == "$ADMIN_USERNAME" ]]; then
+        >&2 echo "ERROR: The user used as the admin user matches a user in the current import list. This should not happen. Comment out that user from the list or use a different admin user: ${ADMIN_USERNAME}"
+        exit 1
+      fi
+
       user_attribute_one=$(awk -F ',' '{print $2}' <<<"$input_line")
       http_code=$(add_user "$user_email" "$username" "$user_attribute_one")
 

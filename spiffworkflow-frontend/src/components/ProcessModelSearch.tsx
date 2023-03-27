@@ -36,10 +36,17 @@ export default function ProcessModelSearch({
 
   const shouldFilterProcessModel = (options: any) => {
     const processModel: ProcessModel = options.item;
-    const { inputValue } = options;
-    return getFullProcessModelLabel(processModel)
-      .toLowerCase()
-      .includes((inputValue || '').toLowerCase());
+    let { inputValue } = options;
+    if (!inputValue) {
+      inputValue = '';
+    }
+    const inputValueArray = inputValue.split(' ');
+    const processModelLowerCase =
+      getFullProcessModelLabel(processModel).toLowerCase();
+
+    return inputValueArray.every((i: any) => {
+      return processModelLowerCase.includes((i || '').toLowerCase());
+    });
   };
   return (
     <ComboBox
