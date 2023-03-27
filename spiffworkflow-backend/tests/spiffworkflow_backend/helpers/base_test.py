@@ -78,7 +78,7 @@ class BaseTest:
         if bpmn_file_location is None:
             bpmn_file_location = process_model_id
 
-        self.create_process_group(client, user, process_group_description, process_group_display_name)
+        self.create_process_group_with_api(client, user, process_group_description, process_group_display_name)
 
         self.create_process_model_with_api(
             client,
@@ -97,6 +97,15 @@ class BaseTest:
         return process_model_identifier
 
     def create_process_group(
+        self,
+        process_group_id: str,
+        display_name: str = "",
+    ) -> ProcessGroup:
+        """Create_process_group."""
+        process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
+        return ProcessModelService.add_process_group(process_group)
+
+    def create_process_group_with_api(
         self,
         client: FlaskClient,
         user: Any,
@@ -353,3 +362,20 @@ class BaseTest:
     def un_modify_modified_process_identifier_for_path_param(self, modified_identifier: str) -> str:
         """Un_modify_modified_process_model_id."""
         return modified_identifier.replace(":", "/")
+
+    def create_process_model_with_metadata(self) -> ProcessModelInfo:
+        self.create_process_group("test_group", "test_group")
+        process_model = load_test_spec(
+            "test_group/hello_world",
+            process_model_source_directory="nested-task-data-structure",
+        )
+        ProcessModelService.update_process_model(
+            process_model,
+            {
+                "metadata_extraction_paths": [
+                    {"key": "awesome_var", "path": "outer.inner"},
+                    {"key": "invoice_number", "path": "invoice_number"},
+                ]
+            },
+        )
+        return process_model

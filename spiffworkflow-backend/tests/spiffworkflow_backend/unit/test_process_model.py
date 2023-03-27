@@ -14,7 +14,6 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
 class TestProcessModel(BaseTest):
@@ -33,7 +32,7 @@ class TestProcessModel(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_run_process_model_with_call_activities."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             "test_group/call_activity_test",
             # bpmn_file_name="call_activity_test.bpmn",
@@ -53,7 +52,7 @@ class TestProcessModel(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_run_process_model_with_call_activities."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             "test_group/call_activity_nested",
             process_model_source_directory="call_activity_nested",
@@ -84,7 +83,7 @@ class TestProcessModel(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_run_process_model_with_call_activities."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             "test_group/call_activity_nested",
             process_model_source_directory="call_activity_nested",
@@ -120,20 +119,7 @@ class TestProcessModel(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_run_process_model_with_call_activities."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
-        process_model = load_test_spec(
-            "test_group/hello_world",
-            process_model_source_directory="nested-task-data-structure",
-        )
-        ProcessModelService.update_process_model(
-            process_model,
-            {
-                "metadata_extraction_paths": [
-                    {"key": "awesome_var", "path": "outer.inner"},
-                    {"key": "invoice_number", "path": "invoice_number"},
-                ]
-            },
-        )
+        process_model = self.create_process_model_with_metadata()
 
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
