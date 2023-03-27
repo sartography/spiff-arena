@@ -33,7 +33,7 @@ class TestPermissions(BaseTest):
     ) -> None:
         """Test_user_can_be_given_permission_to_administer_process_group."""
         process_group_id = "group-a"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
         load_test_spec(
             "group-a/timers_intermediate_catch_event",
             bpmn_file_name="timers_intermediate_catch_event.bpmn",

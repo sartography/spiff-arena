@@ -118,7 +118,7 @@ class TestProcessApi(BaseTest):
         process_group_id = "test_process_group"
         process_group_display_name = "Test Process Group"
         # creates the group directory, and the json file
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_display_name)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_display_name)
 
         process_model_id = "sample"
         model_display_name = "Sample"
@@ -169,7 +169,7 @@ class TestProcessApi(BaseTest):
         process_group_description = "Test Process Group"
         process_model_id = "sample"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_description)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_description)
 
         text = "Create a Bug Tracker process model "
         text += "with a Bug Details form that collects summary, description, and priority"
@@ -237,7 +237,9 @@ class TestProcessApi(BaseTest):
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         initial_primary_process_id = "sample"
         terminal_primary_process_id = "new_process_id"
-        self.create_process_group(client=client, user=with_super_admin_user, process_group_id=process_group_id)
+        self.create_process_group_with_api(
+            client=client, user=with_super_admin_user, process_group_id=process_group_id
+        )
 
         bpmn_file_name = f"{process_model_id}.bpmn"
         bpmn_file_source_directory = process_model_id
@@ -281,7 +283,7 @@ class TestProcessApi(BaseTest):
         process_group_description = "Test Process Group"
         process_model_id = "sample"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_description)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_description)
         self.create_process_model_with_api(
             client,
             process_model_id=process_model_identifier,
@@ -317,7 +319,7 @@ class TestProcessApi(BaseTest):
         bpmn_file_location = "sample"
         process_model_identifier = f"{test_process_group_id}/{test_process_model_id}"
         modified_process_model_identifier = process_model_identifier.replace("/", ":")
-        self.create_process_group(client, with_super_admin_user, test_process_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, test_process_group_id)
         self.create_process_model_with_api(client, process_model_identifier, user=with_super_admin_user)
         bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, bpmn_file_location)
         self.create_spec_file(
@@ -362,7 +364,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_model_update."""
-        self.create_process_group(client, with_super_admin_user, "test_process_group", "Test Process Group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_process_group", "Test Process Group")
         process_model_identifier = "test_process_group/make_cookies"
         self.create_process_model_with_api(
             client,
@@ -403,7 +405,7 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_process_model_list_all."""
         group_id = "test_group/test_sub_group"
-        self.create_process_group(client, with_super_admin_user, group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, group_id)
 
         # add 5 models to the group
         for i in range(5):
@@ -439,7 +441,7 @@ class TestProcessApi(BaseTest):
         """Test_process_model_list."""
         # create a group
         group_id = "test_group"
-        self.create_process_group(client, with_super_admin_user, group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, group_id)
 
         # add 5 models to the group
         for i in range(5):
@@ -603,7 +605,7 @@ class TestProcessApi(BaseTest):
         process_group_id = "test"
         process_group_display_name = "My Process Group"
 
-        self.create_process_group(
+        self.create_process_group_with_api(
             client,
             with_super_admin_user,
             process_group_id,
@@ -632,7 +634,7 @@ class TestProcessApi(BaseTest):
         group_id = "test_process_group"
         group_display_name = "Test Group"
 
-        self.create_process_group(client, with_super_admin_user, group_id, display_name=group_display_name)
+        self.create_process_group_with_api(client, with_super_admin_user, group_id, display_name=group_display_name)
         process_group = ProcessModelService.get_process_group(group_id)
 
         assert process_group.display_name == group_display_name
@@ -662,7 +664,9 @@ class TestProcessApi(BaseTest):
         for i in range(5):
             group_id = f"test_process_group_{i}"
             group_display_name = f"Test Group {i}"
-            self.create_process_group(client, with_super_admin_user, group_id, display_name=group_display_name)
+            self.create_process_group_with_api(
+                client, with_super_admin_user, group_id, display_name=group_display_name
+            )
 
         # get all groups
         response = client.get(
@@ -787,7 +791,7 @@ class TestProcessApi(BaseTest):
         process_group_description = "Test Group"
         process_model_id = "random_fact"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_description)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_description)
         self.create_process_model_with_api(
             client,
             process_model_id=process_model_identifier,
@@ -1091,7 +1095,7 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_get_process_model_when_not_found."""
         process_model_dir_name = "THIS_NO_EXISTS"
-        group_id = self.create_process_group(client, with_super_admin_user, "my_group")
+        group_id = self.create_process_group_with_api(client, with_super_admin_user, "my_group")
         bad_process_model_id = f"{group_id}/{process_model_dir_name}"
         modified_bad_process_model_id = bad_process_model_id.replace("/", ":")
         response = client.get(
@@ -2714,7 +2718,7 @@ class TestProcessApi(BaseTest):
         groups = ["group_a", "group_b", "group_b/group_bb"]
         # setup initial groups
         for group in groups:
-            self.create_process_group(client, with_super_admin_user, group, display_name=group)
+            self.create_process_group_with_api(client, with_super_admin_user, group, display_name=group)
         # make sure initial groups exist
         for group in groups:
             persisted = ProcessModelService.get_process_group(group)
@@ -2783,7 +2787,7 @@ class TestProcessApi(BaseTest):
         sub_group_id = "sub_group"
         original_location = "group_a"
         original_sub_path = f"{original_location}/{sub_group_id}"
-        self.create_process_group(client, with_super_admin_user, original_sub_path, display_name=sub_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, original_sub_path, display_name=sub_group_id)
         # make sure original subgroup exists
         persisted = ProcessModelService.get_process_group(original_sub_path)
         assert persisted is not None
@@ -2835,7 +2839,7 @@ class TestProcessApi(BaseTest):
     #         )
     #
     #         process_group_id = "test_group"
-    #         self.create_process_group(
+    #         self.create_process_group_with_api(
     #             client, with_super_admin_user, process_group_id, process_group_id
     #         )
     #
@@ -3077,6 +3081,18 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_get_process_instance_list_with_report_metadata."""
+        process_model = self.create_process_model_with_metadata()
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        process_instance_metadata = ProcessInstanceMetadataModel.query.filter_by(
+            process_instance_id=process_instance.id
+        ).all()
+        assert len(process_instance_metadata) == 2
+
         process_model = load_test_spec(
             process_model_id="save_process_instance_metadata/save_process_instance_metadata",
             bpmn_file_name="save_process_instance_metadata.bpmn",
@@ -3115,10 +3131,34 @@ class TestProcessApi(BaseTest):
                 "filterable": False,
             },
             {"Header": "Status", "accessor": "status", "filterable": False},
+            {"Header": "awesome_var", "accessor": "awesome_var", "filterable": True},
+            {"Header": "invoice_number", "accessor": "invoice_number", "filterable": True},
             {"Header": "key1", "accessor": "key1", "filterable": True},
             {"Header": "key2", "accessor": "key2", "filterable": True},
             {"Header": "key3", "accessor": "key3", "filterable": True},
         ]
+
+        # pluck accessor from each dict in list
+        accessors = [column["accessor"] for column in response.json]
+        stock_columns = [
+            "id",
+            "process_model_display_name",
+            "start_in_seconds",
+            "end_in_seconds",
+            "process_initiator_username",
+            "status",
+        ]
+        assert accessors == stock_columns + ["awesome_var", "invoice_number", "key1", "key2", "key3"]
+
+        # expected columns are fewer if we filter by process_model_identifier
+        response = client.get(
+            "/v1.0/process-instances/reports/columns?process_model_identifier=save_process_instance_metadata/save_process_instance_metadata",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.json is not None
+        assert response.status_code == 200
+        accessors = [column["accessor"] for column in response.json]
+        assert accessors == stock_columns + ["key1", "key2", "key3"]
 
     def test_process_instance_list_can_order_by_metadata(
         self,
@@ -3128,7 +3168,7 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_instance_list_can_order_by_metadata."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             "test_group/hello_world",
             process_model_source_directory="nested-task-data-structure",

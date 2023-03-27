@@ -72,7 +72,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_sets_permission_correctly_on_human_task."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user = self.find_or_create_user("testuser2")
         assert initiator_user.principal is not None
@@ -140,7 +140,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_sets_permission_correctly_on_human_task_when_using_dict."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user_three = self.find_or_create_user("testuser3")
         finance_user_four = self.find_or_create_user("testuser4")
@@ -264,7 +264,7 @@ class TestProcessInstanceProcessor(BaseTest):
     #     with_db_and_bpmn_file_cleanup: None,
     #     with_super_admin_user: UserModel,
     # ) -> None:
-    #     self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+    #     self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
     #     initiator_user = self.find_or_create_user("initiator_user")
     #     finance_user_three = self.find_or_create_user("testuser3")
     #     assert initiator_user.principal is not None
@@ -318,7 +318,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user_three = self.find_or_create_user("testuser3")
         assert initiator_user.principal is not None
@@ -472,7 +472,7 @@ class TestProcessInstanceProcessor(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_does_not_recreate_human_tasks_on_multiple_saves."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         finance_user_three = self.find_or_create_user("testuser3")
         assert initiator_user.principal is not None

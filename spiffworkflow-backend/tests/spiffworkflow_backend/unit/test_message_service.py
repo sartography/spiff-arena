@@ -153,7 +153,7 @@ class TestMessageService(BaseTest):
         group_name: str = "test_group",
     ) -> None:
         process_group_id = group_name
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model = load_test_spec(
             "test_group/message",
@@ -222,7 +222,7 @@ class TestMessageService(BaseTest):
     ) -> None:
         """Test_can_send_message_to_multiple_process_models."""
         process_group_id = "test_group_multi"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_sender = load_test_spec(
             "test_group/message_sender",

@@ -2353,26 +2353,6 @@
     "notBefore" : 0,
     "groups" : [ ]
   }, {
-    "id" : "058b60f8-799e-48b0-a2b7-2e65e7a35724",
-    "createdTimestamp" : 1675718484672,
-    "username" : "mike",
-    "enabled" : true,
-    "totp" : false,
-    "emailVerified" : false,
-    "email" : "mike@sartography.com",
-    "credentials" : [ {
-      "id" : "669f5421-843d-411d-9f24-1be41e545e52",
-      "type" : "password",
-      "createdDate" : 1675718484715,
-      "secretData" : "{\"value\":\"YILRiRdrsy8CA716ZQazpQOf7mpiXGaYnR26ra3pSjmHkZS9tsePTRwU2OIGPwbN1LKJcIzrpfEP7cVW2Lm17w==\",\"salt\":\"7mfD1X7Hns/5pPgHb9uZ1Q==\",\"additionalParameters\":{}}",
-      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
-    } ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-spiffworkflow" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
     "id" : "97843876-e1b6-469a-bab4-f9bce4aa5936",
     "createdTimestamp" : 1678461819014,
     "username" : "mobile.project-lead",
@@ -2388,26 +2368,6 @@
       "type" : "password",
       "createdDate" : 1678461819049,
       "secretData" : "{\"value\":\"E7nVydRqQ+TZs54VmJcT4AjjtT1la7PmQbOnylqTPkkcOdLRmZbNTw/K429lOhqUHX7y1prC3OjGdY1VI8bjsg==\",\"salt\":\"D61yv2zS3Bi8epVKjRpWQw==\",\"additionalParameters\":{}}",
-      "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
-    } ],
-    "disableableCredentialTypes" : [ ],
-    "requiredActions" : [ ],
-    "realmRoles" : [ "default-roles-spiffworkflow" ],
-    "notBefore" : 0,
-    "groups" : [ ]
-  }, {
-    "id" : "9d23748e-23a7-4c48-956c-64da75871277",
-    "createdTimestamp" : 1675718484779,
-    "username" : "natalia",
-    "enabled" : true,
-    "totp" : false,
-    "emailVerified" : false,
-    "email" : "natalia@sartography.com",
-    "credentials" : [ {
-      "id" : "476024e5-62e4-48b6-afbb-cc2834fae4c7",
-      "type" : "password",
-      "createdDate" : 1675718484823,
-      "secretData" : "{\"value\":\"FfrpgES+XI2w4NRe1aBmolPFcERbEUDXZcFtUWucrbhBspQLYNaN2VLmeDRV0VcT47Bn8dqjU11ct64WDtffWA==\",\"salt\":\"7rZd3fqY54i1eoNyXCcZ1w==\",\"additionalParameters\":{}}",
       "credentialData" : "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\",\"additionalParameters\":{}}"
     } ],
     "disableableCredentialTypes" : [ ],

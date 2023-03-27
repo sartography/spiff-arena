@@ -26,7 +26,7 @@ class TestScriptUnitTestRunner(BaseTest):
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
         process_model_id = "simple_script"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         load_test_spec(
@@ -62,7 +62,7 @@ class TestScriptUnitTestRunner(BaseTest):
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_id = "simple_script"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -99,7 +99,7 @@ class TestScriptUnitTestRunner(BaseTest):
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_id = "script_with_unit_tests"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -132,7 +132,7 @@ class TestScriptUnitTestRunner(BaseTest):
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
-        self.create_process_group(client, with_super_admin_user, process_group_id, process_group_id)
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_id = "script_with_unit_tests"
         process_model_identifier = f"{process_group_id}/{process_model_id}"

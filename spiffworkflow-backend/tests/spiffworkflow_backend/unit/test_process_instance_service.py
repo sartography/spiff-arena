@@ -89,7 +89,7 @@ class TestProcessInstanceService(BaseTest):
         self._check_sample_file_data_model("uploaded_files", 0, models[0])
         self._check_sample_file_data_model("uploaded_files", 1, models[1])
 
-    def test_can_create_file_data_models_for_fix_of_file_data_and_non_file_data_values(
+    def test_can_create_file_data_models_for_mix_of_file_data_and_non_file_data_values(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
@@ -122,6 +122,8 @@ class TestProcessInstanceService(BaseTest):
     ) -> None:
         data = {
             "not_a_file": "just a value",
+            "also_no_files": ["not a file", "also not a file"],
+            "still_no_files": [{"key": "value"}],
         }
         models = ProcessInstanceService.file_data_models_for_data(data, 111)
 
@@ -189,3 +191,25 @@ class TestProcessInstanceService(BaseTest):
             ],
             "not_a_file3": "just a value3",
         }
+
+    def test_can_create_file_data_models_for_mulitple_single_file_data_values(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        data = {
+            "File": [
+                {
+                    "supporting_files": self.SAMPLE_FILE_DATA,
+                },
+                {
+                    "supporting_files": self.SAMPLE_FILE_DATA,
+                },
+            ],
+        }
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
+
+        assert len(models) == 2
+        self._check_sample_file_data_model("File", 0, models[0])
+        self._check_sample_file_data_model("File", 1, models[1])
