@@ -312,7 +312,7 @@ class ProcessInstanceService:
                 data[model.identifier] = digest_reference
             else:
                 old_value = data[model.identifier][model.list_index]
-                new_value = digest_reference
+                new_value: Any = digest_reference
                 if isinstance(old_value, dict) and len(old_value) == 1:
                     new_value = {k: digest_reference for k in old_value.keys()}
                 data[model.identifier][model.list_index] = new_value
