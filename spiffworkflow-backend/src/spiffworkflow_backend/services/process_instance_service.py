@@ -279,14 +279,8 @@ class ProcessInstanceService:
                     if isinstance(list_value, str):
                         yield (identifier, list_value, list_index)
                     if isinstance(list_value, dict) and len(list_value) == 1:
-                        # the form can contain multiple single file uploads. in this case the
-                        # list contains dictionaries with a single key. when this is detected
-                        # the single value will be promoted to the list, overwriting the
-                        # dictionary. this makes this style of multiple file uploads appear
-                        # the same as a single multi file upload widget, which simplifies
-                        # downstream script tasks/file linking.
-                        for value_to_promote in list_value.values():
-                            yield (identifier, value_to_promote, list_index)
+                        for v in list_value.values():
+                            yield (identifier, v, list_index)
 
     @classmethod
     def file_data_models_for_data(
@@ -317,7 +311,11 @@ class ProcessInstanceService:
             if model.list_index is None:
                 data[model.identifier] = digest_reference
             else:
-                data[model.identifier][model.list_index] = digest_reference
+                old_value = data[model.identifier][model.list_index]
+                new_value = digest_reference
+                if isinstance(old_value, dict) and len(old_value) == 1:
+                    new_value = {k: digest_reference for k in old_value.keys()}
+                data[model.identifier][model.list_index] = new_value
 
     @classmethod
     def save_file_data_and_replace_with_digest_references(
