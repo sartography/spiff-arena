@@ -1,5 +1,6 @@
 import logging
 import time
+from uuid import UUID
 from typing import Callable
 from typing import Optional
 
@@ -67,6 +68,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.task_models: dict[str, TaskModel] = {}
         self.json_data_dicts: dict[str, JsonDataDict] = {}
         self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
+        self.last_completed_spiff_task: Optional[SpiffTask] = None
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
@@ -81,6 +83,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
+            self.last_completed_spiff_task= spiff_task
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
@@ -104,10 +107,27 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # TODO: also include children of the last task processed. This may help with task resets
             #   if we have to set their states to FUTURE.
             # excludes FUTURE and COMPLETED. the others were required to get PP1 to go to completion.
-            for waiting_spiff_task in bpmn_process_instance.get_tasks(
-                TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY
-            ):
-                self._update_task_model_with_spiff_task(waiting_spiff_task)
+            # for waiting_spiff_task in bpmn_process_instance.get_tasks(
+            #     TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY
+            # ):
+            #     self._update_task_model_with_spiff_task(waiting_spiff_task)
+            if self.last_completed_spiff_task is not None:
+                self._process_spiff_task_children(self.last_completed_spiff_task)
+                self._process_spiff_task_parents(self.last_completed_spiff_task)
+
+    def _process_spiff_task_children(self, spiff_task: SpiffTask) -> None:
+        for child_spiff_task in spiff_task.children:
+            self._update_task_model_with_spiff_task(child_spiff_task)
+            self._process_spiff_task_children(child_spiff_task)
+
+    def _process_spiff_task_parents(self, spiff_task: SpiffTask) -> None:
+        (parent_subprocess_guid, _parent_subprocess) = TaskService.task_subprocess(spiff_task)
+        if parent_subprocess_guid is not None:
+            spiff_task_of_parent_subprocess = spiff_task.workflow._get_outermost_workflow().get_task(UUID(parent_subprocess_guid))
+
+            if spiff_task_of_parent_subprocess is not None:
+                self._update_task_model_with_spiff_task(spiff_task_of_parent_subprocess)
+                self._process_spiff_task_parents(spiff_task_of_parent_subprocess)
 
     def _should_update_task_model(self) -> bool:
         """We need to figure out if we have previously save task info on this process intance.
