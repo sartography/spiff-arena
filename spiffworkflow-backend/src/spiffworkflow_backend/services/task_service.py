@@ -110,9 +110,9 @@ class TaskService:
             for sp_id, sp in top_level_workflow.subprocesses.items():
                 if sp == my_wf:
                     my_sp = sp
-                    my_sp_id = sp_id
+                    my_sp_id = str(sp_id)
                     break
-        return (str(my_sp_id), my_sp)
+        return (my_sp_id, my_sp)
 
     @classmethod
     def task_bpmn_process(
