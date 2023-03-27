@@ -25,7 +25,7 @@ class TestLoggingService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
@@ -85,7 +85,7 @@ class TestLoggingService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
