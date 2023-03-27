@@ -278,6 +278,15 @@ class ProcessInstanceService:
                 for list_index, list_value in enumerate(value):
                     if isinstance(list_value, str):
                         yield (identifier, list_value, list_index)
+                    if isinstance(list_value, dict) and len(list_value) == 1:
+                        # the form can contain multiple single file uploads. in this case the
+                        # list contains dictionaries with a single key. when this is detected
+                        # the single value will be promoted to the list, overwriting the
+                        # dictionary. this makes this style of multiple file uploads appear
+                        # the same as a single multi file upload widget, which simplifies
+                        # downstream script tasks/file linking.
+                        for value_to_promote in list_value.values():
+                            yield (identifier, value_to_promote, list_index)
 
     @classmethod
     def file_data_models_for_data(
