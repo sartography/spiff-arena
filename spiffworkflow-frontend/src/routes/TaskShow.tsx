@@ -25,9 +25,11 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 // TODO: move this somewhere else
 function TypeAheadWidget({
   id,
+  onChange,
   options: { category },
 }: {
   id: string;
+  onChange: any;
   options: any;
 }) {
   const pathForCategory = (inputText: string) => {
@@ -41,7 +43,7 @@ function TypeAheadWidget({
 
   const lastSearchTerm = useRef('');
   const [items, setItems] = useState<any[]>([]);
-  const [selectedItem, setSelectedItem] = useState('');
+  const [selectedItem, setSelectedItem] = useState<any>(null);
 
   const handleTypeAheadResult = (result: any, inputText: string) => {
     if (lastSearchTerm.current === inputText) {
@@ -49,7 +51,7 @@ function TypeAheadWidget({
       setItems(result.users);
       result.users.forEach((user: any) => {
         if (user.username === inputText) {
-          setSelectedItem(user.username);
+          setSelectedItem(user);
         }
       });
     }
@@ -58,6 +60,7 @@ function TypeAheadWidget({
   const typeAheadSearch = (inputText: string) => {
     if (inputText) {
       lastSearchTerm.current = inputText;
+      // TODO: check cache of prefixes -> results
       HttpService.makeCallToBackend({
         path: pathForCategory(inputText),
         successCallback: (result: any) =>
@@ -70,7 +73,8 @@ function TypeAheadWidget({
     <ComboBox
       onInputChange={typeAheadSearch}
       onChange={(event: any) => {
-        setSelectedItem(event.selectedItem)
+        setSelectedItem(event.selectedItem);
+	onChange(event.selectedItem.username);
       }}
       id={id}
       items={items}
