@@ -1216,13 +1216,16 @@ class ProcessInstanceProcessor:
                 spiff_tasks_updated[task.id] = task
 
         for updated_spiff_task in spiff_tasks_updated.values():
-            bpmn_process, task_model, new_task_models, new_json_data_dicts = (
-                TaskService.find_or_create_task_model_from_spiff_task(
-                    updated_spiff_task,
-                    self.process_instance_model,
-                    self._serializer,
-                    bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-                )
+            (
+                bpmn_process,
+                task_model,
+                new_task_models,
+                new_json_data_dicts,
+            ) = TaskService.find_or_create_task_model_from_spiff_task(
+                updated_spiff_task,
+                self.process_instance_model,
+                self._serializer,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
             bpmn_process_to_use = bpmn_process or task_model.bpmn_process
             bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(

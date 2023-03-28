@@ -1,4 +1,3 @@
-import logging
 import time
 from typing import Callable
 from typing import Optional
@@ -123,13 +122,16 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
     def _update_task_model_with_spiff_task(self, spiff_task: SpiffTask, task_failed: bool = False) -> TaskModel:
-        bpmn_process, task_model, new_task_models, new_json_data_dicts = (
-            TaskService.find_or_create_task_model_from_spiff_task(
-                spiff_task,
-                self.process_instance,
-                self.serializer,
-                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            )
+        (
+            bpmn_process,
+            task_model,
+            new_task_models,
+            new_json_data_dicts,
+        ) = TaskService.find_or_create_task_model_from_spiff_task(
+            spiff_task,
+            self.process_instance,
+            self.serializer,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
         bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(
             bpmn_process or task_model.bpmn_process, spiff_task.workflow.data
@@ -280,10 +282,6 @@ class WorkflowExecutionService:
 
         finally:
             self.execution_strategy.save()
-            spiff_logger = logging.getLogger("spiff")
-            for handler in spiff_logger.handlers:
-                if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
 
             if save:
