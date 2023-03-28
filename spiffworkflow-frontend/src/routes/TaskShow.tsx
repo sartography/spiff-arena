@@ -30,10 +30,8 @@ function TypeAheadWidget({
   id: string;
   options: any;
 }) {
-  // const { category } = options;
   const pathForCategory = (inputText: string) => {
-    // TODO: temp until connectory-proxy api is available unless we want to use
-    //  this for the process initiator search also
+    // TODO: temp until connectory-proxy api is available
     if (category === 'users') {
       return `/users/search?username_prefix=${inputText}`;
     }
@@ -41,20 +39,17 @@ function TypeAheadWidget({
     return `/connector-proxy/type-ahead/${category}?prefix=${inputText}&limit=100`;
   };
 
-  // TODO: move to component and useRef?
-  // TODO: make these any instead of strings
   const lastSearchTerm = useRef('');
-  let items: string[] = [];
-  let selectedItem: string | null = null;
+  const [items, setItems] = useState<any[]>([]);
+  const [selectedItem, setSelectedItem] = useState('');
 
   const handleTypeAheadResult = (result: any, inputText: string) => {
     if (lastSearchTerm.current === inputText) {
-      // setProcessInstanceInitiatorOptions(result.users);
-      items = [];
+      // TODO: need generic response
+      setItems(result.users);
       result.users.forEach((user: any) => {
-        items.push(user.username);
         if (user.username === inputText) {
-          selectedItem = user.username;
+          setSelectedItem(user.username);
         }
       });
     }
@@ -75,14 +70,14 @@ function TypeAheadWidget({
     <ComboBox
       onInputChange={typeAheadSearch}
       onChange={(event: any) => {
-        selectedItem = event.selectedItem;
+        setSelectedItem(event.selectedItem)
       }}
       id={id}
       items={items}
       itemToString={(item: any) => {
-        // TODO: implement when not storing strings
+        // TODO: implement generic response interpolation
         if (item) {
-          return item;
+          return item.username;
         }
         return null;
       }}
