@@ -256,7 +256,7 @@ class TaskService:
 
                 task_data_dict = task_properties.pop("data")
                 state_int = task_properties["state"]
-                spiff_task = spiff_workflow.get_task(UUID(task_id))
+                spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))
 
                 task_model = TaskModel.query.filter_by(guid=task_id).first()
                 if task_model is None:
