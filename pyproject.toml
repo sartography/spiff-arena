@@ -26,3 +26,9 @@ bandit = "1.7.2"
 flake8-bugbear = "^22.10.25"
 flake8-docstrings = "^1.6.0"
 flake8-rst-docstrings = "^0.2.7"
+reorder-python-imports = "^3.9.0"
+pre-commit-hooks = "^4.0.1"
+pyupgrade = "^3.1.0"
+
+[tool.poetry.group.dev.dependencies]
+tomli = "^2.0.1"
