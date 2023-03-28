@@ -59,6 +59,8 @@ class TaskService:
         It also returns the relating json_data object so they can be imported later.
         """
         new_properties_json = serializer.task_to_dict(spiff_task)
+        if new_properties_json["task_spec"] == "Start":
+            new_properties_json["parent"] = None
         spiff_task_data = new_properties_json.pop("data")
         python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task, serializer)
         task_model.properties_json = new_properties_json
@@ -251,11 +253,7 @@ class TaskService:
                 # bpmn process defintion so let's avoid using it.
                 if task_properties["task_spec"] == "Root":
                     continue
-                if task_properties["task_spec"] == "Start":
-                    task_properties["parent"] = None
 
-                task_data_dict = task_properties.pop("data")
-                state_int = task_properties["state"]
                 spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))
 
                 task_model = TaskModel.query.filter_by(guid=task_id).first()
@@ -266,23 +264,14 @@ class TaskService:
                         spiff_task,
                         bpmn_definition_to_task_definitions_mappings,
                     )
-                task_model.state = TaskStateNames[state_int]
-                task_model.properties_json = task_properties
-                new_task_models[task_model.guid] = task_model
 
-                json_data_dict = TaskService.update_task_data_on_task_model(
-                    task_model, task_data_dict, "json_data_hash"
-                )
+                json_data_dict, python_env_dict = cls.update_task_model(task_model, spiff_task, serializer)
+
+                new_task_models[task_model.guid] = task_model
                 if json_data_dict is not None:
                     new_json_data_dicts[json_data_dict["hash"]] = json_data_dict
-
-                python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task, serializer)
-                python_env_dict = TaskService.update_task_data_on_task_model(
-                    task_model, python_env_data_dict, "python_env_data_hash"
-                )
                 if python_env_dict is not None:
                     new_json_data_dicts[python_env_dict["hash"]] = python_env_dict
-
         return (bpmn_process, new_task_models, new_json_data_dicts)
 
     @classmethod

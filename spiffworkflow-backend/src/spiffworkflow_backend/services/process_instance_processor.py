@@ -1349,6 +1349,7 @@ class ProcessInstanceProcessor:
         for task_to_update in tasks_to_update:
             # print(f"task_to_update: {task_to_update}")
             TaskService.reset_task_model(task_to_update, state="FUTURE", commit=commit)
+            # TaskService.reset_task_model(task_to_update, state=task_to_update.state, commit=commit)
             # if task_to_update.task_definition.bpmn_identifier != 'top_level_process_script_after_gate':
             #     TaskService.reset_task_model(task_to_update, state='FUTURE', commit=commit)
             # else:
