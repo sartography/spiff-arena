@@ -1911,14 +1911,21 @@ sqlcipher = ["sqlcipher3-binary"]
 [[package]]
 name = "sqlalchemy-stubs"
 version = "0.4"
-description = "SQLAlchemy stubs and mypy plugin"
+description = ""
 category = "main"
 optional = false
 python-versions = "*"
+develop = false
 
 [package.dependencies]
 mypy = ">=0.790"
 typing-extensions = ">=3.7.4"
+
+[package.source]
+type = "git"
+url = "https://github.com/burnettk/sqlalchemy-stubs.git"
+reference = "scoped-session-delete"
+resolved_reference = "d1176931684ce5b327539cc9567d4a1cd8ef1efd"
 
 [[package]]
 name = "stevedore"
@@ -2247,7 +2254,7 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "64eb6f0dce231c627af5b4a0a3940e199c67afd93b880c85d622336ab466be5c"
+content-hash = "0071c778fc09995b458298c0212d3c707fff91b06b660ced4e0e3c420e384ffe"
 
 [metadata.files]
 alabaster = [
@@ -3641,10 +3648,7 @@ sqlalchemy = [
     {file = "SQLAlchemy-2.0.7-py3-none-any.whl", hash = "sha256:fc67667c8e8c04e5c3250ab2cd51df40bc7c28c7c253d0475b377eff86fe4bb0"},
     {file = "SQLAlchemy-2.0.7.tar.gz", hash = "sha256:a4c1e1582492c66dfacc9eab52738f3e64d9a2a380e412668f75aa06e540f649"},
 ]
-sqlalchemy-stubs = [
-    {file = "sqlalchemy-stubs-0.4.tar.gz", hash = "sha256:c665d6dd4482ef642f01027fa06c3d5e91befabb219dc71fc2a09e7d7695f7ae"},
-    {file = "sqlalchemy_stubs-0.4-py3-none-any.whl", hash = "sha256:5eec7aa110adf9b957b631799a72fef396b23ff99fe296df726645d01e312aa5"},
-]
+sqlalchemy-stubs = []
 stevedore = [
     {file = "stevedore-5.0.0-py3-none-any.whl", hash = "sha256:bd5a71ff5e5e5f5ea983880e4a1dd1bb47f8feebbb3d95b592398e2f02194771"},
     {file = "stevedore-5.0.0.tar.gz", hash = "sha256:2c428d2338976279e8eb2196f7a94910960d9f7ba2f41f3988511e95ca447021"},
