@@ -175,7 +175,7 @@ def task_list_for_my_groups(
 def task_data_show(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    task_guid: int = 0,
+    task_guid: str,
 ) -> flask.wrappers.Response:
     task_model = TaskModel.query.filter_by(guid=task_guid, process_instance_id=process_instance_id).first()
     if task_model is None:
