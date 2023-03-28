@@ -72,7 +72,7 @@ types-pytz = "^2022.1.1"
 # sqlalchemy-stubs = { git = "https://github.com/dropbox/sqlalchemy-stubs.git", rev = "master" }
 # sqlalchemy-stubs = {develop = true, path = "/Users/kevin/projects/github/sqlalchemy-stubs"}
 # for now use my fork
-# sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
+sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
 simplejson = "^3.17.6"
 pytz = "^2022.6"
 dateparser = "^1.1.2"
@@ -83,8 +83,6 @@ flask-simple-crypt = "^0.3.3"
 cryptography = "^39.0.2"
 safety = "^2.3.5"
 sqlalchemy = "^2.0.7"
-sqlalchemy-stubs = "^0.4"
-
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
