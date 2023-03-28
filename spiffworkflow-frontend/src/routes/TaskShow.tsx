@@ -33,11 +33,6 @@ function TypeAheadWidget({
   options: any;
 }) {
   const pathForCategory = (inputText: string) => {
-    // TODO: temp until connectory-proxy api is available
-    if (category === 'users') {
-      return `/users/search?username_prefix=${inputText}`;
-    }
-
     return `/connector-proxy/type-ahead/${category}?prefix=${inputText}&limit=100`;
   };
 
@@ -48,10 +43,10 @@ function TypeAheadWidget({
   const handleTypeAheadResult = (result: any, inputText: string) => {
     if (lastSearchTerm.current === inputText) {
       // TODO: need generic response
-      setItems(result.users);
-      result.users.forEach((user: any) => {
-        if (user.username === inputText) {
-          setSelectedItem(user);
+      setItems(result);
+      result.forEach((item: any) => {
+        if (item.cityStateAndCountryName[0] === inputText) {
+          setSelectedItem(item);
         }
       });
     }
@@ -74,14 +69,17 @@ function TypeAheadWidget({
       onInputChange={typeAheadSearch}
       onChange={(event: any) => {
         setSelectedItem(event.selectedItem);
-        onChange(event.selectedItem.username);
+        onChange(event.selectedItem.cityStateAndCountryName[0]);
       }}
       id={id}
       items={items}
       itemToString={(item: any) => {
         // TODO: implement generic response interpolation
         if (item) {
-          return item.username;
+	   const city = item.cityStateAndCountryName[0];
+	   const state = item.cityStateAndCountryName[1];
+	   const country = item.cityStateAndCountryName[2];
+          return `${city} (${state}, ${country})`;
         }
         return null;
       }}

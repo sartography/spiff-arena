@@ -2089,6 +2089,37 @@ paths:
               schema:
                 $ref: "#/components/schemas/Secret"
 
+  /connector-proxy/type-ahead/{category}:
+    parameters:
+      - name: category
+        in: path
+        required: true
+        description: The category for the type-ahead search
+        schema:
+          type: string
+      - name: prefix
+        in: query
+        required: true
+        description: The prefix to search for
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: true
+        description: The maximum number of search results
+        schema:
+          type: number
+    get:
+      operationId: spiffworkflow_backend.routes.connector_proxy_controller.type_ahead
+      summary: Return type ahead search results
+      tags:
+        - Type Ahead
+      responses:
+        "200":
+          description: We return type ahead search results
+          #content:
+          #  - application/json
+
 components:
   securitySchemes:
     jwt:

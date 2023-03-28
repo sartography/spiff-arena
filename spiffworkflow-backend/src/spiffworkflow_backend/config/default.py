@@ -41,6 +41,9 @@ SPIFFWORKFLOW_BACKEND_URL = environ.get("SPIFFWORKFLOW_BACKEND_URL", default="ht
 SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL = environ.get(
     "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", default="http://localhost:7004"
 )
+SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_TYPE_AHEAD_URL = environ.get(
+    "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_TYPE_AHEAD_URL", default="http://localhost:5000"
+)
 
 # Open ID server
 # use "http://localhost:7000/openid" for running with simple openid
