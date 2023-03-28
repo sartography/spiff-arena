@@ -19,8 +19,6 @@ from spiffworkflow_backend.services.process_instance_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
-# from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 
 # We need to call this before importing spiffworkflow_backend
 # otherwise typeguard cannot work. hence the noqa: E402
