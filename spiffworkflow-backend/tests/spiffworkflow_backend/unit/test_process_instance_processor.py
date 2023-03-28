@@ -1,5 +1,6 @@
 """Test_process_instance_processor."""
 from uuid import UUID
+import json
 
 import pytest
 from flask import g
@@ -305,7 +306,7 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.resume()
         processor.do_engine_steps(save=True)
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
         assert process_instance.status == "complete"
 
@@ -335,34 +336,30 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        import pdb; pdb.set_trace()
+        with open("before_reset.json", 'w') as f: f.write(json.dumps(processor.serialize(), indent=2))
         assert len(process_instance.active_human_tasks) == 1
         initial_human_task_id = process_instance.active_human_tasks[0].id
-
-        # save again to ensure we go attempt to process the human tasks again
-        processor.save()
-
         assert len(process_instance.active_human_tasks) == 1
         assert initial_human_task_id == process_instance.active_human_tasks[0].id
 
-        processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.__class__.get_task_by_bpmn_identifier(
-            human_task_one.task_name, processor.bpmn_process_instance
-        )
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+
 
         processor.suspend()
-        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.parent.id), commit=True)
-        import pdb; pdb.set_trace()
+        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.id), commit=True)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
+        with open("after_reset.json", 'w') as f: f.write(json.dumps(processor.serialize(), indent=2))
         processor.resume()
         processor.do_engine_steps(save=True)
-        import pdb; pdb.set_trace()
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+
+        import pdb; pdb.set_trace()
         assert process_instance.status == "complete"
 
     def test_properly_saves_tasks_when_running(

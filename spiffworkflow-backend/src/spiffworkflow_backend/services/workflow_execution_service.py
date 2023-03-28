@@ -11,6 +11,8 @@ from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
+from spiffworkflow_backend.models import task_definition
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.message_instance_correlation import (
@@ -19,7 +21,8 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # noqa: F401
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
@@ -93,6 +96,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             failing_spiff_task = script_engine.failing_spiff_task
             self._update_task_model_with_spiff_task(failing_spiff_task, task_failed=True)
 
+        # import pdb; pdb.set_trace()
         db.session.bulk_save_objects(self.task_models.values())
         db.session.bulk_save_objects(self.process_instance_events.values())
 
@@ -123,7 +127,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def _process_spiff_task_parents(self, spiff_task: SpiffTask) -> None:
         (parent_subprocess_guid, _parent_subprocess) = TaskService.task_subprocess(spiff_task)
         if parent_subprocess_guid is not None:
-            spiff_task_of_parent_subprocess = spiff_task.workflow._get_outermost_workflow().get_task(
+            spiff_task_of_parent_subprocess = spiff_task.workflow._get_outermost_workflow().get_task_from_id(
                 UUID(parent_subprocess_guid)
             )
 
@@ -156,6 +160,17 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(
             bpmn_process or task_model.bpmn_process, spiff_task.workflow.data
         )
+        # stp = False
+        # for ntm in new_task_models.values():
+        #     td = TaskDefinitionModel.query.filter_by(id=ntm.task_definition_id).first()
+        #     if td.bpmn_identifier == 'Start':
+        #         # import pdb; pdb.set_trace()
+        #         stp = True
+        #         print("HEY")
+
+        # if stp:
+        #     # import pdb; pdb.set_trace()
+        #     print("HEY2")
         self.task_models.update(new_task_models)
         self.json_data_dicts.update(new_json_data_dicts)
         json_data_dict_list = TaskService.update_task_model(task_model, spiff_task, self.serializer)
