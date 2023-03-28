@@ -1,8 +1,6 @@
 """Process_instance_processor."""
 import copy
 import _strptime  # type: ignore
-from sqlalchemy import or_
-from sqlalchemy import and_
 import decimal
 import json
 import logging
@@ -54,6 +52,8 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
+from sqlalchemy import and_
+from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -1176,7 +1176,7 @@ class ProcessInstanceProcessor:
         """Mark the task complete optionally executing it."""
         spiff_tasks_updated = {}
         start_in_seconds = time.time()
-        spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
+        spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
         if execute:
             current_app.logger.info(
