@@ -54,7 +54,7 @@ class TestGetLocaltime(BaseTest):
             target_uri="/v1.0/process-groups",
             permission_names=["read", "create"],
         )
-        self.create_process_group(client=client, user=initiator_user, process_group_id="test_group")
+        self.create_process_group_with_api(client=client, user=initiator_user, process_group_id="test_group")
         process_model = load_test_spec(
             process_model_id="test_group/get_localtime",
             bpmn_file_name="get_localtime.bpmn",

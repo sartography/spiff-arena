@@ -25,7 +25,7 @@ class TestLoggingService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
@@ -85,7 +85,7 @@ class TestLoggingService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
@@ -114,7 +114,7 @@ class TestLoggingService(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
         headers = self.logged_in_headers(with_super_admin_user)

@@ -1175,7 +1175,7 @@ class ProcessInstanceProcessor:
         """Mark the task complete optionally executing it."""
         spiff_tasks_updated = {}
         start_in_seconds = time.time()
-        spiff_task = self.bpmn_process_instance.get_task(UUID(task_id))
+        spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
         if execute:
             current_app.logger.info(
