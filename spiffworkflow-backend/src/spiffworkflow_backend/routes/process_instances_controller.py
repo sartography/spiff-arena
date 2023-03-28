@@ -632,9 +632,10 @@ def process_instance_task_list(
                 status_code=400,
             )
 
-        _parent_bpmn_processes, task_models_of_parent_bpmn_processes = (
-            TaskService.task_models_of_parent_bpmn_processes(to_task_model)
-        )
+        (
+            _parent_bpmn_processes,
+            task_models_of_parent_bpmn_processes,
+        ) = TaskService.task_models_of_parent_bpmn_processes(to_task_model)
         task_models_of_parent_bpmn_processes_guids = [p.guid for p in task_models_of_parent_bpmn_processes if p.guid]
         task_model_query = task_model_query.filter(
             or_(
