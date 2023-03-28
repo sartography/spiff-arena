@@ -49,7 +49,6 @@ setuptools = "^65.5.1"
 connexion = {extras = [ "swagger-ui",], version = "^2"}
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
-marshmallow-sqlalchemy = "^0.28.0"
 PyJWT = "^2.6.0"
 gunicorn = "^20.1.0"
 APScheduler = "*"
@@ -73,7 +72,7 @@ types-pytz = "^2022.1.1"
 # sqlalchemy-stubs = { git = "https://github.com/dropbox/sqlalchemy-stubs.git", rev = "master" }
 # sqlalchemy-stubs = {develop = true, path = "/Users/kevin/projects/github/sqlalchemy-stubs"}
 # for now use my fork
-sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
+# sqlalchemy-stubs = { git = "https://github.com/burnettk/sqlalchemy-stubs.git", rev = "scoped-session-delete" }
 simplejson = "^3.17.6"
 pytz = "^2022.6"
 dateparser = "^1.1.2"
@@ -83,6 +82,7 @@ pylint = "^2.15.10"
 flask-simple-crypt = "^0.3.3"
 cryptography = "^39.0.2"
 safety = "^2.3.5"
+sqlalchemy = "^2.0.7"
 
 
 [tool.poetry.dev-dependencies]
