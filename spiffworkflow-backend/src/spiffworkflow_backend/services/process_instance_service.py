@@ -278,6 +278,9 @@ class ProcessInstanceService:
                 for list_index, list_value in enumerate(value):
                     if isinstance(list_value, str):
                         yield (identifier, list_value, list_index)
+                    if isinstance(list_value, dict) and len(list_value) == 1:
+                        for v in list_value.values():
+                            yield (identifier, v, list_index)
 
     @classmethod
     def file_data_models_for_data(
@@ -308,7 +311,11 @@ class ProcessInstanceService:
             if model.list_index is None:
                 data[model.identifier] = digest_reference
             else:
-                data[model.identifier][model.list_index] = digest_reference
+                old_value = data[model.identifier][model.list_index]
+                new_value: Any = digest_reference
+                if isinstance(old_value, dict) and len(old_value) == 1:
+                    new_value = {k: digest_reference for k in old_value.keys()}
+                data[model.identifier][model.list_index] = new_value
 
     @classmethod
     def save_file_data_and_replace_with_digest_references(

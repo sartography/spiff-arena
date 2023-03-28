@@ -1251,9 +1251,16 @@ paths:
                 $ref: "#/components/schemas/OkTrue"
 
   /process-instances/reports/columns:
+    parameters:
+      - name: process_model_identifier
+        in: query
+        required: false
+        description: The process model identifier to filter by
+        schema:
+          type: string
     get:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_column_list
-      summary: Returns all available columns for a process instance report.
+      summary: Returns all available columns for a process instance report, including custom metadata
       tags:
         - Process Instances
       responses:
