@@ -1,4 +1,5 @@
 """Process_instance_processor."""
+import copy
 import _strptime  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import and_
@@ -1346,7 +1347,12 @@ class ProcessInstanceProcessor:
             db.session.commit()
 
         for task_to_update in tasks_to_update:
+            # print(f"task_to_update: {task_to_update}")
             TaskService.reset_task_model(task_to_update, state="FUTURE", commit=commit)
+            # if task_to_update.task_definition.bpmn_identifier != 'top_level_process_script_after_gate':
+            #     TaskService.reset_task_model(task_to_update, state='FUTURE', commit=commit)
+            # else:
+            #     TaskService.reset_task_model(task_to_update, state=task_to_update.state, commit=commit)
 
         parent_task_model = TaskModel.query.filter_by(guid=to_task_model.properties_json["parent"]).first()
         if parent_task_model is None:
@@ -1363,6 +1369,13 @@ class ProcessInstanceProcessor:
         )
         for task_model in task_models_of_parent_bpmn_processes:
             TaskService.reset_task_model(task_model, state="WAITING", commit=commit)
+
+        bpmn_process = to_task_model.bpmn_process
+        properties_json = copy.copy(bpmn_process.properties_json)
+        properties_json['last_task'] = parent_task_model.guid
+        bpmn_process.properties_json = properties_json
+        db.session.add(bpmn_process)
+        db.session.commit()
 
         if commit:
             processor = ProcessInstanceProcessor(process_instance)
