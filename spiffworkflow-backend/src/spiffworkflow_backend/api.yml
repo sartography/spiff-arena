@@ -2108,7 +2108,7 @@ paths:
         required: true
         description: The maximum number of search results
         schema:
-          type: number
+          type: integer
     get:
       operationId: spiffworkflow_backend.routes.connector_proxy_controller.type_ahead
       summary: Return type ahead search results

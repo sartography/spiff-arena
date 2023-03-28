@@ -11,7 +11,7 @@ def connector_proxy_type_ahead_url() -> str:
 
 def type_ahead(category: str, prefix: str, limit: int) -> flask.wrappers.Response:
     # TODO: change url to /type-ahead/{category}
-    url = f"{connector_proxy_type_ahead_url()}/{category}?prefix={prefix}&limit=100"
+    url = f"{connector_proxy_type_ahead_url()}/{category}?prefix={prefix}&limit={limit}"
 
     # TODO: try/catch/log etc
     proxy_response = requests.get(url)
