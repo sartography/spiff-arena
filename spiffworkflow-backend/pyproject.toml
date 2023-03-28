@@ -39,6 +39,13 @@ pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.4.0"
+
+# pinned to higher than 65.5.0 because of a vulnerability
+# and to lower than 67 because i didn't feel like addressing
+# new deprecation warnings. we don't need this library explicitly,
+# but at one time it was pulled in by various libs we depend on.
+setuptools = "^65.5.1"
+
 connexion = {extras = [ "swagger-ui",], version = "^2"}
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
