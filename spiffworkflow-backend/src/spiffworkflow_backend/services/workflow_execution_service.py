@@ -1,4 +1,3 @@
-import logging
 import time
 from typing import Callable
 from typing import Optional
@@ -280,10 +279,6 @@ class WorkflowExecutionService:
 
         finally:
             self.execution_strategy.save()
-            spiff_logger = logging.getLogger("spiff")
-            for handler in spiff_logger.handlers:
-                if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()  # type: ignore
             db.session.commit()
 
             if save:
