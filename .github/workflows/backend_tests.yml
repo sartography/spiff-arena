@@ -173,12 +173,14 @@ jobs:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./log/*.log"
 
-  security:
+  snyk:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/python@master
+        with:
+          args: spiffworkflow-backend
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
