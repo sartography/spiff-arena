@@ -173,6 +173,15 @@ jobs:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./log/*.log"
 
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
   run_pre_commit_checks:
     runs-on: ubuntu-latest
     defaults:
