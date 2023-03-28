@@ -36,6 +36,8 @@ import {
   getProcessModelFullIdentifierFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
+  REFRESH_INTERVAL_SECONDS,
+  REFRESH_TIMEOUT_SECONDS,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -67,9 +69,6 @@ import { Notification } from './Notification';
 import useAPIError from '../hooks/UseApiError';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { Can } from '../contexts/Can';
-
-const REFRESH_INTERVAL = 5;
-const REFRESH_TIMEOUT = 600;
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -389,8 +388,8 @@ export default function ProcessInstanceListTable({
     checkFiltersAndRun();
     if (autoReload) {
       return refreshAtInterval(
-        REFRESH_INTERVAL,
-        REFRESH_TIMEOUT,
+        REFRESH_INTERVAL_SECONDS,
+        REFRESH_TIMEOUT_SECONDS,
         checkFiltersAndRun
       );
     }
