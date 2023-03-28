@@ -1779,7 +1779,7 @@ class ProcessInstanceProcessor:
             )
 
         task_model.start_in_seconds = time.time()
-        self.bpmn_process_instance.complete_task_from_id(spiff_task.id)
+        self.bpmn_process_instance.run_task_from_id(spiff_task.id)
         task_model.end_in_seconds = time.time()
 
         human_task.completed_by_user_id = user.id
