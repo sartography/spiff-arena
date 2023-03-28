@@ -22,6 +22,77 @@ import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessInstanceTask } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
+// TODO: move this somewhere else
+function TypeAheadWidget({
+  id,
+  options: { category },
+}: {
+  id: string;
+  options: any;
+}) {
+  // const { category } = options;
+  const pathForCategory = (inputText: string) => {
+    // TODO: temp until connectory-proxy api is available unless we want to use
+    //  this for the process initiator search also
+    if (category === 'users') {
+      return `/users/search?username_prefix=${inputText}`;
+    }
+
+    return `/connector-proxy/type-ahead/${category}?prefix=${inputText}&limit=100`;
+  };
+
+  // TODO: move to component and useRef?
+  // TODO: make these any instead of strings
+  const lastSearchTerm = useRef('');
+  let items: string[] = [];
+  let selectedItem: string | null = null;
+
+  const handleTypeAheadResult = (result: any, inputText: string) => {
+    if (lastSearchTerm.current === inputText) {
+      // setProcessInstanceInitiatorOptions(result.users);
+      items = [];
+      result.users.forEach((user: any) => {
+        items.push(user.username);
+        if (user.username === inputText) {
+          selectedItem = user.username;
+        }
+      });
+    }
+  };
+
+  const typeAheadSearch = (inputText: string) => {
+    if (inputText) {
+      lastSearchTerm.current = inputText;
+      HttpService.makeCallToBackend({
+        path: pathForCategory(inputText),
+        successCallback: (result: any) =>
+          handleTypeAheadResult(result, inputText),
+      });
+    }
+  };
+
+  return (
+    <ComboBox
+      onInputChange={typeAheadSearch}
+      onChange={(event: any) => {
+        selectedItem = event.selectedItem;
+      }}
+      id={id}
+      items={items}
+      itemToString={(item: any) => {
+        // TODO: implement when not storing strings
+        if (item) {
+          return item;
+        }
+        return null;
+      }}
+      placeholder="Start typing"
+      titleText="Type ahead widget"
+      selectedItem={selectedItem}
+    />
+  );
+}
+
 export default function TaskShow() {
   const [task, setTask] = useState<ProcessInstanceTask | null>(null);
   const [userTasks] = useState(null);
@@ -244,71 +315,7 @@ export default function TaskShow() {
       return getFieldsWithDateValidations(jsonSchema, formData, errors);
     };
 
-    const typeAheadWidget = (config: any) => {
-      const { category } = config.options;
-      const pathForCategory = (inputText: string) => {
-        // TODO: temp until connectory-proxy api is available unless we want to use
-        //  this for the process initiator search also
-        if (category === 'users') {
-          return `/users/search?username_prefix=${inputText}`;
-        }
-
-        return `/connector-proxy/type-ahead/${category}?prefix=${inputText}&limit=100`;
-      };
-
-      // TODO: move to component and useRef?
-      // TODO: make these any instead of strings
-      let lastSearchTerm = '';
-      let items: string[] = [];
-      let selectedItem: string | null = null;
-
-      const handleTypeAheadResult = (result: any, inputText: string) => {
-        if (lastSearchTerm === inputText) {
-          // setProcessInstanceInitiatorOptions(result.users);
-          items = [];
-          result.users.forEach((user: any) => {
-            items.push(user.username);
-            if (user.username === inputText) {
-              selectedItem = user.username;
-            }
-          });
-        }
-      };
-
-      const typeAheadSearch = (inputText: string) => {
-        if (inputText) {
-          lastSearchTerm = inputText;
-          HttpService.makeCallToBackend({
-            path: pathForCategory(inputText),
-            successCallback: (result: any) =>
-              handleTypeAheadResult(result, inputText),
-          });
-        }
-      };
-
-      return (
-        <ComboBox
-          onInputChange={typeAheadSearch}
-          onChange={(event: any) => {
-            selectedItem = event.selectedItem;
-          }}
-          id={config.id}
-          items={items}
-          itemToString={(item: any) => {
-            // TODO: implement when not storing strings
-            if (item) {
-              return item;
-            }
-            return null;
-          }}
-          placeholder="Start typing"
-          titleText="Type ahead widget"
-          selectedItem={selectedItem}
-        />
-      );
-    };
-
-    const widgets = { typeAhead: typeAheadWidget };
+    const widgets = { typeAhead: TypeAheadWidget };
 
     return (
       <Grid fullWidth condensed>
