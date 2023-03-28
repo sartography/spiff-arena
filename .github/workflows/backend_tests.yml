@@ -184,9 +184,6 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3.3.0
-        with:
-          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v4.2.0
         with:
@@ -205,9 +202,6 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3.3.0
-        with:
-          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-          fetch-depth: 0
       - name: Checkout Samples
         uses: actions/checkout@v3
         with:
@@ -281,7 +275,7 @@ jobs:
         # so just skip everything but main
         if: github.ref_name == 'main'
         with:
-          projectBaseDir: spiffworkflow-frontend
+          projectBaseDir: spiffworkflow-backend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
