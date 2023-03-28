@@ -1,8 +1,8 @@
 import logging
 import time
-from uuid import UUID
 from typing import Callable
 from typing import Optional
+from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
@@ -83,7 +83,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
-            self.last_completed_spiff_task= spiff_task
+            self.last_completed_spiff_task = spiff_task
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
@@ -123,7 +123,9 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def _process_spiff_task_parents(self, spiff_task: SpiffTask) -> None:
         (parent_subprocess_guid, _parent_subprocess) = TaskService.task_subprocess(spiff_task)
         if parent_subprocess_guid is not None:
-            spiff_task_of_parent_subprocess = spiff_task.workflow._get_outermost_workflow().get_task(UUID(parent_subprocess_guid))
+            spiff_task_of_parent_subprocess = spiff_task.workflow._get_outermost_workflow().get_task(
+                UUID(parent_subprocess_guid)
+            )
 
             if spiff_task_of_parent_subprocess is not None:
                 self._update_task_model_with_spiff_task(spiff_task_of_parent_subprocess)
