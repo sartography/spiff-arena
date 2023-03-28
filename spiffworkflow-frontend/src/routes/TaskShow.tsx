@@ -26,7 +26,7 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 function TypeAheadWidget({
   id,
   onChange,
-  options: { category },
+  options: { category, itemFormat },
 }: {
   id: string;
   onChange: any;
@@ -39,16 +39,24 @@ function TypeAheadWidget({
   const lastSearchTerm = useRef('');
   const [items, setItems] = useState<any[]>([]);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const itemFormatRegex = /[^{}]+(?=})/g;
+  const itemFormatSubstitutions = itemFormat.match(itemFormatRegex);
+
+  const itemToString = (item: any) => {
+    if (!item) {
+      return null;
+    }
+
+    let str = itemFormat;
+    itemFormatSubstitutions.forEach((key: string) => {
+      str = str.replace(`{${key}}`, item[key]);
+    });
+    return str;
+  };
 
   const handleTypeAheadResult = (result: any, inputText: string) => {
     if (lastSearchTerm.current === inputText) {
-      // TODO: need generic response
       setItems(result);
-      result.forEach((item: any) => {
-        if (item.cityStateAndCountryName[0] === inputText) {
-          setSelectedItem(item);
-        }
-      });
     }
   };
 
@@ -69,22 +77,13 @@ function TypeAheadWidget({
       onInputChange={typeAheadSearch}
       onChange={(event: any) => {
         setSelectedItem(event.selectedItem);
-        onChange(event.selectedItem.cityStateAndCountryName[0]);
+        onChange(itemToString(event.selectedItem));
       }}
       id={id}
       items={items}
-      itemToString={(item: any) => {
-        // TODO: implement generic response interpolation
-        if (item) {
-	   const city = item.cityStateAndCountryName[0];
-	   const state = item.cityStateAndCountryName[1];
-	   const country = item.cityStateAndCountryName[2];
-          return `${city} (${state}, ${country})`;
-        }
-        return null;
-      }}
-      placeholder="Start typing"
-      titleText="Type ahead widget"
+      itemToString={itemToString}
+      placeholder={`Start typing to search for ${category}...`}
+      titleText={`Type ahead search for ${category}`}
       selectedItem={selectedItem}
     />
   );
