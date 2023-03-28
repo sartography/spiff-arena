@@ -74,7 +74,7 @@ function TypeAheadWidget({
       onInputChange={typeAheadSearch}
       onChange={(event: any) => {
         setSelectedItem(event.selectedItem);
-	onChange(event.selectedItem.username);
+        onChange(event.selectedItem.username);
       }}
       id={id}
       items={items}
