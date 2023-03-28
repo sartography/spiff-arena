@@ -256,60 +256,114 @@ class TestProcessInstanceProcessor(BaseTest):
         assert spiff_task is not None
         assert spiff_task.state == TaskState.COMPLETED
 
-    # TODO: FIX resetting a process instance to a task
-    # def test_properly_resets_process_to_given_task(
-    #     self,
-    #     app: Flask,
-    #     client: FlaskClient,
-    #     with_db_and_bpmn_file_cleanup: None,
-    #     with_super_admin_user: UserModel,
-    # ) -> None:
-    #     self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
-    #     initiator_user = self.find_or_create_user("initiator_user")
-    #     finance_user_three = self.find_or_create_user("testuser3")
-    #     assert initiator_user.principal is not None
-    #     assert finance_user_three.principal is not None
-    #     AuthorizationService.import_permissions_from_yaml_file()
-    #
-    #     finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
-    #     assert finance_group is not None
-    #
-    #     process_model = load_test_spec(
-    #         process_model_id="test_group/manual_task_with_subprocesses",
-    #         process_model_source_directory="manual_task_with_subprocesses",
-    #     )
-    #     process_instance = self.create_process_instance_from_process_model(
-    #         process_model=process_model, user=initiator_user
-    #     )
-    #     processor = ProcessInstanceProcessor(process_instance)
-    #     processor.do_engine_steps(save=True)
-    #     assert len(process_instance.active_human_tasks) == 1
-    #     initial_human_task_id = process_instance.active_human_tasks[0].id
-    #
-    #     # save again to ensure we go attempt to process the human tasks again
-    #     processor.save()
-    #
-    #     assert len(process_instance.active_human_tasks) == 1
-    #     assert initial_human_task_id == process_instance.active_human_tasks[0].id
-    #
-    #     processor = ProcessInstanceProcessor(process_instance)
-    #     human_task_one = process_instance.active_human_tasks[0]
-    #     spiff_manual_task = processor.__class__.get_task_by_bpmn_identifier(
-    #         human_task_one.task_name, processor.bpmn_process_instance
-    #     )
-    #     ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-    #
-    #     processor.suspend()
-    #     ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.id), commit=True)
-    #
-    #     process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-    #     processor = ProcessInstanceProcessor(process_instance)
-    #     human_task_one = process_instance.active_human_tasks[0]
-    #     spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
-    #     ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-    #     human_task_one = process_instance.active_human_tasks[0]
-    #     spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
-    #     ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+    def test_properly_resets_process_to_given_task(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
+        initiator_user = self.find_or_create_user("initiator_user")
+        finance_user_three = self.find_or_create_user("testuser3")
+        assert initiator_user.principal is not None
+        assert finance_user_three.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        assert finance_group is not None
+
+        process_model = load_test_spec(
+            process_model_id="test_group/manual_task",
+            process_model_source_directory="manual_task",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        assert len(process_instance.active_human_tasks) == 1
+        initial_human_task_id = process_instance.active_human_tasks[0].id
+
+        # save again to ensure we go attempt to process the human tasks again
+        processor.save()
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert initial_human_task_id == process_instance.active_human_tasks[0].id
+
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.__class__.get_task_by_bpmn_identifier(
+            human_task_one.task_name, processor.bpmn_process_instance
+        )
+
+        processor.suspend()
+        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.parent.id), commit=True)
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.resume()
+        processor.do_engine_steps(save=True)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        assert process_instance.status == "complete"
+
+    def test_properly_resets_process_to_given_task_with_call_activity(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
+        initiator_user = self.find_or_create_user("initiator_user")
+        finance_user_three = self.find_or_create_user("testuser3")
+        assert initiator_user.principal is not None
+        assert finance_user_three.principal is not None
+        AuthorizationService.import_permissions_from_yaml_file()
+
+        finance_group = GroupModel.query.filter_by(identifier="Finance Team").first()
+        assert finance_group is not None
+
+        process_model = load_test_spec(
+            process_model_id="test_group/manual_task_with_subprocesses",
+            process_model_source_directory="manual_task_with_subprocesses",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        import pdb; pdb.set_trace()
+        assert len(process_instance.active_human_tasks) == 1
+        initial_human_task_id = process_instance.active_human_tasks[0].id
+
+        # save again to ensure we go attempt to process the human tasks again
+        processor.save()
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert initial_human_task_id == process_instance.active_human_tasks[0].id
+
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.__class__.get_task_by_bpmn_identifier(
+            human_task_one.task_name, processor.bpmn_process_instance
+        )
+
+        processor.suspend()
+        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.parent.id), commit=True)
+        import pdb; pdb.set_trace()
+
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.resume()
+        processor.do_engine_steps(save=True)
+        import pdb; pdb.set_trace()
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        assert process_instance.status == "complete"
 
     def test_properly_saves_tasks_when_running(
         self,

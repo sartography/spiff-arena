@@ -1,3 +1,4 @@
+import copy
 import json
 from hashlib import sha256
 from typing import Optional
@@ -360,7 +361,7 @@ class TaskService:
         else:
             task_model.python_env_data_hash = python_env_data_hash
 
-        new_properties_json = task_model.properties_json
+        new_properties_json = copy.copy(task_model.properties_json)
         task_model.state = state
         task_model.start_in_seconds = None
         task_model.end_in_seconds = None
