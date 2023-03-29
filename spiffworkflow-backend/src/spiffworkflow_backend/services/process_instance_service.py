@@ -279,7 +279,8 @@ class ProcessInstanceService:
                         yield (identifier, list_value, list_index)
                     if isinstance(list_value, dict) and len(list_value) == 1:
                         for v in list_value.values():
-                            yield (identifier, v, list_index)
+                            if isinstance(v, str):
+                                yield (identifier, v, list_index)
 
     @classmethod
     def file_data_models_for_data(
