@@ -44,8 +44,8 @@ if [[ "${1:-}" == "clean" ]]; then
   # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
   # start postgres in background with one db
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
-    container_name = "postgres-spiff"
-    container_regex = "^postgres-spiff$"
+    container_name="postgres-spiff"
+    container_regex="^postgres-spiff$"
     if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then
       echo ":: Found postgres container - $container_name"
       if [[ -n "$(docker ps -q -f name=$container_regex)" ]]; then
