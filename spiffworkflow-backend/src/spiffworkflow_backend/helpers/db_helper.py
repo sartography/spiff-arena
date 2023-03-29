@@ -2,6 +2,7 @@
 import time
 
 import sqlalchemy
+from sqlalchemy.sql import text
 
 from spiffworkflow_backend.models.db import db
 
