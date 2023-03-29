@@ -19,8 +19,6 @@ from spiffworkflow_backend.services.process_instance_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
-# from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
-
 
 # We need to call this before importing spiffworkflow_backend
 # otherwise typeguard cannot work. hence the noqa: E402
@@ -47,8 +45,8 @@ def app() -> Flask:
 def with_db_and_bpmn_file_cleanup() -> None:
     """Do it cleanly!"""
     meta = db.metadata
-    db.session.execute(db.update(BpmnProcessModel, values={"top_level_process_id": None}))
-    db.session.execute(db.update(BpmnProcessModel, values={"direct_parent_process_id": None}))
+    db.session.execute(db.update(BpmnProcessModel).values(top_level_process_id=None))
+    db.session.execute(db.update(BpmnProcessModel).values(direct_parent_process_id=None))
 
     for table in reversed(meta.sorted_tables):
         db.session.execute(table.delete())

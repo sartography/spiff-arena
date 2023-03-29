@@ -270,3 +270,11 @@ export const encodeBase64 = (data: string) => {
 export const decodeBase64 = (data: string) => {
   return Buffer.from(data, 'base64').toString('ascii');
 };
+
+const MINUTES_IN_HOUR = 60;
+const SECONDS_IN_MINUTE = 60;
+const SECONDS_IN_HOUR = MINUTES_IN_HOUR * SECONDS_IN_MINUTE;
+const FOUR_HOURS_IN_SECONDS = SECONDS_IN_HOUR * 4;
+
+export const REFRESH_INTERVAL_SECONDS = 5;
+export const REFRESH_TIMEOUT_SECONDS = FOUR_HOURS_IN_SECONDS;

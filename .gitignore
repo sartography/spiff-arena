@@ -2,3 +2,4 @@ pyrightconfig.json
 .idea/
 t
 *~
+.dccache
