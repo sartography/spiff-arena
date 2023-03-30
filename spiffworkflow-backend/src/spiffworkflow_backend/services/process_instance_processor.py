@@ -829,7 +829,7 @@ class ProcessInstanceProcessor:
                         process_instance_id=self.process_instance_model.id,
                         key=key,
                     )
-                pim.value = data_for_key
+                pim.value = str(data_for_key)[0:255]
                 db.session.add(pim)
                 db.session.commit()
 
