@@ -47,15 +47,13 @@ class ProcessInstanceQueueService:
         queue_entry = ProcessInstanceQueueModel(process_instance_id=process_instance.id)
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
-    # TODO: rename to _enqueue
     @classmethod
-    def enqueue(cls, process_instance: ProcessInstanceModel) -> None:
+    def _enqueue(cls, process_instance: ProcessInstanceModel) -> None:
         queue_entry = ProcessInstanceLockService.unlock(process_instance.id)
         cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
-    # TODO: rename to _dequeue
     @classmethod
-    def dequeue(cls, process_instance: ProcessInstanceModel) -> None:
+    def _dequeue(cls, process_instance: ProcessInstanceModel) -> None:
         locked_by = ProcessInstanceLockService.locked_by()
 
         db.session.query(ProcessInstanceQueueModel).filter(
@@ -96,11 +94,11 @@ class ProcessInstanceQueueService:
         reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
         try:
             if not reentering_lock:
-                cls.dequeue(process_instance)
+                cls._dequeue(process_instance)
             yield
         finally:
             if not reentering_lock:
-                cls.enqueue(process_instance)
+                cls._enqueue(process_instance)
                 
 
     @classmethod
