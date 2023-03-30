@@ -1,5 +1,6 @@
 import copy
 import json
+import time
 from hashlib import sha256
 from typing import Optional
 from typing import Tuple
@@ -20,6 +21,8 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 
 
@@ -30,6 +33,135 @@ class JsonDataDict(TypedDict):
 
 class TaskService:
     PYTHON_ENVIRONMENT_STATE_KEY = "spiff__python_env_state"
+
+    def __init__(
+        self,
+        process_instance: ProcessInstanceModel,
+        serializer: BpmnWorkflowSerializer,
+        bpmn_definition_to_task_definitions_mappings: dict,
+    ) -> None:
+        self.process_instance = process_instance
+        self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
+        self.serializer = serializer
+
+        self.bpmn_processes: dict[str, BpmnProcessModel] = {}
+        self.task_models: dict[str, TaskModel] = {}
+        self.json_data_dicts: dict[str, JsonDataDict] = {}
+        self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
+
+    def save_objects_to_database(self) -> None:
+        db.session.bulk_save_objects(self.bpmn_processes.values())
+        db.session.bulk_save_objects(self.task_models.values())
+        db.session.bulk_save_objects(self.process_instance_events.values())
+        self.__class__.insert_or_update_json_data_records(self.json_data_dicts)
+
+    def process_parents_and_children_and_save_to_database(
+        self,
+        spiff_task: SpiffTask,
+    ) -> None:
+        self.process_spiff_task_children(spiff_task)
+        self.process_spiff_task_parents(spiff_task)
+        self.save_objects_to_database()
+
+    def process_spiff_task_children(
+        self,
+        spiff_task: SpiffTask,
+    ) -> None:
+        for child_spiff_task in spiff_task.children:
+            self.update_task_model_with_spiff_task(
+                spiff_task=child_spiff_task,
+            )
+            self.process_spiff_task_children(
+                spiff_task=child_spiff_task,
+            )
+
+    def process_spiff_task_parents(
+        self,
+        spiff_task: SpiffTask,
+    ) -> None:
+        (parent_subprocess_guid, _parent_subprocess) = self.__class__.task_subprocess(spiff_task)
+        if parent_subprocess_guid is not None:
+            spiff_task_of_parent_subprocess = spiff_task.workflow._get_outermost_workflow().get_task_from_id(
+                UUID(parent_subprocess_guid)
+            )
+
+            if spiff_task_of_parent_subprocess is not None:
+                self.update_task_model_with_spiff_task(
+                    spiff_task=spiff_task_of_parent_subprocess,
+                )
+                self.process_spiff_task_parents(
+                    spiff_task=spiff_task_of_parent_subprocess,
+                )
+
+    def update_task_model_with_spiff_task(
+        self,
+        spiff_task: SpiffTask,
+        task_failed: bool = False,
+    ) -> TaskModel:
+        (
+            new_bpmn_process,
+            task_model,
+            new_task_models,
+            new_json_data_dicts,
+        ) = self.__class__.find_or_create_task_model_from_spiff_task(
+            spiff_task,
+            self.process_instance,
+            self.serializer,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        )
+        bpmn_process = new_bpmn_process or task_model.bpmn_process
+        bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(
+            bpmn_process, spiff_task.workflow.data
+        )
+        self.task_models.update(new_task_models)
+        self.json_data_dicts.update(new_json_data_dicts)
+        json_data_dict_list = self.__class__.update_task_model(task_model, spiff_task, self.serializer)
+        self.task_models[task_model.guid] = task_model
+        if bpmn_process_json_data is not None:
+            json_data_dict_list.append(bpmn_process_json_data)
+        self._update_json_data_dicts_using_list(json_data_dict_list, self.json_data_dicts)
+
+        if task_model.state == "COMPLETED" or task_failed:
+            event_type = ProcessInstanceEventType.task_completed.value
+            if task_failed:
+                event_type = ProcessInstanceEventType.task_failed.value
+
+            # FIXME: some failed tasks will currently not have either timestamp since we only hook into spiff when tasks complete
+            #   which script tasks execute when READY.
+            timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
+            process_instance_event = ProcessInstanceEventModel(
+                task_guid=task_model.guid,
+                process_instance_id=self.process_instance.id,
+                event_type=event_type,
+                timestamp=timestamp,
+            )
+            self.process_instance_events[task_model.guid] = process_instance_event
+
+        # self.update_bpmn_process(spiff_task.workflow, bpmn_process)
+        return task_model
+
+    def update_bpmn_process(
+        self,
+        spiff_workflow: BpmnWorkflow,
+        bpmn_process: BpmnProcessModel,
+    ) -> None:
+        # import pdb; pdb.set_trace()
+        new_properties_json = copy.copy(bpmn_process.properties_json)
+        new_properties_json["last_task"] = str(spiff_workflow.last_task) if spiff_workflow.last_task else None
+        new_properties_json["success"] = spiff_workflow.success
+        bpmn_process.properties_json = new_properties_json
+
+        bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(bpmn_process, spiff_workflow.data)
+        if bpmn_process_json_data is not None:
+            self.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+
+        self.bpmn_processes[bpmn_process.guid or "top_level"] = bpmn_process
+
+        if spiff_workflow.outer_workflow != spiff_workflow:
+            direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(
+                id=bpmn_process.direct_parent_process_id
+            ).first()
+            self.update_bpmn_process(spiff_workflow.outer_workflow, direct_parent_bpmn_process)
 
     @classmethod
     def insert_or_update_json_data_records(
@@ -395,3 +527,11 @@ class TaskService:
         # this helps to convert items like datetime objects to be json serializable
         converted_data: dict = serializer.data_converter.convert(user_defined_state)
         return converted_data
+
+    @classmethod
+    def _update_json_data_dicts_using_list(
+        cls, json_data_dict_list: list[Optional[JsonDataDict]], json_data_dicts: dict[str, JsonDataDict]
+    ) -> None:
+        for json_data_dict in json_data_dict_list:
+            if json_data_dict is not None:
+                json_data_dicts[json_data_dict["hash"]] = json_data_dict
