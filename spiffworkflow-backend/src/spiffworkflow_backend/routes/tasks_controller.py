@@ -63,6 +63,9 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
 
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
+)
 
 class TaskDataSelectOption(TypedDict):
     """TaskDataSelectOption."""

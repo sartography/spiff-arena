@@ -59,6 +59,9 @@ from spiffworkflow_backend.services.message_service import MessageService
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
+)
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
