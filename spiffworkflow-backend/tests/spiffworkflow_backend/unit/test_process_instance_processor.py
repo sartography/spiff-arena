@@ -418,54 +418,59 @@ class TestProcessInstanceProcessor(BaseTest):
         processor_final = ProcessInstanceProcessor(process_instance_relookup)
         assert process_instance_relookup.status == "complete"
 
-        first_data_set = {"set_in_top_level_script": 1}
-        second_data_set = {
-            **first_data_set,
+        data_set_1 = {"set_in_top_level_script": 1}
+        data_set_2 = {
+            **data_set_1,
             **{"set_in_top_level_subprocess": 1, "we_move_on": False},
         }
-        third_data_set = {
-            **second_data_set,
+        data_set_3 = {
+            **data_set_2,
             **{
-                "set_in_test_process_to_call_script": 1,
                 "set_in_test_process_to_call_subprocess_subprocess_script": 1,
                 "set_in_test_process_to_call_subprocess_script": 1,
             },
         }
-        fourth_data_set = {**third_data_set, **{"a": 1, "we_move_on": True}}
-        fifth_data_set = {**fourth_data_set, **{"set_top_level_process_script_after_gate": 1}}
-        sixth_data_set = {**fifth_data_set, **{"validate_only": False, "set_top_level_process_script_after_gate": 1}}
+        data_set_4 = {
+            **data_set_3,
+            **{
+                "set_in_test_process_to_call_script": 1,
+            },
+        }
+        data_set_5 = {**data_set_4, **{"a": 1, "we_move_on": True}}
+        data_set_6 = {**data_set_5, **{"set_top_level_process_script_after_gate": 1}}
+        data_set_7 = {**data_set_6, **{"validate_only": False, "set_top_level_process_script_after_gate": 1}}
         expected_task_data = {
-            "top_level_script": {"data": first_data_set, "bpmn_process_identifier": "top_level_process"},
-            "top_level_manual_task_one": {"data": first_data_set, "bpmn_process_identifier": "top_level_process"},
-            "top_level_manual_task_two": {"data": first_data_set, "bpmn_process_identifier": "top_level_process"},
+            "top_level_script": {"data": data_set_1, "bpmn_process_identifier": "top_level_process"},
+            "top_level_manual_task_one": {"data": data_set_1, "bpmn_process_identifier": "top_level_process"},
+            "top_level_manual_task_two": {"data": data_set_1, "bpmn_process_identifier": "top_level_process"},
             "top_level_subprocess_script": {
-                "data": second_data_set,
+                "data": data_set_2,
                 "bpmn_process_identifier": "top_level_subprocess",
             },
-            "top_level_subprocess": {"data": second_data_set, "bpmn_process_identifier": "top_level_process"},
+            "top_level_subprocess": {"data": data_set_2, "bpmn_process_identifier": "top_level_process"},
             "test_process_to_call_subprocess_script": {
-                "data": third_data_set,
+                "data": data_set_3,
                 "bpmn_process_identifier": "test_process_to_call_subprocess",
             },
-            "top_level_call_activity": {"data": third_data_set, "bpmn_process_identifier": "top_level_process"},
+            "top_level_call_activity": {"data": data_set_4, "bpmn_process_identifier": "top_level_process"},
             "top_level_manual_task_two_second": {
-                "data": third_data_set,
+                "data": data_set_4,
                 "bpmn_process_identifier": "top_level_process",
             },
             "top_level_subprocess_script_second": {
-                "data": fourth_data_set,
+                "data": data_set_5,
                 "bpmn_process_identifier": "top_level_subprocess",
             },
-            "top_level_subprocess_second": {"data": fourth_data_set, "bpmn_process_identifier": "top_level_process"},
+            "top_level_subprocess_second": {"data": data_set_5, "bpmn_process_identifier": "top_level_process"},
             "test_process_to_call_subprocess_script_second": {
-                "data": fourth_data_set,
+                "data": data_set_5,
                 "bpmn_process_identifier": "test_process_to_call_subprocess",
             },
             "top_level_call_activity_second": {
-                "data": fourth_data_set,
+                "data": data_set_5,
                 "bpmn_process_identifier": "top_level_process",
             },
-            "end_event_of_manual_task_model": {"data": fifth_data_set, "bpmn_process_identifier": "top_level_process"},
+            "end_event_of_manual_task_model": {"data": data_set_6, "bpmn_process_identifier": "top_level_process"},
         }
 
         spiff_tasks_checked: list[str] = []
@@ -496,6 +501,7 @@ class TestProcessInstanceProcessor(BaseTest):
                 )
                 task_models_with_bpmn_identifier_count = (
                     TaskModel.query.join(TaskDefinitionModel)
+                    .filter(TaskModel.process_instance_id == process_instance_relookup.id)
                     .filter(TaskDefinitionModel.bpmn_identifier == spiff_task.task_spec.name)
                     .count()
                 )
@@ -519,7 +525,6 @@ class TestProcessInstanceProcessor(BaseTest):
                 )
                 # TODO: if we split out env data again we will need to use it here instead of json_data
                 # assert task_model.python_env_data() == expected_python_env_data, message
-                # import pdb; pdb.set_trace()
                 assert task_model.json_data() == expected_python_env_data, message
 
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
@@ -561,7 +566,14 @@ class TestProcessInstanceProcessor(BaseTest):
             )
             assert task_bpmn_identifier in spiff_tasks_checked, message
 
-        assert processor.get_data() == sixth_data_set
+        task_models_that_are_predicted_count = (
+            TaskModel.query.filter(TaskModel.process_instance_id == process_instance_relookup.id)
+            .filter(TaskModel.state.in_(["LIKELY", "MAYBE"]))  # type: ignore
+            .count()
+        )
+        assert task_models_that_are_predicted_count == 0
+
+        assert processor.get_data() == data_set_7
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,

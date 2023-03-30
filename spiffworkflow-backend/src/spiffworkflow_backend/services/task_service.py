@@ -68,12 +68,15 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> None:
         for child_spiff_task in spiff_task.children:
-            self.update_task_model_with_spiff_task(
-                spiff_task=child_spiff_task,
-            )
-            self.process_spiff_task_children(
-                spiff_task=child_spiff_task,
-            )
+            if child_spiff_task._has_state(TaskState.PREDICTED_MASK):
+                self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
+            else:
+                self.update_task_model_with_spiff_task(
+                    spiff_task=child_spiff_task,
+                )
+                self.process_spiff_task_children(
+                    spiff_task=child_spiff_task,
+                )
 
     def process_spiff_task_parents(
         self,
@@ -137,7 +140,7 @@ class TaskService:
             )
             self.process_instance_events[task_model.guid] = process_instance_event
 
-        # self.update_bpmn_process(spiff_task.workflow, bpmn_process)
+        self.update_bpmn_process(spiff_task.workflow, bpmn_process)
         return task_model
 
     def update_bpmn_process(
@@ -315,7 +318,7 @@ class TaskService:
         if "subprocess_specs" in bpmn_process_dict:
             bpmn_process_dict.pop("subprocess_specs")
 
-        new_task_models = {}
+        new_task_models: dict[str, TaskModel] = {}
         new_json_data_dicts: dict[str, JsonDataDict] = {}
 
         bpmn_process = None
@@ -386,7 +389,12 @@ class TaskService:
                 if task_properties["task_spec"] == "Root":
                     continue
 
+                # we are going to avoid saving likely and maybe tasks to the db.
+                # that means we need to remove them from their parents' lists of children as well.
                 spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))
+                if spiff_task._has_state(TaskState.PREDICTED_MASK):
+                    cls.remove_spiff_task_from_parent(spiff_task, new_task_models)
+                    continue
 
                 task_model = TaskModel.query.filter_by(guid=task_id).first()
                 if task_model is None:
@@ -405,6 +413,18 @@ class TaskService:
                 if python_env_dict is not None:
                     new_json_data_dicts[python_env_dict["hash"]] = python_env_dict
         return (bpmn_process, new_task_models, new_json_data_dicts)
+
+    @classmethod
+    def remove_spiff_task_from_parent(cls, spiff_task: SpiffTask, task_models: dict[str, TaskModel]) -> None:
+        """Removes the given spiff task from its parent and then updates the task_models dict with the changes."""
+        spiff_task_parent_guid = str(spiff_task.parent.id)
+        spiff_task_guid = str(spiff_task.id)
+        if spiff_task_parent_guid in task_models:
+            parent_task_model = task_models[spiff_task_parent_guid]
+            new_parent_properties_json = copy.copy(parent_task_model.properties_json)
+            new_parent_properties_json["children"].remove(spiff_task_guid)
+            parent_task_model.properties_json = new_parent_properties_json
+            task_models[spiff_task_parent_guid] = parent_task_model
 
     @classmethod
     def update_task_data_on_bpmn_process(
