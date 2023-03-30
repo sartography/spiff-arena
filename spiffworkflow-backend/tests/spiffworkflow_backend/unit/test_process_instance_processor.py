@@ -360,9 +360,6 @@ class TestProcessInstanceProcessor(BaseTest):
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
-        import pdb
-
-        pdb.set_trace()
         assert process_instance.status == "complete"
 
     def test_properly_saves_tasks_when_running(
