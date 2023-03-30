@@ -89,7 +89,6 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
@@ -1591,7 +1590,7 @@ class ProcessInstanceProcessor:
             # about _add_bpmn_process_definitions and if that needs to happen in
             # the same lock like it does on main
             self._do_engine_steps(exit_at, save, execution_strategy_name)
-        
+
     def _do_engine_steps(
         self,
         exit_at: None = None,

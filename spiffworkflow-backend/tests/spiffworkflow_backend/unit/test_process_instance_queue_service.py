@@ -1,14 +1,18 @@
 """Test_process_instance_queue_service."""
+from contextlib import suppress
+
 from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
+
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-)
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
+)
+
 
 class TestProcessInstanceQueueService(BaseTest):
     """TestProcessInstanceQueueService."""
@@ -79,13 +83,11 @@ class TestProcessInstanceQueueService(BaseTest):
     ) -> None:
         process_instance = self._create_process_instance()
 
-        try:
+        with suppress(Exception):
             with ProcessInstanceQueueService.dequeued(process_instance):
                 assert ProcessInstanceLockService.has_lock(process_instance.id)
                 raise Exception("just testing")
-        except:
-            pass
-        
+
         assert not ProcessInstanceLockService.has_lock(process_instance.id)
 
     def test_can_call_dequeued_mulitple_times(
@@ -94,13 +96,13 @@ class TestProcessInstanceQueueService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_instance = self._create_process_instance()
-        
+
         with ProcessInstanceQueueService.dequeued(process_instance):
             assert ProcessInstanceLockService.has_lock(process_instance.id)
-       
+
         with ProcessInstanceQueueService.dequeued(process_instance):
             assert ProcessInstanceLockService.has_lock(process_instance.id)
-       
+
         with ProcessInstanceQueueService.dequeued(process_instance):
             assert ProcessInstanceLockService.has_lock(process_instance.id)
 
@@ -110,12 +112,12 @@ class TestProcessInstanceQueueService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_instance = self._create_process_instance()
-        
+
         with ProcessInstanceQueueService.dequeued(process_instance):
             with ProcessInstanceQueueService.dequeued(process_instance):
                 with ProcessInstanceQueueService.dequeued(process_instance):
                     assert ProcessInstanceLockService.has_lock(process_instance.id)
-                    
+
                 assert ProcessInstanceLockService.has_lock(process_instance.id)
             assert ProcessInstanceLockService.has_lock(process_instance.id)
 

@@ -23,9 +23,6 @@ from spiffworkflow_backend.services.authorization_service import (
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceIsAlreadyLockedError,
-)
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )

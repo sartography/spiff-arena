@@ -40,9 +40,6 @@ from spiffworkflow_backend.services.process_instance_queue_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
-from spiffworkflow_backend.services.process_instance_queue_service import (
-    ProcessInstanceQueueService,
-)
 
 class ProcessInstanceService:
     """ProcessInstanceService."""
@@ -116,7 +113,6 @@ class ProcessInstanceService:
             .all()
         )
         for process_instance in records:
-            locked = False
             processor = None
             try:
                 current_app.logger.info(f"Processing process_instance {process_instance.id}")

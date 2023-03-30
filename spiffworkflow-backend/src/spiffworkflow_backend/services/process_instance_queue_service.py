@@ -1,10 +1,8 @@
 import contextlib
 import time
+from typing import Generator
 from typing import List
 from typing import Optional
-from typing import Generator
-
-from flask import current_app
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -29,9 +27,9 @@ class ProcessInstanceQueueService:
     """TODO: comment."""
 
     @classmethod
-    def _configure_and_save_queue_entry(cls,
-                                        process_instance: ProcessInstanceModel,
-                                        queue_entry: ProcessInstanceQueueModel) -> None:
+    def _configure_and_save_queue_entry(
+        cls, process_instance: ProcessInstanceModel, queue_entry: ProcessInstanceQueueModel
+    ) -> None:
         # TODO: configurable params (priority/run_at)
         queue_entry.run_at_in_seconds = round(time.time())
         queue_entry.priority = 2
@@ -99,7 +97,6 @@ class ProcessInstanceQueueService:
         finally:
             if not reentering_lock:
                 cls._enqueue(process_instance)
-                
 
     @classmethod
     def entries_with_status(
