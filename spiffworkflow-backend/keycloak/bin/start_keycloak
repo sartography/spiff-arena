@@ -26,9 +26,10 @@ fi
 
 # https://stackoverflow.com/a/60579344/6090676
 container_name="keycloak"
-if [[ -n "$(docker ps -qa -f name=$container_name)" ]]; then
+container_regex="^keycloak$"
+if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then
   echo ":: Found container - $container_name"
-  if [[ -n "$(docker ps -q -f name=$container_name)" ]]; then
+  if [[ -n "$(docker ps -q -f name=$container_regex)" ]]; then
     echo ":: Stopping running container - $container_name"
     docker stop $container_name
   fi
