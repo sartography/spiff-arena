@@ -70,13 +70,13 @@ class TaskService:
         for child_spiff_task in spiff_task.children:
             if child_spiff_task._has_state(TaskState.PREDICTED_MASK):
                 self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
-            else:
-                self.update_task_model_with_spiff_task(
-                    spiff_task=child_spiff_task,
-                )
-                self.process_spiff_task_children(
-                    spiff_task=child_spiff_task,
-                )
+                continue
+            self.update_task_model_with_spiff_task(
+                spiff_task=child_spiff_task,
+            )
+            self.process_spiff_task_children(
+                spiff_task=child_spiff_task,
+            )
 
     def process_spiff_task_parents(
         self,
@@ -148,7 +148,6 @@ class TaskService:
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
     ) -> None:
-        # import pdb; pdb.set_trace()
         new_properties_json = copy.copy(bpmn_process.properties_json)
         new_properties_json["last_task"] = str(spiff_workflow.last_task) if spiff_workflow.last_task else None
         new_properties_json["success"] = spiff_workflow.success

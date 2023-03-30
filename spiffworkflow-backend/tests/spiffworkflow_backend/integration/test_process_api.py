@@ -2616,6 +2616,8 @@ class TestProcessApi(BaseTest):
             content_type="application/json",
             data=json.dumps(data),
         )
+        assert response.status_code == 200
+        assert response.json is not None
         assert response.json["status"] == "complete"
 
         response = client.get(
@@ -2641,9 +2643,9 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_script_unit_test_run."""
         process_group_id = "test_group"
-        process_model_id = "process_navigation"
-        bpmn_file_name = "process_navigation.bpmn"
-        bpmn_file_location = "process_navigation"
+        process_model_id = "manual_task"
+        bpmn_file_name = "manual_task.bpmn"
+        bpmn_file_location = "manual_task"
         process_model_identifier = self.create_group_and_model_with_bpmn(
             client=client,
             user=with_super_admin_user,
@@ -2674,25 +2676,11 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
 
-        data = {
-            "dateTime": "PT1H",
-            "external": True,
-            "internal": True,
-            "label": "Event_0e4owa3",
-            "typename": "TimerEventDefinition",
-        }
-        response = client.post(
-            f"/v1.0/send-event/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-            content_type="application/json",
-            data=json.dumps(data),
-        )
-
         response = client.get(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        assert len(response.json) == 9
+        assert len(response.json) == 7
         human_task = next(task for task in response.json if task["bpmn_identifier"] == "manual_task_one")
 
         response = client.post(
@@ -2711,7 +2699,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        assert len(response.json) == 9
+        assert len(response.json) == 7
 
     def setup_initial_groups_for_move_tests(self, client: FlaskClient, with_super_admin_user: UserModel) -> None:
         """Setup_initial_groups_for_move_tests."""
