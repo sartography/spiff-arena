@@ -1,12 +1,12 @@
 """Test_process_instance_processor."""
 from uuid import UUID
-import json
 
 import pytest
 from flask import g
 from flask.app import Flask
 from flask.testing import FlaskClient
-from SpiffWorkflow.task import TaskState  # type: ignore
+from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
+from SpiffWorkflow.task import TaskState
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -16,6 +16,7 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import (
@@ -297,6 +298,7 @@ class TestProcessInstanceProcessor(BaseTest):
         spiff_manual_task = processor.__class__.get_task_by_bpmn_identifier(
             human_task_one.task_name, processor.bpmn_process_instance
         )
+        assert spiff_manual_task is not None
 
         processor.suspend()
         ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.parent.id), commit=True)
@@ -336,7 +338,7 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        with open("before_reset.json", 'w') as f: f.write(json.dumps(processor.serialize(), indent=2))
+        # with open("before_reset.json", 'w') as f: f.write(json.dumps(processor.serialize(), indent=2))
         assert len(process_instance.active_human_tasks) == 1
         initial_human_task_id = process_instance.active_human_tasks[0].id
         assert len(process_instance.active_human_tasks) == 1
@@ -346,20 +348,21 @@ class TestProcessInstanceProcessor(BaseTest):
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
-
         processor.suspend()
         ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.id), commit=True)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
-        with open("after_reset.json", 'w') as f: f.write(json.dumps(processor.serialize(), indent=2))
+        # with open("after_reset.json", 'w') as f: f.write(json.dumps(processor.serialize(), indent=2))
         processor.resume()
         processor.do_engine_steps(save=True)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
-        import pdb; pdb.set_trace()
+        import pdb
+
+        pdb.set_trace()
         assert process_instance.status == "complete"
 
     def test_properly_saves_tasks_when_running(
@@ -409,6 +412,9 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
         # recreate variables to ensure all bpmn json was recreated from scratch from the db
         process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
@@ -429,34 +435,74 @@ class TestProcessInstanceProcessor(BaseTest):
             },
         }
         fourth_data_set = {**third_data_set, **{"a": 1, "we_move_on": True}}
-        fifth_data_set = {**fourth_data_set, **{"validate_only": False, "set_top_level_process_script_after_gate": 1}}
+        fifth_data_set = {**fourth_data_set, **{"set_top_level_process_script_after_gate": 1}}
+        sixth_data_set = {**fifth_data_set, **{"validate_only": False, "set_top_level_process_script_after_gate": 1}}
         expected_task_data = {
-            "top_level_script": first_data_set,
-            "manual_task": first_data_set,
-            "top_level_subprocess_script": second_data_set,
-            "top_level_subprocess": second_data_set,
-            "test_process_to_call_subprocess_script": third_data_set,
-            "top_level_call_activity": third_data_set,
-            "end_event_of_manual_task_model": third_data_set,
-            "top_level_subprocess_script_second": fourth_data_set,
-            "test_process_to_call_subprocess_script_second": fourth_data_set,
+            "top_level_script": {"data": first_data_set, "bpmn_process_identifier": "top_level_process"},
+            "top_level_manual_task_one": {"data": first_data_set, "bpmn_process_identifier": "top_level_process"},
+            "top_level_manual_task_two": {"data": first_data_set, "bpmn_process_identifier": "top_level_process"},
+            "top_level_subprocess_script": {
+                "data": second_data_set,
+                "bpmn_process_identifier": "top_level_subprocess",
+            },
+            "top_level_subprocess": {"data": second_data_set, "bpmn_process_identifier": "top_level_process"},
+            "test_process_to_call_subprocess_script": {
+                "data": third_data_set,
+                "bpmn_process_identifier": "test_process_to_call_subprocess",
+            },
+            "top_level_call_activity": {"data": third_data_set, "bpmn_process_identifier": "top_level_process"},
+            "top_level_manual_task_two_second": {
+                "data": third_data_set,
+                "bpmn_process_identifier": "top_level_process",
+            },
+            "top_level_subprocess_script_second": {
+                "data": fourth_data_set,
+                "bpmn_process_identifier": "top_level_subprocess",
+            },
+            "top_level_subprocess_second": {"data": fourth_data_set, "bpmn_process_identifier": "top_level_process"},
+            "test_process_to_call_subprocess_script_second": {
+                "data": fourth_data_set,
+                "bpmn_process_identifier": "test_process_to_call_subprocess",
+            },
+            "top_level_call_activity_second": {
+                "data": fourth_data_set,
+                "bpmn_process_identifier": "top_level_process",
+            },
+            "end_event_of_manual_task_model": {"data": fifth_data_set, "bpmn_process_identifier": "top_level_process"},
         }
 
-        spiff_tasks_checked_once: list = []
+        spiff_tasks_checked: list[str] = []
 
         # TODO: also check task data here from the spiff_task directly to ensure we hydrated spiff correctly
-        def assert_spiff_task_is_in_process(spiff_task_identifier: str, bpmn_process_identifier: str) -> None:
-            if spiff_task.task_spec.name == spiff_task_identifier:
-                expected_task_data_key = spiff_task.task_spec.name
-                if spiff_task.task_spec.name in spiff_tasks_checked_once:
+        def assert_spiff_task_is_in_process(spiff_task: SpiffTask) -> None:
+            spiff_task_identifier = spiff_task.task_spec.name
+            if spiff_task_identifier in expected_task_data:
+                bpmn_process_identifier = expected_task_data[spiff_task_identifier]["bpmn_process_identifier"]
+                expected_task_data_key = spiff_task_identifier
+                if spiff_task_identifier in spiff_tasks_checked:
                     expected_task_data_key = f"{spiff_task.task_spec.name}_second"
 
-                expected_python_env_data = expected_task_data[expected_task_data_key]
+                assert expected_task_data_key not in spiff_tasks_checked
+
+                spiff_tasks_checked.append(expected_task_data_key)
+
+                expected_python_env_data = expected_task_data[expected_task_data_key]["data"]
 
                 base_failure_message = (
                     f"Failed on {bpmn_process_identifier} - {spiff_task_identifier} - task data key"
                     f" {expected_task_data_key}."
                 )
+
+                count_failure_message = (
+                    f"{base_failure_message} There are more than 2 entries of this task in the db."
+                    " There should only ever be max 2."
+                )
+                task_models_with_bpmn_identifier_count = (
+                    TaskModel.query.join(TaskDefinitionModel)
+                    .filter(TaskDefinitionModel.bpmn_identifier == spiff_task.task_spec.name)
+                    .count()
+                )
+                assert task_models_with_bpmn_identifier_count < 3, count_failure_message
                 task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
 
                 assert task_model.start_in_seconds is not None
@@ -466,7 +512,9 @@ class TestProcessInstanceProcessor(BaseTest):
                 task_definition = task_model.task_definition
                 assert task_definition.bpmn_identifier == spiff_task_identifier
                 assert task_definition.bpmn_name == spiff_task_identifier.replace("_", " ").title()
-                assert task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
+                assert (
+                    task_definition.bpmn_process_definition.bpmn_identifier == bpmn_process_identifier
+                ), base_failure_message
 
                 message = (
                     f"{base_failure_message} Expected: {sorted(expected_python_env_data)}. Received:"
@@ -474,18 +522,14 @@ class TestProcessInstanceProcessor(BaseTest):
                 )
                 # TODO: if we split out env data again we will need to use it here instead of json_data
                 # assert task_model.python_env_data() == expected_python_env_data, message
+                # import pdb; pdb.set_trace()
                 assert task_model.json_data() == expected_python_env_data, message
-                spiff_tasks_checked_once.append(spiff_task.task_spec.name)
 
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
         assert len(all_spiff_tasks) > 1
         for spiff_task in all_spiff_tasks:
             assert spiff_task.state == TaskState.COMPLETED
-            assert_spiff_task_is_in_process(
-                "test_process_to_call_subprocess_script", "test_process_to_call_subprocess"
-            )
-            assert_spiff_task_is_in_process("top_level_subprocess_script", "top_level_subprocess")
-            assert_spiff_task_is_in_process("top_level_script", "top_level_process")
+            assert_spiff_task_is_in_process(spiff_task)
 
             if spiff_task.task_spec.name == "top_level_call_activity":
                 # the task id / guid of the call activity gets used as the guid of the bpmn process that it calls
@@ -513,7 +557,14 @@ class TestProcessInstanceProcessor(BaseTest):
                 assert direct_parent_process is not None
                 assert direct_parent_process.bpmn_process_definition.bpmn_identifier == "test_process_to_call"
 
-        assert processor.get_data() == fifth_data_set
+        for task_bpmn_identifier in expected_task_data.keys():
+            message = (
+                f"Expected to have seen a task with a bpmn_identifier of {task_bpmn_identifier} but did not. "
+                f"Only saw {sorted(spiff_tasks_checked)}"
+            )
+            assert task_bpmn_identifier in spiff_tasks_checked, message
+
+        assert processor.get_data() == sixth_data_set
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,

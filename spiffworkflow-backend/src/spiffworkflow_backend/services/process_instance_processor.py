@@ -1,6 +1,6 @@
 """Process_instance_processor."""
-import copy
 import _strptime  # type: ignore
+import copy
 import decimal
 import json
 import logging
@@ -1373,7 +1373,7 @@ class ProcessInstanceProcessor:
 
         bpmn_process = to_task_model.bpmn_process
         properties_json = copy.copy(bpmn_process.properties_json)
-        properties_json['last_task'] = parent_task_model.guid
+        properties_json["last_task"] = parent_task_model.guid
         bpmn_process.properties_json = properties_json
         db.session.add(bpmn_process)
         db.session.commit()
@@ -1817,6 +1817,13 @@ class ProcessInstanceProcessor:
             task_guid=task_model.guid,
             user_id=user.id,
         )
+
+        task_service = TaskService(
+            process_instance=self.process_instance_model,
+            serializer=self._serializer,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        )
+        task_service.process_parents_and_children_and_save_to_database(spiff_task)
 
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
