@@ -29,8 +29,8 @@ class ProcessInstanceQueueService:
     """TODO: comment."""
 
     # TODO: rename to _enqueue, expose add_instance_to_queue
-    @staticmethod
-    def enqueue(process_instance: ProcessInstanceModel) -> None:
+    @classmethod
+    def enqueue(cls, process_instance: ProcessInstanceModel) -> None:
         queue_item = ProcessInstanceLockService.try_unlock(process_instance.id)
 
         if queue_item is None:
@@ -47,8 +47,8 @@ class ProcessInstanceQueueService:
         db.session.commit()
 
     # TODO: rename to _dequeue
-    @staticmethod
-    def dequeue(process_instance: ProcessInstanceModel) -> None:
+    @classmethod
+    def dequeue(cls, process_instance: ProcessInstanceModel) -> None:
         locked_by = ProcessInstanceLockService.locked_by()
 
         db.session.query(ProcessInstanceQueueModel).filter(
@@ -83,8 +83,8 @@ class ProcessInstanceQueueService:
 
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 
-    @contextlib.contextmanager
     @classmethod
+    @contextlib.contextmanager
     def dequeued(cls, process_instance: ProcessInstanceModel) -> Generator[None, None, None]:
         reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
         try:
