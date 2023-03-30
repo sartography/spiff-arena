@@ -61,9 +61,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.current_task_model: Optional[TaskModel] = None
         self.current_task_start_in_seconds: Optional[float] = None
 
-        # self.task_models: dict[str, TaskModel] = {}
-        # self.json_data_dicts: dict[str, JsonDataDict] = {}
-        # self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
         self.last_completed_spiff_task: Optional[SpiffTask] = None
 
         self.task_service = TaskService(
