@@ -73,7 +73,7 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
-        ProcessInstanceQueueService.enqueue(process_instance_model)
+        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model)
         return process_instance_model
 
     @classmethod

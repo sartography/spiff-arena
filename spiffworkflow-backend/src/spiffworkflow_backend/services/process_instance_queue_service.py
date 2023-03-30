@@ -28,23 +28,30 @@ class ProcessInstanceIsAlreadyLockedError(Exception):
 class ProcessInstanceQueueService:
     """TODO: comment."""
 
-    # TODO: rename to _enqueue, expose add_instance_to_queue
+    @classmethod
+    def _configure_and_save_queue_entry(cls,
+                                        process_instance: ProcessInstanceModel,
+                                        queue_entry: ProcessInstanceQueueModel) -> None:
+        # TODO: configurable params (priority/run_at)
+        queue_entry.run_at_in_seconds = round(time.time())
+        queue_entry.priority = 2
+        queue_entry.status = process_instance.status
+        queue_entry.locked_by = None
+        queue_entry.locked_at_in_seconds = None
+
+        db.session.add(queue_entry)
+        db.session.commit()
+
+    @classmethod
+    def enqueue_new_process_instance(cls, process_instance: ProcessInstanceModel) -> None:
+        queue_entry = ProcessInstanceQueueModel(process_instance_id=process_instance.id)
+        cls._configure_and_save_queue_entry(process_instance, queue_entry)
+
+    # TODO: rename to _enqueue
     @classmethod
     def enqueue(cls, process_instance: ProcessInstanceModel) -> None:
-        queue_item = ProcessInstanceLockService.try_unlock(process_instance.id)
-
-        if queue_item is None:
-            queue_item = ProcessInstanceQueueModel(process_instance_id=process_instance.id)
-
-        # TODO: configurable params (priority/run_at)
-        queue_item.run_at_in_seconds = round(time.time())
-        queue_item.priority = 2
-        queue_item.status = process_instance.status
-        queue_item.locked_by = None
-        queue_item.locked_at_in_seconds = None
-
-        db.session.add(queue_item)
-        db.session.commit()
+        queue_entry = ProcessInstanceLockService.unlock(process_instance.id)
+        cls._configure_and_save_queue_entry(process_instance, queue_entry)
 
     # TODO: rename to _dequeue
     @classmethod
