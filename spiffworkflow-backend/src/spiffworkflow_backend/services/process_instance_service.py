@@ -40,6 +40,9 @@ from spiffworkflow_backend.services.process_instance_queue_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
+)
 
 class ProcessInstanceService:
     """ProcessInstanceService."""
@@ -70,6 +73,7 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
+        ProcessInstanceQueueService.enqueue(process_instance_model)
         return process_instance_model
 
     @classmethod

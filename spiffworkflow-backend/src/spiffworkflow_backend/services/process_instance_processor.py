@@ -1609,6 +1609,7 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: Optional[str] = None,
     ) -> None:
+        self.lock_process_instance("")
         self._add_bpmn_process_definitions()
 
         task_model_delegate = TaskModelSavingDelegate(
@@ -1638,6 +1639,7 @@ class ProcessInstanceProcessor:
                 and self._script_engine.failing_spiff_task is not None
             ):
                 self._script_engine.failing_spiff_task = None
+            self.unlock_process_instance("")
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
