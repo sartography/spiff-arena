@@ -353,14 +353,24 @@ class TestProcessInstanceProcessor(BaseTest):
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
-        # with open("after_reset.json", 'w') as f: f.write(json.dumps(processor.serialize(), indent=2))
         processor.resume()
         processor.do_engine_steps(save=True)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
-        assert process_instance.status == "complete"
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        processor = ProcessInstanceProcessor(process_instance)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+
+        # recreate variables to ensure all bpmn json was recreated from scratch from the db
+        process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
+        assert process_instance_relookup.status == "complete"
 
     def test_properly_saves_tasks_when_running(
         self,

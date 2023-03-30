@@ -126,13 +126,12 @@ class ExecutionStrategy:
     def __init__(self, delegate: EngineStepDelegate):
         """__init__."""
         self.delegate = delegate
-        self.bpmn_process_instance = None
 
     def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
         pass
 
-    def save(self) -> None:
-        self.delegate.save(self.bpmn_process_instance)
+    def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        self.delegate.save(bpmn_process_instance)
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
@@ -238,7 +237,7 @@ class WorkflowExecutionService:
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
-            self.execution_strategy.save()
+            self.execution_strategy.save(self.bpmn_process_instance)
             db.session.commit()
 
             if save:
