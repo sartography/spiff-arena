@@ -86,7 +86,7 @@ class ProcessInstanceQueueService:
     @contextlib.contextmanager
     @classmethod
     def dequeued(cls, process_instance: ProcessInstanceModel) -> Generator[None, None, None]:
-        reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id):
+        reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
         try:
             if not reentering_lock:
                 cls.dequeue(process_instance)
