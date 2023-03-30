@@ -72,6 +72,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
             self.current_task_start_in_seconds = time.time()
+            # import pdb; pdb.set_trace()
+            spiff_task.task_spec._predict(spiff_task, mask=TaskState.NOT_FINISHED_MASK)
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.will_complete_task(spiff_task)
 
@@ -108,6 +110,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # ):
             #     self._update_task_model_with_spiff_task(waiting_spiff_task)
             if self.last_completed_spiff_task is not None:
+                import pdb; pdb.set_trace()
                 self.task_service.process_spiff_task_parents(self.last_completed_spiff_task)
                 self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
 

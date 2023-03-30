@@ -347,30 +347,36 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+
+        ### NOTES:
+        # somehow we are hosing the task state so that when completing tasks of a subprocess, the task AFTER the subprocess task
+        # is not marked READY but instead stays as FUTURE. Running things like:
+        #   self.last_completed_spiff_task.task_spec._update(self.last_completed_spiff_task)
+        # and
+        #   self.last_completed_spiff_task.task_spec._predict(self.last_completed_spiff_task, mask=TaskState.NOT_FINISHED_MASK)
+        # did not help.
 
         processor.suspend()
-        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.id), commit=True)
+        # import pdb; pdb.set_trace()
+        task_model_to_reset_to = TaskModel.query.join(TaskDefinitionModel).filter(TaskDefinitionModel.bpmn_identifier == 'top_level_subprocess_script').order_by(TaskModel.id.desc()).first()
+        assert task_model_to_reset_to is not None
+        ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid, commit=True)
+        # import pdb; pdb.set_trace()
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         processor.resume()
         processor.do_engine_steps(save=True)
+        import pdb; pdb.set_trace()
+        assert len(process_instance.active_human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
-        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        processor = ProcessInstanceProcessor(process_instance)
-        human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-        human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-
-        # recreate variables to ensure all bpmn json was recreated from scratch from the db
-        process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
-        assert process_instance_relookup.status == "complete"
+        assert process_instance.status == "complete"
 
     def test_properly_saves_tasks_when_running(
         self,

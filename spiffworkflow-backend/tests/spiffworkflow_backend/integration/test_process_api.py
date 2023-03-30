@@ -2618,6 +2618,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
+        import pdb; pdb.set_trace()
         assert response.json["status"] == "complete"
 
         response = client.get(
