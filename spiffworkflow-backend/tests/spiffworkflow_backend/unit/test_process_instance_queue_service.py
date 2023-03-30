@@ -50,7 +50,7 @@ class TestProcessInstanceQueueService(BaseTest):
         queue_entry_ids = ProcessInstanceQueueService.peek_many("not_started")
         assert process_instance.id in queue_entry_ids
 
-    def test_can_dequeue_a_process_instance(
+    def test_can_run_some_code_with_a_dequeued_process_instance(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
@@ -70,6 +70,22 @@ class TestProcessInstanceQueueService(BaseTest):
         assert not ProcessInstanceLockService.has_lock(process_instance.id)
         with ProcessInstanceQueueService.dequeued(process_instance):
             assert ProcessInstanceLockService.has_lock(process_instance.id)
+        assert not ProcessInstanceLockService.has_lock(process_instance.id)
+
+    def test_unlocks_if_an_exception_is_thrown_with_a__dequeued_process_instance(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_instance = self._create_process_instance()
+
+        try:
+            with ProcessInstanceQueueService.dequeued(process_instance):
+                assert ProcessInstanceLockService.has_lock(process_instance.id)
+                raise Exception("just testing")
+        except:
+            pass
+        
         assert not ProcessInstanceLockService.has_lock(process_instance.id)
 
     def test_can_call_dequeued_mulitple_times(
