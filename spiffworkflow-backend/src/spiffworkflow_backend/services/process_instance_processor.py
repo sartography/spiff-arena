@@ -43,11 +43,10 @@ from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.events.StartEvent import StartEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
-from SpiffWorkflow.dmn.serializer.task_spec import BusinessRuleTaskConverter  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
+from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
@@ -109,8 +108,6 @@ from spiffworkflow_backend.services.workflow_execution_service import (
 from spiffworkflow_backend.services.workflow_execution_service import (
     WorkflowExecutionService,
 )
-
-SPIFF_SPEC_CONFIG["task_specs"].append(BusinessRuleTaskConverter)
 
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
@@ -1223,13 +1220,16 @@ class ProcessInstanceProcessor:
                 spiff_tasks_updated[task.id] = task
 
         for updated_spiff_task in spiff_tasks_updated.values():
-            bpmn_process, task_model, new_task_models, new_json_data_dicts = (
-                TaskService.find_or_create_task_model_from_spiff_task(
-                    updated_spiff_task,
-                    self.process_instance_model,
-                    self._serializer,
-                    bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-                )
+            (
+                bpmn_process,
+                task_model,
+                new_task_models,
+                new_json_data_dicts,
+            ) = TaskService.find_or_create_task_model_from_spiff_task(
+                updated_spiff_task,
+                self.process_instance_model,
+                self._serializer,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
             bpmn_process_to_use = bpmn_process or task_model.bpmn_process
             bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(
@@ -1439,7 +1439,7 @@ class ProcessInstanceProcessor:
 
     @staticmethod
     def update_spiff_parser_with_all_process_dependency_files(
-        parser: BpmnDmnParser,
+        parser: SpiffBpmnParser,
         processed_identifiers: Optional[set[str]] = None,
     ) -> None:
         """Update_spiff_parser_with_all_process_dependency_files."""
