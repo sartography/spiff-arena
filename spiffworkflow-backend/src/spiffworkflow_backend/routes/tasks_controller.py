@@ -432,6 +432,8 @@ def task_submit_shared(
     ]
 
     with sentry_sdk.start_span(op="task", description="complete_form_task"):
+        # TODO: fix this, exception in complete_form_task would cause the instance
+        # to remain locked
         processor.lock_process_instance("Web", retry_times, retry_interval_in_seconds)
         ProcessInstanceService.complete_form_task(
             processor=processor,

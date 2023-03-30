@@ -1,6 +1,8 @@
+import contextlib
 import time
 from typing import List
 from typing import Optional
+from typing import Generator
 
 from flask import current_app
 
@@ -26,6 +28,7 @@ class ProcessInstanceIsAlreadyLockedError(Exception):
 class ProcessInstanceQueueService:
     """TODO: comment."""
 
+    # TODO: rename to _enqueue, expose add_instance_to_queue
     @staticmethod
     def enqueue(process_instance: ProcessInstanceModel) -> None:
         queue_item = ProcessInstanceLockService.try_unlock(process_instance.id)
@@ -43,11 +46,9 @@ class ProcessInstanceQueueService:
         db.session.add(queue_item)
         db.session.commit()
 
+    # TODO: rename to _dequeue
     @staticmethod
     def dequeue(process_instance: ProcessInstanceModel) -> None:
-        if ProcessInstanceLockService.has_lock(process_instance.id):
-            return
-
         locked_by = ProcessInstanceLockService.locked_by()
 
         db.session.query(ProcessInstanceQueueModel).filter(
@@ -82,6 +83,19 @@ class ProcessInstanceQueueService:
 
         ProcessInstanceLockService.lock(process_instance.id, queue_entry)
 
+    @contextlib.contextmanager
+    @classmethod
+    def dequeued(cls, process_instance: ProcessInstanceModel) -> Generator[None, None, None]:
+        reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id):
+        try:
+            if not reentering_lock:
+                cls.dequeue(process_instance)
+            yield
+        finally:
+            if not reentering_lock:
+                cls.enqueue(process_instance)
+                
+
     @classmethod
     def entries_with_status(
         cls,
@@ -105,31 +119,3 @@ class ProcessInstanceQueueService:
         queue_entries = cls.entries_with_status(status_value, None)
         ids_with_status = [entry.process_instance_id for entry in queue_entries]
         return ids_with_status
-
-    @classmethod
-    def dequeue_many(
-        cls,
-        status_value: str = ProcessInstanceStatus.waiting.value,
-    ) -> List[int]:
-        locked_by = ProcessInstanceLockService.locked_by()
-
-        # TODO: configurable params (priority/run_at/limit)
-        db.session.query(ProcessInstanceQueueModel).filter(
-            ProcessInstanceQueueModel.status == status_value,
-            ProcessInstanceQueueModel.locked_by.is_(None),  # type: ignore
-        ).update(
-            {
-                "locked_by": locked_by,
-            }
-        )
-
-        db.session.commit()
-
-        queue_entries = cls.entries_with_status(status_value, locked_by)
-
-        locked_ids = ProcessInstanceLockService.lock_many(queue_entries)
-
-        if len(locked_ids) > 0:
-            current_app.logger.info(f"{locked_by} dequeued_many: {locked_ids}")
-
-        return locked_ids
