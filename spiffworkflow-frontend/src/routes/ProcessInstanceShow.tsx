@@ -674,16 +674,16 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canResetProcess = (_task: Task) => {
+  const canResetProcess = (task: Task) => {
     // disabling this feature for now
-    return false;
-    // return (
-    //   ability.can('POST', targetUris.processInstanceResetPath) &&
-    //   processInstance &&
-    //   processInstance.status === 'suspended' &&
-    //   task.state === 'READY' &&
-    //   !showingActiveTask()
-    // );
+    // return false;
+    return (
+      ability.can('POST', targetUris.processInstanceResetPath) &&
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      task.state === 'READY' &&
+      !showingActiveTask()
+    );
   };
 
   const getEvents = (task: Task) => {

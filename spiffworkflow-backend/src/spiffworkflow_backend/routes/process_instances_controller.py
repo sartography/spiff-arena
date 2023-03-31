@@ -693,7 +693,7 @@ def process_instance_reset(
 ) -> flask.wrappers.Response:
     """Reset a process instance to a particular step."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    ProcessInstanceProcessor.reset_process(process_instance, to_task_guid, commit=True)
+    ProcessInstanceProcessor.reset_process(process_instance, to_task_guid)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 

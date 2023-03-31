@@ -1,6 +1,5 @@
 """Test_process_instance_processor."""
 from uuid import UUID
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 
 import pytest
 from flask import g
@@ -17,6 +16,7 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import (
@@ -298,7 +298,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert spiff_manual_task is not None
 
         processor.suspend()
-        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.parent.id), commit=True)
+        ProcessInstanceProcessor.reset_process(process_instance, str(spiff_manual_task.parent.id))
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
@@ -341,15 +341,12 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(process_instance.active_human_tasks) == 1
         assert initial_human_task_id == process_instance.active_human_tasks[0].id
 
-        # import pdb; pdb.set_trace()
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-        # import pdb; pdb.set_trace()
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-        # import pdb; pdb.set_trace()
 
         # NOTES:
         # somehow we are hosing the task state so that when completing tasks of a subprocess, the task AFTER the subprocess task
@@ -367,15 +364,12 @@ class TestProcessInstanceProcessor(BaseTest):
             .first()
         )
         assert task_model_to_reset_to is not None
-        import pdb; pdb.set_trace()
-        ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid, commit=True)
-        import pdb; pdb.set_trace()
+        ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid)
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
         processor.resume()
         processor.do_engine_steps(save=True)
-        import pdb; pdb.set_trace()
 
         assert len(process_instance.active_human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
