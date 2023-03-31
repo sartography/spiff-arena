@@ -504,7 +504,6 @@ class TaskService:
         cls,
         task_model: TaskModel,
         state: str,
-        commit: Optional[bool] = True,
         json_data_hash: Optional[str] = None,
         python_env_data_hash: Optional[str] = None,
     ) -> None:
@@ -522,18 +521,16 @@ class TaskService:
         task_model.start_in_seconds = None
         task_model.end_in_seconds = None
 
-        if commit:
-            db.session.add(task_model)
-            db.session.commit()
+        db.session.add(task_model)
+        db.session.commit()
 
         new_properties_json["state"] = getattr(TaskState, state)
         task_model.properties_json = new_properties_json
 
-        if commit:
-            # if we commit the properties json at the same time as the other items
-            # the json gets reset for some reason.
-            db.session.add(task_model)
-            db.session.commit()
+        # if we commit the properties json at the same time as the other items
+        # the json gets reset for some reason.
+        db.session.add(task_model)
+        db.session.commit()
 
     @classmethod
     def _create_task(
