@@ -450,7 +450,10 @@ export default function ReactDiagramEditor({
       if (alreadyImportedXmlRef.current) {
         return;
       }
-      diagramModelerToUse.importXML(diagramXMLToDisplay);
+      diagramModelerToUse.importXML(diagramXMLToDisplay).then(() => {
+        diagramModelerToUse.get('canvas').zoom('fit-viewport');
+      });
+
       alreadyImportedXmlRef.current = true;
     }
 
