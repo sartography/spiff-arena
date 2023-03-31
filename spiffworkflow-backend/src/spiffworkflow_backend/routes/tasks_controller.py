@@ -56,6 +56,9 @@ from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+from spiffworkflow_backend.services.process_instance_queue_service import (
+    ProcessInstanceQueueService,
+)
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
@@ -426,21 +429,15 @@ def task_submit_shared(
         only_tasks_that_can_be_completed=True,
     )
 
-    retry_times = current_app.config["SPIFFWORKFLOW_BACKEND_USER_INPUT_REQUIRED_LOCK_RETRY_TIMES"]
-    retry_interval_in_seconds = current_app.config[
-        "SPIFFWORKFLOW_BACKEND_USER_INPUT_REQUIRED_LOCK_RETRY_INTERVAL_IN_SECONDS"
-    ]
-
     with sentry_sdk.start_span(op="task", description="complete_form_task"):
-        processor.lock_process_instance("Web", retry_times, retry_interval_in_seconds)
-        ProcessInstanceService.complete_form_task(
-            processor=processor,
-            spiff_task=spiff_task,
-            data=body,
-            user=g.user,
-            human_task=human_task,
-        )
-        processor.unlock_process_instance("Web")
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            ProcessInstanceService.complete_form_task(
+                processor=processor,
+                spiff_task=spiff_task,
+                data=body,
+                user=g.user,
+                human_task=human_task,
+            )
 
     # If we need to update all tasks, then get the next ready task and if it a multi-instance with the same
     # task spec, complete that form as well.
