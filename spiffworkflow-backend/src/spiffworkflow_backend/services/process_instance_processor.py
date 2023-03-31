@@ -1344,7 +1344,14 @@ class ProcessInstanceProcessor:
         #     db.session.commit()
         #
         # for task_to_update in tasks_to_update:
+        #     # print(f"task_to_update: {task_to_update}")
+        #     print(f"task_to_update.state: {task_to_update.state}")
         #     TaskService.reset_task_model(task_to_update, state="FUTURE", commit=commit)
+        #     # TaskService.reset_task_model(task_to_update, state=task_to_update.state, commit=commit)
+        #     # if task_to_update.task_definition.bpmn_identifier != 'top_level_process_script_after_gate':
+        #     #     TaskService.reset_task_model(task_to_update, state='FUTURE', commit=commit)
+        #     # else:
+        #     #     TaskService.reset_task_model(task_to_update, state=task_to_update.state, commit=commit)
         #
         # parent_task_model = TaskModel.query.filter_by(guid=to_task_model.properties_json["parent"]).first()
         # if parent_task_model is None:
@@ -1361,6 +1368,13 @@ class ProcessInstanceProcessor:
         # )
         # for task_model in task_models_of_parent_bpmn_processes:
         #     TaskService.reset_task_model(task_model, state="WAITING", commit=commit)
+        #
+        # bpmn_process = to_task_model.bpmn_process
+        # properties_json = copy.copy(bpmn_process.properties_json)
+        # properties_json["last_task"] = parent_task_model.guid
+        # bpmn_process.properties_json = properties_json
+        # db.session.add(bpmn_process)
+        # db.session.commit()
         #
         # if commit:
         #     processor = ProcessInstanceProcessor(process_instance)
@@ -1802,6 +1816,13 @@ class ProcessInstanceProcessor:
             user_id=user.id,
         )
 
+        task_service = TaskService(
+            process_instance=self.process_instance_model,
+            serializer=self._serializer,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        )
+        task_service.process_parents_and_children_and_save_to_database(spiff_task)
+
         # this is the thing that actually commits the db transaction (on behalf of the other updates above as well)
         self.save()
 
@@ -1872,6 +1893,9 @@ class ProcessInstanceProcessor:
         """Get_all_ready_or_waiting_tasks."""
         all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
         return [t for t in all_tasks if t.state in [TaskState.WAITING, TaskState.READY]]
+
+    def get_task_by_guid(self, task_guid: str) -> Optional[SpiffTask]:
+        return self.bpmn_process_instance.get_task_from_id(UUID(task_guid))
 
     @classmethod
     def get_task_by_bpmn_identifier(
