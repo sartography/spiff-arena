@@ -89,7 +89,6 @@ from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceIsAlreadyLockedError
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
@@ -1544,29 +1543,6 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
-    # TODO: replace with implicit/more granular locking in workflow execution service
-    # TODO: remove the retry logic once all user_input_required's don't need to be locked to check timers
-    def lock_process_instance(
-        self, lock_prefix: str, retry_count: int = 0, retry_interval_in_seconds: int = 0
-    ) -> None:
-        try:
-            ProcessInstanceQueueService.dequeue(self.process_instance_model)
-        except ProcessInstanceIsAlreadyLockedError as e:
-            if retry_count > 0:
-                current_app.logger.info(
-                    f"process_instance_id {self.process_instance_model.id} is locked. "
-                    f"will retry {retry_count} times with delay of {retry_interval_in_seconds}."
-                )
-                if retry_interval_in_seconds > 0:
-                    time.sleep(retry_interval_in_seconds)
-                self.lock_process_instance(lock_prefix, retry_count - 1, retry_interval_in_seconds)
-            else:
-                raise e
-
-    # TODO: replace with implicit/more granular locking in workflow execution service
-    def unlock_process_instance(self, lock_prefix: str) -> None:
-        ProcessInstanceQueueService.enqueue(self.process_instance_model)
-
     def process_bpmn_messages(self) -> None:
         """Process_bpmn_messages."""
         bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
@@ -1623,6 +1599,18 @@ class ProcessInstanceProcessor:
         save: bool = False,
         execution_strategy_name: Optional[str] = None,
     ) -> None:
+        with ProcessInstanceQueueService.dequeued(self.process_instance_model):
+            # TODO: ideally we just lock in the execution service, but not sure
+            # about _add_bpmn_process_definitions and if that needs to happen in
+            # the same lock like it does on main
+            self._do_engine_steps(exit_at, save, execution_strategy_name)
+
+    def _do_engine_steps(
+        self,
+        exit_at: None = None,
+        save: bool = False,
+        execution_strategy_name: Optional[str] = None,
+    ) -> None:
         self._add_bpmn_process_definitions()
 
         task_model_delegate = TaskModelSavingDelegate(
@@ -1646,7 +1634,7 @@ class ProcessInstanceProcessor:
             execution_service.do_engine_steps(exit_at, save)
         finally:
             # clear out failling spiff tasks here since the ProcessInstanceProcessor creates an instance of the
-            #   script engine on a class variable.
+            #    script engine on a class variable.
             if (
                 hasattr(self._script_engine, "failing_spiff_task")
                 and self._script_engine.failing_spiff_task is not None

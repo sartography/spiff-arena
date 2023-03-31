@@ -70,6 +70,7 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
+        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model)
         return process_instance_model
 
     @classmethod
@@ -111,9 +112,7 @@ class ProcessInstanceService:
             .filter(ProcessInstanceModel.id.in_(process_instance_ids_to_check))  # type: ignore
             .all()
         )
-        process_instance_lock_prefix = "Background"
         for process_instance in records:
-            locked = False
             processor = None
             try:
                 current_app.logger.info(f"Processing process_instance {process_instance.id}")
@@ -122,8 +121,6 @@ class ProcessInstanceService:
                     current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
                     continue
 
-                processor.lock_process_instance(process_instance_lock_prefix)
-                locked = True
                 db.session.refresh(process_instance)
                 if process_instance.status == status_value:
                     execution_strategy_name = current_app.config[
@@ -142,9 +139,6 @@ class ProcessInstanceService:
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
-            finally:
-                if locked and processor:
-                    processor.unlock_process_instance(process_instance_lock_prefix)
 
     @staticmethod
     def processor_to_process_instance_api(

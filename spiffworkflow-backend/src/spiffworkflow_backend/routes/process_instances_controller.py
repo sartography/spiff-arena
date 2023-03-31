@@ -56,9 +56,6 @@ from spiffworkflow_backend.services.error_handling_service import ErrorHandlingS
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_lock_service import (
-    ProcessInstanceLockService,
-)
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -105,7 +102,6 @@ def process_instance_create(
     process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
         process_model_identifier, g.user
     )
-    ProcessInstanceQueueService.enqueue(process_instance)
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=201,
@@ -131,7 +127,6 @@ def process_instance_run(
 
     if do_engine_steps:
         try:
-            processor.lock_process_instance("Web")
             processor.do_engine_steps(save=True)
         except (
             ApiError,
@@ -150,9 +145,6 @@ def process_instance_run(
                 status_code=400,
                 task=task,
             ) from e
-        finally:
-            if ProcessInstanceLockService.has_lock(process_instance.id):
-                processor.unlock_process_instance("Web")
 
         if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
             MessageService.correlate_all_message_instances()
@@ -173,14 +165,11 @@ def process_instance_terminate(
     processor = ProcessInstanceProcessor(process_instance)
 
     try:
-        processor.lock_process_instance("Web")
-        processor.terminate()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.terminate()
     except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
-    finally:
-        if ProcessInstanceLockService.has_lock(process_instance.id):
-            processor.unlock_process_instance("Web")
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -194,14 +183,11 @@ def process_instance_suspend(
     processor = ProcessInstanceProcessor(process_instance)
 
     try:
-        processor.lock_process_instance("Web")
-        processor.suspend()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.suspend()
     except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
-    finally:
-        if ProcessInstanceLockService.has_lock(process_instance.id):
-            processor.unlock_process_instance("Web")
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -215,14 +201,11 @@ def process_instance_resume(
     processor = ProcessInstanceProcessor(process_instance)
 
     try:
-        processor.lock_process_instance("Web")
-        processor.resume()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.resume()
     except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
-    finally:
-        if ProcessInstanceLockService.has_lock(process_instance.id):
-            processor.unlock_process_instance("Web")
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
