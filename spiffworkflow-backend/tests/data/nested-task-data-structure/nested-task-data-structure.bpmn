@@ -21,7 +21,7 @@ outer['time'] = time.time_ns()</bpmn:script>
     <bpmn:scriptTask id="Activity_1bvyv67" name="First setting of data">
       <bpmn:incoming>Flow_18gs4jt</bpmn:incoming>
       <bpmn:outgoing>Flow_1flxgry</bpmn:outgoing>
-      <bpmn:script>outer["inner"] = 'sweet2'</bpmn:script>
+      <bpmn:script>outer["inner"] = 'sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2sweet2END_THIS_WILL_TRUNCATE_HERE'</bpmn:script>
     </bpmn:scriptTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
