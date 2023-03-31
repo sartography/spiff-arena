@@ -93,6 +93,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import Proces
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
+from spiffworkflow_backend.services.task_service import JsonDataDict
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import (
@@ -1790,12 +1791,9 @@ class ProcessInstanceProcessor:
         db.session.add(human_task)
 
         json_data_dict_list = TaskService.update_task_model(task_model, spiff_task, self._serializer)
-        for json_data_dict in json_data_dict_list:
-            if json_data_dict is not None:
-                json_data = db.session.query(JsonDataModel.id).filter_by(hash=json_data_dict["hash"]).first()
-                if json_data is None:
-                    json_data = JsonDataModel(**json_data_dict)
-                    db.session.add(json_data)
+        json_data_dict_mapping: dict[str, JsonDataDict] = {}
+        TaskService.update_json_data_dicts_using_list(json_data_dict_list, json_data_dict_mapping)
+        TaskService.insert_or_update_json_data_records(json_data_dict_mapping)
 
         self.add_event_to_process_instance(
             self.process_instance_model,

@@ -130,7 +130,7 @@ class TaskService:
         self.task_models[task_model.guid] = task_model
         if bpmn_process_json_data is not None:
             json_data_dict_list.append(bpmn_process_json_data)
-        self._update_json_data_dicts_using_list(json_data_dict_list, self.json_data_dicts)
+        self.update_json_data_dicts_using_list(json_data_dict_list, self.json_data_dicts)
 
         if task_model.state == "COMPLETED" or task_failed:
             event_type = ProcessInstanceEventType.task_completed.value
@@ -207,8 +207,12 @@ class TaskService:
         python_env_data_dict = cls._get_python_env_data_dict_from_spiff_task(spiff_task, serializer)
         task_model.properties_json = new_properties_json
         task_model.state = TaskStateNames[new_properties_json["state"]]
-        json_data_dict = cls.update_task_data_on_task_model(task_model, spiff_task_data, "json_data_hash")
-        python_env_dict = cls.update_task_data_on_task_model(task_model, python_env_data_dict, "python_env_data_hash")
+        json_data_dict = cls.update_task_data_on_task_model_and_return_dict_if_updated(
+            task_model, spiff_task_data, "json_data_hash"
+        )
+        python_env_dict = cls.update_task_data_on_task_model_and_return_dict_if_updated(
+            task_model, python_env_data_dict, "python_env_data_hash"
+        )
         return [json_data_dict, python_env_dict]
 
     @classmethod
@@ -446,7 +450,11 @@ class TaskService:
         return json_data_dict
 
     @classmethod
-    def update_task_data_on_task_model(
+    def insert_or_update_json_data_dict(cls, json_data_dict: JsonDataDict) -> None:
+        TaskService.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
+
+    @classmethod
+    def update_task_data_on_task_model_and_return_dict_if_updated(
         cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
     ) -> Optional[JsonDataDict]:
         task_data_json = json.dumps(task_data_dict, sort_keys=True)
@@ -501,11 +509,11 @@ class TaskService:
         python_env_data_hash: Optional[str] = None,
     ) -> None:
         if json_data_hash is None:
-            cls.update_task_data_on_task_model(task_model, {}, "json_data_hash")
+            cls.update_task_data_on_task_model_and_return_dict_if_updated(task_model, {}, "json_data_hash")
         else:
             task_model.json_data_hash = json_data_hash
         if python_env_data_hash is None:
-            cls.update_task_data_on_task_model(task_model, {}, "python_env_data")
+            cls.update_task_data_on_task_model_and_return_dict_if_updated(task_model, {}, "python_env_data")
         else:
             task_model.python_env_data_hash = python_env_data_hash
 
@@ -556,7 +564,7 @@ class TaskService:
         return converted_data
 
     @classmethod
-    def _update_json_data_dicts_using_list(
+    def update_json_data_dicts_using_list(
         cls, json_data_dict_list: list[Optional[JsonDataDict]], json_data_dicts: dict[str, JsonDataDict]
     ) -> None:
         for json_data_dict in json_data_dict_list:
