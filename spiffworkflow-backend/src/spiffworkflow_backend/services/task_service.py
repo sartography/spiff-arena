@@ -60,7 +60,7 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> None:
         self.process_spiff_task_children(spiff_task)
-        self.process_spiff_task_parents(spiff_task)
+        self.process_spiff_task_parent_subprocess_tasks(spiff_task)
         self.save_objects_to_database()
 
     def process_spiff_task_children(
@@ -68,9 +68,9 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> None:
         for child_spiff_task in spiff_task.children:
-            if child_spiff_task._has_state(TaskState.PREDICTED_MASK):
-                self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
-                continue
+            # if child_spiff_task._has_state(TaskState.PREDICTED_MASK):
+            #     self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
+            #     continue
             self.update_task_model_with_spiff_task(
                 spiff_task=child_spiff_task,
             )
@@ -78,10 +78,15 @@ class TaskService:
                 spiff_task=child_spiff_task,
             )
 
-    def process_spiff_task_parents(
+    def process_spiff_task_parent_subprocess_tasks(
         self,
         spiff_task: SpiffTask,
     ) -> None:
+        """Find the parent subprocess of a given spiff_task and update its data.
+
+        This will also process that subprocess task's children and will recurse upwards
+        to process its parent subprocesses as well.
+        """
         (parent_subprocess_guid, _parent_subprocess) = self.__class__.task_subprocess(spiff_task)
         if parent_subprocess_guid is not None:
             spiff_task_of_parent_subprocess = spiff_task.workflow._get_outermost_workflow().get_task_from_id(
@@ -92,7 +97,10 @@ class TaskService:
                 self.update_task_model_with_spiff_task(
                     spiff_task=spiff_task_of_parent_subprocess,
                 )
-                self.process_spiff_task_parents(
+                self.process_spiff_task_children(
+                    spiff_task=spiff_task_of_parent_subprocess,
+                )
+                self.process_spiff_task_parent_subprocess_tasks(
                     spiff_task=spiff_task_of_parent_subprocess,
                 )
 
@@ -391,9 +399,9 @@ class TaskService:
                 # we are going to avoid saving likely and maybe tasks to the db.
                 # that means we need to remove them from their parents' lists of children as well.
                 spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))
-                if spiff_task._has_state(TaskState.PREDICTED_MASK):
-                    cls.remove_spiff_task_from_parent(spiff_task, new_task_models)
-                    continue
+                # if spiff_task._has_state(TaskState.PREDICTED_MASK):
+                #     cls.remove_spiff_task_from_parent(spiff_task, new_task_models)
+                #     continue
 
                 task_model = TaskModel.query.filter_by(guid=task_id).first()
                 if task_model is None:

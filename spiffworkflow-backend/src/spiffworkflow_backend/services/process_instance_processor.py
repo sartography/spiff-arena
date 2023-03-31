@@ -1897,6 +1897,11 @@ class ProcessInstanceProcessor:
         all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
         return [t for t in all_tasks if t.state in [TaskState.WAITING, TaskState.READY]]
 
+    def get_task_by_guid(
+        self, task_guid: str
+    ) -> Optional[SpiffTask]:
+        return self.bpmn_process_instance.get_task_from_id(UUID(task_guid))
+
     @classmethod
     def get_task_by_bpmn_identifier(
         cls, bpmn_task_identifier: str, bpmn_process_instance: BpmnWorkflow

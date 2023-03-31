@@ -110,8 +110,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # ):
             #     self._update_task_model_with_spiff_task(waiting_spiff_task)
             if self.last_completed_spiff_task is not None:
-                import pdb; pdb.set_trace()
-                self.task_service.process_spiff_task_parents(self.last_completed_spiff_task)
+                # import pdb; pdb.set_trace()
+                self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
                 self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
 
     def _should_update_task_model(self) -> bool:

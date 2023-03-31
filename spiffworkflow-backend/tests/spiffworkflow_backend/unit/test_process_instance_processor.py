@@ -696,13 +696,47 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(process_instance.human_tasks) == 2
         human_task_two = process_instance.active_human_tasks[0]
 
-        # this is just asserting the way the functionality currently works in spiff.
-        # we would actually expect this to change one day if we stop reusing the same guid
-        # when we re-do a task.
-        # assert human_task_two.task_id == human_task_one.task_id
-
-        # EDIT: when using feature/remove-loop-reset branch of SpiffWorkflow, these should be different.
         assert human_task_two.task_id != human_task_one.task_id
+
+    def test_it_can_loopback_to_previous_bpmn_subprocess_with_gateway(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        initiator_user = self.find_or_create_user("initiator_user")
+        process_model = load_test_spec(
+            process_model_id="test_group/loopback_to_subprocess",
+            process_model_source_directory="loopback_to_subprocess",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=initiator_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 1
+        human_task_one = process_instance.active_human_tasks[0]
+
+        spiff_task = processor.get_task_by_guid(human_task_one.task_id)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task_one)
+
+        processor = ProcessInstanceProcessor(process_instance)
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 2
+        human_task_two = process_instance.active_human_tasks[0]
+        spiff_task = processor.get_task_by_guid(human_task_two.task_id)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task_two)
+
+        import pdb; pdb.set_trace()
+        # ensure this does not raise a KeyError
+        processor = ProcessInstanceProcessor(process_instance)
+        assert len(process_instance.active_human_tasks) == 1
+        assert len(process_instance.human_tasks) == 3
+        human_task_three = process_instance.active_human_tasks[0]
+        spiff_task = processor.get_task_by_guid(human_task_three.task_id)
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task_three)
 
     def test_task_data_is_set_even_if_process_instance_errors(
         self,
