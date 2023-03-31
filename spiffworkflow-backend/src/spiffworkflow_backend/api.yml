@@ -1832,10 +1832,10 @@ paths:
         description: The unique id of an existing process instance.
         schema:
           type: integer
-      - name: terminate_loop
+      - name: save_as_draft
         in: query
         required: false
-        description: Terminate the loop on a looping task
+        description: Save the data to task but do not complete it.
         schema:
           type: boolean
     get:

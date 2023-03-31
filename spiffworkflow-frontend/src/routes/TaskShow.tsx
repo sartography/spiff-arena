@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
 
@@ -9,6 +9,7 @@ import {
   Grid,
   Column,
   Button,
+  ButtonSet,
   // @ts-ignore
 } from '@carbon/react';
 
@@ -21,6 +22,13 @@ import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessInstanceTask } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
+class UnexpectedHumanTaskType extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UnexpectedHumanTaskType';
+  }
+}
+
 export default function TaskShow() {
   const [task, setTask] = useState<ProcessInstanceTask | null>(null);
   const [userTasks] = useState(null);
@@ -29,6 +37,9 @@ export default function TaskShow() {
   const [disabled, setDisabled] = useState(false);
 
   const { addError, removeError } = useAPIError();
+
+  // eslint-disable-next-line sonarjs/no-duplicate-string
+  const supportedHumanTaskTypes = ['User Task', 'Manual Task'];
 
   useEffect(() => {
     const processResult = (result: ProcessInstanceTask) => {
@@ -76,16 +87,22 @@ export default function TaskShow() {
     }
   };
 
-  const handleFormSubmit = (event: any) => {
+  const handleFormSubmit = (formObject: any, event: any) => {
     if (disabled) {
       return;
     }
+    const submitButtonId = event.nativeEvent.submitter.id;
+    let queryParams = '';
+    console.log('submitButtonId', submitButtonId);
+    if (submitButtonId === 'save-as-draft-button') {
+      queryParams = '?save_as_draft=true';
+    }
     setDisabled(true);
     removeError();
-    const dataToSubmit = event.formData;
+    const dataToSubmit = formObject.formData;
     delete dataToSubmit.isManualTask;
     HttpService.makeCallToBackend({
-      path: `/tasks/${params.process_instance_id}/${params.task_id}`,
+      path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,
       successCallback: processSubmitResult,
       failureCallback: (error: any) => {
         addError(error);
@@ -226,16 +243,33 @@ export default function TaskShow() {
     }
 
     if (task.state === 'READY') {
-      let buttonText = 'Submit';
+      let submitButtonText = 'Submit';
+      let saveAsDraftButton = null;
       if (task.type === 'Manual Task') {
-        buttonText = 'Continue';
+        submitButtonText = 'Continue';
+      } else if (task.type === 'User Task') {
+        saveAsDraftButton = (
+          <Button
+            type="submit"
+            id="save-as-draft-button"
+            disabled={disabled}
+            kind="secondary"
+          >
+            Save as draft
+          </Button>
+        );
+      } else {
+        throw new UnexpectedHumanTaskType(
+          `Invalid task type given: ${task.type}. Only supported types: ${supportedHumanTaskTypes}`
+        );
       }
       reactFragmentToHideSubmitButton = (
-        <div>
-          <Button type="submit" disabled={disabled}>
-            {buttonText}
+        <ButtonSet>
+          <Button type="submit" id="submit-button" disabled={disabled}>
+            {submitButtonText}
           </Button>
-        </div>
+          {saveAsDraftButton}
+        </ButtonSet>
       );
     }
 
