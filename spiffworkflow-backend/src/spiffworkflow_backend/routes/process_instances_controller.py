@@ -672,8 +672,10 @@ def process_instance_task_list(
     task_model_list = {}
     if most_recent_tasks_only:
         for task_model in task_models:
-            if task_model.bpmn_identifier not in task_model_list:
-                task_model_list[task_model.bpmn_identifier] = task_model
+            bpmn_process_guid = task_model.bpmn_process_direct_parent_guid or "TOP"
+            row_key = f"{bpmn_process_guid}:::{task_model.bpmn_identifier}"
+            if row_key not in task_model_list:
+                task_model_list[row_key] = task_model
         task_models = list(task_model_list.values())
 
     if to_task_model is not None:
