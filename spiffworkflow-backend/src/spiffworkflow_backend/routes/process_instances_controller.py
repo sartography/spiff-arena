@@ -669,6 +669,13 @@ def process_instance_task_list(
         task_model_query = task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
 
     task_models = task_model_query.all()
+    task_model_list = {}
+    if most_recent_tasks_only:
+        for task_model in task_models:
+            if task_model.bpmn_identifier not in task_model_list:
+                task_model_list[task_model.bpmn_identifier] = task_model
+
+    task_models = list(task_model_list.values())
     if to_task_model is not None:
         task_models_dict = json.loads(current_app.json.dumps(task_models))
         for task_model in task_models_dict:

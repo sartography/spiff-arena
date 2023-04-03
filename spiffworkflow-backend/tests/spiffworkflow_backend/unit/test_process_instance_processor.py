@@ -1,5 +1,6 @@
 """Test_process_instance_processor."""
 from uuid import UUID
+from spiffworkflow_backend.models.db import db
 
 import pytest
 from flask import g
@@ -335,7 +336,6 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
-        # with open("before_reset.json", 'w') as f: f.write(json.dumps(processor.serialize(), indent=2))
         assert len(process_instance.active_human_tasks) == 1
         initial_human_task_id = process_instance.active_human_tasks[0].id
         assert len(process_instance.active_human_tasks) == 1
@@ -348,14 +348,6 @@ class TestProcessInstanceProcessor(BaseTest):
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
-        # NOTES:
-        # somehow we are hosing the task state so that when completing tasks of a subprocess, the task AFTER the subprocess task
-        # is not marked READY but instead stays as FUTURE. Running things like:
-        #   self.last_completed_spiff_task.task_spec._update(self.last_completed_spiff_task)
-        # and
-        #   self.last_completed_spiff_task.task_spec._predict(self.last_completed_spiff_task, mask=TaskState.NOT_FINISHED_MASK)
-        # did not help.
-
         processor.suspend()
         task_model_to_reset_to = (
             TaskModel.query.join(TaskDefinitionModel)
@@ -366,8 +358,15 @@ class TestProcessInstanceProcessor(BaseTest):
         assert task_model_to_reset_to is not None
         ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid)
 
+        # make sure sqlalchemy session matches current db state
+        db.session.expire_all()
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
+
+        # make sure we reset to the task we expected
+        ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
+        top_level_subprocess_script_spiff_task = next(task for task in ready_or_waiting_tasks if task.task_spec.name == "top_level_subprocess_script")
+        assert top_level_subprocess_script_spiff_task is not None
         processor.resume()
         processor.do_engine_steps(save=True)
 
@@ -511,18 +510,17 @@ class TestProcessInstanceProcessor(BaseTest):
                     f" {expected_task_data_key}."
                 )
 
-                # TODO: add back in when removing MAYBE and LIKELY tasks
-                # count_failure_message = (
-                #     f"{base_failure_message} There are more than 2 entries of this task in the db."
-                #     " There should only ever be max 2."
-                # )
-                # task_models_with_bpmn_identifier_count = (
-                #     TaskModel.query.join(TaskDefinitionModel)
-                #     .filter(TaskModel.process_instance_id == process_instance_relookup.id)
-                #     .filter(TaskDefinitionModel.bpmn_identifier == spiff_task.task_spec.name)
-                #     .count()
-                # )
-                # assert task_models_with_bpmn_identifier_count < 3, count_failure_message
+                count_failure_message = (
+                    f"{base_failure_message} There are more than 2 entries of this task in the db."
+                    " There should only ever be max 2."
+                )
+                task_models_with_bpmn_identifier_count = (
+                    TaskModel.query.join(TaskDefinitionModel)
+                    .filter(TaskModel.process_instance_id == process_instance_relookup.id)
+                    .filter(TaskDefinitionModel.bpmn_identifier == spiff_task.task_spec.name)
+                    .count()
+                )
+                assert task_models_with_bpmn_identifier_count < 3, count_failure_message
                 task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
 
                 assert task_model.start_in_seconds is not None
@@ -583,13 +581,12 @@ class TestProcessInstanceProcessor(BaseTest):
             )
             assert task_bpmn_identifier in spiff_tasks_checked, message
 
-        # TODO: add back in when removing MAYBE and LIKELY tasks
-        # task_models_that_are_predicted_count = (
-        #     TaskModel.query.filter(TaskModel.process_instance_id == process_instance_relookup.id)
-        #     .filter(TaskModel.state.in_(["LIKELY", "MAYBE"]))  # type: ignore
-        #     .count()
-        # )
-        # assert task_models_that_are_predicted_count == 0
+        task_models_that_are_predicted_count = (
+            TaskModel.query.filter(TaskModel.process_instance_id == process_instance_relookup.id)
+            .filter(TaskModel.state.in_(["LIKELY", "MAYBE"]))  # type: ignore
+            .count()
+        )
+        assert task_models_that_are_predicted_count == 0
 
         assert processor.get_data() == data_set_7
 
