@@ -236,8 +236,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       tasks.forEach(function getUserTasksElement(task: Task) {
         if (task.state === 'COMPLETED') {
           taskIds.completed.push(task);
-        }
-        if (task.state === 'READY' || task.state === 'WAITING') {
+        } else if (task.state === 'READY' || task.state === 'WAITING') {
           taskIds.readyOrWaiting.push(task);
         }
         return null;
@@ -674,16 +673,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canResetProcess = (_task: Task) => {
-    // disabling this feature for now
-    return false;
-    // return (
-    //   ability.can('POST', targetUris.processInstanceResetPath) &&
-    //   processInstance &&
-    //   processInstance.status === 'suspended' &&
-    //   task.state === 'READY' &&
-    //   !showingActiveTask()
-    // );
+  const canResetProcess = (task: Task) => {
+    return (
+      ability.can('POST', targetUris.processInstanceResetPath) &&
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      task.state === 'READY' &&
+      !showingActiveTask()
+    );
   };
 
   const getEvents = (task: Task) => {
