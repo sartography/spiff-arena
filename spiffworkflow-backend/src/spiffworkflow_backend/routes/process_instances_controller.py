@@ -669,6 +669,15 @@ def process_instance_task_list(
         task_model_query = task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
 
     task_models = task_model_query.all()
+    task_model_list = {}
+    if most_recent_tasks_only:
+        for task_model in task_models:
+            bpmn_process_guid = task_model.bpmn_process_direct_parent_guid or "TOP"
+            row_key = f"{bpmn_process_guid}:::{task_model.bpmn_identifier}"
+            if row_key not in task_model_list:
+                task_model_list[row_key] = task_model
+        task_models = list(task_model_list.values())
+
     if to_task_model is not None:
         task_models_dict = json.loads(current_app.json.dumps(task_models))
         for task_model in task_models_dict:
@@ -693,7 +702,7 @@ def process_instance_reset(
 ) -> flask.wrappers.Response:
     """Reset a process instance to a particular step."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    ProcessInstanceProcessor.reset_process(process_instance, to_task_guid, commit=True)
+    ProcessInstanceProcessor.reset_process(process_instance, to_task_guid)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 

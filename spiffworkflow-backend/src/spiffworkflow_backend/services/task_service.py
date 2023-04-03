@@ -68,9 +68,9 @@ class TaskService:
         spiff_task: SpiffTask,
     ) -> None:
         for child_spiff_task in spiff_task.children:
-            # if child_spiff_task._has_state(TaskState.PREDICTED_MASK):
-            #     self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
-            #     continue
+            if child_spiff_task._has_state(TaskState.PREDICTED_MASK):
+                self.__class__.remove_spiff_task_from_parent(child_spiff_task, self.task_models)
+                continue
             self.update_task_model_with_spiff_task(
                 spiff_task=child_spiff_task,
             )
@@ -157,7 +157,7 @@ class TaskService:
         bpmn_process: BpmnProcessModel,
     ) -> None:
         new_properties_json = copy.copy(bpmn_process.properties_json)
-        new_properties_json["last_task"] = str(spiff_workflow.last_task) if spiff_workflow.last_task else None
+        new_properties_json["last_task"] = str(spiff_workflow.last_task.id) if spiff_workflow.last_task else None
         new_properties_json["success"] = spiff_workflow.success
         bpmn_process.properties_json = new_properties_json
 
@@ -403,9 +403,9 @@ class TaskService:
                 # we are going to avoid saving likely and maybe tasks to the db.
                 # that means we need to remove them from their parents' lists of children as well.
                 spiff_task = spiff_workflow.get_task_from_id(UUID(task_id))
-                # if spiff_task._has_state(TaskState.PREDICTED_MASK):
-                #     cls.remove_spiff_task_from_parent(spiff_task, new_task_models)
-                #     continue
+                if spiff_task._has_state(TaskState.PREDICTED_MASK):
+                    cls.remove_spiff_task_from_parent(spiff_task, new_task_models)
+                    continue
 
                 task_model = TaskModel.query.filter_by(guid=task_id).first()
                 if task_model is None:
@@ -504,7 +504,6 @@ class TaskService:
         cls,
         task_model: TaskModel,
         state: str,
-        commit: Optional[bool] = True,
         json_data_hash: Optional[str] = None,
         python_env_data_hash: Optional[str] = None,
     ) -> None:
@@ -517,23 +516,13 @@ class TaskService:
         else:
             task_model.python_env_data_hash = python_env_data_hash
 
-        new_properties_json = copy.copy(task_model.properties_json)
         task_model.state = state
         task_model.start_in_seconds = None
         task_model.end_in_seconds = None
 
-        if commit:
-            db.session.add(task_model)
-            db.session.commit()
-
+        new_properties_json = copy.copy(task_model.properties_json)
         new_properties_json["state"] = getattr(TaskState, state)
         task_model.properties_json = new_properties_json
-
-        if commit:
-            # if we commit the properties json at the same time as the other items
-            # the json gets reset for some reason.
-            db.session.add(task_model)
-            db.session.commit()
 
     @classmethod
     def _create_task(
