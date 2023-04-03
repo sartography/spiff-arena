@@ -1,6 +1,5 @@
 """Test_process_instance_processor."""
 from uuid import UUID
-from spiffworkflow_backend.models.db import db
 
 import pytest
 from flask import g
@@ -13,6 +12,7 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -365,7 +365,9 @@ class TestProcessInstanceProcessor(BaseTest):
 
         # make sure we reset to the task we expected
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
-        top_level_subprocess_script_spiff_task = next(task for task in ready_or_waiting_tasks if task.task_spec.name == "top_level_subprocess_script")
+        top_level_subprocess_script_spiff_task = next(
+            task for task in ready_or_waiting_tasks if task.task_spec.name == "top_level_subprocess_script"
+        )
         assert top_level_subprocess_script_spiff_task is not None
         processor.resume()
         processor.do_engine_steps(save=True)
