@@ -1336,13 +1336,10 @@ class ProcessInstanceProcessor:
         # ensure the correct order for foreign keys
         for human_task_to_delete in human_tasks_to_delete:
             db.session.delete(human_task_to_delete)
-        db.session.commit()
         for task_to_delete in tasks_to_delete:
             db.session.delete(task_to_delete)
-        db.session.commit()
         for bpmn_process_to_delete in bpmn_processes_to_delete:
             db.session.delete(bpmn_process_to_delete)
-        db.session.commit()
 
         related_human_task = HumanTaskModel.query.filter_by(task_model_id=to_task_model.id).first()
         if related_human_task is not None:
@@ -1354,10 +1351,10 @@ class ProcessInstanceProcessor:
         ).all()
         for human_task_to_delete in human_tasks_to_delete:
             db.session.delete(human_task_to_delete)
-        db.session.commit()
 
         for task_to_update in tasks_to_update:
             TaskService.reset_task_model(task_to_update, state="FUTURE")
+        db.session.bulk_save_objects(tasks_to_update)
 
         parent_task_model = TaskModel.query.filter_by(guid=to_task_model.properties_json["parent"]).first()
         if parent_task_model is None:
@@ -1371,8 +1368,10 @@ class ProcessInstanceProcessor:
             json_data_hash=parent_task_model.json_data_hash,
             python_env_data_hash=parent_task_model.python_env_data_hash,
         )
+        db.session.add(to_task_model)
         for task_model in task_models_of_parent_bpmn_processes:
             TaskService.reset_task_model(task_model, state="WAITING")
+        db.session.bulk_save_objects(task_models_of_parent_bpmn_processes)
 
         bpmn_process = to_task_model.bpmn_process
         properties_json = copy.copy(bpmn_process.properties_json)
