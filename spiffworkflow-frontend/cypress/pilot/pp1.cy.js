@@ -68,7 +68,7 @@ describe('pp1', () => {
         .contains(/^Submit$/)
         .click();
 
-      cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+      cy.contains('Task: Enter NDR-P Items', { timeout: 60000 });
       cy.get('#root_0_sub_category').select('op_src');
       cy.get('#root_0_item').clear().type('spiffworkflow');
       cy.get('#root_0_qty').clear().type('1');
