@@ -650,10 +650,12 @@ def process_instance_task_list(
         .add_columns(
             BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
             BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
-            direct_parent_bpmn_process_alias.guid.label("bpmn_process_direct_parent_guid"),
-            direct_parent_bpmn_process_definition_alias.bpmn_identifier.label(
-                "bpmn_process_direct_parent_bpmn_identifier"
-            ),
+            bpmn_process_alias.guid.label("bpmn_process_guid"),
+            # not sure why we needed these
+            # direct_parent_bpmn_process_alias.guid.label("bpmn_process_direct_parent_guid"),
+            # direct_parent_bpmn_process_definition_alias.bpmn_identifier.label(
+            #     "bpmn_process_direct_parent_bpmn_identifier"
+            # ),
             TaskDefinitionModel.bpmn_identifier,
             TaskDefinitionModel.bpmn_name,
             TaskDefinitionModel.typename,
@@ -672,7 +674,7 @@ def process_instance_task_list(
     task_model_list = {}
     if most_recent_tasks_only:
         for task_model in task_models:
-            bpmn_process_guid = task_model.bpmn_process_direct_parent_guid or "TOP"
+            bpmn_process_guid = task_model.bpmn_process_guid or "TOP"
             row_key = f"{bpmn_process_guid}:::{task_model.bpmn_identifier}"
             if row_key not in task_model_list:
                 task_model_list[row_key] = task_model

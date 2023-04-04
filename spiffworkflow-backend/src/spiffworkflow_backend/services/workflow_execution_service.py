@@ -92,6 +92,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         if hasattr(script_engine, "failing_spiff_task") and script_engine.failing_spiff_task is not None:
             failing_spiff_task = script_engine.failing_spiff_task
             self.task_service.update_task_model_with_spiff_task(failing_spiff_task, task_failed=True)
+            self.task_service.process_spiff_task_parent_subprocess_tasks(failing_spiff_task)
+            self.task_service.process_spiff_task_children(failing_spiff_task)
 
         self.task_service.save_objects_to_database()
 
@@ -101,13 +103,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         if self._should_update_task_model():
-            # TODO: also include children of the last task processed. This may help with task resets
-            #   if we have to set their states to FUTURE.
-            # excludes FUTURE and COMPLETED. the others were required to get PP1 to go to completion.
-            # for waiting_spiff_task in bpmn_process_instance.get_tasks(
-            #     TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY
-            # ):
-            #     self._update_task_model_with_spiff_task(waiting_spiff_task)
             if self.last_completed_spiff_task is not None:
                 self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
                 self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
