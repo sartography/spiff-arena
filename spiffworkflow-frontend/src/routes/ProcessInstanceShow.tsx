@@ -998,6 +998,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
+          <div>
+            <Stack orientation="horizontal" gap={2}>
+              Guid: {taskToUse.guid}
+            </Stack>
+          </div>
           {taskToUse.state === 'COMPLETED' ? (
             <div>
               <Stack orientation="horizontal" gap={2}>
