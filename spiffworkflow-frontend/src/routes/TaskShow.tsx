@@ -29,12 +29,20 @@ class UnexpectedHumanTaskType extends Error {
   }
 }
 
+enum FormSubmitType {
+  Default,
+  Draft,
+}
+
 export default function TaskShow() {
   const [task, setTask] = useState<ProcessInstanceTask | null>(null);
   const [userTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
+
+  // save current form data so that we can avoid validations in certain situations
+  const [currentFormObject, setCurrentFormObject] = useState<any>({});
 
   const { addError, removeError } = useAPIError();
 
@@ -87,14 +95,16 @@ export default function TaskShow() {
     }
   };
 
-  const handleFormSubmit = (formObject: any, event: any) => {
+  const handleFormSubmit = (
+    formObject: any,
+    _event: any,
+    submitType: FormSubmitType = FormSubmitType.Default
+  ) => {
     if (disabled) {
       return;
     }
-    const submitButtonId = event.nativeEvent.submitter.id;
     let queryParams = '';
-    console.log('submitButtonId', submitButtonId);
-    if (submitButtonId === 'save-as-draft-button') {
+    if (submitType === FormSubmitType.Draft) {
       queryParams = '?save_as_draft=true';
     }
     setDisabled(true);
@@ -200,6 +210,11 @@ export default function TaskShow() {
     return errors;
   };
 
+  const updateFormData = (formObject: any) => {
+    currentFormObject.formData = formObject.formData;
+    setCurrentFormObject(currentFormObject);
+  };
+
   const formElement = () => {
     if (!task) {
       return null;
@@ -250,10 +265,12 @@ export default function TaskShow() {
       } else if (task.type === 'User Task') {
         saveAsDraftButton = (
           <Button
-            type="submit"
             id="save-as-draft-button"
             disabled={disabled}
             kind="secondary"
+            onClick={() =>
+              handleFormSubmit(currentFormObject, null, FormSubmitType.Draft)
+            }
           >
             Save as draft
           </Button>
@@ -287,7 +304,10 @@ export default function TaskShow() {
             schema={jsonSchema}
             uiSchema={formUiSchema}
             validator={validator}
+            onChange={updateFormData}
             customValidate={customValidate}
+            omitExtraData
+            liveOmit
           >
             {reactFragmentToHideSubmitButton}
           </Form>
