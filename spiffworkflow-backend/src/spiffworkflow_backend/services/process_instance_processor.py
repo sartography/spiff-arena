@@ -354,6 +354,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         external_methods: Optional[Dict[str, Any]] = None,
     ) -> Any:
         """_evaluate."""
+        # if task.task_spec.name == 'passing_script_task':
+        #     import pdb; pdb.set_trace()
+        #     print("HEY2")
         methods = self.__get_augment_methods(task)
         if external_methods:
             methods.update(external_methods)
@@ -375,6 +378,9 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
 
     def execute(self, task: SpiffTask, script: str, external_methods: Any = None) -> None:
         """Execute."""
+        # if task.task_spec.name == 'passing_script_task':
+        #     import pdb; pdb.set_trace()
+        #     print("HEY3")
         try:
             # reset failing task just in case
             self.failing_spiff_task = None
@@ -1644,6 +1650,7 @@ class ProcessInstanceProcessor:
                 and self._script_engine.failing_spiff_task is not None
             ):
                 self._script_engine.failing_spiff_task = None
+            with open("do_engine_steps.json", 'w') as f: f.write(json.dumps(self.serialize(), indent=2))
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
