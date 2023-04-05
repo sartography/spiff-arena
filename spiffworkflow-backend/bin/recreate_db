@@ -44,6 +44,17 @@ if [[ "${1:-}" == "clean" ]]; then
   # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
   # start postgres in background with one db
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-}" == "postgres" ]]; then
+    container_name="postgres-spiff"
+    container_regex="^postgres-spiff$"
+    if [[ -n "$(docker ps -qa -f name=$container_regex)" ]]; then
+      echo ":: Found postgres container - $container_name"
+      if [[ -n "$(docker ps -q -f name=$container_regex)" ]]; then
+        echo ":: Stopping running container - $container_name"
+        docker stop $container_name
+      fi
+      echo ":: Removing stopped container - $container_name"
+      docker rm $container_name
+    fi
     if ! docker exec -it postgres-spiff psql -U spiffworkflow_backend spiffworkflow_backend_unit_testing -c "select 1"; then
       docker run --name postgres-spiff -p 5432:5432 -e POSTGRES_PASSWORD=spiffworkflow_backend -e POSTGRES_USER=spiffworkflow_backend -e POSTGRES_DB=spiffworkflow_backend_unit_testing -d postgres
       sleep 4 # classy

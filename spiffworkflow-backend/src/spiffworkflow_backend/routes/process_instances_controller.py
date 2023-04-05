@@ -56,9 +56,6 @@ from spiffworkflow_backend.services.error_handling_service import ErrorHandlingS
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_lock_service import (
-    ProcessInstanceLockService,
-)
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -105,7 +102,6 @@ def process_instance_create(
     process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
         process_model_identifier, g.user
     )
-    ProcessInstanceQueueService.enqueue(process_instance)
     return Response(
         json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
         status=201,
@@ -131,7 +127,6 @@ def process_instance_run(
 
     if do_engine_steps:
         try:
-            processor.lock_process_instance("Web")
             processor.do_engine_steps(save=True)
         except (
             ApiError,
@@ -150,9 +145,6 @@ def process_instance_run(
                 status_code=400,
                 task=task,
             ) from e
-        finally:
-            if ProcessInstanceLockService.has_lock(process_instance.id):
-                processor.unlock_process_instance("Web")
 
         if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
             MessageService.correlate_all_message_instances()
@@ -173,14 +165,11 @@ def process_instance_terminate(
     processor = ProcessInstanceProcessor(process_instance)
 
     try:
-        processor.lock_process_instance("Web")
-        processor.terminate()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.terminate()
     except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
-    finally:
-        if ProcessInstanceLockService.has_lock(process_instance.id):
-            processor.unlock_process_instance("Web")
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -194,14 +183,11 @@ def process_instance_suspend(
     processor = ProcessInstanceProcessor(process_instance)
 
     try:
-        processor.lock_process_instance("Web")
-        processor.suspend()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.suspend()
     except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
-    finally:
-        if ProcessInstanceLockService.has_lock(process_instance.id):
-            processor.unlock_process_instance("Web")
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -215,14 +201,11 @@ def process_instance_resume(
     processor = ProcessInstanceProcessor(process_instance)
 
     try:
-        processor.lock_process_instance("Web")
-        processor.resume()
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor.resume()
     except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
-    finally:
-        if ProcessInstanceLockService.has_lock(process_instance.id):
-            processor.unlock_process_instance("Web")
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
@@ -667,10 +650,12 @@ def process_instance_task_list(
         .add_columns(
             BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
             BpmnProcessDefinitionModel.bpmn_name.label("bpmn_process_definition_name"),  # type: ignore
-            direct_parent_bpmn_process_alias.guid.label("bpmn_process_direct_parent_guid"),
-            direct_parent_bpmn_process_definition_alias.bpmn_identifier.label(
-                "bpmn_process_direct_parent_bpmn_identifier"
-            ),
+            bpmn_process_alias.guid.label("bpmn_process_guid"),
+            # not sure why we needed these
+            # direct_parent_bpmn_process_alias.guid.label("bpmn_process_direct_parent_guid"),
+            # direct_parent_bpmn_process_definition_alias.bpmn_identifier.label(
+            #     "bpmn_process_direct_parent_bpmn_identifier"
+            # ),
             TaskDefinitionModel.bpmn_identifier,
             TaskDefinitionModel.bpmn_name,
             TaskDefinitionModel.typename,
@@ -686,6 +671,15 @@ def process_instance_task_list(
         task_model_query = task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
 
     task_models = task_model_query.all()
+    task_model_list = {}
+    if most_recent_tasks_only:
+        for task_model in task_models:
+            bpmn_process_guid = task_model.bpmn_process_guid or "TOP"
+            row_key = f"{bpmn_process_guid}:::{task_model.bpmn_identifier}"
+            if row_key not in task_model_list:
+                task_model_list[row_key] = task_model
+        task_models = list(task_model_list.values())
+
     if to_task_model is not None:
         task_models_dict = json.loads(current_app.json.dumps(task_models))
         for task_model in task_models_dict:
@@ -710,7 +704,7 @@ def process_instance_reset(
 ) -> flask.wrappers.Response:
     """Reset a process instance to a particular step."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    ProcessInstanceProcessor.reset_process(process_instance, to_task_guid, commit=True)
+    ProcessInstanceProcessor.reset_process(process_instance, to_task_guid)
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 

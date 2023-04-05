@@ -70,6 +70,7 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
+        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model)
         return process_instance_model
 
     @classmethod
@@ -111,9 +112,7 @@ class ProcessInstanceService:
             .filter(ProcessInstanceModel.id.in_(process_instance_ids_to_check))  # type: ignore
             .all()
         )
-        process_instance_lock_prefix = "Background"
         for process_instance in records:
-            locked = False
             processor = None
             try:
                 current_app.logger.info(f"Processing process_instance {process_instance.id}")
@@ -122,8 +121,6 @@ class ProcessInstanceService:
                     current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
                     continue
 
-                processor.lock_process_instance(process_instance_lock_prefix)
-                locked = True
                 db.session.refresh(process_instance)
                 if process_instance.status == status_value:
                     execution_strategy_name = current_app.config[
@@ -142,9 +139,6 @@ class ProcessInstanceService:
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
-            finally:
-                if locked and processor:
-                    processor.unlock_process_instance(process_instance_lock_prefix)
 
     @staticmethod
     def processor_to_process_instance_api(
@@ -279,7 +273,8 @@ class ProcessInstanceService:
                         yield (identifier, list_value, list_index)
                     if isinstance(list_value, dict) and len(list_value) == 1:
                         for v in list_value.values():
-                            yield (identifier, v, list_index)
+                            if isinstance(v, str):
+                                yield (identifier, v, list_index)
 
     @classmethod
     def file_data_models_for_data(
@@ -331,6 +326,21 @@ class ProcessInstanceService:
         cls.replace_file_data_with_digest_references(data, models)
 
     @staticmethod
+    def update_form_task_data(
+        processor: ProcessInstanceProcessor,
+        spiff_task: SpiffTask,
+        data: dict[str, Any],
+        user: UserModel,
+    ) -> None:
+        AuthorizationService.assert_user_can_complete_spiff_task(processor.process_instance_model.id, spiff_task, user)
+        ProcessInstanceService.save_file_data_and_replace_with_digest_references(
+            data,
+            processor.process_instance_model.id,
+        )
+        dot_dct = ProcessInstanceService.create_dot_dict(data)
+        spiff_task.update_data(dot_dct)
+
+    @staticmethod
     def complete_form_task(
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
@@ -343,15 +353,7 @@ class ProcessInstanceService:
         Abstracted here because we need to do it multiple times when completing all tasks in
         a multi-instance task.
         """
-        AuthorizationService.assert_user_can_complete_spiff_task(processor.process_instance_model.id, spiff_task, user)
-
-        ProcessInstanceService.save_file_data_and_replace_with_digest_references(
-            data,
-            processor.process_instance_model.id,
-        )
-
-        dot_dct = ProcessInstanceService.create_dot_dict(data)
-        spiff_task.update_data(dot_dct)
+        ProcessInstanceService.update_form_task_data(processor, spiff_task, data, user)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 

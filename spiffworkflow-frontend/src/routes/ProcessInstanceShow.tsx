@@ -236,8 +236,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       tasks.forEach(function getUserTasksElement(task: Task) {
         if (task.state === 'COMPLETED') {
           taskIds.completed.push(task);
-        }
-        if (task.state === 'READY' || task.state === 'WAITING') {
+        } else if (task.state === 'READY' || task.state === 'WAITING') {
           taskIds.readyOrWaiting.push(task);
         }
         return null;
@@ -260,7 +259,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     return !taskToTimeTravelTo;
   };
 
-  const completionViewLink = (label: any, taskGuid: string) => {
+  const queryParams = () => {
     const processIdentifier = searchParams.get('process_identifier');
     const callActivityTaskId = searchParams.get('bpmn_process_guid');
     const queryParamArray = [];
@@ -270,16 +269,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if (callActivityTaskId) {
       queryParamArray.push(`bpmn_process_guid=${callActivityTaskId}`);
     }
-    let queryParams = '';
+    let queryParamString = '';
     if (queryParamArray.length > 0) {
-      queryParams = `?${queryParamArray.join('&')}`;
+      queryParamString = `?${queryParamArray.join('&')}`;
     }
+    return queryParamString;
+  };
 
+  const completionViewLink = (label: any, taskGuid: string) => {
     return (
       <Link
         reloadDocument
         data-qa="process-instance-step-link"
-        to={`${processInstanceShowPageBaseUrl}/${taskGuid}${queryParams}`}
+        to={`${processInstanceShowPageBaseUrl}/${taskGuid}${queryParams()}`}
       >
         {label}
       </Link>
@@ -287,7 +289,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const returnToProcessInstance = () => {
-    window.location.href = processInstanceShowPageBaseUrl;
+    window.location.href = `${processInstanceShowPageBaseUrl}${queryParams()}`;
   };
 
   const resetProcessInstance = () => {
@@ -671,16 +673,14 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     );
   };
 
-  const canResetProcess = (_task: Task) => {
-    // disabling this feature for now
-    return false;
-    // return (
-    //   ability.can('POST', targetUris.processInstanceResetPath) &&
-    //   processInstance &&
-    //   processInstance.status === 'suspended' &&
-    //   task.state === 'READY' &&
-    //   !showingActiveTask()
-    // );
+  const canResetProcess = (task: Task) => {
+    return (
+      ability.can('POST', targetUris.processInstanceResetPath) &&
+      processInstance &&
+      processInstance.status === 'suspended' &&
+      task.state === 'READY' &&
+      !showingActiveTask()
+    );
   };
 
   const getEvents = (task: Task) => {
@@ -998,6 +998,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
             ): {taskToUse.state}
             {taskDisplayButtons(taskToUse)}
           </Stack>
+          <div>
+            <Stack orientation="horizontal" gap={2}>
+              Guid: {taskToUse.guid}
+            </Stack>
+          </div>
           {taskToUse.state === 'COMPLETED' ? (
             <div>
               <Stack orientation="horizontal" gap={2}>

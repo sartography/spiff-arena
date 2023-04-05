@@ -304,7 +304,7 @@ class BaseTest:
         db.session.add(process_instance)
         db.session.commit()
 
-        ProcessInstanceQueueService.enqueue(process_instance)
+        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance)
 
         return process_instance
 

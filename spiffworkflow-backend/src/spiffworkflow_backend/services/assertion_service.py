@@ -14,5 +14,5 @@ def safe_assertion(condition: bool) -> Generator[bool, None, None]:
         if not condition:
             sentry_sdk.capture_exception(e)
             current_app.logger.exception(e)
-            if current_app.config["ENV_IDENTIFIER"] == "local_development":
+            if current_app.config["ENV_IDENTIFIER"] in ["local_development", "unit_testing"]:
                 raise e
