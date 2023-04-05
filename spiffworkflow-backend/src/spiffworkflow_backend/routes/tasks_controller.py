@@ -428,8 +428,9 @@ def _task_submit_shared(
 
     if save_as_draft:
         task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
+        ProcessInstanceService.update_form_task_data(processor, spiff_task, body, g.user)
         json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
-            task_model, body, "json_data_hash"
+            task_model, spiff_task.data, "json_data_hash"
         )
         if json_data_dict is not None:
             TaskService.insert_or_update_json_data_dict(json_data_dict)
