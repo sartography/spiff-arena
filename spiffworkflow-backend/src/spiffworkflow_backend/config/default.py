@@ -42,7 +42,8 @@ SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL = environ.get(
     "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL", default="http://localhost:7004"
 )
 SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_TYPE_AHEAD_URL = environ.get(
-    "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_TYPE_AHEAD_URL", default="https://emehvlxpwodjawtgi7ctkbvpse0vmaow.lambda-url.us-east-1.on.aws"
+    "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_TYPE_AHEAD_URL",
+    default="https://emehvlxpwodjawtgi7ctkbvpse0vmaow.lambda-url.us-east-1.on.aws",
 )
 
 # Open ID server
