@@ -1,11 +1,13 @@
 import time
 from typing import Callable
+from typing import Set
 import json
 from typing import Optional
+from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import SpiffWorkflowException, TaskNotFoundException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 
@@ -63,6 +65,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.current_task_start_in_seconds: Optional[float] = None
 
         self.last_completed_spiff_task: Optional[SpiffTask] = None
+        self.spiff_tasks_to_process: Set[UUID] = set()
 
         self.task_service = TaskService(
             process_instance=self.process_instance,
@@ -91,6 +94,10 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
             self.last_completed_spiff_task = spiff_task
+            self.spiff_tasks_to_process.add(spiff_task.id)
+            self._add_children(spiff_task)
+            self._add_parents(spiff_task)
+
             # self.task_service.process_spiff_task_parent_subprocess_tasks(spiff_task)
             # self.task_service.process_spiff_task_children(spiff_task)
         if self.secondary_engine_step_delegate:
@@ -110,18 +117,47 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.secondary_engine_step_delegate.save(bpmn_process_instance, commit=False)
         db.session.commit()
 
+    def _add_children(self, spiff_task: SpiffTask) -> None:
+        for child_spiff_task in spiff_task.children:
+            self.spiff_tasks_to_process.add(child_spiff_task.id)
+            self._add_children(child_spiff_task)
+
+    def _add_parents(self, spiff_task: SpiffTask) -> None:
+        if spiff_task.parent and spiff_task.parent.task_spec.name != "Root":
+            self.spiff_tasks_to_process.add(spiff_task.parent.id)
+            self._add_parents(spiff_task.parent)
+
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         if self._should_update_task_model():
             # excludes COMPLETED. the others were required to get PP1 to go to completion.
             # process FUTURE tasks because Boundary events are not processed otherwise.
-            for waiting_spiff_task in bpmn_process_instance.get_tasks(
-                TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY | TaskState.FUTURE
-            ):
+            # for waiting_spiff_task in bpmn_process_instance.get_tasks(
+            #     TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY | TaskState.FUTURE
+            # ):
+            for spiff_task_guid in self.spiff_tasks_to_process:
+                if spiff_task_guid is None:
+                    continue
+                try:
+                    print(f"spiff_task_guid: {spiff_task_guid}")
+                    waiting_spiff_task = bpmn_process_instance.get_task_from_id(spiff_task_guid)
+                except TaskNotFoundException:
+                    continue
+                # if waiting_spiff_task.task_spec.name == 'top_level_manual_task_two':
+                #     import pdb; pdb.set_trace()
+                #     print("HEY42")
                 # include PREDICTED_MASK tasks in list so we can remove them from the parent
                 if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
                     TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
+                    for cpt in waiting_spiff_task.parent.children:
+                        if cpt.id == waiting_spiff_task.id:
+                           waiting_spiff_task.parent.children.remove(cpt)
                     continue
-                self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+                try:
+                    self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+                except Exception as ex:
+                    import pdb; pdb.set_trace()
+                    print("HEY16")
+                # self.task_service.process_spiff_task_parent_subprocess_tasks(waiting_spiff_task)
 
             # if self.last_completed_spiff_task is not None:
             #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
@@ -250,6 +286,7 @@ class WorkflowExecutionService:
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
         except SpiffWorkflowException as swe:
+            raise swe
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:

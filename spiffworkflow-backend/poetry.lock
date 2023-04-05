@@ -1875,11 +1875,11 @@ test = ["pytest"]
 [[package]]
 name = "SpiffWorkflow"
 version = "1.2.1"
-description = ""
+description = "A workflow framework and BPMN/DMN Processor"
 category = "main"
 optional = false
 python-versions = "*"
-develop = false
+develop = true
 
 [package.dependencies]
 celery = "*"
@@ -1887,10 +1887,8 @@ configparser = "*"
 lxml = "*"
 
 [package.source]
-type = "git"
-url = "https://github.com/sartography/SpiffWorkflow"
-reference = "main"
-resolved_reference = "e1add839ddf2512f27cd0afe681ff3e0460d6f7a"
+type = "directory"
+url = "../../SpiffWorkflow"
 
 [[package]]
 name = "sqlalchemy"
@@ -2273,7 +2271,7 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "9fea44386fbab29102a051a254058909568c4ee3dbd6a402fb91aacbcf1f7fd2"
+content-hash = "c4bb5e0ce1ad140b0e5b109ab3f9f136844815bd6db8200e546d44d533050612"
 
 [metadata.files]
 alabaster = [

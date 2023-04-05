@@ -136,15 +136,17 @@ def process_instance_run(
             ErrorHandlingService().handle_error(processor, e)
             raise e
         except Exception as e:
-            ErrorHandlingService().handle_error(processor, e)
-            # fixme: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes
-            task = processor.bpmn_process_instance.last_task
-            raise ApiError.from_task(
-                error_code="unknown_exception",
-                message=f"An unknown error occurred. Original error: {e}",
-                status_code=400,
-                task=task,
-            ) from e
+            raise e
+            # import pdb; pdb.set_trace()
+            # ErrorHandlingService().handle_error(processor, e)
+            # # fixme: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes
+            # task = processor.bpmn_process_instance.last_task
+            # raise ApiError.from_task(
+            #     error_code="unknown_exception",
+            #     message=f"An unknown error occurred. Original error: {e}",
+            #     status_code=400,
+            #     task=task,
+            # ) from e
 
         if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
             MessageService.correlate_all_message_instances()
