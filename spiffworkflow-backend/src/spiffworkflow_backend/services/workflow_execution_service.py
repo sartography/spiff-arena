@@ -24,7 +24,7 @@ from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
-from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.task_service import StartAndEndTimes, TaskService
 
 
 class EngineStepDelegate:
@@ -62,10 +62,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.serializer = serializer
 
         self.current_task_model: Optional[TaskModel] = None
-        self.current_task_start_in_seconds: Optional[float] = None
+        # self.current_task_start_in_seconds: Optional[float] = None
 
         self.last_completed_spiff_task: Optional[SpiffTask] = None
         self.spiff_tasks_to_process: Set[UUID] = set()
+        self.spiff_task_timestamps: dict[UUID, StartAndEndTimes] = {}
 
         self.task_service = TaskService(
             process_instance=self.process_instance,
@@ -75,10 +76,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
-            # if spiff_task.task_spec.name == 'passing_script_task':
-            #     import pdb; pdb.set_trace()
-            #     print("HEY1")
-            self.current_task_start_in_seconds = time.time()
+            self.spiff_task_timestamps[spiff_task.id] = {'start_in_seconds': time.time(), 'end_in_seconds': None}
             spiff_task.task_spec._predict(spiff_task, mask=TaskState.NOT_FINISHED_MASK)
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.will_complete_task(spiff_task)
@@ -88,15 +86,16 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # if spiff_task.task_spec.name == 'test_process_to_call_script.BoundaryEventParent':
             #     import pdb; pdb.set_trace()
             #     print("HEY")
-            task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
-            if self.current_task_start_in_seconds is None:
-                raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
-            task_model.start_in_seconds = self.current_task_start_in_seconds
-            task_model.end_in_seconds = time.time()
+            # task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
+            # if self.current_task_start_in_seconds is None:
+            #     raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
+            # task_model.start_in_seconds = self.current_task_start_in_seconds
+            # task_model.end_in_seconds = time.time()
+            self.spiff_task_timestamps[spiff_task.id]['end_in_seconds'] = time.time()
             self.last_completed_spiff_task = spiff_task
             self.spiff_tasks_to_process.add(spiff_task.id)
             self._add_children(spiff_task)
-            self._add_parents(spiff_task)
+            # self._add_parents(spiff_task)
 
             # self.task_service.process_spiff_task_parent_subprocess_tasks(spiff_task)
             # self.task_service.process_spiff_task_children(spiff_task)
@@ -134,12 +133,13 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # for waiting_spiff_task in bpmn_process_instance.get_tasks(
             #     TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY | TaskState.FUTURE
             # ):
-            for spiff_task_guid in self.spiff_tasks_to_process:
-                if spiff_task_guid is None:
+            #     self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+            for spiff_task_uuid in self.spiff_tasks_to_process:
+                if spiff_task_uuid is None: # or str(spiff_task_uuid) in self.task_service.task_models:
                     continue
                 try:
-                    print(f"spiff_task_guid: {spiff_task_guid}")
-                    waiting_spiff_task = bpmn_process_instance.get_task_from_id(spiff_task_guid)
+                    # print(f"spiff_task_uuid: {spiff_task_uuid}")
+                    waiting_spiff_task = bpmn_process_instance.get_task_from_id(spiff_task_uuid)
                 except TaskNotFoundException:
                     continue
                 # if waiting_spiff_task.task_spec.name == 'top_level_manual_task_two':
@@ -152,15 +152,14 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                         if cpt.id == waiting_spiff_task.id:
                            waiting_spiff_task.parent.children.remove(cpt)
                     continue
-                try:
-                    self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
-                except Exception as ex:
-                    import pdb; pdb.set_trace()
-                    print("HEY16")
+                start_and_end_times = None
+                if waiting_spiff_task.id in self.spiff_task_timestamps:
+                    start_and_end_times = self.spiff_task_timestamps[waiting_spiff_task.id]
+                self.task_service.update_task_model_with_spiff_task(waiting_spiff_task, start_and_end_times=start_and_end_times)
                 # self.task_service.process_spiff_task_parent_subprocess_tasks(waiting_spiff_task)
 
-            # if self.last_completed_spiff_task is not None:
-            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
+            if self.last_completed_spiff_task is not None:
+                self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
             #     self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
 
     def _should_update_task_model(self) -> bool:
@@ -286,7 +285,6 @@ class WorkflowExecutionService:
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
         except SpiffWorkflowException as swe:
-            raise swe
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
