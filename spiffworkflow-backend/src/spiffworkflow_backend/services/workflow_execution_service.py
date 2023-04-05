@@ -1,5 +1,6 @@
 import time
 from typing import Callable
+import json
 from typing import Optional
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -71,6 +72,9 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
+            # if spiff_task.task_spec.name == 'passing_script_task':
+            #     import pdb; pdb.set_trace()
+            #     print("HEY1")
             self.current_task_start_in_seconds = time.time()
             spiff_task.task_spec._predict(spiff_task, mask=TaskState.NOT_FINISHED_MASK)
         if self.secondary_engine_step_delegate:
@@ -78,12 +82,17 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
+            # if spiff_task.task_spec.name == 'test_process_to_call_script.BoundaryEventParent':
+            #     import pdb; pdb.set_trace()
+            #     print("HEY")
             task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
             if self.current_task_start_in_seconds is None:
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
             self.last_completed_spiff_task = spiff_task
+            # self.task_service.process_spiff_task_parent_subprocess_tasks(spiff_task)
+            # self.task_service.process_spiff_task_children(spiff_task)
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
@@ -103,9 +112,20 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         if self._should_update_task_model():
-            if self.last_completed_spiff_task is not None:
-                self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
-                self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
+            # excludes COMPLETED. the others were required to get PP1 to go to completion.
+            # process FUTURE tasks because Boundary events are not processed otherwise.
+            for waiting_spiff_task in bpmn_process_instance.get_tasks(
+                TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY | TaskState.FUTURE
+            ):
+                # include PREDICTED_MASK tasks in list so we can remove them from the parent
+                if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
+                    TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
+                    continue
+                self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+
+            # if self.last_completed_spiff_task is not None:
+            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
+            #     self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
 
     def _should_update_task_model(self) -> bool:
         """We need to figure out if we have previously save task info on this process intance.

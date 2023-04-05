@@ -432,10 +432,11 @@ class TaskService:
         spiff_task_guid = str(spiff_task.id)
         if spiff_task_parent_guid in task_models:
             parent_task_model = task_models[spiff_task_parent_guid]
-            new_parent_properties_json = copy.copy(parent_task_model.properties_json)
-            new_parent_properties_json["children"].remove(spiff_task_guid)
-            parent_task_model.properties_json = new_parent_properties_json
-            task_models[spiff_task_parent_guid] = parent_task_model
+            if spiff_task_guid in parent_task_model.properties_json['children']:
+                new_parent_properties_json = copy.copy(parent_task_model.properties_json)
+                new_parent_properties_json["children"].remove(spiff_task_guid)
+                parent_task_model.properties_json = new_parent_properties_json
+                task_models[spiff_task_parent_guid] = parent_task_model
 
     @classmethod
     def update_task_data_on_bpmn_process(
