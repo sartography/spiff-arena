@@ -1875,7 +1875,7 @@ test = ["pytest"]
 [[package]]
 name = "SpiffWorkflow"
 version = "1.2.1"
-description = ""
+description = "A workflow framework and BPMN/DMN Processor"
 category = "main"
 optional = false
 python-versions = "*"
@@ -1890,7 +1890,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "e1add839ddf2512f27cd0afe681ff3e0460d6f7a"
+resolved_reference = "96ad2a2b060deb445c39374f065690023351de19"
 
 [[package]]
 name = "sqlalchemy"

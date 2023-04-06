@@ -98,14 +98,13 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
 
+// Intended to be run from the process model show page
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
   (expectAutoRedirectToHumanTask = false) => {
     // cy.getBySel('start-process-instance').click();
     // click on button with text Start
-    //cy.get('button')
-    // cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/new-demand-request-procurement > div > button')
-    cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/raise-new-demand-request > div > button')
+    cy.get('button')
       .contains(/^Start$/)
       .click();
     if (expectAutoRedirectToHumanTask) {

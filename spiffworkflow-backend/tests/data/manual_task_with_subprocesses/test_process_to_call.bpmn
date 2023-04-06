@@ -50,6 +50,9 @@
       <bpmn:outgoing>Flow_089aeua</bpmn:outgoing>
       <bpmn:script>set_in_test_process_to_call_script = 1</bpmn:script>
     </bpmn:scriptTask>
+    <bpmn:boundaryEvent id="our_boundary_event" name="our_boundary_event" attachedToRef="test_process_to_call_script">
+      <bpmn:escalationEventDefinition id="EscalationEventDefinition_1bs7saf" />
+    </bpmn:boundaryEvent>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="test_process_to_call">
@@ -65,6 +68,12 @@
       <bpmndi:BPMNShape id="Activity_17algy3_di" bpmnElement="test_process_to_call_script">
         <dc:Bounds x="450" y="110" width="100" height="80" />
         <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0wfnf83_di" bpmnElement="our_boundary_event">
+        <dc:Bounds x="492" y="172" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="467" y="215" width="87" height="27" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1qsx5et_di" bpmnElement="Flow_1qsx5et">
         <di:waypoint x="198" y="150" />

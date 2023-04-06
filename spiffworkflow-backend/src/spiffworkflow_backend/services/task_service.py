@@ -26,6 +26,11 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 
 
+class StartAndEndTimes(TypedDict):
+    start_in_seconds: Optional[float]
+    end_in_seconds: Optional[float]
+
+
 class JsonDataDict(TypedDict):
     hash: str
     data: dict
@@ -108,29 +113,45 @@ class TaskService:
         self,
         spiff_task: SpiffTask,
         task_failed: bool = False,
+        start_and_end_times: Optional[StartAndEndTimes] = None,
     ) -> TaskModel:
-        (
-            new_bpmn_process,
-            task_model,
-            new_task_models,
-            new_json_data_dicts,
-        ) = self.__class__.find_or_create_task_model_from_spiff_task(
-            spiff_task,
-            self.process_instance,
-            self.serializer,
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        new_bpmn_process = None
+        if str(spiff_task.id) in self.task_models:
+            task_model = self.task_models[str(spiff_task.id)]
+        else:
+            (
+                new_bpmn_process,
+                task_model,
+                new_task_models,
+                new_json_data_dicts,
+            ) = self.__class__.find_or_create_task_model_from_spiff_task(
+                spiff_task,
+                self.process_instance,
+                self.serializer,
+                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+            )
+            self.task_models.update(new_task_models)
+            self.json_data_dicts.update(new_json_data_dicts)
+
+        # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
+        bpmn_process = (
+            new_bpmn_process
+            or task_model.bpmn_process
+            or BpmnProcessModel.query.filter_by(id=task_model.bpmn_process_id).first()
         )
-        bpmn_process = new_bpmn_process or task_model.bpmn_process
+
         bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(
             bpmn_process, spiff_task.workflow.data
         )
-        self.task_models.update(new_task_models)
-        self.json_data_dicts.update(new_json_data_dicts)
         json_data_dict_list = self.__class__.update_task_model(task_model, spiff_task, self.serializer)
         self.task_models[task_model.guid] = task_model
         if bpmn_process_json_data is not None:
             json_data_dict_list.append(bpmn_process_json_data)
         self.update_json_data_dicts_using_list(json_data_dict_list, self.json_data_dicts)
+
+        if start_and_end_times:
+            task_model.start_in_seconds = start_and_end_times["start_in_seconds"]
+            task_model.end_in_seconds = start_and_end_times["end_in_seconds"]
 
         if task_model.state == "COMPLETED" or task_failed:
             event_type = ProcessInstanceEventType.task_completed.value
@@ -432,10 +453,11 @@ class TaskService:
         spiff_task_guid = str(spiff_task.id)
         if spiff_task_parent_guid in task_models:
             parent_task_model = task_models[spiff_task_parent_guid]
-            new_parent_properties_json = copy.copy(parent_task_model.properties_json)
-            new_parent_properties_json["children"].remove(spiff_task_guid)
-            parent_task_model.properties_json = new_parent_properties_json
-            task_models[spiff_task_parent_guid] = parent_task_model
+            if spiff_task_guid in parent_task_model.properties_json["children"]:
+                new_parent_properties_json = copy.copy(parent_task_model.properties_json)
+                new_parent_properties_json["children"].remove(spiff_task_guid)
+                parent_task_model.properties_json = new_parent_properties_json
+                task_models[spiff_task_parent_guid] = parent_task_model
 
     @classmethod
     def update_task_data_on_bpmn_process(

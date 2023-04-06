@@ -137,7 +137,8 @@ def process_instance_run(
             raise e
         except Exception as e:
             ErrorHandlingService().handle_error(processor, e)
-            # fixme: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes
+            # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
+            # we need to recurse through all last tasks if the last task is a call activity or subprocess.
             task = processor.bpmn_process_instance.last_task
             raise ApiError.from_task(
                 error_code="unknown_exception",
