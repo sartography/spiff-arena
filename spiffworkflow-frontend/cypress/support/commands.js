@@ -1,6 +1,7 @@
 import { string } from 'prop-types';
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
 import { miscDisplayName } from './helpers';
+import 'cypress-file-upload';
 
 // ***********************************************
 // This example commands.js shows you how to
@@ -102,8 +103,9 @@ Cypress.Commands.add(
   (expectAutoRedirectToHumanTask = false) => {
     // cy.getBySel('start-process-instance').click();
     // click on button with text Start
-
-    cy.get('button')
+    //cy.get('button')
+    // cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/new-demand-request-procurement > div > button')
+    cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/raise-new-demand-request > div > button')
       .contains(/^Start$/)
       .click();
     if (expectAutoRedirectToHumanTask) {
