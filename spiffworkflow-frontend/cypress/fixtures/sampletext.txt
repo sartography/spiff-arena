@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="Process_o8prjc6" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1wvr4fo</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1wvr4fo" sourceRef="StartEvent_1" targetRef="Activity_021jb39" />
+    <bpmn:endEvent id="Event_1hpucme">
+      <bpmn:incoming>Flow_14wkay5</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_03aokn9" sourceRef="Activity_021jb39" targetRef="Activity_06y4ypg" />
+    <bpmn:serviceTask id="Activity_021jb39">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="waku/SendMessage" resultVariable="the_var">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="message" type="str" value="&#34;TETING FROM TEST&#34;" />
+            <spiffworkflow:parameter id="message_type" type="str" value="&#34;wakuext_sendOneToOneMessage&#34;" />
+            <spiffworkflow:parameter id="recipient" type="str" value="[&#34;0x04a4209153d1df6e531102f2e98e16ec85fbcb8c563c2f8fcd2737626d1963ced9d17581a8dad7c90c1ab60b0bf56279e5b19ea3147b6b1a147e002cd96e42b294&#34;]" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1wvr4fo</bpmn:incoming>
+      <bpmn:outgoing>Flow_03aokn9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_14wkay5" sourceRef="Activity_06y4ypg" targetRef="Event_1hpucme" />
+    <bpmn:manualTask id="Activity_06y4ypg">
+      <bpmn:incoming>Flow_03aokn9</bpmn:incoming>
+      <bpmn:outgoing>Flow_14wkay5</bpmn:outgoing>
+    </bpmn:manualTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_o8prjc6">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1hpucme_di" bpmnElement="Event_1hpucme">
+        <dc:Bounds x="812" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_12tj4p6_di" bpmnElement="Activity_021jb39">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0rbl68g_di" bpmnElement="Activity_06y4ypg">
+        <dc:Bounds x="530" y="137" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1wvr4fo_di" bpmnElement="Flow_1wvr4fo">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03aokn9_di" bpmnElement="Flow_03aokn9">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="530" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_14wkay5_di" bpmnElement="Flow_14wkay5">
+        <di:waypoint x="630" y="177" />
+        <di:waypoint x="812" y="177" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
