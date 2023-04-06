@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import validator from '@rjsf/validator-ajv8';
 
@@ -8,6 +8,7 @@ import {
   Tabs,
   Grid,
   Column,
+  ComboBox,
   Button,
   ButtonSet,
   // @ts-ignore
@@ -21,6 +22,73 @@ import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessInstanceTask } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
+
+// TODO: move this somewhere else
+function TypeAheadWidget({
+  id,
+  onChange,
+  options: { category, itemFormat },
+}: {
+  id: string;
+  onChange: any;
+  options: any;
+}) {
+  const pathForCategory = (inputText: string) => {
+    return `/connector-proxy/type-ahead/${category}?prefix=${inputText}&limit=100`;
+  };
+
+  const lastSearchTerm = useRef('');
+  const [items, setItems] = useState<any[]>([]);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const itemFormatRegex = /[^{}]+(?=})/g;
+  const itemFormatSubstitutions = itemFormat.match(itemFormatRegex);
+
+  const itemToString = (item: any) => {
+    if (!item) {
+      return null;
+    }
+
+    let str = itemFormat;
+    itemFormatSubstitutions.forEach((key: string) => {
+      str = str.replace(`{${key}}`, item[key]);
+    });
+    return str;
+  };
+
+  const handleTypeAheadResult = (result: any, inputText: string) => {
+    if (lastSearchTerm.current === inputText) {
+      setItems(result);
+    }
+  };
+
+  const typeAheadSearch = (inputText: string) => {
+    if (inputText) {
+      lastSearchTerm.current = inputText;
+      // TODO: check cache of prefixes -> results
+      HttpService.makeCallToBackend({
+        path: pathForCategory(inputText),
+        successCallback: (result: any) =>
+          handleTypeAheadResult(result, inputText),
+      });
+    }
+  };
+
+  return (
+    <ComboBox
+      onInputChange={typeAheadSearch}
+      onChange={(event: any) => {
+        setSelectedItem(event.selectedItem);
+        onChange(itemToString(event.selectedItem));
+      }}
+      id={id}
+      items={items}
+      itemToString={itemToString}
+      placeholder={`Start typing to search for ${category}...`}
+      titleText={`Type ahead search for ${category}`}
+      selectedItem={selectedItem}
+    />
+  );
+}
 
 class UnexpectedHumanTaskType extends Error {
   constructor(message: string) {
@@ -294,6 +362,8 @@ export default function TaskShow() {
       return getFieldsWithDateValidations(jsonSchema, formData, errors);
     };
 
+    const widgets = { typeAhead: TypeAheadWidget };
+
     return (
       <Grid fullWidth condensed>
         <Column sm={4} md={5} lg={8}>
@@ -303,6 +373,7 @@ export default function TaskShow() {
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
+            widgets={widgets}
             validator={validator}
             onChange={updateFormData}
             customValidate={customValidate}
