@@ -1302,7 +1302,7 @@ class ProcessInstanceProcessor:
             and_(
                 or_(
                     TaskModel.end_in_seconds > to_task_model.end_in_seconds,
-                    TaskModel.end_in_seconds.is_not(None),  # type: ignore
+                    TaskModel.end_in_seconds.is_(None),  # type: ignore
                 ),
                 TaskModel.process_instance_id == process_instance.id,
                 TaskModel.guid.not_in(task_models_of_parent_bpmn_processes_guids),  # type: ignore
