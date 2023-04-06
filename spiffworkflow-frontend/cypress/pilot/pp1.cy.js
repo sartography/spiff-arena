@@ -81,7 +81,7 @@ describe('pp1', () => {
       approveWithUser(
         'infra.project-lead',
         processInstanceId,
-        'Task: Reminder: Request Additional Budget',
+        'Task: Reminder: Check Existing Budget',
         'infra.project-leadx'
       );
       approveWithUser('ppg.ba-a1.sme', processInstanceId);
