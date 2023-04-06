@@ -158,7 +158,8 @@ class ApiError(Exception):
                 task_trace=exp.task_trace,
             )
         elif isinstance(exp, WorkflowException) and exp.task_spec:
-            return ApiError.from_task_spec(error_code, message, exp.task_spec)
+            msg = message + ". " + str(exp)
+            return ApiError.from_task_spec(error_code, msg, exp.task_spec)
         else:
             return ApiError("workflow_error", str(exp))
 
