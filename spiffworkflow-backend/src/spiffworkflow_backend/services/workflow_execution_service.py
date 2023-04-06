@@ -1,6 +1,8 @@
 import time
 from typing import Callable
 from typing import Optional
+from typing import Set
+from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
@@ -15,12 +17,12 @@ from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # noqa: F401
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
+from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -58,10 +60,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
         self.serializer = serializer
 
-        self.current_task_model: Optional[TaskModel] = None
         self.current_task_start_in_seconds: Optional[float] = None
 
         self.last_completed_spiff_task: Optional[SpiffTask] = None
+        self.spiff_tasks_to_process: Set[UUID] = set()
+        self.spiff_task_timestamps: dict[UUID, StartAndEndTimes] = {}
 
         self.task_service = TaskService(
             process_instance=self.process_instance,
@@ -71,18 +74,29 @@ class TaskModelSavingDelegate(EngineStepDelegate):
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
-            self.current_task_start_in_seconds = time.time()
+            self.spiff_task_timestamps[spiff_task.id] = {"start_in_seconds": time.time(), "end_in_seconds": None}
             spiff_task.task_spec._predict(spiff_task, mask=TaskState.NOT_FINISHED_MASK)
+
+            self.current_task_start_in_seconds = time.time()
+
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.will_complete_task(spiff_task)
 
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
+            # NOTE: used with process-all-tasks and process-children-of-last-task
             task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
             if self.current_task_start_in_seconds is None:
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
+
+            # # NOTE: used with process-spiff-tasks-list
+            # self.spiff_task_timestamps[spiff_task.id]['end_in_seconds'] = time.time()
+            # self.spiff_tasks_to_process.add(spiff_task.id)
+            # self._add_children(spiff_task)
+            # # self._add_parents(spiff_task)
+
             self.last_completed_spiff_task = spiff_task
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
@@ -101,11 +115,66 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.secondary_engine_step_delegate.save(bpmn_process_instance, commit=False)
         db.session.commit()
 
+    def _add_children(self, spiff_task: SpiffTask) -> None:
+        for child_spiff_task in spiff_task.children:
+            self.spiff_tasks_to_process.add(child_spiff_task.id)
+            self._add_children(child_spiff_task)
+
+    def _add_parents(self, spiff_task: SpiffTask) -> None:
+        if spiff_task.parent and spiff_task.parent.task_spec.name != "Root":
+            self.spiff_tasks_to_process.add(spiff_task.parent.id)
+            self._add_parents(spiff_task.parent)
+
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         if self._should_update_task_model():
-            if self.last_completed_spiff_task is not None:
-                self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
-                self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
+            # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
+            # excludes COMPLETED. the others were required to get PP1 to go to completion.
+            # process FUTURE tasks because Boundary events are not processed otherwise.
+            for waiting_spiff_task in bpmn_process_instance.get_tasks(
+                TaskState.WAITING
+                | TaskState.CANCELLED
+                | TaskState.READY
+                | TaskState.MAYBE
+                | TaskState.LIKELY
+                | TaskState.FUTURE
+            ):
+                if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
+                    TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
+                    continue
+                self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+
+            # # NOTE: process-spiff-tasks-list: this would be the ideal way to handle all tasks
+            # # but we're missing something with it yet
+            # #
+            # # adding from line here until we are ready to go with this
+            # from SpiffWorkflow.exceptions import TaskNotFoundException
+            # for spiff_task_uuid in self.spiff_tasks_to_process:
+            #     try:
+            #         waiting_spiff_task = bpmn_process_instance.get_task_from_id(spiff_task_uuid)
+            #     except TaskNotFoundException:
+            #         continue
+            #
+            #     # include PREDICTED_MASK tasks in list so we can remove them from the parent
+            #     if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
+            #         TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
+            #         for cpt in waiting_spiff_task.parent.children:
+            #             if cpt.id == waiting_spiff_task.id:
+            #                 waiting_spiff_task.parent.children.remove(cpt)
+            #         continue
+            #     # if waiting_spiff_task.state == TaskState.FUTURE:
+            #     #     continue
+            #     start_and_end_times = None
+            #     if waiting_spiff_task.id in self.spiff_task_timestamps:
+            #         start_and_end_times = self.spiff_task_timestamps[waiting_spiff_task.id]
+            #     self.task_service.update_task_model_with_spiff_task(waiting_spiff_task, start_and_end_times=start_and_end_times)
+            #
+            # if self.last_completed_spiff_task is not None:
+            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
+
+            # # NOTE: process-children-of-last-task: this does not work with escalation boundary events
+            # if self.last_completed_spiff_task is not None:
+            #     self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
+            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
 
     def _should_update_task_model(self) -> bool:
         """We need to figure out if we have previously save task info on this process intance.
@@ -257,6 +326,8 @@ class WorkflowExecutionService:
             if bpmn_process is not None:
                 bpmn_process_correlations = self.bpmn_process_instance.correlations
                 bpmn_process.properties_json["correlations"] = bpmn_process_correlations
+                # update correlations correctly but always null out bpmn_messages since they get cleared out later
+                bpmn_process.properties_json["bpmn_messages"] = []
                 db.session.add(bpmn_process)
 
             db.session.commit()
