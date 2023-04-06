@@ -59,7 +59,6 @@ class TestLoggingService(BaseTest):
         assert log_response.status_code == 200
         assert log_response.json
         logs: list = log_response.json["results"]
-        import pdb; pdb.set_trace()
         assert len(logs) == 4
 
         for log in logs:

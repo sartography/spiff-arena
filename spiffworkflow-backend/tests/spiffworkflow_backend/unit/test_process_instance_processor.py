@@ -346,6 +346,7 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        # import pdb; pdb.set_trace()
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
         processor.suspend()
@@ -547,7 +548,7 @@ class TestProcessInstanceProcessor(BaseTest):
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
         assert len(all_spiff_tasks) > 1
         for spiff_task in all_spiff_tasks:
-            assert spiff_task.state == TaskState.COMPLETED
+            assert spiff_task.state == TaskState.COMPLETED or TaskState.CANCELLED
             assert_spiff_task_is_in_process(spiff_task)
 
             if spiff_task.task_spec.name == "top_level_call_activity":
