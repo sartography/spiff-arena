@@ -37,23 +37,10 @@ const approveWithUser = (
 describe('pp1', () => {
   it('can run PP1', () => {
     cy.login('core-a1.contributor', 'core-a1.contributor');
-    // cy.login('sasha', 'sasha');
     cy.visit('/');
     cy.contains('Start New +').click();
     cy.contains('New Demand Request - Procurement').click();
     cy.runPrimaryBpmnFile(true);
-    // cy.contains('Please select the type of request to start the process.');
-    // // wait a second to ensure we can click the radio button
-    // cy.wait(2000);
-    // cy.get('input#root-procurement').click();
-    // cy.wait(2000);
-    // cy.get('button')
-    //   .contains(/^Submit$/)
-    //   .click();
-    // cy.contains(
-    //   'Submit a new demand request for the procurement of needed items',
-    //   { timeout: 60000 }
-    // );
 
     cy.url().then((currentUrl) => {
       // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
@@ -69,11 +56,6 @@ describe('pp1', () => {
       cy.get('#root_payment_method').select('Bank Transfer');
       cy.get('#root_project').select('18564');
       cy.get('#root_category').select('soft_and_lic');
-      // cy.get('button')
-      //   .contains(/^Submit$/)
-      //   .click();
-      //
-      // cy.contains('Task: Enter NDR-P Items', { timeout: 60000 });
       cy.get('#root_item_0_sub_category').select('op_src');
       cy.get('#root_item_0_item_name').clear().type('spiffworkflow');
       cy.get('#root_item_0_qty').clear().type('1');
