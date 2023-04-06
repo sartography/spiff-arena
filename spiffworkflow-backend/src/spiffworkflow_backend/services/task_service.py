@@ -135,14 +135,13 @@ class TaskService:
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
         bpmn_process = new_bpmn_process or task_model.bpmn_process or BpmnProcessModel.query.filter_by(id=task_model.bpmn_process_id).first()
+        # if bpmn_process is None:
+        #     import pdb; pdb.set_trace()
+        #     print("HEY")
 
-        try:
-            bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(
-                bpmn_process, spiff_task.workflow.data
-            )
-        except Exception as ex:
-            import pdb; pdb.set_trace()
-            print("HEY90823")
+        bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(
+            bpmn_process, spiff_task.workflow.data
+        )
         json_data_dict_list = self.__class__.update_task_model(task_model, spiff_task, self.serializer)
         self.task_models[task_model.guid] = task_model
         if bpmn_process_json_data is not None:
@@ -177,9 +176,14 @@ class TaskService:
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
     ) -> None:
+        # bpmn_process_dict = self.serializer.workflow_to_dict(spiff_workflow)
         new_properties_json = copy.copy(bpmn_process.properties_json)
         new_properties_json["last_task"] = str(spiff_workflow.last_task.id) if spiff_workflow.last_task else None
         new_properties_json["success"] = spiff_workflow.success
+
+        # # update correlations correctly but always null out bpmn_messages since they get cleared out later
+        # new_properties_json['correlations'] = bpmn_process_dict['correlations']
+        # new_properties_json['bpmn_messages'] = []
         bpmn_process.properties_json = new_properties_json
 
         bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(bpmn_process, spiff_workflow.data)
@@ -192,6 +196,9 @@ class TaskService:
             direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(
                 id=bpmn_process.direct_parent_process_id
             ).first()
+            # if direct_parent_bpmn_process is None:
+            #     import pdb; pdb.set_trace()
+            #     print("HEY22")
             self.update_bpmn_process(spiff_workflow.outer_workflow, direct_parent_bpmn_process)
 
     @classmethod
