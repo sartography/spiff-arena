@@ -159,7 +159,6 @@ class MessageService:
     ) -> None:
         """process_message_receive."""
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
-        # import pdb; pdb.set_trace()
         processor_receive.bpmn_process_instance.catch_bpmn_message(message_model_name, message_payload)
         processor_receive.do_engine_steps(save=True)
         message_instance_receive.status = MessageStatuses.completed.value

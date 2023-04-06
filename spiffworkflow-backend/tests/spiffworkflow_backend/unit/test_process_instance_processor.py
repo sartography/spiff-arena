@@ -346,7 +346,6 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        # import pdb; pdb.set_trace()
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
         processor.suspend()
@@ -584,7 +583,11 @@ class TestProcessInstanceProcessor(BaseTest):
                 assert direct_parent_process.bpmn_process_definition.bpmn_identifier == "test_process_to_call"
                 spiff_tasks_checked.append(spiff_task.task_spec.name)
 
-        expected_task_identifiers = list(expected_task_data.keys()) + ['our_boundary_event', 'test_process_to_call_subprocess_script', 'top_level_call_activity']
+        expected_task_identifiers = list(expected_task_data.keys()) + [
+            "our_boundary_event",
+            "test_process_to_call_subprocess_script",
+            "top_level_call_activity",
+        ]
         for task_bpmn_identifier in expected_task_identifiers:
             message = (
                 f"Expected to have seen a task with a bpmn_identifier of {task_bpmn_identifier} but did not. "
