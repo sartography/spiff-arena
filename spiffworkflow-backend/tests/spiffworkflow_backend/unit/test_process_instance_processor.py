@@ -548,7 +548,12 @@ class TestProcessInstanceProcessor(BaseTest):
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
         assert len(all_spiff_tasks) > 1
         for spiff_task in all_spiff_tasks:
-            assert spiff_task.state == TaskState.COMPLETED or TaskState.CANCELLED
+            if spiff_task.task_spec.name == "our_boundary_event":
+                assert spiff_task.state == TaskState.CANCELLED
+                spiff_tasks_checked.append(spiff_task.task_spec.name)
+                continue
+
+            assert spiff_task.state == TaskState.COMPLETED
             assert_spiff_task_is_in_process(spiff_task)
 
             if spiff_task.task_spec.name == "top_level_call_activity":
@@ -559,6 +564,7 @@ class TestProcessInstanceProcessor(BaseTest):
                 assert bpmn_process_definition is not None
                 assert bpmn_process_definition.bpmn_identifier == "test_process_to_call"
                 assert bpmn_process_definition.bpmn_name == "Test Process To Call"
+                spiff_tasks_checked.append(spiff_task.task_spec.name)
 
             # Check that the direct parent of the called activity subprocess task is the
             #   name of the process that was called from the activity.
@@ -576,8 +582,10 @@ class TestProcessInstanceProcessor(BaseTest):
                 ).first()
                 assert direct_parent_process is not None
                 assert direct_parent_process.bpmn_process_definition.bpmn_identifier == "test_process_to_call"
+                spiff_tasks_checked.append(spiff_task.task_spec.name)
 
-        for task_bpmn_identifier in expected_task_data.keys():
+        expected_task_identifiers = list(expected_task_data.keys()) + ['our_boundary_event', 'test_process_to_call_subprocess_script', 'top_level_call_activity']
+        for task_bpmn_identifier in expected_task_identifiers:
             message = (
                 f"Expected to have seen a task with a bpmn_identifier of {task_bpmn_identifier} but did not. "
                 f"Only saw {sorted(spiff_tasks_checked)}"
