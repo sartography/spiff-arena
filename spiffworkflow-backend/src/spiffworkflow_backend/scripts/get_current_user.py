@@ -20,12 +20,7 @@ class GetCurrentUser(Script):
         """Get_description."""
         return """Return the current user."""
 
-    def run(
-        self,
-        script_attributes_context: ScriptAttributesContext,
-        *_args: Any,
-        **kwargs: Any
-    ) -> Any:
+    def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
         """Run."""
         # dump the user using our json encoder and then load it back up as a dict
         # to remove unwanted field types

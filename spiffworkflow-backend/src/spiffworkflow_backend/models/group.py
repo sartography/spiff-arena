@@ -26,13 +26,11 @@ class GroupModel(SpiffworkflowBaseDBModel):
     __table_args__ = {"extend_existing": True}
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
-    identifier = db.Column(db.String(255))
+    name = db.Column(db.String(255), index=True)
+    identifier = db.Column(db.String(255), index=True)
 
     user_group_assignments = relationship("UserGroupAssignmentModel", cascade="delete")
-    user_group_assignments_waiting = relationship(  # type: ignore
-        "UserGroupAssignmentWaitingModel", cascade="delete"
-    )
+    user_group_assignments_waiting = relationship("UserGroupAssignmentWaitingModel", cascade="delete")  # type: ignore
     users = relationship(  # type: ignore
         "UserModel",
         viewonly=True,

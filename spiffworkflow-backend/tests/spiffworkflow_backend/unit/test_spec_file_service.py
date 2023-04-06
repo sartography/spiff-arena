@@ -26,9 +26,7 @@ class TestSpecFileService(BaseTest):
     process_model_id = "call_activity_nested"
     bpmn_file_name = "call_activity_nested.bpmn"
 
-    call_activity_nested_relative_file_path = os.path.join(
-        process_group_id, process_model_id, bpmn_file_name
-    )
+    call_activity_nested_relative_file_path = os.path.join(process_group_id, process_model_id, bpmn_file_name)
 
     def test_can_store_process_ids_for_lookup(
         self,
@@ -49,10 +47,7 @@ class TestSpecFileService(BaseTest):
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == "Level1"
-        assert (
-            bpmn_process_id_lookups[0].relative_path
-            == self.call_activity_nested_relative_file_path
-        )
+        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
 
     def test_fails_to_save_duplicate_process_id(
         self,
@@ -74,27 +69,17 @@ class TestSpecFileService(BaseTest):
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
-        assert (
-            bpmn_process_id_lookups[0].relative_path
-            == self.call_activity_nested_relative_file_path
-        )
+        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
         with pytest.raises(ProcessModelFileInvalidError) as exception:
             load_test_spec(
                 "call_activity_nested_duplicate",
                 process_model_source_directory="call_activity_duplicate",
                 bpmn_file_name="call_activity_nested_duplicate",
             )
-            assert (
-                f"Process id ({bpmn_process_identifier}) has already been used"
-                in str(exception.value)
-            )
+            assert f"Process id ({bpmn_process_identifier}) has already been used" in str(exception.value)
 
-        process_model = ProcessModelService.get_process_model(
-            "call_activity_nested_duplicate"
-        )
-        full_file_path = SpecFileService.full_file_path(
-            process_model, "call_activity_nested_duplicate.bpmn"
-        )
+        process_model = ProcessModelService.get_process_model("call_activity_nested_duplicate")
+        full_file_path = SpecFileService.full_file_path(process_model, "call_activity_nested_duplicate.bpmn")
         assert not os.path.isfile(full_file_path)
 
     def test_updates_relative_file_path_when_appropriate(
@@ -126,10 +111,7 @@ class TestSpecFileService(BaseTest):
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
-        assert (
-            bpmn_process_id_lookups[0].relative_path
-            == self.call_activity_nested_relative_file_path
-        )
+        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
 
     def test_change_the_identifier_cleans_up_cache(
         self,
@@ -163,10 +145,7 @@ class TestSpecFileService(BaseTest):
         assert len(bpmn_process_id_lookups) == 1
         assert bpmn_process_id_lookups[0].identifier != old_identifier
         assert bpmn_process_id_lookups[0].identifier == "Level1"
-        assert (
-            bpmn_process_id_lookups[0].relative_path
-            == self.call_activity_nested_relative_file_path
-        )
+        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
 
     def test_load_reference_information(
         self,
@@ -200,9 +179,7 @@ class TestSpecFileService(BaseTest):
         #     ,
         #     process_model_source_directory="call_activity_nested",
         # )
-        process_model_info = ProcessModelService.get_process_model(
-            process_model_identifier
-        )
+        process_model_info = ProcessModelService.get_process_model(process_model_identifier)
         files = SpecFileService.get_files(process_model_info)
 
         file = next(filter(lambda f: f.name == "call_activity_level_3.bpmn", files))
@@ -232,9 +209,7 @@ class TestSpecFileService(BaseTest):
             process_model_source_directory="error",
         )
         with pytest.raises(ProcessModelFileInvalidError):
-            SpecFileService.update_file(
-                process_model, "bad_xml.bpmn", b"THIS_IS_NOT_VALID_XML"
-            )
+            SpecFileService.update_file(process_model, "bad_xml.bpmn", b"THIS_IS_NOT_VALID_XML")
 
         full_file_path = SpecFileService.full_file_path(process_model, "bad_xml.bpmn")
         assert not os.path.isfile(full_file_path)
@@ -251,16 +226,8 @@ class TestSpecFileService(BaseTest):
     ) -> None:
         """Test_does_not_evaluate_entities."""
         string_replacement = b"THIS_STRING_SHOULD_NOT_EXIST_ITS_SECRET"
-        tmp_file = os.path.normpath(
-            self.get_test_data_file_full_path("file_to_inject", "xml_with_entity")
-        )
-        file_contents = self.get_test_data_file_contents(
-            "invoice.bpmn", "xml_with_entity"
-        )
-        file_contents = (
-            file_contents.decode("utf-8")
-            .replace("{{FULL_PATH_TO_FILE}}", tmp_file)
-            .encode()
-        )
+        tmp_file = os.path.normpath(self.get_test_data_file_full_path("file_to_inject", "xml_with_entity"))
+        file_contents = self.get_test_data_file_contents("invoice.bpmn", "xml_with_entity")
+        file_contents = file_contents.decode("utf-8").replace("{{FULL_PATH_TO_FILE}}", tmp_file).encode()
         etree_element = SpecFileService.get_etree_from_xml_bytes(file_contents)
         assert string_replacement not in etree.tostring(etree_element)

@@ -6,12 +6,7 @@ import sys
 from typing import Any
 from typing import Optional
 
-from flask import g
 from flask.app import Flask
-
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
-from spiffworkflow_backend.models.task import Task
 
 
 # flask logging formats:
@@ -63,10 +58,7 @@ class JsonFormatter(logging.Formatter):
 
         KeyError is raised if an unknown attribute is provided in the fmt_dict.
         """
-        return {
-            fmt_key: record.__dict__[fmt_val]
-            for fmt_key, fmt_val in self.fmt_dict.items()
-        }
+        return {fmt_key: record.__dict__[fmt_val] for fmt_key, fmt_val in self.fmt_dict.items()}
 
     def format(self, record: logging.LogRecord) -> str:
         """Mostly the same as the parent's class method.
@@ -95,28 +87,6 @@ class JsonFormatter(logging.Formatter):
         return json.dumps(message_dict, default=str)
 
 
-class SpiffFilter(logging.Filter):
-    """SpiffFilter."""
-
-    def __init__(self, app: Flask):
-        """__init__."""
-        self.app = app
-        super().__init__()
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        """Filter."""
-        tld = self.app.config["THREAD_LOCAL_DATA"]
-        process_instance_id = ""
-        if hasattr(tld, "process_instance_id"):
-            process_instance_id = tld.process_instance_id
-        setattr(record, "process_instance_id", process_instance_id)  # noqa: B010
-        if hasattr(tld, "spiff_step"):
-            setattr(record, "spiff_step", tld.spiff_step)  # noqa: 8010
-        if hasattr(g, "user") and g.user:
-            setattr(record, "current_user_id", g.user.id)  # noqa: B010
-        return True
-
-
 def setup_logger(app: Flask) -> None:
     """Setup_logger."""
     upper_log_level_string = app.config["SPIFFWORKFLOW_BACKEND_LOG_LEVEL"].upper()
@@ -124,15 +94,12 @@ def setup_logger(app: Flask) -> None:
 
     if upper_log_level_string not in log_levels:
         raise InvalidLogLevelError(
-            f"Log level given is invalid: '{upper_log_level_string}'. Valid options are"
-            f" {log_levels}"
+            f"Log level given is invalid: '{upper_log_level_string}'. Valid options are {log_levels}"
         )
 
     log_level = getattr(logging, upper_log_level_string)
     spiff_log_level = getattr(logging, upper_log_level_string)
-    log_formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    log_formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     app.logger.debug("Printing log to create app logger")
 
@@ -161,6 +128,9 @@ def setup_logger(app: Flask) -> None:
         spiff_logger_filehandler.setLevel(spiff_log_level)
         spiff_logger_filehandler.setFormatter(log_formatter)
 
+    # these loggers have been deemed too verbose to be useful
+    garbage_loggers_to_exclude = ["connexion"]
+
     # make all loggers act the same
     for name in logging.root.manager.loggerDict:
         # use a regex so spiffworkflow_backend isn't filtered out
@@ -172,88 +142,15 @@ def setup_logger(app: Flask) -> None:
                 the_logger.propagate = False
                 the_logger.addHandler(spiff_logger_filehandler)
             else:
-                if len(the_logger.handlers) < 1:
-                    # it's very verbose, so only add handlers for the obscure loggers when log level is DEBUG
-                    if upper_log_level_string == "DEBUG":
-                        the_logger.addHandler(logging.StreamHandler(sys.stdout))
+                # it's very verbose, so only add handlers for the obscure loggers when log level is DEBUG
+                if upper_log_level_string == "DEBUG":
+                    if len(the_logger.handlers) < 1:
+                        exclude_logger_name_from_logging = False
+                        for garbage_logger in garbage_loggers_to_exclude:
+                            if name.startswith(garbage_logger):
+                                exclude_logger_name_from_logging = True
+                        if not exclude_logger_name_from_logging:
+                            the_logger.addHandler(logging.StreamHandler(sys.stdout))
                 for the_handler in the_logger.handlers:
                     the_handler.setFormatter(log_formatter)
                     the_handler.setLevel(log_level)
-
-    spiff_logger = logging.getLogger("spiff")
-    spiff_logger.setLevel(spiff_log_level)
-    spiff_formatter = logging.Formatter(
-        "%(asctime)s | %(levelname)s | %(message)s | %(action)s | %(task_type)s |"
-        " %(process)s | %(processName)s | %(process_instance_id)s"
-    )
-
-    # if you add a handler to spiff, it will be used/inherited by spiff.metrics
-    # if you add a filter to the spiff logger directly (and not the handler), it will NOT be inherited by spiff.metrics
-    # so put filters on handlers.
-    db_handler = DBHandler()
-    db_handler.setLevel(spiff_log_level)
-    db_handler.setFormatter(spiff_formatter)
-    db_handler.addFilter(SpiffFilter(app))
-    spiff_logger.addHandler(db_handler)
-
-
-# https://9to5answer.com/python-logging-to-database
-class DBHandler(logging.Handler):
-    """DBHandler."""
-
-    def __init__(self) -> None:
-        """__init__."""
-        self.logs: list[dict] = []
-        super().__init__()
-
-    def bulk_insert_logs(self) -> None:
-        """Bulk_insert_logs."""
-        db.session.bulk_insert_mappings(SpiffLoggingModel, self.logs)
-        db.session.commit()
-        self.logs = []
-
-    def emit(self, record: logging.LogRecord) -> None:
-        """Emit."""
-        # if we do not have a process instance id then do not log and assume we are running a script unit test
-        # that initializes a BpmnWorkflow without a process instance
-        if record and record.process_instance_id:  # type: ignore
-            bpmn_process_identifier = record.workflow_spec  # type: ignore
-            bpmn_process_name = record.workflow_name  # type: ignore
-            spiff_task_guid = str(record.task_id)  # type: ignore
-            bpmn_task_identifier = str(record.task_spec)  # type: ignore
-            bpmn_task_name = record.task_name if hasattr(record, "task_name") else None  # type: ignore
-            bpmn_task_type = record.task_type if hasattr(record, "task_type") else None  # type: ignore
-            timestamp = record.created
-            message = record.msg if hasattr(record, "msg") else None
-
-            current_user_id = None
-            if bpmn_task_type in Task.HUMAN_TASK_TYPES and hasattr(
-                record, "current_user_id"
-            ):
-                current_user_id = record.current_user_id  # type: ignore
-
-            spiff_step = (
-                record.spiff_step  # type: ignore
-                if hasattr(record, "spiff_step") and record.spiff_step is not None  # type: ignore
-                else 1
-            )
-            self.logs.append(
-                {
-                    "process_instance_id": record.process_instance_id,  # type: ignore
-                    "bpmn_process_identifier": bpmn_process_identifier,
-                    "bpmn_process_name": bpmn_process_name,
-                    "spiff_task_guid": spiff_task_guid,
-                    "bpmn_task_name": bpmn_task_name,
-                    "bpmn_task_identifier": bpmn_task_identifier,
-                    "bpmn_task_type": bpmn_task_type,
-                    "message": message,
-                    "timestamp": timestamp,
-                    "current_user_id": current_user_id,
-                    "spiff_step": spiff_step,
-                }
-            )
-            # so at some point we are going to insert logs.
-            # we don't want to insert on every log, so we will insert every 100 logs, which is just about as fast as inserting
-            # on every 1,000 logs. if we get deadlocks in the database, this can be changed to 1 in order to insert on every log.
-            if len(self.logs) >= 100:
-                self.bulk_insert_logs()

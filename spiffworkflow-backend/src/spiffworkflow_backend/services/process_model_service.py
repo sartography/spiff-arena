@@ -62,9 +62,7 @@ class ProcessModelService(FileSystemService):
             process_group_path = os.path.abspath(
                 os.path.join(
                     FileSystemService.root_path(),
-                    FileSystemService.id_string_to_relative_path(
-                        process_group_identifier
-                    ),
+                    FileSystemService.id_string_to_relative_path(process_group_identifier),
                 )
             )
             return cls.is_process_group(process_group_path)
@@ -86,9 +84,7 @@ class ProcessModelService(FileSystemService):
             process_model_path = os.path.abspath(
                 os.path.join(
                     FileSystemService.root_path(),
-                    FileSystemService.id_string_to_relative_path(
-                        process_model_identifier
-                    ),
+                    FileSystemService.id_string_to_relative_path(process_model_identifier),
                 )
             )
             return cls.is_process_model(process_model_path)
@@ -96,9 +92,7 @@ class ProcessModelService(FileSystemService):
         return False
 
     @staticmethod
-    def write_json_file(
-        file_path: str, json_data: dict, indent: int = 4, sort_keys: bool = True
-    ) -> None:
+    def write_json_file(file_path: str, json_data: dict, indent: int = 4, sort_keys: bool = True) -> None:
         """Write json file."""
         with open(file_path, "w") as h_open:
             json.dump(json_data, h_open, indent=indent, sort_keys=sort_keys)
@@ -120,9 +114,7 @@ class ProcessModelService(FileSystemService):
         cls.save_process_model(process_model)
 
     @classmethod
-    def update_process_model(
-        cls, process_model: ProcessModelInfo, attributes_to_update: dict
-    ) -> None:
+    def update_process_model(cls, process_model: ProcessModelInfo, attributes_to_update: dict) -> None:
         """Update_spec."""
         for atu_key, atu_value in attributes_to_update.items():
             if hasattr(process_model, atu_key):
@@ -133,14 +125,10 @@ class ProcessModelService(FileSystemService):
     def save_process_model(cls, process_model: ProcessModelInfo) -> None:
         """Save_process_model."""
         process_model_path = os.path.abspath(
-            os.path.join(
-                FileSystemService.root_path(), process_model.id_for_file_path()
-            )
+            os.path.join(FileSystemService.root_path(), process_model.id_for_file_path())
         )
         os.makedirs(process_model_path, exist_ok=True)
-        json_path = os.path.abspath(
-            os.path.join(process_model_path, cls.PROCESS_MODEL_JSON_FILE)
-        )
+        json_path = os.path.abspath(os.path.join(process_model_path, cls.PROCESS_MODEL_JSON_FILE))
         process_model_id = process_model.id
         # we don't save id in the json file
         # this allows us to move models around on the filesystem
@@ -157,32 +145,25 @@ class ProcessModelService(FileSystemService):
         ).all()
         if len(instances) > 0:
             raise ProcessModelWithInstancesNotDeletableError(
-                f"We cannot delete the model `{process_model_id}`, there are"
-                " existing instances that depend on it."
+                f"We cannot delete the model `{process_model_id}`, there are existing instances that depend on it."
             )
         process_model = self.get_process_model(process_model_id)
         path = self.workflow_path(process_model)
         shutil.rmtree(path)
 
-    def process_model_move(
-        self, original_process_model_id: str, new_location: str
-    ) -> ProcessModelInfo:
+    def process_model_move(self, original_process_model_id: str, new_location: str) -> ProcessModelInfo:
         """Process_model_move."""
         process_model = self.get_process_model(original_process_model_id)
         original_model_path = self.workflow_path(process_model)
         _, model_id = os.path.split(original_model_path)
         new_relative_path = os.path.join(new_location, model_id)
-        new_model_path = os.path.abspath(
-            os.path.join(FileSystemService.root_path(), new_relative_path)
-        )
+        new_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_relative_path))
         shutil.move(original_model_path, new_model_path)
         new_process_model = self.get_process_model(new_relative_path)
         return new_process_model
 
     @classmethod
-    def get_process_model_from_relative_path(
-        cls, relative_path: str
-    ) -> ProcessModelInfo:
+    def get_process_model_from_relative_path(cls, relative_path: str) -> ProcessModelInfo:
         """Get_process_model_from_relative_path."""
         path = os.path.join(FileSystemService.root_path(), relative_path)
         return cls.__scan_process_model(path)
@@ -196,9 +177,7 @@ class ProcessModelService(FileSystemService):
         if not os.path.exists(FileSystemService.root_path()):
             raise ProcessEntityNotFoundError("process_model_root_not_found")
 
-        model_path = os.path.abspath(
-            os.path.join(FileSystemService.root_path(), process_model_id)
-        )
+        model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), process_model_id))
         if cls.is_process_model(model_path):
             return cls.get_process_model_from_relative_path(process_model_id)
         raise ProcessEntityNotFoundError("process_model_not_found")
@@ -222,12 +201,8 @@ class ProcessModelService(FileSystemService):
             process_model_glob = os.path.join(root_path, "**", "process_model.json")
 
         for file in glob(process_model_glob, recursive=True):
-            process_model_relative_path = os.path.relpath(
-                file, start=FileSystemService.root_path()
-            )
-            process_model = cls.get_process_model_from_relative_path(
-                os.path.dirname(process_model_relative_path)
-            )
+            process_model_relative_path = os.path.relpath(file, start=FileSystemService.root_path())
+            process_model = cls.get_process_model_from_relative_path(os.path.dirname(process_model_relative_path))
             process_models.append(process_model)
         process_models.sort()
 
@@ -235,11 +210,7 @@ class ProcessModelService(FileSystemService):
             user = UserService.current_user()
             new_process_model_list = []
             for process_model in process_models:
-                modified_process_model_id = (
-                    ProcessModelInfo.modify_process_identifier_for_path_param(
-                        process_model.id
-                    )
-                )
+                modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_model.id)
                 uri = f"/v1.0/process-instances/{modified_process_model_id}"
                 has_permission = AuthorizationService.user_has_permission(
                     user=user, permission="create", target_uri=uri
@@ -269,32 +240,24 @@ class ProcessModelService(FileSystemService):
             if parent_group:
                 if full_group_id_path not in process_group_cache:
                     process_group_cache[full_group_id_path] = parent_group
-                parent_group_array.append(
-                    {"id": parent_group.id, "display_name": parent_group.display_name}
-                )
+                parent_group_array.append({"id": parent_group.id, "display_name": parent_group.display_name})
         return {"cache": process_group_cache, "process_groups": parent_group_array}
 
     @classmethod
     def get_parent_group_array(cls, process_identifier: str) -> list[ProcessGroupLite]:
         """Get_parent_group_array."""
-        parent_group_lites_with_cache = cls.get_parent_group_array_and_cache_it(
-            process_identifier, {}
-        )
+        parent_group_lites_with_cache = cls.get_parent_group_array_and_cache_it(process_identifier, {})
         return parent_group_lites_with_cache["process_groups"]
 
     @classmethod
-    def get_process_groups(
-        cls, process_group_id: Optional[str] = None
-    ) -> list[ProcessGroup]:
+    def get_process_groups(cls, process_group_id: Optional[str] = None) -> list[ProcessGroup]:
         """Returns the process_groups."""
         process_groups = cls.__scan_process_groups(process_group_id)
         process_groups.sort()
         return process_groups
 
     @classmethod
-    def get_process_group(
-        cls, process_group_id: str, find_direct_nested_items: bool = True
-    ) -> ProcessGroup:
+    def get_process_group(cls, process_group_id: str, find_direct_nested_items: bool = True) -> ProcessGroup:
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
             process_group_path = os.path.abspath(
@@ -309,9 +272,7 @@ class ProcessModelService(FileSystemService):
                     find_direct_nested_items=find_direct_nested_items,
                 )
 
-        raise ProcessEntityNotFoundError(
-            "process_group_not_found", f"Process Group Id: {process_group_id}"
-        )
+        raise ProcessEntityNotFoundError("process_group_not_found", f"Process Group Id: {process_group_id}")
 
     @classmethod
     def add_process_group(cls, process_group: ProcessGroup) -> ProcessGroup:
@@ -331,16 +292,12 @@ class ProcessModelService(FileSystemService):
         cls.write_json_file(json_path, serialized_process_group)
         return process_group
 
-    def process_group_move(
-        self, original_process_group_id: str, new_location: str
-    ) -> ProcessGroup:
+    def process_group_move(self, original_process_group_id: str, new_location: str) -> ProcessGroup:
         """Process_group_move."""
         original_group_path = self.process_group_path(original_process_group_id)
         _, original_group_id = os.path.split(original_group_path)
         new_root = os.path.join(FileSystemService.root_path(), new_location)
-        new_group_path = os.path.abspath(
-            os.path.join(FileSystemService.root_path(), new_root, original_group_id)
-        )
+        new_group_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_root, original_group_id))
         destination = shutil.move(original_group_path, new_group_path)
         new_process_group = self.get_process_group(destination)
         return new_process_group
@@ -388,9 +345,7 @@ class ProcessModelService(FileSystemService):
         return process_groups
 
     @classmethod
-    def __scan_process_groups(
-        cls, process_group_id: Optional[str] = None
-    ) -> list[ProcessGroup]:
+    def __scan_process_groups(cls, process_group_id: Optional[str] = None) -> list[ProcessGroup]:
         """__scan_process_groups."""
         if not os.path.exists(FileSystemService.root_path()):
             return []  # Nothing to scan yet.  There are no files.
@@ -409,9 +364,7 @@ class ProcessModelService(FileSystemService):
             return process_groups
 
     @classmethod
-    def find_or_create_process_group(
-        cls, dir_path: str, find_direct_nested_items: bool = True
-    ) -> ProcessGroup:
+    def find_or_create_process_group(cls, dir_path: str, find_direct_nested_items: bool = True) -> ProcessGroup:
         """Reads the process_group.json file, and any nested directories."""
         cat_path = os.path.join(dir_path, cls.PROCESS_GROUP_JSON_FILE)
         if os.path.exists(cat_path):
@@ -424,15 +377,10 @@ class ProcessModelService(FileSystemService):
                 if process_group is None:
                     raise ApiError(
                         error_code="process_group_could_not_be_loaded_from_disk",
-                        message=(
-                            "We could not load the process_group from disk from:"
-                            f" {dir_path}"
-                        ),
+                        message=f"We could not load the process_group from disk from: {dir_path}",
                     )
         else:
-            process_group_id = cls.path_to_id(
-                dir_path.replace(FileSystemService.root_path(), "")
-            )
+            process_group_id = cls.path_to_id(dir_path.replace(FileSystemService.root_path(), ""))
             process_group = ProcessGroup(
                 id="",
                 display_name=process_group_id,
@@ -452,9 +400,7 @@ class ProcessModelService(FileSystemService):
                         # TODO: check whether this is a group or model
                         if cls.is_process_group(nested_item.path):
                             # This is a nested group
-                            process_group.process_groups.append(
-                                cls.find_or_create_process_group(nested_item.path)
-                            )
+                            process_group.process_groups.append(cls.find_or_create_process_group(nested_item.path))
                         elif ProcessModelService.is_process_model(nested_item.path):
                             process_group.process_models.append(
                                 cls.__scan_process_model(
@@ -490,19 +436,13 @@ class ProcessModelService(FileSystemService):
                 if process_model_info is None:
                     raise ApiError(
                         error_code="process_model_could_not_be_loaded_from_disk",
-                        message=(
-                            "We could not load the process_model from disk with data:"
-                            f" {data}"
-                        ),
+                        message=f"We could not load the process_model from disk with data: {data}",
                     )
         else:
             if name is None:
                 raise ApiError(
                     error_code="missing_name_of_process_model",
-                    message=(
-                        "Missing name of process model. Path not found:"
-                        f" {json_file_path}"
-                    ),
+                    message=f"Missing name of process model. Path not found: {json_file_path}",
                 )
 
             process_model_info = ProcessModelInfo(
@@ -511,9 +451,7 @@ class ProcessModelService(FileSystemService):
                 description="",
                 display_order=0,
             )
-            cls.write_json_file(
-                json_file_path, cls.PROCESS_MODEL_SCHEMA.dump(process_model_info)
-            )
+            cls.write_json_file(json_file_path, cls.PROCESS_MODEL_SCHEMA.dump(process_model_info))
             # we don't store `id` in the json files, so we add it in here
             process_model_info.id = name
         return process_model_info

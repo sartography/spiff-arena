@@ -202,20 +202,13 @@ def handle_exception(exception: Exception) -> flask.wrappers.Response:
 
         if isinstance(exception, ApiError):
             current_app.logger.info(
-                f"Sending ApiError exception to sentry: {exception} with error code"
-                f" {exception.error_code}"
+                f"Sending ApiError exception to sentry: {exception} with error code {exception.error_code}"
             )
 
-        organization_slug = current_app.config.get(
-            "SPIFFWORKFLOW_BACKEND_SENTRY_ORGANIZATION_SLUG"
-        )
-        project_slug = current_app.config.get(
-            "SPIFFWORKFLOW_BACKEND_SENTRY_PROJECT_SLUG"
-        )
+        organization_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ORGANIZATION_SLUG")
+        project_slug = current_app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_PROJECT_SLUG")
         if organization_slug and project_slug:
-            sentry_link = (
-                f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
-            )
+            sentry_link = f"https://sentry.io/{organization_slug}/{project_slug}/events/{id}"
 
         # !!!NOTE!!!: do this after sentry stuff since calling logger.exception
         # seems to break the sentry sdk context where we no longer get back

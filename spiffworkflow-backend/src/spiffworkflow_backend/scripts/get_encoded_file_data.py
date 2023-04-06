@@ -42,8 +42,6 @@ class GetEncodedFileData(Script):
         ).first()
 
         base64_value = base64.b64encode(file_data.contents).decode("ascii")
-        encoded_file_data = (
-            f"data:{file_data.mimetype};name={file_data.filename};base64,{base64_value}"
-        )
+        encoded_file_data = f"data:{file_data.mimetype};name={file_data.filename};base64,{base64_value}"
 
         return encoded_file_data

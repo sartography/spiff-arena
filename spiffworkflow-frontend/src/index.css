@@ -408,3 +408,8 @@ svg.notification-icon {
   text-align: right;
   margin-right: 10px;
 }
+
+.please-press-filter-button {
+  margin-bottom: 1em;
+  font-weight: bold;
+}

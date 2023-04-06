@@ -3,16 +3,11 @@ from typing import Optional
 
 from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.process_instance_file_data import (
     ProcessInstanceFileDataModel,
 )
-from spiffworkflow_backend.models.spiff_logging import SpiffLoggingModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
@@ -37,10 +32,7 @@ class TestProcessInstanceService(BaseTest):
         assert model.mimetype == "some/mimetype"
         assert model.filename == "testing.txt"
         assert model.contents == b"testing\n"  # type: ignore
-        assert (
-            model.digest
-            == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
-        )
+        assert model.digest == "12a61f4e173fb3a11c05d6471f74728f76231b4a5fcd9667cef3af87a3ae4dc2"
 
     def test_can_create_file_data_model_for_file_data_value(
         self,
@@ -97,7 +89,7 @@ class TestProcessInstanceService(BaseTest):
         self._check_sample_file_data_model("uploaded_files", 0, models[0])
         self._check_sample_file_data_model("uploaded_files", 1, models[1])
 
-    def test_can_create_file_data_models_for_fix_of_file_data_and_non_file_data_values(
+    def test_can_create_file_data_models_for_mix_of_file_data_and_non_file_data_values(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
@@ -130,6 +122,8 @@ class TestProcessInstanceService(BaseTest):
     ) -> None:
         data = {
             "not_a_file": "just a value",
+            "also_no_files": ["not a file", "also not a file"],
+            "still_no_files": [{"key": "value"}],
         }
         models = ProcessInstanceService.file_data_models_for_data(data, 111)
 
@@ -198,34 +192,24 @@ class TestProcessInstanceService(BaseTest):
             "not_a_file3": "just a value3",
         }
 
-    def test_does_not_log_set_data_when_calling_engine_steps_on_waiting_call_activity(
+    def test_can_create_file_data_models_for_mulitple_single_file_data_values(
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_does_not_log_set_data_when_calling_engine_steps_on_waiting_call_activity."""
-        process_model = load_test_spec(
-            process_model_id="test_group/call-activity-to-human-task",
-            process_model_source_directory="call-activity-to-human-task",
-        )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model, user=with_super_admin_user
-        )
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        data = {
+            "File": [
+                {
+                    "supporting_files": self.SAMPLE_FILE_DATA,
+                },
+                {
+                    "supporting_files": self.SAMPLE_FILE_DATA,
+                },
+            ],
+        }
+        models = ProcessInstanceService.file_data_models_for_data(data, 111)
 
-        process_instance_logs = SpiffLoggingModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
-        initial_length = len(process_instance_logs)
-
-        # ensure we have something in the logs
-        assert initial_length > 0
-
-        # logs should NOT increase after running this a second time since it's just waiting on a human task
-        processor.do_engine_steps(save=True)
-        process_instance_logs = SpiffLoggingModel.query.filter_by(
-            process_instance_id=process_instance.id
-        ).all()
-        assert len(process_instance_logs) == initial_length
+        assert len(models) == 2
+        self._check_sample_file_data_model("File", 0, models[0])
+        self._check_sample_file_data_model("File", 1, models[1])

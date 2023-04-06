@@ -162,7 +162,7 @@ describe('process-instances', () => {
     cy.getBySel('process-instance-log-list-link').click();
     cy.getBySel('process-instance-log-detailed').click();
     cy.contains('process_model_one');
-    cy.contains('State change to COMPLETED');
+    cy.contains('task_completed');
     cy.basicPaginationTest();
   });
 
@@ -182,6 +182,9 @@ describe('process-instances', () => {
         cy.url().should('include', `status=${processStatus}`);
         cy.assertAtLeastOneItemInPaginatedResults();
         cy.getBySel(`process-instance-status-${processStatus}`);
+
+        // maybe waiting a bit before trying to click makes this work consistently?
+        cy.wait(1000);
         // there should really only be one, but in CI there are sometimes more
         cy.get('div[aria-label="Clear all selected items"]:first').click();
         cy.get('div[aria-label="Clear all selected items"]').should(

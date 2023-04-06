@@ -21,22 +21,14 @@ def main(process_instance_id: str) -> None:
     os.environ[flask_env_key] = "whatevs"
     app = create_app()
     with app.app_context():
-        process_instance = ProcessInstanceModel.query.filter_by(
-            id=process_instance_id
-        ).first()
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
 
         file_path = f"/var/tmp/{process_instance_id}_bpmn_json.json"
         if not process_instance:
-            raise Exception(
-                f"Could not find a process instance with id: {process_instance_id}"
-            )
+            raise Exception(f"Could not find a process instance with id: {process_instance_id}")
 
         with open(file_path, "w", encoding="utf-8") as f:
-            f.write(
-                json.dumps(
-                    ProcessInstanceProcessor._get_full_bpmn_json(process_instance)
-                )
-            )
+            f.write(json.dumps(ProcessInstanceProcessor._get_full_bpmn_json(process_instance)))
         print(f"Saved to {file_path}")
 
 

@@ -35,9 +35,7 @@ class UserService:
     ) -> UserModel:
         """Create_user."""
         user_model: Optional[UserModel] = (
-            UserModel.query.filter(UserModel.service == service)
-            .filter(UserModel.service_id == service_id)
-            .first()
+            UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
         )
         if user_model is None:
             if username == "":
@@ -89,19 +87,13 @@ class UserService:
     def current_user() -> Any:
         """Current_user."""
         if not UserService.has_user():
-            raise ApiError(
-                "logged_out", "You are no longer logged in.", status_code=401
-            )
+            raise ApiError("logged_out", "You are no longer logged in.", status_code=401)
         return g.user
 
     @staticmethod
     def get_principal_by_user_id(user_id: int) -> PrincipalModel:
         """Get_principal_by_user_id."""
-        principal = (
-            db.session.query(PrincipalModel)
-            .filter(PrincipalModel.user_id == user_id)
-            .first()
-        )
+        principal = db.session.query(PrincipalModel).filter(PrincipalModel.user_id == user_id).first()
         if isinstance(principal, PrincipalModel):
             return principal
         raise ApiError(
@@ -110,14 +102,10 @@ class UserService:
         )
 
     @classmethod
-    def create_principal(
-        cls, child_id: int, id_column_name: str = "user_id"
-    ) -> PrincipalModel:
+    def create_principal(cls, child_id: int, id_column_name: str = "user_id") -> PrincipalModel:
         """Create_principal."""
         column = PrincipalModel.__table__.columns[id_column_name]
-        principal: Optional[PrincipalModel] = PrincipalModel.query.filter(
-            column == child_id
-        ).first()
+        principal: Optional[PrincipalModel] = PrincipalModel.query.filter(column == child_id).first()
         if principal is None:
             principal = PrincipalModel()
             setattr(principal, id_column_name, child_id)
@@ -136,12 +124,7 @@ class UserService:
     @classmethod
     def add_user_to_group(cls, user: UserModel, group: GroupModel) -> None:
         """Add_user_to_group."""
-        exists = (
-            UserGroupAssignmentModel()
-            .query.filter_by(user_id=user.id)
-            .filter_by(group_id=group.id)
-            .count()
-        )
+        exists = UserGroupAssignmentModel().query.filter_by(user_id=user.id).filter_by(group_id=group.id).count()
         if not exists:
             ugam = UserGroupAssignmentModel(user_id=user.id, group_id=group.id)
             db.session.add(ugam)
@@ -151,15 +134,10 @@ class UserService:
     def add_waiting_group_assignment(cls, username: str, group: GroupModel) -> None:
         """Add_waiting_group_assignment."""
         wugam = (
-            UserGroupAssignmentWaitingModel()
-            .query.filter_by(username=username)
-            .filter_by(group_id=group.id)
-            .first()
+            UserGroupAssignmentWaitingModel().query.filter_by(username=username).filter_by(group_id=group.id).first()
         )
         if not wugam:
-            wugam = UserGroupAssignmentWaitingModel(
-                username=username, group_id=group.id
-            )
+            wugam = UserGroupAssignmentWaitingModel(username=username, group_id=group.id)
             db.session.add(wugam)
             db.session.commit()
         if wugam.is_match_all():
@@ -179,10 +157,7 @@ class UserService:
             db.session.delete(assignment)
         wildcard = (
             UserGroupAssignmentWaitingModel()
-            .query.filter(
-                UserGroupAssignmentWaitingModel.username
-                == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS
-            )
+            .query.filter(UserGroupAssignmentWaitingModel.username == UserGroupAssignmentWaitingModel.MATCH_ALL_USERS)
             .all()
         )
         for assignment in wildcard:
@@ -190,14 +165,10 @@ class UserService:
         db.session.commit()
 
     @staticmethod
-    def get_user_by_service_and_service_id(
-        service: str, service_id: str
-    ) -> Optional[UserModel]:
+    def get_user_by_service_and_service_id(service: str, service_id: str) -> Optional[UserModel]:
         """Get_user_by_service_and_service_id."""
         user: UserModel = (
-            UserModel.query.filter(UserModel.service == service)
-            .filter(UserModel.service_id == service_id)
-            .first()
+            UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
         )
         if user:
             return user
@@ -211,8 +182,6 @@ class UserService:
             HumanTaskModel.lane_assignment_id.in_(group_ids)  # type: ignore
         ).all()
         for human_task in human_tasks:
-            human_task_user = HumanTaskUserModel(
-                user_id=user.id, human_task_id=human_task.id
-            )
+            human_task_user = HumanTaskUserModel(user_id=user.id, human_task_id=human_task.id)
             db.session.add(human_task_user)
             db.session.commit()

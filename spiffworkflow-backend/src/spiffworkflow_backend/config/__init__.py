@@ -30,13 +30,9 @@ def setup_database_uri(app: Flask) -> None:
             db_pswd = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD")
             if db_pswd is None:
                 db_pswd = ""
-            app.config["SQLALCHEMY_DATABASE_URI"] = (
-                f"mysql+mysqlconnector://root:{db_pswd}@localhost/{database_name}"
-            )
+            app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqlconnector://root:{db_pswd}@localhost/{database_name}"
     else:
-        app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get(
-            "SPIFFWORKFLOW_BACKEND_DATABASE_URI"
-        )
+        app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI")
 
 
 def load_config_file(app: Flask, env_config_module: str) -> None:
@@ -45,30 +41,20 @@ def load_config_file(app: Flask, env_config_module: str) -> None:
         app.config.from_object(env_config_module)
         print(f"loaded config: {env_config_module}")
     except ImportStringError as exception:
-        if (
-            os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT")
-            != "true"
-        ):
-            raise ModuleNotFoundError(
-                f"Cannot find config module: {env_config_module}"
-            ) from exception
+        if os.environ.get("SPIFFWORKFLOW_BACKEND_TERRAFORM_DEPLOYED_ENVIRONMENT") != "true":
+            raise ModuleNotFoundError(f"Cannot find config module: {env_config_module}") from exception
 
 
 def _set_up_tenant_specific_fields_as_list_of_strings(app: Flask) -> None:
-    tenant_specific_fields = app.config.get(
-        "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"
-    )
+    tenant_specific_fields = app.config.get("SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS")
 
     if tenant_specific_fields is None or tenant_specific_fields == "":
         app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = []
     else:
-        app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = (
-            tenant_specific_fields.split(",")
-        )
+        app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"] = tenant_specific_fields.split(",")
         if len(app.config["SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"]) > 3:
             raise ConfigurationError(
-                "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a"
-                " maximum of 3 fields"
+                "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS can have a maximum of 3 fields"
             )
 
 
@@ -80,9 +66,7 @@ def setup_config(app: Flask) -> None:
     except OSError:
         pass
 
-    app.config["ENV_IDENTIFIER"] = os.environ.get(
-        "SPIFFWORKFLOW_BACKEND_ENV", "local_development"
-    )
+    app.config["ENV_IDENTIFIER"] = os.environ.get("SPIFFWORKFLOW_BACKEND_ENV", "local_development")
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     load_config_file(app, "spiffworkflow_backend.config.default")
 
@@ -99,10 +83,7 @@ def setup_config(app: Flask) -> None:
     # This allows config/testing.py or instance/config.py to override the default config
     if "ENV_IDENTIFIER" in app.config and app.config["ENV_IDENTIFIER"] == "testing":
         app.config.from_pyfile("config/testing.py", silent=True)
-    elif (
-        "ENV_IDENTIFIER" in app.config
-        and app.config["ENV_IDENTIFIER"] == "unit_testing"
-    ):
+    elif "ENV_IDENTIFIER" in app.config and app.config["ENV_IDENTIFIER"] == "unit_testing":
         app.config.from_pyfile("config/unit_testing.py", silent=True)
     else:
         app.config.from_pyfile(f"{app.instance_path}/config.py", silent=True)
@@ -125,15 +106,10 @@ def setup_config(app: Flask) -> None:
     app.config.from_pyfile(os.path.join("config", "secrets.py"), silent=True)
 
     if app.config["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] is None:
-        raise ConfigurationError(
-            "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR config must be set"
-        )
+        raise ConfigurationError("SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR config must be set")
 
     if app.config["FLASK_SESSION_SECRET_KEY"] is None:
-        raise KeyError(
-            "Cannot find the secret_key from the environment. Please set"
-            " FLASK_SESSION_SECRET_KEY"
-        )
+        raise KeyError("Cannot find the secret_key from the environment. Please set FLASK_SESSION_SECRET_KEY")
 
     app.secret_key = os.environ.get("FLASK_SESSION_SECRET_KEY")
 

@@ -30,6 +30,7 @@ export const useUriListForPermissions = () => {
       processModelShowPath: `/v1.0/process-models/${params.process_model_id}`,
       secretListPath: `/v1.0/secrets`,
       userSearch: `/v1.0/users/search`,
+      userExists: `/v1.0/users/exists/by-username`,
     };
   }, [params]);
 

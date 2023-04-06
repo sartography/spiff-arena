@@ -24,12 +24,7 @@ class GetLocaltime(Script):
         return """Converts a Datetime object into a Datetime object for a specific timezone.
         Defaults to US/Eastern."""
 
-    def run(
-        self,
-        script_attributes_context: ScriptAttributesContext,
-        *args: Any,
-        **kwargs: Any
-    ) -> datetime:
+    def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> datetime:
         """Run."""
         if len(args) > 0 or "datetime" in kwargs:
             if "datetime" in kwargs:

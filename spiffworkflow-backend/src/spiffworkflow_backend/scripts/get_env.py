@@ -19,11 +19,6 @@ class GetEnv(Script):
         """Get_description."""
         return """Returns the current environment - ie testing, staging, production."""
 
-    def run(
-        self,
-        script_attributes_context: ScriptAttributesContext,
-        *_args: Any,
-        **kwargs: Any
-    ) -> Any:
+    def run(self, script_attributes_context: ScriptAttributesContext, *_args: Any, **kwargs: Any) -> Any:
         """Run."""
         return script_attributes_context.environment_identifier

@@ -10,10 +10,17 @@ from marshmallow import Schema
 from marshmallow_enum import EnumField  # type: ignore
 from SpiffWorkflow.task import TaskStateNames  # type: ignore
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.json_data import JsonDataModel
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+
+
+class TaskNotFoundError(Exception):
+    pass
 
 
 class MultiInstanceType(enum.Enum):
@@ -40,22 +47,33 @@ class MultiInstanceType(enum.Enum):
 @dataclass
 class TaskModel(SpiffworkflowBaseDBModel):
     __tablename__ = "task"
+    __allow_unmapped__ = True
     id: int = db.Column(db.Integer, primary_key=True)
-    guid: str = db.Column(db.String(36), nullable=False, unique=True, index=True)
-    bpmn_process_id: int = db.Column(
-        ForeignKey(BpmnProcessModel.id), nullable=False  # type: ignore
-    )
+    guid: str = db.Column(db.String(36), nullable=False, unique=True)
+    bpmn_process_id: int = db.Column(ForeignKey(BpmnProcessModel.id), nullable=False, index=True)  # type: ignore
+    bpmn_process = relationship(BpmnProcessModel, back_populates="tasks")
+    process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
-    # task_definition_id: int = db.Column(
-    #     ForeignKey(TaskDefinitionModel.id), nullable=False  # type: ignore
-    # )
-    state: str = db.Column(db.String(10), nullable=False)
-    properties_json: dict = db.Column(db.JSON, nullable=False)
-    json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+    task_definition_id: int = db.Column(ForeignKey(TaskDefinitionModel.id), nullable=False, index=True)  # type: ignore
+    task_definition = relationship("TaskDefinitionModel")
 
-    start_in_seconds: float = db.Column(db.DECIMAL(17, 6))
+    state: str = db.Column(db.String(10), nullable=False, index=True)
+    properties_json: dict = db.Column(db.JSON, nullable=False)
+
+    json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+    python_env_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+
+    start_in_seconds: Union[float, None] = db.Column(db.DECIMAL(17, 6))
     end_in_seconds: Union[float, None] = db.Column(db.DECIMAL(17, 6))
+
+    data: Optional[dict] = None
+
+    def python_env_data(self) -> dict:
+        return JsonDataModel.find_data_dict_by_hash(self.python_env_data_hash)
+
+    def json_data(self) -> dict:
+        return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
 
 
 class Task:
@@ -91,7 +109,6 @@ class Task:
         event_definition: Union[dict[str, Any], None] = None,
         call_activity_process_identifier: Optional[str] = None,
         calling_subprocess_task_id: Optional[str] = None,
-        task_spiff_step: Optional[int] = None,
     ):
         """__init__."""
         self.id = id
@@ -106,7 +123,6 @@ class Task:
         self.event_definition = event_definition
         self.call_activity_process_identifier = call_activity_process_identifier
         self.calling_subprocess_task_id = calling_subprocess_task_id
-        self.task_spiff_step = task_spiff_step
 
         self.data = data
         if self.data is None:
@@ -121,15 +137,9 @@ class Task:
         self.form_schema = form_schema
         self.form_ui_schema = form_ui_schema
 
-        self.multi_instance_type = (
-            multi_instance_type  # Some tasks have a repeat behavior.
-        )
-        self.multi_instance_count = (
-            multi_instance_count  # This is the number of times the task could repeat.
-        )
-        self.multi_instance_index = (
-            multi_instance_index  # And the index of the currently repeating task.
-        )
+        self.multi_instance_type = multi_instance_type  # Some tasks have a repeat behavior.
+        self.multi_instance_count = multi_instance_count  # This is the number of times the task could repeat.
+        self.multi_instance_index = multi_instance_index  # And the index of the currently repeating task.
         self.process_identifier = process_identifier
 
         self.properties = properties  # Arbitrary extension properties from BPMN editor.
@@ -170,7 +180,6 @@ class Task:
             "event_definition": self.event_definition,
             "call_activity_process_identifier": self.call_activity_process_identifier,
             "calling_subprocess_task_id": self.calling_subprocess_task_id,
-            "task_spiff_step": self.task_spiff_step,
         }
 
     @classmethod
@@ -227,9 +236,7 @@ class FormFieldSchema(Schema):
     default_value = marshmallow.fields.String(required=False, allow_none=True)
     options = marshmallow.fields.List(marshmallow.fields.Nested(OptionSchema))
     validation = marshmallow.fields.List(marshmallow.fields.Nested(ValidationSchema))
-    properties = marshmallow.fields.List(
-        marshmallow.fields.Nested(FormFieldPropertySchema)
-    )
+    properties = marshmallow.fields.List(marshmallow.fields.Nested(FormFieldPropertySchema))
 
 
 # class FormSchema(Schema):
