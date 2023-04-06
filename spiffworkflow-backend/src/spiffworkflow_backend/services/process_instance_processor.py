@@ -1644,7 +1644,6 @@ class ProcessInstanceProcessor:
                 and self._script_engine.failing_spiff_task is not None
             ):
                 self._script_engine.failing_spiff_task = None
-            # with open("do_engine_steps.json", 'w') as f: f.write(json.dumps(self.serialize(), indent=2))
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
