@@ -177,14 +177,9 @@ class TaskService:
         spiff_workflow: BpmnWorkflow,
         bpmn_process: BpmnProcessModel,
     ) -> None:
-        # bpmn_process_dict = self.serializer.workflow_to_dict(spiff_workflow)
         new_properties_json = copy.copy(bpmn_process.properties_json)
         new_properties_json["last_task"] = str(spiff_workflow.last_task.id) if spiff_workflow.last_task else None
         new_properties_json["success"] = spiff_workflow.success
-
-        # # update correlations correctly but always null out bpmn_messages since they get cleared out later
-        # new_properties_json['correlations'] = bpmn_process_dict['correlations']
-        # new_properties_json['bpmn_messages'] = []
         bpmn_process.properties_json = new_properties_json
 
         bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(bpmn_process, spiff_workflow.data)
