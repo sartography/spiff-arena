@@ -134,10 +134,11 @@ class TaskService:
             self.json_data_dicts.update(new_json_data_dicts)
 
         # we are not sure why task_model.bpmn_process can be None while task_model.bpmn_process_id actually has a valid value
-        bpmn_process = new_bpmn_process or task_model.bpmn_process or BpmnProcessModel.query.filter_by(id=task_model.bpmn_process_id).first()
-        # if bpmn_process is None:
-        #     import pdb; pdb.set_trace()
-        #     print("HEY")
+        bpmn_process = (
+            new_bpmn_process
+            or task_model.bpmn_process
+            or BpmnProcessModel.query.filter_by(id=task_model.bpmn_process_id).first()
+        )
 
         bpmn_process_json_data = self.__class__.update_task_data_on_bpmn_process(
             bpmn_process, spiff_task.workflow.data
@@ -149,8 +150,8 @@ class TaskService:
         self.update_json_data_dicts_using_list(json_data_dict_list, self.json_data_dicts)
 
         if start_and_end_times:
-            task_model.start_in_seconds = start_and_end_times['start_in_seconds']
-            task_model.end_in_seconds = start_and_end_times['end_in_seconds']
+            task_model.start_in_seconds = start_and_end_times["start_in_seconds"]
+            task_model.end_in_seconds = start_and_end_times["end_in_seconds"]
 
         if task_model.state == "COMPLETED" or task_failed:
             event_type = ProcessInstanceEventType.task_completed.value
@@ -196,9 +197,6 @@ class TaskService:
             direct_parent_bpmn_process = BpmnProcessModel.query.filter_by(
                 id=bpmn_process.direct_parent_process_id
             ).first()
-            # if direct_parent_bpmn_process is None:
-            #     import pdb; pdb.set_trace()
-            #     print("HEY22")
             self.update_bpmn_process(spiff_workflow.outer_workflow, direct_parent_bpmn_process)
 
     @classmethod
@@ -460,7 +458,7 @@ class TaskService:
         spiff_task_guid = str(spiff_task.id)
         if spiff_task_parent_guid in task_models:
             parent_task_model = task_models[spiff_task_parent_guid]
-            if spiff_task_guid in parent_task_model.properties_json['children']:
+            if spiff_task_guid in parent_task_model.properties_json["children"]:
                 new_parent_properties_json = copy.copy(parent_task_model.properties_json)
                 new_parent_properties_json["children"].remove(spiff_task_guid)
                 parent_task_model.properties_json = new_parent_properties_json
