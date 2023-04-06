@@ -44,8 +44,9 @@ class MyJSONEncoder(DefaultJSONProvider):
             return obj.serialized
         elif isinstance(obj, sqlalchemy.engine.row.Row):  # type: ignore
             return_dict = {}
-            for row_key in obj.keys():
-                row_value = obj[row_key]
+            row_mapping = obj._mapping
+            for row_key in row_mapping.keys():
+                row_value = row_mapping[row_key]
                 if hasattr(row_value, "serialized"):
                     return_dict.update(row_value.serialized)
                 elif hasattr(row_value, "__dict__"):
@@ -63,11 +64,19 @@ class MyJSONEncoder(DefaultJSONProvider):
         return super().dumps(obj, **kwargs)
 
 
-def start_scheduler(
-    app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler
-) -> None:
+def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = BackgroundScheduler) -> None:
     """Start_scheduler."""
     scheduler = scheduler_class()
+
+    # TODO: polling intervals for different jobs
+    polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
+    user_input_required_polling_interval_in_seconds = app.config[
+        "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS"
+    ]
+    # TODO: add job to release locks to simplify other queries
+    # TODO: add job to delete completed entires
+    # TODO: add job to run old/low priority instances so they do not get drowned out
+
     scheduler.add_job(
         BackgroundProcessingService(app).process_message_instances_with_app_context,
         "interval",
@@ -76,14 +85,25 @@ def start_scheduler(
     scheduler.add_job(
         BackgroundProcessingService(app).process_waiting_process_instances,
         "interval",
-        seconds=10,
+        seconds=polling_interval_in_seconds,
     )
     scheduler.add_job(
         BackgroundProcessingService(app).process_user_input_required_process_instances,
         "interval",
-        seconds=120,
+        seconds=user_input_required_polling_interval_in_seconds,
     )
     scheduler.start()
+
+
+def should_start_scheduler(app: flask.app.Flask) -> bool:
+    if not app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
+        return False
+
+    # do not start the scheduler twice in flask debug mode but support code reloading
+    if app.config["ENV_IDENTIFIER"] != "local_development" or os.environ.get("WERKZEUG_RUN_MAIN") != "true":
+        return False
+
+    return True
 
 
 class NoOpCipher:
@@ -103,9 +123,7 @@ def create_app() -> flask.app.Flask:
     # variable, it will be one thing when we run flask db upgrade in the
     # noxfile and another thing when the tests actually run.
     # instance_path is described more at https://flask.palletsprojects.com/en/2.1.x/config/
-    connexion_app = connexion.FlaskApp(
-        __name__, server_args={"instance_path": os.environ.get("FLASK_INSTANCE_PATH")}
-    )
+    connexion_app = connexion.FlaskApp(__name__, server_args={"instance_path": os.environ.get("FLASK_INSTANCE_PATH")})
     app = connexion_app.app
     app.config["CONNEXION_APP"] = connexion_app
     app.config["SESSION_TYPE"] = "filesystem"
@@ -122,8 +140,7 @@ def create_app() -> flask.app.Flask:
     # we will add an Access-Control-Max-Age header to the response to tell the browser it doesn't
     # need to continually keep asking for the same path.
     origins_re = [
-        r"^https?:\/\/%s(.*)" % o.replace(".", r"\.")
-        for o in app.config["SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS"]
+        r"^https?:\/\/%s(.*)" % o.replace(".", r"\.") for o in app.config["SPIFFWORKFLOW_BACKEND_CORS_ALLOW_ORIGINS"]
     ]
     CORS(app, origins=origins_re, max_age=3600, supports_credentials=True)
 
@@ -134,11 +151,7 @@ def create_app() -> flask.app.Flask:
 
     app.json = MyJSONEncoder(app)
 
-    # do not start the scheduler twice in flask debug mode
-    if (
-        app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]
-        and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
-    ):
+    if should_start_scheduler(app):
         start_scheduler(app)
 
     configure_sentry(app)
@@ -176,13 +189,9 @@ def get_hacked_up_app_for_script() -> flask.app.Flask:
     os.environ[flask_env_key] = "whatevs"
     if "SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR" not in os.environ:
         home = os.environ["HOME"]
-        full_process_model_path = (
-            f"{home}/projects/github/sartography/sample-process-models"
-        )
+        full_process_model_path = f"{home}/projects/github/sartography/sample-process-models"
         if os.path.isdir(full_process_model_path):
-            os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = (
-                full_process_model_path
-            )
+            os.environ["SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR"] = full_process_model_path
         else:
             raise Exception(f"Could not find {full_process_model_path}")
     app = create_app()
@@ -226,28 +235,24 @@ def configure_sentry(app: flask.app.Flask) -> None:
                 return None
         return event
 
-    sentry_errors_sample_rate = app.config.get(
-        "SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE"
-    )
+    sentry_errors_sample_rate = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE")
     if sentry_errors_sample_rate is None:
-        raise Exception(
-            "SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE is not set somehow"
-        )
+        raise Exception("SPIFFWORKFLOW_BACKEND_SENTRY_ERRORS_SAMPLE_RATE is not set somehow")
 
-    sentry_traces_sample_rate = app.config.get(
-        "SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE"
-    )
+    sentry_traces_sample_rate = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE")
     if sentry_traces_sample_rate is None:
-        raise Exception(
-            "SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow"
-        )
+        raise Exception("SPIFFWORKFLOW_BACKEND_SENTRY_TRACES_SAMPLE_RATE is not set somehow")
+
+    sentry_env_identifier = app.config["ENV_IDENTIFIER"]
+    if app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER"):
+        sentry_env_identifier = app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_ENV_IDENTIFIER")
 
     sentry_configs = {
         "dsn": app.config.get("SPIFFWORKFLOW_BACKEND_SENTRY_DSN"),
         "integrations": [
             FlaskIntegration(),
         ],
-        "environment": app.config["ENV_IDENTIFIER"],
+        "environment": sentry_env_identifier,
         # sample_rate is the errors sample rate. we usually set it to 1 (100%)
         # so we get all errors in sentry.
         "sample_rate": float(sentry_errors_sample_rate),
@@ -265,8 +270,6 @@ def configure_sentry(app: flask.app.Flask) -> None:
         # but also we commented out profiling because it was causing segfaults (i guess it is marked experimental)
         profiles_sample_rate = 0 if sys.platform.startswith("win") else 1
         if profiles_sample_rate > 0:
-            sentry_configs["_experiments"] = {
-                "profiles_sample_rate": profiles_sample_rate
-            }
+            sentry_configs["_experiments"] = {"profiles_sample_rate": profiles_sample_rate}
 
     sentry_sdk.init(**sentry_configs)

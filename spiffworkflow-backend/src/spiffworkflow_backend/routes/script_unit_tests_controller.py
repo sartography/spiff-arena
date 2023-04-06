@@ -26,13 +26,9 @@ def script_unit_test_create(
     modified_process_model_identifier: str, body: Dict[str, Union[str, bool, int]]
 ) -> flask.wrappers.Response:
     """Script_unit_test_create."""
-    bpmn_task_identifier = _get_required_parameter_or_raise(
-        "bpmn_task_identifier", body
-    )
+    bpmn_task_identifier = _get_required_parameter_or_raise("bpmn_task_identifier", body)
     input_json = _get_required_parameter_or_raise("input_json", body)
-    expected_output_json = _get_required_parameter_or_raise(
-        "expected_output_json", body
-    )
+    expected_output_json = _get_required_parameter_or_raise("expected_output_json", body)
 
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
@@ -40,10 +36,7 @@ def script_unit_test_create(
     if file is None:
         raise ApiError(
             error_code="cannot_find_file",
-            message=(
-                "Could not find the primary bpmn file for process_model:"
-                f" {process_model.id}"
-            ),
+            message=f"Could not find the primary bpmn file for process_model: {process_model.id}",
             status_code=404,
         )
 
@@ -52,9 +45,7 @@ def script_unit_test_create(
     bpmn_etree_element = SpecFileService.get_etree_from_xml_bytes(file_contents)
 
     nsmap = bpmn_etree_element.nsmap
-    spiff_element_maker = ElementMaker(
-        namespace="http://spiffworkflow.org/bpmn/schema/1.0/core", nsmap=nsmap
-    )
+    spiff_element_maker = ElementMaker(namespace="http://spiffworkflow.org/bpmn/schema/1.0/core", nsmap=nsmap)
 
     script_task_elements = bpmn_etree_element.xpath(
         f"//bpmn:scriptTask[@id='{bpmn_task_identifier}']",
@@ -74,9 +65,7 @@ def script_unit_test_create(
         namespaces={"bpmn": "http://www.omg.org/spec/BPMN/20100524/MODEL"},
     )
     if len(extension_elements_array) == 0:
-        bpmn_element_maker = ElementMaker(
-            namespace="http://www.omg.org/spec/BPMN/20100524/MODEL", nsmap=nsmap
-        )
+        bpmn_element_maker = ElementMaker(namespace="http://www.omg.org/spec/BPMN/20100524/MODEL", nsmap=nsmap)
         extension_elements = bpmn_element_maker("extensionElements")
         script_task_element.append(extension_elements)
     else:
@@ -93,23 +82,16 @@ def script_unit_test_create(
     else:
         unit_test_elements = unit_test_elements_array[0]
 
-    fuzz = "".join(
-        random.choice(string.ascii_uppercase + string.digits)  # noqa: S311
-        for _ in range(7)
-    )
+    fuzz = "".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(7))  # noqa: S311
     unit_test_id = f"unit_test_{fuzz}"
 
     input_json_element = spiff_element_maker("inputJson", json.dumps(input_json))
-    expected_output_json_element = spiff_element_maker(
-        "expectedOutputJson", json.dumps(expected_output_json)
-    )
+    expected_output_json_element = spiff_element_maker("expectedOutputJson", json.dumps(expected_output_json))
     unit_test_element = spiff_element_maker("unitTest", id=unit_test_id)
     unit_test_element.append(input_json_element)
     unit_test_element.append(expected_output_json_element)
     unit_test_elements.append(unit_test_element)
-    SpecFileService.update_file(
-        process_model, file.name, etree.tostring(bpmn_etree_element)
-    )
+    SpecFileService.update_file(process_model, file.name, etree.tostring(bpmn_etree_element))
 
     return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
 
@@ -120,13 +102,10 @@ def script_unit_test_run(
     """Script_unit_test_run."""
     # FIXME: We should probably clear this somewhere else but this works
     current_app.config["THREAD_LOCAL_DATA"].process_instance_id = None
-    current_app.config["THREAD_LOCAL_DATA"].spiff_step = None
 
     python_script = _get_required_parameter_or_raise("python_script", body)
     input_json = _get_required_parameter_or_raise("input_json", body)
-    expected_output_json = _get_required_parameter_or_raise(
-        "expected_output_json", body
-    )
+    expected_output_json = _get_required_parameter_or_raise("expected_output_json", body)
 
     result = ScriptUnitTestRunner.run_with_script_and_pre_post_contexts(
         python_script, input_json, expected_output_json

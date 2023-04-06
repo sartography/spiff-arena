@@ -25,22 +25,14 @@ class ErrorHandlingService:
     @staticmethod
     def set_instance_status(instance_id: int, status: str) -> None:
         """Set_instance_status."""
-        instance = (
-            db.session.query(ProcessInstanceModel)
-            .filter(ProcessInstanceModel.id == instance_id)
-            .first()
-        )
+        instance = db.session.query(ProcessInstanceModel).filter(ProcessInstanceModel.id == instance_id).first()
         if instance:
             instance.status = status
             db.session.commit()
 
-    def handle_error(
-        self, _processor: ProcessInstanceProcessor, _error: Union[ApiError, Exception]
-    ) -> None:
+    def handle_error(self, _processor: ProcessInstanceProcessor, _error: Union[ApiError, Exception]) -> None:
         """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
-        process_model = ProcessModelService.get_process_model(
-            _processor.process_model_identifier
-        )
+        process_model = ProcessModelService.get_process_model(_processor.process_model_identifier)
         # First, suspend or fault the instance
         if process_model.fault_or_suspend_on_exception == "suspend":
             self.set_instance_status(
@@ -72,8 +64,7 @@ class ErrorHandlingService:
     ) -> None:
         """Send a BPMN Message - which may kick off a waiting process."""
         message_text = (
-            f"There was an exception running process {process_model.id}.\nOriginal"
-            f" Error:\n{error.__repr__()}"
+            f"There was an exception running process {process_model.id}.\nOriginal Error:\n{error.__repr__()}"
         )
         message_payload = {
             "message_text": message_text,

@@ -36,9 +36,7 @@ nox.options.sessions = (
 
 def setup_database(session: Session) -> None:
     """Run database migrations against the database."""
-    session.env["FLASK_INSTANCE_PATH"] = os.path.join(
-        os.getcwd(), "instance", "testing"
-    )
+    session.env["FLASK_INSTANCE_PATH"] = os.path.join(os.getcwd(), "instance", "testing")
     flask_env_key = "FLASK_SESSION_SECRET_KEY"
     session.env[flask_env_key] = "e7711a3ba96c46c68e084a86952de16f"
     session.env["FLASK_APP"] = "src/spiffworkflow_backend"
@@ -72,9 +70,7 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
 
         text = hook.read_text()
         bindir = repr(session.bin)[1:-1]  # strip quotes
-        if not (
-            Path("A") == Path("a") and bindir.lower() in text.lower() or bindir in text
-        ):
+        if not (Path("A") == Path("a") and bindir.lower() in text.lower() or bindir in text):
             continue
 
         lines = text.splitlines()

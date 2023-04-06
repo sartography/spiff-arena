@@ -27,9 +27,7 @@ class SaveProcessInstanceMetadata(Script):
         """Run."""
         metadata_dict = args[0]
         if script_attributes_context.process_instance_id is None:
-            raise self.get_proces_instance_id_is_missing_error(
-                "save_process_instance_metadata"
-            )
+            raise self.get_proces_instance_id_is_missing_error("save_process_instance_metadata")
         for key, value in metadata_dict.items():
             pim = ProcessInstanceMetadataModel.query.filter_by(
                 process_instance_id=script_attributes_context.process_instance_id,

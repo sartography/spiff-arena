@@ -44,9 +44,7 @@ def process_group_create(body: dict) -> flask.wrappers.Response:
         )
 
     ProcessModelService.add_process_group(process_group)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} added process group {process_group.id}"
-    )
+    _commit_and_push_to_git(f"User: {g.user.username} added process group {process_group.id}")
     return make_response(jsonify(process_group), 201)
 
 
@@ -63,22 +61,14 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
             status_code=400,
         ) from exception
 
-    _commit_and_push_to_git(
-        f"User: {g.user.username} deleted process group {process_group_id}"
-    )
+    _commit_and_push_to_git(f"User: {g.user.username} deleted process group {process_group_id}")
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_group_update(
-    modified_process_group_id: str, body: dict
-) -> flask.wrappers.Response:
+def process_group_update(modified_process_group_id: str, body: dict) -> flask.wrappers.Response:
     """Process Group Update."""
     body_include_list = ["display_name", "description"]
-    body_filtered = {
-        include_item: body[include_item]
-        for include_item in body_include_list
-        if include_item in body
-    }
+    body_filtered = {include_item: body[include_item] for include_item in body_include_list if include_item in body}
 
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
     if not ProcessModelService.is_process_group_identifier(process_group_id):
@@ -90,9 +80,7 @@ def process_group_update(
 
     process_group = ProcessGroup(id=process_group_id, **body_filtered)
     ProcessModelService.update_process_group(process_group)
-    _commit_and_push_to_git(
-        f"User: {g.user.username} updated process group {process_group_id}"
-    )
+    _commit_and_push_to_git(f"User: {g.user.username} updated process group {process_group_id}")
     return make_response(jsonify(process_group), 200)
 
 
@@ -101,14 +89,10 @@ def process_group_list(
 ) -> flask.wrappers.Response:
     """Process_group_list."""
     if process_group_identifier is not None:
-        process_groups = ProcessModelService.get_process_groups(
-            process_group_identifier
-        )
+        process_groups = ProcessModelService.get_process_groups(process_group_identifier)
     else:
         process_groups = ProcessModelService.get_process_groups()
-    batch = ProcessModelService().get_batch(
-        items=process_groups, page=page, per_page=per_page
-    )
+    batch = ProcessModelService().get_batch(items=process_groups, page=page, per_page=per_page)
     pages = len(process_groups) // per_page
     remainder = len(process_groups) % per_page
     if remainder > 0:
@@ -141,24 +125,15 @@ def process_group_show(
             )
         ) from exception
 
-    process_group.parent_groups = ProcessModelService.get_parent_group_array(
-        process_group.id
-    )
+    process_group.parent_groups = ProcessModelService.get_parent_group_array(process_group.id)
     return make_response(jsonify(process_group), 200)
 
 
-def process_group_move(
-    modified_process_group_identifier: str, new_location: str
-) -> flask.wrappers.Response:
+def process_group_move(modified_process_group_identifier: str, new_location: str) -> flask.wrappers.Response:
     """Process_group_move."""
-    original_process_group_id = _un_modify_modified_process_model_id(
-        modified_process_group_identifier
-    )
-    new_process_group = ProcessModelService().process_group_move(
-        original_process_group_id, new_location
-    )
+    original_process_group_id = _un_modify_modified_process_model_id(modified_process_group_identifier)
+    new_process_group = ProcessModelService().process_group_move(original_process_group_id, new_location)
     _commit_and_push_to_git(
-        f"User: {g.user.username} moved process group {original_process_group_id} to"
-        f" {new_process_group.id}"
+        f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
     )
     return make_response(jsonify(new_process_group), 200)

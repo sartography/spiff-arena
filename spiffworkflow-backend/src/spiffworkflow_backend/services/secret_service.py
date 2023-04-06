@@ -16,10 +16,7 @@ class SecretService:
     @classmethod
     def _encrypt(cls, value: str) -> str:
         encrypted_bytes: bytes = b""
-        if (
-            current_app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB")
-            == "cryptography"
-        ):
+        if current_app.config.get("SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB") == "cryptography":
             # cryptography needs a bytes object
             value_as_bytes = str.encode(value)
             encrypted_bytes = current_app.config["CIPHER"].encrypt(value_as_bytes)
@@ -98,9 +95,7 @@ class SecretService:
         else:
             raise ApiError(
                 error_code="update_secret_error",
-                message=(
-                    f"Cannot update secret with key: {key}. Resource does not exist."
-                ),
+                message=f"Cannot update secret with key: {key}. Resource does not exist.",
                 status_code=404,
             )
 
@@ -115,16 +110,11 @@ class SecretService:
             except Exception as e:
                 raise ApiError(
                     error_code="delete_secret_error",
-                    message=(
-                        f"Could not delete secret with key: {key}. Original error"
-                        f" is: {e}"
-                    ),
+                    message=f"Could not delete secret with key: {key}. Original error is: {e}",
                 ) from e
         else:
             raise ApiError(
                 error_code="delete_secret_error",
-                message=(
-                    f"Cannot delete secret with key: {key}. Resource does not exist."
-                ),
+                message=f"Cannot delete secret with key: {key}. Resource does not exist.",
                 status_code=404,
             )

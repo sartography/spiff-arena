@@ -23,9 +23,7 @@ class TestGetProcessInitiatorUser(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_sets_permission_correctly_on_human_task."""
-        self.create_process_group(
-            client, with_super_admin_user, "test_group", "test_group"
-        )
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
@@ -49,12 +47,7 @@ class TestGetProcessInitiatorUser(BaseTest):
         spiff_task = processor.__class__.get_task_by_bpmn_identifier(
             human_task.task_name, processor.bpmn_process_instance
         )
-        ProcessInstanceService.complete_form_task(
-            processor, spiff_task, {"name": "HEY"}, initiator_user, human_task
-        )
+        ProcessInstanceService.complete_form_task(processor, spiff_task, {"name": "HEY"}, initiator_user, human_task)
 
         assert spiff_task is not None
-        assert (
-            initiator_user.username
-            == spiff_task.get_data("process_initiator_user")["username"]
-        )
+        assert initiator_user.username == spiff_task.get_data("process_initiator_user")["username"]

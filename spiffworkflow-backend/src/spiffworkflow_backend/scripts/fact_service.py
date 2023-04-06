@@ -20,12 +20,7 @@ class FactService(Script):
         return """Just your basic class that can pull in data from a few api endpoints and
         do a basic task."""
 
-    def run(
-        self,
-        script_attributes_context: ScriptAttributesContext,
-        *args: Any,
-        **kwargs: Any
-    ) -> Any:
+    def run(self, script_attributes_context: ScriptAttributesContext, *args: Any, **kwargs: Any) -> Any:
         """Run."""
         if "type" not in kwargs:
             raise Exception("Please specify a 'type' of fact as a keyword argument.")
@@ -35,10 +30,7 @@ class FactService(Script):
         if fact == "cat":
             details = "The cat in the hat"  # self.get_cat()
         elif fact == "norris":
-            details = (
-                "Chuck Norris doesn’t read books. He stares them down until he gets the"
-                " information he wants."
-            )
+            details = "Chuck Norris doesn’t read books. He stares them down until he gets the information he wants."
         elif fact == "buzzword":
             details = "Move the Needle."  # self.get_buzzword()
         else:

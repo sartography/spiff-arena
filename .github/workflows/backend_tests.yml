@@ -16,10 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # FIXME: https://github.com/mysql/mysql-connector-python/pull/86
-          # put back when poetry update protobuf mysql-connector-python updates protobuf
-          # right now mysql is forcing protobuf to version 3
-          # - { python: "3.11", os: "ubuntu-latest", session: "safety" }
+          - { python: "3.11", os: "ubuntu-latest", session: "safety" }
           - { python: "3.11", os: "ubuntu-latest", session: "mypy" }
           - { python: "3.10", os: "ubuntu-latest", session: "mypy" }
           - { python: "3.9", os: "ubuntu-latest", session: "mypy" }
@@ -156,7 +153,7 @@ jobs:
       - name: Upload coverage data
         # pin to upload coverage from only one matrix entry, otherwise coverage gets confused later
         if: always() && matrix.session == 'tests' && matrix.python == '3.11' && matrix.os == 'ubuntu-latest' && matrix.database == 'mysql'
-        uses: "actions/upload-artifact@v3.0.0"
+        uses: "actions/upload-artifact@v3"
         # this action doesn't seem to respect working-directory so include working-directory value in path
         with:
           name: coverage-data
@@ -164,17 +161,30 @@ jobs:
 
       - name: Upload documentation
         if: matrix.session == 'docs-build'
-        uses: actions/upload-artifact@v3.0.0
+        uses: actions/upload-artifact@v3
         with:
           name: docs
           path: docs/_build
 
       - name: Upload logs
         if: failure() && matrix.session == 'tests'
-        uses: "actions/upload-artifact@v3.0.0"
+        uses: "actions/upload-artifact@v3"
         with:
           name: logs-${{matrix.python}}-${{matrix.os}}-${{matrix.database}}
           path: "./log/*.log"
+
+  # burnettk created an account at https://app.snyk.io/org/kevin-jfx
+  # and added his SNYK_TOKEN secret under the spiff-arena repo.
+  snyk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/python@master
+        with:
+          args: spiffworkflow-backend
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
   run_pre_commit_checks:
     runs-on: ubuntu-latest
@@ -184,9 +194,6 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3.3.0
-        with:
-          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v4.2.0
         with:
@@ -205,9 +212,6 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@v3.3.0
-        with:
-          # Disabling shallow clone is recommended for improving relevancy of reporting in sonarcloud
-          fetch-depth: 0
       - name: Checkout Samples
         uses: actions/checkout@v3
         with:
@@ -281,7 +285,7 @@ jobs:
         # so just skip everything but main
         if: github.ref_name == 'main'
         with:
-          projectBaseDir: spiffworkflow-frontend
+          projectBaseDir: spiffworkflow-backend
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

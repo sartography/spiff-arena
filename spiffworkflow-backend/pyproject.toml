@@ -27,7 +27,8 @@ flask-marshmallow = "*"
 flask-migrate = "*"
 flask-restful = "*"
 werkzeug = "*"
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "feature/remove-loop-reset"}
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
+# SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "6cad2981712bb61eca23af1adfafce02d3277cb9"}
 # SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
@@ -38,10 +39,16 @@ pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.4.0"
+
+# pinned to higher than 65.5.0 because of a vulnerability
+# and to lower than 67 because i didn't feel like addressing
+# new deprecation warnings. we don't need this library explicitly,
+# but at one time it was pulled in by various libs we depend on.
+setuptools = "^65.5.1"
+
 connexion = {extras = [ "swagger-ui",], version = "^2"}
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
-marshmallow-sqlalchemy = "^0.28.0"
 PyJWT = "^2.6.0"
 gunicorn = "^20.1.0"
 APScheduler = "*"
@@ -74,7 +81,9 @@ flask-jwt-extended = "^4.4.4"
 pylint = "^2.15.10"
 flask-simple-crypt = "^0.3.3"
 cryptography = "^39.0.2"
-
+safety = "^2.3.5"
+sqlalchemy = "^2.0.7"
+marshmallow-sqlalchemy = "^0.29.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
@@ -126,7 +135,9 @@ filterwarnings = [
     "ignore:'_request_ctx_stack' is deprecated and will be removed in Flask 2.3",
     "ignore:Setting 'json_encoder' on the app or a blueprint is deprecated and will be removed in Flask 2.3",
     "ignore:'JSONEncoder' is deprecated and will be removed in Flask 2.3",
-    "ignore:'app.json_encoder' is deprecated and will be removed in Flask 2.3"
+    "ignore:'app.json_encoder' is deprecated and will be removed in Flask 2.3",
+    # SpiffWorkflow/bpmn/PythonScriptEngineEnvironment.py
+    'ignore:The usage of Box has been deprecated'
 ]
 
 [tool.coverage.paths]

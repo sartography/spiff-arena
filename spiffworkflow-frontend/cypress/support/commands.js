@@ -156,6 +156,10 @@ Cypress.Commands.add(
       .then(($element) => {
         const oldId = $element.text().trim();
         cy.get('.cds--pagination__button--forward').click();
+        cy.contains(
+          `[data-qa=${dataQaTagToUseToEnsureTableHasLoaded}]`,
+          oldId
+        ).should('not.exist');
         cy.contains(/\b3–4 of \d+/);
         cy.get('.cds--pagination__button--backward').click();
         cy.contains(/\b1–2 of \d+/);

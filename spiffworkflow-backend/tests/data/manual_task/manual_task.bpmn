@@ -7,8 +7,8 @@
     <bpmn:endEvent id="end_event_of_manual_task_model">
       <bpmn:incoming>Flow_0nnh2x9</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0nnh2x9" sourceRef="Activity_Hello" targetRef="end_event_of_manual_task_model" />
-    <bpmn:manualTask id="Activity_Hello" name="Hello">
+    <bpmn:sequenceFlow id="Flow_0nnh2x9" sourceRef="manual_task_one" targetRef="end_event_of_manual_task_model" />
+    <bpmn:manualTask id="manual_task_one" name="Hello">
       <bpmn:extensionElements>
         <spiffworkflow:instructionsForEndUser>## Hello</spiffworkflow:instructionsForEndUser>
       </bpmn:extensionElements>
@@ -16,7 +16,7 @@
       <bpmn:outgoing>Flow_0nnh2x9</bpmn:outgoing>
     </bpmn:manualTask>
     <bpmn:sequenceFlow id="Flow_0stlaxe" sourceRef="StartEvent_1" targetRef="the_script" />
-    <bpmn:sequenceFlow id="Flow_1pmem7s" sourceRef="the_script" targetRef="Activity_Hello" />
+    <bpmn:sequenceFlow id="Flow_1pmem7s" sourceRef="the_script" targetRef="manual_task_one" />
     <bpmn:scriptTask id="the_script">
       <bpmn:incoming>Flow_0stlaxe</bpmn:incoming>
       <bpmn:outgoing>Flow_1pmem7s</bpmn:outgoing>
@@ -31,7 +31,7 @@
       <bpmndi:BPMNShape id="Event_0ia26nb_di" bpmnElement="end_event_of_manual_task_model">
         <dc:Bounds x="592" y="159" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1rcj16n_di" bpmnElement="Activity_Hello">
+      <bpmndi:BPMNShape id="Activity_1rcj16n_di" bpmnElement="manual_task_one">
         <dc:Bounds x="420" y="137" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1vokg57_di" bpmnElement="the_script">

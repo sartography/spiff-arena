@@ -8,6 +8,8 @@ import {
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
+  REFRESH_INTERVAL_SECONDS,
+  REFRESH_TIMEOUT_SECONDS,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import {
@@ -19,8 +21,6 @@ import {
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
-const REFRESH_INTERVAL = 5;
-const REFRESH_TIMEOUT = 600;
 
 export default function MyTasks() {
   const [searchParams] = useSearchParams();
@@ -46,7 +46,11 @@ export default function MyTasks() {
     };
 
     getTasks();
-    refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
+    refreshAtInterval(
+      REFRESH_INTERVAL_SECONDS,
+      REFRESH_TIMEOUT_SECONDS,
+      getTasks
+    );
   }, [searchParams]);
 
   const processInstanceRunResultTag = () => {

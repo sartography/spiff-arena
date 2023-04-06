@@ -22,9 +22,7 @@ class TestForGoodErrors(BaseTest):
     ) -> Any:
         """Returns the next available user task for a given process instance, if possible."""
         human_tasks = (
-            db.session.query(HumanTaskModel)
-            .filter(HumanTaskModel.process_instance_id == process_instance_id)
-            .all()
+            db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
         )
         assert len(human_tasks) > 0, "No human tasks found for process."
         human_task = human_tasks[0]
@@ -59,9 +57,7 @@ class TestForGoodErrors(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        response = self.get_next_user_task(
-            process_instance_id, client, with_super_admin_user
-        )
+        response = self.get_next_user_task(process_instance_id, client, with_super_admin_user)
         assert response.json is not None
         assert response.json["error_type"] == "TemplateSyntaxError"
         assert response.json["line_number"] == 3
@@ -88,9 +84,7 @@ class TestForGoodErrors(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        response = self.get_next_user_task(
-            process_instance.id, client, with_super_admin_user
-        )
+        response = self.get_next_user_task(process_instance.id, client, with_super_admin_user)
 
         assert response.status_code == 400
         assert response.json is not None

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 // @ts-ignore
 import { Table, Tabs, TabList, Tab } from '@carbon/react';
-import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
@@ -10,6 +10,7 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
+import { ProcessInstanceLogEntry } from '../interfaces';
 
 type OwnProps = {
   variant: string;
@@ -29,6 +30,11 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   }
 
   useEffect(() => {
+    // Clear out any previous results to avoid a "flicker" effect where columns
+    // are updated above the incorrect data.
+    setProcessInstanceLogs([]);
+    setPagination(null);
+
     const setProcessInstanceLogListFromResult = (result: any) => {
       setProcessInstanceLogs(result.results);
       setPagination(result.pagination);
@@ -45,24 +51,25 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     isDetailedView,
   ]);
 
-  const getTableRow = (row: any) => {
+  const getTableRow = (logEntry: ProcessInstanceLogEntry) => {
     const tableRow = [];
     const taskNameCell = (
       <td>
-        {row.bpmn_task_name ||
-          (row.bpmn_task_type === 'Default Start Event'
-            ? 'Process Started'
-            : '') ||
-          (row.bpmn_task_type === 'End Event' ? 'Process Ended' : '')}
+        {logEntry.task_definition_name ||
+          (logEntry.bpmn_task_type === 'StartEvent' ? 'Process Started' : '') ||
+          (logEntry.bpmn_task_type === 'EndEvent' ? 'Process Ended' : '')}
       </td>
     );
     const bpmnProcessCell = (
-      <td>{row.bpmn_process_name || row.bpmn_process_identifier}</td>
+      <td>
+        {logEntry.bpmn_process_definition_name ||
+          logEntry.bpmn_process_definition_identifier}
+      </td>
     );
     if (isDetailedView) {
       tableRow.push(
         <>
-          <td data-qa="paginated-entity-id">{row.id}</td>
+          <td data-qa="paginated-entity-id">{logEntry.id}</td>
           {bpmnProcessCell}
           {taskNameCell}
         </>
@@ -78,33 +85,44 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     if (isDetailedView) {
       tableRow.push(
         <>
-          <td>{row.bpmn_task_type}</td>
-          <td>{row.message}</td>
+          <td>{logEntry.bpmn_task_type}</td>
+          <td>{logEntry.event_type}</td>
           <td>
-            {row.username || (
+            {logEntry.username || (
               <span className="system-user-log-entry">system</span>
             )}
           </td>
         </>
       );
     }
-    tableRow.push(
-      <td>
-        <Link
-          data-qa="process-instance-show-link"
-          to={`${processInstanceShowPageBaseUrl}/${row.process_instance_id}/${row.spiff_step}`}
-        >
-          {convertSecondsToFormattedDateTime(row.timestamp)}
-        </Link>
-      </td>
+
+    let timestampComponent = (
+      <td>{convertSecondsToFormattedDateTime(logEntry.timestamp)}</td>
     );
-    return <tr key={row.id}>{tableRow}</tr>;
+    if (logEntry.spiff_task_guid) {
+      timestampComponent = (
+        <td>
+          <Link
+            data-qa="process-instance-show-link"
+            to={`${processInstanceShowPageBaseUrl}/${logEntry.process_instance_id}/${logEntry.spiff_task_guid}`}
+            title="View state when task was completed"
+          >
+            {convertSecondsToFormattedDateTime(logEntry.timestamp)}
+          </Link>
+        </td>
+      );
+    }
+    tableRow.push(timestampComponent);
+
+    return <tr key={logEntry.id}>{tableRow}</tr>;
   };
 
   const buildTable = () => {
-    const rows = processInstanceLogs.map((row) => {
-      return getTableRow(row);
-    });
+    const rows = processInstanceLogs.map(
+      (logEntry: ProcessInstanceLogEntry) => {
+        return getTableRow(logEntry);
+      }
+    );
 
     const tableHeaders = [];
     if (isDetailedView) {
@@ -127,7 +145,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       tableHeaders.push(
         <>
           <th>Task Type</th>
-          <th>Message</th>
+          <th>Event</th>
           <th>User</th>
         </>
       );
@@ -173,7 +191,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 setSearchParams(searchParams);
               }}
             >
-              Simple
+              Milestones
             </Tab>
             <Tab
               title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
@@ -183,7 +201,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 setSearchParams(searchParams);
               }}
             >
-              Detailed
+              Events
             </Tab>
           </TabList>
         </Tabs>

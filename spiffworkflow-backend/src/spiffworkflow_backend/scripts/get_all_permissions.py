@@ -34,8 +34,7 @@ class GetAllPermissions(Script):
             .join(GroupModel, GroupModel.id == PrincipalModel.group_id)
             .join(
                 PermissionTargetModel,
-                PermissionTargetModel.id
-                == PermissionAssignmentModel.permission_target_id,
+                PermissionTargetModel.id == PermissionAssignmentModel.permission_target_id,
             )
             .add_columns(
                 PermissionAssignmentModel.permission,
@@ -46,9 +45,7 @@ class GetAllPermissions(Script):
 
         permissions: OrderedDict[tuple[str, str], list[str]] = OrderedDict()
         for pa in permission_assignments:
-            permissions.setdefault((pa.group_identifier, pa.uri), []).append(
-                pa.permission
-            )
+            permissions.setdefault((pa.group_identifier, pa.uri), []).append(pa.permission)
 
         def replace_suffix(string: str, old: str, new: str) -> str:
             """Replace_suffix."""

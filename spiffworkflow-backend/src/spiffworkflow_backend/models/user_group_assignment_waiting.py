@@ -15,15 +15,11 @@ class UserGroupAssignmentWaitingModel(SpiffworkflowBaseDBModel):
 
     MATCH_ALL_USERS = "*"
     __tablename__ = "user_group_assignment_waiting"
-    __table_args__ = (
-        db.UniqueConstraint(
-            "username", "group_id", name="user_group_assignment_staged_unique"
-        ),
-    )
+    __table_args__ = (db.UniqueConstraint("username", "group_id", name="user_group_assignment_staged_unique"),)
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(255), nullable=False)
-    group_id = db.Column(ForeignKey(GroupModel.id), nullable=False)
+    group_id = db.Column(ForeignKey(GroupModel.id), nullable=False, index=True)
 
     group = relationship("GroupModel", overlaps="groups,user_group_assignments_waiting,users")  # type: ignore
 

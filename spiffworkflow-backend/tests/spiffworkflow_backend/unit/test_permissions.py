@@ -33,9 +33,7 @@ class TestPermissions(BaseTest):
     ) -> None:
         """Test_user_can_be_given_permission_to_administer_process_group."""
         process_group_id = "group-a"
-        self.create_process_group(
-            client, with_super_admin_user, process_group_id, process_group_id
-        )
+        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
         load_test_spec(
             "group-a/timers_intermediate_catch_event",
             bpmn_file_name="timers_intermediate_catch_event.bpmn",
@@ -85,16 +83,10 @@ class TestPermissions(BaseTest):
         db.session.add(permission_assignment)
         db.session.commit()
 
-        self.assert_user_has_permission(
-            group_a_admin, "update", f"/{process_group_a_id}"
-        )
-        self.assert_user_has_permission(
-            group_a_admin, "update", f"/{process_group_b_id}", expected_result=False
-        )
+        self.assert_user_has_permission(group_a_admin, "update", f"/{process_group_a_id}")
+        self.assert_user_has_permission(group_a_admin, "update", f"/{process_group_b_id}", expected_result=False)
 
-    def test_user_can_be_granted_access_through_a_group(
-        self, app: Flask, with_db_and_bpmn_file_cleanup: None
-    ) -> None:
+    def test_user_can_be_granted_access_through_a_group(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
         """Test_user_can_be_granted_access_through_a_group."""
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
@@ -158,12 +150,8 @@ class TestPermissions(BaseTest):
         db.session.add(permission_assignment)
         db.session.commit()
 
-        self.assert_user_has_permission(
-            group_a_admin, "update", f"/{process_group_a_id}"
-        )
-        self.assert_user_has_permission(
-            group_a_admin, "update", f"/{process_group_b_id}"
-        )
+        self.assert_user_has_permission(group_a_admin, "update", f"/{process_group_a_id}")
+        self.assert_user_has_permission(group_a_admin, "update", f"/{process_group_b_id}")
 
     def test_user_can_access_base_path_when_given_wildcard_permission(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
@@ -187,6 +175,4 @@ class TestPermissions(BaseTest):
         self.assert_user_has_permission(group_a_admin, "update", "/process-models/hey")
         self.assert_user_has_permission(group_a_admin, "update", "/process-models/")
         self.assert_user_has_permission(group_a_admin, "update", "/process-models")
-        self.assert_user_has_permission(
-            group_a_admin, "update", "/process-modelshey", expected_result=False
-        )
+        self.assert_user_has_permission(group_a_admin, "update", "/process-modelshey", expected_result=False)

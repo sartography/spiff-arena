@@ -26,9 +26,7 @@ class ProcessGroup:
     description: str | None = None
     display_order: int | None = 0
     admin: bool | None = False
-    process_models: list[ProcessModelInfo] = field(
-        default_factory=list[ProcessModelInfo]
-    )
+    process_models: list[ProcessModelInfo] = field(default_factory=list[ProcessModelInfo])
     process_groups: list[ProcessGroup] = field(default_factory=list["ProcessGroup"])
     parent_groups: list[ProcessGroupLite] | None = None
 
@@ -74,17 +72,13 @@ class ProcessGroupSchema(Schema):
         ]
 
     process_models = marshmallow.fields.List(
-        marshmallow.fields.Nested(
-            "ProcessModelInfoSchema", dump_only=True, required=False
-        )
+        marshmallow.fields.Nested("ProcessModelInfoSchema", dump_only=True, required=False)
     )
     process_groups = marshmallow.fields.List(
         marshmallow.fields.Nested("ProcessGroupSchema", dump_only=True, required=False)
     )
 
     @post_load
-    def make_process_group(
-        self, data: dict[str, str | bool | int], **kwargs: dict
-    ) -> ProcessGroup:
+    def make_process_group(self, data: dict[str, str | bool | int], **kwargs: dict) -> ProcessGroup:
         """Make_process_group."""
         return ProcessGroup(**data)  # type: ignore

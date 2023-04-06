@@ -54,17 +54,13 @@ class TestErrorHandlingService(BaseTest):
         )
 
         # Process instance should be marked as errored by default.
-        process_instance = self.run_process_model_and_handle_error(
-            process_model, with_super_admin_user
-        )
+        process_instance = self.run_process_model_and_handle_error(process_model, with_super_admin_user)
         assert ProcessInstanceStatus.error.value == process_instance.status
 
         # If process model should be suspended on error, then that is what should happen.
         process_model.fault_or_suspend_on_exception = "suspend"
         ProcessModelService.save_process_model(process_model)
-        process_instance = self.run_process_model_and_handle_error(
-            process_model, with_super_admin_user
-        )
+        process_instance = self.run_process_model_and_handle_error(process_model, with_super_admin_user)
         assert ProcessInstanceStatus.suspended.value == process_instance.status
 
     def test_error_sends_bpmn_message(
@@ -86,14 +82,10 @@ class TestErrorHandlingService(BaseTest):
             process_model_source_directory="error",
             bpmn_file_name="error_handler.bpmn",  # Slightly misnamed, it sends and receives
         )
-        process_model.exception_notification_addresses = [
-            "dan@ILoveToReadErrorsInMyEmails.com"
-        ]
+        process_model.exception_notification_addresses = ["dan@ILoveToReadErrorsInMyEmails.com"]
         ProcessModelService.save_process_model(process_model)
         # kick off the process and assure it got marked as an error.
-        process_instance = self.run_process_model_and_handle_error(
-            process_model, with_super_admin_user
-        )
+        process_instance = self.run_process_model_and_handle_error(process_model, with_super_admin_user)
         assert ProcessInstanceStatus.error.value == process_instance.status
 
         # Both send and receive messages should be generated, matched
