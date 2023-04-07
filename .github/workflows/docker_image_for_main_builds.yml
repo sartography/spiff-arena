@@ -114,7 +114,7 @@ jobs:
         working-directory: spiffworkflow-backend
         run: |
           touch app_version.json
-          echo '${{ steps.meta.outputs.labels }}' > app_version.json
+          echo $DOCKER_METADATA_OUTPUT_JSON | jq '.labels' > app_version.json
       - name: Build and push Backend Docker image
         uses: docker/build-push-action@v4.0.0
         with:
