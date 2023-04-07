@@ -84,10 +84,6 @@ function requestOptions(eventBus, element, commandStack, optionType) {
   // or you risk a race condition.
   eventBus.once(`spiff.${optionType}.returned`, (event) => {
     spiffExtensionOptions[optionType] = event.options;
-    commandStack.execute('element.updateProperties', {
-      element,
-      properties: {},
-    });
   });
   eventBus.fire(`spiff.${optionType}.requested`, { eventBus });
 }
