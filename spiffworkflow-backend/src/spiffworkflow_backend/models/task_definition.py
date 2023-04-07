@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
@@ -11,6 +13,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
 
+@dataclass
 class TaskDefinitionModel(SpiffworkflowBaseDBModel):
     __tablename__ = "task_definition"
     __table_args__ = (

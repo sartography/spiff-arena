@@ -44,7 +44,9 @@ for attempt in $(seq 1 "$ATTEMPTS" ); do
 
   start_time=$(date +%s)
   success="false"
-  if ./node_modules/.bin/cypress "$command" -c specPattern="cypress/pilot/**/*.cy.{js,jsx,ts,tsx}" --e2e --browser chrome "$@"; then
+  # spec_pattern="cypress/pilot/**/*.cy.{js,jsx,ts,tsx}"
+  spec_pattern="cypress/pilot/*.cy.{js,jsx,ts,tsx}"
+  if ./node_modules/.bin/cypress "$command" -c specPattern="${spec_pattern}" --e2e --browser chrome "$@"; then
     success="true"
   fi
   end_time=$(date +%s)
@@ -56,6 +58,9 @@ for attempt in $(seq 1 "$ATTEMPTS" ); do
     formatted_end_time=$(date "-d@${end_time}" +"%Y-%m-%dT%H-%M-%S")
   fi
 
-  echo "${success},$(( end_time - start_time )),${formatted_start_time},${formatted_end_time},${frontend_url}" >>"$cypress_run_file"
+  if [[ "$command" != "open" ]]; then
+    echo "Recording stats to ${cypress_run_file}"
+    echo "${success},$(( end_time - start_time )),${formatted_start_time},${formatted_end_time},${frontend_url}" >>"$cypress_run_file"
+  fi
 done
 echo "Recorded stats to ${cypress_run_file}"

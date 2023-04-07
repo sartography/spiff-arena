@@ -5,8 +5,13 @@ from os import environ
 environment_identifier_for_this_config_file_only = environ["SPIFFWORKFLOW_BACKEND_ENV"]
 
 SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE = True
-SPIFFWORKFLOW_BACKEND_GIT_USERNAME = "sartography-automated-committer"
-SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL = f"{SPIFFWORKFLOW_BACKEND_GIT_USERNAME}@users.noreply.github.com"
+SPIFFWORKFLOW_BACKEND_GIT_USERNAME = environ.get(
+    "SPIFFWORKFLOW_BACKEND_GIT_USERNAME", default="sartography-automated-committer"
+)
+SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL = environ.get(
+    "SPIFFWORKFLOW_BACKEND_GIT_USER_EMAIL",
+    default=f"{SPIFFWORKFLOW_BACKEND_GIT_USERNAME}@users.noreply.github.com",
+)
 SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME = environ.get(
     "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME",
     default="terraform_deployed_environment.yml",

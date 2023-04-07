@@ -1,6 +1,7 @@
 import { string } from 'prop-types';
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
 import { miscDisplayName } from './helpers';
+import 'cypress-file-upload';
 
 // ***********************************************
 // This example commands.js shows you how to
@@ -97,12 +98,12 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
   cy.contains(`Process Model: ${modelDisplayName}`);
 });
 
+// Intended to be run from the process model show page
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
   (expectAutoRedirectToHumanTask = false) => {
     // cy.getBySel('start-process-instance').click();
     // click on button with text Start
-
     cy.get('button')
       .contains(/^Start$/)
       .click();
@@ -154,6 +155,10 @@ Cypress.Commands.add(
       .then(($element) => {
         const oldId = $element.text().trim();
         cy.get('.cds--pagination__button--forward').click();
+        cy.contains(
+          `[data-qa=${dataQaTagToUseToEnsureTableHasLoaded}]`,
+          oldId
+        ).should('not.exist');
         cy.contains(/\b3–4 of \d+/);
         cy.get('.cds--pagination__button--backward').click();
         cy.contains(/\b1–2 of \d+/);

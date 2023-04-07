@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
@@ -10,6 +12,7 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 #
 # each subprocess will have its own row in this table.
 # there is a join table to link them together: bpmn_process_definition_relationship
+@dataclass
 class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process_definition"
     id: int = db.Column(db.Integer, primary_key=True)

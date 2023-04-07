@@ -54,9 +54,10 @@ backend_token=$(jq -r '.access_token' <<< "$result")
 function add_user() {
   local user_email=$1
   local username=$2
-  local user_attribute_one=$3
+  local pass=$3
+  local user_attribute_one=$4
 
-  local credentials='{"type":"password","value":"'"${username}"'","temporary":false}'
+  local credentials='{"type":"password","value":"'"${pass}"'","temporary":false}'
 
   local data='{"email":"'"${user_email}"'", "enabled":"true", "username":"'"${username}"'", "credentials":['"${credentials}"']'
   if [[ -n "$user_attribute_one" ]]; then
@@ -79,18 +80,31 @@ while read -r input_line; do
   if ! grep -qE '^#' <<<"$input_line" ; then
     if [[ "$first_line_processed" == "false" ]]; then
       email_header=$(awk -F ',' '{print $1}' <<<"$input_line")
+      pass_header=$(awk -F ',' '{print $2}' <<<"$input_line")
       if [[ "$email_header" != "email" ]]; then
         >&2 echo "ERROR: the first column in the first row must be email."
         exit 1
       fi
-      custom_attribute_one=$(awk -F ',' '{print $2}' <<<"$input_line")
+      if [[ "$pass_header" != "pass" ]]; then
+        >&2 echo "ERROR: the first column in the first row must be pass."
+        exit 1
+      fi
+      custom_attribute_one=$(awk -F ',' '{print $3}' <<<"$input_line")
       first_line_processed="true"
     elif [[ -n "$input_line" ]]; then
       echo "Importing: $input_line"
       user_email=$(awk -F ',' '{print $1}' <<<"$input_line")
       username=$(awk -F '@' '{print $1}' <<<"$user_email")
-      user_attribute_one=$(awk -F ',' '{print $2}' <<<"$input_line")
-      http_code=$(add_user "$user_email" "$username" "$user_attribute_one")
+
+      if [[ "$username" == "$ADMIN_USERNAME" || "$user_email" == "$ADMIN_USERNAME" ]]; then
+        >&2 echo "ERROR: The user used as the admin user matches a user in the current import list. This should not happen. Comment out that user from the list or use a different admin user: ${ADMIN_USERNAME}"
+        exit 1
+      fi
+
+      password=$(awk -F ',' '{print $2}' <<<"$input_line")
+      echo "Password: $password"
+      user_attribute_one=$(awk -F ',' '{print $3}' <<<"$input_line")
+      http_code=$(add_user "$user_email" "$username" "$password" "$user_attribute_one")
 
       if [[ "$http_code" == "409" ]]; then
         user_info=$(curl --fail --silent --location --request GET "${KEYCLOAK_BASE_URL}/admin/realms/${keycloak_realm}/users?username=${username}&exact=true" \
@@ -106,7 +120,7 @@ while read -r input_line; do
           -H 'Content-Type: application/json' \
           -H "Authorization: Bearer $backend_token"
 
-        http_code=$(add_user "$user_email" "$username" "$user_attribute_one")
+        http_code=$(add_user "$user_email" "$username" "$password" "$user_attribute_one")
       fi
       if [[ "$http_code" != "201" ]]; then
         >&2 echo "ERROR: Failed to create user: ${user_email} with http_code: ${http_code}"

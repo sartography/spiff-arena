@@ -21,8 +21,47 @@ export interface RecentProcessModel {
   processModelDisplayName: string;
 }
 
-export interface ProcessInstanceTask {
+export interface TaskPropertiesJson {
+  parent: string;
+}
+
+export interface TaskDefinitionPropertiesJson {
+  spec: string;
+}
+
+export interface EventDefinition {
+  typename: string;
+  payload: any;
+  event_definitions: [EventDefinition];
+
+  message_var?: string;
+}
+
+export interface Task {
   id: number;
+  guid: string;
+  bpmn_identifier: string;
+
+  bpmn_name?: string;
+
+  bpmn_process_direct_parent_guid: string;
+  bpmn_process_definition_identifier: string;
+  data: any;
+  state: string;
+  typename: string;
+  properties_json: TaskPropertiesJson;
+  task_definition_properties_json: TaskDefinitionPropertiesJson;
+
+  event_definition?: EventDefinition;
+}
+
+export interface TaskIds {
+  completed: Task[];
+  readyOrWaiting: Task[];
+}
+
+export interface ProcessInstanceTask {
+  id: string;
   task_id: string;
 
   calling_subprocess_task_id: string;
@@ -46,7 +85,6 @@ export interface ProcessInstanceTask {
   type: string;
   updated_at_in_seconds: number;
 
-  task_spiff_step?: number;
   potential_owner_usernames?: string;
   assigned_user_group_identifier?: string;
 }
@@ -90,7 +128,6 @@ export interface ProcessInstance {
   end_in_seconds: number | null;
   process_initiator_username: string;
   bpmn_xml_file_contents?: string;
-  spiff_step?: number;
   created_at_in_seconds: number;
   updated_at_in_seconds: number;
   bpmn_version_control_identifier: string;
@@ -257,4 +294,21 @@ export interface JsonSchemaForm {
   name: string;
   process_model_id: string;
   required: string[];
+}
+
+export interface ProcessInstanceLogEntry {
+  bpmn_process_definition_identifier: string;
+  bpmn_process_definition_name: string;
+  bpmn_task_type: string;
+  event_type: string;
+  spiff_task_guid: string;
+  task_definition_identifier: string;
+  task_guid: string;
+  timestamp: number;
+  id: number;
+  process_instance_id: number;
+
+  task_definition_name?: string;
+  user_id?: number;
+  username?: string;
 }

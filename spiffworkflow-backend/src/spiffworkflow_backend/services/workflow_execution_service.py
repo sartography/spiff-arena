@@ -1,8 +1,8 @@
-import logging
 import time
 from typing import Callable
-from typing import List
 from typing import Optional
+from typing import Set
+from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
@@ -17,15 +17,12 @@ from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.models.spiff_step_details import SpiffStepDetailsModel
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # noqa: F401
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
-from spiffworkflow_backend.services.task_service import JsonDataDict
+from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -43,10 +40,6 @@ class EngineStepDelegate:
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
-
-
-SpiffStepIncrementer = Callable[[], None]
-SpiffStepDetailsMappingBuilder = Callable[[SpiffTask, float, float], dict]
 
 
 class TaskModelSavingDelegate(EngineStepDelegate):
@@ -67,26 +60,44 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
         self.serializer = serializer
 
-        self.current_task_model: Optional[TaskModel] = None
         self.current_task_start_in_seconds: Optional[float] = None
 
-        self.task_models: dict[str, TaskModel] = {}
-        self.json_data_dicts: dict[str, JsonDataDict] = {}
-        self.process_instance_events: dict[str, ProcessInstanceEventModel] = {}
+        self.last_completed_spiff_task: Optional[SpiffTask] = None
+        self.spiff_tasks_to_process: Set[UUID] = set()
+        self.spiff_task_timestamps: dict[UUID, StartAndEndTimes] = {}
+
+        self.task_service = TaskService(
+            process_instance=self.process_instance,
+            serializer=self.serializer,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        )
 
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
+            self.spiff_task_timestamps[spiff_task.id] = {"start_in_seconds": time.time(), "end_in_seconds": None}
+            spiff_task.task_spec._predict(spiff_task, mask=TaskState.NOT_FINISHED_MASK)
+
             self.current_task_start_in_seconds = time.time()
+
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.will_complete_task(spiff_task)
 
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         if self._should_update_task_model():
-            task_model = self._update_task_model_with_spiff_task(spiff_task)
+            # NOTE: used with process-all-tasks and process-children-of-last-task
+            task_model = self.task_service.update_task_model_with_spiff_task(spiff_task)
             if self.current_task_start_in_seconds is None:
                 raise Exception("Could not find cached current_task_start_in_seconds. This should never have happend")
             task_model.start_in_seconds = self.current_task_start_in_seconds
             task_model.end_in_seconds = time.time()
+
+            # # NOTE: used with process-spiff-tasks-list
+            # self.spiff_task_timestamps[spiff_task.id]['end_in_seconds'] = time.time()
+            # self.spiff_tasks_to_process.add(spiff_task.id)
+            # self._add_children(spiff_task)
+            # # self._add_parents(spiff_task)
+
+            self.last_completed_spiff_task = spiff_task
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
@@ -94,24 +105,76 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         script_engine = bpmn_process_instance.script_engine
         if hasattr(script_engine, "failing_spiff_task") and script_engine.failing_spiff_task is not None:
             failing_spiff_task = script_engine.failing_spiff_task
-            self._update_task_model_with_spiff_task(failing_spiff_task, task_failed=True)
+            self.task_service.update_task_model_with_spiff_task(failing_spiff_task, task_failed=True)
+            self.task_service.process_spiff_task_parent_subprocess_tasks(failing_spiff_task)
+            self.task_service.process_spiff_task_children(failing_spiff_task)
 
-        db.session.bulk_save_objects(self.task_models.values())
-        db.session.bulk_save_objects(self.process_instance_events.values())
-
-        TaskService.insert_or_update_json_data_records(self.json_data_dicts)
+        self.task_service.save_objects_to_database()
 
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.save(bpmn_process_instance, commit=False)
         db.session.commit()
 
+    def _add_children(self, spiff_task: SpiffTask) -> None:
+        for child_spiff_task in spiff_task.children:
+            self.spiff_tasks_to_process.add(child_spiff_task.id)
+            self._add_children(child_spiff_task)
+
+    def _add_parents(self, spiff_task: SpiffTask) -> None:
+        if spiff_task.parent and spiff_task.parent.task_spec.name != "Root":
+            self.spiff_tasks_to_process.add(spiff_task.parent.id)
+            self._add_parents(spiff_task.parent)
+
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         if self._should_update_task_model():
-            # excludes FUTURE and COMPLETED. the others were required to get PP1 to go to completion.
+            # NOTE: process-all-tasks: All tests pass with this but it's less efficient and would be nice to replace
+            # excludes COMPLETED. the others were required to get PP1 to go to completion.
+            # process FUTURE tasks because Boundary events are not processed otherwise.
             for waiting_spiff_task in bpmn_process_instance.get_tasks(
-                TaskState.WAITING | TaskState.CANCELLED | TaskState.READY | TaskState.MAYBE | TaskState.LIKELY
+                TaskState.WAITING
+                | TaskState.CANCELLED
+                | TaskState.READY
+                | TaskState.MAYBE
+                | TaskState.LIKELY
+                | TaskState.FUTURE
             ):
-                self._update_task_model_with_spiff_task(waiting_spiff_task)
+                if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
+                    TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
+                    continue
+                self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
+
+            # # NOTE: process-spiff-tasks-list: this would be the ideal way to handle all tasks
+            # # but we're missing something with it yet
+            # #
+            # # adding from line here until we are ready to go with this
+            # from SpiffWorkflow.exceptions import TaskNotFoundException
+            # for spiff_task_uuid in self.spiff_tasks_to_process:
+            #     try:
+            #         waiting_spiff_task = bpmn_process_instance.get_task_from_id(spiff_task_uuid)
+            #     except TaskNotFoundException:
+            #         continue
+            #
+            #     # include PREDICTED_MASK tasks in list so we can remove them from the parent
+            #     if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
+            #         TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
+            #         for cpt in waiting_spiff_task.parent.children:
+            #             if cpt.id == waiting_spiff_task.id:
+            #                 waiting_spiff_task.parent.children.remove(cpt)
+            #         continue
+            #     # if waiting_spiff_task.state == TaskState.FUTURE:
+            #     #     continue
+            #     start_and_end_times = None
+            #     if waiting_spiff_task.id in self.spiff_task_timestamps:
+            #         start_and_end_times = self.spiff_task_timestamps[waiting_spiff_task.id]
+            #     self.task_service.update_task_model_with_spiff_task(waiting_spiff_task, start_and_end_times=start_and_end_times)
+            #
+            # if self.last_completed_spiff_task is not None:
+            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
+
+            # # NOTE: process-children-of-last-task: this does not work with escalation boundary events
+            # if self.last_completed_spiff_task is not None:
+            #     self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
+            #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
 
     def _should_update_task_model(self) -> bool:
         """We need to figure out if we have previously save task info on this process intance.
@@ -121,101 +184,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         # return self.process_instance.bpmn_process_id is not None
         return True
 
-    def _update_json_data_dicts_using_list(self, json_data_dict_list: list[Optional[JsonDataDict]]) -> None:
-        for json_data_dict in json_data_dict_list:
-            if json_data_dict is not None:
-                self.json_data_dicts[json_data_dict["hash"]] = json_data_dict
-
-    def _update_task_model_with_spiff_task(self, spiff_task: SpiffTask, task_failed: bool = False) -> TaskModel:
-        bpmn_process, task_model, new_task_models, new_json_data_dicts = (
-            TaskService.find_or_create_task_model_from_spiff_task(
-                spiff_task,
-                self.process_instance,
-                self.serializer,
-                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
-            )
-        )
-        bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(
-            bpmn_process or task_model.bpmn_process, spiff_task.workflow.data
-        )
-        self.task_models.update(new_task_models)
-        self.json_data_dicts.update(new_json_data_dicts)
-        json_data_dict_list = TaskService.update_task_model(task_model, spiff_task, self.serializer)
-        self.task_models[task_model.guid] = task_model
-        if bpmn_process_json_data is not None:
-            json_data_dict_list.append(bpmn_process_json_data)
-        self._update_json_data_dicts_using_list(json_data_dict_list)
-
-        if task_model.state == "COMPLETED" or task_failed:
-            event_type = ProcessInstanceEventType.task_completed.value
-            if task_failed:
-                event_type = ProcessInstanceEventType.task_failed.value
-
-            # FIXME: some failed tasks will currently not have either timestamp since we only hook into spiff when tasks complete
-            #   which script tasks execute when READY.
-            timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
-            process_instance_event = ProcessInstanceEventModel(
-                task_guid=task_model.guid,
-                process_instance_id=self.process_instance.id,
-                event_type=event_type,
-                timestamp=timestamp,
-            )
-            self.process_instance_events[task_model.guid] = process_instance_event
-
-        return task_model
-
-
-class StepDetailLoggingDelegate(EngineStepDelegate):
-    """Engine step delegate that takes care of logging spiff step details.
-
-    This separates the concerns of step execution and step logging.
-    """
-
-    def __init__(
-        self,
-        increment_spiff_step: SpiffStepIncrementer,
-        spiff_step_details_mapping: SpiffStepDetailsMappingBuilder,
-    ):
-        """__init__."""
-        self.increment_spiff_step = increment_spiff_step
-        self.spiff_step_details_mapping = spiff_step_details_mapping
-        self.step_details: List[dict] = []
-        self.current_task_start_in_seconds = 0.0
-        self.tasks_to_log = {
-            "BPMN Task",
-            "Script Task",
-            "Service Task",
-            "Default Start Event",
-            "Exclusive Gateway",
-            "Call Activity",
-            # "End Join",
-            "End Event",
-            "Default Throwing Event",
-            "Subprocess",
-            "Transactional Subprocess",
-        }
-
-    def should_log(self, spiff_task: SpiffTask) -> bool:
-        return spiff_task.task_spec.spec_type in self.tasks_to_log and not spiff_task.task_spec.name.endswith(
-            ".EndJoin"
-        )
-
-    def will_complete_task(self, spiff_task: SpiffTask) -> None:
-        if self.should_log(spiff_task):
-            self.current_task_start_in_seconds = time.time()
-            self.increment_spiff_step()
-
-    def did_complete_task(self, spiff_task: SpiffTask) -> None:
-        if self.should_log(spiff_task):
-            self.step_details.append(
-                self.spiff_step_details_mapping(spiff_task, self.current_task_start_in_seconds, time.time())
-            )
-
-    def save(self, _bpmn_process_instance: BpmnWorkflow, commit: bool = True) -> None:
-        db.session.bulk_insert_mappings(SpiffStepDetailsModel, self.step_details)
-        if commit:
-            db.session.commit()
-
 
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
@@ -223,13 +191,12 @@ class ExecutionStrategy:
     def __init__(self, delegate: EngineStepDelegate):
         """__init__."""
         self.delegate = delegate
-        self.bpmn_process_instance = None
 
     def do_engine_steps(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
         pass
 
-    def save(self) -> None:
-        self.delegate.save(self.bpmn_process_instance)
+    def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        self.delegate.save(bpmn_process_instance)
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
@@ -335,11 +302,7 @@ class WorkflowExecutionService:
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
-            self.execution_strategy.save()
-            spiff_logger = logging.getLogger("spiff")
-            for handler in spiff_logger.handlers:
-                if hasattr(handler, "bulk_insert_logs"):
-                    handler.bulk_insert_logs()  # type: ignore
+            self.execution_strategy.save(self.bpmn_process_instance)
             db.session.commit()
 
             if save:
@@ -363,6 +326,8 @@ class WorkflowExecutionService:
             if bpmn_process is not None:
                 bpmn_process_correlations = self.bpmn_process_instance.correlations
                 bpmn_process.properties_json["correlations"] = bpmn_process_correlations
+                # update correlations correctly but always null out bpmn_messages since they get cleared out later
+                bpmn_process.properties_json["bpmn_messages"] = []
                 db.session.add(bpmn_process)
 
             db.session.commit()

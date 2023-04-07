@@ -29,7 +29,7 @@ flask-restful = "*"
 werkzeug = "*"
 SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "6cad2981712bb61eca23af1adfafce02d3277cb9"}
-# SpiffWorkflow = {develop = true, path = "../SpiffWorkflow" }
+# SpiffWorkflow = {develop = true, path = "../../SpiffWorkflow" }
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
 flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
@@ -39,10 +39,16 @@ pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
 psycopg2 = "^2.9.3"
 typing-extensions = "^4.4.0"
+
+# pinned to higher than 65.5.0 because of a vulnerability
+# and to lower than 67 because i didn't feel like addressing
+# new deprecation warnings. we don't need this library explicitly,
+# but at one time it was pulled in by various libs we depend on.
+setuptools = "^65.5.1"
+
 connexion = {extras = [ "swagger-ui",], version = "^2"}
 lxml = "^4.9.1"
 marshmallow-enum = "^1.5.1"
-marshmallow-sqlalchemy = "^0.28.0"
 PyJWT = "^2.6.0"
 gunicorn = "^20.1.0"
 APScheduler = "*"
@@ -77,6 +83,9 @@ flask-simple-crypt = "^0.3.3"
 cryptography = "^39.0.2"
 prometheus-flask-exporter = "^0.22.3"
 
+safety = "^2.3.5"
+sqlalchemy = "^2.0.7"
+marshmallow-sqlalchemy = "^0.29.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from sqlalchemy import ForeignKey
 from sqlalchemy import UniqueConstraint
 
@@ -10,6 +12,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
 
+@dataclass
 class BpmnProcessDefinitionRelationshipModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process_definition_relationship"
     __table_args__ = (
