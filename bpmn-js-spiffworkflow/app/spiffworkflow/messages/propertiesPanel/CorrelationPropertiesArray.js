@@ -255,40 +255,6 @@ function MessageCorrelationKeySelect(props) {
   });
 }
 
-function CorrelationPropertyIdTextField(props) {
-  const {
-    id,
-    element,
-    correlationPropertyModdleElement,
-    commandStack,
-    translate,
-  } = props;
-
-  const debounce = useService('debounceInput');
-  const setValue = (value) => {
-    commandStack.execute('element.updateModdleProperties', {
-      element,
-      moddleElement: correlationPropertyModdleElement,
-      properties: {
-        id: value,
-      },
-    });
-  };
-
-  const getValue = () => {
-    return correlationPropertyModdleElement.id;
-  };
-
-  return TextFieldEntry({
-    element,
-    id: `${id}-id-textField`,
-    label: translate('ID'),
-    getValue,
-    setValue,
-    debounce,
-  });
-}
-
 function CorrelationPropertyNameTextField(props) {
   const {
     id,
@@ -305,6 +271,7 @@ function CorrelationPropertyNameTextField(props) {
       moddleElement: correlationPropertyModdleElement,
       properties: {
         name: value,
+        id: value,
       },
     });
   };
