@@ -187,9 +187,6 @@ def create_app() -> flask.app.Flask:
 
 def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.apps.flask_app.FlaskApp) -> None:
     metrics = ConnexionPrometheusMetrics(connexion_app)
-    info = metrics.info('dynamic_info', 'Something dynamic')
-    info.set(42.1)
-
     app.config["PROMETHEUS_METRICS"] = metrics
     app_version_data = {}
     if os.path.isfile("app_version.json"):
