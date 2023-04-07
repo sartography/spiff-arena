@@ -35,7 +35,6 @@ module.exports = {
     new CopyWebpackPlugin({
       patterns: [
         { from: 'assets/**', to: 'vendor/bpmn-js', context: 'node_modules/bpmn-js/dist/' },
-        { from: '*.css', to: 'vendor/bpmn-js-color-picker', context: 'node_modules/bpmn-js-color-picker/colors' },
         {
           from: 'assets/**',
           to: 'vendor/bpmn-js-properties-panel',
