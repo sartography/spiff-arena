@@ -188,11 +188,13 @@ def create_app() -> flask.app.Flask:
 def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.apps.flask_app.FlaskApp) -> None:
     metrics = ConnexionPrometheusMetrics(connexion_app)
     app.config["PROMETHEUS_METRICS"] = metrics
-    app_version_data = {}
     if os.path.isfile("app_version.json"):
+        app_version_data = {}
         with open("app_version.json", 'r') as f:
             app_version_data = json.load(f)
-        metrics.info('app_version_info', 'Application Version Info', **app_version_data)
+        # prometheus does not allow periods in key names
+        app_version_data_normalized = {k.replace('.', '_') : v for k, v in app_version_data.items()}
+        metrics.info('app_version_info', 'Application Version Info', **app_version_data_normalized)
 
 
 def get_hacked_up_app_for_script() -> flask.app.Flask:
