@@ -19,7 +19,7 @@ class TestProcessModelService(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_can_update_specified_attributes."""
-        self.create_process_group(client, with_super_admin_user, "test_group", "test_group")
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             "test_group/hello_world",
             bpmn_file_name="hello_world.bpmn",

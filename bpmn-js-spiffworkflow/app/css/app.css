@@ -78,3 +78,6 @@ html, body {
   right: 10px;
 }
 
+.djs-palette.two-column.open {
+  width: 95px;
+}

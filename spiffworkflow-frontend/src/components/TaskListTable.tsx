@@ -9,14 +9,14 @@ import {
   getPageInfoFromSearchParams,
   modifyProcessIdentifierForPathParam,
   refreshAtInterval,
+  REFRESH_INTERVAL_SECONDS,
+  REFRESH_TIMEOUT_SECONDS,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { PaginationObject, ProcessInstanceTask } from '../interfaces';
 import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 
 const PER_PAGE_FOR_TASKS_ON_HOME_PAGE = 5;
-const REFRESH_INTERVAL = 5;
-const REFRESH_TIMEOUT = 600;
 
 type OwnProps = {
   apiPath: string;
@@ -89,7 +89,11 @@ export default function TaskListTable({
     };
     getTasks();
     if (autoReload) {
-      return refreshAtInterval(REFRESH_INTERVAL, REFRESH_TIMEOUT, getTasks);
+      return refreshAtInterval(
+        REFRESH_INTERVAL_SECONDS,
+        REFRESH_TIMEOUT_SECONDS,
+        getTasks
+      );
     }
     return undefined;
   }, [
@@ -141,7 +145,7 @@ export default function TaskListTable({
       rowElements.push(
         <td>
           <Link
-            data-qa="process-instance-show-link"
+            data-qa="process-instance-show-link-id"
             to={`/admin/process-instances/for-me/${modifiedProcessModelIdentifier}/${processInstanceTask.process_instance_id}`}
             title={`View process instance ${processInstanceTask.process_instance_id}`}
           >

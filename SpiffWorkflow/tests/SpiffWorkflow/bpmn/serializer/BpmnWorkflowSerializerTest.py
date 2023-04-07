@@ -142,7 +142,7 @@ class BpmnWorkflowSerializerTest(BaseTestCase):
     def test_serialize_workflow_where_script_task_includes_function(self):
         self.workflow.do_engine_steps()
         ready_tasks = self.workflow.get_ready_user_tasks()
-        ready_tasks[0].complete()
+        ready_tasks[0].run()
         self.workflow.do_engine_steps()
         results = self.serializer.serialize_json(self.workflow)
         assert self.workflow.is_completed()
@@ -161,7 +161,7 @@ class BpmnWorkflowSerializerTest(BaseTestCase):
         self.assertEqual(w1.data, w2.data)
         self.assertEqual(w1.name, w2.name)
         for task in w1.get_ready_user_tasks():
-            w2_task = w2.get_task(task.id)
+            w2_task = w2.get_task_from_id(task.id)
             self.assertIsNotNone(w2_task)
             self.assertEqual(task.data, w2_task.data)
 

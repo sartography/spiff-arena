@@ -74,10 +74,6 @@ class TaskSpec(object):
         :param wf_spec: A reference to the workflow specification that owns it.
         :type  name: string
         :param name: A name for the task.
-        :type  lock: list(str)
-        :param lock: A list of mutex names. The mutex is acquired
-                     on entry of execute() and released on leave of
-                     execute().
         :type  manual: bool
         :param manual: Whether this task requires a manual action to complete.
         :type  data: dict((str, object))
@@ -107,7 +103,6 @@ class TaskSpec(object):
         self.defines = kwargs.get('defines', {})
         self.pre_assign = kwargs.get('pre_assign',[])
         self.post_assign = kwargs.get('post_assign', [])
-        self.locks = kwargs.get('lock', [])
         self.lookahead = 2  # Maximum number of MAYBE predictions.
 
         # Events.
@@ -213,7 +208,7 @@ class TaskSpec(object):
         if len(self.inputs) < 1:
             raise WorkflowException(self, 'No input task connected.')
 
-    def _predict(self, my_task, seen=None, looked_ahead=0):
+    def _predict(self, my_task, seen=None, looked_ahead=0, mask=TaskState.PREDICTED_MASK):
         """
         Updates the branch such that all possible future routes are added.
 
@@ -229,26 +224,25 @@ class TaskSpec(object):
         if seen is None:
             seen = []
 
-        self._predict_hook(my_task)
-        if not my_task._is_definite():
+        if my_task._has_state(mask):
+            self._predict_hook(my_task)
+
+        if my_task._is_predicted():
             seen.append(self)
+
         look_ahead = my_task._is_definite() or looked_ahead + 1 < self.lookahead
         for child in my_task.children:
-            if not child._is_finished() and child not in seen and look_ahead:
-                child.task_spec._predict(child, seen[:], looked_ahead + 1)
+            if child._has_state(mask) and child not in seen and look_ahead:
+                child.task_spec._predict(child, seen[:], looked_ahead + 1, mask)
 
     def _predict_hook(self, my_task):
-        # If the task's status is not predicted, we default to FUTURE for all it's outputs.
+        # If the task's status is definite, we default to FUTURE for all it's outputs.
         # Otherwise, copy my own state to the children.
-        if my_task._is_definite():
+        if  my_task._is_definite():
             best_state = TaskState.FUTURE
         else:
             best_state = my_task.state
-
         my_task._sync_children(self.outputs, best_state)
-        for child in my_task.children:
-            if not child._is_definite():
-                child._set_state(best_state)
 
     def _update(self, my_task):
         """
@@ -281,42 +275,13 @@ class TaskSpec(object):
         assert my_task is not None
         self.test()
 
-        # Acquire locks, if any.
-        for lock in self.locks:
-            mutex = my_task.workflow._get_mutex(lock)
-            if not mutex.testandset():
-                return
-
         # Assign variables, if so requested.
         for assignment in self.pre_assign:
             assignment.assign(my_task, my_task)
 
         # Run task-specific code.
-        self._on_ready_before_hook(my_task)
-        self.reached_event.emit(my_task.workflow, my_task)
         self._on_ready_hook(my_task)
-
-        # Run user code, if any.
-        if self.ready_event.emit(my_task.workflow, my_task):
-            # Assign variables, if so requested.
-            for assignment in self.post_assign:
-                assignment.assign(my_task, my_task)
-
-        # Release locks, if any.
-        for lock in self.locks:
-            mutex = my_task.workflow._get_mutex(lock)
-            mutex.unlock()
-
-        self.finished_event.emit(my_task.workflow, my_task)
-
-    def _on_ready_before_hook(self, my_task):
-        """
-        A hook into _on_ready() that does the task specific work.
-
-        :type  my_task: Task
-        :param my_task: The associated task in the task tree.
-        """
-        pass
+        self.reached_event.emit(my_task.workflow, my_task)
 
     def _on_ready_hook(self, my_task):
         """
@@ -326,6 +291,35 @@ class TaskSpec(object):
         :param my_task: The associated task in the task tree.
         """
         pass
+
+    def _run(self, my_task):
+        """
+        Run the task.
+
+        :type  my_task: Task
+        :param my_task: The associated task in the task tree.
+
+        :rtype: boolean or None
+        :returns: the value returned by the task spec's run method.
+        """
+        result = self._run_hook(my_task)
+        # Run user code, if any.
+        if self.ready_event.emit(my_task.workflow, my_task):
+            # Assign variables, if so requested.
+            for assignment in self.post_assign:
+                assignment.assign(my_task, my_task)
+
+        self.finished_event.emit(my_task.workflow, my_task)
+        return result
+
+    def _run_hook(self, my_task):
+        """
+        A hook into _run() that does the task specific work.
+
+        :type  my_task: Task
+        :param my_task: The associated task in the task tree.
+        """
+        return True
 
     def _on_cancel(self, my_task):
         """
@@ -359,20 +353,12 @@ class TaskSpec(object):
         :rtype:  boolean
         :returns: True on success, False otherwise.
         """
-        assert my_task is not None
-
-        # We have to set the last task here, because the on_complete_hook
-        # of a loopback task may overwrite what the last_task will be.
-        my_task.workflow.last_task = my_task
         self._on_complete_hook(my_task)
         for child in my_task.children:
-            # Don't like this, but this is the most expedient way of preventing cancelled tasks from reactivation
-            if child.state != TaskState.CANCELLED:
+            if not child._is_finished():
                 child.task_spec._update(child)
         my_task.workflow._task_completed_notify(my_task)
-
         self.completed_event.emit(my_task.workflow, my_task)
-        return True
 
     def _on_complete_hook(self, my_task):
         """
@@ -419,7 +405,6 @@ class TaskSpec(object):
                   'defines':self.defines,
                   'pre_assign':self.pre_assign,
                   'post_assign':self.post_assign,
-                  'locks':self.locks,
                   'lookahead':self.lookahead,
                   }
 
@@ -457,7 +442,6 @@ class TaskSpec(object):
         out.defines = s_state.get('defines')
         out.pre_assign = s_state.get('pre_assign')
         out.post_assign = s_state.get('post_assign')
-        out.locks = s_state.get('locks')
         out.lookahead = s_state.get('lookahead')
         return out
 

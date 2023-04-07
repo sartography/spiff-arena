@@ -50,18 +50,19 @@ describe('tasks', () => {
     );
 
     cy.contains('Task: get_user_generated_number_three');
-    cy.getBySel('form-nav-form2').click();
-    checkFormFieldIsReadOnly(
-      'get_user_generated_number_two',
-      '#root_user_generated_number_2'
-    );
-    cy.getBySel('form-nav-form1').click();
-    checkFormFieldIsReadOnly(
-      'get_user_generated_number_one',
-      '#root_user_generated_number_1'
-    );
-
-    cy.getBySel('form-nav-form3').click();
+    // TODO: remove this if we decide to completely kill form navigation
+    // cy.getBySel('form-nav-form2').click();
+    // checkFormFieldIsReadOnly(
+    //   'get_user_generated_number_two',
+    //   '#root_user_generated_number_2'
+    // );
+    // cy.getBySel('form-nav-form1').click();
+    // checkFormFieldIsReadOnly(
+    //   'get_user_generated_number_one',
+    //   '#root_user_generated_number_1'
+    // );
+    //
+    // cy.getBySel('form-nav-form3').click();
     submitInputIntoFormField(
       'get_user_generated_number_three',
       '#root_user_generated_number_3',

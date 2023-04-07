@@ -128,7 +128,7 @@ class ApiError(Exception):
         instance = cls(code, message, status_code=status_code)
         instance.task_id = task_spec.name or ""
         instance.task_name = task_spec.description or ""
-        if task_spec._wf_spec:
+        if hasattr(task_spec, "_wf_spec") and task_spec._wf_spec:
             instance.file_name = task_spec._wf_spec.file
         return instance
 
@@ -158,7 +158,8 @@ class ApiError(Exception):
                 task_trace=exp.task_trace,
             )
         elif isinstance(exp, WorkflowException) and exp.task_spec:
-            return ApiError.from_task_spec(error_code, message, exp.task_spec)
+            msg = message + ". " + str(exp)
+            return ApiError.from_task_spec(error_code, msg, exp.task_spec)
         else:
             return ApiError("workflow_error", str(exp))
 

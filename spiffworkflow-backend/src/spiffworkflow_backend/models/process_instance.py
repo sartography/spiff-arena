@@ -53,6 +53,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     """ProcessInstanceModel."""
 
     __tablename__ = "process_instance"
+    __allow_unmapped__ = True
     id: int = db.Column(db.Integer, primary_key=True)
     process_model_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     process_model_display_name: str = db.Column(db.String(255), nullable=False, index=True)
@@ -87,6 +88,10 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         "ProcessInstanceMetadataModel",
         cascade="delete",
     )  # type: ignore
+    process_instance_queue = relationship(
+        "ProcessInstanceQueueModel",
+        cascade="delete",
+    )  # type: ignore
 
     start_in_seconds: int | None = db.Column(db.Integer, index=True)
     end_in_seconds: int | None = db.Column(db.Integer, index=True)
@@ -96,7 +101,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     bpmn_version_control_type: str = db.Column(db.String(50))
     bpmn_version_control_identifier: str = db.Column(db.String(255))
-    spiff_step: int = db.Column(db.Integer)
 
     bpmn_xml_file_contents: str | None = None
     process_model_with_diagram_identifier: str | None = None
@@ -117,7 +121,6 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "bpmn_xml_file_contents": self.bpmn_xml_file_contents,
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
-            "spiff_step": self.spiff_step,
             "process_initiator_username": self.process_initiator.username,
         }
 

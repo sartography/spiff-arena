@@ -46,8 +46,9 @@ class MyJSONEncoder(DefaultJSONProvider):
             return obj.serialized
         elif isinstance(obj, sqlalchemy.engine.row.Row):  # type: ignore
             return_dict = {}
-            for row_key in obj.keys():
-                row_value = obj[row_key]
+            row_mapping = obj._mapping
+            for row_key in row_mapping.keys():
+                row_value = row_mapping[row_key]
                 if hasattr(row_value, "serialized"):
                     return_dict.update(row_value.serialized)
                 elif hasattr(row_value, "__dict__"):
