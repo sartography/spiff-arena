@@ -39,4 +39,6 @@ COPY --from=setup /app/build /app/build
 COPY --from=setup /app/bin /app/bin
 COPY --from=setup /app/node_modules.justserve /app/node_modules
 
+ENV REACT_APP_VERSION_INFO="123"
+
 ENTRYPOINT ["/app/bin/boot_server_in_docker"]

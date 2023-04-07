@@ -7,6 +7,11 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+if [[ -f app_version.json ]]; then
+  SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_REACT_APP_VERSION_INFO_JSON=$(cat app_version.json)
+  export SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_REACT_APP_VERSION_INFO_JSON
+fi
+
 # sort of like https://lithic.tech/blog/2020-05/react-dynamic-config, but without golang
 react_configs=$(env | grep -E "^SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_" || echo '')
 if [[ -n "$react_configs" ]]; then
