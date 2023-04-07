@@ -264,6 +264,7 @@ def login_return(code: str, state: str, session_state: str = "") -> Optional[Res
         )
 
     else:
+        current_app.logger.error(f"id_token not found in payload from provider: {auth_token_object}")
         raise ApiError(
             error_code="invalid_token",
             message="Login failed. Please try again",
