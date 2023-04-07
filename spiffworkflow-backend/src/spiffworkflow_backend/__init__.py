@@ -1,15 +1,14 @@
 """__init__."""
 import base64
 import faulthandler
+import json
 import os
 import sys
 from typing import Any
-from prometheus_flask_exporter import ConnexionPrometheusMetrics
 
 import connexion  # type: ignore
 import flask.app
 import flask.json
-import json
 import sqlalchemy
 from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
 from apscheduler.schedulers.base import BaseScheduler  # type: ignore
@@ -17,6 +16,7 @@ from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
 from flask_simple_crypt import SimpleCrypt  # type: ignore
+from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from werkzeug.exceptions import NotFound
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
@@ -190,11 +190,11 @@ def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.app
     app.config["PROMETHEUS_METRICS"] = metrics
     if os.path.isfile("app_version.json"):
         app_version_data = {}
-        with open("app_version.json", 'r') as f:
+        with open("app_version.json") as f:
             app_version_data = json.load(f)
         # prometheus does not allow periods in key names
-        app_version_data_normalized = {k.replace('.', '_') : v for k, v in app_version_data.items()}
-        metrics.info('app_version_info', 'Application Version Info', **app_version_data_normalized)
+        app_version_data_normalized = {k.replace(".", "_"): v for k, v in app_version_data.items()}
+        metrics.info("app_version_info", "Application Version Info", **app_version_data_normalized)
 
 
 def get_hacked_up_app_for_script() -> flask.app.Flask:
