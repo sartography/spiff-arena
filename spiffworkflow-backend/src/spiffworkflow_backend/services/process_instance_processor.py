@@ -419,6 +419,20 @@ class ProcessInstanceProcessor:
     #   * __get_bpmn_process_instance, which takes spec and subprocesses and instantiates and returns a BpmnWorkflow
     def __init__(self, process_instance_model: ProcessInstanceModel, validate_only: bool = False) -> None:
         """Create a Workflow Processor based on the serialized information available in the process_instance model."""
+        with ProcessInstanceQueueService.dequeued(process_instance_model):
+            try:
+                self.setup_processor_with_process_instance(
+                    process_instance_model=process_instance_model, validate_only=validate_only
+                )
+            except Exception as ex:
+                process_instance_model.status = ProcessInstanceStatus.error.value
+                db.session.add(process_instance_model)
+                db.session.commit()
+                raise ex
+
+    def setup_processor_with_process_instance(
+        self, process_instance_model: ProcessInstanceModel, validate_only: bool = False
+    ) -> None:
         tld = current_app.config["THREAD_LOCAL_DATA"]
         tld.process_instance_id = process_instance_model.id
 
