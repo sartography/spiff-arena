@@ -68,8 +68,6 @@ jobs:
         run: |
           touch app_version.json
           echo '${{ steps.meta.outputs.labels }}' > app_version.json
-        id: app_version_info
-        run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Build and push Frontend Docker image
         uses: docker/build-push-action@v4.0.0
         with:
