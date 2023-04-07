@@ -128,7 +128,7 @@ class ApiError(Exception):
         instance = cls(code, message, status_code=status_code)
         instance.task_id = task_spec.name or ""
         instance.task_name = task_spec.description or ""
-        if hasattr(task_spec, '_wf_spec') and task_spec._wf_spec:
+        if hasattr(task_spec, "_wf_spec") and task_spec._wf_spec:
             instance.file_name = task_spec._wf_spec.file
         return instance
 
