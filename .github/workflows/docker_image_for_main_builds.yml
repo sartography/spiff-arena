@@ -31,7 +31,7 @@ on:
   push:
     branches:
       - main
-      - feature/use_tasks_as_logs
+      - feature/prometheus-metrics
 
 jobs:
   create_frontend_docker_image:
@@ -64,6 +64,12 @@ jobs:
             type=ref,event=branch,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
 
+      - name: Write app verison info
+        run: |
+          touch app_version.json
+          echo '${{ steps.meta.outputs.labels }}' > app_version.json
+        id: app_version_info
+        run: echo "date=$(date -u +'%Y-%m-%d_%H-%M-%S')" >> "$GITHUB_OUTPUT"
       - name: Build and push Frontend Docker image
         uses: docker/build-push-action@v4.0.0
         with:
@@ -73,7 +79,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
       - run: echo 'TAGS' >> "$GITHUB_STEP_SUMMARY"
-      - run: echo 'for tag in ${{ steps.meta.outputs.tags }}; do echo "* $tag"; done' >> "$GITHUB_STEP_SUMMARY"
+      - run: for tag in ${{ steps.meta.outputs.tags }}; do echo "* $tag"; done >> "$GITHUB_STEP_SUMMARY"
 
   create_backend_docker_image:
     runs-on: ubuntu-latest

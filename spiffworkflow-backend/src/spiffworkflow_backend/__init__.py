@@ -4,7 +4,7 @@ import faulthandler
 import os
 import sys
 from typing import Any
-from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_flask_exporter import ConnexionPrometheusMetrics
 
 import connexion  # type: ignore
 import flask.app
@@ -128,17 +128,8 @@ def create_app() -> flask.app.Flask:
     connexion_app = connexion.FlaskApp(__name__, server_args={"instance_path": os.environ.get("FLASK_INSTANCE_PATH")})
     app = connexion_app.app
     app.config["CONNEXION_APP"] = connexion_app
-    metrics = PrometheusMetrics(app)
-    info = metrics.info('dynamic_info', 'Something dynamic')
-    info.set(42.1)
-    # metrics.register_endpoint('/metricss')
-
-    app.config["PROMETHEUS_METRICS"] = metrics
-    app_version_data = {}
-    with open("app_version.json", 'r') as f:
-        app_version_data = json.load(f)
-    metrics.info('app_info', 'Application info', version='1.0.3')
     app.config["SESSION_TYPE"] = "filesystem"
+    _setup_prometheus_metrics(app, connexion_app)
 
     setup_config(app)
     db.init_app(app)
@@ -192,6 +183,19 @@ def create_app() -> flask.app.Flask:
     app.after_request(set_new_access_token_in_cookie)
 
     return app  # type: ignore
+
+
+def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.apps.flask_app.FlaskApp) -> None:
+    metrics = ConnexionPrometheusMetrics(connexion_app)
+    info = metrics.info('dynamic_info', 'Something dynamic')
+    info.set(42.1)
+
+    app.config["PROMETHEUS_METRICS"] = metrics
+    app_version_data = {}
+    if os.path.isfile("app_version.json"):
+        with open("app_version.json", 'r') as f:
+            app_version_data = json.load(f)
+        metrics.info('app_version_info', 'Application Version Info', **app_version_data)
 
 
 def get_hacked_up_app_for_script() -> flask.app.Flask:
