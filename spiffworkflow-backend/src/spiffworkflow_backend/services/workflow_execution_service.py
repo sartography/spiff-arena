@@ -1,3 +1,4 @@
+import copy
 import time
 from typing import Callable
 from typing import Optional
@@ -138,9 +139,16 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 | TaskState.LIKELY
                 | TaskState.FUTURE
             ):
+                # these will be removed from the parent and then ignored
                 if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
-                    TaskService.remove_spiff_task_from_parent(waiting_spiff_task, self.task_service.task_models)
                     continue
+
+                # removing elements from an array causes the loop to exit so deep copy the array first
+                waiting_children = copy.copy(waiting_spiff_task.children)
+                for waiting_child in waiting_children:
+                    if waiting_child._has_state(TaskState.PREDICTED_MASK):
+                        waiting_spiff_task.children.remove(waiting_child)
+
                 self.task_service.update_task_model_with_spiff_task(waiting_spiff_task)
 
             # # NOTE: process-spiff-tasks-list: this would be the ideal way to handle all tasks
