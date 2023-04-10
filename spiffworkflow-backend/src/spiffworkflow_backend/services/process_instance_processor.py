@@ -1649,7 +1649,7 @@ class ProcessInstanceProcessor:
             self.save,
         )
         try:
-            execution_service.do_engine_steps(exit_at, save)
+            execution_service.run_until_user_input_required_and_save(exit_at, save)
         finally:
             # clear out failling spiff tasks here since the ProcessInstanceProcessor creates an instance of the
             #    script engine on a class variable.
@@ -1839,7 +1839,7 @@ class ProcessInstanceProcessor:
         Return either the most recent task data or--if the process instance is complete--
         the process data.
         """
-        if self.process_instance_model.status == "complete":
+        if self.process_instance_model.status == ProcessInstanceStatus.complete.value:
             return self.get_data()
 
         most_recent_task = None
