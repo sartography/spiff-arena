@@ -1889,8 +1889,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "main"
-resolved_reference = "1c877dd768053b4cce4c4e14c92caa3216371751"
+reference = "bugfix/run-boundary-events-from-engine-steps"
+resolved_reference = "067d6a723b2533ba51d83f94f7f3609004474673"
 
 [[package]]
 name = "sqlalchemy"
@@ -2273,7 +2273,7 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "9fea44386fbab29102a051a254058909568c4ee3dbd6a402fb91aacbcf1f7fd2"
+content-hash = "3f192bd96668c070edc1270804ba560b7e0df3df09b7f23f2651b2dcd68c1500"
 
 [metadata.files]
 alabaster = [
