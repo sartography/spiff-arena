@@ -113,10 +113,10 @@ class ProcessInstanceService:
             .all()
         )
         for process_instance in records:
-            processor = None
             try:
                 current_app.logger.info(f"Processing process_instance {process_instance.id}")
-                processor = ProcessInstanceProcessor(process_instance)
+                with ProcessInstanceQueueService.dequeued(process_instance):
+                    processor = ProcessInstanceProcessor(process_instance)
                 if cls.can_optimistically_skip(processor, status_value):
                     current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
                     continue

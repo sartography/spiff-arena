@@ -10,6 +10,10 @@ from spiffworkflow_backend.models.process_instance_queue import (
 )
 
 
+class ExpectedLockNotFoundError(Exception):
+    pass
+
+
 class ProcessInstanceLockService:
     """TODO: comment."""
 
@@ -49,8 +53,10 @@ class ProcessInstanceLockService:
 
     @classmethod
     def unlock(cls, process_instance_id: int) -> ProcessInstanceQueueModel:
-        ctx = cls.get_thread_local_locking_context()
-        return ctx["locks"].pop(process_instance_id)  # type: ignore
+        queue_model = cls.try_unlock(process_instance_id)
+        if queue_model is None:
+            raise ExpectedLockNotFoundError(f"Could not find a lock for process instance: {process_instance_id}")
+        return queue_model
 
     @classmethod
     def try_unlock(cls, process_instance_id: int) -> Optional[ProcessInstanceQueueModel]:
