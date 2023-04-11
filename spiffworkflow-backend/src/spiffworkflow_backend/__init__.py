@@ -1,6 +1,7 @@
 """__init__."""
 import base64
 import faulthandler
+import json
 import os
 import sys
 from typing import Any
@@ -15,6 +16,7 @@ from flask.json.provider import DefaultJSONProvider
 from flask_cors import CORS  # type: ignore
 from flask_mail import Mail  # type: ignore
 from flask_simple_crypt import SimpleCrypt  # type: ignore
+from prometheus_flask_exporter import ConnexionPrometheusMetrics  # type: ignore
 from werkzeug.exceptions import NotFound
 
 import spiffworkflow_backend.load_database_models  # noqa: F401
@@ -127,6 +129,7 @@ def create_app() -> flask.app.Flask:
     app = connexion_app.app
     app.config["CONNEXION_APP"] = connexion_app
     app.config["SESSION_TYPE"] = "filesystem"
+    _setup_prometheus_metrics(app, connexion_app)
 
     setup_config(app)
     db.init_app(app)
@@ -180,6 +183,18 @@ def create_app() -> flask.app.Flask:
     app.after_request(set_new_access_token_in_cookie)
 
     return app  # type: ignore
+
+
+def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.apps.flask_app.FlaskApp) -> None:
+    metrics = ConnexionPrometheusMetrics(connexion_app)
+    app.config["PROMETHEUS_METRICS"] = metrics
+    if os.path.isfile("version_info.json"):
+        version_info_data = {}
+        with open("version_info.json") as f:
+            version_info_data = json.load(f)
+        # prometheus does not allow periods in key names
+        version_info_data_normalized = {k.replace(".", "_"): v for k, v in version_info_data.items()}
+        metrics.info("version_info", "Application Version Info", **version_info_data_normalized)
 
 
 def get_hacked_up_app_for_script() -> flask.app.Flask:

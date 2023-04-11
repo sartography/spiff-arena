@@ -24,7 +24,7 @@ RUN cp /app/package.json.bak /app/package.json
 # npx can-i-ignore-scripts can check that it's safe to ignore scripts.
 RUN npm ci --ignore-scripts
 
-RUN npm run build
+RUN ./bin/build
 
 # Final image without setup dependencies.
 FROM base AS final
