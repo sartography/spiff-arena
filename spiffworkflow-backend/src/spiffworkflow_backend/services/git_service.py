@@ -1,5 +1,6 @@
 """Git_service."""
 import os
+import re
 import shutil
 import subprocess  # noqa we need the subprocess module to safely run the git commands
 import uuid
@@ -253,6 +254,12 @@ class GitService:
 
             # build url for github page to open PR
             git_remote = cls.run_shell_command_to_get_stdout(["git", "config", "--get", "remote.origin.url"])
+            git_remote = re.sub(
+                pattern=r'^git@([^:]+):',
+                repl='https://\\1/',
+                string=git_remote
+            )
+
             remote_url = git_remote.strip().replace(".git", "")
             pr_url = f"{remote_url}/compare/{branch_to_update}...{branch_to_pull_request}?expand=1"
 
