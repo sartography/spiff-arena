@@ -1,18 +1,24 @@
+/* eslint-disable sonarjs/cognitive-complexity */
+
 import { useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 // @ts-ignore
 import { Button, Modal } from '@carbon/react';
+import { Can } from '@casl/react';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import HttpService from '../services/HttpService';
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
-import { ProcessFile } from '../interfaces';
+import { ProcessFile, PermissionsToCheck } from '../interfaces';
 import { Notification } from '../components/Notification';
 import useAPIError from '../hooks/UseApiError';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 // NOTE: This is mostly the same as ProcessModelEditDiagram and if we go this route could
 // possibly be merged into it. I'm leaving as a separate file now in case it does
 // end up diverging greatly
+
 export default function ReactFormEditor() {
   const params = useParams();
   const { addError, removeError } = useAPIError();
@@ -20,6 +26,12 @@ export default function ReactFormEditor() {
   const [newFileName, setNewFileName] = useState('');
   const searchParams = useSearchParams()[0];
   const handleShowFileNameEditor = () => setShowFileNameEditor(true);
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processModelShowPath]: ['PUT'],
+    [targetUris.processModelFileShowPath]: ['POST', 'GET', 'PUT', 'DELETE'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
 
   const [displaySaveFileMessage, setDisplaySaveFileMessage] =
@@ -42,6 +54,7 @@ export default function ReactFormEditor() {
   })();
 
   const hasDiagram = fileExtension === 'bpmn' || fileExtension === 'dmn';
+  const hasFormBuilder = fileExtension === 'json';
 
   const editorDefaultLanguage = (() => {
     if (fileExtension === 'json') {
@@ -210,42 +223,60 @@ export default function ReactFormEditor() {
         </h1>
         {newFileNameBox()}
         {saveFileMessage()}
-        <Button onClick={saveFile} variant="danger" data-qa="file-save-button">
-          Save
-        </Button>
 
-        {params.file_name ? (
-          <ButtonWithConfirmation
-            data-qa="delete-process-model-file"
-            description={`Delete file ${params.file_name}?`}
-            onConfirmation={deleteFile}
-            buttonLabel="Delete"
-          />
-        ) : null}
-        <Button
-          onClick={() =>
-            navigate(
-              `/admin/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
-            )
-          }
-          variant="danger"
-          data-qa="form-builder-button"
-        >
-          Form Builder
-        </Button>
-        {hasDiagram ? (
+        <Can I="PUT" a={targetUris.processModelFileShowPath} ability={ability}>
           <Button
-            onClick={() =>
-              navigate(
-                `/admin/process-models/${modifiedProcessModelId}/files/${params.file_name}`
-              )
-            }
+            onClick={saveFile}
             variant="danger"
-            data-qa="view-diagram-button"
+            data-qa="file-save-button"
           >
-            View Diagram
+            Save
           </Button>
-        ) : null}
+        </Can>
+        <Can
+          I="DELETE"
+          a={targetUris.processModelFileShowPath}
+          ability={ability}
+        >
+          {params.file_name ? (
+            <ButtonWithConfirmation
+              data-qa="delete-process-model-file"
+              description={`Delete file ${params.file_name}?`}
+              onConfirmation={deleteFile}
+              buttonLabel="Delete"
+            />
+          ) : null}
+        </Can>
+        <Can I="PUT" a={targetUris.processModelFileShowPath} ability={ability}>
+          {hasFormBuilder ? (
+            <Button
+              onClick={() =>
+                navigate(
+                  `/admin/process-models/${params.process_model_id}/form-builder${formBuildFileParam}`
+                )
+              }
+              variant="danger"
+              data-qa="form-builder-button"
+            >
+              Form Builder
+            </Button>
+          ) : null}
+        </Can>
+        <Can I="GET" a={targetUris.processModelFileShowPath} ability={ability}>
+          {hasDiagram ? (
+            <Button
+              onClick={() =>
+                navigate(
+                  `/admin/process-models/${modifiedProcessModelId}/files/${params.file_name}`
+                )
+              }
+              variant="danger"
+              data-qa="view-diagram-button"
+            >
+              View Diagram
+            </Button>
+          ) : null}
+        </Can>
         <Editor
           height={600}
           width="auto"
