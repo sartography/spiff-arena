@@ -31,7 +31,6 @@ on:
   push:
     branches:
       - main
-      - feature/prometheus-metrics
 
 jobs:
   create_frontend_docker_image:
