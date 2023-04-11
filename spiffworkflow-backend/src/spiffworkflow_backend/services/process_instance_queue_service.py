@@ -90,9 +90,11 @@ class ProcessInstanceQueueService:
     @contextlib.contextmanager
     def dequeued(cls, process_instance: ProcessInstanceModel) -> Generator[None, None, None]:
         reentering_lock = ProcessInstanceLockService.has_lock(process_instance.id)
+        if not reentering_lock:
+            # this can blow up with ProcessInstanceIsNotEnqueuedError or ProcessInstanceIsAlreadyLockedError
+            # that's fine, let it bubble up. and in that case, there's no need to _enqueue / unlock
+            cls._dequeue(process_instance)
         try:
-            if not reentering_lock:
-                cls._dequeue(process_instance)
             yield
         finally:
             if not reentering_lock:
