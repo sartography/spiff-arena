@@ -24,7 +24,7 @@ RUN cp /app/package.json.bak /app/package.json
 # npx can-i-ignore-scripts can check that it's safe to ignore scripts.
 RUN npm ci --ignore-scripts
 
-RUN npm run build
+RUN ./bin/build
 
 # Final image without setup dependencies.
 FROM base AS final
@@ -38,7 +38,5 @@ ENV PORT0=7001
 COPY --from=setup /app/build /app/build
 COPY --from=setup /app/bin /app/bin
 COPY --from=setup /app/node_modules.justserve /app/node_modules
-
-ENV REACT_APP_VERSION_INFO="123"
 
 ENTRYPOINT ["/app/bin/boot_server_in_docker"]
