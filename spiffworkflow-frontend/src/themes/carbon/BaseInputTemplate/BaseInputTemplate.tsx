@@ -1,5 +1,5 @@
 // @ts-ignore
-import { TextInput } from '@carbon/react';
+import { DatePicker, DatePickerInput, TextInput } from '@carbon/react';
 import {
   getInputProps,
   FormContextType,
@@ -101,35 +101,65 @@ export default function BaseInputTemplate<
     }
   }
 
-  return (
-    <>
-      <TextInput
-        id={id}
-        name={id}
-        className="text-input"
-        helperText={helperText}
-        invalid={invalid}
-        invalidText={errorMessageForField}
-        autoFocus={autofocus}
-        disabled={disabled || readonly}
-        value={value || value === 0 ? value : ''}
-        onChange={_onChange}
-        onBlur={_onBlur}
-        onFocus={_onFocus}
-        // eslint-disable-next-line react/jsx-props-no-spreading
-        {...inputProps}
-      />
-      {Array.isArray(schema.examples) && (
-        <datalist key={`datalist_${id}`} id={`examples_${id}`}>
-          {[
-            ...new Set(
-              schema.examples.concat(schema.default ? [schema.default] : [])
-            ),
-          ].map((example: any) => (
-            <option key={example} value={example} />
-          ))}
-        </datalist>
-      )}
-    </>
-  );
+  let component = null;
+  if (type === 'date') {
+    component = (
+      <DatePicker
+        className="date-input"
+        dateFormat="m-d-Y"
+        datePickerType="single"
+      >
+        <DatePickerInput
+          id={id}
+          placeholder="m-d-Y"
+          helperText={helperText}
+          type="text"
+          size="md"
+          autocomplete="off"
+          allowInput={false}
+          onChange={_onChange}
+          value={value || value === 0 ? value : ''}
+          invalid={invalid}
+          invalidText={errorMessageForField}
+          autoFocus={autofocus}
+          disabled={disabled || readonly}
+          onBlur={_onBlur}
+          onFocus={_onFocus}
+        />
+      </DatePicker>
+    );
+  } else {
+    component = (
+      <>
+        <TextInput
+          id={id}
+          name={id}
+          className="text-input"
+          helperText={helperText}
+          invalid={invalid}
+          invalidText={errorMessageForField}
+          autoFocus={autofocus}
+          disabled={disabled || readonly}
+          value={value || value === 0 ? value : ''}
+          onChange={_onChange}
+          onBlur={_onBlur}
+          onFocus={_onFocus}
+          // eslint-disable-next-line react/jsx-props-no-spreading
+          {...inputProps}
+        />
+        {Array.isArray(schema.examples) && (
+          <datalist key={`datalist_${id}`} id={`examples_${id}`}>
+            {[
+              ...new Set(
+                schema.examples.concat(schema.default ? [schema.default] : [])
+              ),
+            ].map((example: any) => (
+              <option key={example} value={example} />
+            ))}
+          </datalist>
+        )}
+      </>
+    );
+  }
+  return component;
 }

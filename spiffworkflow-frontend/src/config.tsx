@@ -75,9 +75,26 @@ export const PROCESS_STATUSES = [
 ];
 
 // with time: yyyy-MM-dd HH:mm:ss
-export const DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm:ss';
+let generalDateFormat = 'yyyy-MM-dd';
+if (
+  'spiffworkflowFrontendJsenv' in window &&
+  'DATE_FORMAT' in window.spiffworkflowFrontendJsenv
+) {
+  generalDateFormat = window.spiffworkflowFrontendJsenv.DATE_FORMAT;
+}
+const supportedDateFormats = ['yyyy-MM-dd', 'dd-MM-yyyy', 'MM-dd-yyyy'];
+if (!supportedDateFormats.includes(generalDateFormat)) {
+  throw new Error(
+    `Given SPIFFWORKFLOW_FRONTEND_RUNTIME_CONFIG_DATE_FORMAT is not supported. Given: ${generalDateFormat}. Valid options are: ${supportedDateFormats}`
+  );
+}
+const carbonDateFormat = generalDateFormat
+  .replace('yyyy', 'Y')
+  .replace('MM', 'm')
+  .replace('dd', 'd');
+export const DATE_TIME_FORMAT = `${generalDateFormat} HH:mm:ss`;
 export const TIME_FORMAT_HOURS_MINUTES = 'HH:mm';
-export const DATE_FORMAT = 'yyyy-MM-dd';
-export const DATE_FORMAT_CARBON = 'Y-m-d';
+export const DATE_FORMAT = generalDateFormat;
+export const DATE_FORMAT_CARBON = carbonDateFormat;
 
 export const SPIFF_ENVIRONMENT = spiffEnvironment;

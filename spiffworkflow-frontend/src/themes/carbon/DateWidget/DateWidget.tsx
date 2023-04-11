@@ -8,9 +8,11 @@ function DateWidget(props: WidgetProps) {
     registry,
     options
   );
+
   return (
     <BaseInputTemplate
       type="date"
+      dateFormat="Y-m-d"
       InputLabelProps={{
         shrink: true,
       }}
