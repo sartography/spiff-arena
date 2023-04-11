@@ -83,10 +83,6 @@ export default function ProcessModelShow() {
   );
 
   useEffect(() => {
-    console.log(
-      'process.env.REACT_APP_VERSION_INFO',
-      process.env.REACT_APP_VERSION_INFO
-    );
     const processResult = (result: ProcessModel) => {
       setProcessModel(result);
       setReloadModel(false);
