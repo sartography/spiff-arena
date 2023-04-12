@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { getTemplate, WidgetProps } from '@rjsf/utils';
+import { dateStringToYMDFormat } from '../../../helpers';
 
 function DateWidget(props: WidgetProps) {
   const { onChange, options, registry } = props;
@@ -9,7 +10,11 @@ function DateWidget(props: WidgetProps) {
     options
   );
   const handleChange = useCallback(
-    (value: any) => onChange(value || undefined),
+    (value: any) => {
+      // react json schema forces y-m-d format for dates
+      const newValue = dateStringToYMDFormat(value);
+      onChange(newValue || undefined);
+    },
     [onChange]
   );
 

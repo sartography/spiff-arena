@@ -10,6 +10,7 @@ import {
 
 import { useCallback } from 'react';
 import { DATE_FORMAT, DATE_FORMAT_CARBON } from '../../../config';
+import { ymdDateStringToConfiguredFormat } from '../../../helpers';
 
 /** The `BaseInputTemplate` is the template to use to render the basic `<input>` component for the `core` theme.
  * It is used as the template for rendering many of the <input> based widgets that differ by `type` and callbacks only.
@@ -104,6 +105,13 @@ export default function BaseInputTemplate<
 
   let component = null;
   if (type === 'date') {
+    // display the date in a date input box as the config wants.
+    // it should in be y-m-d when it gets here.
+    let dateValue: string | null = '';
+    if (value || value === 0) {
+      dateValue = ymdDateStringToConfiguredFormat(value);
+    }
+
     component = (
       <DatePicker
         dateFormat={DATE_FORMAT_CARBON}
@@ -116,10 +124,10 @@ export default function BaseInputTemplate<
           helperText={helperText}
           type="text"
           size="md"
+          value={dateValue}
           autocomplete="off"
           allowInput={false}
           onChange={_onChange}
-          value={value || value === 0 ? value : ''}
           invalid={invalid}
           invalidText={errorMessageForField}
           autoFocus={autofocus}
