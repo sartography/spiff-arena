@@ -58,6 +58,7 @@ export interface Task {
 export interface TaskIds {
   completed: Task[];
   readyOrWaiting: Task[];
+  cancelled: Task[];
 }
 
 export interface ProcessInstanceTask {

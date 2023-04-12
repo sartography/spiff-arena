@@ -231,13 +231,19 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   const getTaskIds = () => {
-    const taskIds: TaskIds = { completed: [], readyOrWaiting: [] };
+    const taskIds: TaskIds = {
+      completed: [],
+      readyOrWaiting: [],
+      cancelled: [],
+    };
     if (tasks) {
       tasks.forEach(function getUserTasksElement(task: Task) {
         if (task.state === 'COMPLETED') {
           taskIds.completed.push(task);
         } else if (task.state === 'READY' || task.state === 'WAITING') {
           taskIds.readyOrWaiting.push(task);
+        } else if (task.state === 'CANCELLED') {
+          taskIds.cancelled.push(task);
         }
         return null;
       });
@@ -1152,6 +1158,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           fileName={processInstance.bpmn_xml_file_contents || ''}
           readyOrWaitingProcessInstanceTasks={taskIds.readyOrWaiting}
           completedProcessInstanceTasks={taskIds.completed}
+          cancelledProcessInstanceTasks={taskIds.cancelled}
           diagramType="readonly"
           onElementClick={handleClickedDiagramTask}
         />

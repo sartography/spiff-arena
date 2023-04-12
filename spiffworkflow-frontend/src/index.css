@@ -142,6 +142,10 @@ code {
   fill: grey !important;
   opacity: .4;
 }
+.cancelled-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
+  fill: blue !important;
+  opacity: .2;
+}
 
 .accordion-item-label {
   vertical-align: middle;
