@@ -7,6 +7,7 @@ import MyTasks from './MyTasks';
 import GroupedTasks from './GroupedTasks';
 import CompletedInstances from './CompletedInstances';
 import CreateNewInstance from './CreateNewInstance';
+import InProgressInstances from './InProgressInstances';
 
 export default function HomePageRoutes() {
   const location = useLocation();
@@ -51,10 +52,10 @@ export default function HomePageRoutes() {
     <>
       {renderTabs()}
       <Routes>
-        <Route path="/" element={<GroupedTasks />} />
+        <Route path="/" element={<InProgressInstances />} />
         <Route path="my-tasks" element={<MyTasks />} />
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
-        <Route path="grouped" element={<GroupedTasks />} />
+        <Route path="grouped" element={<InProgressInstances />} />
         <Route path="completed-instances" element={<CompletedInstances />} />
         <Route path="create-new-instance" element={<CreateNewInstance />} />
       </Routes>

@@ -47,6 +47,7 @@ class ProcessInstanceReportFilter:
     initiated_by_me: Optional[bool] = None
     has_terminal_status: Optional[bool] = None
     with_tasks_completed_by_me: Optional[bool] = None
+    with_tasks_i_can_complete: Optional[bool] = None
     with_tasks_assigned_to_my_group: Optional[bool] = None
     with_relation_to_me: Optional[bool] = None
     process_initiator_username: Optional[str] = None
@@ -77,6 +78,8 @@ class ProcessInstanceReportFilter:
             d["has_terminal_status"] = str(self.has_terminal_status).lower()
         if self.with_tasks_completed_by_me is not None:
             d["with_tasks_completed_by_me"] = str(self.with_tasks_completed_by_me).lower()
+        if self.with_tasks_i_can_complete is not None:
+            d["with_tasks_i_can_complete"] = str(self.with_tasks_i_can_complete).lower()
         if self.with_tasks_assigned_to_my_group is not None:
             d["with_tasks_assigned_to_my_group"] = str(self.with_tasks_assigned_to_my_group).lower()
         if self.with_relation_to_me is not None:
@@ -140,6 +143,31 @@ class ProcessInstanceReportService:
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
+            "system_report_in_progress_instances_initiated_by_me": {
+                "columns": [
+                    {"Header": "id", "accessor": "id"},
+                    {
+                        "Header": "process_model_display_name",
+                        "accessor": "process_model_display_name",
+                    },
+                    {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
+                    {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
+                    {"Header": "status", "accessor": "status"},
+                ],
+                "filter_by": [
+                    {"field_name": "initiated_by_me", "field_value": "true"},
+                    {"field_name": "has_terminal_status", "field_value": "false"},
+                ],
+                "order_by": ["-start_in_seconds", "-id"],
+            },
+            "system_report_in_progress_instances_with_tasks_for_me": {
+                "columns": cls.builtin_column_options(),
+                "filter_by": [
+                    {"field_name": "with_tasks_i_can_complete", "field_value": "true"},
+                    {"field_name": "has_terminal_status", "field_value": "false"},
+                ],
+                "order_by": ["-start_in_seconds", "-id"],
+            },
         }
 
         if metadata_key not in temp_system_metadata_map:
@@ -199,7 +227,12 @@ class ProcessInstanceReportService:
 
         def bool_value(key: str) -> Optional[bool]:
             """Bool_value."""
-            return bool(filters[key]) if key in filters else None
+            if key not in filters:
+                return None
+            # bool returns True if not an empty string so check explicitly for false
+            if filters[key] in ['false', 'False']:
+                return False
+            return bool(filters[key])
 
         def int_value(key: str) -> Optional[int]:
             """Int_value."""
@@ -219,6 +252,7 @@ class ProcessInstanceReportService:
         initiated_by_me = bool_value("initiated_by_me")
         has_terminal_status = bool_value("has_terminal_status")
         with_tasks_completed_by_me = bool_value("with_tasks_completed_by_me")
+        with_tasks_i_can_complete = bool_value("with_tasks_i_can_complete")
         with_tasks_assigned_to_my_group = bool_value("with_tasks_assigned_to_my_group")
         with_relation_to_me = bool_value("with_relation_to_me")
         process_initiator_username = filters.get("process_initiator_username")
@@ -236,6 +270,7 @@ class ProcessInstanceReportService:
             initiated_by_me=initiated_by_me,
             has_terminal_status=has_terminal_status,
             with_tasks_completed_by_me=with_tasks_completed_by_me,
+            with_tasks_i_can_complete=with_tasks_i_can_complete,
             with_tasks_assigned_to_my_group=with_tasks_assigned_to_my_group,
             with_relation_to_me=with_relation_to_me,
             process_initiator_username=process_initiator_username,
@@ -259,6 +294,7 @@ class ProcessInstanceReportService:
         initiated_by_me: Optional[bool] = None,
         has_terminal_status: Optional[bool] = None,
         with_tasks_completed_by_me: Optional[bool] = None,
+        with_tasks_i_can_complete: Optional[bool] = None,
         with_tasks_assigned_to_my_group: Optional[bool] = None,
         with_relation_to_me: Optional[bool] = None,
         process_initiator_username: Optional[str] = None,
@@ -288,6 +324,8 @@ class ProcessInstanceReportService:
             report_filter.has_terminal_status = has_terminal_status
         if with_tasks_completed_by_me is not None:
             report_filter.with_tasks_completed_by_me = with_tasks_completed_by_me
+        if with_tasks_i_can_complete is not None:
+            report_filter.with_tasks_i_can_complete = with_tasks_i_can_complete
         if process_initiator_username is not None:
             report_filter.process_initiator_username = process_initiator_username
         if report_column_list is not None:
@@ -405,6 +443,10 @@ class ProcessInstanceReportService:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
             )
+        elif report_filter.has_terminal_status is False:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.status.not_in(ProcessInstanceModel.terminal_statuses())  # type: ignore
+            )
 
         if report_filter.process_initiator_username is not None:
             initiator = UserModel.query.filter_by(username=report_filter.process_initiator_username).first()
@@ -416,6 +458,7 @@ class ProcessInstanceReportService:
         if (
             not report_filter.with_tasks_completed_by_me
             and not report_filter.with_tasks_assigned_to_my_group
+            and not report_filter.with_tasks_i_can_complete
             and report_filter.with_relation_to_me is True
         ):
             process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(
@@ -442,6 +485,21 @@ class ProcessInstanceReportService:
                     HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
                     HumanTaskModel.completed_by_user_id == user.id,
                 ),
+            )
+
+        if report_filter.with_tasks_i_can_complete is True:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.process_initiator_id != user.id
+            )
+            process_instance_query = process_instance_query.join(
+                HumanTaskModel,
+                HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
+            ).join(
+                HumanTaskUserModel,
+                and_(
+                    HumanTaskUserModel.human_task_id == HumanTaskModel.id,
+                    HumanTaskUserModel.user_id == user.id
+                )
             )
 
         if report_filter.with_tasks_assigned_to_my_group is True:
