@@ -96,6 +96,11 @@ class ProcessInstanceQueueService:
             cls._dequeue(process_instance)
         try:
             yield
+        except Exception as ex:
+            process_instance.status = ProcessInstanceStatus.error.value
+            db.session.add(process_instance)
+            db.session.commit()
+            raise ex
         finally:
             if not reentering_lock:
                 cls._enqueue(process_instance)
