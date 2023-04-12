@@ -29,9 +29,9 @@ export default function ProcessModelSearch({
   };
 
   const getFullProcessModelLabel = (processModel: ProcessModel) => {
-    return `${processModel.id} (${getParentGroupsDisplayName(processModel)} ${
+    return `${getParentGroupsDisplayName(processModel)} / ${
       processModel.display_name
-    })`;
+    } (${processModel.id})`;
   };
 
   const shouldFilterProcessModel = (options: any) => {
