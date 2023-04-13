@@ -18,13 +18,12 @@ export default function CompletedInstances() {
     }
 
     return userGroups.map((userGroup: string) => {
+      const titleText = `This is a list of instances with tasks that were completed by the ${userGroup} group.`;
       return (
         <>
-          <h2>With tasks completed by group: {userGroup}</h2>
-          <p className="data-table-description">
-            This is a list of instances with tasks that were completed by the{' '}
-            {userGroup} group.
-          </p>
+          <h2 title={titleText} className="process-instance-table-header">
+            With tasks completed by <strong>{userGroup}</strong>
+          </h2>
           <ProcessInstanceListTable
             filtersEnabled={false}
             paginationQueryParamPrefix="group_completed_instances"
@@ -40,12 +39,19 @@ export default function CompletedInstances() {
     });
   };
 
+  const startedByMeTitleText =
+    'This is a list of instances you started that are now complete.';
+  const withTasksCompletedByMeTitleText =
+    'This is a list of instances where you have completed tasks.';
+
   return (
     <>
-      <h2>My completed instances</h2>
-      <p className="data-table-description">
-        This is a list of instances you started that are now complete.
-      </p>
+      <h2
+        title={startedByMeTitleText}
+        className="process-instance-table-header"
+      >
+        Started by me
+      </h2>
       <ProcessInstanceListTable
         filtersEnabled={false}
         paginationQueryParamPrefix="my_completed_instances"
@@ -56,10 +62,12 @@ export default function CompletedInstances() {
         paginationClassName="with-large-bottom-margin"
         autoReload
       />
-      <h2>With tasks completed by me</h2>
-      <p className="data-table-description">
-        This is a list of instances where you have completed tasks.
-      </p>
+      <h2
+        title={withTasksCompletedByMeTitleText}
+        className="process-instance-table-header"
+      >
+        With tasks completed by me
+      </h2>
       <ProcessInstanceListTable
         filtersEnabled={false}
         paginationQueryParamPrefix="my_completed_tasks"
