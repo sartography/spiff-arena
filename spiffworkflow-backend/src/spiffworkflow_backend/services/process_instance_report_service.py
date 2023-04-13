@@ -168,6 +168,17 @@ class ProcessInstanceReportService:
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
+            "system_report_in_progress_instances_with_tasks_for_my_group": {
+                "columns": cls.builtin_column_options(),
+                "filter_by": [
+                    {
+                        "field_name": "with_tasks_assigned_to_my_group",
+                        "field_value": "true",
+                    },
+                    {"field_name": "has_terminal_status", "field_value": "false"},
+                ],
+                "order_by": ["-start_in_seconds", "-id"],
+            },
         }
 
         if metadata_key not in temp_system_metadata_map:
@@ -350,6 +361,8 @@ class ProcessInstanceReportService:
         for process_instance_row in process_instance_sqlalchemy_rows:
             process_instance_mapping = process_instance_row._mapping
             process_instance_dict = process_instance_row[0].serialized
+            if 'task_guid' in process_instance_mapping:
+                process_instance_dict['task_guid'] = process_instance_mapping['task_guid']
             for metadata_column in metadata_columns:
                 if metadata_column["accessor"] not in process_instance_dict:
                     process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[
@@ -493,7 +506,10 @@ class ProcessInstanceReportService:
             )
             process_instance_query = process_instance_query.join(
                 HumanTaskModel,
-                HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
+                and_(
+                    HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
+                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                )
             ).join(
                 HumanTaskUserModel,
                 and_(
