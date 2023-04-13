@@ -39,7 +39,7 @@ describe('pp1', () => {
     cy.login('core-a1.contributor', 'core-a1.contributor');
     cy.visit('/');
     cy.contains('Start New +').click();
-    cy.contains('New Demand Request - Procurement').click();
+    cy.contains('Request Goods/Services').click();
     cy.runPrimaryBpmnFile(true);
 
     cy.url().then((currentUrl) => {
