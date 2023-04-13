@@ -1303,6 +1303,111 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const getWaitingForTableCellComponent = (processInstanceTask: any) => {
+    let fullUsernameString = '';
+    let shortUsernameString = '';
+    if (processInstanceTask.potential_owner_usernames) {
+      fullUsernameString = processInstanceTask.potential_owner_usernames;
+      const usernames =
+        processInstanceTask.potential_owner_usernames.split(',');
+      const firstTwoUsernames = usernames.slice(0, 2);
+      if (usernames.length > 2) {
+        firstTwoUsernames.push('...');
+      }
+      shortUsernameString = firstTwoUsernames.join(',');
+    }
+    if (processInstanceTask.assigned_user_group_identifier) {
+      fullUsernameString = processInstanceTask.assigned_user_group_identifier;
+      shortUsernameString = processInstanceTask.assigned_user_group_identifier;
+    }
+    return <span title={fullUsernameString}>{shortUsernameString}</span>;
+  };
+  const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
+    return <span data-qa="paginated-entity-id">{id}</span>;
+  };
+  const formatProcessModelIdentifier = (_row: any, identifier: any) => {
+    return <span>{identifier}</span>;
+  };
+  const formatProcessModelDisplayName = (_row: any, identifier: any) => {
+    return <span>{identifier}</span>;
+  };
+
+  const formatSecondsForDisplay = (_row: any, seconds: any) => {
+    return convertSecondsToFormattedDateTime(seconds) || '-';
+  };
+  const defaultFormatter = (_row: any, value: any) => {
+    return value;
+  };
+
+  const formattedColumn = (row: any, column: any) => {
+    const reportColumnFormatters: Record<string, any> = {
+      id: formatProcessInstanceId,
+      process_model_identifier: formatProcessModelIdentifier,
+      process_model_display_name: formatProcessModelDisplayName,
+      start_in_seconds: formatSecondsForDisplay,
+      end_in_seconds: formatSecondsForDisplay,
+      updated_at_in_seconds: formatSecondsForDisplay,
+    };
+    const formatter =
+      reportColumnFormatters[column.accessor] ?? defaultFormatter;
+    const value = row[column.accessor];
+    const modifiedModelId = modifyProcessIdentifierForPathParam(
+      row.process_model_identifier
+    );
+    const navigateToProcessInstance = () => {
+      navigate(`${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`);
+    };
+    const navigateToProcessModel = () => {
+      navigate(`/admin/process-models/${modifiedModelId}`);
+    };
+
+    if (column.accessor === 'status') {
+      return (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <td
+          onClick={navigateToProcessInstance}
+          onKeyDown={navigateToProcessInstance}
+          data-qa={`process-instance-status-${value}`}
+        >
+          {formatter(row, value)}
+        </td>
+      );
+    }
+    if (column.accessor === 'process_model_display_name') {
+      const pmStyle = { background: 'rgba(0, 0, 0, .02)' };
+      return (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <td
+          style={pmStyle}
+          onClick={navigateToProcessModel}
+          onKeyDown={navigateToProcessModel}
+        >
+          {formatter(row, value)}
+        </td>
+      );
+    }
+    if (column.accessor === 'waiting_for') {
+      return <td>{getWaitingForTableCellComponent(row)}</td>;
+    }
+    if (column.accessor === 'updated_at_in_seconds') {
+      return (
+        <TableCellWithTimeAgoInWords
+          timeInSeconds={row.updated_at_in_seconds}
+        />
+      );
+    }
+    return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+      <td
+        data-qa={`process-instance-show-link-${column.accessor}`}
+        onKeyDown={navigateToProcessModel}
+        onClick={navigateToProcessInstance}
+      >
+        {formatter(row, value)}
+      </td>
+    );
+  };
+
   const buildTable = () => {
     const headerLabels: Record<string, string> = {
       id: 'Id',
@@ -1322,115 +1427,6 @@ export default function ProcessInstanceListTable({
     if (showActionsColumn) {
       headers.push('Actions');
     }
-
-    const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
-      return <span data-qa="paginated-entity-id">{id}</span>;
-    };
-    const formatProcessModelIdentifier = (_row: any, identifier: any) => {
-      return <span>{identifier}</span>;
-    };
-    const formatProcessModelDisplayName = (_row: any, identifier: any) => {
-      return <span>{identifier}</span>;
-    };
-
-    const formatSecondsForDisplay = (_row: any, seconds: any) => {
-      return convertSecondsToFormattedDateTime(seconds) || '-';
-    };
-    const defaultFormatter = (_row: any, value: any) => {
-      return value;
-    };
-
-    const getWaitingForTableCellComponent = (processInstanceTask: any) => {
-      let fullUsernameString = '';
-      let shortUsernameString = '';
-      if (processInstanceTask.potential_owner_usernames) {
-        fullUsernameString = processInstanceTask.potential_owner_usernames;
-        const usernames =
-          processInstanceTask.potential_owner_usernames.split(',');
-        const firstTwoUsernames = usernames.slice(0, 2);
-        if (usernames.length > 2) {
-          firstTwoUsernames.push('...');
-        }
-        shortUsernameString = firstTwoUsernames.join(',');
-      }
-      if (processInstanceTask.assigned_user_group_identifier) {
-        fullUsernameString = processInstanceTask.assigned_user_group_identifier;
-        shortUsernameString =
-          processInstanceTask.assigned_user_group_identifier;
-      }
-      return <span title={fullUsernameString}>{shortUsernameString}</span>;
-    };
-
-    const reportColumnFormatters: Record<string, any> = {
-      id: formatProcessInstanceId,
-      process_model_identifier: formatProcessModelIdentifier,
-      process_model_display_name: formatProcessModelDisplayName,
-      start_in_seconds: formatSecondsForDisplay,
-      end_in_seconds: formatSecondsForDisplay,
-      updated_at_in_seconds: formatSecondsForDisplay,
-    };
-    const formattedColumn = (row: any, column: any) => {
-      const formatter =
-        reportColumnFormatters[column.accessor] ?? defaultFormatter;
-      const value = row[column.accessor];
-      const modifiedModelId = modifyProcessIdentifierForPathParam(
-        row.process_model_identifier
-      );
-      const navigateToProcessInstance = () => {
-        navigate(
-          `${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`
-        );
-      };
-      const navigateToProcessModel = () => {
-        navigate(`/admin/process-models/${modifiedModelId}`);
-      };
-
-      if (column.accessor === 'status') {
-        return (
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-          <td
-            onClick={navigateToProcessInstance}
-            onKeyDown={navigateToProcessInstance}
-            data-qa={`process-instance-status-${value}`}
-          >
-            {formatter(row, value)}
-          </td>
-        );
-      }
-      if (column.accessor === 'process_model_display_name') {
-        const pmStyle = { background: 'rgba(0, 0, 0, .02)' };
-        return (
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-          <td
-            style={pmStyle}
-            onClick={navigateToProcessModel}
-            onKeyDown={navigateToProcessModel}
-          >
-            {formatter(row, value)}
-          </td>
-        );
-      }
-      if (column.accessor === 'waiting_for') {
-        return <td>{getWaitingForTableCellComponent(row)}</td>;
-      }
-      if (column.accessor === 'updated_at_in_seconds') {
-        return (
-          <TableCellWithTimeAgoInWords
-            timeInSeconds={row.updated_at_in_seconds}
-          />
-        );
-      }
-      return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <td
-          data-qa={`process-instance-show-link-${column.accessor}`}
-          onKeyDown={navigateToProcessModel}
-          onClick={navigateToProcessInstance}
-        >
-          {formatter(row, value)}
-        </td>
-      );
-    };
 
     const rows = processInstances.map((row: any) => {
       const currentRow = reportColumns().map((column: any) => {

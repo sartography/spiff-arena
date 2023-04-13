@@ -4,7 +4,6 @@ import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { Tabs, TabList, Tab } from '@carbon/react';
 import TaskShow from './TaskShow';
 import MyTasks from './MyTasks';
-import GroupedTasks from './GroupedTasks';
 import CompletedInstances from './CompletedInstances';
 import CreateNewInstance from './CreateNewInstance';
 import InProgressInstances from './InProgressInstances';

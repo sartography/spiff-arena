@@ -422,7 +422,7 @@ class ProcessInstanceReportService:
         for process_instance_dict in process_instance_dicts:
             assigned_user = aliased(UserModel)
             human_task_query = (
-                HumanTaskModel.query.filter_by(process_instance_id=process_instance_dict['id'])
+                HumanTaskModel.query.filter_by(process_instance_id=process_instance_dict['id'], completed=False)
                 .group_by(HumanTaskModel.id)
                 .outerjoin(
                     HumanTaskUserModel,
