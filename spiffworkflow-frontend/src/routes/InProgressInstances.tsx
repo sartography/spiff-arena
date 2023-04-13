@@ -38,7 +38,7 @@ export default function InProgressInstances() {
             additionalParams={`user_group_identifier=${userGroup}`}
             canCompleteAllTasks
             showActionsColumn
-            autoReload={false}
+            autoReload
           />
         </>
       );
@@ -66,7 +66,7 @@ export default function InProgressInstances() {
         textToShowIfEmpty="There are no open instances you started at this time."
         paginationClassName="with-large-bottom-margin"
         showActionsColumn
-        autoReload={false}
+        autoReload
       />
       <h2
         title={waitingForMeTitleText}
@@ -84,7 +84,7 @@ export default function InProgressInstances() {
         paginationClassName="with-large-bottom-margin"
         canCompleteAllTasks
         showActionsColumn
-        autoReload={false}
+        autoReload
       />
       {groupTableComponents()}
     </>

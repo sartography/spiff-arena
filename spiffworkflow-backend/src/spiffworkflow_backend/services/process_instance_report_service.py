@@ -1,25 +1,25 @@
 """Process_instance_report_service."""
 import re
-from flask import current_app
-from sqlalchemy.orm.util import AliasedClass
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
 from typing import Type
 
 import sqlalchemy
+from flask import current_app
 from sqlalchemy import and_
 from sqlalchemy import func
 from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 from sqlalchemy.orm import selectinload
+from sqlalchemy.orm.util import AliasedClass
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel, ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
@@ -167,7 +167,12 @@ class ProcessInstanceReportService:
                 "filter_by": [
                     {"field_name": "initiated_by_me", "field_value": "true"},
                     {"field_name": "has_terminal_status", "field_value": "false"},
-                    {"field_name": "oldest_open_human_task_fields", "field_value": ['task_id', 'task_title', 'task_name', 'potential_owner_usernames', 'assigned_user_group_identifier']},
+                    {
+                        "field_name": "oldest_open_human_task_fields",
+                        "field_value": (
+                            "task_id,task_title,task_name,potential_owner_usernames,assigned_user_group_identifier"
+                        ),
+                    },
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
@@ -186,7 +191,10 @@ class ProcessInstanceReportService:
                 "filter_by": [
                     {"field_name": "with_tasks_i_can_complete", "field_value": "true"},
                     {"field_name": "has_active_status", "field_value": "true"},
-                    {"field_name": "oldest_open_human_task_fields", "field_value": ['task_id', 'task_title', 'task_name']},
+                    {
+                        "field_name": "oldest_open_human_task_fields",
+                        "field_value": "task_id,task_title,task_name",
+                    },
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
@@ -208,7 +216,10 @@ class ProcessInstanceReportService:
                         "field_value": "true",
                     },
                     {"field_name": "has_active_status", "field_value": "true"},
-                    {"field_name": "oldest_open_human_task_fields", "field_value": ['task_id', 'task_title', 'task_name']},
+                    {
+                        "field_name": "oldest_open_human_task_fields",
+                        "field_value": "task_id,task_title,task_name",
+                    },
                 ],
                 "order_by": ["-start_in_seconds", "-id"],
             },
@@ -274,7 +285,7 @@ class ProcessInstanceReportService:
             if key not in filters:
                 return None
             # bool returns True if not an empty string so check explicitly for false
-            if filters[key] in ['false', 'False']:
+            if filters[key] in ["false", "False"]:
                 return False
             return bool(filters[key])
 
@@ -283,12 +294,7 @@ class ProcessInstanceReportService:
             return int(filters[key]) if key in filters else None
 
         def list_value(key: str) -> Optional[list[str]]:
-            """List_value."""
-            if key not in filters:
-                return None
-            if isinstance(filters[key], list):
-                return filters[key]
-            return filters[key].split(",")
+            return filters[key].split(",") if key in filters else None
 
         process_model_identifier = filters.get("process_model_identifier")
         user_group_identifier = filters.get("user_group_identifier")
@@ -418,11 +424,13 @@ class ProcessInstanceReportService:
         return results
 
     @classmethod
-    def add_human_task_fields(cls, process_instance_dicts: list[dict], oldest_open_human_task_fields: list) -> list[dict]:
+    def add_human_task_fields(
+        cls, process_instance_dicts: list[dict], oldest_open_human_task_fields: list
+    ) -> list[dict]:
         for process_instance_dict in process_instance_dicts:
             assigned_user = aliased(UserModel)
             human_task_query = (
-                HumanTaskModel.query.filter_by(process_instance_id=process_instance_dict['id'], completed=False)
+                HumanTaskModel.query.filter_by(process_instance_id=process_instance_dict["id"], completed=False)
                 .group_by(HumanTaskModel.id)
                 .outerjoin(
                     HumanTaskUserModel,
@@ -438,8 +446,10 @@ class ProcessInstanceReportService:
                     HumanTaskModel.task_name,
                     HumanTaskModel.task_title,
                     func.max(GroupModel.identifier).label("assigned_user_group_identifier"),
-                    potential_owner_usernames_from_group_concat_or_similar
-                ).order_by(HumanTaskModel.id.asc()).first()  # type: ignore
+                    potential_owner_usernames_from_group_concat_or_similar,
+                )
+                .order_by(HumanTaskModel.id.asc())  # type: ignore
+                .first()
             )
             if human_task is not None:
                 for field in oldest_open_human_task_fields:
@@ -602,13 +612,10 @@ class ProcessInstanceReportService:
                 and_(
                     HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
                     HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
-                )
+                ),
             ).join(
                 HumanTaskUserModel,
-                and_(
-                    HumanTaskUserModel.human_task_id == HumanTaskModel.id,
-                    HumanTaskUserModel.user_id == user.id
-                )
+                and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
             )
 
         if report_filter.with_tasks_assigned_to_my_group is True:
