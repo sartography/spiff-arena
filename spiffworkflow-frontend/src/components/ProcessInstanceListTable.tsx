@@ -69,6 +69,8 @@ import { Notification } from './Notification';
 import useAPIError from '../hooks/UseApiError';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { Can } from '../contexts/Can';
+import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
+import UserService from '../services/UserService';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -82,6 +84,8 @@ type OwnProps = {
   autoReload?: boolean;
   additionalParams?: string;
   variant?: string;
+  canCompleteAllTasks?: boolean;
+  showActionsColumn?: boolean;
 };
 
 interface dateParameters {
@@ -100,6 +104,8 @@ export default function ProcessInstanceListTable({
   paginationClassName,
   autoReload = false,
   variant = 'for-me',
+  canCompleteAllTasks = false,
+  showActionsColumn = false,
 }: OwnProps) {
   let apiPath = '/process-instances/for-me';
   if (variant === 'all') {
@@ -140,6 +146,9 @@ export default function ProcessInstanceListTable({
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
   const [requiresRefilter, setRequiresRefilter] = useState<boolean>(false);
   const [lastColumnFilter, setLastColumnFilter] = useState<string>('');
+
+  const preferredUsername = UserService.getPreferredUsername();
+  const userEmail = UserService.getUserEmail();
 
   const processInstanceListPathPrefix =
     variant === 'all'
@@ -1308,9 +1317,11 @@ export default function ProcessInstanceListTable({
       return headerLabels[header] ?? header;
     };
     const headers = reportColumns().map((column: any) => {
-      // return <th>{getHeaderLabel((column as any).Header)}</th>;
       return getHeaderLabel((column as any).Header);
     });
+    if (showActionsColumn) {
+      headers.push('Actions');
+    }
 
     const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
       return <span data-qa="paginated-entity-id">{id}</span>;
@@ -1329,12 +1340,34 @@ export default function ProcessInstanceListTable({
       return value;
     };
 
+    const getWaitingForTableCellComponent = (processInstanceTask: any) => {
+      let fullUsernameString = '';
+      let shortUsernameString = '';
+      if (processInstanceTask.potential_owner_usernames) {
+        fullUsernameString = processInstanceTask.potential_owner_usernames;
+        const usernames =
+          processInstanceTask.potential_owner_usernames.split(',');
+        const firstTwoUsernames = usernames.slice(0, 2);
+        if (usernames.length > 2) {
+          firstTwoUsernames.push('...');
+        }
+        shortUsernameString = firstTwoUsernames.join(',');
+      }
+      if (processInstanceTask.assigned_user_group_identifier) {
+        fullUsernameString = processInstanceTask.assigned_user_group_identifier;
+        shortUsernameString =
+          processInstanceTask.assigned_user_group_identifier;
+      }
+      return <span title={fullUsernameString}>{shortUsernameString}</span>;
+    };
+
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
       process_model_display_name: formatProcessModelDisplayName,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
+      updated_at_in_seconds: formatSecondsForDisplay,
     };
     const formattedColumn = (row: any, column: any) => {
       const formatter =
@@ -1377,6 +1410,16 @@ export default function ProcessInstanceListTable({
           </td>
         );
       }
+      if (column.accessor === 'waiting_for') {
+        return <td>{getWaitingForTableCellComponent(row)}</td>;
+      }
+      if (column.accessor === 'updated_at_in_seconds') {
+        return (
+          <TableCellWithTimeAgoInWords
+            timeInSeconds={row.updated_at_in_seconds}
+          />
+        );
+      }
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <td
@@ -1393,7 +1436,35 @@ export default function ProcessInstanceListTable({
       const currentRow = reportColumns().map((column: any) => {
         return formattedColumn(row, column);
       });
+      if (showActionsColumn) {
+        let buttonElement = null;
+        if (row.task_id) {
+          const taskUrl = `/tasks/${row.id}/${row.task_id}`;
+          const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
+          let hasAccessToCompleteTask = false;
+          if (
+            canCompleteAllTasks ||
+            (row.potential_owner_usernames || '').match(regex)
+          ) {
+            hasAccessToCompleteTask = true;
+          }
+          buttonElement = (
+            <Button
+              variant="primary"
+              href={taskUrl}
+              hidden={row.status === 'suspended'}
+              disabled={!hasAccessToCompleteTask}
+            >
+              Go
+            </Button>
+          );
+        }
+
+        currentRow.push(<td>{buttonElement}</td>);
+      }
+
       const rowStyle = { cursor: 'pointer' };
+
       return (
         <tr style={rowStyle} key={row.id}>
           {currentRow}
