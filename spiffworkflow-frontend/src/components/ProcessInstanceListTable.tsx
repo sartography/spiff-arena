@@ -254,6 +254,8 @@ export default function ProcessInstanceListTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const clearRefreshRef = useRef<any>(null);
+
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
     function setProcessInstancesFromResult(result: any) {
@@ -268,6 +270,11 @@ export default function ProcessInstanceListTable({
         setProcessInstanceReportSelection(result.report);
       }
     }
+    const stopRefreshing = () => {
+      if (clearRefreshRef.current) {
+        clearRefreshRef.current();
+      }
+    };
     function getProcessInstances() {
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
@@ -352,6 +359,7 @@ export default function ProcessInstanceListTable({
       HttpService.makeCallToBackend({
         path: `${apiPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
+        onUnauthorized: stopRefreshing,
       });
     }
     function processResultForProcessModels(result: any) {
@@ -396,11 +404,12 @@ export default function ProcessInstanceListTable({
 
     checkFiltersAndRun();
     if (autoReload) {
-      return refreshAtInterval(
+      clearRefreshRef.current = refreshAtInterval(
         REFRESH_INTERVAL_SECONDS,
         REFRESH_TIMEOUT_SECONDS,
         checkFiltersAndRun
       );
+      return clearRefreshRef.current;
     }
     return undefined;
   }, [
