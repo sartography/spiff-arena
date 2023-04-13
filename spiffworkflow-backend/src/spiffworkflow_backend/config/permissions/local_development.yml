@@ -3,10 +3,14 @@ default_group: everybody
 groups:
   admin:
     users: [admin@spiffworkflow.org]
+  group1:
+    users: [jason@sartography.com, kb@sartography.com]
+  group2:
+    users: [dan@sartography.com]
 
 permissions:
   admin:
-    groups: [admin]
+    groups: [admin, group1, group2]
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /*
