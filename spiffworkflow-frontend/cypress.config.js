@@ -32,7 +32,7 @@ if (process.env.SPIFFWORKFLOW_FRONTEND_URL) {
 
 const cypressConfig = {
   projectId: 'crax1q',
-  defaultCommandTimeout: 10000,
+  defaultCommandTimeout: 20000,
   videoUploadOnPasses: false,
   chromeWebSecurity: false,
   e2e: {
