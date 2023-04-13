@@ -34,6 +34,8 @@ export default function InProgressInstances() {
             showReports={false}
             textToShowIfEmpty="This group has no completed instances at this time."
             additionalParams={`user_group_identifier=${userGroup}`}
+            canCompleteAllTasks
+            showActionsColumn
             autoReload={false}
           />
         </>
@@ -55,6 +57,7 @@ export default function InProgressInstances() {
         showReports={false}
         textToShowIfEmpty="There are no open instances you started at this time."
         paginationClassName="with-large-bottom-margin"
+        showActionsColumn
         autoReload={false}
       />
       <h2>With tasks I can complete</h2>
@@ -69,6 +72,8 @@ export default function InProgressInstances() {
         showReports={false}
         textToShowIfEmpty="You have no completed instances at this time."
         paginationClassName="with-large-bottom-margin"
+        canCompleteAllTasks
+        showActionsColumn
         autoReload={false}
       />
       {groupTableComponents()}
