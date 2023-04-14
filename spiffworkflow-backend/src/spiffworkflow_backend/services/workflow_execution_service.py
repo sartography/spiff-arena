@@ -1,6 +1,6 @@
 import copy
 import time
-from typing import Callable
+from typing import Callable, List
 from typing import Optional
 from typing import Set
 from uuid import UUID
@@ -206,6 +206,15 @@ class ExecutionStrategy:
     def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.delegate.save(bpmn_process_instance)
 
+    def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
+        return list(
+            [
+                t
+                for t in bpmn_process_instance.get_tasks(TaskState.READY)
+                if bpmn_process_instance._is_engine_task(t.task_spec)
+            ]
+        )
+
 
 class GreedyExecutionStrategy(ExecutionStrategy):
     """The common execution strategy. This will greedily run all engine steps without stopping."""
@@ -234,7 +243,6 @@ class GreedyExecutionStrategy(ExecutionStrategy):
         if non_human_waiting_task is not None:
             self.run_until_user_input_required(exit_at)
 
-
 class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
     """For illustration purposes, not currently integrated.
 
@@ -243,30 +251,45 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
     """
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        self.bpmn_process_instance = bpmn_process_instance
-        engine_steps = list(
-            [
-                t
-                for t in bpmn_process_instance.get_tasks(TaskState.READY)
-                if bpmn_process_instance._is_engine_task(t.task_spec)
-            ]
-        )
+        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
         while engine_steps:
             for spiff_task in engine_steps:
                 if spiff_task.task_spec.spec_type == "Service Task":
                     return
                 self.delegate.will_complete_task(spiff_task)
-                spiff_task.complete()
+                spiff_task.run()
                 self.delegate.did_complete_task(spiff_task)
+                bpmn_process_instance.refresh_waiting_tasks()
+            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        self.delegate.after_engine_steps(bpmn_process_instance)
 
-            engine_steps = list(
-                [
-                    t
-                    for t in bpmn_process_instance.get_tasks(TaskState.READY)
-                    if bpmn_process_instance._is_engine_task(t.task_spec)
-                ]
-            )
 
+class RunUntilUserMessageExecutionStrategy(ExecutionStrategy):
+    """When you want to run tasks until you hit something to report to the end user, or
+     until there are no other engine steps to complete."""
+
+    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        while engine_steps:
+            for spiff_task in engine_steps:
+                self.delegate.will_complete_task(spiff_task)
+                spiff_task.run()
+                self.delegate.did_complete_task(spiff_task)
+                if spiff_task.task_spec.properties.get("instructionsForEndUser", None) is not None:
+                    break
+            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        self.delegate.after_engine_steps(bpmn_process_instance)
+
+class OneAtATimeExecutionStrategy(ExecutionStrategy):
+    """When you want to run only one engine step at a time."""
+
+    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        if len(engine_steps) > 0:
+            spiff_task = engine_steps[0]
+            self.delegate.will_complete_task(spiff_task)
+            spiff_task.run()
+            self.delegate.did_complete_task(spiff_task)
         self.delegate.after_engine_steps(bpmn_process_instance)
 
 
@@ -274,6 +297,8 @@ def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> Executi
     cls = {
         "greedy": GreedyExecutionStrategy,
         "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
+        "run_until_user_message": RunUntilUserMessageExecutionStrategy,
+        "one_at_a_time": OneAtATimeExecutionStrategy,
     }[name]
 
     return cls(delegate)
@@ -281,7 +306,6 @@ def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> Executi
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]
 ProcessInstanceSaver = Callable[[], None]
-
 
 class WorkflowExecutionService:
     """Provides the driver code for workflow execution."""
@@ -306,16 +330,7 @@ class WorkflowExecutionService:
     #   run
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
-    def run(self, exit_at: None = None, save: bool = False) -> None:
-        """Do_engine_steps."""
-        with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
-            if tripped:
-                raise AssertionError(
-                    "The current thread has not obtained a lock for this process"
-                    f" instance ({self.process_instance_model.id})."
-                )
-
-        try:
+    def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
             # TODO: implicit re-entrant locks here `with_dequeued`
@@ -324,17 +339,9 @@ class WorkflowExecutionService:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_completer(self.bpmn_process_instance)
 
-            self.process_bpmn_messages()
-            self.queue_waiting_receive_messages()
-        except SpiffWorkflowException as swe:
-            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
-
-        finally:
-            self.execution_strategy.save(self.bpmn_process_instance)
-            db.session.commit()
-
-            if save:
-                self.process_instance_saver()
+            self.execution_strategy.spiff_run(self.bpmn_process_instance, exit_at)
+            if self.bpmn_process_instance.is_completed():
+                self.process_instance_completer(self.bpmn_process_instance)
 
     def process_bpmn_messages(self) -> None:
         """Process_bpmn_messages."""
@@ -407,11 +414,11 @@ class WorkflowExecutionService:
 class ProfiledWorkflowExecutionService(WorkflowExecutionService):
     """A profiled version of the workflow execution service."""
 
-    def run(self, exit_at: None = None, save: bool = False) -> None:
+    def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
         """__do_engine_steps."""
         import cProfile
         from pstats import SortKey
 
         with cProfile.Profile() as pr:
-            super().run(exit_at=exit_at, save=save)
+            super().run_and_save(exit_at=exit_at, save=save)
         pr.print_stats(sort=SortKey.CUMULATIVE)

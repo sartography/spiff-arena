@@ -17,6 +17,7 @@ import {
 import MDEditor from '@uiw/react-md-editor';
 // eslint-disable-next-line import/no-named-as-default
 import Form from '../themes/carbon';
+import Loading from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
@@ -90,6 +91,8 @@ function TypeAheadWidget({
   );
 }
 
+
+
 class UnexpectedHumanTaskType extends Error {
   constructor(message: string) {
     super(message);
@@ -108,6 +111,7 @@ export default function TaskShow() {
   const params = useParams();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
+  const [refreshSeconds, setRefreshSeconds] = useState(0);
 
   // save current form data so that we can avoid validations in certain situations
   const [currentFormObject, setCurrentFormObject] = useState<any>({});
@@ -116,6 +120,7 @@ export default function TaskShow() {
 
   // eslint-disable-next-line sonarjs/no-duplicate-string
   const supportedHumanTaskTypes = ['User Task', 'Manual Task'];
+
 
   useEffect(() => {
     const processResult = (result: ProcessInstanceTask) => {
@@ -157,7 +162,15 @@ export default function TaskShow() {
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
-      navigate(`/tasks/${result.process_instance_id}/${result.id}`);
+      if (result.type in supportedHumanTaskTypes) {
+        navigate(`/tasks/${result.process_instance_id}/${result.id}`);
+      } else {
+        navigate(
+          `/process/${modifyProcessIdentifierForPathParam(
+            result.process_model_identifier
+          )}/${result.process_instance_id}/interstitial`
+        );
+      }
     } else {
       addError(result);
     }
@@ -344,8 +357,10 @@ export default function TaskShow() {
           </Button>
         );
       } else {
-        throw new UnexpectedHumanTaskType(
-          `Invalid task type given: ${task.type}. Only supported types: ${supportedHumanTaskTypes}`
+        return (
+          <p>
+            <i>Page will refresh in {refreshSeconds} seconds.</i>
+          </p>
         );
       }
       reactFragmentToHideSubmitButton = (

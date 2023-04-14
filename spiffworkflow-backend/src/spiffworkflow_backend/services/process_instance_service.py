@@ -155,7 +155,6 @@ class ProcessInstanceService:
             next_task=None,
             process_model_identifier=processor.process_model_identifier,
             process_model_display_name=processor.process_model_display_name,
-            completed_tasks=processor.process_instance_model.completed_tasks,
             updated_at_in_seconds=processor.process_instance_model.updated_at_in_seconds,
         )
 
@@ -442,6 +441,8 @@ class ProcessInstanceService:
             spiff_task.get_state_name(),
             lane=lane,
             process_identifier=spiff_task.task_spec._wf_spec.name,
+            process_instance_id=processor.process_instance_model.id,
+            process_model_identifier=processor.process_model_identifier,
             properties=props,
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),
