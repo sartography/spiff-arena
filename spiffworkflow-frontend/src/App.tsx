@@ -8,6 +8,7 @@ import NavigationBar from './components/NavigationBar';
 import HomePageRoutes from './routes/HomePageRoutes';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminRoutes from './routes/AdminRoutes';
+import ProcessRoutes from './routes/ProcessRoutes';
 
 import { AbilityContext } from './contexts/Can';
 import UserService from './services/UserService';
@@ -35,6 +36,7 @@ export default function App() {
                 <Routes>
                   <Route path="/*" element={<HomePageRoutes />} />
                   <Route path="/tasks/*" element={<HomePageRoutes />} />
+                  <Route path="/process/*" element={<ProcessRoutes />} />
                   <Route path="/admin/*" element={<AdminRoutes />} />
                 </Routes>
               </ErrorBoundary>

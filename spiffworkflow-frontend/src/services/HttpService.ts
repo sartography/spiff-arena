@@ -8,7 +8,7 @@ const HttpMethods = {
   DELETE: 'DELETE',
 };
 
-const getBasicHeaders = (): object => {
+export const getBasicHeaders = (): Record<string, string> => {
   if (UserService.isLoggedIn()) {
     return {
       Authorization: `Bearer ${UserService.getAccessToken()}`,
