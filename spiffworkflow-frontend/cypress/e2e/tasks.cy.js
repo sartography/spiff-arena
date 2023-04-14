@@ -90,7 +90,9 @@ describe('tasks', () => {
     cy.get('.is-visible .cds--modal-close').click();
 
     cy.navigateToHome();
-    cy.contains('Tasks').should('exist');
+
+    // look for somethig to make sure the homepage has loaded
+    cy.contains('Waiting for me').should('exist');
 
     // FIXME: this will probably need a better way to link to the proper form that we want
     cy.contains('Go').click();

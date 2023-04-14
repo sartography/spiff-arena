@@ -467,7 +467,9 @@ export default function ReactDiagramEditor({
         return;
       }
       diagramModelerToUse.importXML(diagramXMLToDisplay).then(() => {
-        diagramModelerToUse.get('canvas').zoom('fit-viewport');
+        if (diagramType === 'bpmn' || diagramType === 'readonly') {
+          diagramModelerToUse.get('canvas').zoom('fit-viewport');
+        }
       });
 
       alreadyImportedXmlRef.current = true;
