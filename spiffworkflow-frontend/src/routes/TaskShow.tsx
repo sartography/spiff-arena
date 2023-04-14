@@ -19,10 +19,7 @@ import MDEditor from '@uiw/react-md-editor';
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
-import {
-  dateStringToYMDFormat,
-  modifyProcessIdentifierForPathParam,
-} from '../helpers';
+import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessInstanceTask } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 
