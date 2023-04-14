@@ -109,6 +109,7 @@ from spiffworkflow_backend.services.workflow_execution_service import (
     WorkflowExecutionService,
 )
 
+import spiff_element_units
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
