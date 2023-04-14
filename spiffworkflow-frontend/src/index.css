@@ -336,10 +336,13 @@ td.actions-cell {
   width: 1em;
 }
 
+.process-instance-table-header {
+  margin-bottom: 1em;
+}
+
 .no-results-message {
   font-style: italic;
   margin-left: 2em;
-  margin-top: 1em;
   font-size: 14px;
 }
 
