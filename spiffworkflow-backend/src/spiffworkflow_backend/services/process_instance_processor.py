@@ -1046,10 +1046,8 @@ class ProcessInstanceProcessor:
             if bpmn_key in bpmn_dict_keys:
                 bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
 
-        # TODO: tmp, do not merge
-        with open(f"{os.environ.get('FLASK_INSTANCE_PATH')}/bpmn_spec_dict.json", "w") as f:
-            json.dump(bpmn_spec_dict, f, indent=4, sort_keys=True)
-
+        # TODO: cache_element_units here somewhere...
+        
         # store only if mappings is currently empty. this also would mean this is a new instance that has never saved before
         store_bpmn_definition_mappings = not self.bpmn_definition_to_task_definitions_mappings
         bpmn_process_definition_parent = self._store_bpmn_process_definition(
