@@ -1647,7 +1647,7 @@ class ProcessInstanceProcessor:
             self.save,
         )
         try:
-            execution_service.run_until_user_input_required_and_save(exit_at, save)
+            execution_service.run(exit_at, save)
         finally:
             # clear out failling spiff tasks here since the ProcessInstanceProcessor creates an instance of the
             #    script engine on a class variable.

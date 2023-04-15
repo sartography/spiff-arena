@@ -69,6 +69,8 @@ import { Notification } from './Notification';
 import useAPIError from '../hooks/UseApiError';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { Can } from '../contexts/Can';
+import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
+import UserService from '../services/UserService';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -82,6 +84,8 @@ type OwnProps = {
   autoReload?: boolean;
   additionalParams?: string;
   variant?: string;
+  canCompleteAllTasks?: boolean;
+  showActionsColumn?: boolean;
 };
 
 interface dateParameters {
@@ -100,6 +104,8 @@ export default function ProcessInstanceListTable({
   paginationClassName,
   autoReload = false,
   variant = 'for-me',
+  canCompleteAllTasks = false,
+  showActionsColumn = false,
 }: OwnProps) {
   let apiPath = '/process-instances/for-me';
   if (variant === 'all') {
@@ -140,6 +146,9 @@ export default function ProcessInstanceListTable({
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
   const [requiresRefilter, setRequiresRefilter] = useState<boolean>(false);
   const [lastColumnFilter, setLastColumnFilter] = useState<string>('');
+
+  const preferredUsername = UserService.getPreferredUsername();
+  const userEmail = UserService.getUserEmail();
 
   const processInstanceListPathPrefix =
     variant === 'all'
@@ -245,6 +254,8 @@ export default function ProcessInstanceListTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const clearRefreshRef = useRef<any>(null);
+
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
     function setProcessInstancesFromResult(result: any) {
@@ -259,6 +270,11 @@ export default function ProcessInstanceListTable({
         setProcessInstanceReportSelection(result.report);
       }
     }
+    const stopRefreshing = () => {
+      if (clearRefreshRef.current) {
+        clearRefreshRef.current();
+      }
+    };
     function getProcessInstances() {
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
@@ -343,6 +359,7 @@ export default function ProcessInstanceListTable({
       HttpService.makeCallToBackend({
         path: `${apiPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
+        onUnauthorized: stopRefreshing,
       });
     }
     function processResultForProcessModels(result: any) {
@@ -387,11 +404,12 @@ export default function ProcessInstanceListTable({
 
     checkFiltersAndRun();
     if (autoReload) {
-      return refreshAtInterval(
+      clearRefreshRef.current = refreshAtInterval(
         REFRESH_INTERVAL_SECONDS,
         REFRESH_TIMEOUT_SECONDS,
         checkFiltersAndRun
       );
+      return clearRefreshRef.current;
     }
     return undefined;
   }, [
@@ -1294,6 +1312,111 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const getWaitingForTableCellComponent = (processInstanceTask: any) => {
+    let fullUsernameString = '';
+    let shortUsernameString = '';
+    if (processInstanceTask.potential_owner_usernames) {
+      fullUsernameString = processInstanceTask.potential_owner_usernames;
+      const usernames =
+        processInstanceTask.potential_owner_usernames.split(',');
+      const firstTwoUsernames = usernames.slice(0, 2);
+      if (usernames.length > 2) {
+        firstTwoUsernames.push('...');
+      }
+      shortUsernameString = firstTwoUsernames.join(',');
+    }
+    if (processInstanceTask.assigned_user_group_identifier) {
+      fullUsernameString = processInstanceTask.assigned_user_group_identifier;
+      shortUsernameString = processInstanceTask.assigned_user_group_identifier;
+    }
+    return <span title={fullUsernameString}>{shortUsernameString}</span>;
+  };
+  const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
+    return <span data-qa="paginated-entity-id">{id}</span>;
+  };
+  const formatProcessModelIdentifier = (_row: any, identifier: any) => {
+    return <span>{identifier}</span>;
+  };
+  const formatProcessModelDisplayName = (_row: any, identifier: any) => {
+    return <span>{identifier}</span>;
+  };
+
+  const formatSecondsForDisplay = (_row: any, seconds: any) => {
+    return convertSecondsToFormattedDateTime(seconds) || '-';
+  };
+  const defaultFormatter = (_row: any, value: any) => {
+    return value;
+  };
+
+  const formattedColumn = (row: any, column: any) => {
+    const reportColumnFormatters: Record<string, any> = {
+      id: formatProcessInstanceId,
+      process_model_identifier: formatProcessModelIdentifier,
+      process_model_display_name: formatProcessModelDisplayName,
+      start_in_seconds: formatSecondsForDisplay,
+      end_in_seconds: formatSecondsForDisplay,
+      updated_at_in_seconds: formatSecondsForDisplay,
+    };
+    const formatter =
+      reportColumnFormatters[column.accessor] ?? defaultFormatter;
+    const value = row[column.accessor];
+    const modifiedModelId = modifyProcessIdentifierForPathParam(
+      row.process_model_identifier
+    );
+    const navigateToProcessInstance = () => {
+      navigate(`${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`);
+    };
+    const navigateToProcessModel = () => {
+      navigate(`/admin/process-models/${modifiedModelId}`);
+    };
+
+    if (column.accessor === 'status') {
+      return (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <td
+          onClick={navigateToProcessInstance}
+          onKeyDown={navigateToProcessInstance}
+          data-qa={`process-instance-status-${value}`}
+        >
+          {formatter(row, value)}
+        </td>
+      );
+    }
+    if (column.accessor === 'process_model_display_name') {
+      const pmStyle = { background: 'rgba(0, 0, 0, .02)' };
+      return (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <td
+          style={pmStyle}
+          onClick={navigateToProcessModel}
+          onKeyDown={navigateToProcessModel}
+        >
+          {formatter(row, value)}
+        </td>
+      );
+    }
+    if (column.accessor === 'waiting_for') {
+      return <td>{getWaitingForTableCellComponent(row)}</td>;
+    }
+    if (column.accessor === 'updated_at_in_seconds') {
+      return (
+        <TableCellWithTimeAgoInWords
+          timeInSeconds={row.updated_at_in_seconds}
+        />
+      );
+    }
+    return (
+      // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+      <td
+        data-qa={`process-instance-show-link-${column.accessor}`}
+        onKeyDown={navigateToProcessModel}
+        onClick={navigateToProcessInstance}
+      >
+        {formatter(row, value)}
+      </td>
+    );
+  };
+
   const buildTable = () => {
     const headerLabels: Record<string, string> = {
       id: 'Id',
@@ -1308,92 +1431,45 @@ export default function ProcessInstanceListTable({
       return headerLabels[header] ?? header;
     };
     const headers = reportColumns().map((column: any) => {
-      // return <th>{getHeaderLabel((column as any).Header)}</th>;
       return getHeaderLabel((column as any).Header);
     });
-
-    const formatProcessInstanceId = (row: ProcessInstance, id: number) => {
-      return <span data-qa="paginated-entity-id">{id}</span>;
-    };
-    const formatProcessModelIdentifier = (_row: any, identifier: any) => {
-      return <span>{identifier}</span>;
-    };
-    const formatProcessModelDisplayName = (_row: any, identifier: any) => {
-      return <span>{identifier}</span>;
-    };
-
-    const formatSecondsForDisplay = (_row: any, seconds: any) => {
-      return convertSecondsToFormattedDateTime(seconds) || '-';
-    };
-    const defaultFormatter = (_row: any, value: any) => {
-      return value;
-    };
-
-    const reportColumnFormatters: Record<string, any> = {
-      id: formatProcessInstanceId,
-      process_model_identifier: formatProcessModelIdentifier,
-      process_model_display_name: formatProcessModelDisplayName,
-      start_in_seconds: formatSecondsForDisplay,
-      end_in_seconds: formatSecondsForDisplay,
-    };
-    const formattedColumn = (row: any, column: any) => {
-      const formatter =
-        reportColumnFormatters[column.accessor] ?? defaultFormatter;
-      const value = row[column.accessor];
-      const modifiedModelId = modifyProcessIdentifierForPathParam(
-        row.process_model_identifier
-      );
-      const navigateToProcessInstance = () => {
-        navigate(
-          `${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`
-        );
-      };
-      const navigateToProcessModel = () => {
-        navigate(`/admin/process-models/${modifiedModelId}`);
-      };
-
-      if (column.accessor === 'status') {
-        return (
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-          <td
-            onClick={navigateToProcessInstance}
-            onKeyDown={navigateToProcessInstance}
-            data-qa={`process-instance-status-${value}`}
-          >
-            {formatter(row, value)}
-          </td>
-        );
-      }
-      if (column.accessor === 'process_model_display_name') {
-        const pmStyle = { background: 'rgba(0, 0, 0, .02)' };
-        return (
-          // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-          <td
-            style={pmStyle}
-            onClick={navigateToProcessModel}
-            onKeyDown={navigateToProcessModel}
-          >
-            {formatter(row, value)}
-          </td>
-        );
-      }
-      return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <td
-          data-qa={`process-instance-show-link-${column.accessor}`}
-          onKeyDown={navigateToProcessModel}
-          onClick={navigateToProcessInstance}
-        >
-          {formatter(row, value)}
-        </td>
-      );
-    };
+    if (showActionsColumn) {
+      headers.push('Actions');
+    }
 
     const rows = processInstances.map((row: any) => {
       const currentRow = reportColumns().map((column: any) => {
         return formattedColumn(row, column);
       });
+      if (showActionsColumn) {
+        let buttonElement = null;
+        if (row.task_id) {
+          const taskUrl = `/tasks/${row.id}/${row.task_id}`;
+          const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
+          let hasAccessToCompleteTask = false;
+          if (
+            canCompleteAllTasks ||
+            (row.potential_owner_usernames || '').match(regex)
+          ) {
+            hasAccessToCompleteTask = true;
+          }
+          buttonElement = (
+            <Button
+              variant="primary"
+              href={taskUrl}
+              hidden={row.status === 'suspended'}
+              disabled={!hasAccessToCompleteTask}
+            >
+              Go
+            </Button>
+          );
+        }
+
+        currentRow.push(<td>{buttonElement}</td>);
+      }
+
       const rowStyle = { cursor: 'pointer' };
+
       return (
         <tr style={rowStyle} key={row.id}>
           {currentRow}

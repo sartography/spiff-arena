@@ -161,8 +161,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def terminal_statuses(cls) -> list[str]:
-        """Terminal_statuses."""
         return ["complete", "error", "terminated"]
+
+    @classmethod
+    def active_statuses(cls) -> list[str]:
+        return ["user_input_required", "waiting"]
 
 
 class ProcessInstanceModelSchema(Schema):

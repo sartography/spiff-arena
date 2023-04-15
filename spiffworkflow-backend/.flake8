@@ -41,3 +41,6 @@ per-file-ignores =
     src/spiffworkflow_backend/services/logging_service.py:N802,B950
 
     tests/spiffworkflow_backend/integration/test_process_api.py:S607,S101,S605,D102,D103,D101
+
+    # TODO: refactor this service so complexity should be reduced throughout
+    src/spiffworkflow_backend/services/process_instance_report_service.py:C901,D100,D101,D102,D103,D107

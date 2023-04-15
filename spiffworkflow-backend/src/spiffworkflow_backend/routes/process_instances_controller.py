@@ -18,7 +18,9 @@ from sqlalchemy.orm import aliased
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.bpmn_process_definition import (
+    BpmnProcessDefinitionModel,
+)
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
@@ -28,7 +30,9 @@ from spiffworkflow_backend.models.process_instance import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+from spiffworkflow_backend.models.process_instance_event import (
+    ProcessInstanceEventModel,
+)
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
@@ -168,7 +172,10 @@ def process_instance_terminate(
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
             processor.terminate()
-    except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
+    except (
+        ProcessInstanceIsNotEnqueuedError,
+        ProcessInstanceIsAlreadyLockedError,
+    ) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
 
@@ -186,7 +193,10 @@ def process_instance_suspend(
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
             processor.suspend()
-    except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
+    except (
+        ProcessInstanceIsNotEnqueuedError,
+        ProcessInstanceIsAlreadyLockedError,
+    ) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
 
@@ -204,7 +214,10 @@ def process_instance_resume(
     try:
         with ProcessInstanceQueueService.dequeued(process_instance):
             processor.resume()
-    except (ProcessInstanceIsNotEnqueuedError, ProcessInstanceIsAlreadyLockedError) as e:
+    except (
+        ProcessInstanceIsNotEnqueuedError,
+        ProcessInstanceIsAlreadyLockedError,
+    ) as e:
         ErrorHandlingService().handle_error(processor, e)
         raise e
 
@@ -227,7 +240,8 @@ def process_instance_log_list(
         .outerjoin(TaskModel, TaskModel.guid == ProcessInstanceEventModel.task_guid)
         .outerjoin(TaskDefinitionModel, TaskDefinitionModel.id == TaskModel.task_definition_id)
         .outerjoin(
-            BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id
+            BpmnProcessDefinitionModel,
+            BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id,
         )
     )
     if not detailed:
@@ -374,7 +388,9 @@ def process_instance_list(
     return make_response(jsonify(response_json), 200)
 
 
-def process_instance_report_column_list(process_model_identifier: Optional[str] = None) -> flask.wrappers.Response:
+def process_instance_report_column_list(
+    process_model_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
     """Process_instance_report_column_list."""
     table_columns = ProcessInstanceReportService.builtin_column_options()
     columns_for_metadata_query = (
@@ -646,7 +662,8 @@ def process_instance_task_list(
             == direct_parent_bpmn_process_alias.bpmn_process_definition_id,
         )
         .join(
-            BpmnProcessDefinitionModel, BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id
+            BpmnProcessDefinitionModel,
+            BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id,
         )
         .add_columns(
             BpmnProcessDefinitionModel.bpmn_identifier.label("bpmn_process_definition_identifier"),  # type: ignore
@@ -672,14 +689,22 @@ def process_instance_task_list(
         task_model_query = task_model_query.filter(bpmn_process_alias.id.in_(bpmn_process_ids))
 
     task_models = task_model_query.all()
-    task_model_list = {}
     if most_recent_tasks_only:
+        most_recent_tasks = {}
+        most_recent_subprocesses = set()
         for task_model in task_models:
             bpmn_process_guid = task_model.bpmn_process_guid or "TOP"
             row_key = f"{bpmn_process_guid}:::{task_model.bpmn_identifier}"
-            if row_key not in task_model_list:
-                task_model_list[row_key] = task_model
-        task_models = list(task_model_list.values())
+            if row_key not in most_recent_tasks:
+                most_recent_tasks[row_key] = task_model
+                if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
+                    most_recent_subprocesses.add(task_model.guid)
+
+        task_models = [
+            task_model
+            for task_model in most_recent_tasks.values()
+            if task_model.bpmn_process_guid in most_recent_subprocesses or task_model.bpmn_process_guid is None
+        ]
 
     if to_task_model is not None:
         task_models_dict = json.loads(current_app.json.dumps(task_models))

@@ -142,6 +142,10 @@ code {
   fill: grey !important;
   opacity: .4;
 }
+.cancelled-task-highlight:not(.djs-connection) .djs-visual > :nth-child(1) {
+  fill: blue !important;
+  opacity: .2;
+}
 
 .accordion-item-label {
   vertical-align: middle;
@@ -332,10 +336,13 @@ td.actions-cell {
   width: 1em;
 }
 
+.process-instance-table-header {
+  margin-bottom: 1em;
+}
+
 .no-results-message {
   font-style: italic;
   margin-left: 2em;
-  margin-top: 1em;
   font-size: 14px;
 }
 

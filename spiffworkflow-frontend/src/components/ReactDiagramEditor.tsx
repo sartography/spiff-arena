@@ -68,6 +68,7 @@ type OwnProps = {
   diagramType: string;
   readyOrWaitingProcessInstanceTasks?: Task[] | null;
   completedProcessInstanceTasks?: Task[] | null;
+  cancelledProcessInstanceTasks?: Task[] | null;
   saveDiagram?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
   isPrimaryFile?: boolean;
@@ -94,6 +95,7 @@ export default function ReactDiagramEditor({
   diagramType,
   readyOrWaitingProcessInstanceTasks,
   completedProcessInstanceTasks,
+  cancelledProcessInstanceTasks,
   saveDiagram,
   onDeleteFile,
   isPrimaryFile,
@@ -358,7 +360,8 @@ export default function ReactDiagramEditor({
     function checkTaskCanBeHighlighted(taskBpmnId: string) {
       return (
         !taskSpecsThatCannotBeHighlighted.includes(taskBpmnId) &&
-        !taskBpmnId.match(/EndJoin/)
+        !taskBpmnId.match(/EndJoin/) &&
+        !taskBpmnId.match(/BoundaryEventParent/)
       );
     }
 
@@ -441,6 +444,19 @@ export default function ReactDiagramEditor({
           );
         });
       }
+      if (cancelledProcessInstanceTasks) {
+        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+          canvas.getRootElement()
+        );
+        cancelledProcessInstanceTasks.forEach((cancelledTask) => {
+          highlightBpmnIoElement(
+            canvas,
+            cancelledTask,
+            'cancelled-task-highlight',
+            bpmnProcessIdentifiers
+          );
+        });
+      }
     }
 
     function displayDiagram(
@@ -451,7 +467,9 @@ export default function ReactDiagramEditor({
         return;
       }
       diagramModelerToUse.importXML(diagramXMLToDisplay).then(() => {
-        diagramModelerToUse.get('canvas').zoom('fit-viewport');
+        if (diagramType === 'bpmn' || diagramType === 'readonly') {
+          diagramModelerToUse.get('canvas').zoom('fit-viewport');
+        }
       });
 
       alreadyImportedXmlRef.current = true;
@@ -518,6 +536,7 @@ export default function ReactDiagramEditor({
     diagramXMLString,
     readyOrWaitingProcessInstanceTasks,
     completedProcessInstanceTasks,
+    cancelledProcessInstanceTasks,
     fileName,
     performingXmlUpdates,
     processModelId,
