@@ -109,7 +109,9 @@ from spiffworkflow_backend.services.workflow_execution_service import (
     WorkflowExecutionService,
 )
 
-import spiff_element_units
+from spiffworkflow_backend.services.element_units_service import (
+    ElementUnitsService,
+)
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
@@ -1045,8 +1047,6 @@ class ProcessInstanceProcessor:
         for bpmn_key in bpmn_dict.keys():
             if bpmn_key in bpmn_dict_keys:
                 bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
-
-        # TODO: cache_element_units here somewhere...
         
         # store only if mappings is currently empty. this also would mean this is a new instance that has never saved before
         store_bpmn_definition_mappings = not self.bpmn_definition_to_task_definitions_mappings
@@ -1061,6 +1061,8 @@ class ProcessInstanceProcessor:
                 store_bpmn_definition_mappings=store_bpmn_definition_mappings,
             )
         self.process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
+
+        ElementUnitsService.cache_element_units()
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
