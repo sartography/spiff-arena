@@ -4,8 +4,8 @@ from typing import Optional
 class ElementUnitsService:
     """Feature gated glue between the backend and spiff-element-units."""
 
-    @staticmethod
-    def _cache_dir() -> Optional[str]:
+    @classmethod
+    def _cache_dir(cls) -> Optional[str]:
         return current_app.config["SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR"]
 
     @classmethod
