@@ -78,10 +78,9 @@ class TestElementUnitsService(BaseTest):
         self,
         app_disabled: Flask,
     ) -> None:
-        result = ElementUnitsService.cache_element_units()
+        result = ElementUnitsService.cache_element_units("", "", "")
         assert result is None
-        assert app_disabled.instance_path is not None
-
+        
     # TODO: ok to get for process when disabled
     # TODO: ok to get for element when disabled
 
@@ -91,4 +90,8 @@ class TestElementUnitsService(BaseTest):
             example_specs_json_str: str,
             tmp_cache_dir_name: str,
             ) -> None:
-        pass
+        result = ElementUnitsService.cache_element_units(tmp_cache_dir_name, "testing", example_specs_json_str)
+        assert result is None
+
+    # TODO: get for process when enabled
+    # TODO: get for element when enabled

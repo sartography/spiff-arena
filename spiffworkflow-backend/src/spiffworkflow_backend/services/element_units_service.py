@@ -11,10 +11,10 @@ class ElementUnitsService:
     @classmethod
     def _enabled(cls) -> bool:
         enabled = current_app.config["SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED"]
-        return enabled and cls._cache_dir() is not None
+        return enabled and cls._cache_dir()
 
     @classmethod
-    def cache_element_units(cls) -> None:
+    def cache_element_units(cls, cache_dir: str, cache_key: str, workflow_spec_json: str) -> None:
         if not cls._enabled():
             return None
 
@@ -23,4 +23,4 @@ class ElementUnitsService:
         # moving
         import spiff_element_units
 
-        current_app.logger.info(f"spiff_element_units cache @ {cls._cache_dir()}")
+        return spiff_element_units.cache_element_units(cache_dir, cache_key, workflow_spec_json)
