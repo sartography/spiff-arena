@@ -1043,11 +1043,12 @@ class ProcessInstanceProcessor:
         # we may have to already process bpmn_defintions if we ever care about the Root task again
         bpmn_dict = self.serialize()
         bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
+
         bpmn_spec_dict = {}
         for bpmn_key in bpmn_dict.keys():
             if bpmn_key in bpmn_dict_keys:
                 bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
-
+        
         # store only if mappings is currently empty. this also would mean this is a new instance that has never saved before
         store_bpmn_definition_mappings = not self.bpmn_definition_to_task_definitions_mappings
         bpmn_process_definition_parent = self._store_bpmn_process_definition(
@@ -1072,7 +1073,13 @@ class ProcessInstanceProcessor:
         # definition and their hashes could be used? Not sure how that plays in with the
         # bpmn_process_defintion hash though.
         #
-        ElementUnitsService.cache_element_units_for_workflow(bpmn_process_definition_parent.hash, bpmn_spec_dict)
+
+        # TODO: first time through for an instance the bpmn_spec_dict seems to get mutated,
+        # so for now we don't seed the cache until the second instance. not immediately a
+        # problem and can be part of the larger discussion mentioned in the TODO above.
+
+        if "task_specs" in bpmn_spec_dict["spec"]:
+            ElementUnitsService.cache_element_units_for_workflow(bpmn_process_definition_parent.hash, bpmn_spec_dict)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
