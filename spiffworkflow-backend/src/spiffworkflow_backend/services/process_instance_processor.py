@@ -1062,7 +1062,13 @@ class ProcessInstanceProcessor:
             )
         self.process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
 
-        ElementUnitsService.cache_element_units()
+        # TODO: think spiff-element-units needs to take the format of bpmn_dict_keys internally?
+        # at minimum it needs to be able to return it, so needs the serializer version key which
+        # would be an issues if anyone ever named their process "serializer_version".
+        # The ElementUnitService methods need to take/return this dict and can handle the mapping
+        # internally.
+        
+        #ElementUnitsService.cache_element_units("", "")
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""

@@ -14,7 +14,7 @@ class ElementUnitsService:
         return enabled and cls._cache_dir()
 
     @classmethod
-    def cache_element_units(cls, cache_dir: str, cache_key: str, workflow_spec_json: str) -> None:
+    def cache_element_units(cls, cache_key: str, workflow_spec_json: str) -> None:
         if not cls._enabled():
             return None
 
@@ -24,13 +24,13 @@ class ElementUnitsService:
         import spiff_element_units
 
         try:
-            return spiff_element_units.cache_element_units(cache_dir, cache_key, workflow_spec_json)
+            return spiff_element_units.cache_element_units(cls._cache_dir(), cache_key, workflow_spec_json)
         except Exception as e:
             current_app.logger.exception(e)
             return None
 
     @classmethod
-    def cached_element_unit_for_process(cls, cache_dir: str, cache_key: str, process_id: str) -> Optional[str]:
+    def cached_element_unit_for_process(cls, cache_key: str, process_id: str) -> Optional[str]:
         if not cls._enabled():
             return None
 
@@ -40,13 +40,13 @@ class ElementUnitsService:
         import spiff_element_units
 
         try:
-            return spiff_element_units.cached_element_unit_for_process(cache_dir, cache_key, process_id)
+            return spiff_element_units.cached_element_unit_for_process(cls._cache_dir(), cache_key, process_id)
         except Exception as e:
             current_app.logger.exception(e)
             return None
 
     @classmethod
-    def cached_element_unit_for_element(cls, cache_dir: str, cache_key: str, process_id: str, element_id: str) -> Optional[str]:
+    def cached_element_unit_for_element(cls, cache_key: str, process_id: str, element_id: str) -> Optional[str]:
         if not cls._enabled():
             return None
 
@@ -56,7 +56,7 @@ class ElementUnitsService:
         import spiff_element_units
 
         try:
-            return spiff_element_units.cached_element_unit_for_element(cache_dir, cache_key, process_id, element_id)
+            return spiff_element_units.cached_element_unit_for_element(cls._cache_dir(), cache_key, process_id, element_id)
         except Exception as e:
             current_app.logger.exception(e)
             return None
