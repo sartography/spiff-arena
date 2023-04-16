@@ -1,5 +1,7 @@
-from flask import current_app
 from typing import Optional
+
+from flask import current_app
+
 
 class ElementUnitsService:
     """Feature gated glue between the backend and spiff-element-units."""
@@ -56,7 +58,9 @@ class ElementUnitsService:
         import spiff_element_units
 
         try:
-            return spiff_element_units.cached_element_unit_for_element(cls._cache_dir(), cache_key, process_id, element_id)
+            return spiff_element_units.cached_element_unit_for_element(
+                cls._cache_dir(), cache_key, process_id, element_id
+            )
         except Exception as e:
             current_app.logger.exception(e)
             return None

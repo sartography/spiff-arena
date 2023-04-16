@@ -1,9 +1,9 @@
 import os
-import pytest
 import tempfile
+
+import pytest
 from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
-from typing import Optional
 
 from spiffworkflow_backend.services.element_units_service import (
     ElementUnitsService,
@@ -15,25 +15,30 @@ from spiffworkflow_backend.services.element_units_service import (
 # as expected.
 #
 
+
 @pytest.fixture()
 def app_no_cache_dir(app: Flask) -> Flask:
     app.config["SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR"] = None
     yield app
+
 
 @pytest.fixture()
 def app_some_cache_dir(app: Flask) -> Flask:
     app.config["SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR"] = "some_cache_dir"
     yield app
 
+
 @pytest.fixture()
 def app_disabled(app: Flask) -> Flask:
     app.config["SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED"] = False
     yield app
 
+
 @pytest.fixture()
 def app_enabled(app_some_cache_dir: Flask) -> Flask:
     app_some_cache_dir.config["SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED"] = True
     yield app_some_cache_dir
+
 
 @pytest.fixture()
 def app_enabled_tmp_cache_dir(app_enabled: Flask) -> str:
@@ -41,19 +46,14 @@ def app_enabled_tmp_cache_dir(app_enabled: Flask) -> str:
         app_enabled.config["SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR"] = tmpdirname
         yield app_enabled
 
+
 @pytest.fixture()
 def example_specs_json_str(app: Flask) -> str:
-    path = os.path.join(
-            app.instance_path,
-            "..",
-            "..",
-            "tests",
-            "data",
-        "specs-json",
-        "no-tasks.json")
+    path = os.path.join(app.instance_path, "..", "..", "tests", "data", "specs-json", "no-tasks.json")
     with open(path) as f:
         yield f.read()
-        
+
+
 class TestElementUnitsService(BaseTest):
     """Tests the ElementUnitsService."""
 
@@ -68,7 +68,7 @@ class TestElementUnitsService(BaseTest):
         app_disabled: Flask,
     ) -> None:
         assert not ElementUnitsService._enabled()
-        
+
     def test_feature_enabled_if_env_is_true(
         self,
         app_enabled: Flask,
@@ -103,18 +103,18 @@ class TestElementUnitsService(BaseTest):
         assert result is None
 
     def test_can_write_to_cache(
-            self,
-            app_enabled_tmp_cache_dir: Flask,
-            example_specs_json_str: str,
-            ) -> None:
+        self,
+        app_enabled_tmp_cache_dir: Flask,
+        example_specs_json_str: str,
+    ) -> None:
         result = ElementUnitsService.cache_element_units("testing", example_specs_json_str)
         assert result is None
 
     def test_can_write_to_cache_multiple_times(
-            self,
-            app_enabled_tmp_cache_dir: Flask,
-            example_specs_json_str: str,
-            ) -> None:
+        self,
+        app_enabled_tmp_cache_dir: Flask,
+        example_specs_json_str: str,
+    ) -> None:
         result = ElementUnitsService.cache_element_units("testing", example_specs_json_str)
         assert result is None
         result = ElementUnitsService.cache_element_units("testing", example_specs_json_str)
@@ -123,43 +123,33 @@ class TestElementUnitsService(BaseTest):
         assert result is None
 
     def test_can_read_element_unit_for_process_from_cache(
-            self,
-            app_enabled_tmp_cache_dir: Flask,
-            example_specs_json_str: str,
-            ) -> None:
+        self,
+        app_enabled_tmp_cache_dir: Flask,
+        example_specs_json_str: str,
+    ) -> None:
         ElementUnitsService.cache_element_units("testing", example_specs_json_str)
-        cached_specs_json_str = ElementUnitsService.cached_element_unit_for_process(
-            "testing",
-            "no_tasks")
+        cached_specs_json_str = ElementUnitsService.cached_element_unit_for_process("testing", "no_tasks")
         assert cached_specs_json_str == example_specs_json_str
 
     def test_can_read_element_unit_for_element_from_cache(
-            self,
-            app_enabled_tmp_cache_dir: Flask,
-            example_specs_json_str: str,
-            ) -> None:
+        self,
+        app_enabled_tmp_cache_dir: Flask,
+        example_specs_json_str: str,
+    ) -> None:
         ElementUnitsService.cache_element_units("testing", example_specs_json_str)
-        cached_specs_json_str = ElementUnitsService.cached_element_unit_for_element(
-            "testing",
-            "no_tasks",
-            "Start")
+        cached_specs_json_str = ElementUnitsService.cached_element_unit_for_element("testing", "no_tasks", "Start")
         assert cached_specs_json_str == example_specs_json_str
 
     def test_reading_element_unit_for_uncached_process_returns_none(
-            self,
-            app_enabled_tmp_cache_dir: Flask,
-            ) -> None:
-        cached_specs_json_str = ElementUnitsService.cached_element_unit_for_process(
-            "testing",
-            "no_tasks")
+        self,
+        app_enabled_tmp_cache_dir: Flask,
+    ) -> None:
+        cached_specs_json_str = ElementUnitsService.cached_element_unit_for_process("testing", "no_tasks")
         assert cached_specs_json_str is None
 
     def test_reading_element_unit_for_uncached_element_returns_none(
-            self,
-            app_enabled_tmp_cache_dir: Flask,
-            ) -> None:
-        cached_specs_json_str = ElementUnitsService.cached_element_unit_for_element(
-            "testing",
-            "no_tasks",
-            "Start")
+        self,
+        app_enabled_tmp_cache_dir: Flask,
+    ) -> None:
+        cached_specs_json_str = ElementUnitsService.cached_element_unit_for_element("testing", "no_tasks", "Start")
         assert cached_specs_json_str is None
