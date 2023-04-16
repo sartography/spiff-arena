@@ -3267,7 +3267,7 @@ category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:395c491e1c18574e0714222cb5916b06cadb9cf00f64d4f565ae79b146432e15"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:c167baf824af102c80af8974877a90d3f4e48887d4f255e3c49b5bb419a6bb3e"},
 ]
 
 [package.source]

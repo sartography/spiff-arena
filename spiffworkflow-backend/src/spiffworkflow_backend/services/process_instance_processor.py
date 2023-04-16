@@ -1072,7 +1072,7 @@ class ProcessInstanceProcessor:
         # definition and their hashes could be used? Not sure how that plays in with the
         # bpmn_process_defintion hash though.
         #
-        ElementUnitsService.cache_element_units(bpmn_process_definition_parent.hash, bpmn_spec_dict)
+        ElementUnitsService.cache_element_units_for_workflow(bpmn_process_definition_parent.hash, bpmn_spec_dict)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
