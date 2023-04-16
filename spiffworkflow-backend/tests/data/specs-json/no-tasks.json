@@ -1,5 +1,6 @@
 {
-    "no_tasks": {
+    "serializer_version": "spiff-element-units-integration",
+    "spec": {
         "correlation_keys": {},
         "data_objects": {},
         "description": "No Tasks",
@@ -110,5 +111,6 @@
             }
         },
         "typename": "BpmnProcessSpec"
-    }
+    },
+    "subprocess_specs": {}
 }
