@@ -108,6 +108,9 @@ from spiffworkflow_backend.services.workflow_execution_service import (
 from spiffworkflow_backend.services.workflow_execution_service import (
     WorkflowExecutionService,
 )
+from spiffworkflow_backend.services.element_units_service import (
+    ElementUnitsService,
+)
 
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
@@ -1059,13 +1062,17 @@ class ProcessInstanceProcessor:
             )
         self.process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
 
-        # TODO: think spiff-element-units needs to take the format of bpmn_dict_keys internally?
-        # at minimum it needs to be able to return it, so needs the serializer version key which
-        # would be an issues if anyone ever named their process "serializer_version".
-        # The ElementUnitService methods need to take/return this dict and can handle the mapping
-        # internally.
-
-        # ElementUnitsService.cache_element_units("", "")
+        #
+        # builds and caches the element units for the parent bpmn process defintion. these
+        # element units can then be queried using the same hash for later execution.
+        #
+        # TODO: this seems to be run each time a process instance is started, so element
+        # units will only be queried after a save/resume point. the hash used as the key
+        # can be anything, so possibly some hash of all files required to form the process
+        # definition and their hashes could be used? Not sure how that plays in with the
+        # bpmn_process_defintion hash though.
+        #
+        ElementUnitsService.cache_element_units(bpmn_process_definition_parent.hash, bpmn_spec_dict)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
