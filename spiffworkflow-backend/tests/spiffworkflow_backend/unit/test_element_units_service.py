@@ -1,5 +1,6 @@
 import os
 import tempfile
+from typing import Generator
 
 import pytest
 from flask.app import Flask
@@ -17,38 +18,38 @@ from spiffworkflow_backend.services.element_units_service import (
 
 
 @pytest.fixture()
-def app_no_cache_dir(app: Flask) -> Flask:
+def app_no_cache_dir(app: Flask) -> Generator[Flask, None, None]:
     app.config["SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR"] = None
     yield app
 
 
 @pytest.fixture()
-def app_some_cache_dir(app: Flask) -> Flask:
+def app_some_cache_dir(app: Flask) -> Generator[Flask, None, None]:
     app.config["SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR"] = "some_cache_dir"
     yield app
 
 
 @pytest.fixture()
-def app_disabled(app: Flask) -> Flask:
+def app_disabled(app: Flask) -> Generator[Flask, None, None]:
     app.config["SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED"] = False
     yield app
 
 
 @pytest.fixture()
-def app_enabled(app_some_cache_dir: Flask) -> Flask:
+def app_enabled(app_some_cache_dir: Flask) -> Generator[Flask, None, None]:
     app_some_cache_dir.config["SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED"] = True
     yield app_some_cache_dir
 
 
 @pytest.fixture()
-def app_enabled_tmp_cache_dir(app_enabled: Flask) -> str:
+def app_enabled_tmp_cache_dir(app_enabled: Flask) -> Generator[Flask, None, None]:
     with tempfile.TemporaryDirectory() as tmpdirname:
         app_enabled.config["SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR"] = tmpdirname
         yield app_enabled
 
 
 @pytest.fixture()
-def example_specs_json_str(app: Flask) -> str:
+def example_specs_json_str(app: Flask) -> Generator[str, None, None]:
     path = os.path.join(app.instance_path, "..", "..", "tests", "data", "specs-json", "no-tasks.json")
     with open(path) as f:
         yield f.read()
