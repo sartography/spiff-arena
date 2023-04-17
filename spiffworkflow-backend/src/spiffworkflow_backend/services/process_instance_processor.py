@@ -91,6 +91,9 @@ from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
+from spiffworkflow_backend.services.element_units_service import (
+    ElementUnitsService,
+)
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -673,6 +676,25 @@ class ProcessInstanceProcessor:
                 bpmn_definition_to_task_definitions_mappings,
             )
 
+            #
+            # see if we have any cached element units and if so step on the spec and subprocess_specs.
+            # in the early stages of development this will return the full workflow when the feature
+            # flag is set to on. as time goes we will need to think about how this plays in with the
+            # bpmn definition tables more.
+            #
+
+            element_unit_process_dict = None
+            full_process_model_hash = bpmn_process_definition.full_process_model_hash
+
+            if full_process_model_hash is not None:
+                element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
+                    full_process_model_hash,
+                    bpmn_process_definition.bpmn_identifier,
+                )
+            if element_unit_process_dict is not None:
+                spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
+                spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
+
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
                 single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_process, get_tasks=True)
@@ -959,18 +981,31 @@ class ProcessInstanceProcessor:
         process_bpmn_properties: dict,
         bpmn_process_definition_parent: Optional[BpmnProcessDefinitionModel] = None,
         store_bpmn_definition_mappings: bool = False,
+        full_bpmn_spec_dict: Optional[dict] = None,
     ) -> BpmnProcessDefinitionModel:
         process_bpmn_identifier = process_bpmn_properties["name"]
         process_bpmn_name = process_bpmn_properties["description"]
-        new_hash_digest = sha256(json.dumps(process_bpmn_properties, sort_keys=True).encode("utf8")).hexdigest()
-        bpmn_process_definition: Optional[BpmnProcessDefinitionModel] = BpmnProcessDefinitionModel.query.filter_by(
-            hash=new_hash_digest
-        ).first()
+
+        bpmn_process_definition: Optional[BpmnProcessDefinitionModel] = None
+        single_process_hash = sha256(json.dumps(process_bpmn_properties, sort_keys=True).encode("utf8")).hexdigest()
+        full_process_model_hash = None
+        if full_bpmn_spec_dict is not None:
+            full_process_model_hash = sha256(
+                json.dumps(full_bpmn_spec_dict, sort_keys=True).encode("utf8")
+            ).hexdigest()
+            bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
+                full_process_model_hash=full_process_model_hash
+            ).first()
+        else:
+            bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
+                single_process_hash=single_process_hash
+            ).first()
 
         if bpmn_process_definition is None:
             task_specs = process_bpmn_properties.pop("task_specs")
             bpmn_process_definition = BpmnProcessDefinitionModel(
-                hash=new_hash_digest,
+                single_process_hash=single_process_hash,
+                full_process_model_hash=full_process_model_hash,
                 bpmn_identifier=process_bpmn_identifier,
                 bpmn_name=process_bpmn_name,
                 properties_json=process_bpmn_properties,
@@ -1050,6 +1085,7 @@ class ProcessInstanceProcessor:
         bpmn_process_definition_parent = self._store_bpmn_process_definition(
             bpmn_spec_dict["spec"],
             store_bpmn_definition_mappings=store_bpmn_definition_mappings,
+            full_bpmn_spec_dict=bpmn_spec_dict,
         )
         for process_bpmn_properties in bpmn_spec_dict["subprocess_specs"].values():
             self._store_bpmn_process_definition(
@@ -1058,6 +1094,26 @@ class ProcessInstanceProcessor:
                 store_bpmn_definition_mappings=store_bpmn_definition_mappings,
             )
         self.process_instance_model.bpmn_process_definition = bpmn_process_definition_parent
+
+        #
+        # builds and caches the element units for the parent bpmn process defintion. these
+        # element units can then be queried using the same hash for later execution.
+        #
+        # TODO: this seems to be run each time a process instance is started, so element
+        # units will only be queried after a save/resume point. the hash used as the key
+        # can be anything, so possibly some hash of all files required to form the process
+        # definition and their hashes could be used? Not sure how that plays in with the
+        # bpmn_process_defintion hash though.
+        #
+
+        # TODO: first time through for an instance the bpmn_spec_dict seems to get mutated,
+        # so for now we don't seed the cache until the second instance. not immediately a
+        # problem and can be part of the larger discussion mentioned in the TODO above.
+
+        full_process_model_hash = bpmn_process_definition_parent.full_process_model_hash
+
+        if full_process_model_hash is not None and "task_specs" in bpmn_spec_dict["spec"]:
+            ElementUnitsService.cache_element_units_for_workflow(full_process_model_hash, bpmn_spec_dict)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
