@@ -129,7 +129,7 @@ def setup_logger(app: Flask) -> None:
         spiff_logger_filehandler.setFormatter(log_formatter)
 
     # these loggers have been deemed too verbose to be useful
-    garbage_loggers_to_exclude = ["connexion"]
+    garbage_loggers_to_exclude = ["connexion", "flask_cors.extension"]
 
     # make all loggers act the same
     for name in logging.root.manager.loggerDict:
