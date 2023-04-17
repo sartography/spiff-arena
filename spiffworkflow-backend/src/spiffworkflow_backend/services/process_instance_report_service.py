@@ -622,7 +622,13 @@ class ProcessInstanceReportService:
             group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
             if report_filter.user_group_identifier:
                 group_model_join_conditions.append(GroupModel.identifier == report_filter.user_group_identifier)
+
             process_instance_query = process_instance_query.join(HumanTaskModel)
+            if report_filter.has_active_status:
+                process_instance_query = process_instance_query.filter(
+                    HumanTaskModel.completed.is_(False)  # type: ignore
+                )
+
             process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))
             process_instance_query = process_instance_query.join(
                 UserGroupAssignmentModel,
