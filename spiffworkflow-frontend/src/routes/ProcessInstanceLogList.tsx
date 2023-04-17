@@ -9,6 +9,7 @@ import {
   ButtonSet,
   Button,
   TextInput,
+  ComboBox,
   // @ts-ignore
 } from '@carbon/react';
 import {
@@ -43,6 +44,10 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
 
   const [taskName, setTaskName] = useState<string>('');
   const [taskIdentifier, setTaskIdentifier] = useState<string>('');
+
+  const [taskTypes, setTaskTypes] = useState<string[]>([])
+  const [selectedTaskType, setSelectedTaskType] = useState<string | null>(null)
+  const [eventTypes, setEventTypes] = useState<string[]>([])
 
   const { targetUris } = useUriListForPermissions();
   const isDetailedView = searchParams.get('detailed') === 'true';
@@ -81,6 +86,13 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceLogListPath}?per_page=${perPage}&page=${page}&detailed=${isDetailedView}`,
       successCallback: setProcessInstanceLogListFromResult,
+    });
+    HttpService.makeCallToBackend({
+      path: `/v1.0/logs/types`,
+      successCallback: (result: any) => {
+      setTaskTypes(result.task_types)
+      setEventTypes(result.event_types)
+      },
     });
   }, [
     searchParams,
@@ -209,6 +221,15 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     setSearchParams(searchParams);
   };
 
+  const shouldFilterTaskType = (options: any) => {
+    const taskTypeOption = options.item
+    let { inputValue } = options;
+    if (!inputValue) {
+      inputValue = '';
+    }
+    return taskTypeOption.toLowerCase().includes(inputValue.toLowerCase())
+  }
+
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
@@ -240,6 +261,21 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 addDebouncedSearchParams(newValue, 'bpmn_identifier');
               }}
             />
+          </Column>
+          <Column md={4}>
+    <ComboBox
+      onChange={(value: any) => setSelectedTaskType(value.selectedItem)}
+      id="task-type-select"
+      data-qa="task-type-select"
+      items={taskTypes}
+      itemToString={(value: string) => {
+        return value
+      }}
+      shouldFilterItem={shouldFilterTaskType}
+      placeholder="Choose a process model"
+      titleText="Task Type"
+      selectedItem={selectedTaskType}
+    />
           </Column>
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
