@@ -23,6 +23,7 @@ import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessInstanceTask } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
+import InstructionsForEndUser from '../components/InstructionsForEndUser';
 
 // TODO: move this somewhere else
 function TypeAheadWidget({
@@ -402,27 +403,6 @@ export default function TaskShow() {
     );
   };
 
-  const instructionsElement = () => {
-    if (!task) {
-      return null;
-    }
-    let instructions = '';
-    if (task.properties.instructionsForEndUser) {
-      instructions = task.properties.instructionsForEndUser;
-    }
-    return (
-      <div className="markdown">
-        {/*
-          https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
-          This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
-        */}
-        <div data-color-mode="light">
-          <MDEditor.Markdown source={instructions} />
-        </div>
-      </div>
-    );
-  };
-
   if (task) {
     let statusString = '';
     if (task.state !== 'READY') {
@@ -446,7 +426,7 @@ export default function TaskShow() {
         <h3>
           Task: {task.title} ({task.process_model_display_name}){statusString}
         </h3>
-        {instructionsElement()}
+        <InstructionsForEndUser task={task} />
         {formElement()}
       </main>
     );

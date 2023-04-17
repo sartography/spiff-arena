@@ -404,6 +404,9 @@ def interstitial(process_instance_id: int):
             last_task = spiff_task
             processor.do_engine_steps(execution_strategy_name="one_at_a_time")
             spiff_task = processor.next_task()
+            # Note, this has to be done in case someone leaves the page,
+            # which can cancel this function before saving.
+            processor.save() # Fixme - maybe find a way not to do this on every method?
         return
 
     #    return Response(get_data(), mimetype='text/event-stream')
