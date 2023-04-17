@@ -684,7 +684,7 @@ class ProcessInstanceProcessor:
             #
 
             element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
-                bpmn_process_definition.hash,
+                bpmn_process_definition.full_process_model_hash,
                 bpmn_process_definition.bpmn_identifier,
             )
             if element_unit_process_dict is not None:
@@ -1107,7 +1107,7 @@ class ProcessInstanceProcessor:
         # problem and can be part of the larger discussion mentioned in the TODO above.
 
         if "task_specs" in bpmn_spec_dict["spec"]:
-            ElementUnitsService.cache_element_units_for_workflow(bpmn_process_definition_parent.hash, bpmn_spec_dict)
+            ElementUnitsService.cache_element_units_for_workflow(bpmn_process_definition_parent.full_process_model_hash, bpmn_spec_dict)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
