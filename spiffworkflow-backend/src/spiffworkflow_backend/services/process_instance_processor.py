@@ -977,18 +977,31 @@ class ProcessInstanceProcessor:
         process_bpmn_properties: dict,
         bpmn_process_definition_parent: Optional[BpmnProcessDefinitionModel] = None,
         store_bpmn_definition_mappings: bool = False,
+        full_bpmn_spec_dict: Optional[dict] = None,
     ) -> BpmnProcessDefinitionModel:
         process_bpmn_identifier = process_bpmn_properties["name"]
         process_bpmn_name = process_bpmn_properties["description"]
-        new_hash_digest = sha256(json.dumps(process_bpmn_properties, sort_keys=True).encode("utf8")).hexdigest()
-        bpmn_process_definition: Optional[BpmnProcessDefinitionModel] = BpmnProcessDefinitionModel.query.filter_by(
-            hash=new_hash_digest
-        ).first()
+
+        bpmn_process_definition: Optional[BpmnProcessDefinitionModel] = None
+        single_process_hash = sha256(json.dumps(process_bpmn_properties, sort_keys=True).encode("utf8")).hexdigest()
+        full_process_model_hash = None
+        if full_bpmn_spec_dict is not None:
+            full_process_model_hash = sha256(
+                json.dumps(full_bpmn_spec_dict, sort_keys=True).encode("utf8")
+            ).hexdigest()
+            bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
+                full_process_model_hash=full_process_model_hash
+            ).first()
+        else:
+            bpmn_process_definition = BpmnProcessDefinitionModel.query.filter_by(
+                single_process_hash=single_process_hash
+            ).first()
 
         if bpmn_process_definition is None:
             task_specs = process_bpmn_properties.pop("task_specs")
             bpmn_process_definition = BpmnProcessDefinitionModel(
-                hash=new_hash_digest,
+                single_process_hash=single_process_hash,
+                full_process_model_hash=full_process_model_hash,
                 bpmn_identifier=process_bpmn_identifier,
                 bpmn_name=process_bpmn_name,
                 properties_json=process_bpmn_properties,
@@ -1068,6 +1081,7 @@ class ProcessInstanceProcessor:
         bpmn_process_definition_parent = self._store_bpmn_process_definition(
             bpmn_spec_dict["spec"],
             store_bpmn_definition_mappings=store_bpmn_definition_mappings,
+            full_bpmn_spec_dict=bpmn_spec_dict,
         )
         for process_bpmn_properties in bpmn_spec_dict["subprocess_specs"].values():
             self._store_bpmn_process_definition(
