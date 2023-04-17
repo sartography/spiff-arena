@@ -691,19 +691,29 @@ def process_instance_task_list(
     task_models = task_model_query.all()
     if most_recent_tasks_only:
         most_recent_tasks = {}
-        most_recent_subprocesses = set()
+
+        # if you have a loop and there is a subprocess, and you are going around for the second time,
+        # ignore the tasks in the "first loop" subprocess
+        relevant_subprocess_guids = {bpmn_process_guid, None}
+
+        bpmn_process_cache: dict[str, list[str]] = {}
         for task_model in task_models:
-            bpmn_process_guid = task_model.bpmn_process_guid or "TOP"
-            row_key = f"{bpmn_process_guid}:::{task_model.bpmn_identifier}"
+            if task_model.bpmn_process_guid not in bpmn_process_cache:
+                bpmn_process = BpmnProcessModel.query.filter_by(guid=task_model.bpmn_process_guid).first()
+                full_bpmn_process_path = TaskService.full_bpmn_process_path(bpmn_process)
+                bpmn_process_cache[task_model.bpmn_process_guid] = full_bpmn_process_path
+            else:
+                full_bpmn_process_path = bpmn_process_cache[task_model.bpmn_process_guid]
+
+            row_key = f"{':::'.join(full_bpmn_process_path)}:::{task_model.bpmn_identifier}"
             if row_key not in most_recent_tasks:
                 most_recent_tasks[row_key] = task_model
                 if task_model.typename in ["SubWorkflowTask", "CallActivity"]:
-                    most_recent_subprocesses.add(task_model.guid)
-
+                    relevant_subprocess_guids.add(task_model.guid)
         task_models = [
             task_model
             for task_model in most_recent_tasks.values()
-            if task_model.bpmn_process_guid in most_recent_subprocesses or task_model.bpmn_process_guid is None
+            if task_model.bpmn_process_guid in relevant_subprocess_guids
         ]
 
     if to_task_model is not None:
