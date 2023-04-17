@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from typing import Generator
@@ -6,9 +7,8 @@ import pytest
 from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
-from spiffworkflow_backend.services.element_units_service import (
-    ElementUnitsService,
-)
+from spiffworkflow_backend.services.element_units_service import BpmnSpecDict
+from spiffworkflow_backend.services.element_units_service import ElementUnitsService
 
 #
 # we don't want to fully flex every aspect of the spiff-element-units
@@ -49,10 +49,10 @@ def app_enabled_tmp_cache_dir(app_enabled: Flask) -> Generator[Flask, None, None
 
 
 @pytest.fixture()
-def example_specs_json_str(app: Flask) -> Generator[str, None, None]:
+def example_specs_dict(app: Flask) -> Generator[BpmnSpecDict, None, None]:
     path = os.path.join(app.instance_path, "..", "..", "tests", "data", "specs-json", "no-tasks.json")
     with open(path) as f:
-        yield f.read()
+        yield json.loads(f.read())
 
 
 class TestElementUnitsService(BaseTest):
@@ -86,7 +86,7 @@ class TestElementUnitsService(BaseTest):
         self,
         app_disabled: Flask,
     ) -> None:
-        result = ElementUnitsService.cache_element_units_for_workflow("", "")
+        result = ElementUnitsService.cache_element_units_for_workflow("", {})
         assert result is None
 
     def test_ok_to_read_workflow_from_cached_element_unit_when_disabled(
@@ -99,31 +99,31 @@ class TestElementUnitsService(BaseTest):
     def test_can_write_to_cache(
         self,
         app_enabled_tmp_cache_dir: Flask,
-        example_specs_json_str: str,
+        example_specs_dict: BpmnSpecDict,
     ) -> None:
-        result = ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_json_str)
+        result = ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_dict)
         assert result is None
 
     def test_can_write_to_cache_multiple_times(
         self,
         app_enabled_tmp_cache_dir: Flask,
-        example_specs_json_str: str,
+        example_specs_dict: BpmnSpecDict,
     ) -> None:
-        result = ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_json_str)
+        result = ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_dict)
         assert result is None
-        result = ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_json_str)
+        result = ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_dict)
         assert result is None
-        result = ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_json_str)
+        result = ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_dict)
         assert result is None
 
     def test_can_read_element_unit_for_process_from_cache(
         self,
         app_enabled_tmp_cache_dir: Flask,
-        example_specs_json_str: str,
+        example_specs_dict: BpmnSpecDict,
     ) -> None:
-        ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_json_str)
+        ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_dict)
         cached_specs_json_str = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks")
-        assert cached_specs_json_str == example_specs_json_str
+        assert cached_specs_json_str == example_specs_dict
 
     def test_reading_element_unit_for_uncached_process_returns_none(
         self,
