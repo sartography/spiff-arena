@@ -1058,7 +1058,6 @@ class ProcessInstanceProcessor:
         # we may have to already process bpmn_defintions if we ever care about the Root task again
         bpmn_dict = self.serialize()
         bpmn_dict_keys = ("spec", "subprocess_specs", "serializer_version")
-
         bpmn_spec_dict = {}
         for bpmn_key in bpmn_dict.keys():
             if bpmn_key in bpmn_dict_keys:

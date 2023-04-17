@@ -122,12 +122,12 @@ class TestElementUnitsService(BaseTest):
         example_specs_dict: BpmnSpecDict,
     ) -> None:
         ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_dict)
-        cached_specs_json_str = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks")
-        assert cached_specs_json_str == example_specs_dict
+        cached_specs_dict = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks")
+        assert cached_specs_dict == example_specs_dict
 
     def test_reading_element_unit_for_uncached_process_returns_none(
         self,
         app_enabled_tmp_cache_dir: Flask,
     ) -> None:
-        cached_specs_json_str = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks")
-        assert cached_specs_json_str is None
+        cached_specs_dict = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks")
+        assert cached_specs_dict is None
