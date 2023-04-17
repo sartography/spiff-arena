@@ -683,10 +683,14 @@ class ProcessInstanceProcessor:
             # bpmn definition tables more.
             #
 
-            element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
-                bpmn_process_definition.full_process_model_hash,
-                bpmn_process_definition.bpmn_identifier,
-            )
+            element_unit_process_dict = None
+            full_process_model_hash = bpmn_process_definition.full_process_model_hash
+
+            if full_process_model_hash is not None:
+                element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
+                    full_process_model_hash,
+                    bpmn_process_definition.bpmn_identifier,
+                )
             if element_unit_process_dict is not None:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
                 spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
@@ -1106,8 +1110,10 @@ class ProcessInstanceProcessor:
         # so for now we don't seed the cache until the second instance. not immediately a
         # problem and can be part of the larger discussion mentioned in the TODO above.
 
-        if "task_specs" in bpmn_spec_dict["spec"]:
-            ElementUnitsService.cache_element_units_for_workflow(bpmn_process_definition_parent.full_process_model_hash, bpmn_spec_dict)
+        full_process_model_hash = bpmn_process_definition_parent.full_process_model_hash
+
+        if full_process_model_hash is not None and "task_specs" in bpmn_spec_dict["spec"]:
+            ElementUnitsService.cache_element_units_for_workflow(full_process_model_hash, bpmn_spec_dict)
 
     def save(self) -> None:
         """Saves the current state of this processor to the database."""
