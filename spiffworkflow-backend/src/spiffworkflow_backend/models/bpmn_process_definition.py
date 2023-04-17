@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from sqlalchemy import UniqueConstraint
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
@@ -15,17 +17,25 @@ from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 @dataclass
 class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     __tablename__ = "bpmn_process_definition"
+    __table_args__ = (
+        UniqueConstraint(
+            "full_process_model_hash",
+            "single_process_hash",
+            name="process_hash_unique",
+        ),
+    )
+
     id: int = db.Column(db.Integer, primary_key=True)
 
     # this is a sha256 hash of spec and serializer_version
     # note that a call activity is its own row in this table, with its own hash,
     # and therefore it only gets stored once per version, and can be reused
     # by multiple calling processes.
-    single_process_hash: str = db.Column(db.String(255), nullable=False, unique=True)
+    single_process_hash: str = db.Column(db.String(255), nullable=False)
 
     # only the top level parent will have this set
     # it includes all subprocesses and call activities
-    full_process_model_hash: str | None = db.Column(db.String(255), nullable=True, unique=True, default=None)
+    full_process_model_hash: str | None = db.Column(db.String(255), nullable=True, unique=True)
 
     bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     bpmn_name: str = db.Column(db.String(255), nullable=True, index=True)
