@@ -682,7 +682,7 @@ class ProcessInstanceProcessor:
             # flag is set to on. as time goes we will need to think about how this plays in with the
             # bpmn definition tables more.
             #
-                
+
             element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
                 bpmn_process_definition.hash,
                 bpmn_process_definition.bpmn_identifier,
