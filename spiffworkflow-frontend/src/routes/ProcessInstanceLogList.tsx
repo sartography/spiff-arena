@@ -1,7 +1,24 @@
 import { useEffect, useState } from 'react';
-// @ts-ignore
-import { Table, Tabs, TabList, Tab } from '@carbon/react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Table,
+  Tabs,
+  TabList,
+  Tab,
+  Grid,
+  Column,
+  ButtonSet,
+  Button,
+  TextInput,
+  // @ts-ignore
+} from '@carbon/react';
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
+import { DebounceInput } from 'react-debounce-input';
+import { useDebounce, useDebouncedCallback } from 'use-debounce';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
@@ -11,6 +28,7 @@ import {
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { ProcessInstanceLogEntry } from '../interfaces';
+import Filters from '../components/Filters';
 
 type OwnProps = {
   variant: string;
@@ -18,16 +36,36 @@ type OwnProps = {
 
 export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const params = useParams();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
+
+  const [taskName, setTaskName] = useState<string>('');
+  const [taskIdentifier, setTaskIdentifier] = useState<string>('');
+
   const { targetUris } = useUriListForPermissions();
   const isDetailedView = searchParams.get('detailed') === 'true';
+
+  const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
 
   let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}`;
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}`;
   }
+
+  const addDebouncedSearchParams = useDebouncedCallback(
+    (value, key) => {
+      if (value) {
+        searchParams.set(key, value);
+      } else {
+        searchParams.delete(key);
+      }
+      setSearchParams(searchParams);
+    },
+    // delay in ms
+    1000
+  );
 
   useEffect(() => {
     // Clear out any previous results to avoid a "flicker" effect where columns
@@ -160,7 +198,96 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       </Table>
     );
   };
-  const selectedTabIndex = isDetailedView ? 1 : 0;
+
+  const resetFilters = () => {
+    setTaskIdentifier('');
+    setTaskName('');
+
+    searchParams.delete(taskName);
+    searchParams.delete(taskIdentifier);
+
+    setSearchParams(searchParams);
+  };
+
+  const filterOptions = () => {
+    if (!showFilterOptions) {
+      return null;
+    }
+
+    return (
+      <>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column md={4}>
+            <TextInput
+              id="task-name-filter"
+              labelText="Task Name"
+              value={taskName}
+              onChange={(event: any) => {
+                const newValue = event.target.value;
+                setTaskName(newValue);
+                addDebouncedSearchParams(newValue, 'bpmn_name');
+              }}
+            />
+          </Column>
+          <Column md={4}>
+            <TextInput
+              id="task-identifier-filter"
+              labelText="Task Identifier"
+              value={taskIdentifier}
+              onChange={(event: any) => {
+                const newValue = event.target.value;
+                setTaskIdentifier(newValue);
+                addDebouncedSearchParams(newValue, 'bpmn_identifier');
+              }}
+            />
+          </Column>
+        </Grid>
+        <Grid fullWidth className="with-bottom-margin">
+          <Column sm={4} md={4} lg={8}>
+            <ButtonSet>
+              <Button
+                kind=""
+                className="button-white-background narrow-button"
+                onClick={resetFilters}
+              >
+                Reset
+              </Button>
+            </ButtonSet>
+          </Column>
+        </Grid>
+      </>
+    );
+  };
+
+  const tabs = () => {
+    const selectedTabIndex = isDetailedView ? 1 : 0;
+    return (
+      <Tabs selectedIndex={selectedTabIndex}>
+        <TabList aria-label="List of tabs">
+          <Tab
+            title="Only show a subset of the logs, and show fewer columns"
+            data-qa="process-instance-log-simple"
+            onClick={() => {
+              searchParams.set('detailed', 'false');
+              setSearchParams(searchParams);
+            }}
+          >
+            Milestones
+          </Tab>
+          <Tab
+            title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
+            data-qa="process-instance-log-detailed"
+            onClick={() => {
+              searchParams.set('detailed', 'true');
+              setSearchParams(searchParams);
+            }}
+          >
+            Events
+          </Tab>
+        </TabList>
+      </Tabs>
+    );
+  };
 
   if (pagination) {
     const { page, perPage } = getPageInfoFromSearchParams(searchParams);
@@ -181,30 +308,13 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
             ['Logs'],
           ]}
         />
-        <Tabs selectedIndex={selectedTabIndex}>
-          <TabList aria-label="List of tabs">
-            <Tab
-              title="Only show a subset of the logs, and show fewer columns"
-              data-qa="process-instance-log-simple"
-              onClick={() => {
-                searchParams.set('detailed', 'false');
-                setSearchParams(searchParams);
-              }}
-            >
-              Milestones
-            </Tab>
-            <Tab
-              title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
-              data-qa="process-instance-log-detailed"
-              onClick={() => {
-                searchParams.set('detailed', 'true');
-                setSearchParams(searchParams);
-              }}
-            >
-              Events
-            </Tab>
-          </TabList>
-        </Tabs>
+        {tabs()}
+        <Filters
+          filterOptions={filterOptions}
+          showFilterOptions={showFilterOptions}
+          setShowFilterOptions={setShowFilterOptions}
+          filtersEnabled
+        />
         <br />
         <PaginationForTable
           page={page}
