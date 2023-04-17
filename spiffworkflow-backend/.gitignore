@@ -19,3 +19,4 @@ node_modules
 /bin/import_secrets.py
 /src/spiffworkflow_backend/config/secrets.py
 *null-ls_*
+/local_wheels/*.whl
