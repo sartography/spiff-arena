@@ -331,6 +331,15 @@ class WorkflowExecutionService:
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
     def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
+        """Do_engine_steps."""
+        with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
+            if tripped:
+                raise AssertionError(
+                    "The current thread has not obtained a lock for this process"
+                    f" instance ({self.process_instance_model.id})."
+                )
+
+        try:
             self.bpmn_process_instance.refresh_waiting_tasks()
 
             # TODO: implicit re-entrant locks here `with_dequeued`
@@ -339,9 +348,17 @@ class WorkflowExecutionService:
             if self.bpmn_process_instance.is_completed():
                 self.process_instance_completer(self.bpmn_process_instance)
 
-            self.execution_strategy.spiff_run(self.bpmn_process_instance, exit_at)
-            if self.bpmn_process_instance.is_completed():
-                self.process_instance_completer(self.bpmn_process_instance)
+            self.process_bpmn_messages()
+            self.queue_waiting_receive_messages()
+        except SpiffWorkflowException as swe:
+            raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
+
+        finally:
+            self.execution_strategy.save(self.bpmn_process_instance)
+            db.session.commit()
+
+            if save:
+                self.process_instance_saver()
 
     def process_bpmn_messages(self) -> None:
         """Process_bpmn_messages."""
