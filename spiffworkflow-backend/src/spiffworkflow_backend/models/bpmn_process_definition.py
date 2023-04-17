@@ -21,7 +21,11 @@ class BpmnProcessDefinitionModel(SpiffworkflowBaseDBModel):
     # note that a call activity is its own row in this table, with its own hash,
     # and therefore it only gets stored once per version, and can be reused
     # by multiple calling processes.
-    hash: str = db.Column(db.String(255), nullable=False, unique=True)
+    single_process_hash: str = db.Column(db.String(255), nullable=False, unique=True)
+
+    # only the top level parent will have this set
+    # it includes all subprocesses and call activities
+    full_process_model_hash: str | None = db.Column(db.String(255), nullable=True, unique=True, default=None)
 
     bpmn_identifier: str = db.Column(db.String(255), nullable=False, index=True)
     bpmn_name: str = db.Column(db.String(255), nullable=True, index=True)
