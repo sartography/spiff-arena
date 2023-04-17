@@ -1,10 +1,12 @@
 import json
+from typing import Any
+from typing import Dict
 from typing import Optional
-from typing import Dict, Any
 
 from flask import current_app
 
 BpmnSpecDict = Dict[str, Any]
+
 
 class ElementUnitsService:
     """Feature gated glue between the backend and spiff-element-units."""
@@ -22,7 +24,7 @@ class ElementUnitsService:
     def cache_element_units_for_workflow(cls, cache_key: str, bpmn_spec_dict: BpmnSpecDict) -> None:
         if not cls._enabled():
             return None
-        
+
         try:
             # for now we are importing inside each of these functions, not sure the best
             # way to do this in an overall feature flagged strategy but this gets things
@@ -46,7 +48,9 @@ class ElementUnitsService:
             # moving
             import spiff_element_units
 
-            bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(cls._cache_dir(), cache_key, element_id)
+            bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(
+                cls._cache_dir(), cache_key, element_id
+            )
             return json.loads(bpmn_spec_json)
         except Exception as e:
             current_app.logger.exception(e)

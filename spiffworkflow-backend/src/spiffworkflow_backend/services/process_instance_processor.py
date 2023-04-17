@@ -91,6 +91,9 @@ from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.scripts.script import Script
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
+from spiffworkflow_backend.services.element_units_service import (
+    ElementUnitsService,
+)
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
@@ -107,9 +110,6 @@ from spiffworkflow_backend.services.workflow_execution_service import (
 )
 from spiffworkflow_backend.services.workflow_execution_service import (
     WorkflowExecutionService,
-)
-from spiffworkflow_backend.services.element_units_service import (
-    ElementUnitsService,
 )
 
 
@@ -676,6 +676,21 @@ class ProcessInstanceProcessor:
                 bpmn_definition_to_task_definitions_mappings,
             )
 
+            #
+            # see if we have any cached element units and if so step on the spec and subprocess_specs.
+            # in the early stages of development this will return the full workflow when the feature
+            # flag is set to on. as time goes we will need to think about how this plays in with the
+            # bpmn definition tables more.
+            #
+                
+            element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
+                bpmn_process_definition.hash,
+                bpmn_process_definition.bpmn_identifier,
+            )
+            if element_unit_process_dict is not None:
+                spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
+                spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
+
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
                 single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_process, get_tasks=True)
@@ -1048,7 +1063,7 @@ class ProcessInstanceProcessor:
         for bpmn_key in bpmn_dict.keys():
             if bpmn_key in bpmn_dict_keys:
                 bpmn_spec_dict[bpmn_key] = bpmn_dict[bpmn_key]
-        
+
         # store only if mappings is currently empty. this also would mean this is a new instance that has never saved before
         store_bpmn_definition_mappings = not self.bpmn_definition_to_task_definitions_mappings
         bpmn_process_definition_parent = self._store_bpmn_process_definition(
