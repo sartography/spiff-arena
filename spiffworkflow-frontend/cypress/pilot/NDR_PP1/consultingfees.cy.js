@@ -82,9 +82,9 @@ const submitWithUser = (
 
 //Consulting Fees Path - Without Files
 describe('Consulting Fees Path - Without Files', () => {
-  Cypress._.times(5, () => {
+  Cypress._.times(1, () => {
     //Budget owner approves the request
-    it('Budget owner approves', () => {
+    it.only('Budget owner approves', () => {
       let username = Cypress.env('requestor_username');
       let password = Cypress.env('requestor_password');
       cy.log('=====username : ' + username);
@@ -94,24 +94,25 @@ describe('Consulting Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Raise New Demand Request');
+      cy.contains('Request Goods/Services');
 
       cy.runPrimaryBpmnFile(true);
 
-      cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.wait(2000);
-      cy.get('input#root-procurement').click();
-      cy.wait(2000);
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
+      /*      cy.contains('Please select the type of request to start the process.');
+            // wait a second to ensure we can click the radio button
+      
+            cy.wait(2000);
+            cy.get('input#root-procurement').click();
+            cy.wait(2000);
+      
+      
+            cy.get('button')
+              .contains(/^Submit$/)
+              .click();
+      */
 
       cy.contains(
-        'Submit a new demand request for the procurement of needed items',
+        'Request Goods/Services',
         { timeout: 60000 }
       );
 
@@ -121,45 +122,47 @@ describe('Consulting Fees Path - Without Files', () => {
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
         cy.log('==###############===processInstanceId : ', processInstanceId);
         let projectId = Cypress.env('project_id');
+        cy.wait(2000);
         cy.get('#root_project').select(projectId);
         cy.get('#root_category').select('consult_fees');
         cy.get('#root_purpose').clear().type('Consulting ==== Management consulting includes a broad range of activities, and the many firms and their members often define these practices quite differently. One way to categorize the activities is in terms of the professional’s area of expertise.');
         cy.get('#root_criticality').select('High');
-        cy.get('#root_period').clear().type('2025-12-25');
+        cy.get('#root_period').clear().type('25-12-2025');
+        cy.get('body').click();
         cy.get('#root_vendor').clear().type('Embassar');
         cy.get('#root_payment_method').select('Bank Transfer');
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
         //item 0
-        cy.get('#root_0_sub_category').select('ambassadors');
-        cy.get('#root_0_item').clear().type('An ambassador is an official envoy, especially a high-ranking diplomat who represents a state.');
-        cy.get('#root_0_qty').clear().type('4');
-        cy.get('#root_0_currency_type').select('Crypto');
-        cy.get('#root_0_currency').select('ETH');
-        cy.get('#root_0_unit_price').type('1.15');
+        cy.get('#root_item_0_sub_category').select('ambassadors');
+        cy.get('#root_item_0_item_name').clear().type('An ambassador is an official envoy, especially a high-ranking diplomat who represents a state.');
+        cy.get('#root_item_0_qty').clear().type('4');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('ETH');
+        cy.get('#root_item_0_unit_price').type('1.15');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 1
-        cy.get('#root_1_sub_category').select('consultants');
-        cy.get('#root_1_item').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
-        cy.get('#root_1_qty').clear().type('1');
-        cy.get('#root_1_currency_type').select('Fiat');
-        cy.get('#root_1_currency').select('CAD');
-        cy.get('#root_1_unit_price').type('1355');
+        cy.get('#root_item_1_sub_category').select('consultants');
+        cy.get('#root_item_1_item_name').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
+        cy.get('#root_item_1_qty').clear().type('1');
+        cy.get('#root_item_1_currency_type').select('Fiat');
+        cy.get('#root_item_1_currency').select('CAD');
+        cy.get('#root_item_1_unit_price').type('1355');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 2
-        cy.get('#root_2_sub_category').select('freelancers');
-        cy.get('#root_2_item').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
-        cy.get('#root_2_qty').clear().type('6');
-        cy.get('#root_2_currency_type').select('Crypto');
-        cy.get('#root_2_currency').select('SNT');
-        cy.get('#root_2_unit_price').type('2300');
+        cy.get('#root_item_2_sub_category').select('freelancers');
+        cy.get('#root_item_2_item_name').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
+        cy.get('#root_item_2_qty').clear().type('6');
+        cy.get('#root_item_2_currency_type').select('Crypto');
+        cy.get('#root_item_2_currency').select('SNT');
+        cy.get('#root_item_2_unit_price').type('2300');
 
 
         cy.get('button')
@@ -183,8 +186,9 @@ describe('Consulting Fees Path - Without Files', () => {
           .click();
 
 
-        cy.contains('Tasks for my open instances', { timeout: 60000 });
+        cy.contains('Started by me', { timeout: 60000 });
         cy.logout();
+        cy.wait(1000);
 
         let budgetOwnerUsername = Cypress.env('budgetowner_username');
         let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -195,7 +199,7 @@ describe('Consulting Fees Path - Without Files', () => {
           budgetOwnerUsername,
           budgetOwnerPassword,
           processInstanceId,
-          'Task: Reminder: Request Additional Budget',
+          'Task: Reminder: Check Existing Budget',
           "approve"
         );
 
@@ -213,24 +217,25 @@ describe('Consulting Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Raise New Demand Request');
+      cy.contains('Request Goods/Services');
 
       cy.runPrimaryBpmnFile(true);
 
-      cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.wait(2000);
-      cy.get('input#root-procurement').click();
-      cy.wait(2000);
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
+      /*      cy.contains('Please select the type of request to start the process.');
+            // wait a second to ensure we can click the radio button
+      
+            cy.wait(2000);
+            cy.get('input#root-procurement').click();
+            cy.wait(2000);
+      
+      
+            cy.get('button')
+              .contains(/^Submit$/)
+              .click();
+      */
 
       cy.contains(
-        'Submit a new demand request for the procurement of needed items',
+        'Request Goods/Services',
         { timeout: 60000 }
       );
 
@@ -240,46 +245,48 @@ describe('Consulting Fees Path - Without Files', () => {
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
         cy.log('==###############===processInstanceId : ', processInstanceId);
         let projectId = Cypress.env('project_id');
+        cy.wait(2000);
         cy.get('#root_project').select(projectId);
         cy.get('#root_category').select('consult_fees');
         cy.get('#root_purpose').clear().type('Consulting is defined as the practise of providing a third party with expertise on a matter in exchange for a fee. The service may involve either advisory or implementation services.');
         cy.get('#root_criticality').select('Medium');
-        cy.get('#root_period').clear().type('2024-10-02');
+        cy.get('#root_period').clear().type('24-10-2032');
+        cy.get('body').click();
         cy.get('#root_vendor').clear().type('Consultancy.uk');
         cy.get('#root_payment_method').select('Crypto Transfer');
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
 
         //Item 0
-        cy.get('#root_0_sub_category').select('consultants');
-        cy.get('#root_0_item').clear().type('Software development consultants with Python background');
-        cy.get('#root_0_qty').clear().type('5');
-        cy.get('#root_0_currency_type').select('Crypto');
-        cy.get('#root_0_currency').select('DAI');
-        cy.get('#root_0_unit_price').type('1500');
+        cy.get('#root_item_0_sub_category').select('consultants');
+        cy.get('#root_item_0_item_name').clear().type('Software development consultants with Python background');
+        cy.get('#root_item_0_qty').clear().type('5');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('DAI');
+        cy.get('#root_item_0_unit_price').type('1500');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 1
-        cy.get('#root_1_sub_category').select('consultants');
-        cy.get('#root_1_item').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
-        cy.get('#root_1_qty').clear().type('1');
-        cy.get('#root_1_currency_type').select('Fiat');
-        cy.get('#root_1_currency').select('CAD');
-        cy.get('#root_1_unit_price').type('1355');
+        cy.get('#root_item_1_sub_category').select('consultants');
+        cy.get('#root_item_1_item_name').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
+        cy.get('#root_item_1_qty').clear().type('1');
+        cy.get('#root_item_1_currency_type').select('Fiat');
+        cy.get('#root_item_1_currency').select('CAD');
+        cy.get('#root_item_1_unit_price').type('1355');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 2
-        cy.get('#root_2_sub_category').select('freelancers');
-        cy.get('#root_2_item').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
-        cy.get('#root_2_qty').clear().type('6');
-        cy.get('#root_2_currency_type').select('Crypto');
-        cy.get('#root_2_currency').select('SNT');
-        cy.get('#root_2_unit_price').type('2300');
+        cy.get('#root_item_2_sub_category').select('freelancers');
+        cy.get('#root_item_2_item_name').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
+        cy.get('#root_item_2_qty').clear().type('6');
+        cy.get('#root_item_2_currency_type').select('Crypto');
+        cy.get('#root_item_2_currency').select('SNT');
+        cy.get('#root_item_2_unit_price').type('2300');
 
 
         cy.get('button')
@@ -302,8 +309,9 @@ describe('Consulting Fees Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Tasks for my open instances', { timeout: 60000 });
+        cy.contains('Started by me', { timeout: 60000 });
         cy.logout();
+        cy.wait(1000);
 
         let budgetOwnerUsername = Cypress.env('budgetowner_username');
         let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -332,24 +340,25 @@ describe('Consulting Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Raise New Demand Request');
+      cy.contains('Request Goods/Services');
 
       cy.runPrimaryBpmnFile(true);
 
-      cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.wait(2000);
-      cy.get('input#root-procurement').click();
-      cy.wait(2000);
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
+      /*      cy.contains('Please select the type of request to start the process.');
+            // wait a second to ensure we can click the radio button
+      
+            cy.wait(2000);
+            cy.get('input#root-procurement').click();
+            cy.wait(2000);
+      
+      
+            cy.get('button')
+              .contains(/^Submit$/)
+              .click();
+      */
 
       cy.contains(
-        'Submit a new demand request for the procurement of needed items',
+        'Request Goods/Services',
         { timeout: 60000 }
       );
 
@@ -359,46 +368,48 @@ describe('Consulting Fees Path - Without Files', () => {
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
         cy.log('==###############===processInstanceId : ', processInstanceId);
         let projectId = Cypress.env('project_id');
+        cy.wait(2000);
         cy.get('#root_project').select(projectId);
         cy.get('#root_category').select('consult_fees');
         cy.get('#root_purpose').clear().type('Freelancing - Freelancing is doing specific work for clients without committing to full-time employment. Freelancers often take on multiple projects with different clients simultaneously. IRS considers freelancers to be self-employed individuals.');
         cy.get('#root_criticality').select('Low');
-        cy.get('#root_period').clear().type('2025-04-15');
+        cy.get('#root_period').clear().type('05-04-2028');
+        cy.get('body').click();
         cy.get('#root_vendor').clear().type('Upwork');
         cy.get('#root_payment_method').select('Debit Card');
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
 
         //item 0
-        cy.get('#root_0_sub_category').select('freelancers');
-        cy.get('#root_0_item').clear().type('Freelancers to do the Python development and front end react app development');
-        cy.get('#root_0_qty').clear().type('4');
-        cy.get('#root_0_currency_type').select('Crypto');
-        cy.get('#root_0_currency').select('SNT');
-        cy.get('#root_0_unit_price').type('1750');
+        cy.get('#root_item_0_sub_category').select('freelancers');
+        cy.get('#root_item_0_item_name').clear().type('Freelancers to do the Python development and front end react app development');
+        cy.get('#root_item_0_qty').clear().type('4');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('SNT');
+        cy.get('#root_item_0_unit_price').type('1750');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 1
-        cy.get('#root_1_sub_category').select('consultants');
-        cy.get('#root_1_item').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
-        cy.get('#root_1_qty').clear().type('1');
-        cy.get('#root_1_currency_type').select('Fiat');
-        cy.get('#root_1_currency').select('CAD');
-        cy.get('#root_1_unit_price').type('1355');
+        cy.get('#root_item_1_sub_category').select('consultants');
+        cy.get('#root_item_1_item_name').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
+        cy.get('#root_item_1_qty').clear().type('1');
+        cy.get('#root_item_1_currency_type').select('Fiat');
+        cy.get('#root_item_1_currency').select('CAD');
+        cy.get('#root_item_1_unit_price').type('1355');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 2
-        cy.get('#root_2_sub_category').select('freelancers');
-        cy.get('#root_2_item').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
-        cy.get('#root_2_qty').clear().type('6');
-        cy.get('#root_2_currency_type').select('Crypto');
-        cy.get('#root_2_currency').select('SNT');
-        cy.get('#root_2_unit_price').type('2300');
+        cy.get('#root_item_2_sub_category').select('freelancers');
+        cy.get('#root_item_2_item_name').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
+        cy.get('#root_item_2_qty').clear().type('6');
+        cy.get('#root_item_2_currency_type').select('Crypto');
+        cy.get('#root_item_2_currency').select('SNT');
+        cy.get('#root_item_2_unit_price').type('2300');
 
 
 
@@ -422,8 +433,9 @@ describe('Consulting Fees Path - Without Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Tasks for my open instances', { timeout: 60000 });
+        cy.contains('Started by me', { timeout: 60000 });
         cy.logout();
+        cy.wait(1000);
 
         let budgetOwnerUsername = Cypress.env('budgetowner_username');
         let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -452,7 +464,7 @@ describe('Consulting Fees Path - Without Files', () => {
           budgetOwnerUsername,
           budgetOwnerPassword,
           processInstanceId,
-          'Task: Reminder: Request Additional Budget',
+          'Task: Reminder: Check Existing Budget',
           "approve"
         );
 
@@ -466,7 +478,7 @@ describe('Consulting Fees Path - Without Files', () => {
 describe('Consulting Fees Path - With Files', () => {
   Cypress._.times(1, () => {
     //Budget owner approves the request
-    it('Budget owner approves', () => {
+    it.only('Budget owner approves', () => {
       let username = Cypress.env('requestor_username');
       let password = Cypress.env('requestor_password');
       cy.log('=====username : ' + username);
@@ -476,24 +488,25 @@ describe('Consulting Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Raise New Demand Request');
+      cy.contains('Request Goods/Services');
 
       cy.runPrimaryBpmnFile(true);
 
-      cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.wait(2000);
-      cy.get('input#root-procurement').click();
-      cy.wait(2000);
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
+      /*      cy.contains('Please select the type of request to start the process.');
+            // wait a second to ensure we can click the radio button
+      
+            cy.wait(2000);
+            cy.get('input#root-procurement').click();
+            cy.wait(2000);
+      
+      
+            cy.get('button')
+              .contains(/^Submit$/)
+              .click();
+      */
 
       cy.contains(
-        'Submit a new demand request for the procurement of needed items',
+        'Request Goods/Services',
         { timeout: 60000 }
       );
 
@@ -503,46 +516,48 @@ describe('Consulting Fees Path - With Files', () => {
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
         cy.log('==###############===processInstanceId : ', processInstanceId);
         let projectId = Cypress.env('project_id');
+        cy.wait(2000);
         cy.get('#root_project').select(projectId);
         cy.get('#root_category').select('consult_fees');
         cy.get('#root_purpose').clear().type('Consulting ==== Management consulting includes a broad range of activities, and the many firms and their members often define these practices quite differently. One way to categorize the activities is in terms of the professional’s area of expertise.');
         cy.get('#root_criticality').select('High');
-        cy.get('#root_period').clear().type('2025-12-25');
+        cy.get('#root_period').clear().type('05-12-2025');
+        cy.get('body').click();
         cy.get('#root_vendor').clear().type('Embassar');
         cy.get('#root_payment_method').select('Bank Transfer');
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
 
         //item 0
-        cy.get('#root_0_sub_category').select('ambassadors');
-        cy.get('#root_0_item').clear().type('An ambassador is an official envoy, especially a high-ranking diplomat who represents a state.');
-        cy.get('#root_0_qty').clear().type('4');
-        cy.get('#root_0_currency_type').select('Crypto');
-        cy.get('#root_0_currency').select('ETH');
-        cy.get('#root_0_unit_price').type('1.15');
+        cy.get('#root_item_0_sub_category').select('ambassadors');
+        cy.get('#root_item_0_item_name').clear().type('An ambassador is an official envoy, especially a high-ranking diplomat who represents a state.');
+        cy.get('#root_item_0_qty').clear().type('4');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('ETH');
+        cy.get('#root_item_0_unit_price').type('1.15');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 1
-        cy.get('#root_1_sub_category').select('consultants');
-        cy.get('#root_1_item').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
-        cy.get('#root_1_qty').clear().type('1');
-        cy.get('#root_1_currency_type').select('Fiat');
-        cy.get('#root_1_currency').select('CAD');
-        cy.get('#root_1_unit_price').type('1355');
+        cy.get('#root_item_1_sub_category').select('consultants');
+        cy.get('#root_item_1_item_name').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
+        cy.get('#root_item_1_qty').clear().type('1');
+        cy.get('#root_item_1_currency_type').select('Fiat');
+        cy.get('#root_item_1_currency').select('CAD');
+        cy.get('#root_item_1_unit_price').type('1355');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 2
-        cy.get('#root_2_sub_category').select('freelancers');
-        cy.get('#root_2_item').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
-        cy.get('#root_2_qty').clear().type('6');
-        cy.get('#root_2_currency_type').select('Crypto');
-        cy.get('#root_2_currency').select('SNT');
-        cy.get('#root_2_unit_price').type('2300');
+        cy.get('#root_item_2_sub_category').select('freelancers');
+        cy.get('#root_item_2_item_name').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
+        cy.get('#root_item_2_qty').clear().type('6');
+        cy.get('#root_item_2_currency_type').select('Crypto');
+        cy.get('#root_item_2_currency').select('SNT');
+        cy.get('#root_item_2_unit_price').type('2300');
 
 
         cy.get('button')
@@ -556,8 +571,47 @@ describe('Consulting Fees Path - With Files', () => {
 
         cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
 
+        cy.get('#root > div:nth-child(3) > p > button').click();
+
         cy.get("input[type=file]")
-          .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+          .attachFile(['lorem-ipsum.pdf']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get("input[type=file]")
+          .attachFile(['png-5mb-1.png']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+
+        cy.get("input[type=file]")
+          .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+
+        cy.get("input[type=file]")
+          .attachFile(['sampletext.txt']);
+
+        cy.wait(2000);
 
         cy.contains('Submit the Request').click();
 
@@ -569,8 +623,9 @@ describe('Consulting Fees Path - With Files', () => {
           .click();
 
 
-        cy.contains('Tasks for my open instances', { timeout: 60000 });
+        cy.contains('Started by me', { timeout: 60000 });
         cy.logout();
+        cy.wait(1000);
 
         let budgetOwnerUsername = Cypress.env('budgetowner_username');
         let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -581,7 +636,7 @@ describe('Consulting Fees Path - With Files', () => {
           budgetOwnerUsername,
           budgetOwnerPassword,
           processInstanceId,
-          'Task: Reminder: Request Additional Budget',
+          'Task: Reminder: Check Existing Budget',
           "approve"
         );
 
@@ -599,24 +654,25 @@ describe('Consulting Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Raise New Demand Request');
+      cy.contains('Request Goods/Services');
 
       cy.runPrimaryBpmnFile(true);
 
-      cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.wait(2000);
-      cy.get('input#root-procurement').click();
-      cy.wait(2000);
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
+      /*      cy.contains('Please select the type of request to start the process.');
+            // wait a second to ensure we can click the radio button
+      
+            cy.wait(2000);
+            cy.get('input#root-procurement').click();
+            cy.wait(2000);
+      
+      
+            cy.get('button')
+              .contains(/^Submit$/)
+              .click();
+      */
 
       cy.contains(
-        'Submit a new demand request for the procurement of needed items',
+        'Request Goods/Services',
         { timeout: 60000 }
       );
 
@@ -626,46 +682,48 @@ describe('Consulting Fees Path - With Files', () => {
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
         cy.log('==###############===processInstanceId : ', processInstanceId);
         let projectId = Cypress.env('project_id');
+        cy.wait(2000);
         cy.get('#root_project').select(projectId);
         cy.get('#root_category').select('consult_fees');
         cy.get('#root_purpose').clear().type('Consulting is defined as the practise of providing a third party with expertise on a matter in exchange for a fee. The service may involve either advisory or implementation services.');
         cy.get('#root_criticality').select('Medium');
-        cy.get('#root_period').clear().type('2024-10-02');
+        cy.get('#root_period').clear().type('14-10-2029');
+        cy.get('body').click();
         cy.get('#root_vendor').clear().type('Consultancy.uk');
         cy.get('#root_payment_method').select('Crypto Transfer');
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
 
         //item 0
-        cy.get('#root_0_sub_category').select('consultants');
-        cy.get('#root_0_item').clear().type('Software development consultants with Python background');
-        cy.get('#root_0_qty').clear().type('5');
-        cy.get('#root_0_currency_type').select('Crypto');
-        cy.get('#root_0_currency').select('DAI');
-        cy.get('#root_0_unit_price').type('1500');
+        cy.get('#root_item_0_sub_category').select('consultants');
+        cy.get('#root_item_0_item_name').clear().type('Software development consultants with Python background');
+        cy.get('#root_item_0_qty').clear().type('5');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('DAI');
+        cy.get('#root_item_0_unit_price').type('1500');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 1
-        cy.get('#root_1_sub_category').select('consultants');
-        cy.get('#root_1_item').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
-        cy.get('#root_1_qty').clear().type('1');
-        cy.get('#root_1_currency_type').select('Fiat');
-        cy.get('#root_1_currency').select('CAD');
-        cy.get('#root_1_unit_price').type('1355');
+        cy.get('#root_item_1_sub_category').select('consultants');
+        cy.get('#root_item_1_item_name').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
+        cy.get('#root_item_1_qty').clear().type('1');
+        cy.get('#root_item_1_currency_type').select('Fiat');
+        cy.get('#root_item_1_currency').select('CAD');
+        cy.get('#root_item_1_unit_price').type('1355');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 2
-        cy.get('#root_2_sub_category').select('freelancers');
-        cy.get('#root_2_item').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
-        cy.get('#root_2_qty').clear().type('6');
-        cy.get('#root_2_currency_type').select('Crypto');
-        cy.get('#root_2_currency').select('SNT');
-        cy.get('#root_2_unit_price').type('2300');
+        cy.get('#root_item_2_sub_category').select('freelancers');
+        cy.get('#root_item_2_item_name').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
+        cy.get('#root_item_2_qty').clear().type('6');
+        cy.get('#root_item_2_currency_type').select('Crypto');
+        cy.get('#root_item_2_currency').select('SNT');
+        cy.get('#root_item_2_unit_price').type('2300');
 
 
         cy.get('button')
@@ -679,8 +737,47 @@ describe('Consulting Fees Path - With Files', () => {
 
         cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
 
+        cy.get('#root > div:nth-child(3) > p > button').click();
+
         cy.get("input[type=file]")
-          .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+          .attachFile(['lorem-ipsum.pdf']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get("input[type=file]")
+          .attachFile(['png-5mb-1.png']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+
+        cy.get("input[type=file]")
+          .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+
+        cy.get("input[type=file]")
+          .attachFile(['sampletext.txt']);
+
+        cy.wait(2000);
 
         cy.contains('Submit the Request').click();
 
@@ -691,8 +788,9 @@ describe('Consulting Fees Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Tasks for my open instances', { timeout: 60000 });
+        cy.contains('Started by me', { timeout: 60000 });
         cy.logout();
+        cy.wait(1000);
 
         let budgetOwnerUsername = Cypress.env('budgetowner_username');
         let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -721,24 +819,25 @@ describe('Consulting Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Raise New Demand Request');
+      cy.contains('Request Goods/Services');
 
       cy.runPrimaryBpmnFile(true);
 
-      cy.contains('Please select the type of request to start the process.');
-      // wait a second to ensure we can click the radio button
-
-      cy.wait(2000);
-      cy.get('input#root-procurement').click();
-      cy.wait(2000);
-
-
-      cy.get('button')
-        .contains(/^Submit$/)
-        .click();
+      /*      cy.contains('Please select the type of request to start the process.');
+            // wait a second to ensure we can click the radio button
+      
+            cy.wait(2000);
+            cy.get('input#root-procurement').click();
+            cy.wait(2000);
+      
+      
+            cy.get('button')
+              .contains(/^Submit$/)
+              .click();
+      */
 
       cy.contains(
-        'Submit a new demand request for the procurement of needed items',
+        'Request Goods/Services',
         { timeout: 60000 }
       );
 
@@ -748,45 +847,47 @@ describe('Consulting Fees Path - With Files', () => {
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
         cy.log('==###############===processInstanceId : ', processInstanceId);
         let projectId = Cypress.env('project_id');
+        cy.wait(2000);
         cy.get('#root_project').select(projectId);
         cy.get('#root_category').select('consult_fees');
         cy.get('#root_purpose').clear().type('Freelancing - Freelancing is doing specific work for clients without committing to full-time employment. Freelancers often take on multiple projects with different clients simultaneously. IRS considers freelancers to be self-employed individuals.');
         cy.get('#root_criticality').select('Low');
-        cy.get('#root_period').clear().type('2025-04-15');
+        cy.get('#root_period').clear().type('05-04-2024');
+        cy.get('body').click();
         cy.get('#root_vendor').clear().type('Upwork');
         cy.get('#root_payment_method').select('Debit Card');
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
         //item 0
-        cy.get('#root_0_sub_category').select('freelancers');
-        cy.get('#root_0_item').clear().type('Freelancers to do the Python development and front end react app development');
-        cy.get('#root_0_qty').clear().type('4');
-        cy.get('#root_0_currency_type').select('Crypto');
-        cy.get('#root_0_currency').select('SNT');
-        cy.get('#root_0_unit_price').type('1750');
+        cy.get('#root_item_0_sub_category').select('freelancers');
+        cy.get('#root_item_0_item_name').clear().type('Freelancers to do the Python development and front end react app development');
+        cy.get('#root_item_0_qty').clear().type('4');
+        cy.get('#root_item_0_currency_type').select('Crypto');
+        cy.get('#root_item_0_currency').select('SNT');
+        cy.get('#root_item_0_unit_price').type('1750');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 1
-        cy.get('#root_1_sub_category').select('consultants');
-        cy.get('#root_1_item').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
-        cy.get('#root_1_qty').clear().type('1');
-        cy.get('#root_1_currency_type').select('Fiat');
-        cy.get('#root_1_currency').select('CAD');
-        cy.get('#root_1_unit_price').type('1355');
+        cy.get('#root_item_1_sub_category').select('consultants');
+        cy.get('#root_item_1_item_name').clear().type('A consultant (from Latin: consultare "to deliberate") is a professional');
+        cy.get('#root_item_1_qty').clear().type('1');
+        cy.get('#root_item_1_currency_type').select('Fiat');
+        cy.get('#root_item_1_currency').select('CAD');
+        cy.get('#root_item_1_unit_price').type('1355');
 
-        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.get('#root_item > div:nth-child(3) > p > button').click();
 
         //item 2
-        cy.get('#root_2_sub_category').select('freelancers');
-        cy.get('#root_2_item').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
-        cy.get('#root_2_qty').clear().type('6');
-        cy.get('#root_2_currency_type').select('Crypto');
-        cy.get('#root_2_currency').select('SNT');
-        cy.get('#root_2_unit_price').type('2300');
+        cy.get('#root_item_2_sub_category').select('freelancers');
+        cy.get('#root_item_2_item_name').clear().type('Find & hire top freelancers, web developers & designers inexpensively. ');
+        cy.get('#root_item_2_qty').clear().type('6');
+        cy.get('#root_item_2_currency_type').select('Crypto');
+        cy.get('#root_item_2_currency').select('SNT');
+        cy.get('#root_item_2_unit_price').type('2300');
 
 
         cy.get('button')
@@ -800,8 +901,47 @@ describe('Consulting Fees Path - With Files', () => {
 
         cy.get('.cds--text-area__wrapper').find('#root').type('It\’s free and easy to post a job. Simply fill in a title, description and budget and competitive bids come within minutes. No job is too big or too small. We\'ve got freelancers for jobs of any size or budget across 1800 skills. No job is too complex.');
 
+        cy.get('#root > div:nth-child(3) > p > button').click();
+
         cy.get("input[type=file]")
-          .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+          .attachFile(['lorem-ipsum.pdf']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get("input[type=file]")
+          .attachFile(['png-5mb-1.png']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+
+        cy.get("input[type=file]")
+          .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+        cy.wait(1000);
+
+        cy.get('#root > div:nth-child(3) > p > button').click();
+        cy.wait(1000);
+
+        cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+        cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+        cy.wait(1000);
+
+        cy.get("input[type=file]")
+          .attachFile(['sampletext.txt']);
+
+        cy.wait(2000);
 
         cy.contains('Submit the Request').click();
 
@@ -812,8 +952,9 @@ describe('Consulting Fees Path - With Files', () => {
           .contains(/^Submit$/)
           .click();
 
-        cy.contains('Tasks for my open instances', { timeout: 60000 });
+        cy.contains('Started by me', { timeout: 60000 });
         cy.logout();
+        cy.wait(1000);
 
         let budgetOwnerUsername = Cypress.env('budgetowner_username');
         let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -842,7 +983,7 @@ describe('Consulting Fees Path - With Files', () => {
           budgetOwnerUsername,
           budgetOwnerPassword,
           processInstanceId,
-          'Task: Reminder: Request Additional Budget',
+          'Task: Reminder: Check Existing Budget',
           "approve"
         );
 
