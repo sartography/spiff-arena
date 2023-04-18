@@ -7,7 +7,6 @@ from typing import Optional
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.parser.BpmnParser import BpmnValidator  # type: ignore
-from SpiffWorkflow.bpmn.parser.ProcessParser import ProcessParser  # type: ignore
 
 from spiffworkflow_backend.models.correlation_property_cache import (
     CorrelationPropertyCache,
@@ -90,28 +89,6 @@ class SpecFileService(FileSystemService):
         return etree.fromstring(binary_data, parser=etree_xml_parser)
 
     @classmethod
-    def get_references_for_called_element_ids(cls, process_model_info: ProcessModelInfo, file_name: str, file_path: str, parser: ProcessParser) -> list[SpecReference]:
-        references: list[SpecReference] = []
-        for called_element_id in set(parser.called_element_ids()):
-            references.append(
-                SpecReference(
-                    identifier=called_element_id,
-                    display_name=called_element_id,
-                    process_model_id=process_model_info.id,
-                    type="caller",
-                    file_name=file_name,
-                    relative_path=file_path,
-                    has_lanes=False,
-                    is_executable=False,
-                    messages={},
-                    is_primary=False,
-                    correlations={},
-                    start_messages=[],
-                )
-            )
-        return references
-        
-    @classmethod
     def get_references_for_file_contents(
         cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes
     ) -> list[SpecReference]:
@@ -149,7 +126,6 @@ class SpecFileService(FileSystemService):
             return references
         for sub_parser in sub_parsers:
             if parser_type == "process":
-                references.extend(cls.get_references_for_called_element_ids(process_model_info, file_name, file_path, sub_parser))
                 has_lanes = sub_parser.has_lanes()
                 is_executable = sub_parser.process_executable
                 start_messages = sub_parser.start_messages()
@@ -311,7 +287,7 @@ class SpecFileService(FileSystemService):
             db.session.add(process_id_lookup)
             db.session.commit()
         else:
-            if ref.type == "process" and ref.relative_path != process_id_lookup.relative_path:
+            if ref.relative_path != process_id_lookup.relative_path:
                 full_bpmn_file_path = SpecFileService.full_path_from_relative_path(process_id_lookup.relative_path)
                 # if the old relative bpmn file no longer exists, then assume things were moved around
                 # on the file system. Otherwise, assume it is a duplicate process id and error.
