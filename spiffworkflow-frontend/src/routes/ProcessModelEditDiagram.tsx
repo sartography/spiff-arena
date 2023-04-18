@@ -890,7 +890,7 @@ export default function ProcessModelEditDiagram() {
     const path = generatePath(
       '/admin/process-models/:process_model_id/form/:file_name',
       {
-        process_model_id: params.process_model_id,
+        process_model_id: params.process_model_id || null,
         file_name: fileName,
       }
     );
@@ -902,7 +902,7 @@ export default function ProcessModelEditDiagram() {
       const path = generatePath(
         '/admin/process-models/:process_model_id/files/:file_name',
         {
-          process_model_id: params.process_model_id,
+          process_model_id: params.process_model_id || null,
           file_name: file.name,
         }
       );
