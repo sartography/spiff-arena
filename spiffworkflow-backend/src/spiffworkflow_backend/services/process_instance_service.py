@@ -443,6 +443,7 @@ class ProcessInstanceService:
             process_identifier=spiff_task.task_spec._wf_spec.name,
             process_instance_id=processor.process_instance_model.id,
             process_model_identifier=processor.process_model_identifier,
+            process_model_display_name=processor.process_model_display_name,
             properties=props,
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),

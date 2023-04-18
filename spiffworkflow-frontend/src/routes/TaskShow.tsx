@@ -17,7 +17,6 @@ import {
 import MDEditor from '@uiw/react-md-editor';
 // eslint-disable-next-line import/no-named-as-default
 import Form from '../themes/carbon';
-import Loading from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
