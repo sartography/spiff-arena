@@ -1397,12 +1397,22 @@ export default function ProcessInstanceListTable({
       );
     }
     if (column.accessor === 'waiting_for') {
-      return <td>{getWaitingForTableCellComponent(row)}</td>;
+      return (
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <td
+          onClick={navigateToProcessInstance}
+          onKeyDown={navigateToProcessInstance}
+        >
+          {getWaitingForTableCellComponent(row)}
+        </td>
+      );
     }
     if (column.accessor === 'updated_at_in_seconds') {
       return (
         <TableCellWithTimeAgoInWords
           timeInSeconds={row.updated_at_in_seconds}
+          onClick={navigateToProcessInstance}
+          onKeyDown={navigateToProcessInstance}
         />
       );
     }
@@ -1410,7 +1420,7 @@ export default function ProcessInstanceListTable({
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
       <td
         data-qa={`process-instance-show-link-${column.accessor}`}
-        onKeyDown={navigateToProcessModel}
+        onKeyDown={navigateToProcessInstance}
         onClick={navigateToProcessInstance}
       >
         {formatter(row, value)}
