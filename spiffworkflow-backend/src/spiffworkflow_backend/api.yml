@@ -1959,14 +1959,52 @@ paths:
         description: Show the detailed view, which includes all log entries
         schema:
           type: boolean
+      - name: bpmn_name
+        in: query
+        required: false
+        description: The bpmn name of the task to search for.
+        schema:
+          type: string
+      - name: bpmn_identifier
+        in: query
+        required: false
+        description: The bpmn identifier of the task to search for.
+        schema:
+          type: string
+      - name: task_type
+        in: query
+        required: false
+        description: The task type of the task to search for.
+        schema:
+          type: string
+      - name: event_type
+        in: query
+        required: false
+        description: The type of the event to search for.
+        schema:
+          type: string
     get:
       tags:
-        - Process Instances
-      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_log_list
+        - Process Instance Events
+      operationId: spiffworkflow_backend.routes.process_instance_events_controller.log_list
       summary: returns a list of logs associated with the process instance
       responses:
         "200":
           description: list of logs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessInstanceLog"
+
+  /logs/types:
+    get:
+      tags:
+        - Process Instance Events
+      operationId: spiffworkflow_backend.routes.process_instance_events_controller.types
+      summary: returns a list of task types and event typs. useful for building log queries.
+      responses:
+        "200":
+          description: list of types
           content:
             application/json:
               schema:

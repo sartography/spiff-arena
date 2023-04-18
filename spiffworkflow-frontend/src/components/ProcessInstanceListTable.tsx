@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 // @ts-ignore
-import { Filter, Close, AddAlt } from '@carbon/icons-react';
+import { Close, AddAlt } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
@@ -71,6 +71,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 import { Can } from '../contexts/Can';
 import TableCellWithTimeAgoInWords from './TableCellWithTimeAgoInWords';
 import UserService from '../services/UserService';
+import Filters from './Filters';
 
 type OwnProps = {
   filtersEnabled?: boolean;
@@ -1506,10 +1507,6 @@ export default function ProcessInstanceListTable({
     );
   };
 
-  const toggleShowFilterOptions = () => {
-    setShowFilterOptions(!showFilterOptions);
-  };
-
   const reportSearchComponent = () => {
     if (showReports) {
       const columns = [
@@ -1527,37 +1524,6 @@ export default function ProcessInstanceListTable({
       );
     }
     return null;
-  };
-
-  const filterComponent = () => {
-    if (!filtersEnabled) {
-      return null;
-    }
-    return (
-      <>
-        <Grid fullWidth>
-          <Column sm={2} md={4} lg={7}>
-            {reportSearchComponent()}
-          </Column>
-          <Column
-            className="filterIcon"
-            sm={{ span: 1, offset: 3 }}
-            md={{ span: 1, offset: 7 }}
-            lg={{ span: 1, offset: 15 }}
-          >
-            <Button
-              data-qa="filter-section-expand-toggle"
-              renderIcon={Filter}
-              iconDescription="Filter Options"
-              hasIconOnly
-              size="lg"
-              onClick={toggleShowFilterOptions}
-            />
-          </Column>
-        </Grid>
-        {filterOptions()}
-      </>
-    );
   };
 
   if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
@@ -1599,7 +1565,13 @@ export default function ProcessInstanceListTable({
       <>
         {reportColumnForm()}
         {processInstanceReportSaveTag()}
-        {filterComponent()}
+        <Filters
+          filterOptions={filterOptions}
+          showFilterOptions={showFilterOptions}
+          setShowFilterOptions={setShowFilterOptions}
+          reportSearchComponent={reportSearchComponent}
+          filtersEnabled={filtersEnabled}
+        />
         {resultsTable}
       </>
     );
