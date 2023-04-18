@@ -44,11 +44,21 @@ class TestSpecFileService(BaseTest):
             bpmn_file_name=self.bpmn_file_name,
             bpmn_file_location="call_activity_nested",
         )
-        bpmn_process_id_lookups = SpecReferenceCache.query.all()
-        assert len(bpmn_process_id_lookups) == 1
-        assert bpmn_process_id_lookups[0].identifier == "Level1"
-        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
+        bpmn_process_id_lookups = SpecReferenceCache.query.order_by(SpecReferenceCache.identifier).all()
+        assert len(bpmn_process_id_lookups) == 3
 
+        assert bpmn_process_id_lookups[0].identifier == "Level1"
+        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path        
+        assert bpmn_process_id_lookups[0].type == "process"
+
+        assert bpmn_process_id_lookups[1].identifier == "Level2"
+        assert bpmn_process_id_lookups[1].relative_path == self.call_activity_nested_relative_file_path        
+        assert bpmn_process_id_lookups[1].type == "caller"
+        
+        assert bpmn_process_id_lookups[2].identifier == "Level2b"
+        assert bpmn_process_id_lookups[2].relative_path == self.call_activity_nested_relative_file_path        
+        assert bpmn_process_id_lookups[2].type == "caller"
+        
     def test_fails_to_save_duplicate_process_id(
         self,
         app: Flask,
@@ -66,8 +76,8 @@ class TestSpecFileService(BaseTest):
             bpmn_file_name=self.bpmn_file_name,
             bpmn_file_location=self.process_model_id,
         )
-        bpmn_process_id_lookups = SpecReferenceCache.query.all()
-        assert len(bpmn_process_id_lookups) == 1
+        bpmn_process_id_lookups = SpecReferenceCache.query.order_by(SpecReferenceCache.identifier).all()
+        assert len(bpmn_process_id_lookups) == 3
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
         assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
         with pytest.raises(ProcessModelFileInvalidError) as exception:
@@ -108,10 +118,19 @@ class TestSpecFileService(BaseTest):
             bpmn_file_location=self.process_model_id,
         )
 
-        bpmn_process_id_lookups = SpecReferenceCache.query.all()
-        assert len(bpmn_process_id_lookups) == 1
+        bpmn_process_id_lookups = SpecReferenceCache.query.order_by(SpecReferenceCache.identifier).all()
+        assert len(bpmn_process_id_lookups) == 3
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
-        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
+        assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path        
+        assert bpmn_process_id_lookups[0].type == "process"
+
+        assert bpmn_process_id_lookups[1].identifier == "Level2"
+        assert bpmn_process_id_lookups[1].relative_path == self.call_activity_nested_relative_file_path        
+        assert bpmn_process_id_lookups[1].type == "caller"
+        
+        assert bpmn_process_id_lookups[2].identifier == "Level2b"
+        assert bpmn_process_id_lookups[2].relative_path == self.call_activity_nested_relative_file_path        
+        assert bpmn_process_id_lookups[2].type == "caller"
 
     def test_change_the_identifier_cleans_up_cache(
         self,
@@ -141,11 +160,19 @@ class TestSpecFileService(BaseTest):
             bpmn_file_location=self.process_model_id,
         )
 
-        bpmn_process_id_lookups = SpecReferenceCache.query.all()
-        assert len(bpmn_process_id_lookups) == 1
+        bpmn_process_id_lookups = SpecReferenceCache.query.order_by(SpecReferenceCache.identifier).all()
+        assert len(bpmn_process_id_lookups) == 3
         assert bpmn_process_id_lookups[0].identifier != old_identifier
         assert bpmn_process_id_lookups[0].identifier == "Level1"
         assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
+
+        assert bpmn_process_id_lookups[1].identifier == "Level2"
+        assert bpmn_process_id_lookups[1].relative_path == self.call_activity_nested_relative_file_path        
+        assert bpmn_process_id_lookups[1].type == "caller"
+        
+        assert bpmn_process_id_lookups[2].identifier == "Level2b"
+        assert bpmn_process_id_lookups[2].relative_path == self.call_activity_nested_relative_file_path        
+        assert bpmn_process_id_lookups[2].type == "caller"
 
     def test_load_reference_information(
         self,
