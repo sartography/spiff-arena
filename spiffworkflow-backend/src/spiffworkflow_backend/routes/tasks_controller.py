@@ -358,9 +358,11 @@ def _render_instructions_for_end_user(spiff_task: SpiffTask, task: Task):
     if task.properties and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
             try:
-                task.properties["instructionsForEndUser"] = _render_jinja_template(
+                instructions =  _render_jinja_template(
                     task.properties["instructionsForEndUser"], spiff_task
                 )
+                task.properties["instructionsForEndUser"] = instructions
+                return instructions
             except WorkflowTaskException as wfe:
                 wfe.add_note("Failed to render instructions for end user.")
                 raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe
@@ -393,19 +395,22 @@ def process_data_show(
 def interstitial(process_instance_id: int):
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
-
+    reported_ids = [] # bit of an issue with end tasks showing as getting completed twice.
     def get_data():
         spiff_task = processor.next_task()
         last_task = None
         while last_task != spiff_task:
             task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-            _render_instructions_for_end_user(spiff_task, task)
-            yield f'data: {current_app.json.dumps(task)} \n\n'
+            instructions = _render_instructions_for_end_user(spiff_task, task)
+            if instructions and spiff_task.id not in reported_ids:
+                reported_ids.append(spiff_task.id)
+                yield f'data: {current_app.json.dumps(task)} \n\n'
             last_task = spiff_task
+            processor.do_engine_steps(execution_strategy_name="run_until_user_message")
             processor.do_engine_steps(execution_strategy_name="one_at_a_time")
             spiff_task = processor.next_task()
             # Note, this has to be done in case someone leaves the page,
-            # which can cancel this function before saving.
+            # which can otherwise cancel this function and leave completed tasks un-registered.
             processor.save() # Fixme - maybe find a way not to do this on every method?
         return
 
