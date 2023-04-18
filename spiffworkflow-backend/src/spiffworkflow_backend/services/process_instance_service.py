@@ -10,7 +10,7 @@ from typing import Tuple
 from urllib.parse import unquote
 
 import sentry_sdk
-from flask import current_app
+from flask import current_app, g
 from SpiffWorkflow.bpmn.specs.events.IntermediateEvent import _BoundaryEventParent  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
@@ -26,7 +26,8 @@ from spiffworkflow_backend.models.process_instance_file_data import (
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import AuthorizationService, HumanTaskNotFoundError, \
+    UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -422,6 +423,18 @@ class ProcessInstanceService:
         else:
             lane = None
 
+        # Check for a human task, and if it exists, check to see if the current user
+        # can complete it.
+        can_complete = False
+        try:
+            AuthorizationService.assert_user_can_complete_spiff_task(processor.process_instance_model.id, spiff_task,
+                                                                     g.user)
+            can_complete = True
+        except HumanTaskNotFoundError as e:
+            can_complete = False
+        except UserDoesNotHaveAccessToTaskError as ude:
+            can_complete = False
+
         if hasattr(spiff_task.task_spec, "spec"):
             call_activity_process_identifier = spiff_task.task_spec.spec
         else:
@@ -439,6 +452,7 @@ class ProcessInstanceService:
             spiff_task.task_spec.description,
             task_type,
             spiff_task.get_state_name(),
+            can_complete=can_complete,
             lane=lane,
             process_identifier=spiff_task.task_spec._wf_spec.name,
             process_instance_id=processor.process_instance_model.id,
