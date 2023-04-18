@@ -92,7 +92,7 @@ class SpecFileService(FileSystemService):
     @classmethod
     def get_references_for_called_element_ids(cls, process_model_info: ProcessModelInfo, file_name: str, file_path: str, parser: ProcessParser) -> list[SpecReference]:
         references: list[SpecReference] = []
-        for called_element_id in parser.called_element_ids():
+        for called_element_id in set(parser.called_element_ids()):
             references.append(
                 SpecReference(
                     identifier=called_element_id,
@@ -311,7 +311,7 @@ class SpecFileService(FileSystemService):
             db.session.add(process_id_lookup)
             db.session.commit()
         else:
-            if ref.relative_path != process_id_lookup.relative_path:
+            if ref.type == "process" and ref.relative_path != process_id_lookup.relative_path:
                 full_bpmn_file_path = SpecFileService.full_path_from_relative_path(process_id_lookup.relative_path)
                 # if the old relative bpmn file no longer exists, then assume things were moved around
                 # on the file system. Otherwise, assume it is a duplicate process id and error.
