@@ -1959,6 +1959,30 @@ paths:
         description: Show the detailed view, which includes all log entries
         schema:
           type: boolean
+      - name: bpmn_name
+        in: query
+        required: false
+        description: The bpmn name of the task to search for.
+        schema:
+          type: string
+      - name: bpmn_identifier
+        in: query
+        required: false
+        description: The bpmn identifier of the task to search for.
+        schema:
+          type: string
+      - name: task_type
+        in: query
+        required: false
+        description: The task type of the task to search for.
+        schema:
+          type: string
+      - name: event_type
+        in: query
+        required: false
+        description: The type of the event to search for.
+        schema:
+          type: string
     get:
       tags:
         - Process Instance Events
