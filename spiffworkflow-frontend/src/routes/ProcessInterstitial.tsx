@@ -9,6 +9,7 @@ import { getBasicHeaders } from '../services/HttpService';
 // @ts-ignore
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
+import { ProcessInstanceTask } from '../interfaces';
 
 export default function ProcessInterstitial() {
   const [data, setData] = useState<any[]>([]);
@@ -39,7 +40,11 @@ export default function ProcessInterstitial() {
   useEffect(() => {
     // Added this seperate use effect so that the timer interval will be cleared if
     // we end up redirecting back to the TaskShow page.
-    if (lastTask && ['User Task', 'Manual Task'].includes(lastTask.type)) {
+    if (
+      lastTask &&
+      lastTask.can_complete &&
+      ['User Task', 'Manual Task'].includes(lastTask.type)
+    ) {
       const timerId = setInterval(() => {
         navigate(`/tasks/${lastTask.process_instance_id}/${lastTask.id}`);
       }, 1000);
@@ -52,6 +57,12 @@ export default function ProcessInterstitial() {
     if (status !== 'running') {
       setStatus(lastTask.state);
     }
+    if (
+      !lastTask.can_complete &&
+      ['User Task', 'Manual Task'].includes(lastTask.type)
+    ) {
+      setStatus('LOCKED');
+    }
     console.log(`Status is : ${status}}`);
     console.log('last task is : ', lastTask);
     switch (status) {
@@ -63,10 +74,25 @@ export default function ProcessInterstitial() {
         return <img src="/interstitial/clock.png" alt="Waiting ...." />;
       case 'COMPLETED':
         return <img src="/interstitial/checkmark.png" alt="Completed" />;
+      case 'LOCKED':
+        return <img src="/interstitial/lock.png" alt="Locked, Waiting on someone else." />;
       default:
         return null;
     }
   };
+
+  const userMessage = (myTask: ProcessInstanceTask) => {
+    if (
+      !myTask.can_complete &&
+      ['User Task', 'Manual Task'].includes(myTask.type)
+    ) {
+      return (
+        <div>This task is assigned to another user or group to complete. </div>
+      );
+    }
+    return <InstructionsForEndUser task={myTask} />;
+  };
+
   if (lastTask) {
     return (
       <>
@@ -81,7 +107,7 @@ export default function ProcessInterstitial() {
             [`Process Instance Id: ${lastTask.process_instance_id}`],
           ]}
         />
-        <h1 style={{display: 'inline-flex', alignItems: 'center'}}>
+        <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
           {processStatusImage()}
           {lastTask.process_model_display_name}: {lastTask.process_instance_id}
         </h1>
@@ -89,18 +115,20 @@ export default function ProcessInterstitial() {
         <Grid condensed fullWidth>
           <Column md={6} lg={8} sm={4}>
             <table className="table table-bordered">
-            <tbody>
-              {data &&
-                data.map((d) => (
-                  <tr key={d.id}>
-                    <td><h3>{d.title}</h3></td>
-                    <td>
-                      <InstructionsForEndUser task={d} />
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+              <tbody>
+                {data &&
+                  data.map((d) => (
+                    <tr key={d.id}>
+                      <td>
+                        <h3>{d.title}</h3>
+                      </td>
+                      <td>
+                        <p>{userMessage(d)}</p>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
           </Column>
         </Grid>
       </>

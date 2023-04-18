@@ -91,8 +91,6 @@ function TypeAheadWidget({
   );
 }
 
-
-
 class UnexpectedHumanTaskType extends Error {
   constructor(message: string) {
     super(message);
@@ -121,11 +119,24 @@ export default function TaskShow() {
   // eslint-disable-next-line sonarjs/no-duplicate-string
   const supportedHumanTaskTypes = ['User Task', 'Manual Task'];
 
+  const navigateToInterstitial = (myTask: ProcessInstanceTask) => {
+    navigate(
+      `/process/${modifyProcessIdentifierForPathParam(
+        myTask.process_model_identifier
+      )}/${myTask.process_instance_id}/interstitial`
+    );
+  };
+
 
   useEffect(() => {
     const processResult = (result: ProcessInstanceTask) => {
       setTask(result);
       setDisabled(false);
+
+      if (!result.can_complete) {
+        navigateToInterstitial(result);
+      }
+
       /*  Disable call to load previous tasks -- do not display menu.
       const url = `/v1.0/process-instances/for-me/${modifyProcessIdentifierForPathParam(
         result.process_model_identifier
@@ -162,14 +173,10 @@ export default function TaskShow() {
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
-      if (result.type in supportedHumanTaskTypes) {
+      if (result.can_complete) {
         navigate(`/tasks/${result.process_instance_id}/${result.id}`);
       } else {
-        navigate(
-          `/process/${modifyProcessIdentifierForPathParam(
-            result.process_model_identifier
-          )}/${result.process_instance_id}/interstitial`
-        );
+        navigateToInterstitial(result);
       }
     } else {
       addError(result);
