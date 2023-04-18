@@ -13,18 +13,18 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 import {
+  createSearchParams,
   Link,
-  useNavigate,
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { DebounceInput } from 'react-debounce-input';
-import { useDebounce, useDebouncedCallback } from 'use-debounce';
+import { useDebouncedCallback } from 'use-debounce';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
   getPageInfoFromSearchParams,
   convertSecondsToFormattedDateTime,
+  selectKeysFromSearchParams,
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
@@ -37,7 +37,6 @@ type OwnProps = {
 
 export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const params = useParams();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
@@ -45,12 +44,13 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const [taskName, setTaskName] = useState<string>('');
   const [taskIdentifier, setTaskIdentifier] = useState<string>('');
 
-  const [taskTypes, setTaskTypes] = useState<string[]>([])
-  const [selectedTaskType, setSelectedTaskType] = useState<string | null>(null)
-  const [eventTypes, setEventTypes] = useState<string[]>([])
+  const [taskTypes, setTaskTypes] = useState<string[]>([]);
+  const [eventTypes, setEventTypes] = useState<string[]>([]);
 
   const { targetUris } = useUriListForPermissions();
   const isDetailedView = searchParams.get('detailed') === 'true';
+
+  const taskNameHeader = isDetailedView ? 'Task Name' : 'Milestone';
 
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
 
@@ -59,14 +59,18 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}`;
   }
 
+  const updateSearchParams = (value: string, key: string) => {
+    if (value) {
+      searchParams.set(key, value);
+    } else {
+      searchParams.delete(key);
+    }
+    setSearchParams(searchParams);
+  };
+
   const addDebouncedSearchParams = useDebouncedCallback(
-    (value, key) => {
-      if (value) {
-        searchParams.set(key, value);
-      } else {
-        searchParams.delete(key);
-      }
-      setSearchParams(searchParams);
+    (value: string, key: string) => {
+      updateSearchParams(value, key);
     },
     // delay in ms
     1000
@@ -82,16 +86,39 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       setProcessInstanceLogs(result.results);
       setPagination(result.pagination);
     };
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+
+    const searchParamsToInclude = [
+      'detailed',
+      'page',
+      'per_page',
+      'bpmn_name',
+      'bpmn_identifier',
+      'task_type',
+      'event_type',
+    ];
+    const pickedSearchParams = selectKeysFromSearchParams(
+      searchParams,
+      searchParamsToInclude
+    );
+
+    if ('bpmn_name' in pickedSearchParams) {
+      setTaskName(pickedSearchParams.bpmn_name);
+    }
+    if ('bpmn_identifier' in pickedSearchParams) {
+      setTaskIdentifier(pickedSearchParams.bpmn_identifier);
+    }
+
     HttpService.makeCallToBackend({
-      path: `${targetUris.processInstanceLogListPath}?per_page=${perPage}&page=${page}&detailed=${isDetailedView}`,
+      path: `${targetUris.processInstanceLogListPath}?${createSearchParams(
+        pickedSearchParams
+      )}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
     HttpService.makeCallToBackend({
       path: `/v1.0/logs/types`,
       successCallback: (result: any) => {
-      setTaskTypes(result.task_types)
-      setEventTypes(result.event_types)
+        setTaskTypes(result.task_types);
+        setEventTypes(result.event_types);
       },
     });
   }, [
@@ -135,6 +162,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     if (isDetailedView) {
       tableRow.push(
         <>
+          <td>{logEntry.task_definition_identifier}</td>
           <td>{logEntry.bpmn_task_type}</td>
           <td>{logEntry.event_type}</td>
           <td>
@@ -180,13 +208,13 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         <>
           <th>Id</th>
           <th>Bpmn Process</th>
-          <th>Task Name</th>
+          <th>{taskNameHeader}</th>
         </>
       );
     } else {
       tableHeaders.push(
         <>
-          <th>Event</th>
+          <th>{taskNameHeader}</th>
           <th>Bpmn Process</th>
         </>
       );
@@ -194,8 +222,9 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     if (isDetailedView) {
       tableHeaders.push(
         <>
+          <th>Task Identifier</th>
           <th>Task Type</th>
-          <th>Event</th>
+          <th>Event Type</th>
           <th>User</th>
         </>
       );
@@ -215,41 +244,46 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     setTaskIdentifier('');
     setTaskName('');
 
-    searchParams.delete(taskName);
-    searchParams.delete(taskIdentifier);
+    ['bpmn_name', 'bpmn_identifier', 'task_type', 'event_type'].forEach(
+      (value: string) => searchParams.delete(value)
+    );
 
     setSearchParams(searchParams);
   };
 
-  const shouldFilterTaskType = (options: any) => {
-    const taskTypeOption = options.item
+  const shouldFilterStringItem = (options: any) => {
+    const stringItem = options.item;
     let { inputValue } = options;
     if (!inputValue) {
       inputValue = '';
     }
-    return taskTypeOption.toLowerCase().includes(inputValue.toLowerCase())
-  }
+    return stringItem.toLowerCase().includes(inputValue.toLowerCase());
+  };
 
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
     }
 
-    return (
-      <>
-        <Grid fullWidth className="with-bottom-margin">
-          <Column md={4}>
-            <TextInput
-              id="task-name-filter"
-              labelText="Task Name"
-              value={taskName}
-              onChange={(event: any) => {
-                const newValue = event.target.value;
-                setTaskName(newValue);
-                addDebouncedSearchParams(newValue, 'bpmn_name');
-              }}
-            />
-          </Column>
+    const filterElements = [];
+    filterElements.push(
+      <Column md={4}>
+        <TextInput
+          id="task-name-filter"
+          labelText={taskNameHeader}
+          value={taskName}
+          onChange={(event: any) => {
+            const newValue = event.target.value;
+            setTaskName(newValue);
+            addDebouncedSearchParams(newValue, 'bpmn_name');
+          }}
+        />
+      </Column>
+    );
+
+    if (isDetailedView) {
+      filterElements.push(
+        <>
           <Column md={4}>
             <TextInput
               id="task-identifier-filter"
@@ -263,20 +297,47 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
             />
           </Column>
           <Column md={4}>
-    <ComboBox
-      onChange={(value: any) => setSelectedTaskType(value.selectedItem)}
-      id="task-type-select"
-      data-qa="task-type-select"
-      items={taskTypes}
-      itemToString={(value: string) => {
-        return value
-      }}
-      shouldFilterItem={shouldFilterTaskType}
-      placeholder="Choose a process model"
-      titleText="Task Type"
-      selectedItem={selectedTaskType}
-    />
+            <ComboBox
+              onChange={(value: any) => {
+                updateSearchParams(value.selectedItem, 'task_type');
+              }}
+              id="task-type-select"
+              data-qa="task-type-select"
+              items={taskTypes}
+              itemToString={(value: string) => {
+                return value;
+              }}
+              shouldFilterItem={shouldFilterStringItem}
+              placeholder="Choose a process model"
+              titleText="Task Type"
+              selectedItem={searchParams.get('task_type')}
+            />
           </Column>
+          <Column md={4}>
+            <ComboBox
+              onChange={(value: any) => {
+                updateSearchParams(value.selectedItem, 'event_type');
+              }}
+              id="event-type-select"
+              data-qa="event-type-select"
+              items={eventTypes}
+              itemToString={(value: string) => {
+                return value;
+              }}
+              shouldFilterItem={shouldFilterStringItem}
+              placeholder="Choose a process model"
+              titleText="Event Type"
+              selectedItem={searchParams.get('event_type')}
+            />
+          </Column>
+        </>
+      );
+    }
+
+    return (
+      <>
+        <Grid fullWidth className="with-bottom-margin">
+          {filterElements}
         </Grid>
         <Grid fullWidth className="with-bottom-margin">
           <Column sm={4} md={4} lg={8}>
@@ -325,41 +386,38 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     );
   };
 
-  if (pagination) {
-    const { page, perPage } = getPageInfoFromSearchParams(searchParams);
-    return (
-      <>
-        <ProcessBreadcrumb
-          hotCrumbs={[
-            ['Process Groups', '/admin'],
-            {
-              entityToExplode: params.process_model_id || '',
-              entityType: 'process-model-id',
-              linkLastItem: true,
-            },
-            [
-              `Process Instance: ${params.process_instance_id}`,
-              `${processInstanceShowPageBaseUrl}/${params.process_instance_id}`,
-            ],
-            ['Logs'],
-          ]}
-        />
-        {tabs()}
-        <Filters
-          filterOptions={filterOptions}
-          showFilterOptions={showFilterOptions}
-          setShowFilterOptions={setShowFilterOptions}
-          filtersEnabled
-        />
-        <br />
-        <PaginationForTable
-          page={page}
-          perPage={perPage}
-          pagination={pagination}
-          tableToDisplay={buildTable()}
-        />
-      </>
-    );
-  }
-  return null;
+  const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+  return (
+    <>
+      <ProcessBreadcrumb
+        hotCrumbs={[
+          ['Process Groups', '/admin'],
+          {
+            entityToExplode: params.process_model_id || '',
+            entityType: 'process-model-id',
+            linkLastItem: true,
+          },
+          [
+            `Process Instance: ${params.process_instance_id}`,
+            `${processInstanceShowPageBaseUrl}/${params.process_instance_id}`,
+          ],
+          ['Logs'],
+        ]}
+      />
+      {tabs()}
+      <Filters
+        filterOptions={filterOptions}
+        showFilterOptions={showFilterOptions}
+        setShowFilterOptions={setShowFilterOptions}
+        filtersEnabled
+      />
+      <br />
+      <PaginationForTable
+        page={page}
+        perPage={perPage}
+        pagination={pagination}
+        tableToDisplay={buildTable()}
+      />
+    </>
+  );
 }
