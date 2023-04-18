@@ -26,6 +26,17 @@ export const underscorizeString = (inputString: string) => {
   return slugifyString(inputString).replace(/-/g, '_');
 };
 
+export const selectKeysFromSearchParams = (obj: any, keys: string[]) => {
+  const newSearchParams: { [key: string]: string } = {};
+  keys.forEach((key: string) => {
+    const value = obj.get(key);
+    if (value) {
+      newSearchParams[key] = value;
+    }
+  });
+  return newSearchParams;
+};
+
 export const capitalizeFirstLetter = (string: any) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
