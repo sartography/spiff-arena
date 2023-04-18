@@ -1,92 +1,58 @@
-// @ts-ignore
 import { Select, SelectItem } from '@carbon/react';
-import { ChangeEvent, FocusEvent, SyntheticEvent, useCallback } from 'react';
-import {
-  enumOptionsValueForIndex,
-  FormContextType,
-  RJSFSchema,
-  StrictRJSFSchema,
-  WidgetProps,
-} from '@rjsf/utils';
+import { WidgetProps, processSelectValue } from '@rjsf/utils';
 
-function getValue(event: SyntheticEvent<HTMLSelectElement>, multiple: boolean) {
-  if (multiple) {
-    return Array.from((event.target as HTMLSelectElement).options)
-      .slice()
-      .filter((o) => o.selected)
-      .map((o) => o.value);
-  }
-  return (event.target as HTMLSelectElement).value;
-}
-
-/** The `SelectWidget` is a widget for rendering dropdowns.
- *  It is typically used with string properties constrained with enum options.
- *
- * @param props - The `WidgetProps` for this component
- */
-function SelectWidget<
-  T = any,
-  S extends StrictRJSFSchema = RJSFSchema,
-  F extends FormContextType = any
->({
+function SelectWidget({
   schema,
-  uiSchema,
   id,
   options,
-  value,
+  label,
+  required,
   disabled,
   readonly,
-  multiple = false,
-  autofocus = false,
+  value,
+  multiple,
+  autofocus,
   onChange,
   onBlur,
   onFocus,
+  uiSchema,
+  placeholder,
   rawErrors = [],
-}: WidgetProps<T, S, F>) {
-  const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;
+}: WidgetProps) {
+  const { enumOptions, enumDisabled } = options;
+
   const emptyValue = multiple ? [] : '';
 
-  const handleFocus = useCallback(
-    (event: FocusEvent<HTMLSelectElement>) => {
-      const newValue = getValue(event, multiple);
-      return onFocus(
-        id,
-        enumOptionsValueForIndex<S>(newValue, enumOptions, optEmptyVal)
-      );
-    },
-    [onFocus, id, schema, multiple, options]
-  );
+  const _onChange = ({
+    target: { value },
+  }: React.ChangeEvent<{ name?: string; value: unknown }>) =>
+    onChange(processSelectValue(schema, value, options));
+  const _onBlur = ({ target: { value } }: React.FocusEvent<HTMLInputElement>) =>
+    onBlur(id, processSelectValue(schema, value, options));
+  const _onFocus = ({
+    target: { value },
+  }: React.FocusEvent<HTMLInputElement>) =>
+    onFocus(id, processSelectValue(schema, value, options));
 
-  const handleBlur = useCallback(
-    (event: FocusEvent<HTMLSelectElement>) => {
-      const newValue = getValue(event, multiple);
-      return onBlur(
-        id,
-        enumOptionsValueForIndex<S>(newValue, enumOptions, optEmptyVal)
-      );
-    },
-    [onBlur, id, schema, multiple, options]
-  );
-
-  const handleChange = useCallback(
-    (event: ChangeEvent<HTMLSelectElement>) => {
-      const newValue = getValue(event, multiple);
-      return onChange(
-        enumOptionsValueForIndex<S>(newValue, enumOptions, optEmptyVal)
-      );
-    },
-    [onChange, schema, multiple, options]
-  );
-
+  let labelToUse = label;
+  if (uiSchema && uiSchema['ui:title']) {
+    labelToUse = uiSchema['ui:title'];
+  } else if (schema && schema.title) {
+    labelToUse = schema.title;
+  }
   let helperText = null;
   if (uiSchema && uiSchema['ui:help']) {
     helperText = uiSchema['ui:help'];
+  }
+  if (required) {
+    labelToUse = `${labelToUse}*`;
   }
 
   let invalid = false;
   let errorMessageForField = null;
   if (rawErrors && rawErrors.length > 0) {
     invalid = true;
+    // errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
     errorMessageForField = rawErrors[0];
   }
 
@@ -104,9 +70,9 @@ function SelectWidget<
       disabled={disabled || readonly}
       autoFocus={autofocus}
       error={rawErrors.length > 0}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      onFocus={handleFocus}
+      onChange={_onChange}
+      onBlur={_onBlur}
+      onFocus={_onFocus}
       invalid={invalid}
       invalidText={errorMessageForField}
       InputLabelProps={{

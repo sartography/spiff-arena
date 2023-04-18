@@ -54,13 +54,6 @@ export default function BaseInputTemplate<
     ...getInputProps<T, S, F>(schema, type, options),
   };
 
-  let inputValue;
-  if (inputProps.type === 'number' || inputProps.type === 'integer') {
-    inputValue = value || value === 0 ? value : '';
-  } else {
-    inputValue = value == null ? '' : value;
-  }
-
   const _onChange = useCallback(
     ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) =>
       onChange(value === '' ? options.emptyValue : value),
