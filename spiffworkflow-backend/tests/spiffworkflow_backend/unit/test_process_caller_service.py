@@ -84,27 +84,27 @@ class TestProcessCallerService(BaseTest):
         assert ProcessCallerService.count() == 3
 
     def test_no_records_added_if_calling_process_ids_is_empty(self, with_no_process_callers: None) -> None:
-        ProcessCallerService.add_callers("bob", [])
+        ProcessCallerService.add_caller("bob", [])
         assert ProcessCallerService.count() == 0
 
     def test_can_add_caller_for_new_process(self, with_no_process_callers: None) -> None:
-        ProcessCallerService.add_callers("bob", ["new_caller"])
+        ProcessCallerService.add_caller("bob", ["new_caller"])
         assert ProcessCallerService.count() == 1
 
     def test_can_many_callers_for_new_process(self, with_no_process_callers: None) -> None:
-        ProcessCallerService.add_callers("bob", ["new_caller", "another_new_caller"])
+        ProcessCallerService.add_caller("bob", ["new_caller", "another_new_caller"])
         assert ProcessCallerService.count() == 2
 
     def test_can_add_caller_for_existing_process(self, with_multiple_process_callers: None) -> None:
-        ProcessCallerService.add_callers("called_many", ["new_caller"])
+        ProcessCallerService.add_caller("called_many", ["new_caller"])
         assert ProcessCallerService.count() == 4
 
     def test_can_add_many_callers_for_existing_process(self, with_multiple_process_callers: None) -> None:
-        ProcessCallerService.add_callers("called_many", ["new_caller", "another_new_caller"])
+        ProcessCallerService.add_caller("called_many", ["new_caller", "another_new_caller"])
         assert ProcessCallerService.count() == 5
 
     def test_can_track_duplicate_callers(self, with_no_process_callers: None) -> None:
-        ProcessCallerService.add_callers("bob", ["new_caller", "new_caller"])
+        ProcessCallerService.add_caller("bob", ["new_caller", "new_caller"])
         assert ProcessCallerService.count() == 2
 
     def test_can_return_no_callers_when_no_records(self, with_no_process_callers: None) -> None:
@@ -117,7 +117,8 @@ class TestProcessCallerService(BaseTest):
         assert ProcessCallerService.callers("called_once") == ["one_caller"]
 
     def test_can_return_mulitple_callers(self, with_multiple_process_callers: None) -> None:
-        assert ProcessCallerService.callers("called_many") == ["one_caller", "two_caller", "three_caller"]
+        callers = sorted(ProcessCallerService.callers("called_many"))
+        assert callers == ["one_caller", "three_caller", "two_caller"]
 
     def test_can_return_single_caller_when_there_are_other_process_ids(
         self, with_single_process_caller: None, with_multiple_process_callers: None

@@ -25,10 +25,10 @@ class ProcessCallerService:
         ).delete()
 
     @staticmethod
-    def add_callers(process_id: str, calling_process_ids: List[str]) -> None:
-        for calling_process_id in calling_process_ids:
+    def add_caller(process_id: str, called_process_ids: List[str]) -> None:
+        for called_process_id in called_process_ids:
             db.session.add(
-                ProcessCallerCache(process_identifier=process_id, calling_process_identifier=calling_process_id)
+                ProcessCallerCache(process_identifier=called_process_id, calling_process_identifier=process_id)
             )
         db.session.commit()
 

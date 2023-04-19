@@ -317,7 +317,7 @@ class SpecFileService(FileSystemService):
 
     @staticmethod
     def update_process_caller_cache(ref: SpecReference) -> None:
-        ProcessCallerService.add_callers(ref.identifier, ref.called_element_ids)
+        ProcessCallerService.add_caller(ref.identifier, ref.called_element_ids)
     
     @staticmethod
     def update_message_cache(ref: SpecReference) -> None:
