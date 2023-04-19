@@ -3,6 +3,8 @@ from typing import Any
 
 from flask.app import Flask
 from flask.testing import FlaskClient
+
+from spiffworkflow_backend.routes.tasks_controller import _interstitial_stream
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -20,6 +22,10 @@ class TestForGoodErrors(BaseTest):
         client: FlaskClient,
         with_super_admin_user: UserModel,
     ) -> Any:
+
+        # Call this to assure all engine-steps are fully processed before we search for human tasks.
+        _interstitial_stream(process_instance_id)
+
         """Returns the next available user task for a given process instance, if possible."""
         human_tasks = (
             db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()

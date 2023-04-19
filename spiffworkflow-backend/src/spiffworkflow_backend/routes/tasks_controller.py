@@ -350,7 +350,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
                 task.form_ui_schema = ui_form_contents
 
         _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task)
-        _render_instructions_for_end_user(spiff_task, task)
+    _render_instructions_for_end_user(spiff_task, task)
     return make_response(jsonify(task), 200)
 
 
