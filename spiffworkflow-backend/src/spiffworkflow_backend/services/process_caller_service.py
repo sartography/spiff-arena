@@ -37,4 +37,4 @@ class ProcessCallerService:
         records = (
             db.session.query(ProcessCallerCache).filter(ProcessCallerCache.process_identifier == process_id).all()
         )
-        return list(map(lambda r: r.calling_process_identifier, records))  # type: ignore
+        return list(set(map(lambda r: r.calling_process_identifier, records)))  # type: ignore
