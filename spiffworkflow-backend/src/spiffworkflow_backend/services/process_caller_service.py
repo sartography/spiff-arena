@@ -35,6 +35,8 @@ class ProcessCallerService:
     @staticmethod
     def callers(process_id: str) -> List[str]:
         records = (
-            db.session.query(ProcessCallerCacheModel).filter(ProcessCallerCache.process_identifier == process_id).all()
+            db.session.query(ProcessCallerCacheModel)
+            .filter(ProcessCallerCacheModel.process_identifier == process_id)
+            .all()
         )
         return list(set(map(lambda r: r.calling_process_identifier, records)))  # type: ignore

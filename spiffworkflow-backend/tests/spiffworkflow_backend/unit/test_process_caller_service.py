@@ -5,13 +5,13 @@ from flask.app import Flask
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_caller import ProcessCallerCache
+from spiffworkflow_backend.models.process_caller import ProcessCallerCacheModel
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 
 
 @pytest.fixture()
 def with_clean_cache(app: Flask) -> Generator[None, None, None]:
-    db.session.query(ProcessCallerCache).delete()
+    db.session.query(ProcessCallerCacheModel).delete()
     db.session.commit()
     yield
 
@@ -23,16 +23,18 @@ def with_no_process_callers(with_clean_cache: None) -> Generator[None, None, Non
 
 @pytest.fixture()
 def with_single_process_caller(with_clean_cache: None) -> Generator[None, None, None]:
-    db.session.add(ProcessCallerCache(process_identifier="called_once", calling_process_identifier="one_caller"))
+    db.session.add(ProcessCallerCacheModel(process_identifier="called_once", calling_process_identifier="one_caller"))
     db.session.commit()
     yield
 
 
 @pytest.fixture()
 def with_multiple_process_callers(with_clean_cache: None) -> Generator[None, None, None]:
-    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="one_caller"))
-    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="two_caller"))
-    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="three_caller"))
+    db.session.add(ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="one_caller"))
+    db.session.add(ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="two_caller"))
+    db.session.add(
+        ProcessCallerCacheModel(process_identifier="called_many", calling_process_identifier="three_caller")
+    )
     db.session.commit()
     yield
 
