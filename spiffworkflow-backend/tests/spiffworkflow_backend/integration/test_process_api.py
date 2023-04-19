@@ -42,6 +42,7 @@ from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 
 # from spiffworkflow_backend.services.git_service import GitService
 
@@ -556,6 +557,47 @@ class TestProcessApi(BaseTest):
         assert simple_form["has_lanes"] is False
         assert simple_form["is_executable"] is True
         assert simple_form["is_primary"] is True
+
+    def test_process_callers(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        """It should be possible to get a list of all processes that call another process."""
+        load_test_spec(
+            "test_group_one/simple_form",
+            process_model_source_directory="simple_form",
+            bpmn_file_name="simple_form",
+        )
+        # When adding a process model with one Process, no decisions, and some json files, only one process is recorded.
+        assert len(SpecReferenceCache.query.all()) == 1
+        # but no callers are recorded
+        assert ProcessCallerService.count() == 0
+
+        self.create_group_and_model_with_bpmn(
+            client=client,
+            user=with_super_admin_user,
+            process_group_id="test_group_two",
+            process_model_id="call_activity_nested",
+            bpmn_file_location="call_activity_nested",
+        )
+        # When adding a process model with 4 processes and a decision, 5 new records will be in the Cache
+        assert len(SpecReferenceCache.query.all()) == 6
+        # and 4 callers recorded
+        assert ProcessCallerService.count() == 4
+
+        # get the results
+        response = client.get(
+            "/v1.0/processes/Level2/callers",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.json is not None
+        # We should get 1 back, Level1 calls Level2
+        assert len(response.json) == 1
+        caller = response.json[0]
+        assert caller["identifier"] == "Level1"
 
     def test_process_group_add(
         self,
