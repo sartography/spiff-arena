@@ -13,7 +13,6 @@ import {
   ButtonSet,
 } from '@carbon/react';
 
-import MDEditor from '@uiw/react-md-editor';
 // eslint-disable-next-line import/no-named-as-default
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
@@ -90,13 +89,6 @@ function TypeAheadWidget({
   );
 }
 
-class UnexpectedHumanTaskType extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'UnexpectedHumanTaskType';
-  }
-}
-
 enum FormSubmitType {
   Default,
   Draft,
@@ -108,15 +100,10 @@ export default function TaskShow() {
   const params = useParams();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
-  const [refreshSeconds, setRefreshSeconds] = useState(0);
-
   // save current form data so that we can avoid validations in certain situations
   const [currentFormObject, setCurrentFormObject] = useState<any>({});
 
   const { addError, removeError } = useAPIError();
-
-  // eslint-disable-next-line sonarjs/no-duplicate-string
-  const supportedHumanTaskTypes = ['User Task', 'Manual Task'];
 
   const navigateToInterstitial = (myTask: ProcessInstanceTask) => {
     navigate(
@@ -360,12 +347,6 @@ export default function TaskShow() {
           >
             Save as draft
           </Button>
-        );
-      } else {
-        return (
-          <p>
-            <i>Page will refresh in {refreshSeconds} seconds.</i>
-          </p>
         );
       }
       reactFragmentToHideSubmitButton = (

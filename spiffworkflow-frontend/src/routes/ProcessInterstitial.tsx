@@ -17,6 +17,7 @@ export default function ProcessInterstitial() {
   const [status, setStatus] = useState<string>('running');
   const params = useParams();
   const navigate = useNavigate();
+  const userTasks = ['User Task', 'Manual Task'];
 
   useEffect(() => {
     fetchEventSource(
@@ -35,7 +36,8 @@ export default function ProcessInterstitial() {
         },
       }
     );
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // it is critical to only run this once.
 
   useEffect(() => {
     // Added this seperate use effect so that the timer interval will be cleared if
@@ -43,7 +45,7 @@ export default function ProcessInterstitial() {
     if (
       lastTask &&
       lastTask.can_complete &&
-      ['User Task', 'Manual Task'].includes(lastTask.type)
+      userTasks.includes(lastTask.type)
     ) {
       const timerId = setInterval(() => {
         navigate(`/tasks/${lastTask.process_instance_id}/${lastTask.id}`);
@@ -57,14 +59,9 @@ export default function ProcessInterstitial() {
     if (status !== 'running') {
       setStatus(lastTask.state);
     }
-    if (
-      !lastTask.can_complete &&
-      ['User Task', 'Manual Task'].includes(lastTask.type)
-    ) {
+    if (!lastTask.can_complete && userTasks.includes(lastTask.type)) {
       setStatus('LOCKED');
     }
-    console.log(`Status is : ${status}}`);
-    console.log('last task is : ', lastTask);
     switch (status) {
       case 'running':
         return (
@@ -87,10 +84,7 @@ export default function ProcessInterstitial() {
   };
 
   const userMessage = (myTask: ProcessInstanceTask) => {
-    if (
-      !myTask.can_complete &&
-      ['User Task', 'Manual Task'].includes(myTask.type)
-    ) {
+    if (!myTask.can_complete && userTasks.includes(myTask.type)) {
       return <div>This next task must be completed by a different person.</div>;
     }
     return (

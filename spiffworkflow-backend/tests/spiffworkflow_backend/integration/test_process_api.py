@@ -1654,7 +1654,7 @@ class TestProcessApi(BaseTest):
         # a list.  It tests all of our code.  No reason to test Flasks SSE support.
         results = list(_interstitial_stream(process_instance_id))
         # strip the "data:" prefix and convert remaining string to dict.
-        json_results = list(map(lambda x: json.loads(x[5:]), results))
+        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
         # There should be 2 results back -
         # the first script task should not be returned (it contains no end user instructions)
         # The second script task should produce rendered jinja text
@@ -1675,10 +1675,10 @@ class TestProcessApi(BaseTest):
 
         # we should now be on a task that does not belong to the original user, and the interstitial page should know this.
         results = list(_interstitial_stream(process_instance_id))
-        json_results = list(map(lambda x: json.loads(x[5:]), results))
+        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
         assert len(results) == 1
         assert json_results[0]["state"] == "READY"
-        assert json_results[0]["can_complete"] == False
+        assert json_results[0]["can_complete"] is False
         assert json_results[0]["title"] == "Please Approve"
         assert json_results[0]["properties"]["instructionsForEndUser"] == "I am a manual task in another lane"
 
@@ -1692,7 +1692,7 @@ class TestProcessApi(BaseTest):
         list(_interstitial_stream(process_instance_id))
         list(_interstitial_stream(process_instance_id))
         results = list(_interstitial_stream(process_instance_id))
-        json_results = list(map(lambda x: json.loads(x[5:]), results))
+        json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
         assert len(json_results) == 1
         assert json_results[0]["state"] == "COMPLETED"
         assert json_results[0]["properties"]["instructionsForEndUser"] == "I am the end task"
