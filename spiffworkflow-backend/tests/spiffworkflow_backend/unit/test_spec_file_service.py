@@ -29,7 +29,7 @@ class TestSpecFileService(BaseTest):
     call_activity_nested_relative_file_path = os.path.join(process_group_id, process_model_id, bpmn_file_name)
 
     def test_can_store_process_ids_for_lookup(
-        self,
+        self,s
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
