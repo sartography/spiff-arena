@@ -22,8 +22,8 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
+from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
 class ProcessModelFileNotFoundError(Exception):
@@ -270,9 +270,12 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def clear_caches_for_file(file_name: str, process_model_info: ProcessModelInfo) -> None:
         """Clear all caches related to a file."""
-        records = db.session.query(SpecReferenceCache).filter(SpecReferenceCache.file_name == file_name).filter(
-            SpecReferenceCache.process_model_id == process_model_info.id
-        ).all()
+        records = (
+            db.session.query(SpecReferenceCache)
+            .filter(SpecReferenceCache.file_name == file_name)
+            .filter(SpecReferenceCache.process_model_id == process_model_info.id)
+            .all()
+        )
 
         process_ids = []
 
@@ -318,7 +321,7 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def update_process_caller_cache(ref: SpecReference) -> None:
         ProcessCallerService.add_caller(ref.identifier, ref.called_element_ids)
-    
+
     @staticmethod
     def update_message_cache(ref: SpecReference) -> None:
         """Assure we have a record in the database of all possible message ids and names."""
