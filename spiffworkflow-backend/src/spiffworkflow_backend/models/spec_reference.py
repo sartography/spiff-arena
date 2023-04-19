@@ -35,6 +35,7 @@ class SpecReference:
     messages: dict  # Any messages defined in the same file where this process is defined.
     correlations: dict  # Any correlations defined in the same file with this process.
     start_messages: list  # The names of any messages that would start this process.
+    called_element_ids: list # The element ids of any called elements
 
 
 class SpecReferenceCache(SpiffworkflowBaseDBModel):

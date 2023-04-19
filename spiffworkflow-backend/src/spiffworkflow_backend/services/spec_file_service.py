@@ -112,6 +112,7 @@ class SpecFileService(FileSystemService):
         messages = {}
         correlations = {}
         start_messages = []
+        called_element_ids = []
         if file_type.value == FileType.bpmn.value:
             parser.add_bpmn_xml(cls.get_etree_from_xml_bytes(binary_data))
             parser_type = "process"
@@ -130,6 +131,7 @@ class SpecFileService(FileSystemService):
                 is_executable = sub_parser.process_executable
                 start_messages = sub_parser.start_messages()
                 is_primary = sub_parser.get_id() == process_model_info.primary_process_id
+                called_element_ids = sub_parser.called_element_ids()
 
             references.append(
                 SpecReference(
@@ -145,6 +147,7 @@ class SpecFileService(FileSystemService):
                     is_primary=is_primary,
                     correlations=correlations,
                     start_messages=start_messages,
+                    called_element_ids=called_element_ids,
                 )
             )
         return references
