@@ -7,7 +7,7 @@ export default function InstructionsForEndUser({ task }: any) {
     return null;
   }
   let instructions = '';
-  console.log("I was passed a task: ", task);
+  console.log('I was passed a task: ', task);
   const { properties } = task;
   const { instructionsForEndUser } = properties;
   if (instructionsForEndUser) {

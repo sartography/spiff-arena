@@ -126,7 +126,6 @@ export default function TaskShow() {
     );
   };
 
-
   useEffect(() => {
     const processResult = (result: ProcessInstanceTask) => {
       setTask(result);

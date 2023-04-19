@@ -10,7 +10,8 @@ from typing import Tuple
 from urllib.parse import unquote
 
 import sentry_sdk
-from flask import current_app, g
+from flask import current_app
+from flask import g
 from SpiffWorkflow.bpmn.specs.events.IntermediateEvent import _BoundaryEventParent  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
@@ -26,8 +27,9 @@ from spiffworkflow_backend.models.process_instance_file_data import (
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.authorization_service import AuthorizationService, HumanTaskNotFoundError, \
-    UserDoesNotHaveAccessToTaskError
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
+from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -427,12 +429,13 @@ class ProcessInstanceService:
         # can complete it.
         can_complete = False
         try:
-            AuthorizationService.assert_user_can_complete_spiff_task(processor.process_instance_model.id, spiff_task,
-                                                                     g.user)
+            AuthorizationService.assert_user_can_complete_spiff_task(
+                processor.process_instance_model.id, spiff_task, g.user
+            )
             can_complete = True
-        except HumanTaskNotFoundError as e:
+        except HumanTaskNotFoundError:
             can_complete = False
-        except UserDoesNotHaveAccessToTaskError as ude:
+        except UserDoesNotHaveAccessToTaskError:
             can_complete = False
 
         if hasattr(spiff_task.task_spec, "spec"):

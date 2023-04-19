@@ -75,7 +75,12 @@ export default function ProcessInterstitial() {
       case 'COMPLETED':
         return <img src="/interstitial/checkmark.png" alt="Completed" />;
       case 'LOCKED':
-        return <img src="/interstitial/lock.png" alt="Locked, Waiting on someone else." />;
+        return (
+          <img
+            src="/interstitial/lock.png"
+            alt="Locked, Waiting on someone else."
+          />
+        );
       default:
         return null;
     }
@@ -86,11 +91,13 @@ export default function ProcessInterstitial() {
       !myTask.can_complete &&
       ['User Task', 'Manual Task'].includes(myTask.type)
     ) {
-      return (
-        <div>This next task must be completed by a different person.</div>
-      );
+      return <div>This next task must be completed by a different person.</div>;
     }
-    return <div><InstructionsForEndUser task={myTask} /></div>;
+    return (
+      <div>
+        <InstructionsForEndUser task={myTask} />
+      </div>
+    );
   };
 
   if (lastTask) {
@@ -116,7 +123,9 @@ export default function ProcessInterstitial() {
           <Column md={6} lg={8} sm={4}>
             {data &&
               data.map((d) => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '2em' }}>
+                <div
+                  style={{ display: 'flex', alignItems: 'center', gap: '2em' }}
+                >
                   <div>
                     Task: <em>{d.title}</em>
                   </div>

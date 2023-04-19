@@ -1455,7 +1455,8 @@ export default function ProcessInstanceListTable({
       if (showActionsColumn) {
         let buttonElement = null;
         const interstitialUrl = `/process/${modifyProcessIdentifierForPathParam(
-          row.process_model_identifier)}/${row.id}/interstitial`
+          row.process_model_identifier
+        )}/${row.id}/interstitial`;
         const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
         let hasAccessToCompleteTask = false;
         if (

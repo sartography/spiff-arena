@@ -1,6 +1,7 @@
 import copy
 import time
-from typing import Callable, List
+from typing import Callable
+from typing import List
 from typing import Optional
 from typing import Set
 from uuid import UUID
@@ -50,11 +51,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
     """
 
     def __init__(
-            self,
-            serializer: BpmnWorkflowSerializer,
-            process_instance: ProcessInstanceModel,
-            bpmn_definition_to_task_definitions_mappings: dict,
-            secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
+        self,
+        serializer: BpmnWorkflowSerializer,
+        process_instance: ProcessInstanceModel,
+        bpmn_definition_to_task_definitions_mappings: dict,
+        secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
@@ -132,12 +133,12 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # excludes COMPLETED. the others were required to get PP1 to go to completion.
             # process FUTURE tasks because Boundary events are not processed otherwise.
             for waiting_spiff_task in bpmn_process_instance.get_tasks(
-                    TaskState.WAITING
-                    | TaskState.CANCELLED
-                    | TaskState.READY
-                    | TaskState.MAYBE
-                    | TaskState.LIKELY
-                    | TaskState.FUTURE
+                TaskState.WAITING
+                | TaskState.CANCELLED
+                | TaskState.READY
+                | TaskState.MAYBE
+                | TaskState.LIKELY
+                | TaskState.FUTURE
             ):
                 # these will be removed from the parent and then ignored
                 if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
@@ -267,17 +268,21 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
 
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
     """When you want to run tasks until you hit something to report to the end user, or
-     until there are no other engine steps to complete."""
+    until there are no other engine steps to complete."""
 
     def get_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
-        return list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) \
-                     if t.task_spec.spec_type not in ["User Task", "Manual Task"] and
-                     not (hasattr(t.task_spec, "extensions") and
-                          t.task_spec.extensions.get("instructionsForEndUser", None))
-                     ])
+        return list(
+            [
+                t
+                for t in bpmn_process_instance.get_tasks(TaskState.READY)
+                if t.task_spec.spec_type not in ["User Task", "Manual Task"]
+                and not (
+                    hasattr(t.task_spec, "extensions") and t.task_spec.extensions.get("instructionsForEndUser", None)
+                )
+            ]
+        )
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-
         engine_steps = self.get_engine_steps(bpmn_process_instance)
         while engine_steps:
             for task in engine_steps:
@@ -320,12 +325,12 @@ class WorkflowExecutionService:
     """Provides the driver code for workflow execution."""
 
     def __init__(
-            self,
-            bpmn_process_instance: BpmnWorkflow,
-            process_instance_model: ProcessInstanceModel,
-            execution_strategy: ExecutionStrategy,
-            process_instance_completer: ProcessInstanceCompleter,
-            process_instance_saver: ProcessInstanceSaver,
+        self,
+        bpmn_process_instance: BpmnWorkflow,
+        process_instance_model: ProcessInstanceModel,
+        execution_strategy: ExecutionStrategy,
+        process_instance_completer: ProcessInstanceCompleter,
+        process_instance_saver: ProcessInstanceSaver,
     ):
         """__init__."""
         self.bpmn_process_instance = bpmn_process_instance
@@ -402,12 +407,12 @@ class WorkflowExecutionService:
         for event in waiting_message_events:
             # Ensure we are only creating one message instance for each waiting message
             if (
-                    MessageInstanceModel.query.filter_by(
-                        process_instance_id=self.process_instance_model.id,
-                        message_type="receive",
-                        name=event["name"],
-                    ).count()
-                    > 0
+                MessageInstanceModel.query.filter_by(
+                    process_instance_id=self.process_instance_model.id,
+                    message_type="receive",
+                    name=event["name"],
+                ).count()
+                > 0
             ):
                 continue
 
