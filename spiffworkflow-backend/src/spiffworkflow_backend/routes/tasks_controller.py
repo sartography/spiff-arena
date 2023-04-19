@@ -1,9 +1,7 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 import os
-import time
 import uuid
-from datetime import datetime
 from sys import exc_info
 from typing import Any
 from typing import Dict
@@ -14,10 +12,11 @@ from typing import Union
 import flask.wrappers
 import jinja2
 import sentry_sdk
-from flask import current_app, stream_with_context
+from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
+from flask import stream_with_context
 from flask.wrappers import Response
 from jinja2 import TemplateSyntaxError
 from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
@@ -85,7 +84,7 @@ class ReactJsonSchemaSelectOption(TypedDict):
 
 
 def task_list_my_tasks(
-        process_instance_id: Optional[int] = None, page: int = 1, per_page: int = 100
+    process_instance_id: Optional[int] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Task_list_my_tasks."""
     principal = _find_principal_or_raise()
@@ -166,7 +165,7 @@ def task_list_for_me(page: int = 1, per_page: int = 100) -> flask.wrappers.Respo
 
 
 def task_list_for_my_groups(
-        user_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+    user_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     """Task_list_for_my_groups."""
     return _get_tasks(
@@ -178,9 +177,9 @@ def task_list_for_my_groups(
 
 
 def task_data_show(
-        modified_process_model_identifier: str,
-        process_instance_id: int,
-        task_guid: str,
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    task_guid: str,
 ) -> flask.wrappers.Response:
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_model.data = task_model.json_data()
@@ -188,10 +187,10 @@ def task_data_show(
 
 
 def task_data_update(
-        process_instance_id: str,
-        modified_process_model_identifier: str,
-        task_guid: str,
-        body: Dict,
+    process_instance_id: str,
+    modified_process_model_identifier: str,
+    task_guid: str,
+    body: Dict,
 ) -> Response:
     """Update task data."""
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
@@ -241,10 +240,10 @@ def task_data_update(
 
 
 def manual_complete_task(
-        modified_process_model_identifier: str,
-        process_instance_id: str,
-        task_guid: str,
-        body: Dict,
+    modified_process_model_identifier: str,
+    process_instance_id: str,
+    task_guid: str,
+    body: Dict,
 ) -> Response:
     """Mark a task complete without executing it."""
     execute = body.get("execute", True)
@@ -359,9 +358,7 @@ def _render_instructions_for_end_user(spiff_task: SpiffTask, task: Task):
     if task.properties and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
             try:
-                instructions = _render_jinja_template(
-                    task.properties["instructionsForEndUser"], spiff_task
-                )
+                instructions = _render_jinja_template(task.properties["instructionsForEndUser"], spiff_task)
                 task.properties["instructionsForEndUser"] = instructions
                 return instructions
             except WorkflowTaskException as wfe:
@@ -371,9 +368,9 @@ def _render_instructions_for_end_user(spiff_task: SpiffTask, task: Task):
 
 
 def process_data_show(
-        process_instance_id: int,
-        process_data_identifier: str,
-        modified_process_model_identifier: str,
+    process_instance_id: int,
+    process_data_identifier: str,
+    modified_process_model_identifier: str,
 ) -> flask.wrappers.Response:
     """Process_data_show."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -408,7 +405,7 @@ def _interstitial_stream(process_instance_id: int):
         instructions = _render_instructions_for_end_user(spiff_task, task)
         if instructions and spiff_task.id not in reported_ids:
             reported_ids.append(spiff_task.id)
-            yield f'data: {current_app.json.dumps(task)} \n\n'
+            yield f"data: {current_app.json.dumps(task)} \n\n"
         last_task = spiff_task
         processor.do_engine_steps(execution_strategy_name="run_until_user_message")
         processor.do_engine_steps(execution_strategy_name="one_at_a_time")
@@ -420,15 +417,15 @@ def _interstitial_stream(process_instance_id: int):
 
 def interstitial(process_instance_id: int):
     """A Server Side Events Stream for watching the execution of engine tasks in a
-    process instance. """
-    return Response(stream_with_context(_interstitial_stream(process_instance_id)), mimetype='text/event-stream')
+    process instance."""
+    return Response(stream_with_context(_interstitial_stream(process_instance_id)), mimetype="text/event-stream")
 
 
 def _task_submit_shared(
-        process_instance_id: int,
-        task_guid: str,
-        body: Dict[str, Any],
-        save_as_draft: bool = False,
+    process_instance_id: int,
+    task_guid: str,
+    body: Dict[str, Any],
+    save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
     principal = _find_principal_or_raise()
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -509,18 +506,24 @@ def _task_submit_shared(
             task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
             return make_response(jsonify(task), 200)
 
-    return Response(json.dumps(
-        {"ok": True,
-         "process_model_identifier": process_instance.process_model_identifier,
-         "process_instance_id": process_instance_id
-         }), status=202, mimetype="application/json")
+    return Response(
+        json.dumps(
+            {
+                "ok": True,
+                "process_model_identifier": process_instance.process_model_identifier,
+                "process_instance_id": process_instance_id,
+            }
+        ),
+        status=202,
+        mimetype="application/json",
+    )
 
 
 def task_submit(
-        process_instance_id: int,
-        task_guid: str,
-        body: Dict[str, Any],
-        save_as_draft: bool = False,
+    process_instance_id: int,
+    task_guid: str,
+    body: Dict[str, Any],
+    save_as_draft: bool = False,
 ) -> flask.wrappers.Response:
     """Task_submit_user_data."""
     with sentry_sdk.start_span(op="controller_action", description="tasks_controller.task_submit"):
@@ -528,11 +531,11 @@ def task_submit(
 
 
 def _get_tasks(
-        processes_started_by_user: bool = True,
-        has_lane_assignment_id: bool = True,
-        page: int = 1,
-        per_page: int = 100,
-        user_group_identifier: Optional[str] = None,
+    processes_started_by_user: bool = True,
+    has_lane_assignment_id: bool = True,
+    page: int = 1,
+    per_page: int = 100,
+    user_group_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """Get_tasks."""
     user_id = g.user.id
@@ -679,9 +682,9 @@ def _render_jinja_template(unprocessed_template: str, spiff_task: SpiffTask) -> 
 
 
 def _get_spiff_task_from_process_instance(
-        task_guid: str,
-        process_instance: ProcessInstanceModel,
-        processor: Union[ProcessInstanceProcessor, None] = None,
+    task_guid: str,
+    process_instance: ProcessInstanceModel,
+    processor: Union[ProcessInstanceProcessor, None] = None,
 ) -> SpiffTask:
     """Get_spiff_task_from_process_instance."""
     if processor is None:
@@ -737,8 +740,9 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task: Task, spif
                             select_options_from_task_data = task.data.get(task_data_var)
                             if isinstance(select_options_from_task_data, list):
                                 if all("value" in d and "label" in d for d in select_options_from_task_data):
+
                                     def map_function(
-                                            task_data_select_option: TaskDataSelectOption,
+                                        task_data_select_option: TaskDataSelectOption,
                                     ) -> ReactJsonSchemaSelectOption:
                                         """Map_function."""
                                         return {
@@ -776,9 +780,9 @@ def _get_potential_owner_usernames(assigned_user: AliasedClass) -> Any:
 
 
 def _find_human_task_or_raise(
-        process_instance_id: int,
-        task_guid: str,
-        only_tasks_that_can_be_completed: bool = False,
+    process_instance_id: int,
+    task_guid: str,
+    only_tasks_that_can_be_completed: bool = False,
 ) -> HumanTaskModel:
     if only_tasks_that_can_be_completed:
         human_task_query = HumanTaskModel.query.filter_by(

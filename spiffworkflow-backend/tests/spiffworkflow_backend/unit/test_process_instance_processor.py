@@ -405,7 +405,7 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model=process_model, user=initiator_user
         )
         processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert len(process_instance.active_human_tasks) == 1
         initial_human_task_id = process_instance.active_human_tasks[0].id
 
@@ -436,7 +436,8 @@ class TestProcessInstanceProcessor(BaseTest):
         # recreate variables to ensure all bpmn json was recreated from scratch from the db
         process_instance_relookup = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor_final = ProcessInstanceProcessor(process_instance_relookup)
-        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        processor_final.do_engine_steps(save=True, execution_strategy_name="greedy")
+
         assert process_instance_relookup.status == "complete"
 
         data_set_1 = {"set_in_top_level_script": 1}
@@ -548,7 +549,6 @@ class TestProcessInstanceProcessor(BaseTest):
                 # assert task_model.python_env_data() == expected_python_env_data, message
                 assert task_model.json_data() == expected_python_env_data, message
 
-        processor_final.do_engine_steps(save=True, execution_strategy_name="greedy")
         all_spiff_tasks = processor_final.bpmn_process_instance.get_tasks()
         assert len(all_spiff_tasks) > 1
         for spiff_task in all_spiff_tasks:
@@ -607,7 +607,7 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         assert task_models_that_are_predicted_count == 0
 
-        assert processor.get_data() == data_set_7
+        assert processor_final.get_data() == data_set_7
 
     def test_does_not_recreate_human_tasks_on_multiple_saves(
         self,
