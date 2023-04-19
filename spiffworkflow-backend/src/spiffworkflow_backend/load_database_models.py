@@ -22,7 +22,7 @@ from spiffworkflow_backend.models.spec_reference import (
     SpecReferenceCache,
 )  # noqa: F401
 from spiffworkflow_backend.models.process_caller import (
-    ProcessCallerCache,
+    ProcessCallerCacheModel,
 )  # noqa: F401
 from spiffworkflow_backend.models.message_instance import (
     MessageInstanceModel,

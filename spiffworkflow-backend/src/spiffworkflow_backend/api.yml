@@ -528,7 +528,7 @@ paths:
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_callers
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_caller_lists
       summary:
         Return a list of information about all processes that call the provided process id
       tags:
