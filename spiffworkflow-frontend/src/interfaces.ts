@@ -238,8 +238,9 @@ export interface ErrorForDisplay {
   task_name?: string;
   task_id?: string;
   line_number?: number;
+  error_line?: string;
   file_name?: string;
-  task_trace?: [string];
+  task_trace?: string[];
 }
 
 export interface AuthenticationParam {
@@ -301,6 +302,10 @@ export interface ProcessInstanceEventErrorDetail {
   id: number;
   message: string;
   stacktrace: string;
+  task_line_contents?: string;
+  task_line_number?: number;
+  task_offset?: number;
+  task_trace?: string[];
 }
 
 export interface ProcessInstanceLogEntry {

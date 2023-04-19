@@ -32,12 +32,14 @@ import {
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
+  ErrorForDisplay,
   PermissionsToCheck,
   ProcessInstanceEventErrorDetail,
   ProcessInstanceLogEntry,
 } from '../interfaces';
 import Filters from '../components/Filters';
 import { usePermissionFetcher } from '../hooks/PermissionService';
+import { childrenForErrorObject } from '../components/ErrorDisplay';
 
 type OwnProps = {
   variant: string;
@@ -54,6 +56,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
 
   const [taskTypes, setTaskTypes] = useState<string[]>([]);
   const [eventTypes, setEventTypes] = useState<string[]>([]);
+
   const [eventForModal, setEventForModal] =
     useState<ProcessInstanceLogEntry | null>(null);
   const [eventErrorDetails, setEventErrorDetails] =
@@ -150,15 +153,25 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
 
   const errorEventModal = () => {
     if (eventForModal) {
-      const modalHeading = `Event Error Details for`;
+      const modalHeading = 'Event Error Details';
       let errorMessageTag = (
         <Loading className="some-class" withOverlay={false} small />
       );
       if (eventErrorDetails) {
+        const errorForDisplay: ErrorForDisplay = {
+          message: eventErrorDetails.message,
+          task_name: eventForModal.task_definition_name,
+          task_id: eventForModal.task_definition_identifier,
+          line_number: eventErrorDetails.task_line_number,
+          error_line: eventErrorDetails.task_line_contents,
+          task_trace: eventErrorDetails.task_trace,
+        };
+        const errorChildren = childrenForErrorObject(errorForDisplay);
         errorMessageTag = (
           <>
-            <p className="failure-string">{eventErrorDetails.message} NOOO</p>
+            <p className="failure-string">{eventErrorDetails.message}</p>
             <br />
+            {errorChildren}
             <pre>{eventErrorDetails.stacktrace}</pre>
           </>
         );

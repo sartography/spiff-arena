@@ -138,6 +138,8 @@ class TaskModelSavingDelegate(EngineStepDelegate):
                 | TaskState.MAYBE
                 | TaskState.LIKELY
                 | TaskState.FUTURE
+                | TaskState.STARTED
+                | TaskState.ERROR
             ):
                 # these will be removed from the parent and then ignored
                 if waiting_spiff_task._has_state(TaskState.PREDICTED_MASK):
