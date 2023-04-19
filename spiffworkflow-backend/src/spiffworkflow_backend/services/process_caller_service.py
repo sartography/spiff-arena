@@ -1,15 +1,16 @@
-from sqlalchemy import or_
-from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.spec_reference import SpecReference
-from spiffworkflow_backend.models.process_caller import ProcessCallerCache
 from typing import List
 
-class ProcessCallerService:
+from sqlalchemy import or_
 
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.process_caller import ProcessCallerCache
+
+
+class ProcessCallerService:
     @staticmethod
     def count() -> int:
-        return ProcessCallerCache.query.count()
-    
+        return ProcessCallerCache.query.count()  # type: ignore
+
     @staticmethod
     def clear_cache() -> None:
         db.session.query(ProcessCallerCache).delete()
@@ -26,10 +27,14 @@ class ProcessCallerService:
     @staticmethod
     def add_callers(process_id: str, calling_process_ids: List[str]) -> None:
         for calling_process_id in calling_process_ids:
-            db.session.add(ProcessCallerCache(process_identifier=process_id, calling_process_identifier=calling_process_id))
+            db.session.add(
+                ProcessCallerCache(process_identifier=process_id, calling_process_identifier=calling_process_id)
+            )
         db.session.commit()
 
     @staticmethod
     def callers(process_id: str) -> List[str]:
-        records = db.session.query(ProcessCallerCache).filter(ProcessCallerCache.process_identifier==process_id).all()
-        return list(map(lambda r: r.calling_process_identifier, records))
+        records = (
+            db.session.query(ProcessCallerCache).filter(ProcessCallerCache.process_identifier == process_id).all()
+        )
+        return list(map(lambda r: r.calling_process_identifier, records))  # type: ignore

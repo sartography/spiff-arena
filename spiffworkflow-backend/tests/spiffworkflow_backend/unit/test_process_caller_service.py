@@ -1,34 +1,42 @@
+from typing import Generator
+
 import pytest
 from flask.app import Flask
+from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_caller import ProcessCallerCache
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
-from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+
 
 @pytest.fixture()
-def with_clean_cache(app: Flask) -> None:
+def with_clean_cache(app: Flask) -> Generator[None, None, None]:
     db.session.query(ProcessCallerCache).delete()
     db.session.commit()
     yield
 
-@pytest.fixture()
-def with_no_process_callers(with_clean_cache: None) -> None:
-    yield
 
 @pytest.fixture()
-def with_single_process_caller(with_clean_cache: None) -> None:
+def with_no_process_callers(with_clean_cache: None) -> Generator[None, None, None]:
+    yield
+
+
+@pytest.fixture()
+def with_single_process_caller(with_clean_cache: None) -> Generator[None, None, None]:
     db.session.add(ProcessCallerCache(process_identifier="called_once", calling_process_identifier="one_caller"))
     db.session.commit()
     yield
 
+
 @pytest.fixture()
-def with_multiple_process_callers(with_clean_cache: None) -> None:
+def with_multiple_process_callers(with_clean_cache: None) -> Generator[None, None, None]:
     db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="one_caller"))
     db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="two_caller"))
     db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="three_caller"))
     db.session.commit()
     yield
-    
+
+
 class TestProcessCallerService(BaseTest):
     """Infer from class name."""
 
@@ -54,20 +62,23 @@ class TestProcessCallerService(BaseTest):
         ProcessCallerService.clear_cache_for_process_ids(["one_caller"])
         assert ProcessCallerService.count() == 2
 
-    def test_can_clear_the_cache_for_callee_caller_process_id(self, with_single_process_caller: None, with_multiple_process_callers: None) -> None:
+    def test_can_clear_the_cache_for_callee_caller_process_id(
+        self, with_single_process_caller: None, with_multiple_process_callers: None
+    ) -> None:
         ProcessCallerService.clear_cache_for_process_ids(["one_caller"])
         assert ProcessCallerService.count() == 2
 
-    def test_can_clear_the_cache_for_process_id_and_leave_other_process_ids_alone(self,
-                                                                                  with_single_process_caller: None,
-                                                                                  with_multiple_process_callers: None,
-                                                                                  ) -> None:
+    def test_can_clear_the_cache_for_process_id_and_leave_other_process_ids_alone(
+        self,
+        with_single_process_caller: None,
+        with_multiple_process_callers: None,
+    ) -> None:
         ProcessCallerService.clear_cache_for_process_ids(["called_many"])
         assert ProcessCallerService.count() == 1
 
     def test_can_clear_the_cache_for_process_id_when_it_doesnt_exist(
-            self,
-            with_multiple_process_callers: None,
+        self,
+        with_multiple_process_callers: None,
     ) -> None:
         ProcessCallerService.clear_cache_for_process_ids(["garbage"])
         assert ProcessCallerService.count() == 3
@@ -108,5 +119,7 @@ class TestProcessCallerService(BaseTest):
     def test_can_return_mulitple_callers(self, with_multiple_process_callers: None) -> None:
         assert ProcessCallerService.callers("called_many") == ["one_caller", "two_caller", "three_caller"]
 
-    def test_can_return_single_caller_when_there_are_other_process_ids(self, with_single_process_caller: None, with_multiple_process_callers: None) -> None:
+    def test_can_return_single_caller_when_there_are_other_process_ids(
+        self, with_single_process_caller: None, with_multiple_process_callers: None
+    ) -> None:
         assert ProcessCallerService.callers("called_once") == ["one_caller"]

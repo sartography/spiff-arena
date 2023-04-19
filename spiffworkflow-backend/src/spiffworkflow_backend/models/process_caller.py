@@ -2,6 +2,7 @@
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
+
 class ProcessCallerCache(SpiffworkflowBaseDBModel):
     """A cache of calling process ids for all Processes defined in all files."""
 
@@ -9,4 +10,3 @@ class ProcessCallerCache(SpiffworkflowBaseDBModel):
     id = db.Column(db.Integer, primary_key=True)
     process_identifier = db.Column(db.String(255), index=True)
     calling_process_identifier = db.Column(db.String(255))
-    
