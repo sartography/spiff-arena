@@ -112,7 +112,6 @@ def process_instance_create(
 def process_instance_run(
     modified_process_model_identifier: str,
     process_instance_id: int,
-    do_engine_steps: bool = True,
 ) -> flask.wrappers.Response:
     """Process_instance_run."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
@@ -123,22 +122,22 @@ def process_instance_run(
             status_code=400,
         )
 
-    processor = ProcessInstanceProcessor(process_instance)
-
-    if do_engine_steps:
-        try:
-            processor.do_engine_steps(save=True)
-        except (
-            ApiError,
-            ProcessInstanceIsNotEnqueuedError,
-            ProcessInstanceIsAlreadyLockedError,
-        ) as e:
-            ErrorHandlingService().handle_error(processor, e)
-            raise e
-        except Exception as e:
-            ErrorHandlingService().handle_error(processor, e)
-            # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
-            # we need to recurse through all last tasks if the last task is a call activity or subprocess.
+    processor = None
+    try:
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+    except (
+        ApiError,
+        ProcessInstanceIsNotEnqueuedError,
+        ProcessInstanceIsAlreadyLockedError,
+    ) as e:
+        ErrorHandlingService.handle_error(process_instance, e)
+        raise e
+    except Exception as e:
+        ErrorHandlingService.handle_error(process_instance, e)
+        # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
+        # we need to recurse through all last tasks if the last task is a call activity or subprocess.
+        if processor is not None:
             task = processor.bpmn_process_instance.last_task
             raise ApiError.from_task(
                 error_code="unknown_exception",
@@ -146,9 +145,10 @@ def process_instance_run(
                 status_code=400,
                 task=task,
             ) from e
+        raise e
 
-        if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
-            MessageService.correlate_all_message_instances()
+    if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
+        MessageService.correlate_all_message_instances()
 
     process_instance_api = ProcessInstanceService.processor_to_process_instance_api(processor)
     process_instance_data = processor.get_data()
@@ -172,7 +172,7 @@ def process_instance_terminate(
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
     ) as e:
-        ErrorHandlingService().handle_error(processor, e)
+        ErrorHandlingService.handle_error(process_instance, e)
         raise e
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -193,7 +193,7 @@ def process_instance_suspend(
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
     ) as e:
-        ErrorHandlingService().handle_error(processor, e)
+        ErrorHandlingService.handle_error(process_instance, e)
         raise e
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
@@ -214,7 +214,7 @@ def process_instance_resume(
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
     ) as e:
-        ErrorHandlingService().handle_error(processor, e)
+        ErrorHandlingService.handle_error(process_instance, e)
         raise e
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
