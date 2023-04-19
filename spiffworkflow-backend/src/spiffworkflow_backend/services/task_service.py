@@ -512,6 +512,17 @@ class TaskService:
         return (bpmn_processes, task_models)
 
     @classmethod
+    def full_bpmn_process_path(cls, bpmn_process: BpmnProcessModel) -> list[str]:
+        """Returns a list of bpmn process identifiers pointing the given bpmn_process."""
+        bpmn_process_identifiers: list[str] = [bpmn_process.bpmn_process_definition.bpmn_identifier]
+        if bpmn_process.direct_parent_process_id is not None:
+            parent_bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
+            if parent_bpmn_process is not None:
+                # always prepend new identifiers since they come first in the path
+                bpmn_process_identifiers = cls.full_bpmn_process_path(parent_bpmn_process) + bpmn_process_identifiers
+        return bpmn_process_identifiers
+
+    @classmethod
     def reset_task_model_dict(
         cls,
         task_model: dict,

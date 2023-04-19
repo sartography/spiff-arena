@@ -1899,6 +1899,14 @@ lint = ["docutils-stubs", "flake8", "mypy"]
 test = ["pytest"]
 
 [[package]]
+name = "spiff-element-units"
+version = "0.1.0"
+description = ""
+category = "main"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "SpiffWorkflow"
 version = "1.2.1"
 description = "A workflow framework and BPMN/DMN Processor"
@@ -1916,7 +1924,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "162a1c5f56cf12fc589a1e368704c0819bfcc0cd"
+resolved_reference = "7211e67ee0dfecbabaeb7cec8f0e0373bd7cdc10"
 
 [[package]]
 name = "sqlalchemy"
@@ -2299,7 +2307,7 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "554d5da592e80f26a3f6bb2322a397a6512c09b1a3891584d4d38a21fedc0445"
+content-hash = "994c36ab39238500b4fd05bc1ccdd2d729dd5f66749ab77b1028371147bdf753"
 
 [metadata.files]
 alabaster = [
@@ -3660,6 +3668,19 @@ sphinxcontrib-qthelp = [
 sphinxcontrib-serializinghtml = [
     {file = "sphinxcontrib-serializinghtml-1.1.5.tar.gz", hash = "sha256:aa5f6de5dfdf809ef505c4895e51ef5c9eac17d0f287933eb49ec495280b6952"},
     {file = "sphinxcontrib_serializinghtml-1.1.5-py2.py3-none-any.whl", hash = "sha256:352a9a00ae864471d3a7ead8d7d79f5fc0b57e8b3f95e9867eb9eb28999b92fd"},
+]
+spiff-element-units = [
+    {file = "spiff_element_units-0.1.0-cp39-abi3-macosx_10_7_x86_64.whl", hash = "sha256:fc34e1012a922037cf5d04c154a37119bc1ba83cc536d79fde601da42703d5f7"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:664197124c2a81c780d83a60750ad4411dda22a31e0db7615007a3905393fa4b"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:34409c2a1f24dfca99afafd3b1caa9e2fba66c81864954f7f9ebf8030bc632c8"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:dcc1307447f30f597d31224d855c979f5c8cca5906792cbf7d9418ee2bcac54b"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:f40788203884db9d15e1e2c6b5d7b019b38606750f3df75f66d6c14fe492b5b4"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:78afa90e8ee48dfe84b8accb3399212297cb2b05f7e5288ae57614f68a2cffd8"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:aab909b3d8f896eb2f2ed64273a7e013564a708e875883dafe76cdb34e459cb3"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:1a264c4ad717d83fe1d7b31d4c9a26143a3a9eff9cfdb09216f4fc1ef029e178"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-win32.whl", hash = "sha256:9b2e25b8b18ae006c39cd0b8bac11b08d60bf0e53b60a9cca9a3cec3750f0176"},
+    {file = "spiff_element_units-0.1.0-cp39-abi3-win_amd64.whl", hash = "sha256:825594fa95496db3a9a7826c9cbf95b90b6a5676838bbd9fe23c5ff32a2d2920"},
+    {file = "spiff_element_units-0.1.0.tar.gz", hash = "sha256:807e207562220f350cd0f0b6a46484c7b976c4effe4b194701179add7abe871a"},
 ]
 SpiffWorkflow = []
 sqlalchemy = [

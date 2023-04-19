@@ -275,6 +275,7 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_explode_permissions_basic."""
         expected_permissions = [
+            ("/logs/types", "read"),
             ("/process-instances/find-by-id/*", "read"),
             ("/process-instances/for-me", "read"),
             ("/process-instances/reports/*", "create"),
