@@ -71,3 +71,27 @@ class TestProcessCallerService(BaseTest):
     ) -> None:
         ProcessCallerService.clear_cache_for_process_ids(["garbage"])
         assert ProcessCallerService.count() == 3
+
+    def test_no_records_added_if_calling_process_ids_is_empty(self, with_no_process_callers: None) -> None:
+        ProcessCallerService.add_callers("bob", [])
+        assert ProcessCallerService.count() == 0
+
+    def test_can_add_caller_for_new_process(self, with_no_process_callers: None) -> None:
+        ProcessCallerService.add_callers("bob", ["new_caller"])
+        assert ProcessCallerService.count() == 1
+
+    def test_can_many_callers_for_new_process(self, with_no_process_callers: None) -> None:
+        ProcessCallerService.add_callers("bob", ["new_caller", "another_new_caller"])
+        assert ProcessCallerService.count() == 2
+
+    def test_can_add_caller_for_existing_process(self, with_multiple_process_callers: None) -> None:
+        ProcessCallerService.add_callers("called_many", ["new_caller"])
+        assert ProcessCallerService.count() == 4
+
+    def test_can_add_many_callers_for_existing_process(self, with_multiple_process_callers: None) -> None:
+        ProcessCallerService.add_callers("called_many", ["new_caller", "another_new_caller"])
+        assert ProcessCallerService.count() == 5
+
+    def test_can_track_duplicate_callers(self, with_no_process_callers: None) -> None:
+        ProcessCallerService.add_callers("bob", ["new_caller", "new_caller"])
+        assert ProcessCallerService.count() == 2

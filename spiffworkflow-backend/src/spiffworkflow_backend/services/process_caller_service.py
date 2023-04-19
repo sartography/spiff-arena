@@ -2,6 +2,7 @@ from sqlalchemy import or_
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.spec_reference import SpecReference
 from spiffworkflow_backend.models.process_caller import ProcessCallerCache
+from typing import List
 
 class ProcessCallerService:
 
@@ -21,3 +22,9 @@ class ProcessCallerService:
                 ProcessCallerCache.calling_process_identifier.in_(process_ids),
             )
         ).delete()
+
+    @staticmethod
+    def add_callers(process_id: str, calling_process_ids: List[str]) -> None:
+        for calling_process_id in calling_process_ids:
+            db.session.add(ProcessCallerCache(process_identifier=process_id, calling_process_identifier=calling_process_id))
+        db.session.commit()
