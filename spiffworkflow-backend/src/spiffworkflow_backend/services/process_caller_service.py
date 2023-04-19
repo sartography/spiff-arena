@@ -15,7 +15,7 @@ class ProcessCallerService:
         db.session.query(ProcessCallerCache).delete()
 
     @staticmethod
-    def clear_cache_for_process_ids(process_ids: list[str]) -> None:
+    def clear_cache_for_process_ids(process_ids: List[str]) -> None:
         db.session.query(ProcessCallerCache).filter(
             or_(
                 ProcessCallerCache.process_identifier.in_(process_ids),
@@ -28,3 +28,8 @@ class ProcessCallerService:
         for calling_process_id in calling_process_ids:
             db.session.add(ProcessCallerCache(process_identifier=process_id, calling_process_identifier=calling_process_id))
         db.session.commit()
+
+    @staticmethod
+    def callers(process_id: str) -> List[str]:
+        records = db.session.query(ProcessCallerCache).filter(ProcessCallerCache.process_identifier==process_id).all()
+        return list(map(lambda r: r.calling_process_identifier, records))
