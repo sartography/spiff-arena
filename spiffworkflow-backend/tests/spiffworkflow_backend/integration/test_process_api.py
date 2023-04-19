@@ -10,6 +10,8 @@ import pytest
 from flask.app import Flask
 from flask.testing import FlaskClient
 from SpiffWorkflow.task import TaskState  # type: ignore
+
+from spiffworkflow_backend.routes.tasks_controller import _interstitial_stream
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -1610,6 +1612,90 @@ class TestProcessApi(BaseTest):
             "building": {"floor": {"ui:widget": "hidden"}},
             "veryImportantFieldButOnlySometimes": {"ui:widget": "hidden"},
         }
+
+    def test_interstitial_page(
+            self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+
+        process_group_id = "my_process_group"
+        process_model_id = "interstitial"
+        bpmn_file_location = "interstitial"
+        # Assure we have someone in the finance team
+        finance_user = self.find_or_create_user("testuser2")
+        AuthorizationService.import_permissions_from_yaml_file()
+        process_model_identifier = self.create_group_and_model_with_bpmn(
+            client,
+            with_super_admin_user,
+            process_group_id=process_group_id,
+            process_model_id=process_model_id,
+            bpmn_file_location=bpmn_file_location,
+        )
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(
+            client, process_model_identifier, headers
+        )
+        assert response.json is not None
+        process_instance_id = response.json["id"]
+
+        response = client.post(
+            f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
+            headers=headers,
+        )
+
+        assert response.json is not None
+        assert response.json["next_task"] is not None
+        assert response.json["next_task"]["state"] == 'READY'
+        assert response.json["next_task"]["title"] == 'Script Task #2'
+
+        # Rather that call the API and deal with the Server Side Events, call the loop directly and covert it to
+        # a list.  It tests all of our code.  No reason to test Flasks SSE support.
+        results = list(_interstitial_stream(process_instance_id))
+        json_results = list(map(lambda x: json.loads(x[5:]), results)) # strip the "data:" prefix and convert remaining string to dict.
+        # There should be 2 results back -
+        # the first script task should not be returned (it contains no end user instructions)
+        # The second script task should produce rendered jinja text
+        # The Manual Task should then return a message as well.
+        assert len(results) == 2
+        assert json_results[0]["state"] == 'READY'
+        assert json_results[0]["title"] == 'Script Task #2'
+        assert json_results[0]["properties"]["instructionsForEndUser"] == 'I am Script Task 2'
+        assert json_results[1]["state"] == 'READY'
+        assert json_results[1]["title"] == 'Manual Task'
+
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{json_results[1]['id']}",
+            headers=headers,
+        )
+
+        assert response.json is not None
+
+        # we should now be on a task that does not belong to the original user, and the interstitial page should know this.
+        results = list(_interstitial_stream(process_instance_id))
+        json_results = list(map(lambda x: json.loads(x[5:]), results))
+        assert len(results) == 1
+        assert json_results[0]["state"] == 'READY'
+        assert json_results[0]["can_complete"] == False
+        assert json_results[0]["title"] == 'Please Approve'
+        assert json_results[0]["properties"]["instructionsForEndUser"] == 'I am a manual task in another lane'
+
+        # Complete task as the finance user.
+        response = client.put(
+            f"/v1.0/tasks/{process_instance_id}/{json_results[0]['id']}",
+            headers=self.logged_in_headers(finance_user),
+        )
+
+        # We should now be on the end task with a valid message, even after loading it many times.
+        results_1 = list(_interstitial_stream(process_instance_id))
+        results_2 = list(_interstitial_stream(process_instance_id))
+        results = list(_interstitial_stream(process_instance_id))
+        json_results = list(map(lambda x: json.loads(x[5:]), results))
+        assert len(json_results) == 1
+        assert json_results[0]["state"] == 'COMPLETED'
+        assert json_results[0]["properties"]["instructionsForEndUser"] == 'I am the end task'
 
     def test_process_instance_list_with_default_list(
         self,
