@@ -1,4 +1,3 @@
-// @ts-ignore
 import { Select, SelectItem } from '@carbon/react';
 import { WidgetProps, processSelectValue } from '@rjsf/utils';
 

@@ -89,7 +89,7 @@ describe('Software and Licenses Path - Without Files', () => {
     Cypress._.times(1, () => {
 
         //Everyone approves with CP
-        it('Everyone approves with CP', () => {
+        it.only('Everyone approves with CP', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -99,24 +99,25 @@ describe('Software and Licenses Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -126,36 +127,39 @@ describe('Software and Licenses Path - Without Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Sware\nA software license is a document that provides legally binding guidelines for the use and distribution of software.\nSoftware licenses typically provide end users with the right to one or more copies of the software without violating copyrights');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('25-11-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Microsoft');
                 cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
                 //item 0
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('Open source software is code that is designed to be publicly accessible anyone can see, modify, END');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Crypto');
-                cy.get('#root_0_currency').select('SNT');
-                cy.get('#root_0_unit_price').type('1915');
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('Open source software is code that is designed to be publicly accessible anyone can see, modify, END');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Crypto');
+                cy.get('#root_item_0_currency').select('SNT');
+                cy.get('#root_item_0_unit_price').type('1915');
 
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 1
-                cy.get('#root_1_sub_category').select('lic_and_sub');
-                cy.get('#root_1_item').clear().type('A software license is a document that provides legally binding guidelines for the use and distri END');
-                cy.get('#root_1_qty').clear().type('1');
-                cy.get('#root_1_currency_type').select('Fiat');
-                cy.get('#root_1_currency').select('AED');
-                cy.get('#root_1_unit_price').type('4500');
+                cy.get('#root_item_1_sub_category').select('lic_and_sub');
+                cy.get('#root_item_1_item_name').clear().type('A software license is a document that provides legally binding guidelines for the use and distri END');
+                cy.get('#root_item_1_qty').clear().type('1');
+                cy.get('#root_item_1_currency_type').select('Fiat');
+                cy.get('#root_item_1_currency').select('AED');
+                cy.get('#root_item_1_unit_price').type('4500');
 
 
                 cy.get('button')
@@ -179,8 +183,9 @@ describe('Software and Licenses Path - Without Files', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -191,12 +196,12 @@ describe('Software and Licenses Path - Without Files', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -224,7 +229,7 @@ describe('Software and Licenses Path - Without Files', () => {
         });
 
         //Everyone approves the request
-        it('Everyone approves', () => {
+        it.only('Everyone approves', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -234,24 +239,25 @@ describe('Software and Licenses Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -261,37 +267,39 @@ describe('Software and Licenses Path - Without Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Software licenses typically are proprietary, free or open source. The distinguishing feature is the terms under which users may redistribute or copy the software for future development or use.');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('05-11-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Red Hat');
                 cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
 
                 //item 0
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('Open source has become a movement and a way of working that reaches beyond software production');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('NZD');
-                cy.get('#root_0_unit_price').type('2416');
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('Open source has become a movement and a way of working that reaches beyond software production');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('NZD');
+                cy.get('#root_item_0_unit_price').type('2416');
 
-
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 1
-                cy.get('#root_1_sub_category').select('lic_and_sub');
-                cy.get('#root_1_item').clear().type('A software license is a document that states the rights of the developer and user of software.');
-                cy.get('#root_1_qty').clear().type('1');
-                cy.get('#root_1_currency_type').select('Fiat');
-                cy.get('#root_1_currency').select('STN');
-                cy.get('#root_1_unit_price').type('380');
+                cy.get('#root_item_1_sub_category').select('lic_and_sub');
+                cy.get('#root_item_1_item_name').clear().type('A software license is a document that states the rights of the developer and user of software.');
+                cy.get('#root_item_1_qty').clear().type('1');
+                cy.get('#root_item_1_currency_type').select('Fiat');
+                cy.get('#root_item_1_currency').select('STN');
+                cy.get('#root_item_1_unit_price').type('380');
 
 
                 cy.get('button')
@@ -315,8 +323,9 @@ describe('Software and Licenses Path - Without Files', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -327,12 +336,12 @@ describe('Software and Licenses Path - Without Files', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -386,24 +395,25 @@ describe('Software and Licenses Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -413,24 +423,27 @@ describe('Software and Licenses Path - Without Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Sware\nA software license is a document that provides legally binding guidelines for the use and distribution of software.\nSoftware licenses typically provide end users with the right to one or more copies of the software without violating copyrights');
                 cy.get('#root_criticality').select('Medium');
-                cy.get('#root_period').clear().type('2024-02-06');
+                cy.get('#root_period').clear().type('24-02-2026');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Oracle');
                 cy.get('#root_payment_method').select('Bank Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('lic_and_sub');
-                cy.get('#root_0_item').clear().type('It defines the terms of. A user must agree to the terms of the license when acquiring the software.');
-                cy.get('#root_0_qty').clear().type('5');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('EUR');
-                cy.get('#root_0_unit_price').type('250');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('lic_and_sub');
+                cy.get('#root_item_0_item_name').clear().type('It defines the terms of. A user must agree to the terms of the license when acquiring the software.');
+                cy.get('#root_item_0_qty').clear().type('5');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('EUR');
+                cy.get('#root_item_0_unit_price').type('250');
 
 
                 cy.get('button')
@@ -453,8 +466,9 @@ describe('Software and Licenses Path - Without Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -483,24 +497,25 @@ describe('Software and Licenses Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -510,24 +525,27 @@ describe('Software and Licenses Path - Without Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('A software license establishes the rights of all parties involved with the software: the author, the provider and the end users. It defines the relationship between the software company and users and explains how they are protected');
                 cy.get('#root_criticality').select('Low');
-                cy.get('#root_period').clear().type('2025-02-25');
+                cy.get('#root_period').clear().type('25-02-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('ABC Licensing Co');
                 cy.get('#root_payment_method').select('Crypto Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('lic_and_sub');
-                cy.get('#root_0_item').clear().type('They protect developers\' intellectual property and trade secrets based on copyright laws');
-                cy.get('#root_0_qty').clear().type('4');
-                cy.get('#root_0_currency_type').select('Crypto');
-                cy.get('#root_0_currency').select('SNT');
-                cy.get('#root_0_unit_price').type('450');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('lic_and_sub');
+                cy.get('#root_item_0_item_name').clear().type('They protect developers\' intellectual property and trade secrets based on copyright laws');
+                cy.get('#root_item_0_qty').clear().type('4');
+                cy.get('#root_item_0_currency_type').select('Crypto');
+                cy.get('#root_item_0_currency').select('SNT');
+                cy.get('#root_item_0_unit_price').type('450');
 
 
                 cy.get('button')
@@ -550,8 +568,9 @@ describe('Software and Licenses Path - Without Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -580,12 +599,12 @@ describe('Software and Licenses Path - Without Files', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let legalsmeUsername = Cypress.env('legalsme_username');
                 let legalsmePassword = Cypress.env('legalsme_password');
 
@@ -620,24 +639,25 @@ describe('Software and Licenses Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -647,24 +667,27 @@ describe('Software and Licenses Path - Without Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('There are two general types of software licenses that differ based on how they are viewed under copyright law.');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('02-11-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Meta');
                 cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('The open source movement uses the values and decentralized production model of open source software');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('AUD');
-                cy.get('#root_0_unit_price').type('2416');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('The open source movement uses the values and decentralized production model of open source software');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('AUD');
+                cy.get('#root_item_0_unit_price').type('2416');
 
 
                 cy.get('button')
@@ -688,8 +711,9 @@ describe('Software and Licenses Path - Without Files', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -700,12 +724,12 @@ describe('Software and Licenses Path - Without Files', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -750,7 +774,7 @@ describe('Software and Licenses Path - With Files', () => {
     Cypress._.times(1, () => {
 
         //Everyone approves with CP
-        it('Everyone approves with CP', () => {
+        it.only('Everyone approves with CP', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -760,24 +784,25 @@ describe('Software and Licenses Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -787,35 +812,38 @@ describe('Software and Licenses Path - With Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Sware\nA software license is a document that provides legally binding guidelines for the use and distribution of software.\nSoftware licenses typically provide end users with the right to one or more copies of the software without violating copyrights');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('15-11-2035');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Microsoft Corp');
                 cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
                 //item 0
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('Open source software is developed in a decentralized and collaborative way');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('JPY');
-                cy.get('#root_0_unit_price').type('2416');
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('Open source software is developed in a decentralized and collaborative way');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('JPY');
+                cy.get('#root_item_0_unit_price').type('2416');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 1
-                cy.get('#root_1_sub_category').select('lic_and_sub');
-                cy.get('#root_1_item').clear().type('A software license is a document that provides legally binding guidelines for the use and distri END');
-                cy.get('#root_1_qty').clear().type('1');
-                cy.get('#root_1_currency_type').select('Fiat');
-                cy.get('#root_1_currency').select('INR');
-                cy.get('#root_1_unit_price').type('4500');
+                cy.get('#root_item_1_sub_category').select('lic_and_sub');
+                cy.get('#root_item_1_item_name').clear().type('A software license is a document that provides legally binding guidelines for the use and distri END');
+                cy.get('#root_item_1_qty').clear().type('1');
+                cy.get('#root_item_1_currency_type').select('Fiat');
+                cy.get('#root_item_1_currency').select('INR');
+                cy.get('#root_item_1_unit_price').type('4500');
 
 
                 cy.get('button')
@@ -829,8 +857,47 @@ describe('Software and Licenses Path - With Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('Open source software is developed in a decentralized and collaborative way, relying on peer review and community production. Open source software is often cheaper more flexible. \nhttps://www.redhat.com/en');
 
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['sampletext.txt']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -842,8 +909,9 @@ describe('Software and Licenses Path - With Files', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -854,12 +922,12 @@ describe('Software and Licenses Path - With Files', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -887,7 +955,7 @@ describe('Software and Licenses Path - With Files', () => {
         });
 
         //Everyone approves the request
-        it('Everyone approves', () => {
+        it.only('Everyone approves', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -897,24 +965,25 @@ describe('Software and Licenses Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -924,24 +993,27 @@ describe('Software and Licenses Path - With Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Stware\nA software license is a document that provides legally binding guidelines for the use and distribution of software.\nSoftware licenses typically provide end users with the right to one or more copies of the software without violating copyrights');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('30-11-2024');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('ORACLE LTD');
                 cy.get('#root_payment_method').select('Bank Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('A bounty is a payment or reward of money to locate');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('SGD');
-                cy.get('#root_0_unit_price').type('2416');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('A bounty is a payment or reward of money to locate');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('SGD');
+                cy.get('#root_item_0_unit_price').type('2416');
 
 
                 cy.get('button')
@@ -955,8 +1027,47 @@ describe('Software and Licenses Path - With Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('Open source software is developed in a decentralized and collaborative way, relying on peer review and community production. Open source software is often cheaper more flexible. \nhttps://www.redhat.com/en');
 
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'png-5mb-2.png']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-2.png']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -968,8 +1079,9 @@ describe('Software and Licenses Path - With Files', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -980,12 +1092,12 @@ describe('Software and Licenses Path - With Files', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -1039,24 +1151,25 @@ describe('Software and Licenses Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -1066,24 +1179,27 @@ describe('Software and Licenses Path - With Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Stware\nA software license is a document that provides legally binding guidelines for the use and distribution of software.\nSoftware licenses typically provide end users with the right to one or more copies of the software without violating copyrights');
                 cy.get('#root_criticality').select('Medium');
-                cy.get('#root_period').clear().type('2024-02-06');
+                cy.get('#root_period').clear().type('24-12-2023');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Subscription PVT');
                 cy.get('#root_payment_method').select('Bank Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('lic_and_sub');
-                cy.get('#root_0_item').clear().type('Software development consultants with Python background');
-                cy.get('#root_0_qty').clear().type('5');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('EUR');
-                cy.get('#root_0_unit_price').type('250');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('lic_and_sub');
+                cy.get('#root_item_0_item_name').clear().type('Software development consultants with Python background');
+                cy.get('#root_item_0_qty').clear().type('5');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('EUR');
+                cy.get('#root_item_0_unit_price').type('250');
 
 
                 cy.get('button')
@@ -1097,8 +1213,47 @@ describe('Software and Licenses Path - With Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('Open source software is developed in a decentralized and collaborative way, relying on peer review and community production. Open source software is often cheaper more flexible. \nhttps://www.redhat.com/en');
 
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-2.png']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -1109,8 +1264,9 @@ describe('Software and Licenses Path - With Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -1139,24 +1295,25 @@ describe('Software and Licenses Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -1166,24 +1323,27 @@ describe('Software and Licenses Path - With Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Stware\nA software license is a document that provides legally binding guidelines for the use and distribution of software.\nSoftware licenses typically provide end users with the right to one or more copies of the software without violating copyrights');
                 cy.get('#root_criticality').select('Low');
-                cy.get('#root_period').clear().type('2025-02-25');
+                cy.get('#root_period').clear().type('25-02-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('LIC INST');
                 cy.get('#root_payment_method').select('Crypto Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('lic_and_sub');
-                cy.get('#root_0_item').clear().type('Freelancers to do the Python development and front end react app development');
-                cy.get('#root_0_qty').clear().type('4');
-                cy.get('#root_0_currency_type').select('Crypto');
-                cy.get('#root_0_currency').select('SNT');
-                cy.get('#root_0_unit_price').type('450');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('lic_and_sub');
+                cy.get('#root_item_0_item_name').clear().type('Freelancers to do the Python development and front end react app development');
+                cy.get('#root_item_0_qty').clear().type('4');
+                cy.get('#root_item_0_currency_type').select('Crypto');
+                cy.get('#root_item_0_currency').select('SNT');
+                cy.get('#root_item_0_unit_price').type('450');
 
 
                 cy.get('button')
@@ -1197,9 +1357,47 @@ describe('Software and Licenses Path - With Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A software license is a legal instrument (usually by way of contract law, with or without printed material) governing the use or redistribution of software. Under United States copyright law, all software is copyright protected.');
 
-                cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+                cy.get('#root > div:nth-child(3) > p > button').click();
 
+                cy.get("input[type=file]")
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-2.png']);
+
+                cy.wait(2000);
                 cy.contains('Submit the Request').click();
 
                 cy.get('input[value="Submit the Request"]').click();
@@ -1209,8 +1407,9 @@ describe('Software and Licenses Path - With Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -1239,12 +1438,12 @@ describe('Software and Licenses Path - With Files', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let legalsmeUsername = Cypress.env('legalsme_username');
                 let legalsmePassword = Cypress.env('legalsme_password');
 
@@ -1280,24 +1479,25 @@ describe('Software and Licenses Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -1307,24 +1507,27 @@ describe('Software and Licenses Path - With Files', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Proprietary licenses are often referred to as closed source. They provide customers with operational code. Users cannot freely alter this software. These licenses also usually restrict reverse engineering the software\'s code to obtain the source code');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('25-11-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Red HAT');
                 cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('They provide customers with operational code. Users cannot freely alter this software.');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('STN');
-                cy.get('#root_0_unit_price').type('2416');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('They provide customers with operational code. Users cannot freely alter this software.');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('STN');
+                cy.get('#root_item_0_unit_price').type('2416');
 
 
                 cy.get('button')
@@ -1338,8 +1541,47 @@ describe('Software and Licenses Path - With Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('Free and open source software (FOSS) licenses are often referred to as open source. FOSS source code is available to the customer along with the software product. The customer is usually allowed to use the source code to change the software.');
 
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'png-5mb-2.png']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-2.png']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -1351,8 +1593,9 @@ describe('Software and Licenses Path - With Files', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -1363,12 +1606,12 @@ describe('Software and Licenses Path - With Files', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -1412,7 +1655,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
     Cypress._.times(1, () => {
 
         //Everyone approves with CP
-        it('Everyone approves with CP', () => {
+        it.only('Everyone approves with CP', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -1422,24 +1665,25 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -1449,46 +1693,49 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Software licenses typically are proprietary, free or open source. The distinguishing feature is the terms under which users may redistribute or copy the software for future development or use.');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('25-11-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Meta Corp');
                 cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
 
                 //item 0
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
-                cy.get('#root_0_qty').clear().type('1');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('AUD');
-                cy.get('#root_0_unit_price').type('2416');
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
+                cy.get('#root_item_0_qty').clear().type('1');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('AUD');
+                cy.get('#root_item_0_unit_price').type('2416');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 1
-                cy.get('#root_1_sub_category').select('lic_and_sub');
-                cy.get('#root_1_item').clear().type('A software license is a document that provides binding guidelines for the use and distribution.');
-                cy.get('#root_1_qty').clear().type('5');
-                cy.get('#root_1_currency_type').select('Fiat');
-                cy.get('#root_1_currency').select('EUR');
-                cy.get('#root_1_unit_price').type('250');
+                cy.get('#root_item_1_sub_category').select('lic_and_sub');
+                cy.get('#root_item_1_item_name').clear().type('A software license is a document that provides binding guidelines for the use and distribution.');
+                cy.get('#root_item_1_qty').clear().type('5');
+                cy.get('#root_item_1_currency_type').select('Fiat');
+                cy.get('#root_item_1_currency').select('EUR');
+                cy.get('#root_item_1_unit_price').type('250');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 2
-                cy.get('#root_2_sub_category').select('lic_and_sub');
-                cy.get('#root_2_item').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
-                cy.get('#root_2_qty').clear().type('10');
-                cy.get('#root_2_currency_type').select('Crypto');
-                cy.get('#root_2_currency').select('DAI');
-                cy.get('#root_2_unit_price').type('12500');
+                cy.get('#root_item_2_sub_category').select('lic_and_sub');
+                cy.get('#root_item_2_item_name').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
+                cy.get('#root_item_2_qty').clear().type('10');
+                cy.get('#root_item_2_currency_type').select('Crypto');
+                cy.get('#root_item_2_currency').select('DAI');
+                cy.get('#root_item_2_unit_price').type('12500');
 
 
 
@@ -1503,8 +1750,47 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A software license is a legal instrument (usually by way of contract law, with or without printed material) governing the use or redistribution of software. Under United States copyright law, all software is copyright protected.');
 
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['sampletext.txt']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -1516,8 +1802,9 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -1528,12 +1815,12 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -1561,7 +1848,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
         });
 
         //Everyone approves the request
-        it('Everyone approves', () => {
+        it.only('Everyone approves', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -1571,24 +1858,25 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -1598,45 +1886,48 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Software licenses typically are proprietary, free or open source. The distinguishing feature is the terms under which users may redistribute or copy the software for future development or use.');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('25-11-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Apple');
                 cy.get('#root_payment_method').select('Crypto Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
                 //item 0
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('AED');
-                cy.get('#root_0_unit_price').type('1250');
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('AED');
+                cy.get('#root_item_0_unit_price').type('1250');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 1
-                cy.get('#root_1_sub_category').select('lic_and_sub');
-                cy.get('#root_1_item').clear().type('A software license is a document that provides binding guidelines for the use and distribution.');
-                cy.get('#root_1_qty').clear().type('5');
-                cy.get('#root_1_currency_type').select('Crypto');
-                cy.get('#root_1_currency').select('SNT');
-                cy.get('#root_1_unit_price').type('25000');
+                cy.get('#root_item_1_sub_category').select('lic_and_sub');
+                cy.get('#root_item_1_item_name').clear().type('A software license is a document that provides binding guidelines for the use and distribution.');
+                cy.get('#root_item_1_qty').clear().type('5');
+                cy.get('#root_item_1_currency_type').select('Crypto');
+                cy.get('#root_item_1_currency').select('SNT');
+                cy.get('#root_item_1_unit_price').type('25000');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 2
-                cy.get('#root_2_sub_category').select('lic_and_sub');
-                cy.get('#root_2_item').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
-                cy.get('#root_2_qty').clear().type('3');
-                cy.get('#root_2_currency_type').select('Crypto');
-                cy.get('#root_2_currency').select('ETH');
-                cy.get('#root_2_unit_price').type('2.10');
+                cy.get('#root_item_2_sub_category').select('lic_and_sub');
+                cy.get('#root_item_2_item_name').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
+                cy.get('#root_item_2_qty').clear().type('3');
+                cy.get('#root_item_2_currency_type').select('Crypto');
+                cy.get('#root_item_2_currency').select('ETH');
+                cy.get('#root_item_2_unit_price').type('2.10');
 
 
                 cy.get('button')
@@ -1650,8 +1941,48 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A software license is a legal instrument (usually by way of contract law, with or without printed material) governing the use or redistribution of software. Under United States copyright law, \nhttps://en.wikipedia.org/wiki/Software_license');
 
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'png-5mb-2.png']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-2.png']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -1663,8 +1994,9 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -1675,12 +2007,12 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -1734,24 +2066,25 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -1761,46 +2094,49 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Software licenses typically are proprietary, free or open source. The distinguishing feature is the terms under which users may redistribute or copy the software for future development or use.');
                 cy.get('#root_criticality').select('Medium');
-                cy.get('#root_period').clear().type('2024-02-06');
+                cy.get('#root_period').clear().type('24-02-2026');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Subscription PVT');
                 cy.get('#root_payment_method').select('Bank Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
 
                 //item 0
-                cy.get('#root_0_sub_category').select('lic_and_sub');
-                cy.get('#root_0_item').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
-                cy.get('#root_0_qty').clear().type('5');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('USD');
-                cy.get('#root_0_unit_price').type('250.50');
+                cy.get('#root_item_0_sub_category').select('lic_and_sub');
+                cy.get('#root_item_0_item_name').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
+                cy.get('#root_item_0_qty').clear().type('5');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('USD');
+                cy.get('#root_item_0_unit_price').type('250.50');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 1
-                cy.get('#root_1_sub_category').select('lic_and_sub');
-                cy.get('#root_1_item').clear().type('A software license is a document that provides binding guidelines for the use and distribution.');
-                cy.get('#root_1_qty').clear().type('5');
-                cy.get('#root_1_currency_type').select('Fiat');
-                cy.get('#root_1_currency').select('GBP');
-                cy.get('#root_1_unit_price').type('5200');
+                cy.get('#root_item_1_sub_category').select('lic_and_sub');
+                cy.get('#root_item_1_item_name').clear().type('A software license is a document that provides binding guidelines for the use and distribution.');
+                cy.get('#root_item_1_qty').clear().type('5');
+                cy.get('#root_item_1_currency_type').select('Fiat');
+                cy.get('#root_item_1_currency').select('GBP');
+                cy.get('#root_item_1_unit_price').type('5200');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 2
-                cy.get('#root_2_sub_category').select('op_src');
-                cy.get('#root_2_item').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
-                cy.get('#root_2_qty').clear().type('3');
-                cy.get('#root_2_currency_type').select('Fiat');
-                cy.get('#root_2_currency').select('HKD');
-                cy.get('#root_2_unit_price').type('2100');
+                cy.get('#root_item_2_sub_category').select('op_src');
+                cy.get('#root_item_2_item_name').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
+                cy.get('#root_item_2_qty').clear().type('3');
+                cy.get('#root_item_2_currency_type').select('Fiat');
+                cy.get('#root_item_2_currency').select('HKD');
+                cy.get('#root_item_2_unit_price').type('2100');
 
                 cy.get('button')
                     .contains(/^Submit$/)
@@ -1813,8 +2149,47 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A software license is a legal instrument (usually by way of contract law, with or without printed material) governing the use or redistribution of software. Under United States copyright law, \nhttps://en.wikipedia.org/wiki/Software_license');
 
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['sampletext.txt']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -1825,8 +2200,9 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -1855,24 +2231,25 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -1882,45 +2259,48 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Free and open source software (FOSS) licenses are often referred to as open source. FOSS source code is available to the customer along with the software product. The customer is usually allowed to use the source code to change the software.');
                 cy.get('#root_criticality').select('Low');
-                cy.get('#root_period').clear().type('2025-02-25');
+                cy.get('#root_period').clear().type('25-02-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('LIC INST');
                 cy.get('#root_payment_method').select('Crypto Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
                 //item 0
-                cy.get('#root_0_sub_category').select('lic_and_sub');
-                cy.get('#root_0_item').clear().type('A software license is a document that provides binding guidelines for the use and distribution.');
-                cy.get('#root_0_qty').clear().type('24');
-                cy.get('#root_0_currency_type').select('Crypto');
-                cy.get('#root_0_currency').select('SNT');
-                cy.get('#root_0_unit_price').type('450');
+                cy.get('#root_item_0_sub_category').select('lic_and_sub');
+                cy.get('#root_item_0_item_name').clear().type('A software license is a document that provides binding guidelines for the use and distribution.');
+                cy.get('#root_item_0_qty').clear().type('24');
+                cy.get('#root_item_0_currency_type').select('Crypto');
+                cy.get('#root_item_0_currency').select('SNT');
+                cy.get('#root_item_0_unit_price').type('450');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 1
-                cy.get('#root_1_sub_category').select('op_src');
-                cy.get('#root_1_item').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
-                cy.get('#root_1_qty').clear().type('15');
-                cy.get('#root_1_currency_type').select('Crypto');
-                cy.get('#root_1_currency').select('ETH');
-                cy.get('#root_1_unit_price').type('0.85');
+                cy.get('#root_item_1_sub_category').select('op_src');
+                cy.get('#root_item_1_item_name').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
+                cy.get('#root_item_1_qty').clear().type('15');
+                cy.get('#root_item_1_currency_type').select('Crypto');
+                cy.get('#root_item_1_currency').select('ETH');
+                cy.get('#root_item_1_unit_price').type('0.85');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 2
-                cy.get('#root_2_sub_category').select('lic_and_sub');
-                cy.get('#root_2_item').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
-                cy.get('#root_2_qty').clear().type('8');
-                cy.get('#root_2_currency_type').select('Crypto');
-                cy.get('#root_2_currency').select('DAI');
-                cy.get('#root_2_unit_price').type('2100');
+                cy.get('#root_item_2_sub_category').select('lic_and_sub');
+                cy.get('#root_item_2_item_name').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
+                cy.get('#root_item_2_qty').clear().type('8');
+                cy.get('#root_item_2_currency_type').select('Crypto');
+                cy.get('#root_item_2_currency').select('DAI');
+                cy.get('#root_item_2_unit_price').type('2100');
 
 
                 cy.get('button')
@@ -1934,8 +2314,47 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A software license is a legal instrument (usually by way of contract law, with or without printed material) governing the use or redistribution of software. Under United States copyright law, \nhttps://en.wikipedia.org/wiki/Software_license');
 
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'sampletext.txt']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['sampletext.txt']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -1946,8 +2365,9 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -1976,12 +2396,12 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let legalsmeUsername = Cypress.env('legalsme_username');
                 let legalsmePassword = Cypress.env('legalsme_password');
 
@@ -2017,24 +2437,25 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -2044,11 +2465,13 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Free and open source software (FOSS) licenses are often referred to as open source. FOSS source code is available to the customer along with the software product. The customer is usually allowed to use the source code to change the software.');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('20-11-2025');
+                cy.get('body').click();
                 cy.get('#root_vendor').clear().type('Atlassian');
                 cy.get('#root_payment_method').select('Debit Card');
                 cy.get('button')
@@ -2057,32 +2480,32 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
 
                 //item 0
                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('THB');
-                cy.get('#root_0_unit_price').type('1350');
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('Definition. Open source software (OSS) is software that is distributed with its source code');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('THB');
+                cy.get('#root_item_0_unit_price').type('1350');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 1
-                cy.get('#root_1_sub_category').select('op_src');
-                cy.get('#root_1_item').clear().type('Open source software (OSS) is software that is distributed with its source code');
-                cy.get('#root_1_qty').clear().type('15');
-                cy.get('#root_1_currency_type').select('Fiat');
-                cy.get('#root_1_currency').select('TRY');
-                cy.get('#root_1_unit_price').type('3200');
+                cy.get('#root_item_1_sub_category').select('op_src');
+                cy.get('#root_item_1_item_name').clear().type('Open source software (OSS) is software that is distributed with its source code');
+                cy.get('#root_item_1_qty').clear().type('15');
+                cy.get('#root_item_1_currency_type').select('Fiat');
+                cy.get('#root_item_1_currency').select('TRY');
+                cy.get('#root_item_1_unit_price').type('3200');
 
-                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.get('#root_item > div:nth-child(3) > p > button').click();
 
                 //item 2
-                cy.get('#root_2_sub_category').select('lic_and_sub');
-                cy.get('#root_2_item').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
-                cy.get('#root_2_qty').clear().type('8');
-                cy.get('#root_2_currency_type').select('Crypto');
-                cy.get('#root_2_currency').select('DAI');
-                cy.get('#root_2_unit_price').type('2100');
+                cy.get('#root_item_2_sub_category').select('lic_and_sub');
+                cy.get('#root_item_2_item_name').clear().type('Subscription relates to a licensing model that allows users to pay regularly for a computer program');
+                cy.get('#root_item_2_qty').clear().type('8');
+                cy.get('#root_item_2_currency_type').select('Crypto');
+                cy.get('#root_item_2_currency').select('DAI');
+                cy.get('#root_item_2_unit_price').type('2100');
 
 
                 cy.get('button')
@@ -2096,8 +2519,48 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A typical software license grants the licensee, typically an end-user, permission to use one or more copies of software in ways where such a use would otherwise potentially constitute copyright.\nhttps://en.wikipedia.org/wiki/Software_license');
 
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+
                 cy.get("input[type=file]")
-                    .attachFile(['lorem-ipsum.pdf', 'png-5mb-1.png', 'Free_Test_Data_1MB_PDF.pdf', 'png-5mb-2.png']);
+                    .attachFile(['lorem-ipsum.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-1.png']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['Free_Test_Data_1MB_PDF.pdf']);
+                cy.wait(1000);
+
+                cy.get('#root > div:nth-child(3) > p > button').click();
+                cy.wait(1000);
+
+                cy.get('#root > div.row.array-item-list > div:nth-child(4) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(3) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+                cy.get('#root > div.row.array-item-list > div:nth-child(2) > div > div.cds--sm\\:col-span-1.cds--md\\:col-span-1.cds--lg\\:col-span-1.cds--css-grid-column > div > div > button.btn.btn-default.array-item-move-up > svg').click();
+                cy.wait(1000);
+
+                cy.get("input[type=file]")
+                    .attachFile(['png-5mb-2.png']);
+
+                cy.wait(2000);
 
                 cy.contains('Submit the Request').click();
 
@@ -2109,8 +2572,9 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -2121,12 +2585,12 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -2170,7 +2634,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
     Cypress._.times(1, () => {
 
         //Everyone approves with CP
-        it('Everyone approves with CP', () => {
+        it.only('Everyone approves with CP', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -2180,24 +2644,25 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -2207,24 +2672,27 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Need to buy a Software');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2024-11-25');
+                cy.get('#root_period').clear().type('24-11-2025');
+                cy.get('body').click();
                 //cy.get('#root_vendor').clear().type('Embassar');
                 //cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('Open source software');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('USD');
-                cy.get('#root_0_unit_price').type('550');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('Open source software');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('USD');
+                cy.get('#root_item_0_unit_price').type('550');
 
 
                 cy.get('button')
@@ -2248,8 +2716,9 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -2260,12 +2729,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -2293,7 +2762,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
         });
 
         //Everyone approves the request
-        it('Everyone approves', () => {
+        it.only('Everyone approves', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -2303,24 +2772,25 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -2330,24 +2800,27 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('need software');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('20-11-2025');
+                cy.get('body').click();
                 //cy.get('#root_vendor').clear().type('Embassar');
                 //cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('open source');
-                cy.get('#root_0_qty').clear().type('1');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('AED');
-                cy.get('#root_0_unit_price').type('1520');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('open source');
+                cy.get('#root_item_0_qty').clear().type('1');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('AED');
+                cy.get('#root_item_0_unit_price').type('1520');
 
 
                 cy.get('button')
@@ -2371,8 +2844,9 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -2383,12 +2857,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');
@@ -2442,24 +2916,25 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -2469,24 +2944,27 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Nee license');
                 cy.get('#root_criticality').select('Medium');
-                cy.get('#root_period').clear().type('2024-02-06');
+                cy.get('#root_period').clear().type('20-02-2026');
+                cy.get('body').click();
                 //cy.get('#root_vendor').clear().type('Subsc LTD');
                 //cy.get('#root_payment_method').select('Bank Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('lic_and_sub');
-                cy.get('#root_0_item').clear().type('Software development');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('EUR');
-                cy.get('#root_0_unit_price').type('1400');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('lic_and_sub');
+                cy.get('#root_item_0_item_name').clear().type('Software development');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('EUR');
+                cy.get('#root_item_0_unit_price').type('1400');
 
 
                 cy.get('button')
@@ -2509,8 +2987,9 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .contains(/^Submit$/)
                     .click();
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -2539,24 +3018,25 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -2566,24 +3046,27 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Software needed');
                 cy.get('#root_criticality').select('Low');
-                cy.get('#root_period').clear().type('2025-02-25');
+                cy.get('#root_period').clear().type('05-02-2025');
+                cy.get('body').click();
                 //cy.get('#root_vendor').clear().type('ABC Licensing Co');
                 //cy.get('#root_payment_method').select('Crypto Transfer');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('lic_and_sub');
-                cy.get('#root_0_item').clear().type('License');
-                cy.get('#root_0_qty').clear().type('4');
-                cy.get('#root_0_currency_type').select('Crypto');
-                cy.get('#root_0_currency').select('SNT');
-                cy.get('#root_0_unit_price').type('450');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('lic_and_sub');
+                cy.get('#root_item_0_item_name').clear().type('License');
+                cy.get('#root_item_0_qty').clear().type('4');
+                cy.get('#root_item_0_currency_type').select('Crypto');
+                cy.get('#root_item_0_currency').select('SNT');
+                cy.get('#root_item_0_unit_price').type('450');
 
 
                 cy.get('button')
@@ -2606,8 +3089,9 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .contains(/^Submit$/)
                     .click();
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -2636,12 +3120,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let legalsmeUsername = Cypress.env('legalsme_username');
                 let legalsmePassword = Cypress.env('legalsme_password');
 
@@ -2676,24 +3160,25 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Raise New Demand Request');
+            cy.contains('Request Goods/Services');
 
             cy.runPrimaryBpmnFile(true);
 
-            cy.contains('Please select the type of request to start the process.');
-            // wait a second to ensure we can click the radio button
-
-            cy.wait(2000);
-            cy.get('input#root-procurement').click();
-            cy.wait(2000);
-
-
-            cy.get('button')
-                .contains(/^Submit$/)
-                .click();
+            /*            cy.contains('Please select the type of request to start the process.');
+                        // wait a second to ensure we can click the radio button
+            
+                        cy.wait(2000);
+                        cy.get('input#root-procurement').click();
+                        cy.wait(2000);
+            
+            
+                        cy.get('button')
+                            .contains(/^Submit$/)
+                            .click();
+            */
 
             cy.contains(
-                'Submit a new demand request for the procurement of needed items',
+                'Request Goods/Services',
                 { timeout: 60000 }
             );
 
@@ -2703,24 +3188,27 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
                 cy.log('==###############===processInstanceId : ', processInstanceId);
                 let projectId = Cypress.env('project_id');
+                cy.wait(2000);
                 cy.get('#root_project').select(projectId);
                 cy.get('#root_category').select('soft_and_lic');
                 cy.get('#root_purpose').clear().type('Software is needed');
                 cy.get('#root_criticality').select('High');
-                cy.get('#root_period').clear().type('2025-11-25');
+                cy.get('#root_period').clear().type('25-11-2025');
+                cy.get('body').click();
                 // cy.get('#root_vendor').clear().type('Embassar');
                 // cy.get('#root_payment_method').select('Reimbursement');
-                cy.get('button')
-                    .contains(/^Submit$/)
-                    .click();
-
-                cy.contains('Task: Enter NDR Items', { timeout: 60000 });
-                cy.get('#root_0_sub_category').select('op_src');
-                cy.get('#root_0_item').clear().type('Open source');
-                cy.get('#root_0_qty').clear().type('2');
-                cy.get('#root_0_currency_type').select('Fiat');
-                cy.get('#root_0_currency').select('AUD');
-                cy.get('#root_0_unit_price').type('2416');
+                /* cy.get('button')
+                     .contains(/^Submit$/)
+                     .click();
+ 
+                 cy.contains('Task: Enter NDR Items', { timeout: 60000 });
+ */
+                cy.get('#root_item_0_sub_category').select('op_src');
+                cy.get('#root_item_0_item_name').clear().type('Open source');
+                cy.get('#root_item_0_qty').clear().type('2');
+                cy.get('#root_item_0_currency_type').select('Fiat');
+                cy.get('#root_item_0_currency').select('AUD');
+                cy.get('#root_item_0_unit_price').type('2416');
 
 
                 cy.get('button')
@@ -2744,8 +3232,9 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .click();
 
 
-                cy.contains('Tasks for my open instances', { timeout: 60000 });
+                cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
+                cy.wait(1000);
 
                 let budgetOwnerUsername = Cypress.env('budgetowner_username');
                 let budgetOwnerPassword = Cypress.env('budgetowner_password');
@@ -2756,12 +3245,12 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     budgetOwnerUsername,
                     budgetOwnerPassword,
                     processInstanceId,
-                    'Task: Reminder: Request Additional Budget',
+                    'Task: Reminder: Check Existing Budget',
                     "approve"
                 );
 
                 let ppgbasmeUsername = Cypress.env('ppgbasme_username');
-                let ppgbasmePassword = Cypress.env('ppgbasme_username');
+                let ppgbasmePassword = Cypress.env('ppgbasme_password');
                 let securitysmeUsername = Cypress.env('securitysme_username');
                 let securitysmePassword = Cypress.env('securitysme_password');
                 let infrasmeUsername = Cypress.env('infrasme_username');

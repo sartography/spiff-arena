@@ -11,7 +11,6 @@ import {
   ComboBox,
   Button,
   ButtonSet,
-  // @ts-ignore
 } from '@carbon/react';
 
 import MDEditor from '@uiw/react-md-editor';
