@@ -35,6 +35,7 @@ from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -42,7 +43,6 @@ from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
-from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 
 # from spiffworkflow_backend.services.git_service import GitService
 
