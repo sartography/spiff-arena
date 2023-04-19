@@ -23,9 +23,9 @@ def with_single_process_caller(with_clean_cache: None) -> None:
 
 @pytest.fixture()
 def with_multiple_process_callers(with_clean_cache: None) -> None:
-    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="caller1"))
-    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="caller2"))
-    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="caller3"))
+    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="one_caller"))
+    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="two_caller"))
+    db.session.add(ProcessCallerCache(process_identifier="called_many", calling_process_identifier="three_caller"))
     db.session.commit()
     yield
     
@@ -50,6 +50,14 @@ class TestProcessCallerService(BaseTest):
         ProcessCallerService.clear_cache_for_process_ids(["called_once"])
         assert ProcessCallerService.count() == 0
 
+    def test_can_clear_the_cache_for_calling_process_id(self, with_multiple_process_callers: None) -> None:
+        ProcessCallerService.clear_cache_for_process_ids(["one_caller"])
+        assert ProcessCallerService.count() == 2
+
+    def test_can_clear_the_cache_for_callee_caller_process_id(self, with_single_process_caller: None, with_multiple_process_callers: None) -> None:
+        ProcessCallerService.clear_cache_for_process_ids(["one_caller"])
+        assert ProcessCallerService.count() == 2
+
     def test_can_clear_the_cache_for_process_id_and_leave_other_process_ids_alone(self,
                                                                                   with_single_process_caller: None,
                                                                                   with_multiple_process_callers: None,
@@ -59,6 +67,7 @@ class TestProcessCallerService(BaseTest):
 
     def test_can_clear_the_cache_for_process_id_when_it_doesnt_exist(
             self,
-            with_no_process_callers: None,
+            with_multiple_process_callers: None,
     ) -> None:
-        assert ProcessCallerService.count() == 0
+        ProcessCallerService.clear_cache_for_process_ids(["garbage"])
+        assert ProcessCallerService.count() == 3
