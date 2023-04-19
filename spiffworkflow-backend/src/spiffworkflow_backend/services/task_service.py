@@ -1,5 +1,8 @@
 import copy
 import json
+from flask import g
+from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
+import traceback
 import time
 from hashlib import sha256
 from typing import Optional
@@ -592,3 +595,34 @@ class TaskService:
         for json_data_dict in json_data_dict_list:
             if json_data_dict is not None:
                 json_data_dicts[json_data_dict["hash"]] = json_data_dict
+
+    # TODO: move to process_instance_service once we clean it and the processor up
+    @classmethod
+    def add_event_to_process_instance(
+        cls,
+        process_instance: ProcessInstanceModel,
+        event_type: str,
+        task_guid: Optional[str] = None,
+        user_id: Optional[int] = None,
+        exception: Optional[Exception] = None,
+    ) -> None:
+        if user_id is None and hasattr(g, "user") and g.user:
+            user_id = g.user.id
+        process_instance_event = ProcessInstanceEventModel(
+            process_instance_id=process_instance.id, event_type=event_type, timestamp=time.time(), user_id=user_id
+        )
+        if task_guid:
+            process_instance_event.task_guid = task_guid
+        db.session.add(process_instance_event)
+
+        if event_type == ProcessInstanceEventType.process_instance_error.value and exception is not None:
+            # truncate to avoid database errors on large values. We observed that text in mysql is 65K.
+            stacktrace = traceback.format_exc()[0:63999]
+            message = str(exception)[0:1023]
+
+            process_instance_error_detail = ProcessInstanceErrorDetailModel(
+                process_instance_event=process_instance_event,
+                message=message,
+                stacktrace=stacktrace,
+            )
+            db.session.add(process_instance_error_detail)

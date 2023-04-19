@@ -1,5 +1,10 @@
 """Process_instance_processor."""
+
+# TODO: clean up this service for a clear distinction between it and the process_instance_service
+#   where this points to the pi service
+import traceback
 import _strptime  # type: ignore
+from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 import copy
 import decimal
 import json
@@ -1318,7 +1323,7 @@ class ProcessInstanceProcessor:
             db.session.bulk_save_objects(new_task_models.values())
             TaskService.insert_or_update_json_data_records(new_json_data_dicts)
 
-        self.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
+        TaskService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
         self.save()
         # Saving the workflow seems to reset the status
         self.suspend()
@@ -1331,7 +1336,7 @@ class ProcessInstanceProcessor:
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
         """Reset a process to an earlier state."""
         # raise Exception("This feature to reset a process instance to a given task is currently unavaiable")
-        cls.add_event_to_process_instance(
+        TaskService.add_event_to_process_instance(
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
 
@@ -1861,7 +1866,7 @@ class ProcessInstanceProcessor:
         TaskService.update_json_data_dicts_using_list(json_data_dict_list, json_data_dict_mapping)
         TaskService.insert_or_update_json_data_records(json_data_dict_mapping)
 
-        self.add_event_to_process_instance(
+        TaskService.add_event_to_process_instance(
             self.process_instance_model,
             ProcessInstanceEventType.task_completed.value,
             task_guid=task_model.guid,
@@ -1960,49 +1965,13 @@ class ProcessInstanceProcessor:
                 return task
         return None
 
-    def get_nav_item(self, task: SpiffTask) -> Any:
-        """Get_nav_item."""
-        for nav_item in self.bpmn_process_instance.get_nav_list():
-            if nav_item["task_id"] == task.id:
-                return nav_item
-        return None
-
-    def find_spec_and_field(self, spec_name: str, field_id: Union[str, int]) -> Any:
-        """Tracks down a form field by name in the process_instance spec(s), Returns a tuple of the task, and form."""
-        process_instances = [self.bpmn_process_instance]
-        for task in self.bpmn_process_instance.get_ready_user_tasks():
-            if task.process_instance not in process_instances:
-                process_instances.append(task.process_instance)
-        for process_instance in process_instances:
-            for spec in process_instance.spec.task_specs.values():
-                if spec.name == spec_name:
-                    if not hasattr(spec, "form"):
-                        raise ApiError(
-                            "invalid_spec",
-                            "The spec name you provided does not contain a form.",
-                        )
-
-                    for field in spec.form.fields:
-                        if field.id == field_id:
-                            return spec, field
-
-                    raise ApiError(
-                        "invalid_field",
-                        f"The task '{spec_name}' has no field named '{field_id}'",
-                    )
-
-        raise ApiError(
-            "invalid_spec",
-            f"Unable to find a task in the process_instance called '{spec_name}'",
-        )
-
     def terminate(self) -> None:
         """Terminate."""
         self.bpmn_process_instance.cancel()
         self.save()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
-        self.add_event_to_process_instance(
+        TaskService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_terminated.value
         )
         db.session.commit()
@@ -2011,7 +1980,7 @@ class ProcessInstanceProcessor:
         """Suspend."""
         self.process_instance_model.status = ProcessInstanceStatus.suspended.value
         db.session.add(self.process_instance_model)
-        self.add_event_to_process_instance(
+        TaskService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_suspended.value
         )
         db.session.commit()
@@ -2020,24 +1989,7 @@ class ProcessInstanceProcessor:
         """Resume."""
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
-        self.add_event_to_process_instance(
+        TaskService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )
         db.session.commit()
-
-    @classmethod
-    def add_event_to_process_instance(
-        cls,
-        process_instance: ProcessInstanceModel,
-        event_type: str,
-        task_guid: Optional[str] = None,
-        user_id: Optional[int] = None,
-    ) -> None:
-        if user_id is None and hasattr(g, "user") and g.user:
-            user_id = g.user.id
-        process_instance_event = ProcessInstanceEventModel(
-            process_instance_id=process_instance.id, event_type=event_type, timestamp=time.time(), user_id=user_id
-        )
-        if task_guid:
-            process_instance_event.task_guid = task_guid
-        db.session.add(process_instance_event)

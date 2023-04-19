@@ -322,19 +322,20 @@ class ProcessInstanceService:
 
         cls.replace_file_data_with_digest_references(data, models)
 
-    @staticmethod
+    @classmethod
     def update_form_task_data(
-        processor: ProcessInstanceProcessor,
+        cls,
+        process_instance: ProcessInstanceModel,
         spiff_task: SpiffTask,
         data: dict[str, Any],
         user: UserModel,
     ) -> None:
-        AuthorizationService.assert_user_can_complete_spiff_task(processor.process_instance_model.id, spiff_task, user)
-        ProcessInstanceService.save_file_data_and_replace_with_digest_references(
+        AuthorizationService.assert_user_can_complete_spiff_task(process_instance.id, spiff_task, user)
+        cls.save_file_data_and_replace_with_digest_references(
             data,
-            processor.process_instance_model.id,
+            process_instance.id,
         )
-        dot_dct = ProcessInstanceService.create_dot_dict(data)
+        dot_dct = cls.create_dot_dict(data)
         spiff_task.update_data(dot_dct)
 
     @staticmethod
@@ -350,7 +351,7 @@ class ProcessInstanceService:
         Abstracted here because we need to do it multiple times when completing all tasks in
         a multi-instance task.
         """
-        ProcessInstanceService.update_form_task_data(processor, spiff_task, data, user)
+        ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 

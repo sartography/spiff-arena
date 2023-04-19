@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 44a8f46cc508
+Revision ID: c95031498e62
 Revises: 
-Create Date: 2023-04-17 15:40:28.658588
+Create Date: 2023-04-19 10:35:25.813002
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '44a8f46cc508'
+revision = 'c95031498e62'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -463,6 +463,17 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_message_instance_correlation_rule_message_instance_id'), ['message_instance_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_message_instance_correlation_rule_name'), ['name'], unique=False)
 
+    op.create_table('process_instance_error_detail',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_event_id', sa.Integer(), nullable=False),
+    sa.Column('message', sa.String(length=1024), nullable=False),
+    sa.Column('stacktrace', sa.Text(), nullable=False),
+    sa.ForeignKeyConstraint(['process_instance_event_id'], ['process_instance_event.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('process_instance_error_detail', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_process_instance_error_detail_process_instance_event_id'), ['process_instance_event_id'], unique=False)
+
     op.create_table('human_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('human_task_id', sa.Integer(), nullable=False),
@@ -486,6 +497,10 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_human_task_user_human_task_id'))
 
     op.drop_table('human_task_user')
+    with op.batch_alter_table('process_instance_error_detail', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_process_instance_error_detail_process_instance_event_id'))
+
+    op.drop_table('process_instance_error_detail')
     with op.batch_alter_table('message_instance_correlation_rule', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_message_instance_correlation_rule_name'))
         batch_op.drop_index(batch_op.f('ix_message_instance_correlation_rule_message_instance_id'))

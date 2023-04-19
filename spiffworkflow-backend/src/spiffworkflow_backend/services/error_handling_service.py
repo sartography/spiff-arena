@@ -1,5 +1,6 @@
-"""Error_handling_service."""
 from typing import Union
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.services.task_service import TaskService
 
 from flask import current_app
 from flask import g
@@ -11,56 +12,52 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.services.message_service import MessageService
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
 class ErrorHandlingService:
-    """ErrorHandlingService."""
-
     MESSAGE_NAME = "SystemErrorMessage"
 
-    @staticmethod
-    def set_instance_status(instance_id: int, status: str) -> None:
-        """Set_instance_status."""
-        instance = db.session.query(ProcessInstanceModel).filter(ProcessInstanceModel.id == instance_id).first()
-        if instance:
-            instance.status = status
-            db.session.commit()
-
-    def handle_error(self, _processor: ProcessInstanceProcessor, _error: Union[ApiError, Exception]) -> None:
+    @classmethod
+    def handle_error(cls, process_instance: ProcessInstanceModel, error: Union[ApiError, Exception]) -> None:
         """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
-        process_model = ProcessModelService.get_process_model(_processor.process_model_identifier)
-        # First, suspend or fault the instance
-        if process_model.fault_or_suspend_on_exception == "suspend":
-            self.set_instance_status(
-                _processor.process_instance_model.id,
-                ProcessInstanceStatus.suspended.value,
-            )
-        else:
-            # fault is the default
-            self.set_instance_status(
-                _processor.process_instance_model.id,
-                ProcessInstanceStatus.error.value,
-            )
+        process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
+        cls._update_process_instance_in_database(process_instance, error, process_model.fault_or_suspend_on_exception)
 
         # Second, send a bpmn message out, but only if an exception notification address is provided
         # This will create a new Send Message with correlation keys on the recipients and the message
         # body.
         if len(process_model.exception_notification_addresses) > 0:
             try:
-                self.handle_system_notification(_error, process_model, _processor)
+                cls._handle_system_notification(error, process_model, process_instance)
             except Exception as e:
                 # hmm... what to do if a notification method fails. Probably log, at least
                 current_app.logger.error(e)
 
+    @classmethod
+    def _update_process_instance_in_database(cls, process_instance: ProcessInstanceModel, error: Union[ApiError, Exception], fault_or_suspend_on_exception: str) -> None:
+        TaskService.add_event_to_process_instance(process_instance, ProcessInstanceEventType.process_instance_error.value, exception=error)
+
+        # First, suspend or fault the instance
+        if fault_or_suspend_on_exception == "suspend":
+            cls._set_instance_status(
+                process_instance,
+                ProcessInstanceStatus.suspended.value,
+            )
+        else:
+            # fault is the default
+            cls._set_instance_status(
+                process_instance,
+                ProcessInstanceStatus.error.value,
+            )
+
+        db.session.commit()
+
     @staticmethod
-    def handle_system_notification(
+    def _handle_system_notification(
         error: Union[ApiError, Exception],
         process_model: ProcessModelInfo,
-        _processor: ProcessInstanceProcessor,
+        process_instance: ProcessInstanceModel,
     ) -> None:
         """Send a BPMN Message - which may kick off a waiting process."""
         message_text = (
@@ -74,7 +71,7 @@ class ErrorHandlingService:
         if "user" in g:
             user_id = g.user.id
         else:
-            user_id = _processor.process_instance_model.process_initiator_id
+            user_id = process_instance.process_initiator_id
 
         message_instance = MessageInstanceModel(
             message_type="send",
@@ -85,3 +82,8 @@ class ErrorHandlingService:
         db.session.add(message_instance)
         db.session.commit()
         MessageService.correlate_send_message(message_instance)
+
+    @staticmethod
+    def _set_instance_status(process_instance: ProcessInstanceModel, status: str) -> None:
+        process_instance.status = status
+        db.session.add(process_instance)

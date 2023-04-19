@@ -1,5 +1,7 @@
 import contextlib
 import time
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.services.task_service import TaskService
 from typing import Generator
 from typing import List
 from typing import Optional
@@ -24,8 +26,6 @@ class ProcessInstanceIsAlreadyLockedError(Exception):
 
 
 class ProcessInstanceQueueService:
-    """TODO: comment."""
-
     @classmethod
     def _configure_and_save_queue_entry(
         cls, process_instance: ProcessInstanceModel, queue_entry: ProcessInstanceQueueModel
@@ -99,6 +99,7 @@ class ProcessInstanceQueueService:
         except Exception as ex:
             process_instance.status = ProcessInstanceStatus.error.value
             db.session.add(process_instance)
+            TaskService.add_event_to_process_instance(process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex)
             db.session.commit()
             raise ex
         finally:
