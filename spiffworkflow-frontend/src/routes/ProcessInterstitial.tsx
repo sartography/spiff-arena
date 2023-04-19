@@ -53,6 +53,7 @@ export default function ProcessInterstitial() {
       return () => clearInterval(timerId);
     }
     return undefined;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastTask]);
 
   const processStatusImage = () => {
@@ -94,6 +95,11 @@ export default function ProcessInterstitial() {
     );
   };
 
+  /** In the event there is no task information and the connection closed,
+   * redirect to the home page. */
+  if (status === 'closed' && lastTask === null) {
+    navigate(`/tasks`);
+  }
   if (lastTask) {
     return (
       <>
