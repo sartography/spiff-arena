@@ -87,10 +87,10 @@ export default function ProcessInterstitial() {
       ['User Task', 'Manual Task'].includes(myTask.type)
     ) {
       return (
-        <div>This task is assigned to another user or group to complete. </div>
+        <div>This next task must be completed by a different person.</div>
       );
     }
-    return <InstructionsForEndUser task={myTask} />;
+    return <div><InstructionsForEndUser task={myTask} /></div>;
   };
 
   if (lastTask) {
@@ -114,21 +114,15 @@ export default function ProcessInterstitial() {
 
         <Grid condensed fullWidth>
           <Column md={6} lg={8} sm={4}>
-            <table className="table table-bordered">
-              <tbody>
-                {data &&
-                  data.map((d) => (
-                    <tr key={d.id}>
-                      <td>
-                        <h3>{d.title}</h3>
-                      </td>
-                      <td>
-                        <p>{userMessage(d)}</p>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+            {data &&
+              data.map((d) => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2em' }}>
+                  <div>
+                    Task: <em>{d.title}</em>
+                  </div>
+                  <div>{userMessage(d)}</div>
+                </div>
+              ))}
           </Column>
         </Grid>
       </>
