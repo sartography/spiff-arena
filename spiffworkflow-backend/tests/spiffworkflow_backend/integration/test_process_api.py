@@ -1588,7 +1588,8 @@ class TestProcessApi(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-
+        # Call this to assure all engine-steps are fully processed.
+        _interstitial_stream(process_instance_id)
         assert response.json is not None
         assert response.json["next_task"] is not None
 
@@ -2391,7 +2392,7 @@ class TestProcessApi(BaseTest):
             f"/v1.0/tasks/{process_instance_id}/{task_id}",
             headers=self.logged_in_headers(initiator_user),
         )
-        assert response.status_code == 202
+        assert response.status_code == 200
 
         response = client.get(
             "/v1.0/tasks",
