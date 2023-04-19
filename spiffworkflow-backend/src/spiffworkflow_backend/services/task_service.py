@@ -1,5 +1,7 @@
 import copy
 import json
+from spiffworkflow_backend.exceptions.api_error import ApiError
+from SpiffWorkflow.exceptions import WorkflowTaskException # type: ignore
 from flask import g
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 import traceback
@@ -158,7 +160,7 @@ class TaskService:
 
         if task_model.state == "COMPLETED" or task_failed:
             event_type = ProcessInstanceEventType.task_completed.value
-            if task_failed:
+            if task_failed or task_model.state == TaskState.ERROR:
                 event_type = ProcessInstanceEventType.task_failed.value
 
             # FIXME: some failed tasks will currently not have either timestamp since we only hook into spiff when tasks complete
@@ -620,9 +622,24 @@ class TaskService:
             stacktrace = traceback.format_exc()[0:63999]
             message = str(exception)[0:1023]
 
+            task_line_number = None
+            task_line_contents = None
+            task_trace = None
+            task_offset = None
+            # import pdb; pdb.set_trace()
+            if isinstance(exception, WorkflowTaskException) or (isinstance(exception, ApiError) and exception.error_code == 'task_error'):
+                task_line_number = exception.line_number
+                task_line_contents = exception.error_line
+                task_trace = exception.task_trace
+                task_offset = exception.offset
+
             process_instance_error_detail = ProcessInstanceErrorDetailModel(
                 process_instance_event=process_instance_event,
                 message=message,
                 stacktrace=stacktrace,
+                task_line_number=task_line_number,
+                task_line_contents=task_line_contents,
+                task_trace=task_trace,
+                task_offset=task_offset,
             )
             db.session.add(process_instance_error_detail)

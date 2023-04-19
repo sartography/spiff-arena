@@ -131,6 +131,7 @@ def process_instance_run(
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
     ) as e:
+        # import pdb; pdb.set_trace()
         ErrorHandlingService.handle_error(process_instance, e)
         raise e
     except Exception as e:
@@ -138,6 +139,7 @@ def process_instance_run(
         # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
         # we need to recurse through all last tasks if the last task is a call activity or subprocess.
         if processor is not None:
+            # import pdb; pdb.set_trace()
             task = processor.bpmn_process_instance.last_task
             raise ApiError.from_task(
                 error_code="unknown_exception",

@@ -1923,8 +1923,8 @@ lxml = "*"
 [package.source]
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
-reference = "main"
-resolved_reference = "7211e67ee0dfecbabaeb7cec8f0e0373bd7cdc10"
+reference = "feature/new-task-states"
+resolved_reference = "5a0fd2774fde20dd65dbb49ae67f22cad53df528"
 
 [[package]]
 name = "sqlalchemy"
@@ -2307,7 +2307,7 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.12"
-content-hash = "994c36ab39238500b4fd05bc1ccdd2d729dd5f66749ab77b1028371147bdf753"
+content-hash = "4ae3c31115f378193f33eb9b27d376fcf0f7c20fba54ed5c921f37a4778b8d09"
 
 [metadata.files]
 alabaster = [
