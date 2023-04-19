@@ -297,6 +297,12 @@ export interface JsonSchemaForm {
   required: string[];
 }
 
+export interface ProcessInstanceEventErrorDetail {
+  id: number;
+  message: string;
+  stacktrace: string;
+}
+
 export interface ProcessInstanceLogEntry {
   bpmn_process_definition_identifier: string;
   bpmn_process_definition_name: string;
