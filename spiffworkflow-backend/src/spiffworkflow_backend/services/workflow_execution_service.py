@@ -267,8 +267,7 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
 
 
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
-    """When you want to run tasks until you hit something to report to the end user, or
-    until there are no other engine steps to complete."""
+    """When you want to run tasks until you hit something to report to the end user."""
 
     def get_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
         return list(

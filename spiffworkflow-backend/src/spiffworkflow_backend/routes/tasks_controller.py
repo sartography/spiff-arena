@@ -5,6 +5,7 @@ import uuid
 from sys import exc_info
 from typing import Any
 from typing import Dict
+from typing import Generator
 from typing import Optional
 from typing import TypedDict
 from typing import Union
@@ -353,7 +354,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     return make_response(jsonify(task), 200)
 
 
-def _render_instructions_for_end_user(spiff_task: SpiffTask, task: Task):
+def _render_instructions_for_end_user(spiff_task: SpiffTask, task: Task) -> str:
     """Assure any instructions for end user are processed for jinja syntax."""
     if task.properties and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
@@ -391,7 +392,7 @@ def process_data_show(
     )
 
 
-def _interstitial_stream(process_instance_id: int):
+def _interstitial_stream(process_instance_id: int) -> Generator[str, str, None]:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # bit of an issue with end tasks showing as getting completed twice.
@@ -415,9 +416,8 @@ def _interstitial_stream(process_instance_id: int):
         processor.save()  # Fixme - maybe find a way not to do this on every method?
 
 
-def interstitial(process_instance_id: int):
-    """A Server Side Events Stream for watching the execution of engine tasks in a
-    process instance."""
+def interstitial(process_instance_id: int) -> Response:
+    """A Server Side Events Stream for watching the execution of engine tasks."""
     return Response(stream_with_context(_interstitial_stream(process_instance_id)), mimetype="text/event-stream")
 
 
