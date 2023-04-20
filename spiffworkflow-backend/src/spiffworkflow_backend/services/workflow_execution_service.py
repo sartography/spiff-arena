@@ -344,7 +344,7 @@ def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> Executi
         "one_at_a_time": OneAtATimeExecutionStrategy,
     }[name]
 
-    return cls(delegate)
+    return cls(delegate)  # type: ignore
 
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]

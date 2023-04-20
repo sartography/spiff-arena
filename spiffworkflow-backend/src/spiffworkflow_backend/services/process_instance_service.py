@@ -134,7 +134,10 @@ class ProcessInstanceService:
 
     @classmethod
     def run_process_instance_with_processor(
-        cls, process_instance: ProcessInstanceModel, status_value: Optional[str] = None, execution_strategy_name=None
+        cls,
+        process_instance: ProcessInstanceModel,
+        status_value: Optional[str] = None,
+        execution_strategy_name: Optional[str] = None,
     ) -> Optional[ProcessInstanceProcessor]:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
