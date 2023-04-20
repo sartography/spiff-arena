@@ -396,9 +396,6 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, str, None]:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # bit of an issue with end tasks showing as getting completed twice.
-
-    #    return Response(get_data(), mimetype='text/event-stream')
-
     spiff_task = processor.next_task()
     last_task = None
     while last_task != spiff_task:
@@ -413,7 +410,11 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, str, None]:
         spiff_task = processor.next_task()
         # Note, this has to be done in case someone leaves the page,
         # which can otherwise cancel this function and leave completed tasks un-registered.
-        processor.save()  # Fixme - maybe find a way not to do this on every method?
+        processor.save()  # Fixme - maybe find a way not to do this on every loop?
+    if len(reported_ids) == 0:
+        # Always provide some response, in the event no instructions were provided.
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+        yield f"data: {current_app.json.dumps(task)} \n\n"
 
 
 def interstitial(process_instance_id: int) -> Response:

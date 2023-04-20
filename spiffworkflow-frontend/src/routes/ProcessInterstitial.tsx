@@ -14,7 +14,7 @@ import { ProcessInstanceTask } from '../interfaces';
 export default function ProcessInterstitial() {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
-  const [status, setStatus] = useState<string>('running');
+  const [state, setState] = useState<string>('RUNNING');
   const params = useParams();
   const navigate = useNavigate();
   const userTasks = ['User Task', 'Manual Task'];
@@ -31,61 +31,73 @@ export default function ProcessInterstitial() {
           setLastTask(task);
         },
         onclose() {
-          setStatus('closed');
-          console.log('Connection Closed by the Server');
+          setState('CLOSED');
         },
       }
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 
+  const shouldRedirect = (myTask: ProcessInstanceTask): boolean => {
+    return myTask && myTask.can_complete && userTasks.includes(myTask.type);
+  };
+
   useEffect(() => {
     // Added this seperate use effect so that the timer interval will be cleared if
     // we end up redirecting back to the TaskShow page.
-    if (
-      lastTask &&
-      lastTask.can_complete &&
-      userTasks.includes(lastTask.type)
-    ) {
+    if (shouldRedirect(lastTask)) {
+      setState('REDIRECTING');
+      lastTask.properties.instructionsForEndUser = '';
       const timerId = setInterval(() => {
         navigate(`/tasks/${lastTask.process_instance_id}/${lastTask.id}`);
-      }, 1000);
+      }, 2000);
       return () => clearInterval(timerId);
     }
     return undefined;
   }, [lastTask, navigate, userTasks]);
 
-  const processStatusImage = () => {
-    if (status !== 'running') {
-      setStatus(lastTask.state);
-    }
+  const getStatus = (): string => {
     if (!lastTask.can_complete && userTasks.includes(lastTask.type)) {
-      setStatus('LOCKED');
+      return 'LOCKED';
     }
-    switch (status) {
-      case 'running':
+    if (state === 'CLOSED') {
+      return lastTask.state;
+    }
+    console.log('The State is: ', state);
+    return state;
+  };
+
+  const getStatusImage = () => {
+    switch (getStatus()) {
+      case 'RUNNING':
         return (
           <Loading description="Active loading indicator" withOverlay={false} />
         );
-      case 'WAITING':
-        return <img src="/interstitial/clock.png" alt="Waiting ...." />;
-      case 'COMPLETED':
-        return <img src="/interstitial/checkmark.png" alt="Completed" />;
       case 'LOCKED':
-        return (
-          <img
-            src="/interstitial/lock.png"
-            alt="Locked, Waiting on someone else."
-          />
-        );
-      default:
-        return null;
+        return <img src="/interstitial/locked.png" alt="Locked" />;
+      case 'REDIRECTING':
+        return <img src="/interstitial/redirect.png" alt="Redirecting ...." />;
+      case 'WAITING':
+        return <img src="/interstitial/waiting.png" alt="Waiting ...." />;
+      case 'COMPLETED':
+        return <img src="/interstitial/completed.png" alt="Completed" />;
     }
   };
+
+  function capitalize(str: string): string {
+    console.log('Capitalizing: ', str);
+    if (str && str.length > 0) {
+      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    }
+    return '';
+  }
 
   const userMessage = (myTask: ProcessInstanceTask) => {
     if (!myTask.can_complete && userTasks.includes(myTask.type)) {
       return <div>This next task must be completed by a different person.</div>;
+    }
+    if (shouldRedirect(myTask)) {
+      return <div>Redirecting you to the next task now ...</div>;
     }
     return (
       <div>
@@ -96,7 +108,7 @@ export default function ProcessInterstitial() {
 
   /** In the event there is no task information and the connection closed,
    * redirect to the home page. */
-  if (status === 'closed' && lastTask === null) {
+  if (state === 'closed' && lastTask === null) {
     navigate(`/tasks`);
   }
   if (lastTask) {
@@ -113,26 +125,28 @@ export default function ProcessInterstitial() {
             [`Process Instance Id: ${lastTask.process_instance_id}`],
           ]}
         />
-        <h1 style={{ display: 'inline-flex', alignItems: 'center' }}>
-          {processStatusImage()}
-          {lastTask.process_model_display_name}: {lastTask.process_instance_id}
-        </h1>
-
-        <Grid condensed fullWidth>
-          <Column md={6} lg={8} sm={4}>
-            {data &&
-              data.map((d) => (
-                <div
-                  style={{ display: 'flex', alignItems: 'center', gap: '2em' }}
-                >
-                  <div>
-                    Task: <em>{d.title}</em>
-                  </div>
-                  <div>{userMessage(d)}</div>
-                </div>
-              ))}
-          </Column>
-        </Grid>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          {getStatusImage()}
+          <div>
+            <h1 style={{ marginBottom: '0em' }}>
+              {lastTask.process_model_display_name}:{' '}
+              {lastTask.process_instance_id}
+            </h1>
+            <div>Status: {capitalize(getStatus())}</div>
+          </div>
+        </div>
+        <br />
+        <br />
+        {data.map((d) => (
+          <Grid fullWidth style={{ marginBottom: '1em' }}>
+            <Column md={2} lg={4} sm={2}>
+              Task: <em>{d.title}</em>
+            </Column>
+            <Column md={6} lg={8} sm={4}>
+              {userMessage(d)}
+            </Column>
+          </Grid>
+        ))}
       </>
     );
   }
