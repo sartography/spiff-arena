@@ -28,10 +28,14 @@ export default function ProcessModelSearch({
     return '';
   };
 
-  const getFullProcessModelLabel = (processModel: ProcessModel) => {
-    return `${getParentGroupsDisplayName(processModel)} / ${
-      processModel.display_name
-    } (${processModel.id})`;
+  const getProcessModelLabelForDisplay = (processModel: ProcessModel) => {
+    return `${processModel.display_name} (${processModel.id})`;
+  };
+
+  const getProcessModelLabelForSearch = (processModel: ProcessModel) => {
+    return `${processModel.display_name} ${
+      processModel.id
+    } ${getParentGroupsDisplayName(processModel)}`;
   };
 
   const shouldFilterProcessModel = (options: any) => {
@@ -42,7 +46,7 @@ export default function ProcessModelSearch({
     }
     const inputValueArray = inputValue.split(' ');
     const processModelLowerCase =
-      getFullProcessModelLabel(processModel).toLowerCase();
+      getProcessModelLabelForSearch(processModel).toLowerCase();
 
     return inputValueArray.every((i: any) => {
       return processModelLowerCase.includes((i || '').toLowerCase());
@@ -56,7 +60,7 @@ export default function ProcessModelSearch({
       items={processModels}
       itemToString={(processModel: ProcessModel) => {
         if (processModel) {
-          return getFullProcessModelLabel(processModel);
+          return getProcessModelLabelForDisplay(processModel);
         }
         return null;
       }}

@@ -71,13 +71,15 @@ export const convertDateObjectToFormattedString = (dateObject: Date) => {
 };
 
 export const dateStringToYMDFormat = (dateString: string) => {
-  if (DATE_FORMAT.startsWith('dd')) {
-    const d = dateString.split('-');
-    return `${d[2]}-${d[1]}-${d[0]}`;
-  }
-  if (DATE_FORMAT.startsWith('MM')) {
-    const d = dateString.split('-');
-    return `${d[2]}-${d[0]}-${d[1]}`;
+  if (dateString && dateString.match(/^\d{2}-\d{2}-\d{4}$/)) {
+    if (DATE_FORMAT.startsWith('dd')) {
+      const d = dateString.split('-');
+      return `${d[2]}-${d[1]}-${d[0]}`;
+    }
+    if (DATE_FORMAT.startsWith('MM')) {
+      const d = dateString.split('-');
+      return `${d[2]}-${d[0]}-${d[1]}`;
+    }
   }
   return dateString;
 };
