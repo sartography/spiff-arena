@@ -690,7 +690,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     setSelectingEvent(false);
     initializeTaskDataToDisplay(taskToDisplay);
     setEventPayload('{}');
-    console.log('cancel updating task');
     removeError();
   };
 
@@ -771,10 +770,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     }
 
     if (task.typename === 'CallActivity') {
-      console.log('task', task);
       const taskDefinitionPropertiesJson: TaskDefinitionPropertiesJson =
         task.task_definition_properties_json;
-      console.log('taskDefinitionPropertiesJson', taskDefinitionPropertiesJson);
       buttons.push(
         <Link
           data-qa="go-to-call-activity-result"
