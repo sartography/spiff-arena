@@ -49,6 +49,7 @@ type OwnProps = {
 
 export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const params = useParams();
+  const [clearAll, setClearAll] = useState<boolean>(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
@@ -71,6 +72,13 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const { ability } = usePermissionFetcher(permissionRequestData);
 
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
+  const randomNumberBetween0and1 = Math.random();
+
+  let shouldDisplayClearButton = false;
+  if (randomNumberBetween0and1 < 0.05) {
+    // 5% chance of being here
+    shouldDisplayClearButton = true;
+  }
 
   let processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}`;
   if (variant === 'all') {
@@ -357,6 +365,10 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     setSearchParams(searchParams);
   };
 
+  const clearFilters = () => {
+    setClearAll(true);
+  };
+
   const shouldFilterStringItem = (options: any) => {
     const stringItem = options.item;
     let { inputValue } = options;
@@ -414,7 +426,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 return value;
               }}
               shouldFilterItem={shouldFilterStringItem}
-              placeholder="Choose a process model"
+              placeholder="Choose a task type"
               titleText="Task Type"
               selectedItem={searchParams.get('task_type')}
             />
@@ -431,7 +443,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
                 return value;
               }}
               shouldFilterItem={shouldFilterStringItem}
-              placeholder="Choose a process model"
+              placeholder="Choose an event type"
               titleText="Event Type"
               selectedItem={searchParams.get('event_type')}
             />
@@ -455,6 +467,15 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
               >
                 Reset
               </Button>
+              {shouldDisplayClearButton && (
+                <Button
+                  kind=""
+                  className="button-white-background narrow-button"
+                  onClick={clearFilters}
+                >
+                  Clear
+                </Button>
+              )}
             </ButtonSet>
           </Column>
         </Grid>
@@ -493,6 +514,9 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   };
 
   const { page, perPage } = getPageInfoFromSearchParams(searchParams);
+  if (clearAll) {
+    return <p>Page cleared 👍</p>;
+  }
   return (
     <>
       <ProcessBreadcrumb
