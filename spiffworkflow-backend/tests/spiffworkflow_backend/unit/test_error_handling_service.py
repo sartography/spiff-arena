@@ -36,7 +36,7 @@ class TestErrorHandlingService(BaseTest):
         pip = ProcessInstanceProcessor(process_instance)
         with pytest.raises(ApiError) as e:
             pip.do_engine_steps(save=True)
-        ErrorHandlingService().handle_error(pip, e.value)
+        ErrorHandlingService().handle_error(process_instance, e.value)
         return process_instance
 
     def test_handle_error_suspends_or_faults_process(

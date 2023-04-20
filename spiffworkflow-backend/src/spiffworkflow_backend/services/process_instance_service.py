@@ -127,7 +127,9 @@ class ProcessInstanceService:
                 current_app.logger.error(error_message)
 
     @classmethod
-    def run_process_intance_with_processor(cls, process_instance: ProcessInstanceModel, status_value: Optional[str] = None) -> Optional[ProcessInstanceProcessor]:
+    def run_process_intance_with_processor(
+        cls, process_instance: ProcessInstanceModel, status_value: Optional[str] = None
+    ) -> Optional[ProcessInstanceProcessor]:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
             processor = ProcessInstanceProcessor(process_instance)

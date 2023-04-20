@@ -1,18 +1,15 @@
 from __future__ import annotations
+
 import copy
 import time
 from abc import abstractmethod
-from typing import Type, TypeVar
-from SpiffWorkflow.exceptions import WorkflowTaskException # type: ignore
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from typing import Callable
-from typing import Optional
-from typing import Set
 from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 
@@ -23,15 +20,13 @@ from spiffworkflow_backend.models.message_instance_correlation import (
     MessageInstanceCorrelationRuleModel,
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel  # noqa: F401
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
-
-
 
 
 class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
@@ -107,17 +102,17 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         serializer: BpmnWorkflowSerializer,
         process_instance: ProcessInstanceModel,
         bpmn_definition_to_task_definitions_mappings: dict,
-        secondary_engine_step_delegate: Optional[EngineStepDelegate] = None,
+        secondary_engine_step_delegate: EngineStepDelegate | None = None,
     ) -> None:
         self.secondary_engine_step_delegate = secondary_engine_step_delegate
         self.process_instance = process_instance
         self.bpmn_definition_to_task_definitions_mappings = bpmn_definition_to_task_definitions_mappings
         self.serializer = serializer
 
-        self.current_task_start_in_seconds: Optional[float] = None
+        self.current_task_start_in_seconds: float | None = None
 
-        self.last_completed_spiff_task: Optional[SpiffTask] = None
-        self.spiff_tasks_to_process: Set[UUID] = set()
+        self.last_completed_spiff_task: SpiffTask | None = None
+        self.spiff_tasks_to_process: set[UUID] = set()
         self.spiff_task_timestamps: dict[UUID, StartAndEndTimes] = {}
 
         self.task_service = TaskService(
@@ -364,9 +359,14 @@ class WorkflowExecutionService:
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
         except WorkflowTaskException as wte:
-            TaskService.add_event_to_process_instance(self.process_instance_model, ProcessInstanceEventType.task_failed.value, exception=wte, task_guid=str(wte.task.id))
+            TaskService.add_event_to_process_instance(
+                self.process_instance_model,
+                ProcessInstanceEventType.task_failed.value,
+                exception=wte,
+                task_guid=str(wte.task.id),
+            )
             self.execution_strategy.on_exception(self.bpmn_process_instance)
-            raise WorkflowExecutionServiceError.from_workflow_task_exception(wte)
+            raise WorkflowExecutionServiceError.from_workflow_task_exception(wte) from wte
         except SpiffWorkflowException as swe:
             self.execution_strategy.on_exception(self.bpmn_process_instance)
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe

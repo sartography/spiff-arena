@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 from typing import Optional
-from sqlalchemy.orm import relationship
-from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
+
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
 
 @dataclass
@@ -12,7 +14,7 @@ class ProcessInstanceErrorDetailModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
 
     process_instance_event_id: int = db.Column(ForeignKey("process_instance_event.id"), nullable=False, index=True)
-    process_instance_event = relationship('ProcessInstanceEventModel')  # type: ignore
+    process_instance_event = relationship("ProcessInstanceEventModel")  # type: ignore
 
     message: str = db.Column(db.String(1024), nullable=False)
 

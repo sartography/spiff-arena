@@ -1,10 +1,7 @@
 """Process_instance_processor."""
-
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
-import traceback
 import _strptime  # type: ignore
-from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 import copy
 import decimal
 import json
@@ -29,7 +26,6 @@ from uuid import UUID
 import dateparser
 import pytz
 from flask import current_app
-from flask import g
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
@@ -80,7 +76,6 @@ from spiffworkflow_backend.models.message_instance_correlation import (
 )
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
@@ -107,10 +102,8 @@ from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import JsonDataDict
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
-from spiffworkflow_backend.services.workflow_execution_service import (
-    ExecutionStrategyNotConfiguredError,
-    execution_strategy_named,
-)
+from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
+from spiffworkflow_backend.services.workflow_execution_service import ExecutionStrategyNotConfiguredError
 from spiffworkflow_backend.services.workflow_execution_service import (
     TaskModelSavingDelegate,
 )
@@ -228,6 +221,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         self.state.update(context)
         try:
             exec(script, self.state)  # noqa
+            return True
         finally:
             # since the task data is not directly mutated when the script executes, need to determine which keys
             # have been deleted from the environment and remove them from task data if present.
@@ -241,7 +235,6 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
             # the task data needs to be updated with the current state so data references can be resolved properly.
             # the state will be removed later once the task is completed.
             context.update(self.state)
-            return True
 
     def user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         keys_to_filter = self.non_user_defined_keys
@@ -1682,7 +1675,9 @@ class ProcessInstanceProcessor:
         if execution_strategy_name is None:
             execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
         if execution_strategy_name is None:
-            raise ExecutionStrategyNotConfiguredError("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set")
+            raise ExecutionStrategyNotConfiguredError(
+                "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
+            )
 
         execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
         execution_service = WorkflowExecutionService(

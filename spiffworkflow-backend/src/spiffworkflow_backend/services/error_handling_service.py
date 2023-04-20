@@ -1,11 +1,6 @@
-from typing import Union
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.services.task_service import TaskService
-
 from flask import current_app
 from flask import g
 
-from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -35,7 +30,9 @@ class ErrorHandlingService:
                 current_app.logger.error(e)
 
     @classmethod
-    def _update_process_instance_in_database(cls, process_instance: ProcessInstanceModel, fault_or_suspend_on_exception: str) -> None:
+    def _update_process_instance_in_database(
+        cls, process_instance: ProcessInstanceModel, fault_or_suspend_on_exception: str
+    ) -> None:
         # First, suspend or fault the instance
         if fault_or_suspend_on_exception == "suspend":
             cls._set_instance_status(
