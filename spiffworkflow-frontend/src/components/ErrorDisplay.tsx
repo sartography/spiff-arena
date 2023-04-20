@@ -1,6 +1,10 @@
 import { Notification } from './Notification';
 import useAPIError from '../hooks/UseApiError';
-import { ErrorForDisplay } from '../interfaces';
+import {
+  ErrorForDisplay,
+  ProcessInstanceEventErrorDetail,
+  ProcessInstanceLogEntry,
+} from '../interfaces';
 
 function errorDetailDisplay(
   errorObject: any,
@@ -18,6 +22,23 @@ function errorDetailDisplay(
   }
   return null;
 }
+
+export const errorForDisplayFromProcessInstanceErrorDetail = (
+  processInstanceEvent: ProcessInstanceLogEntry,
+  processInstanceErrorEventDetail: ProcessInstanceEventErrorDetail
+) => {
+  const errorForDisplay: ErrorForDisplay = {
+    message: processInstanceErrorEventDetail.message,
+    messageClassName: 'failure-string',
+    task_name: processInstanceEvent.task_definition_name,
+    task_id: processInstanceEvent.task_definition_identifier,
+    line_number: processInstanceErrorEventDetail.task_line_number,
+    error_line: processInstanceErrorEventDetail.task_line_contents,
+    task_trace: processInstanceErrorEventDetail.task_trace,
+    stacktrace: processInstanceErrorEventDetail.stacktrace,
+  };
+  return errorForDisplay;
+};
 
 export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
   let sentryLinkTag = null;

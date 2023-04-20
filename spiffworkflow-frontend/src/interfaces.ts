@@ -37,6 +37,7 @@ export interface EventDefinition {
   message_var?: string;
 }
 
+// TODO: merge with ProcessInstanceTask
 export interface Task {
   id: number;
   guid: string;
@@ -53,13 +54,6 @@ export interface Task {
   task_definition_properties_json: TaskDefinitionPropertiesJson;
 
   event_definition?: EventDefinition;
-}
-
-export interface TaskIds {
-  completed: Task[];
-  readyOrWaiting: Task[];
-  cancelled: Task[];
-  errored: Task[];
 }
 
 export interface ProcessInstanceTask {
