@@ -1,5 +1,6 @@
 import copy
 import time
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from typing import Callable
 from typing import Optional
 from typing import Set
@@ -329,6 +330,7 @@ class WorkflowExecutionService:
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
         except SpiffWorkflowException as swe:
+            TaskService.add_event_to_process_instance(self.process_instance_model, ProcessInstanceEventType.task_failed.value, exception=swe, task_guid=str(swe.task.id))
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:

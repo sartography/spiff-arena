@@ -17,7 +17,7 @@ class ProcessInstanceErrorDetailModel(SpiffworkflowBaseDBModel):
     message: str = db.Column(db.String(1024), nullable=False)
 
     # this should be 65k in mysql
-    stacktrace: str = db.Column(db.Text(), nullable=False)
+    stacktrace: Optional[list] = db.Column(db.JSON, nullable=False)
 
     task_line_number: Optional[int] = db.Column(db.Integer)
     task_offset: Optional[int] = db.Column(db.Integer)
