@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
@@ -17,7 +17,9 @@ export default function ProcessInterstitial() {
   const [state, setState] = useState<string>('RUNNING');
   const params = useParams();
   const navigate = useNavigate();
-  const userTasks = ['User Task', 'Manual Task'];
+  const userTasks = useMemo(() => {
+    return ['User Task', 'Manual Task'];
+  }, []);
 
   useEffect(() => {
     fetchEventSource(
@@ -54,7 +56,7 @@ export default function ProcessInterstitial() {
       return () => clearInterval(timerId);
     }
     return undefined;
-  }, [lastTask, navigate, userTasks]);
+  }, [lastTask, navigate, userTasks, shouldRedirect]);
 
   const getStatus = (): string => {
     if (!lastTask.can_complete && userTasks.includes(lastTask.type)) {
@@ -81,6 +83,8 @@ export default function ProcessInterstitial() {
         return <img src="/interstitial/waiting.png" alt="Waiting ...." />;
       case 'COMPLETED':
         return <img src="/interstitial/completed.png" alt="Completed" />;
+      default:
+        return <br />;
     }
   };
 
