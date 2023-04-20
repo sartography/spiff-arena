@@ -2019,7 +2019,7 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 400
 
         api_error = json.loads(response.get_data(as_text=True))
-        assert api_error["error_code"] == "task_error"
+        assert api_error["error_code"] == "unexpected_workflow_exception"
         assert 'TypeError:can only concatenate str (not "int") to str' in api_error["message"]
 
         process = db.session.query(ProcessInstanceModel).filter(ProcessInstanceModel.id == process_instance_id).first()
@@ -2099,7 +2099,7 @@ class TestProcessApi(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
         spiff_task = processor.get_task_by_bpmn_identifier("script_task_two", processor.bpmn_process_instance)
         assert spiff_task is not None
-        assert spiff_task.state == TaskState.WAITING
+        assert spiff_task.state == TaskState.ERROR
         assert spiff_task.data == {"my_var": "THE VAR"}
 
     def test_process_model_file_create(
