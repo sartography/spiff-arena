@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ErrorOutline } from '@carbon/icons-react';
 import {
   Table,
   Tabs,
@@ -10,6 +11,8 @@ import {
   Button,
   TextInput,
   ComboBox,
+  Modal,
+  Loading,
   // @ts-ignore
 } from '@carbon/react';
 import {
@@ -28,8 +31,17 @@ import {
 } from '../helpers';
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { ProcessInstanceLogEntry } from '../interfaces';
+import {
+  PermissionsToCheck,
+  ProcessInstanceEventErrorDetail,
+  ProcessInstanceLogEntry,
+} from '../interfaces';
 import Filters from '../components/Filters';
+import { usePermissionFetcher } from '../hooks/PermissionService';
+import {
+  childrenForErrorObject,
+  errorForDisplayFromProcessInstanceErrorDetail,
+} from '../components/ErrorDisplay';
 
 type OwnProps = {
   variant: string;
@@ -47,10 +59,16 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const [taskTypes, setTaskTypes] = useState<string[]>([]);
   const [eventTypes, setEventTypes] = useState<string[]>([]);
 
-  const { targetUris } = useUriListForPermissions();
-  const isDetailedView = searchParams.get('detailed') === 'true';
+  const [eventForModal, setEventForModal] =
+    useState<ProcessInstanceLogEntry | null>(null);
+  const [eventErrorDetails, setEventErrorDetails] =
+    useState<ProcessInstanceEventErrorDetail | null>(null);
 
-  const taskNameHeader = isDetailedView ? 'Task Name' : 'Milestone';
+  const { targetUris } = useUriListForPermissions();
+  const permissionRequestData: PermissionsToCheck = {
+    [targetUris.processInstanceErrorEventDetails]: ['GET'],
+  };
+  const { ability } = usePermissionFetcher(permissionRequestData);
 
   const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
 
@@ -58,6 +76,8 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}`;
   }
+  const isDetailedView = searchParams.get('detailed') === 'true';
+  const taskNameHeader = isDetailedView ? 'Task Name' : 'Milestone';
 
   const updateSearchParams = (value: string, key: string) => {
     if (value) {
@@ -128,6 +148,92 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     isDetailedView,
   ]);
 
+  const handleErrorEventModalClose = () => {
+    setEventForModal(null);
+    setEventErrorDetails(null);
+  };
+
+  const errorEventModal = () => {
+    if (eventForModal) {
+      const modalHeading = 'Event Error Details';
+      let errorMessageTag = (
+        <Loading className="some-class" withOverlay={false} small />
+      );
+      if (eventErrorDetails) {
+        const errorForDisplay = errorForDisplayFromProcessInstanceErrorDetail(
+          eventForModal,
+          eventErrorDetails
+        );
+        const errorChildren = childrenForErrorObject(errorForDisplay);
+        // eslint-disable-next-line react/jsx-no-useless-fragment
+        errorMessageTag = <>{errorChildren}</>;
+      }
+      return (
+        <Modal
+          open={!!eventForModal}
+          passiveModal
+          onRequestClose={handleErrorEventModalClose}
+          modalHeading={modalHeading}
+          modalLabel="Error Details"
+        >
+          {errorMessageTag}
+        </Modal>
+      );
+    }
+    return null;
+  };
+
+  const handleErrorDetailsReponse = (
+    results: ProcessInstanceEventErrorDetail
+  ) => {
+    setEventErrorDetails(results);
+  };
+
+  const getErrorDetailsForEvent = (logEntry: ProcessInstanceLogEntry) => {
+    setEventForModal(logEntry);
+    if (ability.can('GET', targetUris.processInstanceErrorEventDetails)) {
+      HttpService.makeCallToBackend({
+        path: `${targetUris.processInstanceErrorEventDetails}/${logEntry.id}`,
+        httpMethod: 'GET',
+        successCallback: handleErrorDetailsReponse,
+        failureCallback: (error: any) => {
+          const errorObject: ProcessInstanceEventErrorDetail = {
+            id: 0,
+            message: `ERROR retrieving error details: ${error.message}`,
+            stacktrace: [],
+          };
+          setEventErrorDetails(errorObject);
+        },
+      });
+    }
+  };
+
+  const eventTypeCell = (logEntry: ProcessInstanceLogEntry) => {
+    if (
+      ['process_instance_error', 'task_failed'].includes(logEntry.event_type)
+    ) {
+      const errorTitle = 'Event has an error';
+      const errorIcon = (
+        <>
+          &nbsp;
+          <ErrorOutline className="red-icon" />
+        </>
+      );
+      return (
+        <Button
+          kind="ghost"
+          className="button-link"
+          onClick={() => getErrorDetailsForEvent(logEntry)}
+          title={errorTitle}
+        >
+          {logEntry.event_type}
+          {errorIcon}
+        </Button>
+      );
+    }
+    return logEntry.event_type;
+  };
+
   const getTableRow = (logEntry: ProcessInstanceLogEntry) => {
     const tableRow = [];
     const taskNameCell = (
@@ -164,7 +270,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         <>
           <td>{logEntry.task_definition_identifier}</td>
           <td>{logEntry.bpmn_task_type}</td>
-          <td>{logEntry.event_type}</td>
+          <td>{eventTypeCell(logEntry)}</td>
           <td>
             {logEntry.username || (
               <span className="system-user-log-entry">system</span>
@@ -405,6 +511,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         ]}
       />
       {tabs()}
+      {errorEventModal()}
       <Filters
         filterOptions={filterOptions}
         showFilterOptions={showFilterOptions}

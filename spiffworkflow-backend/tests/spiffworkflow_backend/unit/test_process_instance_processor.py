@@ -10,12 +10,12 @@ from SpiffWorkflow.task import TaskState
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.models.user import UserModel
@@ -29,6 +29,7 @@ from spiffworkflow_backend.services.process_instance_processor import (
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 
 class TestProcessInstanceProcessor(BaseTest):
@@ -720,7 +721,7 @@ class TestProcessInstanceProcessor(BaseTest):
         spiff_task = processor.get_task_by_guid(human_task_three.task_id)
         ProcessInstanceService.complete_form_task(processor, spiff_task, {}, initiator_user, human_task_three)
 
-    def test_task_data_is_set_even_if_process_instance_errors(
+    def test_task_data_is_set_even_if_process_instance_errors_and_creates_task_failed_event(
         self,
         app: Flask,
         client: FlaskClient,
@@ -738,7 +739,7 @@ class TestProcessInstanceProcessor(BaseTest):
         )
 
         processor = ProcessInstanceProcessor(process_instance)
-        with pytest.raises(ApiError):
+        with pytest.raises(WorkflowExecutionServiceError):
             processor.do_engine_steps(save=True)
 
         process_instance_final = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
@@ -748,5 +749,22 @@ class TestProcessInstanceProcessor(BaseTest):
             "script_task_two", processor_final.bpmn_process_instance
         )
         assert spiff_task is not None
-        assert spiff_task.state == TaskState.WAITING
+        assert spiff_task.state == TaskState.ERROR
         assert spiff_task.data == {"my_var": "THE VAR"}
+
+        process_instance_events = process_instance.process_instance_events
+        assert len(process_instance_events) == 4
+        error_events = [
+            e for e in process_instance_events if e.event_type == ProcessInstanceEventType.task_failed.value
+        ]
+        assert len(error_events) == 1
+        error_event = error_events[0]
+        assert error_event.task_guid is not None
+        process_instance_error_details = error_event.error_details
+        assert len(process_instance_error_details) == 1
+        error_detail = process_instance_error_details[0]
+        assert error_detail.message == "NameError:name 'hey' is not defined.  Did you mean 'my_var'?"
+        assert error_detail.task_offset is None
+        assert error_detail.task_line_number == 1
+        assert error_detail.task_line_contents == "hey"
+        assert error_detail.task_trace is not None

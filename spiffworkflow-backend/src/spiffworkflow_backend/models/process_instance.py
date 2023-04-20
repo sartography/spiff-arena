@@ -229,7 +229,6 @@ class ProcessInstanceApiSchema(Schema):
             "next_task",
             "process_model_identifier",
             "process_model_display_name",
-            "completed_tasks",
             "updated_at_in_seconds",
         ]
         unknown = INCLUDE
@@ -246,7 +245,6 @@ class ProcessInstanceApiSchema(Schema):
             "next_task",
             "process_model_identifier",
             "process_model_display_name",
-            "completed_tasks",
             "updated_at_in_seconds",
         ]
         filtered_fields = {key: data[key] for key in keys}

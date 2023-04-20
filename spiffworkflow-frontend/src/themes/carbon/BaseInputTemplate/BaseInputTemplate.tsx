@@ -102,7 +102,11 @@ export default function BaseInputTemplate<
     // it should in be y-m-d when it gets here.
     let dateValue: string | null = '';
     if (value || value === 0) {
-      dateValue = ymdDateStringToConfiguredFormat(value);
+      if (value.length < 10) {
+        dateValue = value;
+      } else {
+        dateValue = ymdDateStringToConfiguredFormat(value);
+      }
     }
 
     component = (

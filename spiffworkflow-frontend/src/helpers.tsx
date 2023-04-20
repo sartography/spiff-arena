@@ -71,9 +71,6 @@ export const convertDateObjectToFormattedString = (dateObject: Date) => {
 };
 
 export const dateStringToYMDFormat = (dateString: string) => {
-  if (dateString.length < 10) {
-    return dateString;
-  }
   if (DATE_FORMAT.startsWith('dd')) {
     const d = dateString.split('-');
     return `${d[2]}-${d[1]}-${d[0]}`;
@@ -107,12 +104,15 @@ export const convertDateAndTimeStringsToSeconds = (
 };
 
 export const convertStringToDate = (dateString: string) => {
-  return convertDateAndTimeStringsToSeconds(dateString, '00:10:00');
+  return convertDateAndTimeStringsToDate(dateString, '00:10:00');
 };
 
 export const ymdDateStringToConfiguredFormat = (dateString: string) => {
   const dateObject = convertStringToDate(dateString);
-  return convertDateObjectToFormattedString(dateObject);
+  if (dateObject) {
+    return convertDateObjectToFormattedString(dateObject);
+  }
+  return null;
 };
 
 export const convertSecondsToDateObject = (seconds: number) => {
@@ -155,7 +155,10 @@ export const convertSecondsToFormattedDateString = (seconds: number) => {
 
 export const convertDateStringToSeconds = (dateString: string) => {
   const dateObject = convertStringToDate(dateString);
-  return convertDateToSeconds(dateObject);
+  if (dateObject) {
+    return convertDateToSeconds(dateObject);
+  }
+  return null;
 };
 
 export const objectIsEmpty = (obj: object) => {
