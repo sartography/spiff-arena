@@ -113,6 +113,28 @@ class TestSpecFileService(BaseTest):
         assert bpmn_process_id_lookups[0].identifier == bpmn_process_identifier
         assert bpmn_process_id_lookups[0].relative_path == self.call_activity_nested_relative_file_path
 
+    # this is really a test of your configuration.
+    # sqlite and postgres are case sensitive by default,
+    # but mysql is not, and our app requires that it be.
+    def test_database_is_case_sensitive(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_id_lookup = SpecReferenceCache(
+            identifier="HOT",
+            type="process",
+        )
+        db.session.add(process_id_lookup)
+        db.session.commit()
+        process_id_lookup = SpecReferenceCache(
+            identifier="hot",
+            type="process",
+        )
+        db.session.add(process_id_lookup)
+        db.session.commit()
+
+
     def test_change_the_identifier_cleans_up_cache(
         self,
         app: Flask,
