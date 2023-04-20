@@ -22,6 +22,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -112,6 +113,7 @@ class SpecFileService(FileSystemService):
         messages = {}
         correlations = {}
         start_messages = []
+        called_element_ids = []
         if file_type.value == FileType.bpmn.value:
             parser.add_bpmn_xml(cls.get_etree_from_xml_bytes(binary_data))
             parser_type = "process"
@@ -130,6 +132,7 @@ class SpecFileService(FileSystemService):
                 is_executable = sub_parser.process_executable
                 start_messages = sub_parser.start_messages()
                 is_primary = sub_parser.get_id() == process_model_info.primary_process_id
+                called_element_ids = sub_parser.called_element_ids()
 
             references.append(
                 SpecReference(
@@ -145,6 +148,7 @@ class SpecFileService(FileSystemService):
                     is_primary=is_primary,
                     correlations=correlations,
                     start_messages=start_messages,
+                    called_element_ids=called_element_ids,
                 )
             )
         return references
@@ -258,6 +262,7 @@ class SpecFileService(FileSystemService):
     def update_caches(ref: SpecReference) -> None:
         """Update_caches."""
         SpecFileService.update_process_cache(ref)
+        SpecFileService.update_process_caller_cache(ref)
         SpecFileService.update_message_cache(ref)
         SpecFileService.update_message_trigger_cache(ref)
         SpecFileService.update_correlation_cache(ref)
@@ -265,15 +270,27 @@ class SpecFileService(FileSystemService):
     @staticmethod
     def clear_caches_for_file(file_name: str, process_model_info: ProcessModelInfo) -> None:
         """Clear all caches related to a file."""
-        db.session.query(SpecReferenceCache).filter(SpecReferenceCache.file_name == file_name).filter(
-            SpecReferenceCache.process_model_id == process_model_info.id
-        ).delete()
+        records = (
+            db.session.query(SpecReferenceCache)
+            .filter(SpecReferenceCache.file_name == file_name)
+            .filter(SpecReferenceCache.process_model_id == process_model_info.id)
+            .all()
+        )
+
+        process_ids = []
+
+        for record in records:
+            process_ids.append(record.identifier)
+            db.session.delete(record)
+
+        ProcessCallerService.clear_cache_for_process_ids(process_ids)
         # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
 
     @staticmethod
     def clear_caches() -> None:
         """Clear_caches."""
         db.session.query(SpecReferenceCache).delete()
+        ProcessCallerService.clear_cache()
         # fixme:  likely the other caches should be cleared as well, but we don't have a clean way to do so yet.
 
     @staticmethod
@@ -300,6 +317,10 @@ class SpecFileService(FileSystemService):
                     process_id_lookup.relative_path = ref.relative_path
                     db.session.add(process_id_lookup)
                     db.session.commit()
+
+    @staticmethod
+    def update_process_caller_cache(ref: SpecReference) -> None:
+        ProcessCallerService.add_caller(ref.identifier, ref.called_element_ids)
 
     @staticmethod
     def update_message_cache(ref: SpecReference) -> None:

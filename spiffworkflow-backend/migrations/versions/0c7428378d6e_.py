@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 5dae229f0a9b
+Revision ID: 0c7428378d6e
 Revises: 
-Create Date: 2023-04-20 08:19:03.409112
+Create Date: 2023-04-20 14:05:44.779453
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '5dae229f0a9b'
+revision = '0c7428378d6e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -84,6 +84,15 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uri')
     )
+    op.create_table('process_caller_cache',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_identifier', sa.String(length=255), nullable=True),
+    sa.Column('calling_process_identifier', sa.String(length=255), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('process_caller_cache', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_process_caller_cache_process_identifier'), ['process_identifier'], unique=False)
+
     op.create_table('spec_reference_cache',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('identifier', sa.String(length=255), nullable=True),
@@ -626,6 +635,10 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_spec_reference_cache_display_name'))
 
     op.drop_table('spec_reference_cache')
+    with op.batch_alter_table('process_caller_cache', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_process_caller_cache_process_identifier'))
+
+    op.drop_table('process_caller_cache')
     op.drop_table('permission_target')
     with op.batch_alter_table('message_triggerable_process_model', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_message_triggerable_process_model_process_model_identifier'))
