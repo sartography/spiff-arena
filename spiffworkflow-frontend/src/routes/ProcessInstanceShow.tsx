@@ -47,7 +47,6 @@ import {
   ProcessInstanceMetadata,
   Task,
   TaskDefinitionPropertiesJson,
-  TaskIds,
 } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
@@ -228,30 +227,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       successCallback: refreshPage,
       httpMethod: 'POST',
     });
-  };
-
-  const getTaskIds = () => {
-    const taskIds: TaskIds = {
-      completed: [],
-      readyOrWaiting: [],
-      cancelled: [],
-      errored: [],
-    };
-    if (tasks) {
-      tasks.forEach(function getUserTasksElement(task: Task) {
-        if (task.state === 'COMPLETED') {
-          taskIds.completed.push(task);
-        } else if (task.state === 'READY' || task.state === 'WAITING') {
-          taskIds.readyOrWaiting.push(task);
-        } else if (task.state === 'CANCELLED') {
-          taskIds.cancelled.push(task);
-        } else if (task.state === 'ERROR') {
-          taskIds.errored.push(task);
-        }
-        return null;
-      });
-    }
-    return taskIds;
   };
 
   const currentToTaskGuid = () => {
@@ -1101,7 +1076,6 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
   };
 
   if (processInstance && (tasks || tasksCallHadError)) {
-    const taskIds = getTaskIds();
     const processModelId = unModifyProcessIdentifierForPathParam(
       params.process_model_id ? params.process_model_id : ''
     );
@@ -1159,10 +1133,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           processModelId={processModelId || ''}
           diagramXML={processInstance.bpmn_xml_file_contents || ''}
           fileName={processInstance.bpmn_xml_file_contents || ''}
-          readyOrWaitingProcessInstanceTasks={taskIds.readyOrWaiting}
-          completedProcessInstanceTasks={taskIds.completed}
-          cancelledProcessInstanceTasks={taskIds.cancelled}
-          erroredProcessInstanceTasks={taskIds.errored}
+          tasks={tasks}
           diagramType="readonly"
           onElementClick={handleClickedDiagramTask}
         />

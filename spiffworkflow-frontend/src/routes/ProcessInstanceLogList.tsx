@@ -32,14 +32,16 @@ import {
 import HttpService from '../services/HttpService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
-  ErrorForDisplay,
   PermissionsToCheck,
   ProcessInstanceEventErrorDetail,
   ProcessInstanceLogEntry,
 } from '../interfaces';
 import Filters from '../components/Filters';
 import { usePermissionFetcher } from '../hooks/PermissionService';
-import { childrenForErrorObject } from '../components/ErrorDisplay';
+import {
+  childrenForErrorObject,
+  errorForDisplayFromProcessInstanceErrorDetail,
+} from '../components/ErrorDisplay';
 
 type OwnProps = {
   variant: string;
@@ -158,17 +160,12 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         <Loading className="some-class" withOverlay={false} small />
       );
       if (eventErrorDetails) {
-        const errorForDisplay: ErrorForDisplay = {
-          message: eventErrorDetails.message,
-          messageClassName: 'failure-string',
-          task_name: eventForModal.task_definition_name,
-          task_id: eventForModal.task_definition_identifier,
-          line_number: eventErrorDetails.task_line_number,
-          error_line: eventErrorDetails.task_line_contents,
-          task_trace: eventErrorDetails.task_trace,
-          stacktrace: eventErrorDetails.stacktrace,
-        };
+        const errorForDisplay = errorForDisplayFromProcessInstanceErrorDetail(
+          eventForModal,
+          eventErrorDetails
+        );
         const errorChildren = childrenForErrorObject(errorForDisplay);
+        // eslint-disable-next-line react/jsx-no-useless-fragment
         errorMessageTag = <>{errorChildren}</>;
       }
       return (
