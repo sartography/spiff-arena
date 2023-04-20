@@ -167,12 +167,12 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
           task_trace: eventErrorDetails.task_trace,
         };
         const errorChildren = childrenForErrorObject(errorForDisplay);
+        // <pre>{eventErrorDetails.stacktrace}</pre>
         errorMessageTag = (
           <>
             <p className="failure-string">{eventErrorDetails.message}</p>
             <br />
             {errorChildren}
-            <pre>{eventErrorDetails.stacktrace}</pre>
           </>
         );
       }
