@@ -113,20 +113,9 @@ class ProcessInstanceService:
             .all()
         )
         for process_instance in records:
+            current_app.logger.info(f"Processing process_instance {process_instance.id}")
             try:
-                current_app.logger.info(f"Processing process_instance {process_instance.id}")
-                with ProcessInstanceQueueService.dequeued(process_instance):
-                    processor = ProcessInstanceProcessor(process_instance)
-                if cls.can_optimistically_skip(processor, status_value):
-                    current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
-                    continue
-
-                db.session.refresh(process_instance)
-                if process_instance.status == status_value:
-                    execution_strategy_name = current_app.config[
-                        "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"
-                    ]
-                    processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+                cls.run_process_intance_with_processor(process_instance, status_value=status_value)
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
@@ -136,6 +125,26 @@ class ProcessInstanceService:
                     + f"({process_instance.process_model_identifier}). {str(e)}"
                 )
                 current_app.logger.error(error_message)
+
+    @classmethod
+    def run_process_intance_with_processor(
+        cls, process_instance: ProcessInstanceModel, status_value: Optional[str] = None
+    ) -> Optional[ProcessInstanceProcessor]:
+        processor = None
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            processor = ProcessInstanceProcessor(process_instance)
+        if status_value and cls.can_optimistically_skip(processor, status_value):
+            current_app.logger.info(f"Optimistically skipped process_instance {process_instance.id}")
+            return None
+
+        db.session.refresh(process_instance)
+        if status_value is None or process_instance.status == status_value:
+            execution_strategy_name = current_app.config[
+                "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"
+            ]
+            processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
+
+        return processor
 
     @staticmethod
     def processor_to_process_instance_api(
@@ -155,7 +164,6 @@ class ProcessInstanceService:
             next_task=None,
             process_model_identifier=processor.process_model_identifier,
             process_model_display_name=processor.process_model_display_name,
-            completed_tasks=processor.process_instance_model.completed_tasks,
             updated_at_in_seconds=processor.process_instance_model.updated_at_in_seconds,
         )
 
@@ -322,19 +330,20 @@ class ProcessInstanceService:
 
         cls.replace_file_data_with_digest_references(data, models)
 
-    @staticmethod
+    @classmethod
     def update_form_task_data(
-        processor: ProcessInstanceProcessor,
+        cls,
+        process_instance: ProcessInstanceModel,
         spiff_task: SpiffTask,
         data: dict[str, Any],
         user: UserModel,
     ) -> None:
-        AuthorizationService.assert_user_can_complete_spiff_task(processor.process_instance_model.id, spiff_task, user)
-        ProcessInstanceService.save_file_data_and_replace_with_digest_references(
+        AuthorizationService.assert_user_can_complete_spiff_task(process_instance.id, spiff_task, user)
+        cls.save_file_data_and_replace_with_digest_references(
             data,
-            processor.process_instance_model.id,
+            process_instance.id,
         )
-        dot_dct = ProcessInstanceService.create_dot_dict(data)
+        dot_dct = cls.create_dot_dict(data)
         spiff_task.update_data(dot_dct)
 
     @staticmethod
@@ -350,7 +359,7 @@ class ProcessInstanceService:
         Abstracted here because we need to do it multiple times when completing all tasks in
         a multi-instance task.
         """
-        ProcessInstanceService.update_form_task_data(processor, spiff_task, data, user)
+        ProcessInstanceService.update_form_task_data(processor.process_instance_model, spiff_task, data, user)
         # ProcessInstanceService.post_process_form(spiff_task)  # some properties may update the data store.
         processor.complete_task(spiff_task, human_task, user=user)
 

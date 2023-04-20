@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
@@ -13,6 +14,7 @@ from spiffworkflow_backend.models.user import UserModel
 
 # event types take the form [SUBJECT]_[PAST_TENSE_VERB] since subject is not always the same.
 class ProcessInstanceEventType(SpiffEnum):
+    process_instance_error = "process_instance_error"
     process_instance_resumed = "process_instance_resumed"
     process_instance_rewound_to_task = "process_instance_rewound_to_task"
     process_instance_suspended = "process_instance_suspended"
@@ -36,6 +38,10 @@ class ProcessInstanceEventModel(SpiffworkflowBaseDBModel):
     timestamp: float = db.Column(db.DECIMAL(17, 6), nullable=False, index=True)
 
     user_id = db.Column(ForeignKey(UserModel.id), nullable=True, index=True)  # type: ignore
+
+    error_details = relationship(
+        "ProcessInstanceErrorDetailModel", back_populates="process_instance_event", cascade="delete"
+    )  # type: ignore
 
     @validates("event_type")
     def validate_event_type(self, key: str, value: Any) -> Any:
