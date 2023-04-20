@@ -53,8 +53,7 @@ export default function ProcessInterstitial() {
       return () => clearInterval(timerId);
     }
     return undefined;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastTask]);
+  }, [lastTask, navigate, userTasks]);
 
   const processStatusImage = () => {
     if (status !== 'running') {
