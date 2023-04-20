@@ -160,21 +160,16 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       if (eventErrorDetails) {
         const errorForDisplay: ErrorForDisplay = {
           message: eventErrorDetails.message,
+          messageClassName: 'failure-string',
           task_name: eventForModal.task_definition_name,
           task_id: eventForModal.task_definition_identifier,
           line_number: eventErrorDetails.task_line_number,
           error_line: eventErrorDetails.task_line_contents,
           task_trace: eventErrorDetails.task_trace,
+          stacktrace: eventErrorDetails.stacktrace,
         };
         const errorChildren = childrenForErrorObject(errorForDisplay);
-        // <pre>{eventErrorDetails.stacktrace}</pre>
-        errorMessageTag = (
-          <>
-            <p className="failure-string">{eventErrorDetails.message}</p>
-            <br />
-            {errorChildren}
-          </>
-        );
+        errorMessageTag = <>{errorChildren}</>;
       }
       return (
         <Modal
@@ -207,8 +202,8 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         failureCallback: (error: any) => {
           const errorObject: ProcessInstanceEventErrorDetail = {
             id: 0,
-            message: `ERROR: ${error.message}`,
-            stacktrace: '',
+            message: `ERROR retrieving error details: ${error.message}`,
+            stacktrace: [],
           };
           setEventErrorDetails(errorObject);
         },
@@ -218,7 +213,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
 
   const eventTypeCell = (logEntry: ProcessInstanceLogEntry) => {
     if (
-      ['process_instance_error', 'task_error'].includes(logEntry.event_type)
+      ['process_instance_error', 'task_failed'].includes(logEntry.event_type)
     ) {
       const errorTitle = 'Event has an error';
       const errorIcon = (

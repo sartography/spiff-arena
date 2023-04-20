@@ -234,6 +234,8 @@ export type HotCrumbItem = HotCrumbItemArray | HotCrumbItemObject;
 
 export interface ErrorForDisplay {
   message: string;
+
+  messageClassName?: string;
   sentry_link?: string;
   task_name?: string;
   task_id?: string;
@@ -241,6 +243,7 @@ export interface ErrorForDisplay {
   error_line?: string;
   file_name?: string;
   task_trace?: string[];
+  stacktrace?: string[];
 }
 
 export interface AuthenticationParam {
@@ -301,7 +304,7 @@ export interface JsonSchemaForm {
 export interface ProcessInstanceEventErrorDetail {
   id: number;
   message: string;
-  stacktrace: string;
+  stacktrace: string[];
   task_line_contents?: string;
   task_line_number?: number;
   task_offset?: number;

@@ -34,7 +34,9 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
     );
   }
 
-  const message = <div>{errorObject.message}</div>;
+  const message = (
+    <div className={errorObject.messageClassName}>{errorObject.message}</div>
+  );
   const taskName = errorDetailDisplay(errorObject, 'task_name', 'Task Name');
   const taskId = errorDetailDisplay(errorObject, 'task_id', 'Task ID');
   const fileName = errorDetailDisplay(errorObject, 'file_name', 'File Name');
@@ -44,13 +46,25 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
     'Line Number'
   );
   const errorLine = errorDetailDisplay(errorObject, 'error_line', 'Context');
-  let taskTrace = null;
+  let codeTrace = null;
   if (errorObject.task_trace && errorObject.task_trace.length > 0) {
-    taskTrace = (
+    codeTrace = (
       <div className="error_info">
         <span className="error_title">Call Activity Trace:</span>
         {errorObject.task_trace.reverse().join(' -> ')}
       </div>
+    );
+  } else if (errorObject.stacktrace) {
+    codeTrace = (
+      <pre className="error_info">
+        <span className="error_title">Stacktrace:</span>
+        {errorObject.stacktrace.reverse().map((a) => (
+          <>
+            {a}
+            <br />
+          </>
+        ))}
+      </pre>
     );
   }
 
@@ -63,7 +77,7 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
     fileName,
     lineNumber,
     errorLine,
-    taskTrace,
+    codeTrace,
   ];
 };
 

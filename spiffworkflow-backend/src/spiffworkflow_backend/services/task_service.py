@@ -619,7 +619,7 @@ class TaskService:
 
         if exception is not None:
             # truncate to avoid database errors on large values. We observed that text in mysql is 65K.
-            stacktrace = traceback.format_exc()[0:63999]
+            stacktrace = traceback.format_exc().split("\n")
             message = str(exception)[0:1023]
 
             task_line_number = None

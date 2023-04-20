@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: e0510795b643
+Revision ID: 5dae229f0a9b
 Revises: 
-Create Date: 2023-04-19 14:36:11.004444
+Create Date: 2023-04-20 08:19:03.409112
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = 'e0510795b643'
+revision = '5dae229f0a9b'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -467,7 +467,7 @@ def upgrade():
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('process_instance_event_id', sa.Integer(), nullable=False),
     sa.Column('message', sa.String(length=1024), nullable=False),
-    sa.Column('stacktrace', sa.Text(), nullable=False),
+    sa.Column('stacktrace', sa.JSON(), nullable=False),
     sa.Column('task_line_number', sa.Integer(), nullable=True),
     sa.Column('task_offset', sa.Integer(), nullable=True),
     sa.Column('task_line_contents', sa.String(length=255), nullable=True),
