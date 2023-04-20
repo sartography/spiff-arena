@@ -519,6 +519,31 @@ paths:
               schema:
                 type: string
 
+  /processes/{bpmn_process_identifier}/callers:
+    parameters:
+      - name: bpmn_process_identifier
+        in: path
+        required: true
+        description: the modified process model id
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_caller_lists
+      summary:
+        Return a list of information about all processes that call the provided process id
+      tags:
+        - Process Models
+      responses:
+        "200":
+          description: Successfully return the requested calling processes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Process"
+
+
   /processes:
     get:
       operationId: spiffworkflow_backend.routes.process_api_blueprint.process_list
