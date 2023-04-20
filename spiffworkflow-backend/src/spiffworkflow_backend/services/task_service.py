@@ -3,6 +3,7 @@ import json
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from SpiffWorkflow.exceptions import WorkflowTaskException # type: ignore
 from flask import g
+from spiffworkflow_backend.models import process_instance_error_detail
 from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 import traceback
 import time
@@ -117,7 +118,6 @@ class TaskService:
     def update_task_model_with_spiff_task(
         self,
         spiff_task: SpiffTask,
-        task_failed: bool = False,
         start_and_end_times: Optional[StartAndEndTimes] = None,
     ) -> TaskModel:
         new_bpmn_process = None
@@ -158,20 +158,11 @@ class TaskService:
             task_model.start_in_seconds = start_and_end_times["start_in_seconds"]
             task_model.end_in_seconds = start_and_end_times["end_in_seconds"]
 
-        if task_model.state == "COMPLETED" or task_failed:
+        # let failed tasks raise and we will log the event then
+        if task_model.state == "COMPLETED":
             event_type = ProcessInstanceEventType.task_completed.value
-            if task_failed or task_model.state == TaskState.ERROR:
-                event_type = ProcessInstanceEventType.task_failed.value
-
-            # FIXME: some failed tasks will currently not have either timestamp since we only hook into spiff when tasks complete
-            #   which script tasks execute when READY.
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
-            process_instance_event = ProcessInstanceEventModel(
-                task_guid=task_model.guid,
-                process_instance_id=self.process_instance.id,
-                event_type=event_type,
-                timestamp=timestamp,
-            )
+            process_instance_event, _process_instance_error_detail = TaskService.add_event_to_process_instance(self.process_instance, event_type, task_guid=task_model.guid, timestamp=timestamp, add_to_db_session=False)
             self.process_instance_events[task_model.guid] = process_instance_event
 
         self.update_bpmn_process(spiff_task.workflow, bpmn_process)
@@ -607,16 +598,24 @@ class TaskService:
         task_guid: Optional[str] = None,
         user_id: Optional[int] = None,
         exception: Optional[Exception] = None,
-    ) -> None:
+        timestamp: Optional[float] = None,
+        add_to_db_session: Optional[bool] = True,
+    ) -> Tuple[ProcessInstanceEventModel, Optional[ProcessInstanceErrorDetailModel]]:
         if user_id is None and hasattr(g, "user") and g.user:
             user_id = g.user.id
+        if timestamp is None:
+            timestamp = time.time()
+
         process_instance_event = ProcessInstanceEventModel(
-            process_instance_id=process_instance.id, event_type=event_type, timestamp=time.time(), user_id=user_id
+            process_instance_id=process_instance.id, event_type=event_type, timestamp=timestamp, user_id=user_id
         )
         if task_guid:
             process_instance_event.task_guid = task_guid
-        db.session.add(process_instance_event)
 
+        if add_to_db_session:
+            db.session.add(process_instance_event)
+
+        process_instance_error_detail = None
         if exception is not None:
             # truncate to avoid database errors on large values. We observed that text in mysql is 65K.
             stacktrace = traceback.format_exc().split("\n")
@@ -641,4 +640,7 @@ class TaskService:
                 task_trace=task_trace,
                 task_offset=task_offset,
             )
-            db.session.add(process_instance_error_detail)
+
+            if add_to_db_session:
+                db.session.add(process_instance_error_detail)
+        return (process_instance_event, process_instance_error_detail)

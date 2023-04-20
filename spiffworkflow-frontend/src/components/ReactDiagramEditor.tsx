@@ -69,6 +69,7 @@ type OwnProps = {
   readyOrWaitingProcessInstanceTasks?: Task[] | null;
   completedProcessInstanceTasks?: Task[] | null;
   cancelledProcessInstanceTasks?: Task[] | null;
+  erroredProcessInstanceTasks?: Task[] | null;
   saveDiagram?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
   isPrimaryFile?: boolean;
@@ -96,6 +97,7 @@ export default function ReactDiagramEditor({
   readyOrWaitingProcessInstanceTasks,
   completedProcessInstanceTasks,
   cancelledProcessInstanceTasks,
+  erroredProcessInstanceTasks,
   saveDiagram,
   onDeleteFile,
   isPrimaryFile,
@@ -453,6 +455,19 @@ export default function ReactDiagramEditor({
             canvas,
             cancelledTask,
             'cancelled-task-highlight',
+            bpmnProcessIdentifiers
+          );
+        });
+      }
+      if (erroredProcessInstanceTasks) {
+        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
+          canvas.getRootElement()
+        );
+        erroredProcessInstanceTasks.forEach((erroredTask) => {
+          highlightBpmnIoElement(
+            canvas,
+            erroredTask,
+            'errored-task-highlight',
             bpmnProcessIdentifiers
           );
         });

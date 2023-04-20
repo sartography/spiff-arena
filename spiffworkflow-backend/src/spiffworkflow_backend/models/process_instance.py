@@ -205,7 +205,6 @@ class ProcessInstanceApi:
         next_task: Task | None,
         process_model_identifier: str,
         process_model_display_name: str,
-        completed_tasks: int,
         updated_at_in_seconds: int,
     ) -> None:
         """__init__."""
@@ -214,7 +213,6 @@ class ProcessInstanceApi:
         self.next_task = next_task  # The next task that requires user input.
         self.process_model_identifier = process_model_identifier
         self.process_model_display_name = process_model_display_name
-        self.completed_tasks = completed_tasks
         self.updated_at_in_seconds = updated_at_in_seconds
 
 
@@ -231,7 +229,6 @@ class ProcessInstanceApiSchema(Schema):
             "next_task",
             "process_model_identifier",
             "process_model_display_name",
-            "completed_tasks",
             "updated_at_in_seconds",
         ]
         unknown = INCLUDE
@@ -248,7 +245,6 @@ class ProcessInstanceApiSchema(Schema):
             "next_task",
             "process_model_identifier",
             "process_model_display_name",
-            "completed_tasks",
             "updated_at_in_seconds",
         ]
         filtered_fields = {key: data[key] for key in keys}

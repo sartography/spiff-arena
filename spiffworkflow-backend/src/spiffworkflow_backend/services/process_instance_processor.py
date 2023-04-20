@@ -108,6 +108,7 @@ from spiffworkflow_backend.services.task_service import JsonDataDict
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import (
+    ExecutionStrategyNotConfiguredError,
     execution_strategy_named,
 )
 from spiffworkflow_backend.services.workflow_execution_service import (
@@ -162,9 +163,10 @@ class BoxedTaskDataBasedScriptEngineEnvironment(BoxedTaskDataEnvironment):  # ty
         script: str,
         context: Dict[str, Any],
         external_methods: Optional[Dict[str, Any]] = None,
-    ) -> None:
+    ) -> bool:
         super().execute(script, context, external_methods)
         self._last_result = context
+        return True
 
     def user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         return {}
@@ -217,7 +219,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
         script: str,
         context: Dict[str, Any],
         external_methods: Optional[Dict[str, Any]] = None,
-    ) -> None:
+    ) -> bool:
         # TODO: once integrated look at the tests that fail without Box
         # context is task.data
         Box.convert_to_box(context)
@@ -239,6 +241,7 @@ class NonTaskDataBasedScriptEngineEnvironment(BasePythonScriptEngineEnvironment)
             # the task data needs to be updated with the current state so data references can be resolved properly.
             # the state will be removed later once the task is completed.
             context.update(self.state)
+            return True
 
     def user_defined_state(self, external_methods: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         keys_to_filter = self.non_user_defined_keys
@@ -318,13 +321,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         # This will overwrite the standard builtins
         default_globals.update(safe_globals)
         default_globals["__builtins__"]["__import__"] = _import
-
         environment = CustomScriptEngineEnvironment(default_globals)
-
-        # right now spiff is executing script tasks on ready so doing this
-        # so we know when something fails and we can save it to our database.
-        self.failing_spiff_task: Optional[SpiffTask] = None
-
         super().__init__(environment=environment)
 
     def __get_augment_methods(self, task: Optional[SpiffTask]) -> Dict[str, Callable]:
@@ -351,7 +348,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         expression: str,
         external_methods: Optional[dict[str, Any]] = None,
     ) -> Any:
-        """Evaluate."""
         return self._evaluate(expression, task.data, task, external_methods)
 
     def _evaluate(
@@ -361,7 +357,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         task: Optional[SpiffTask] = None,
         external_methods: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        """_evaluate."""
         methods = self.__get_augment_methods(task)
         if external_methods:
             methods.update(external_methods)
@@ -381,17 +376,15 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
                     exception=exception,
                 ) from exception
 
-    def execute(self, task: SpiffTask, script: str, external_methods: Any = None) -> None:
-        """Execute."""
+    def execute(self, task: SpiffTask, script: str, external_methods: Any = None) -> bool:
         try:
             # reset failing task just in case
-            self.failing_spiff_task = None
             methods = self.__get_augment_methods(task)
             if external_methods:
                 methods.update(external_methods)
             super().execute(task, script, methods)
+            return True
         except WorkflowException as e:
-            self.failing_spiff_task = task
             raise e
         except Exception as e:
             raise self.create_task_exec_exception(task, script, e) from e
@@ -402,7 +395,6 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
         operation_params: Dict[str, Any],
         task_data: Dict[str, Any],
     ) -> Any:
-        """CallService."""
         return ServiceTaskDelegate.call_connector(operation_name, operation_params, task_data)
 
 
@@ -1124,14 +1116,10 @@ class ProcessInstanceProcessor:
         """Saves the current state of this processor to the database."""
         self.process_instance_model.spiff_serializer_version = self.SERIALIZER_VERSION
 
-        complete_states = [TaskState.CANCELLED, TaskState.COMPLETED]
-        user_tasks = list(self.get_all_user_tasks())
         self.process_instance_model.status = self.get_status().value
         current_app.logger.debug(
             f"the_status: {self.process_instance_model.status} for instance {self.process_instance_model.id}"
         )
-        self.process_instance_model.total_tasks = len(user_tasks)
-        self.process_instance_model.completed_tasks = sum(1 for t in user_tasks if t.state in complete_states)
 
         if self.process_instance_model.start_in_seconds is None:
             self.process_instance_model.start_in_seconds = round(time.time())
@@ -1693,6 +1681,8 @@ class ProcessInstanceProcessor:
 
         if execution_strategy_name is None:
             execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB"]
+        if execution_strategy_name is None:
+            raise ExecutionStrategyNotConfiguredError("SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set")
 
         execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
         execution_service = WorkflowExecutionService(
@@ -1702,16 +1692,7 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.finalize_result,
             self.save,
         )
-        try:
-            execution_service.run(exit_at, save)
-        finally:
-            # clear out failling spiff tasks here since the ProcessInstanceProcessor creates an instance of the
-            #    script engine on a class variable.
-            if (
-                hasattr(self._script_engine, "failing_spiff_task")
-                and self._script_engine.failing_spiff_task is not None
-            ):
-                self._script_engine.failing_spiff_task = None
+        execution_service.run(exit_at, save)
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
@@ -1932,7 +1913,6 @@ class ProcessInstanceProcessor:
         return [t for t in all_tasks if not self.bpmn_process_instance._is_engine_task(t.task_spec)]
 
     def get_all_completed_tasks(self) -> list[SpiffTask]:
-        """Get_all_completed_tasks."""
         all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
         return [
             t
