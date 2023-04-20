@@ -115,14 +115,13 @@ class ProcessInstanceService:
             .filter(ProcessInstanceModel.id.in_(process_instance_ids_to_check))  # type: ignore
             .all()
         )
-        execution_strategy_name = current_app.config[
-            "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"
-        ]
+        execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"]
         for process_instance in records:
             current_app.logger.info(f"Processing process_instance {process_instance.id}")
             try:
-                cls.run_process_instance_with_processor(process_instance, status_value=status_value,
-                                                        execution_strategy_name=execution_strategy_name)
+                cls.run_process_instance_with_processor(
+                    process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
+                )
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
@@ -135,8 +134,7 @@ class ProcessInstanceService:
 
     @classmethod
     def run_process_instance_with_processor(
-        cls, process_instance: ProcessInstanceModel, status_value: Optional[str] = None,
-            execution_strategy_name = None
+        cls, process_instance: ProcessInstanceModel, status_value: Optional[str] = None, execution_strategy_name=None
     ) -> Optional[ProcessInstanceProcessor]:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
