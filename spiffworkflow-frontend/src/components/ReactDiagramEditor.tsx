@@ -66,9 +66,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 type OwnProps = {
   processModelId: string;
   diagramType: string;
-  readyOrWaitingProcessInstanceTasks?: Task[] | null;
-  completedProcessInstanceTasks?: Task[] | null;
-  cancelledProcessInstanceTasks?: Task[] | null;
+  tasks?: Task[] | null;
   saveDiagram?: (..._args: any[]) => any;
   onDeleteFile?: (..._args: any[]) => any;
   isPrimaryFile?: boolean;
@@ -93,9 +91,7 @@ type OwnProps = {
 export default function ReactDiagramEditor({
   processModelId,
   diagramType,
-  readyOrWaitingProcessInstanceTasks,
-  completedProcessInstanceTasks,
-  cancelledProcessInstanceTasks,
+  tasks,
   saveDiagram,
   onDeleteFile,
   isPrimaryFile,
@@ -418,43 +414,29 @@ export default function ReactDiagramEditor({
       // highlighting a field
       // Option 3 at:
       //  https://github.com/bpmn-io/bpmn-js-examples/tree/master/colors
-      if (readyOrWaitingProcessInstanceTasks) {
+      if (tasks) {
         const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
           canvas.getRootElement()
         );
-        readyOrWaitingProcessInstanceTasks.forEach((readyOrWaitingBpmnTask) => {
-          highlightBpmnIoElement(
-            canvas,
-            readyOrWaitingBpmnTask,
-            'active-task-highlight',
-            bpmnProcessIdentifiers
-          );
-        });
-      }
-      if (completedProcessInstanceTasks) {
-        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-          canvas.getRootElement()
-        );
-        completedProcessInstanceTasks.forEach((completedTask) => {
-          highlightBpmnIoElement(
-            canvas,
-            completedTask,
-            'completed-task-highlight',
-            bpmnProcessIdentifiers
-          );
-        });
-      }
-      if (cancelledProcessInstanceTasks) {
-        const bpmnProcessIdentifiers = getBpmnProcessIdentifiers(
-          canvas.getRootElement()
-        );
-        cancelledProcessInstanceTasks.forEach((cancelledTask) => {
-          highlightBpmnIoElement(
-            canvas,
-            cancelledTask,
-            'cancelled-task-highlight',
-            bpmnProcessIdentifiers
-          );
+        tasks.forEach((task: Task) => {
+          let className = '';
+          if (task.state === 'COMPLETED') {
+            className = 'completed-task-highlight';
+          } else if (task.state === 'READY' || task.state === 'WAITING') {
+            className = 'active-task-highlight';
+          } else if (task.state === 'CANCELLED') {
+            className = 'cancelled-task-highlight';
+          } else if (task.state === 'ERROR') {
+            className = 'errored-task-highlight';
+          }
+          if (className) {
+            highlightBpmnIoElement(
+              canvas,
+              task,
+              className,
+              bpmnProcessIdentifiers
+            );
+          }
         });
       }
     }
@@ -534,10 +516,8 @@ export default function ReactDiagramEditor({
     diagramType,
     diagramXML,
     diagramXMLString,
-    readyOrWaitingProcessInstanceTasks,
-    completedProcessInstanceTasks,
-    cancelledProcessInstanceTasks,
     fileName,
+    tasks,
     performingXmlUpdates,
     processModelId,
     url,

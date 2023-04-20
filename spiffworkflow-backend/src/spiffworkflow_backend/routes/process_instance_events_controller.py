@@ -5,6 +5,7 @@ from flask import jsonify
 from flask import make_response
 from sqlalchemy import and_
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
@@ -91,3 +92,20 @@ def types() -> flask.wrappers.Response:
     task_types = [t.typename for t in query]
     event_types = ProcessInstanceEventType.list()
     return make_response(jsonify({"task_types": task_types, "event_types": event_types}), 200)
+
+
+def error_details(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    process_instance_event_id: int,
+) -> flask.wrappers.Response:
+    process_instance_event = ProcessInstanceEventModel.query.filter_by(id=process_instance_event_id).first()
+    if process_instance_event is None:
+        raise (
+            ApiError(
+                error_code="process_instance_event_cannot_be_found",
+                message=f"Process instance event cannot be found: {process_instance_event_id}",
+                status_code=400,
+            )
+        )
+    return make_response(jsonify(process_instance_event.error_details[0]), 200)

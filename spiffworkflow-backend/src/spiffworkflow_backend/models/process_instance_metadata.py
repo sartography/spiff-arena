@@ -1,4 +1,3 @@
-"""Process_instance_metadata."""
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey
@@ -10,8 +9,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 @dataclass
 class ProcessInstanceMetadataModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceMetadataModel."""
-
     __tablename__ = "process_instance_metadata"
     __table_args__ = (db.UniqueConstraint("process_instance_id", "key", name="process_instance_metadata_unique"),)
 

@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 44a8f46cc508
+Revision ID: 0c7428378d6e
 Revises: 
-Create Date: 2023-04-17 15:40:28.658588
+Create Date: 2023-04-20 14:05:44.779453
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision = '44a8f46cc508'
+revision = '0c7428378d6e'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -84,6 +84,15 @@ def upgrade():
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('uri')
     )
+    op.create_table('process_caller_cache',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_identifier', sa.String(length=255), nullable=True),
+    sa.Column('calling_process_identifier', sa.String(length=255), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('process_caller_cache', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_process_caller_cache_process_identifier'), ['process_identifier'], unique=False)
+
     op.create_table('spec_reference_cache',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('identifier', sa.String(length=255), nullable=True),
@@ -463,6 +472,21 @@ def upgrade():
         batch_op.create_index(batch_op.f('ix_message_instance_correlation_rule_message_instance_id'), ['message_instance_id'], unique=False)
         batch_op.create_index(batch_op.f('ix_message_instance_correlation_rule_name'), ['name'], unique=False)
 
+    op.create_table('process_instance_error_detail',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('process_instance_event_id', sa.Integer(), nullable=False),
+    sa.Column('message', sa.String(length=1024), nullable=False),
+    sa.Column('stacktrace', sa.JSON(), nullable=False),
+    sa.Column('task_line_number', sa.Integer(), nullable=True),
+    sa.Column('task_offset', sa.Integer(), nullable=True),
+    sa.Column('task_line_contents', sa.String(length=255), nullable=True),
+    sa.Column('task_trace', sa.JSON(), nullable=True),
+    sa.ForeignKeyConstraint(['process_instance_event_id'], ['process_instance_event.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    with op.batch_alter_table('process_instance_error_detail', schema=None) as batch_op:
+        batch_op.create_index(batch_op.f('ix_process_instance_error_detail_process_instance_event_id'), ['process_instance_event_id'], unique=False)
+
     op.create_table('human_task_user',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('human_task_id', sa.Integer(), nullable=False),
@@ -486,6 +510,10 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_human_task_user_human_task_id'))
 
     op.drop_table('human_task_user')
+    with op.batch_alter_table('process_instance_error_detail', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_process_instance_error_detail_process_instance_event_id'))
+
+    op.drop_table('process_instance_error_detail')
     with op.batch_alter_table('message_instance_correlation_rule', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_message_instance_correlation_rule_name'))
         batch_op.drop_index(batch_op.f('ix_message_instance_correlation_rule_message_instance_id'))
@@ -607,6 +635,10 @@ def downgrade():
         batch_op.drop_index(batch_op.f('ix_spec_reference_cache_display_name'))
 
     op.drop_table('spec_reference_cache')
+    with op.batch_alter_table('process_caller_cache', schema=None) as batch_op:
+        batch_op.drop_index(batch_op.f('ix_process_caller_cache_process_identifier'))
+
+    op.drop_table('process_caller_cache')
     op.drop_table('permission_target')
     with op.batch_alter_table('message_triggerable_process_model', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_message_triggerable_process_model_process_model_identifier'))

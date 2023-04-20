@@ -28,6 +28,7 @@ from spiffworkflow_backend.models.spec_reference import SpecReferenceSchema
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.git_service import GitService
+from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -74,6 +75,14 @@ def process_list() -> Any:
     primary process - helpful for finding possible call activities.
     """
     references = SpecReferenceCache.query.filter_by(type="process").all()
+    return SpecReferenceSchema(many=True).dump(references)
+
+
+def process_caller_lists(bpmn_process_identifier: str) -> Any:
+    callers = ProcessCallerService.callers(bpmn_process_identifier)
+    references = (
+        SpecReferenceCache.query.filter_by(type="process").filter(SpecReferenceCache.identifier.in_(callers)).all()
+    )
     return SpecReferenceSchema(many=True).dump(references)
 
 
