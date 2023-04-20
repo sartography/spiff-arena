@@ -45,7 +45,7 @@ export const childrenForErrorObject = (errorObject: ErrorForDisplay) => {
   );
   const errorLine = errorDetailDisplay(errorObject, 'error_line', 'Context');
   let taskTrace = null;
-  if (errorObject.task_trace && errorObject.task_trace.length > 1) {
+  if (errorObject.task_trace && errorObject.task_trace.length > 0) {
     taskTrace = (
       <div className="error_info">
         <span className="error_title">Call Activity Trace:</span>

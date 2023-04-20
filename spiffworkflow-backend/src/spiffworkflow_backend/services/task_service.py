@@ -617,7 +617,7 @@ class TaskService:
             process_instance_event.task_guid = task_guid
         db.session.add(process_instance_event)
 
-        if event_type == ProcessInstanceEventType.process_instance_error.value and exception is not None:
+        if exception is not None:
             # truncate to avoid database errors on large values. We observed that text in mysql is 65K.
             stacktrace = traceback.format_exc()[0:63999]
             message = str(exception)[0:1023]
@@ -626,7 +626,6 @@ class TaskService:
             task_line_contents = None
             task_trace = None
             task_offset = None
-            # import pdb; pdb.set_trace()
             if isinstance(exception, WorkflowTaskException) or (isinstance(exception, ApiError) and exception.error_code == 'task_error'):
                 task_line_number = exception.line_number
                 task_line_contents = exception.error_line
