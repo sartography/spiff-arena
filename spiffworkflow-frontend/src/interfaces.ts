@@ -37,6 +37,7 @@ export interface EventDefinition {
   message_var?: string;
 }
 
+// TODO: merge with ProcessInstanceTask
 export interface Task {
   id: number;
   guid: string;
@@ -53,12 +54,6 @@ export interface Task {
   task_definition_properties_json: TaskDefinitionPropertiesJson;
 
   event_definition?: EventDefinition;
-}
-
-export interface TaskIds {
-  completed: Task[];
-  readyOrWaiting: Task[];
-  cancelled: Task[];
 }
 
 export interface ProcessInstanceTask {
@@ -234,12 +229,16 @@ export type HotCrumbItem = HotCrumbItemArray | HotCrumbItemObject;
 
 export interface ErrorForDisplay {
   message: string;
+
+  messageClassName?: string;
   sentry_link?: string;
   task_name?: string;
   task_id?: string;
   line_number?: number;
+  error_line?: string;
   file_name?: string;
-  task_trace?: [string];
+  task_trace?: string[];
+  stacktrace?: string[];
 }
 
 export interface AuthenticationParam {
@@ -295,6 +294,16 @@ export interface JsonSchemaForm {
   name: string;
   process_model_id: string;
   required: string[];
+}
+
+export interface ProcessInstanceEventErrorDetail {
+  id: number;
+  message: string;
+  stacktrace: string[];
+  task_line_contents?: string;
+  task_line_number?: number;
+  task_offset?: number;
+  task_trace?: string[];
 }
 
 export interface ProcessInstanceLogEntry {

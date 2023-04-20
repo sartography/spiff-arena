@@ -215,7 +215,7 @@ def task_data_update(
             )
             if json_data_dict is not None:
                 TaskService.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
-                ProcessInstanceProcessor.add_event_to_process_instance(
+                TaskService.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_guid
                 )
             try:
@@ -428,7 +428,7 @@ def _task_submit_shared(
 
     if save_as_draft:
         task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-        ProcessInstanceService.update_form_task_data(processor, spiff_task, body, g.user)
+        ProcessInstanceService.update_form_task_data(process_instance, spiff_task, body, g.user)
         json_data_dict = TaskService.update_task_data_on_task_model_and_return_dict_if_updated(
             task_model, spiff_task.data, "json_data_hash"
         )
