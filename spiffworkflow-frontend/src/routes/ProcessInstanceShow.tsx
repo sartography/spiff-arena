@@ -235,6 +235,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
       completed: [],
       readyOrWaiting: [],
       cancelled: [],
+      errored: [],
     };
     if (tasks) {
       tasks.forEach(function getUserTasksElement(task: Task) {
@@ -244,6 +245,8 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           taskIds.readyOrWaiting.push(task);
         } else if (task.state === 'CANCELLED') {
           taskIds.cancelled.push(task);
+        } else if (task.state === 'ERROR') {
+          taskIds.errored.push(task);
         }
         return null;
       });
@@ -1159,6 +1162,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           readyOrWaitingProcessInstanceTasks={taskIds.readyOrWaiting}
           completedProcessInstanceTasks={taskIds.completed}
           cancelledProcessInstanceTasks={taskIds.cancelled}
+          erroredProcessInstanceTasks={taskIds.errored}
           diagramType="readonly"
           onElementClick={handleClickedDiagramTask}
         />

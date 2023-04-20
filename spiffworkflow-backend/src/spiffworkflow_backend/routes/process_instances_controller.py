@@ -124,14 +124,12 @@ def process_instance_run(
 
     processor = None
     try:
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        processor = ProcessInstanceService.run_process_intance_with_processor(process_instance)
     except (
         ApiError,
         ProcessInstanceIsNotEnqueuedError,
         ProcessInstanceIsAlreadyLockedError,
     ) as e:
-        # import pdb; pdb.set_trace()
         ErrorHandlingService.handle_error(process_instance, e)
         raise e
     except Exception as e:
@@ -139,7 +137,6 @@ def process_instance_run(
         # FIXME: this is going to point someone to the wrong task - it's misinformation for errors in sub-processes.
         # we need to recurse through all last tasks if the last task is a call activity or subprocess.
         if processor is not None:
-            # import pdb; pdb.set_trace()
             task = processor.bpmn_process_instance.last_task
             raise ApiError.from_task(
                 error_code="unknown_exception",
@@ -152,11 +149,17 @@ def process_instance_run(
     if not current_app.config["SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER"]:
         MessageService.correlate_all_message_instances()
 
-    process_instance_api = ProcessInstanceService.processor_to_process_instance_api(processor)
-    process_instance_data = processor.get_data()
-    process_instance_metadata = ProcessInstanceApiSchema().dump(process_instance_api)
-    process_instance_metadata["data"] = process_instance_data
-    return Response(json.dumps(process_instance_metadata), status=200, mimetype="application/json")
+    # for mypy
+    if processor is not None:
+        process_instance_api = ProcessInstanceService.processor_to_process_instance_api(processor)
+        process_instance_data = processor.get_data()
+        process_instance_metadata = ProcessInstanceApiSchema().dump(process_instance_api)
+        process_instance_metadata["data"] = process_instance_data
+        return Response(json.dumps(process_instance_metadata), status=200, mimetype="application/json")
+
+    # FIXME: this should never happen currently but it'd be ideal to always do this
+    # currently though it does not return next task so it cannnot be used to take the user to the next human task
+    return make_response(jsonify(process_instance), 200)
 
 
 def process_instance_terminate(

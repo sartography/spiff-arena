@@ -19,10 +19,10 @@ class ErrorHandlingService:
     MESSAGE_NAME = "SystemErrorMessage"
 
     @classmethod
-    def handle_error(cls, process_instance: ProcessInstanceModel, error: Union[ApiError, Exception]) -> None:
+    def handle_error(cls, process_instance: ProcessInstanceModel, error: Exception) -> None:
         """On unhandled exceptions, set instance.status based on model.fault_or_suspend_on_exception."""
         process_model = ProcessModelService.get_process_model(process_instance.process_model_identifier)
-        cls._update_process_instance_in_database(process_instance, error, process_model.fault_or_suspend_on_exception)
+        cls._update_process_instance_in_database(process_instance, process_model.fault_or_suspend_on_exception)
 
         # Second, send a bpmn message out, but only if an exception notification address is provided
         # This will create a new Send Message with correlation keys on the recipients and the message
@@ -35,9 +35,7 @@ class ErrorHandlingService:
                 current_app.logger.error(e)
 
     @classmethod
-    def _update_process_instance_in_database(cls, process_instance: ProcessInstanceModel, error: Union[ApiError, Exception], fault_or_suspend_on_exception: str) -> None:
-        TaskService.add_event_to_process_instance(process_instance, ProcessInstanceEventType.process_instance_error.value, exception=error)
-
+    def _update_process_instance_in_database(cls, process_instance: ProcessInstanceModel, fault_or_suspend_on_exception: str) -> None:
         # First, suspend or fault the instance
         if fault_or_suspend_on_exception == "suspend":
             cls._set_instance_status(
@@ -55,7 +53,7 @@ class ErrorHandlingService:
 
     @staticmethod
     def _handle_system_notification(
-        error: Union[ApiError, Exception],
+        error: Exception,
         process_model: ProcessModelInfo,
         process_instance: ProcessInstanceModel,
     ) -> None:

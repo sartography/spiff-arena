@@ -1,5 +1,9 @@
+from __future__ import annotations
 import copy
 import time
+from abc import abstractmethod
+from typing import Type, TypeVar
+from SpiffWorkflow.exceptions import WorkflowTaskException # type: ignore
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from typing import Callable
 from typing import Optional
@@ -28,20 +32,68 @@ from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 
 
+
+
+class WorkflowExecutionServiceError(WorkflowTaskException):  # type: ignore
+    @classmethod
+    def from_workflow_task_exception(
+        cls,
+        workflow_task_exception: WorkflowTaskException,
+    ) -> WorkflowExecutionServiceError:
+        return cls(
+            error_msg=str(workflow_task_exception),
+            task=workflow_task_exception.task,
+            exception=workflow_task_exception,
+            line_number=workflow_task_exception.line_number,
+            offset=workflow_task_exception.offset,
+            error_line=workflow_task_exception.error_line,
+        )
+
+
+class ExecutionStrategyNotConfiguredError(Exception):
+    pass
+
+
 class EngineStepDelegate:
     """Interface of sorts for a concrete engine step delegate."""
 
+    @abstractmethod
     def will_complete_task(self, spiff_task: SpiffTask) -> None:
         pass
 
+    @abstractmethod
     def did_complete_task(self, spiff_task: SpiffTask) -> None:
         pass
 
+    @abstractmethod
     def save(self, bpmn_process_instance: BpmnWorkflow, commit: bool = False) -> None:
         pass
 
+    @abstractmethod
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
+
+    @abstractmethod
+    def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        pass
+
+
+class ExecutionStrategy:
+    """Interface of sorts for a concrete execution strategy."""
+
+    def __init__(self, delegate: EngineStepDelegate):
+        """__init__."""
+        self.delegate = delegate
+
+    @abstractmethod
+    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        pass
+
+    def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        self.delegate.on_exception(bpmn_process_instance)
+
+    def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        self.delegate.save(bpmn_process_instance)
 
 
 class TaskModelSavingDelegate(EngineStepDelegate):
@@ -104,28 +156,11 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 
     def save(self, bpmn_process_instance: BpmnWorkflow, _commit: bool = True) -> None:
-        script_engine = bpmn_process_instance.script_engine
-        if hasattr(script_engine, "failing_spiff_task") and script_engine.failing_spiff_task is not None:
-            failing_spiff_task = script_engine.failing_spiff_task
-            self.task_service.update_task_model_with_spiff_task(failing_spiff_task, task_failed=True)
-            self.task_service.process_spiff_task_parent_subprocess_tasks(failing_spiff_task)
-            self.task_service.process_spiff_task_children(failing_spiff_task)
-
         self.task_service.save_objects_to_database()
 
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.save(bpmn_process_instance, commit=False)
         db.session.commit()
-
-    def _add_children(self, spiff_task: SpiffTask) -> None:
-        for child_spiff_task in spiff_task.children:
-            self.spiff_tasks_to_process.add(child_spiff_task.id)
-            self._add_children(child_spiff_task)
-
-    def _add_parents(self, spiff_task: SpiffTask) -> None:
-        if spiff_task.parent and spiff_task.parent.task_spec.name != "Root":
-            self.spiff_tasks_to_process.add(spiff_task.parent.id)
-            self._add_parents(spiff_task.parent)
 
     def after_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> None:
         if self._should_update_task_model():
@@ -187,6 +222,19 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             #     self.task_service.process_spiff_task_children(self.last_completed_spiff_task)
             #     self.task_service.process_spiff_task_parent_subprocess_tasks(self.last_completed_spiff_task)
 
+    def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
+        self.after_engine_steps(bpmn_process_instance)
+
+    def _add_children(self, spiff_task: SpiffTask) -> None:
+        for child_spiff_task in spiff_task.children:
+            self.spiff_tasks_to_process.add(child_spiff_task.id)
+            self._add_children(child_spiff_task)
+
+    def _add_parents(self, spiff_task: SpiffTask) -> None:
+        if spiff_task.parent and spiff_task.parent.task_spec.name != "Root":
+            self.spiff_tasks_to_process.add(spiff_task.parent.id)
+            self._add_parents(spiff_task.parent)
+
     def _should_update_task_model(self) -> bool:
         """We need to figure out if we have previously save task info on this process intance.
 
@@ -194,20 +242,6 @@ class TaskModelSavingDelegate(EngineStepDelegate):
         """
         # return self.process_instance.bpmn_process_id is not None
         return True
-
-
-class ExecutionStrategy:
-    """Interface of sorts for a concrete execution strategy."""
-
-    def __init__(self, delegate: EngineStepDelegate):
-        """__init__."""
-        self.delegate = delegate
-
-    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        pass
-
-    def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        self.delegate.save(bpmn_process_instance)
 
 
 class GreedyExecutionStrategy(ExecutionStrategy):
@@ -329,8 +363,12 @@ class WorkflowExecutionService:
 
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
+        except WorkflowTaskException as wte:
+            TaskService.add_event_to_process_instance(self.process_instance_model, ProcessInstanceEventType.task_failed.value, exception=wte, task_guid=str(wte.task.id))
+            self.execution_strategy.on_exception(self.bpmn_process_instance)
+            raise WorkflowExecutionServiceError.from_workflow_task_exception(wte)
         except SpiffWorkflowException as swe:
-            TaskService.add_event_to_process_instance(self.process_instance_model, ProcessInstanceEventType.task_failed.value, exception=swe, task_guid=str(swe.task.id))
+            self.execution_strategy.on_exception(self.bpmn_process_instance)
             raise ApiError.from_workflow_exception("task_error", str(swe), swe) from swe
 
         finally:
