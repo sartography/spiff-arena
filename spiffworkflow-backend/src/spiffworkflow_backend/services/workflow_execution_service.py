@@ -4,9 +4,6 @@ import copy
 import time
 from abc import abstractmethod
 from typing import Callable
-from typing import List
-from typing import Optional
-from typing import Set
 from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -93,7 +90,7 @@ class ExecutionStrategy:
     def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.delegate.save(bpmn_process_instance)
 
-    def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
+    def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         return list(
             [
                 t
@@ -101,6 +98,7 @@ class ExecutionStrategy:
                 if bpmn_process_instance._is_engine_task(t.task_spec)
             ]
         )
+
 
 class TaskModelSavingDelegate(EngineStepDelegate):
     """Engine step delegate that takes care of saving a task model to the database.
@@ -302,7 +300,7 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
     """When you want to run tasks until you hit something to report to the end user."""
 
-    def get_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
+    def get_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         return list(
             [
                 t

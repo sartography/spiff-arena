@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
@@ -40,9 +40,12 @@ export default function ProcessInterstitial() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 
-  const shouldRedirect = (myTask: ProcessInstanceTask): boolean => {
-    return myTask && myTask.can_complete && userTasks.includes(myTask.type);
-  };
+  const shouldRedirect = useCallback(
+    (myTask: ProcessInstanceTask): boolean => {
+      return myTask && myTask.can_complete && userTasks.includes(myTask.type);
+    },
+    [userTasks]
+  );
 
   useEffect(() => {
     // Added this seperate use effect so that the timer interval will be cleared if
