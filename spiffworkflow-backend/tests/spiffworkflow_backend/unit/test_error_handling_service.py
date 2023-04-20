@@ -5,7 +5,6 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend import db
-from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -19,6 +18,7 @@ from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 
 class TestErrorHandlingService(BaseTest):
@@ -34,7 +34,7 @@ class TestErrorHandlingService(BaseTest):
             process_model.id, user
         )
         pip = ProcessInstanceProcessor(process_instance)
-        with pytest.raises(ApiError) as e:
+        with pytest.raises(WorkflowExecutionServiceError) as e:
             pip.do_engine_steps(save=True)
         ErrorHandlingService().handle_error(process_instance, e.value)
         return process_instance
