@@ -1,12 +1,7 @@
 import copy
 import json
-from spiffworkflow_backend.exceptions.api_error import ApiError
-from SpiffWorkflow.exceptions import WorkflowTaskException # type: ignore
-from flask import g
-from spiffworkflow_backend.models import process_instance_error_detail
-from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
-import traceback
 import time
+import traceback
 from hashlib import sha256
 from typing import Optional
 from typing import Tuple
@@ -14,19 +9,23 @@ from typing import TypedDict
 from uuid import UUID
 
 from flask import current_app
+from flask import g
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
+from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.task import TaskStateNames
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
+from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
@@ -162,7 +161,13 @@ class TaskService:
         if task_model.state == "COMPLETED":
             event_type = ProcessInstanceEventType.task_completed.value
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
-            process_instance_event, _process_instance_error_detail = TaskService.add_event_to_process_instance(self.process_instance, event_type, task_guid=task_model.guid, timestamp=timestamp, add_to_db_session=False)
+            process_instance_event, _process_instance_error_detail = TaskService.add_event_to_process_instance(
+                self.process_instance,
+                event_type,
+                task_guid=task_model.guid,
+                timestamp=timestamp,
+                add_to_db_session=False,
+            )
             self.process_instance_events[task_model.guid] = process_instance_event
 
         self.update_bpmn_process(spiff_task.workflow, bpmn_process)
@@ -625,7 +630,9 @@ class TaskService:
             task_line_contents = None
             task_trace = None
             task_offset = None
-            if isinstance(exception, WorkflowTaskException) or (isinstance(exception, ApiError) and exception.error_code == 'task_error'):
+            if isinstance(exception, WorkflowTaskException) or (
+                isinstance(exception, ApiError) and exception.error_code == "task_error"
+            ):
                 task_line_number = exception.line_number
                 task_line_contents = exception.error_line
                 task_trace = exception.task_trace

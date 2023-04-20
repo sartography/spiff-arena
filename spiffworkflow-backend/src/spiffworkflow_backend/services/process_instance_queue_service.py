@@ -1,8 +1,5 @@
 import contextlib
 import time
-from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
-from spiffworkflow_backend.services.task_service import TaskService
 from typing import Generator
 from typing import List
 from typing import Optional
@@ -10,12 +7,15 @@ from typing import Optional
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_instance_queue import (
     ProcessInstanceQueueModel,
 )
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
+from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 
 class ProcessInstanceIsNotEnqueuedError(Exception):
@@ -103,7 +103,9 @@ class ProcessInstanceQueueService:
             # these events are handled in the WorkflowExecutionService.
             # that is, we don't need to add error_detail records here, etc.
             if not isinstance(ex, WorkflowExecutionServiceError):
-                TaskService.add_event_to_process_instance(process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex)
+                TaskService.add_event_to_process_instance(
+                    process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
+                )
             db.session.commit()
             raise ex
         finally:

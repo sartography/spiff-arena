@@ -1,9 +1,9 @@
 from __future__ import annotations
-from sqlalchemy.orm import relationship
 
 from typing import Any
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
