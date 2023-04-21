@@ -1793,10 +1793,10 @@ class ProcessInstanceProcessor:
 
         # If there are no ready tasks, but the thing isn't complete yet, find the first non-complete task
         # and return that
-        next_task_to_return = None
+        next_task = None
         for task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.NOT_FINISHED_MASK):
-            next_task_to_return = task
-        return next_task_to_return
+            next_task = task
+        return next_task
 
     def completed_user_tasks(self) -> List[SpiffTask]:
         """Completed_user_tasks."""
