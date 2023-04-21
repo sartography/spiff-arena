@@ -12,6 +12,7 @@ export default function ProcessModelNew() {
     display_name: '',
     description: '',
     primary_file_name: '',
+    primary_process_id: '',
     files: [],
   });
 

@@ -147,6 +147,7 @@ export default function MyTasks() {
         description: '',
         display_name: '',
         primary_file_name: '',
+        primary_process_id: '',
         files: [],
       };
       const modifiedProcessModelId = modifyProcessIdentifierForPathParam(
