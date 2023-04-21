@@ -6,6 +6,8 @@ from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine
 
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
 from SpiffWorkflow.exceptions import WorkflowTaskException
+from SpiffWorkflow.task import TaskState
+
 from .BpmnWorkflowTestCase import BpmnWorkflowTestCase
 
 __author__ = 'kellym'
@@ -34,13 +36,12 @@ class CallActivityTest(BpmnWorkflowTestCase):
         self.workflow = BpmnWorkflow(self.spec, self.subprocesses,
                                      script_engine=CustomScriptEngine())
         self.workflow.do_engine_steps()
+        self.complete_subworkflow()
         self.assertTrue(self.workflow.is_completed())
         self.assertIsInstance(self.workflow.script_engine, CustomScriptEngine)
 
         if save_restore:
             self.save_restore()
-            # We have to reset the script engine after deserialize.
-            self.workflow.script_engine = CustomScriptEngine()
 
         # Get the subworkflow
         sub_task = self.workflow.get_tasks_from_spec_name('Sub_Bpmn_Task')[0]
@@ -54,6 +55,7 @@ class CallActivityTest(BpmnWorkflowTestCase):
         # data should be removed in the final output as well.
         self.workflow = BpmnWorkflow(self.spec, self.subprocesses)
         self.workflow.do_engine_steps()
+        self.complete_subworkflow()
         self.assertTrue(self.workflow.is_completed())
         self.assertNotIn('remove_this_var', self.workflow.last_task.data.keys())
 
@@ -66,6 +68,8 @@ class CallActivityTest(BpmnWorkflowTestCase):
         self.assertEquals(2, len(context.exception.task_trace))
         self.assertRegexpMatches(context.exception.task_trace[0], 'Create Data \(.*?call_activity_call_activity.bpmn\)')
         self.assertRegexpMatches(context.exception.task_trace[1], 'Get Data Call Activity \(.*?call_activity_with_error.bpmn\)')
+        task = self.workflow.get_tasks_from_spec_name('Sub_Bpmn_Task')[0]
+        self.assertEqual(task.state, TaskState.ERROR)
 
 def suite():
     return unittest.TestLoader().loadTestsFromTestCase(CallActivityTest)

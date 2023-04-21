@@ -38,6 +38,8 @@ class CustomInlineScriptTest(BpmnWorkflowTestCase):
     def actual_test(self, save_restore):
         if save_restore: self.save_restore()
         self.workflow.do_engine_steps()
+        self.complete_subworkflow()
+        self.complete_subworkflow()
         if save_restore: self.save_restore()
         data = self.workflow.last_task.data
         self.assertEqual(data['c1'], 'HELLO')
@@ -49,8 +51,9 @@ class CustomInlineScriptTest(BpmnWorkflowTestCase):
         ready_task.data = {'custom_function': "bill"}
         with self.assertRaises(WorkflowTaskException) as e:
             self.workflow.do_engine_steps()
-        self.assertTrue('' in str(e.exception))
         self.assertTrue('custom_function' in str(e.exception))
+        task = self.workflow.get_tasks_from_spec_name('Activity_1y303ko')[0]
+        self.assertEqual(task.state, TaskState.ERROR)
 
 
 def suite():
