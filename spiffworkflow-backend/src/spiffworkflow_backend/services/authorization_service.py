@@ -17,7 +17,6 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
 
@@ -417,7 +416,6 @@ class AuthorizationService:
         task_bpmn_identifier: str,
         user: UserModel,
     ) -> bool:
-        """Assert_user_can_complete_spiff_task."""
         human_task = HumanTaskModel.query.filter_by(
             task_name=task_bpmn_identifier,
             process_instance_id=process_instance_id,

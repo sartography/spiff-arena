@@ -21,7 +21,7 @@ export default function ProcessInterstitial() {
     return ['User Task', 'Manual Task'];
   }, []);
 
-  const processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.process_model_id}`;
+  const processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.modified_process_model_identifier}`;
 
   useEffect(() => {
     fetchEventSource(

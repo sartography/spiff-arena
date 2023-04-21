@@ -496,7 +496,9 @@ class TaskService:
         processB has subprocessA which has taskA. Using taskA this method should return processB and then that can be used with
         the spec reference cache to find process_modelB.
         """
-        (bpmn_processes, _task_models) = TaskService.task_models_of_parent_bpmn_processes(task_model, stop_on_first_call_activity=True)
+        (bpmn_processes, _task_models) = TaskService.task_models_of_parent_bpmn_processes(
+            task_model, stop_on_first_call_activity=True
+        )
         return bpmn_processes[0]
 
     @classmethod
@@ -537,9 +539,11 @@ class TaskService:
         if bpmn_process.guid is not None:
             parent_task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
             task_models.append(parent_task_model)
-            if not stop_on_first_call_activity or parent_task_model.task_definition.typename != 'CallActivity':
+            if not stop_on_first_call_activity or parent_task_model.task_definition.typename != "CallActivity":
                 if parent_task_model is not None:
-                    b, t = cls.task_models_of_parent_bpmn_processes(parent_task_model, stop_on_first_call_activity=stop_on_first_call_activity)
+                    b, t = cls.task_models_of_parent_bpmn_processes(
+                        parent_task_model, stop_on_first_call_activity=stop_on_first_call_activity
+                    )
                     return (b + bpmn_processes, t + task_models)
         return (bpmn_processes, task_models)
 

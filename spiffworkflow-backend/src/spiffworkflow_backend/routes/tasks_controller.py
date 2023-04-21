@@ -1,7 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
-from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
 import os
 import uuid
 from sys import exc_info
@@ -45,7 +43,6 @@ from spiffworkflow_backend.models.process_instance import (
 )
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
@@ -56,6 +53,8 @@ from spiffworkflow_backend.routes.process_api_blueprint import (
 )
 from spiffworkflow_backend.routes.process_api_blueprint import _get_process_model
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
+from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -267,7 +266,6 @@ def manual_complete_task(
 
 
 def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappers.Response:
-    """Task_show."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
     if process_instance.status == ProcessInstanceStatus.suspended.value:
@@ -286,12 +284,11 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     form_schema_file_name = ""
     form_ui_schema_file_name = ""
 
-    processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
-    extensions = spiff_task.task_spec.extensions
-
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
-    # extensions = task_model.properties_json['extensions'] if 'extensions' in task_model.properties_json else {}
+    task_definition = task_model.task_definition
+    extensions = (
+        task_definition.properties_json["extensions"] if "extensions" in task_definition.properties_json else {}
+    )
 
     if "properties" in extensions:
         properties = extensions["properties"]
@@ -303,7 +300,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     can_complete = False
     try:
         AuthorizationService.assert_user_can_complete_task(
-            process_instance.id, task_model.task_definition.bpmn_identifier, g.user
+            process_instance.id, task_definition.bpmn_identifier, g.user
         )
         can_complete = True
     except HumanTaskNotFoundError:
@@ -311,24 +308,10 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     except UserDoesNotHaveAccessToTaskError:
         can_complete = False
 
-    task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
-    task.data = spiff_task.data
-    task.process_model_display_name = process_model.display_name
-    task.process_model_identifier = process_model.id
-
-    # task.data
-    # task.form_schema
-    # task.form_ui_schema
-    # task.id
-    # task.process_model_display_name
-    # task.process_model_identifier
-    # task.state
-    # task.type
-
     task_model.data = task_model.get_data()
     task_model.process_model_display_name = process_model.display_name
     task_model.process_model_identifier = process_model.id
-    task_model.type = task_model.task_definition.typename
+    task_model.type = task_definition.typename
     task_model.can_complete = can_complete
     task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
 
@@ -345,7 +328,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
         process_model_relative_path = os.path.dirname(relative_path)
         process_model_with_form = ProcessModelService.get_process_model_from_relative_path(process_model_relative_path)
 
-    if task_model.task_definition.typename == "UserTask":
+    if task_definition.typename == "UserTask":
         if not form_schema_file_name:
             raise (
                 ApiError(
@@ -386,7 +369,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
 
 def _render_instructions_for_end_user(task_model: TaskModel) -> str:
     """Assure any instructions for end user are processed for jinja syntax."""
-    extensions = task_model.properties_json['extensions'] if 'extensions' in task_model.properties_json else {}
+    extensions = task_model.properties_json["extensions"] if "extensions" in task_model.properties_json else {}
     if extensions and "instructionsForEndUser" in extensions:
         if extensions["instructionsForEndUser"]:
             try:
@@ -458,7 +441,7 @@ def interstitial(process_instance_id: int) -> Response:
     return Response(
         stream_with_context(_interstitial_stream(process_instance_id)),
         mimetype="text/event-stream",
-        headers={'X-Accel-Buffering': 'no'}
+        headers={"X-Accel-Buffering": "no"},
     )
 
 
@@ -762,8 +745,8 @@ def _update_form_schema_with_task_data_as_needed(in_dict: dict, task_model: Task
 
                             if task_data_var not in task_model.data:
                                 message = (
-                                    "Error building form. Attempting to create a selection list with options from variable"
-                                    f" '{task_data_var}' but it doesn't exist in the Task Data."
+                                    "Error building form. Attempting to create a selection list with options from"
+                                    f" variable '{task_data_var}' but it doesn't exist in the Task Data."
                                 )
                                 raise ApiError(
                                     error_code="missing_task_data_var",
