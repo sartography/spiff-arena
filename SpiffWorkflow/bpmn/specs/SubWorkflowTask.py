@@ -27,15 +27,17 @@ class SubWorkflowTask(BpmnSpecMixin):
 
     def _on_subworkflow_completed(self, subworkflow, my_task):
         self.update_data(my_task, subworkflow)
-        my_task._set_state(TaskState.READY)
 
     def _update_hook(self, my_task):
         wf = my_task.workflow._get_outermost_workflow(my_task)
-        if my_task.id not in wf.subprocesses:
+        subprocess = wf.subprocesses.get(my_task.id)
+        if subprocess is None:
             super()._update_hook(my_task)
             self.create_workflow(my_task)
             self.start_workflow(my_task)
             my_task._set_state(TaskState.WAITING)
+        else:
+            return subprocess.is_completed()
 
     def _on_cancel(self, my_task):
         subworkflow = my_task.workflow.get_subprocess(my_task)
@@ -44,7 +46,11 @@ class SubWorkflowTask(BpmnSpecMixin):
 
     def copy_data(self, my_task, subworkflow):
         # There is only one copy of any given data object, so it should be updated immediately
-        subworkflow.data = my_task.workflow.data
+        # Doing this is actually a little problematic, because it gives parent processes access to 
+        # data objects defined in subprocesses.
+        # But our data management is already hopelessly messed up and in dire needs of reconsideration
+        if len(subworkflow.spec.data_objects) > 0:
+            subworkflow.data = my_task.workflow.data
         start = subworkflow.get_tasks_from_spec_name('Start', workflow=subworkflow)
         start[0].set_data(**my_task.data)
 
