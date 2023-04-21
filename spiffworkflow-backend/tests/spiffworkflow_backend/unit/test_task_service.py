@@ -1,19 +1,16 @@
 from flask import Flask
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
-from spiffworkflow_backend.models.task import TaskModel # noqa: F401
-from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
-from flask.testing import FlaskClient
-from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.task_service import TaskService
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 class TestTaskService(BaseTest):
-
     def test_can_get_full_bpmn_process_path(
         self,
         app: Flask,
@@ -42,22 +39,22 @@ class TestTaskService(BaseTest):
         assert process_instance.status == "complete"
 
         bpmn_process_level_2b = (
-            BpmnProcessModel.query
-            .join(BpmnProcessDefinitionModel)
-            .filter(BpmnProcessDefinitionModel.bpmn_identifier == 'Level2b').first()
+            BpmnProcessModel.query.join(BpmnProcessDefinitionModel)
+            .filter(BpmnProcessDefinitionModel.bpmn_identifier == "Level2b")
+            .first()
         )
         assert bpmn_process_level_2b is not None
         full_bpnmn_process_path = TaskService.full_bpmn_process_path(bpmn_process_level_2b)
-        assert full_bpnmn_process_path == ['Level1', 'Level2', 'Level2b']
+        assert full_bpnmn_process_path == ["Level1", "Level2", "Level2b"]
 
         bpmn_process_level_3 = (
-            BpmnProcessModel.query
-            .join(BpmnProcessDefinitionModel)
-            .filter(BpmnProcessDefinitionModel.bpmn_identifier == 'Level3').first()
+            BpmnProcessModel.query.join(BpmnProcessDefinitionModel)
+            .filter(BpmnProcessDefinitionModel.bpmn_identifier == "Level3")
+            .first()
         )
         assert bpmn_process_level_3 is not None
         full_bpnmn_process_path = TaskService.full_bpmn_process_path(bpmn_process_level_3)
-        assert full_bpnmn_process_path == ['Level1', 'Level2', 'Level3']
+        assert full_bpnmn_process_path == ["Level1", "Level2", "Level3"]
 
     def test_task_models_of_parent_bpmn_processes_stop_on_first_call_activity(
         self,
@@ -88,25 +85,31 @@ class TestTaskService(BaseTest):
 
         task_model_level_2b = (
             TaskModel.query.join(TaskDefinitionModel)
-            .filter(TaskDefinitionModel.bpmn_identifier == 'level_2b_subprocess_script_task').first()
+            .filter(TaskDefinitionModel.bpmn_identifier == "level_2b_subprocess_script_task")
+            .first()
         )
         assert task_model_level_2b is not None
-        (bpmn_processes, task_models) = TaskService.task_models_of_parent_bpmn_processes(task_model_level_2b, stop_on_first_call_activity=True)
+        (bpmn_processes, task_models) = TaskService.task_models_of_parent_bpmn_processes(
+            task_model_level_2b, stop_on_first_call_activity=True
+        )
         assert len(bpmn_processes) == 2
         assert len(task_models) == 2
-        assert bpmn_processes[0].bpmn_process_definition.bpmn_identifier == 'Level2b'
-        assert task_models[0].task_definition.bpmn_identifier == 'level2b_second_call'
+        assert bpmn_processes[0].bpmn_process_definition.bpmn_identifier == "Level2b"
+        assert task_models[0].task_definition.bpmn_identifier == "level2b_second_call"
 
         task_model_level_3 = (
             TaskModel.query.join(TaskDefinitionModel)
-            .filter(TaskDefinitionModel.bpmn_identifier == 'level_3_script_task').first()
+            .filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task")
+            .first()
         )
         assert task_model_level_3 is not None
-        (bpmn_processes, task_models) = TaskService.task_models_of_parent_bpmn_processes(task_model_level_3, stop_on_first_call_activity=True)
+        (bpmn_processes, task_models) = TaskService.task_models_of_parent_bpmn_processes(
+            task_model_level_3, stop_on_first_call_activity=True
+        )
         assert len(bpmn_processes) == 1
         assert len(task_models) == 1
-        assert bpmn_processes[0].bpmn_process_definition.bpmn_identifier == 'Level3'
-        assert task_models[0].task_definition.bpmn_identifier == 'level3'
+        assert bpmn_processes[0].bpmn_process_definition.bpmn_identifier == "Level3"
+        assert task_models[0].task_definition.bpmn_identifier == "level3"
 
     def test_bpmn_process_for_called_activity_or_top_level_process(
         self,
@@ -137,17 +140,19 @@ class TestTaskService(BaseTest):
 
         task_model_level_2b = (
             TaskModel.query.join(TaskDefinitionModel)
-            .filter(TaskDefinitionModel.bpmn_identifier == 'level_2b_subprocess_script_task').first()
+            .filter(TaskDefinitionModel.bpmn_identifier == "level_2b_subprocess_script_task")
+            .first()
         )
         assert task_model_level_2b is not None
         bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model_level_2b)
         assert bpmn_process is not None
-        assert bpmn_process.bpmn_process_definition.bpmn_identifier == 'Level2b'
+        assert bpmn_process.bpmn_process_definition.bpmn_identifier == "Level2b"
 
         task_model_level_3 = (
             TaskModel.query.join(TaskDefinitionModel)
-            .filter(TaskDefinitionModel.bpmn_identifier == 'level_3_script_task').first()
+            .filter(TaskDefinitionModel.bpmn_identifier == "level_3_script_task")
+            .first()
         )
         assert task_model_level_3 is not None
         bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model_level_3)
-        assert bpmn_process.bpmn_process_definition.bpmn_identifier == 'Level3'
+        assert bpmn_process.bpmn_process_definition.bpmn_identifier == "Level3"
