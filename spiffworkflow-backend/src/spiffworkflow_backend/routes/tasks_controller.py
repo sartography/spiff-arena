@@ -419,7 +419,11 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[st
 
 def interstitial(process_instance_id: int) -> Response:
     """A Server Side Events Stream for watching the execution of engine tasks."""
-    return Response(stream_with_context(_interstitial_stream(process_instance_id)), mimetype="text/event-stream")
+    return Response(
+        stream_with_context(_interstitial_stream(process_instance_id)),
+        mimetype="text/event-stream",
+        headers={'X-Accel-Buffering': 'no'}
+    )
 
 
 def _task_submit_shared(
