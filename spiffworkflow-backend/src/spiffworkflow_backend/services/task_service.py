@@ -489,6 +489,17 @@ class TaskService:
         return json_data_dict
 
     @classmethod
+    def bpmn_process_for_called_activity_or_top_level_process(cls, task_model: TaskModel) -> BpmnProcessModel:
+        """Returns either the bpmn process for the call activity calling the process or the top level bpmn process.
+
+        For example, process_modelA has processA which has a call activity that calls processB which is inside of process_modelB.
+        processB has subprocessA which has taskA. Using taskA this method should return processB and then that can be used with
+        the spec reference cache to find process_modelB.
+        """
+        (bpmn_processes, _task_models) = TaskService.task_models_of_parent_bpmn_processes(task_model, stop_on_first_call_activity=True)
+        return bpmn_processes[0]
+
+    @classmethod
     def bpmn_process_and_descendants(cls, bpmn_processes: list[BpmnProcessModel]) -> list[BpmnProcessModel]:
         bpmn_process_ids = [p.id for p in bpmn_processes]
         direct_children = BpmnProcessModel.query.filter(
@@ -500,27 +511,51 @@ class TaskService:
 
     @classmethod
     def task_models_of_parent_bpmn_processes(
-        cls, task_model: TaskModel
+        cls, task_model: TaskModel, stop_on_first_call_activity: Optional[bool] = False
     ) -> Tuple[list[BpmnProcessModel], list[TaskModel]]:
+        """Returns the list of task models that are associated with the paren bpmn process.
+
+        Example: TopLevelProcess has SubprocessTaskA which has CallActivityTaskA which has ScriptTaskA.
+        SubprocessTaskA corresponds to SpiffSubprocess1.
+        CallActivityTaskA corresponds to SpiffSubprocess2.
+        Using ScriptTaskA this will return:
+            (
+                [TopLevelProcess, SpiffSubprocess1, SpiffSubprocess2],
+                [SubprocessTaskA, CallActivityTaskA]
+            )
+
+        If stop_on_first_call_activity it will stop when it reaches the first task model with a type of 'CallActivity'.
+        This will change the return value in the example to:
+            (
+                [SpiffSubprocess2],
+                [CallActivityTaskA]
+            )
+        """
         bpmn_process = task_model.bpmn_process
         task_models: list[TaskModel] = []
         bpmn_processes: list[BpmnProcessModel] = [bpmn_process]
         if bpmn_process.guid is not None:
             parent_task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
-            if parent_task_model is not None:
-                b, t = cls.task_models_of_parent_bpmn_processes(parent_task_model)
-                return (bpmn_processes + b, [parent_task_model] + t)
+            task_models.append(parent_task_model)
+            if not stop_on_first_call_activity or parent_task_model.task_definition.typename != 'CallActivity':
+                if parent_task_model is not None:
+                    b, t = cls.task_models_of_parent_bpmn_processes(parent_task_model, stop_on_first_call_activity=stop_on_first_call_activity)
+                    return (b + bpmn_processes, t + task_models)
         return (bpmn_processes, task_models)
 
     @classmethod
     def full_bpmn_process_path(cls, bpmn_process: BpmnProcessModel) -> list[str]:
         """Returns a list of bpmn process identifiers pointing the given bpmn_process."""
-        bpmn_process_identifiers: list[str] = [bpmn_process.bpmn_process_definition.bpmn_identifier]
-        if bpmn_process.direct_parent_process_id is not None:
-            parent_bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
-            if parent_bpmn_process is not None:
-                # always prepend new identifiers since they come first in the path
-                bpmn_process_identifiers = cls.full_bpmn_process_path(parent_bpmn_process) + bpmn_process_identifiers
+        bpmn_process_identifiers: list[str] = []
+        if bpmn_process.guid:
+            task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
+            (
+                parent_bpmn_processes,
+                _task_models_of_parent_bpmn_processes,
+            ) = TaskService.task_models_of_parent_bpmn_processes(task_model)
+            for parent_bpmn_process in parent_bpmn_processes:
+                bpmn_process_identifiers.append(parent_bpmn_process.bpmn_process_definition.bpmn_identifier)
+        bpmn_process_identifiers.append(bpmn_process.bpmn_process_definition.bpmn_identifier)
         return bpmn_process_identifiers
 
     @classmethod
