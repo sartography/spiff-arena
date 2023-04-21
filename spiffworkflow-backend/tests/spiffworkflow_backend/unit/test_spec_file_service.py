@@ -134,7 +134,6 @@ class TestSpecFileService(BaseTest):
         db.session.add(process_id_lookup)
         db.session.commit()
 
-
     def test_change_the_identifier_cleans_up_cache(
         self,
         app: Flask,
