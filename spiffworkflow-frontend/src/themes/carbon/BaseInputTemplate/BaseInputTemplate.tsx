@@ -9,7 +9,7 @@ import {
 } from '@rjsf/utils';
 
 import { useCallback } from 'react';
-import { DATE_FORMAT, DATE_FORMAT_CARBON } from '../../../config';
+import { DATE_FORMAT_CARBON, DATE_FORMAT_FOR_DISPLAY } from '../../../config';
 import { ymdDateStringToConfiguredFormat } from '../../../helpers';
 
 /** The `BaseInputTemplate` is the template to use to render the basic `<input>` component for the `core` theme.
@@ -117,7 +117,7 @@ export default function BaseInputTemplate<
       >
         <DatePickerInput
           id={id}
-          placeholder={DATE_FORMAT}
+          placeholder={DATE_FORMAT_FOR_DISPLAY}
           helperText={helperText}
           type="text"
           size="md"

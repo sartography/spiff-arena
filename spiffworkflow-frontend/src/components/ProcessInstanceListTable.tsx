@@ -24,7 +24,11 @@ import {
   FormLabel,
   // @ts-ignore
 } from '@carbon/react';
-import { PROCESS_STATUSES, DATE_FORMAT, DATE_FORMAT_CARBON } from '../config';
+import {
+  PROCESS_STATUSES,
+  DATE_FORMAT_CARBON,
+  DATE_FORMAT_FOR_DISPLAY,
+} from '../config';
 import {
   convertDateAndTimeStringsToSeconds,
   convertDateObjectToFormattedHoursMinutes,
@@ -681,7 +685,7 @@ export default function ProcessInstanceListTable({
         <DatePicker dateFormat={DATE_FORMAT_CARBON} datePickerType="single">
           <DatePickerInput
             id={`date-picker-${name}`}
-            placeholder={DATE_FORMAT}
+            placeholder={DATE_FORMAT_FOR_DISPLAY}
             labelText={labelString}
             type="text"
             size="md"

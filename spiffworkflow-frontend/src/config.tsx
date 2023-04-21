@@ -96,5 +96,6 @@ export const DATE_TIME_FORMAT = `${generalDateFormat} HH:mm:ss`;
 export const TIME_FORMAT_HOURS_MINUTES = 'HH:mm';
 export const DATE_FORMAT = generalDateFormat;
 export const DATE_FORMAT_CARBON = carbonDateFormat;
+export const DATE_FORMAT_FOR_DISPLAY = generalDateFormat.toLowerCase();
 
 export const SPIFF_ENVIRONMENT = spiffEnvironment;
