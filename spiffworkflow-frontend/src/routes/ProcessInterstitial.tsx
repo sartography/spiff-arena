@@ -27,7 +27,6 @@ export default function ProcessInterstitial() {
       {
         headers: getBasicHeaders(),
         onmessage(ev) {
-          console.log(data, ev.data);
           const task = JSON.parse(ev.data);
           setData((prevData) => [...prevData, task]);
           setLastTask(task);
@@ -68,7 +67,6 @@ export default function ProcessInterstitial() {
     if (state === 'CLOSED') {
       return lastTask.state;
     }
-    console.log('The State is: ', state);
     return state;
   };
 
@@ -80,6 +78,7 @@ export default function ProcessInterstitial() {
         );
       case 'LOCKED':
         return <img src="/interstitial/locked.png" alt="Locked" />;
+      case 'READY':
       case 'REDIRECTING':
         return <img src="/interstitial/redirect.png" alt="Redirecting ...." />;
       case 'WAITING':
@@ -87,12 +86,11 @@ export default function ProcessInterstitial() {
       case 'COMPLETED':
         return <img src="/interstitial/completed.png" alt="Completed" />;
       default:
-        return <br />;
+        return getStatus();
     }
   };
 
   function capitalize(str: string): string {
-    console.log('Capitalizing: ', str);
     if (str && str.length > 0) {
       return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
     }
