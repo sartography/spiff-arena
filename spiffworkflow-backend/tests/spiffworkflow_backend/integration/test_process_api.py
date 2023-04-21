@@ -1694,7 +1694,8 @@ class TestProcessApi(BaseTest):
 
         # Rather that call the API and deal with the Server Side Events, call the loop directly and covert it to
         # a list.  It tests all of our code.  No reason to test Flasks SSE support.
-        results = list(_interstitial_stream(process_instance_id))
+        stream_results = _interstitial_stream(process_instance_id)
+        results = list(stream_results)
         # strip the "data:" prefix and convert remaining string to dict.
         json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
         # There should be 2 results back -

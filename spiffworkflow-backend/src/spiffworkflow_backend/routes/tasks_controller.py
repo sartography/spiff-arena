@@ -392,7 +392,7 @@ def process_data_show(
     )
 
 
-def _interstitial_stream(process_instance_id: int) -> Generator[str, str, None]:
+def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[str], None]:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # bit of an issue with end tasks showing as getting completed twice.
