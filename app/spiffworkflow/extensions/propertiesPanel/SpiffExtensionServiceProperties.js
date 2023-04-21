@@ -45,10 +45,6 @@ function requestServiceTaskOperators(eventBus, element, commandStack) {
       serviceTaskOperators = event.serviceTaskOperators.sort((a, b) =>
         a.id.localeCompare(b.id)
       );
-      commandStack.execute('element.updateProperties', {
-        element,
-        properties: {},
-      });
     }
   });
 }

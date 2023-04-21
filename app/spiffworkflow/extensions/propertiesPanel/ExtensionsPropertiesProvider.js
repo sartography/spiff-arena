@@ -37,14 +37,18 @@ export default function ExtensionsPropertiesProvider(
           createBusinessRuleGroup(element, translate, moddle, commandStack)
         );
       }
-      if (isAny(element, ['bpmn:ManualTask', 'bpmn:UserTask', 'bpmn:EndEvent'])) {
+      if (
+        isAny(element, [
+          'bpmn:ManualTask',
+          'bpmn:UserTask',
+          'bpmn:ServiceTask',
+          'bpmn:EndEvent',
+          'bpmn:ScriptTask',
+          'bpmn:IntermediateCatchEvent',
+        ])
+      ) {
         groups.push(
-          createUserInstructionsGroup (
-            element,
-            translate,
-            moddle,
-            commandStack
-          )
+          createUserInstructionsGroup(element, translate, moddle, commandStack)
         );
       }
       if (is(element, 'bpmn:ServiceTask')) {
@@ -237,7 +241,7 @@ function createUserInstructionsGroup (
         component: SpiffExtensionTextArea,
         name: 'spiffworkflow:instructionsForEndUser',
         label: 'Instructions',
-        description: 'The instructions to display when completing this task.',
+        description: 'Displayed above user forms or when this task is executing.',
       },
       {
         element,
