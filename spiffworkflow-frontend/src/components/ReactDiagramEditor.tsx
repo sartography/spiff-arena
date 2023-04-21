@@ -85,6 +85,7 @@ type OwnProps = {
   onSearchProcessModels?: (..._args: any[]) => any;
   onElementsChanged?: (..._args: any[]) => any;
   url?: string;
+  callers?: any;
 };
 
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
@@ -110,6 +111,7 @@ export default function ReactDiagramEditor({
   onSearchProcessModels,
   onElementsChanged,
   url,
+  callers,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState(null);
@@ -124,6 +126,8 @@ export default function ReactDiagramEditor({
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
+
+  console.log(callers);
 
   useEffect(() => {
     if (diagramModelerState) {
