@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from flask import g
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -68,12 +69,19 @@ class HumanTaskModel(SpiffworkflowBaseDBModel):
     @classmethod
     def to_task(cls, task: HumanTaskModel) -> Task:
         """To_task."""
+        can_complete = False
+        for user in task.human_task_users:
+            if user.user_id == g.user.id:
+                can_complete = True
+                break
+
         new_task = Task(
             task.task_id,
             task.task_name,
             task.task_title,
             task.task_type,
             task.task_status,
+            can_complete,
             process_instance_id=task.process_instance_id,
         )
         if hasattr(task, "process_model_display_name"):

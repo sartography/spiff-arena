@@ -1842,6 +1842,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServiceTask"
+  /tasks/{process_instance_id}:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of an existing process instance.
+        schema:
+          type: integer
+    get:
+      tags:
+        - Tasks
+      operationId: spiffworkflow_backend.routes.tasks_controller.interstitial
+      summary: An SSE (Server Sent Events) endpoint that returns what tasks are currently active (running, waiting, or the final END event)
+      responses:
+        "200":
+          description: One task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
 
   /tasks/{process_instance_id}/{task_guid}:
     parameters:

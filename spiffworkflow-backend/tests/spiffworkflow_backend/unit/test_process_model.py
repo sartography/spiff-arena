@@ -43,7 +43,7 @@ class TestProcessModel(BaseTest):
 
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"
 
     def test_can_run_process_model_with_call_activities_when_not_in_same_directory(
@@ -74,7 +74,7 @@ class TestProcessModel(BaseTest):
             )
         process_instance = self.create_process_instance_from_process_model(process_model)
         processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"
 
     def test_can_run_process_model_with_call_activities_when_process_identifier_is_not_in_database(
@@ -110,7 +110,7 @@ class TestProcessModel(BaseTest):
         db.session.query(SpecReferenceCache).delete()
         db.session.commit()
         processor = ProcessInstanceProcessor(process_instance)
-        processor.do_engine_steps(save=True)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
         assert process_instance.status == "complete"
 
     def test_extract_metadata(

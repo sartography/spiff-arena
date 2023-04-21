@@ -10,6 +10,7 @@ export default function MyCompletedInstances() {
       perPageOptions={[2, 5, 25]}
       reportIdentifier="system_report_completed_instances_initiated_by_me"
       showReports={false}
+      showActionsColumn
     />
   );
 }

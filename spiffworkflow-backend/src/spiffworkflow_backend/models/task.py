@@ -88,6 +88,7 @@ class Task:
         title: str,
         type: str,
         state: str,
+        can_complete: bool,
         lane: Union[str, None] = None,
         form: None = None,
         documentation: str = "",
@@ -116,6 +117,7 @@ class Task:
         self.title = title
         self.type = type
         self.state = state
+        self.can_complete = can_complete
         self.form = form
         self.documentation = documentation
         self.lane = lane
@@ -160,6 +162,7 @@ class Task:
             "type": self.type,
             "state": self.state,
             "lane": self.lane,
+            "can_complete": self.can_complete,
             "form": self.form,
             "documentation": self.documentation,
             "data": self.data,

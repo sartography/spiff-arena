@@ -11,6 +11,7 @@ from urllib.parse import unquote
 
 import sentry_sdk
 from flask import current_app
+from flask import g
 from SpiffWorkflow.bpmn.specs.events.IntermediateEvent import _BoundaryEventParent  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
@@ -27,6 +28,8 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.task import Task
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import HumanTaskNotFoundError
+from spiffworkflow_backend.services.authorization_service import UserDoesNotHaveAccessToTaskError
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -112,10 +115,13 @@ class ProcessInstanceService:
             .filter(ProcessInstanceModel.id.in_(process_instance_ids_to_check))  # type: ignore
             .all()
         )
+        execution_strategy_name = current_app.config["SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"]
         for process_instance in records:
             current_app.logger.info(f"Processing process_instance {process_instance.id}")
             try:
-                cls.run_process_intance_with_processor(process_instance, status_value=status_value)
+                cls.run_process_instance_with_processor(
+                    process_instance, status_value=status_value, execution_strategy_name=execution_strategy_name
+                )
             except ProcessInstanceIsAlreadyLockedError:
                 continue
             except Exception as e:
@@ -127,8 +133,11 @@ class ProcessInstanceService:
                 current_app.logger.error(error_message)
 
     @classmethod
-    def run_process_intance_with_processor(
-        cls, process_instance: ProcessInstanceModel, status_value: Optional[str] = None
+    def run_process_instance_with_processor(
+        cls,
+        process_instance: ProcessInstanceModel,
+        status_value: Optional[str] = None,
+        execution_strategy_name: Optional[str] = None,
     ) -> Optional[ProcessInstanceProcessor]:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
@@ -139,9 +148,6 @@ class ProcessInstanceService:
 
         db.session.refresh(process_instance)
         if status_value is None or process_instance.status == status_value:
-            execution_strategy_name = current_app.config[
-                "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_BACKGROUND"
-            ]
             processor.do_engine_steps(save=True, execution_strategy_name=execution_strategy_name)
 
         return processor
@@ -432,6 +438,19 @@ class ProcessInstanceService:
         else:
             lane = None
 
+        # Check for a human task, and if it exists, check to see if the current user
+        # can complete it.
+        can_complete = False
+        try:
+            AuthorizationService.assert_user_can_complete_spiff_task(
+                processor.process_instance_model.id, spiff_task, g.user
+            )
+            can_complete = True
+        except HumanTaskNotFoundError:
+            can_complete = False
+        except UserDoesNotHaveAccessToTaskError:
+            can_complete = False
+
         if hasattr(spiff_task.task_spec, "spec"):
             call_activity_process_identifier = spiff_task.task_spec.spec
         else:
@@ -449,8 +468,12 @@ class ProcessInstanceService:
             spiff_task.task_spec.description,
             task_type,
             spiff_task.get_state_name(),
+            can_complete=can_complete,
             lane=lane,
             process_identifier=spiff_task.task_spec._wf_spec.name,
+            process_instance_id=processor.process_instance_model.id,
+            process_model_identifier=processor.process_model_identifier,
+            process_model_display_name=processor.process_model_display_name,
             properties=props,
             parent=parent_id,
             event_definition=serialized_task_spec.get("event_definition"),

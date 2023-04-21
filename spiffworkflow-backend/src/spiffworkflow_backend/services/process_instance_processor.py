@@ -1687,7 +1687,7 @@ class ProcessInstanceProcessor:
             self._script_engine.environment.finalize_result,
             self.save,
         )
-        execution_service.run(exit_at, save)
+        execution_service.run_and_save(exit_at, save)
 
     @classmethod
     def get_tasks_with_data(cls, bpmn_process_instance: BpmnWorkflow) -> List[SpiffTask]:
