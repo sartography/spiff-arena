@@ -5,6 +5,7 @@ import uuid
 from sys import exc_info
 from typing import Any
 from typing import Dict
+from typing import Generator
 from typing import Optional
 from typing import TypedDict
 from typing import Union
@@ -16,6 +17,7 @@ from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
+from flask import stream_with_context
 from flask.wrappers import Response
 from jinja2 import TemplateSyntaxError
 from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
@@ -262,7 +264,7 @@ def manual_complete_task(
     )
 
 
-def task_show(process_instance_id: int, task_guid: str) -> flask.wrappers.Response:
+def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappers.Response:
     """Task_show."""
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
@@ -277,12 +279,16 @@ def task_show(process_instance_id: int, task_guid: str) -> flask.wrappers.Respon
         process_instance.process_model_identifier,
     )
 
-    _find_human_task_or_raise(process_instance_id, task_guid)
+    # _find_human_task_or_raise(process_instance_id, task_guid)
 
     form_schema_file_name = ""
     form_ui_schema_file_name = ""
     processor = ProcessInstanceProcessor(process_instance)
-    spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
+    if task_guid == "next":
+        spiff_task = processor.next_task()
+        task_guid = spiff_task.id
+    else:
+        spiff_task = _get_spiff_task_from_process_instance(task_guid, process_instance, processor=processor)
     extensions = spiff_task.task_spec.extensions
 
     if "properties" in extensions:
@@ -344,17 +350,22 @@ def task_show(process_instance_id: int, task_guid: str) -> flask.wrappers.Respon
                 task.form_ui_schema = ui_form_contents
 
         _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task)
+    _render_instructions_for_end_user(spiff_task, task)
+    return make_response(jsonify(task), 200)
 
+
+def _render_instructions_for_end_user(spiff_task: SpiffTask, task: Task) -> str:
+    """Assure any instructions for end user are processed for jinja syntax."""
     if task.properties and "instructionsForEndUser" in task.properties:
         if task.properties["instructionsForEndUser"]:
             try:
-                task.properties["instructionsForEndUser"] = _render_jinja_template(
-                    task.properties["instructionsForEndUser"], spiff_task
-                )
+                instructions = _render_jinja_template(task.properties["instructionsForEndUser"], spiff_task)
+                task.properties["instructionsForEndUser"] = instructions
+                return instructions
             except WorkflowTaskException as wfe:
                 wfe.add_note("Failed to render instructions for end user.")
                 raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe
-    return make_response(jsonify(task), 200)
+    return ""
 
 
 def process_data_show(
@@ -379,6 +390,36 @@ def process_data_show(
         ),
         200,
     )
+
+
+def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[str], None]:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    processor = ProcessInstanceProcessor(process_instance)
+    reported_ids = []  # bit of an issue with end tasks showing as getting completed twice.
+    spiff_task = processor.next_task()
+    last_task = None
+    while last_task != spiff_task:
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+        instructions = _render_instructions_for_end_user(spiff_task, task)
+        if instructions and spiff_task.id not in reported_ids:
+            reported_ids.append(spiff_task.id)
+            yield f"data: {current_app.json.dumps(task)} \n\n"
+        last_task = spiff_task
+        processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+        processor.do_engine_steps(execution_strategy_name="one_at_a_time")
+        spiff_task = processor.next_task()
+        # Note, this has to be done in case someone leaves the page,
+        # which can otherwise cancel this function and leave completed tasks un-registered.
+        processor.save()  # Fixme - maybe find a way not to do this on every loop?
+    if len(reported_ids) == 0:
+        # Always provide some response, in the event no instructions were provided.
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+        yield f"data: {current_app.json.dumps(task)} \n\n"
+
+
+def interstitial(process_instance_id: int) -> Response:
+    """A Server Side Events Stream for watching the execution of engine tasks."""
+    return Response(stream_with_context(_interstitial_stream(process_instance_id)), mimetype="text/event-stream")
 
 
 def _task_submit_shared(
@@ -462,8 +503,21 @@ def _task_submit_shared(
         )
         if next_human_task_assigned_to_me:
             return make_response(jsonify(HumanTaskModel.to_task(next_human_task_assigned_to_me)), 200)
+        elif processor.next_task():
+            task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+            return make_response(jsonify(task), 200)
 
-    return Response(json.dumps({"ok": True}), status=202, mimetype="application/json")
+    return Response(
+        json.dumps(
+            {
+                "ok": True,
+                "process_model_identifier": process_instance.process_model_identifier,
+                "process_instance_id": process_instance_id,
+            }
+        ),
+        status=202,
+        mimetype="application/json",
+    )
 
 
 def task_submit(

@@ -13,7 +13,6 @@ import {
   ButtonSet,
 } from '@carbon/react';
 
-import MDEditor from '@uiw/react-md-editor';
 // eslint-disable-next-line import/no-named-as-default
 import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
@@ -21,6 +20,7 @@ import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
 import { ProcessInstanceTask } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
+import InstructionsForEndUser from '../components/InstructionsForEndUser';
 
 // TODO: move this somewhere else
 function TypeAheadWidget({
@@ -89,13 +89,6 @@ function TypeAheadWidget({
   );
 }
 
-class UnexpectedHumanTaskType extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'UnexpectedHumanTaskType';
-  }
-}
-
 enum FormSubmitType {
   Default,
   Draft,
@@ -107,19 +100,28 @@ export default function TaskShow() {
   const params = useParams();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
-
   // save current form data so that we can avoid validations in certain situations
   const [currentFormObject, setCurrentFormObject] = useState<any>({});
 
   const { addError, removeError } = useAPIError();
 
-  // eslint-disable-next-line sonarjs/no-duplicate-string
-  const supportedHumanTaskTypes = ['User Task', 'Manual Task'];
+  const navigateToInterstitial = (myTask: ProcessInstanceTask) => {
+    navigate(
+      `/process/${modifyProcessIdentifierForPathParam(
+        myTask.process_model_identifier
+      )}/${myTask.process_instance_id}/interstitial`
+    );
+  };
 
   useEffect(() => {
     const processResult = (result: ProcessInstanceTask) => {
       setTask(result);
       setDisabled(false);
+
+      if (!result.can_complete) {
+        navigateToInterstitial(result);
+      }
+
       /*  Disable call to load previous tasks -- do not display menu.
       const url = `/v1.0/process-instances/for-me/${modifyProcessIdentifierForPathParam(
         result.process_model_identifier
@@ -156,7 +158,11 @@ export default function TaskShow() {
     if (result.ok) {
       navigate(`/tasks`);
     } else if (result.process_instance_id) {
-      navigate(`/tasks/${result.process_instance_id}/${result.id}`);
+      if (result.can_complete) {
+        navigate(`/tasks/${result.process_instance_id}/${result.id}`);
+      } else {
+        navigateToInterstitial(result);
+      }
     } else {
       addError(result);
     }
@@ -342,10 +348,6 @@ export default function TaskShow() {
             Save as draft
           </Button>
         );
-      } else {
-        throw new UnexpectedHumanTaskType(
-          `Invalid task type given: ${task.type}. Only supported types: ${supportedHumanTaskTypes}`
-        );
       }
       reactFragmentToHideSubmitButton = (
         <ButtonSet>
@@ -386,27 +388,6 @@ export default function TaskShow() {
     );
   };
 
-  const instructionsElement = () => {
-    if (!task) {
-      return null;
-    }
-    let instructions = '';
-    if (task.properties.instructionsForEndUser) {
-      instructions = task.properties.instructionsForEndUser;
-    }
-    return (
-      <div className="markdown">
-        {/*
-          https://www.npmjs.com/package/@uiw/react-md-editor switches to dark mode by default by respecting @media (prefers-color-scheme: dark)
-          This makes it look like our site is broken, so until the rest of the site supports dark mode, turn off dark mode for this component.
-        */}
-        <div data-color-mode="light">
-          <MDEditor.Markdown source={instructions} />
-        </div>
-      </div>
-    );
-  };
-
   if (task) {
     let statusString = '';
     if (task.state !== 'READY') {
@@ -430,7 +411,7 @@ export default function TaskShow() {
         <h3>
           Task: {task.title} ({task.process_model_display_name}){statusString}
         </h3>
-        {instructionsElement()}
+        <InstructionsForEndUser task={task} />
         {formElement()}
       </main>
     );

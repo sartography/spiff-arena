@@ -90,6 +90,15 @@ class ExecutionStrategy:
     def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.delegate.save(bpmn_process_instance)
 
+    def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
+        return list(
+            [
+                t
+                for t in bpmn_process_instance.get_tasks(TaskState.READY)
+                if bpmn_process_instance._is_engine_task(t.task_spec)
+            ]
+        )
+
 
 class TaskModelSavingDelegate(EngineStepDelegate):
     """Engine step delegate that takes care of saving a task model to the database.
@@ -275,30 +284,55 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
     """
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        self.bpmn_process_instance = bpmn_process_instance
-        engine_steps = list(
-            [
-                t
-                for t in bpmn_process_instance.get_tasks(TaskState.READY)
-                if bpmn_process_instance._is_engine_task(t.task_spec)
-            ]
-        )
+        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
         while engine_steps:
             for spiff_task in engine_steps:
                 if spiff_task.task_spec.spec_type == "Service Task":
                     return
                 self.delegate.will_complete_task(spiff_task)
-                spiff_task.complete()
+                spiff_task.run()
                 self.delegate.did_complete_task(spiff_task)
+                bpmn_process_instance.refresh_waiting_tasks()
+            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        self.delegate.after_engine_steps(bpmn_process_instance)
 
-            engine_steps = list(
-                [
-                    t
-                    for t in bpmn_process_instance.get_tasks(TaskState.READY)
-                    if bpmn_process_instance._is_engine_task(t.task_spec)
-                ]
-            )
 
+class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
+    """When you want to run tasks until you hit something to report to the end user."""
+
+    def get_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
+        return list(
+            [
+                t
+                for t in bpmn_process_instance.get_tasks(TaskState.READY)
+                if t.task_spec.spec_type not in ["User Task", "Manual Task"]
+                and not (
+                    hasattr(t.task_spec, "extensions") and t.task_spec.extensions.get("instructionsForEndUser", None)
+                )
+            ]
+        )
+
+    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        engine_steps = self.get_engine_steps(bpmn_process_instance)
+        while engine_steps:
+            for task in engine_steps:
+                self.delegate.will_complete_task(task)
+                task.run()
+                self.delegate.did_complete_task(task)
+            engine_steps = self.get_engine_steps(bpmn_process_instance)
+        self.delegate.after_engine_steps(bpmn_process_instance)
+
+
+class OneAtATimeExecutionStrategy(ExecutionStrategy):
+    """When you want to run only one engine step at a time."""
+
+    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        if len(engine_steps) > 0:
+            spiff_task = engine_steps[0]
+            self.delegate.will_complete_task(spiff_task)
+            spiff_task.run()
+            self.delegate.did_complete_task(spiff_task)
         self.delegate.after_engine_steps(bpmn_process_instance)
 
 
@@ -306,9 +340,11 @@ def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> Executi
     cls = {
         "greedy": GreedyExecutionStrategy,
         "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
+        "run_until_user_message": RunUntilUserTaskOrMessageExecutionStrategy,
+        "one_at_a_time": OneAtATimeExecutionStrategy,
     }[name]
 
-    return cls(delegate)
+    return cls(delegate)  # type: ignore
 
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]
@@ -338,7 +374,7 @@ class WorkflowExecutionService:
     #   run
     #     execution_strategy.spiff_run
     #       spiff.[some_run_task_method]
-    def run(self, exit_at: None = None, save: bool = False) -> None:
+    def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
         """Do_engine_steps."""
         with safe_assertion(ProcessInstanceLockService.has_lock(self.process_instance_model.id)) as tripped:
             if tripped:
@@ -384,7 +420,8 @@ class WorkflowExecutionService:
         for bpmn_message in bpmn_messages:
             message_instance = MessageInstanceModel(
                 process_instance_id=self.process_instance_model.id,
-                user_id=self.process_instance_model.process_initiator_id,  # TODO: use the correct swimlane user when that is set up
+                user_id=self.process_instance_model.process_initiator_id,
+                # TODO: use the correct swimlane user when that is set up
                 message_type="send",
                 name=bpmn_message.name,
                 payload=bpmn_message.payload,
@@ -449,11 +486,11 @@ class WorkflowExecutionService:
 class ProfiledWorkflowExecutionService(WorkflowExecutionService):
     """A profiled version of the workflow execution service."""
 
-    def run(self, exit_at: None = None, save: bool = False) -> None:
+    def run_and_save(self, exit_at: None = None, save: bool = False) -> None:
         """__do_engine_steps."""
         import cProfile
         from pstats import SortKey
 
         with cProfile.Profile() as pr:
-            super().run(exit_at=exit_at, save=save)
+            super().run_and_save(exit_at=exit_at, save=save)
         pr.print_stats(sort=SortKey.CUMULATIVE)

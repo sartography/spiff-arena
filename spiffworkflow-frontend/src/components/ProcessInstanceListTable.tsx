@@ -1458,28 +1458,28 @@ export default function ProcessInstanceListTable({
       });
       if (showActionsColumn) {
         let buttonElement = null;
-        if (row.task_id) {
-          const taskUrl = `/tasks/${row.id}/${row.task_id}`;
-          const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
-          let hasAccessToCompleteTask = false;
-          if (
-            canCompleteAllTasks ||
-            (row.potential_owner_usernames || '').match(regex)
-          ) {
-            hasAccessToCompleteTask = true;
-          }
-          buttonElement = (
-            <Button
-              variant="primary"
-              href={taskUrl}
-              hidden={row.status === 'suspended'}
-              disabled={!hasAccessToCompleteTask}
-            >
-              Go
-            </Button>
-          );
+        const interstitialUrl = `/process/${modifyProcessIdentifierForPathParam(
+          row.process_model_identifier
+        )}/${row.id}/interstitial`;
+        const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
+        let hasAccessToCompleteTask = false;
+        if (
+          canCompleteAllTasks ||
+          (row.potential_owner_usernames || '').match(regex)
+        ) {
+          hasAccessToCompleteTask = true;
         }
 
+        buttonElement = (
+          <Button
+            kind={
+              hasAccessToCompleteTask && row.task_id ? 'secondary' : 'tertiary'
+            }
+            href={interstitialUrl}
+          >
+            Go
+          </Button>
+        );
         currentRow.push(<td>{buttonElement}</td>);
       }
 

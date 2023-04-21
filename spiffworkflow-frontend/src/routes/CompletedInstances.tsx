@@ -33,6 +33,7 @@ export default function CompletedInstances() {
             showReports={false}
             textToShowIfEmpty="This group has no completed instances at this time."
             additionalParams={`user_group_identifier=${userGroup}`}
+            showActionsColumn
           />
         </>
       );
@@ -61,6 +62,7 @@ export default function CompletedInstances() {
         textToShowIfEmpty="You have no completed instances at this time."
         paginationClassName="with-large-bottom-margin"
         autoReload
+        showActionsColumn
       />
       <h2
         title={withTasksCompletedByMeTitleText}
@@ -76,6 +78,7 @@ export default function CompletedInstances() {
         showReports={false}
         textToShowIfEmpty="You have no completed instances at this time."
         paginationClassName="with-large-bottom-margin"
+        showActionsColumn
       />
       {groupTableComponents()}
     </>
