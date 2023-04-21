@@ -58,6 +58,8 @@ class PrescriptPostsciptTest(BaseTestCase):
             self.workflow.do_engine_steps()
         ex = se.exception
         self.assertIn("Error occurred in the Pre-Script", str(ex))
+        task = self.workflow.get_tasks_from_spec_name('Activity_1iqs4li')[0]
+        self.assertEqual(task.state, TaskState.ERROR)
 
     def call_activity_test(self, save_restore=False):
 
@@ -82,3 +84,4 @@ class PrescriptPostsciptTest(BaseTestCase):
         ready_tasks = self.workflow.get_tasks(TaskState.READY)
         ready_tasks[0].set_data(**data)
         self.workflow.do_engine_steps()
+        self.complete_subworkflow()
