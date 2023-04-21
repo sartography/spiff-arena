@@ -422,7 +422,7 @@ def interstitial(process_instance_id: int) -> Response:
     return Response(
         stream_with_context(_interstitial_stream(process_instance_id)),
         mimetype="text/event-stream",
-        headers={'X-Accel-Buffering': 'no'}
+        headers={"X-Accel-Buffering": "no"},
     )
 
 
