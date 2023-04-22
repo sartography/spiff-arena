@@ -409,7 +409,9 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[st
             processor.do_engine_steps(execution_strategy_name="run_until_user_message")
             processor.do_engine_steps(execution_strategy_name="one_at_a_time")
         except WorkflowTaskException as wfe:
-            api_error = ApiError.from_workflow_exception("engine_steps_error", "Failed complete an automated task.", exp=wfe)
+            api_error = ApiError.from_workflow_exception(
+                "engine_steps_error", "Failed complete an automated task.", exp=wfe
+            )
             yield f"data: {current_app.json.dumps(api_error)} \n\n"
         # Note, this has to be done in case someone leaves the page,
         # which can otherwise cancel this function and leave completed tasks un-registered.

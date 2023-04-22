@@ -21,7 +21,7 @@ export default function ProcessInterstitial() {
   const userTasks = useMemo(() => {
     return ['User Task', 'Manual Task'];
   }, []);
-  const { addError, removeError } = useAPIError();
+  const { addError } = useAPIError();
 
   useEffect(() => {
     fetchEventSource(
@@ -113,7 +113,7 @@ export default function ProcessInterstitial() {
       return <div>Redirecting you to the next task now ...</div>;
     }
     if (myTask.error_message) {
-      return <div>{myTask.error_message}</div>
+      return <div>{myTask.error_message}</div>;
     }
 
     return (
