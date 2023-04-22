@@ -462,6 +462,12 @@ class ProcessInstanceService:
 
         serialized_task_spec = processor.serialize_task_spec(spiff_task.task_spec)
 
+        # Grab the last error message.
+        error_message = None
+        for event in processor.process_instance_model.process_instance_events:
+            for detail in event.error_details:
+                error_message = detail.message
+
         task = Task(
             spiff_task.id,
             spiff_task.task_spec.name,
@@ -479,6 +485,7 @@ class ProcessInstanceService:
             event_definition=serialized_task_spec.get("event_definition"),
             call_activity_process_identifier=call_activity_process_identifier,
             calling_subprocess_task_id=calling_subprocess_task_id,
+            error_message=error_message
         )
 
         return task

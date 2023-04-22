@@ -110,6 +110,7 @@ class Task:
         event_definition: Union[dict[str, Any], None] = None,
         call_activity_process_identifier: Optional[str] = None,
         calling_subprocess_task_id: Optional[str] = None,
+        error_message: Optional[str] = None,
     ):
         """__init__."""
         self.id = id
@@ -147,6 +148,7 @@ class Task:
         self.properties = properties  # Arbitrary extension properties from BPMN editor.
         if self.properties is None:
             self.properties = {}
+        self.error_message = error_message
 
     @property
     def serialized(self) -> dict[str, Any]:
@@ -183,6 +185,7 @@ class Task:
             "event_definition": self.event_definition,
             "call_activity_process_identifier": self.call_activity_process_identifier,
             "calling_subprocess_task_id": self.calling_subprocess_task_id,
+            "error_message": self.error_message,
         }
 
     @classmethod
