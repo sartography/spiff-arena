@@ -485,7 +485,7 @@ class ProcessInstanceService:
             event_definition=serialized_task_spec.get("event_definition"),
             call_activity_process_identifier=call_activity_process_identifier,
             calling_subprocess_task_id=calling_subprocess_task_id,
-            error_message=error_message
+            error_message=error_message,
         )
 
         return task

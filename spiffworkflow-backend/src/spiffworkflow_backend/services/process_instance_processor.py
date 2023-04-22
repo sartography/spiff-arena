@@ -423,9 +423,9 @@ class ProcessInstanceProcessor:
         tld.process_instance_id = process_instance_model.id
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
-        current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
-            f"{process_instance_model.process_model_identifier}"
-        )
+        current_app.config[
+            "THREAD_LOCAL_DATA"
+        ].process_model_identifier = f"{process_instance_model.process_model_identifier}"
 
         self.process_instance_model = process_instance_model
         self.process_model_service = ProcessModelService()
@@ -585,9 +585,9 @@ class ProcessInstanceProcessor:
                 bpmn_subprocess_definition.bpmn_identifier
             ] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(  # type: ignore
@@ -1776,7 +1776,6 @@ class ProcessInstanceProcessor:
                 error_task = task
             return error_task
 
-
         # Get a list of all completed user tasks (Non engine tasks)
         completed_user_tasks = self.completed_user_tasks()
 
@@ -1802,7 +1801,6 @@ class ProcessInstanceProcessor:
         for task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.NOT_FINISHED_MASK):
             next_task = task
         return next_task
-
 
     def completed_user_tasks(self) -> List[SpiffTask]:
         """Completed_user_tasks."""
