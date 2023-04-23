@@ -65,7 +65,7 @@ export default function ProcessModelSearch({
         return null;
       }}
       shouldFilterItem={shouldFilterProcessModel}
-      placeholder="Choose a process"
+      placeholder="Choose a process model"
       titleText={titleText}
       selectedItem={selectedItem}
     />
