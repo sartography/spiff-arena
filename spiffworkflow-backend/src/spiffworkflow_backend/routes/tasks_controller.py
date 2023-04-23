@@ -406,16 +406,25 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[st
             yield f"data: {current_app.json.dumps(task)} \n\n"
         last_task = spiff_task
         try:
-            processor.do_engine_steps(execution_strategy_name="run_until_user_message")
             processor.do_engine_steps(execution_strategy_name="one_at_a_time")
+            processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+            processor.save()  # Fixme - maybe find a way not to do this on every loop?
         except WorkflowTaskException as wfe:
             api_error = ApiError.from_workflow_exception(
                 "engine_steps_error", "Failed complete an automated task.", exp=wfe
             )
             yield f"data: {current_app.json.dumps(api_error)} \n\n"
+        except Exception as e:
+            api_error = ApiError(
+                    error_code="engine_steps_error",
+                    message=f"Failed complete an automated task. Error was: {str(e)}",
+                    status_code=400,
+                )
+            yield f"data: {current_app.json.dumps(api_error)} \n\n"
+
+
         # Note, this has to be done in case someone leaves the page,
         # which can otherwise cancel this function and leave completed tasks un-registered.
-        processor.save()  # Fixme - maybe find a way not to do this on every loop?
         spiff_task = processor.next_task()
 
     # Always provide some response, in the event no instructions were provided.
