@@ -81,6 +81,7 @@ export interface ProcessInstanceTask {
 
   potential_owner_usernames?: string;
   assigned_user_group_identifier?: string;
+  error_message?: string;
 }
 
 export interface ProcessReference {

@@ -1190,7 +1190,7 @@ export default function ProcessInstanceListTable({
                         return null;
                       }}
                       placeholder="Start typing username"
-                      titleText="Process Initiator"
+                      titleText="Started By"
                       selectedItem={processInitiatorSelection}
                     />
                   );
@@ -1199,7 +1199,7 @@ export default function ProcessInstanceListTable({
                   <TextInput
                     id="process-instance-initiator-search"
                     placeholder="Enter username"
-                    labelText="Process Initiator"
+                    labelText="Started By"
                     invalid={processInitiatorNotFoundErrorText !== ''}
                     invalidText={processInitiatorNotFoundErrorText}
                     onChange={(event: any) => {
