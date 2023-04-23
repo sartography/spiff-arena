@@ -416,12 +416,11 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[st
             yield f"data: {current_app.json.dumps(api_error)} \n\n"
         except Exception as e:
             api_error = ApiError(
-                    error_code="engine_steps_error",
-                    message=f"Failed complete an automated task. Error was: {str(e)}",
-                    status_code=400,
-                )
+                error_code="engine_steps_error",
+                message=f"Failed complete an automated task. Error was: {str(e)}",
+                status_code=400,
+            )
             yield f"data: {current_app.json.dumps(api_error)} \n\n"
-
 
         # Note, this has to be done in case someone leaves the page,
         # which can otherwise cancel this function and leave completed tasks un-registered.
