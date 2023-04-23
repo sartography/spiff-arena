@@ -1365,68 +1365,30 @@ export default function ProcessInstanceListTable({
     const formatter =
       reportColumnFormatters[column.accessor] ?? defaultFormatter;
     const value = row[column.accessor];
-    const modifiedModelId = modifyProcessIdentifierForPathParam(
-      row.process_model_identifier
-    );
-    const navigateToProcessInstance = () => {
-      navigate(`${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`);
-    };
-    const navigateToProcessModel = () => {
-      navigate(`/admin/process-models/${modifiedModelId}`);
-    };
 
     if (column.accessor === 'status') {
       return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <td
-          onClick={navigateToProcessInstance}
-          onKeyDown={navigateToProcessInstance}
-          data-qa={`process-instance-status-${value}`}
-        >
+        <td data-qa={`process-instance-status-${value}`}>
           {formatter(row, value)}
         </td>
       );
     }
     if (column.accessor === 'process_model_display_name') {
-      const pmStyle = { background: 'rgba(0, 0, 0, .02)' };
-      return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <td
-          style={pmStyle}
-          onClick={navigateToProcessModel}
-          onKeyDown={navigateToProcessModel}
-        >
-          {formatter(row, value)}
-        </td>
-      );
+      return <td> {formatter(row, value)} </td>;
     }
     if (column.accessor === 'waiting_for') {
-      return (
-        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-        <td
-          onClick={navigateToProcessInstance}
-          onKeyDown={navigateToProcessInstance}
-        >
-          {getWaitingForTableCellComponent(row)}
-        </td>
-      );
+      return <td> {getWaitingForTableCellComponent(row)} </td>;
     }
     if (column.accessor === 'updated_at_in_seconds') {
       return (
         <TableCellWithTimeAgoInWords
           timeInSeconds={row.updated_at_in_seconds}
-          onClick={navigateToProcessInstance}
-          onKeyDown={navigateToProcessInstance}
         />
       );
     }
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-      <td
-        data-qa={`process-instance-show-link-${column.accessor}`}
-        onKeyDown={navigateToProcessInstance}
-        onClick={navigateToProcessInstance}
-      >
+      <td data-qa={`process-instance-show-link-${column.accessor}`}>
         {formatter(row, value)}
       </td>
     );
@@ -1484,9 +1446,22 @@ export default function ProcessInstanceListTable({
       }
 
       const rowStyle = { cursor: 'pointer' };
-
+      const modifiedModelId = modifyProcessIdentifierForPathParam(
+        row.process_model_identifier
+      );
+      const navigateToProcessInstance = () => {
+        navigate(
+          `${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`
+        );
+      };
       return (
-        <tr style={rowStyle} key={row.id}>
+        // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
+        <tr
+          style={rowStyle}
+          key={row.id}
+          onClick={navigateToProcessInstance}
+          onKeyDown={navigateToProcessInstance}
+        >
           {currentRow}
         </tr>
       );
