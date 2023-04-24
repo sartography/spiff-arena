@@ -65,9 +65,15 @@ class PermissionToAssign:
     target_uri: str
 
 
+# you can explicitly call out the CRUD actions you want to permit. These include: ["create", "read", "update", "delete"]
+# if you hate typing, you can instead specify "all". If you do this, you might think it would grant access to
+# ["create", "read", "update", "delete"] for everything. instead, we do this cute thing where we, as the API authors,
+# understand that not all verbs are relevant for all API paths. For example, you cannot create logs over the API at this juncture,
+# so for /logs, only "read" is relevant. When you ask for /logs, "all", we give you read.
 # the relevant permissions are the only API methods that are currently available for each path prefix.
 # if we add further API methods, we'll need to evaluate whether they should be added here.
 PATH_SEGMENTS_FOR_PERMISSION_ALL = [
+    {"path": "/event-error-details", "relevant_permissions": ["read"]},
     {"path": "/logs", "relevant_permissions": ["read"]},
     {
         "path": "/process-instances",
