@@ -66,6 +66,11 @@ class TestGetAllPermissions(BaseTest):
                 "uri": "/process-data-file-download/hey:group:*",
                 "permissions": ["read"],
             },
+            {
+                "group_identifier": "my_test_group",
+                "uri": "/event-error-details/hey:group:*",
+                "permissions": ["read"],
+            },
         ]
 
         permissions = GetAllPermissions().run(script_attributes_context)
