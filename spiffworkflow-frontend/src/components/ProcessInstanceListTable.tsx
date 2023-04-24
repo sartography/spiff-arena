@@ -1416,7 +1416,7 @@ export default function ProcessInstanceListTable({
       return getHeaderLabel((column as any).Header);
     });
     if (showActionsColumn) {
-      headers.push('Actions');
+      headers.push('Action');
     }
 
     const rows = processInstances.map((row: any) => {
