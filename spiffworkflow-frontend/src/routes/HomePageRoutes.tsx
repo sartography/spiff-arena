@@ -7,7 +7,6 @@ import MyTasks from './MyTasks';
 import CompletedInstances from './CompletedInstances';
 import CreateNewInstance from './CreateNewInstance';
 import InProgressInstances from './InProgressInstances';
-import ProcessInterstitial from './ProcessInterstitial';
 
 export default function HomePageRoutes() {
   const location = useLocation();
@@ -56,10 +55,6 @@ export default function HomePageRoutes() {
         <Route path="my-tasks" element={<MyTasks />} />
         <Route path=":process_instance_id/:task_id" element={<TaskShow />} />
         <Route path="grouped" element={<InProgressInstances />} />
-        <Route
-          path="process/:process_instance_id/interstitial"
-          element={<ProcessInterstitial />}
-        />
         <Route path="completed-instances" element={<CompletedInstances />} />
         <Route path="create-new-instance" element={<CreateNewInstance />} />
       </Routes>

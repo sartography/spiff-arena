@@ -253,7 +253,9 @@ class TestProcessInstanceProcessor(BaseTest):
         processor = ProcessInstanceProcessor(process_instance)
 
         # this task will be found within subprocesses
-        spiff_task = processor.__class__.get_task_by_bpmn_identifier("do_nothing", processor.bpmn_process_instance)
+        spiff_task = processor.__class__.get_task_by_bpmn_identifier(
+            "level_3_script_task", processor.bpmn_process_instance
+        )
         assert spiff_task is not None
         assert spiff_task.state == TaskState.COMPLETED
 

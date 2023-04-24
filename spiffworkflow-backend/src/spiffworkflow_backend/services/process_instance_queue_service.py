@@ -14,7 +14,7 @@ from spiffworkflow_backend.models.process_instance_queue import (
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
-from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 
@@ -103,7 +103,7 @@ class ProcessInstanceQueueService:
             # these events are handled in the WorkflowExecutionService.
             # that is, we don't need to add error_detail records here, etc.
             if not isinstance(ex, WorkflowExecutionServiceError):
-                TaskService.add_event_to_process_instance(
+                ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.process_instance_error.value, exception=ex
                 )
             db.session.commit()

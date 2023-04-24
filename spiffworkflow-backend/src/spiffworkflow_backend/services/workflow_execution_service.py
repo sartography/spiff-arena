@@ -25,6 +25,7 @@ from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 
@@ -395,7 +396,7 @@ class WorkflowExecutionService:
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
         except WorkflowTaskException as wte:
-            TaskService.add_event_to_process_instance(
+            ProcessInstanceTmpService.add_event_to_process_instance(
                 self.process_instance_model,
                 ProcessInstanceEventType.task_failed.value,
                 exception=wte,

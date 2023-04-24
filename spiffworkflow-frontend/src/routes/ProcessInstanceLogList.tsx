@@ -213,6 +213,13 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
           setEventErrorDetails(errorObject);
         },
       });
+    } else {
+      const notAuthorized: ProcessInstanceEventErrorDetail = {
+        id: 0,
+        message: 'You are not authorized to view error details',
+        stacktrace: [],
+      };
+      setEventErrorDetails(notAuthorized);
     }
   };
 
