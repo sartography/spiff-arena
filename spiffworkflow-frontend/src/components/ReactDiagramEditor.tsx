@@ -19,7 +19,7 @@ import {
 
 import React, { useRef, useEffect, useState } from 'react';
 // @ts-ignore
-import { Button, Modal, UnorderedList, Link } from '@carbon/react';
+import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
@@ -578,6 +578,7 @@ export default function ReactDiagramEditor({
     return (
       <Modal
         open={showingReferences}
+        modalHeading="Process Model References"
         onRequestClose={() => setShowingReferences(false)}
         passiveModal
       >
@@ -591,7 +592,8 @@ export default function ReactDiagramEditor({
                 )}`}
               >
                 {`${ref.display_name}`}
-              </Link>
+              </Link>{' '}
+              ({ref.process_model_id})
             </li>
           ))}
         </UnorderedList>
@@ -613,7 +615,7 @@ export default function ReactDiagramEditor({
   const userActionOptions = () => {
     if (diagramType !== 'readonly') {
       return (
-        <>
+        <ButtonSet>
           <Can
             I="PUT"
             a={targetUris.processModelFileShowPath}
@@ -665,7 +667,8 @@ export default function ReactDiagramEditor({
               </Button>
             )}
           </Can>
-        </>
+          {getReferencesButton()}
+        </ButtonSet>
       );
     }
     return null;
@@ -674,7 +677,6 @@ export default function ReactDiagramEditor({
   return (
     <div>
       {userActionOptions()}
-      {getReferencesButton()}
       {showReferences()}
     </div>
   );
