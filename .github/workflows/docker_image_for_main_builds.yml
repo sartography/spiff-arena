@@ -65,7 +65,7 @@ jobs:
 
       - name: Write app version info
         working-directory: spiffworkflow-frontend
-        run: echo $DOCKER_METADATA_OUTPUT_JSON | jq '.labels' > version_info.json
+        run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
       - name: Build and push Frontend Docker image
         uses: docker/build-push-action@v4.0.0
         with:
@@ -109,7 +109,7 @@ jobs:
 
       - name: Write app version info
         working-directory: spiffworkflow-backend
-        run: echo $DOCKER_METADATA_OUTPUT_JSON | jq '.labels' > version_info.json
+        run: echo "$DOCKER_METADATA_OUTPUT_JSON" | jq '.labels' > version_info.json
       - name: Build and push Backend Docker image
         uses: docker/build-push-action@v4.0.0
         with:
