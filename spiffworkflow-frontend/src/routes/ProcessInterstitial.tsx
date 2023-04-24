@@ -10,6 +10,7 @@ import { getBasicHeaders } from '../services/HttpService';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import { ProcessInstanceTask } from '../interfaces';
+import useAPIError from '../hooks/UseApiError';
 
 export default function ProcessInterstitial() {
   const [data, setData] = useState<any[]>([]);
@@ -20,6 +21,7 @@ export default function ProcessInterstitial() {
   const userTasks = useMemo(() => {
     return ['User Task', 'Manual Task'];
   }, []);
+  const { addError } = useAPIError();
 
   const processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.modified_process_model_identifier}`;
 
@@ -29,9 +31,13 @@ export default function ProcessInterstitial() {
       {
         headers: getBasicHeaders(),
         onmessage(ev) {
-          const task = JSON.parse(ev.data);
-          setData((prevData) => [...prevData, task]);
-          setLastTask(task);
+          const retValue = JSON.parse(ev.data);
+          if ('error_code' in retValue) {
+            addError(retValue);
+          } else {
+            setData((prevData) => [...prevData, retValue]);
+            setLastTask(retValue);
+          }
         },
         onclose() {
           setState('CLOSED');
@@ -87,6 +93,8 @@ export default function ProcessInterstitial() {
         return <img src="/interstitial/waiting.png" alt="Waiting ...." />;
       case 'COMPLETED':
         return <img src="/interstitial/completed.png" alt="Completed" />;
+      case 'ERROR':
+        return <img src="/interstitial/errored.png" alt="Errored" />;
       default:
         return getStatus();
     }
@@ -106,6 +114,10 @@ export default function ProcessInterstitial() {
     if (shouldRedirect(myTask)) {
       return <div>Redirecting you to the next task now ...</div>;
     }
+    if (myTask.error_message) {
+      return <div>{myTask.error_message}</div>;
+    }
+
     return (
       <div>
         <InstructionsForEndUser task={myTask} />
@@ -152,7 +164,7 @@ export default function ProcessInterstitial() {
             <Column md={2} lg={4} sm={2}>
               Task: <em>{d.title}</em>
             </Column>
-            <Column md={6} lg={8} sm={4}>
+            <Column md={6} lg={6} sm={4}>
               {userMessage(d)}
             </Column>
           </Grid>
