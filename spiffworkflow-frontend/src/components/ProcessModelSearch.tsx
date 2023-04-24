@@ -15,7 +15,7 @@ export default function ProcessModelSearch({
   processModels,
   selectedItem,
   onChange,
-  titleText = 'Process model',
+  titleText = 'Process',
 }: OwnProps) {
   const getParentGroupsDisplayName = (processModel: ProcessModel) => {
     if (processModel.parent_groups) {
