@@ -312,6 +312,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     task_model.type = task_definition.typename
     task_model.can_complete = can_complete
     task_process_identifier = task_model.bpmn_process.bpmn_process_definition.bpmn_identifier
+    task_model.name_for_display = TaskService.get_name_for_display(task_definition)
 
     process_model_with_form = process_model
 
