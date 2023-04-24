@@ -64,7 +64,7 @@ import {
   modifyProcessIdentifierForPathParam,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
-import { PermissionsToCheck, Task } from '../interfaces';
+import { PermissionsToCheck, ProcessModelCaller, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 
 type OwnProps = {
@@ -89,7 +89,7 @@ type OwnProps = {
   onSearchProcessModels?: (..._args: any[]) => any;
   onElementsChanged?: (..._args: any[]) => any;
   url?: string;
-  callers?: any;
+  callers?: ProcessModelCaller[];
 };
 
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
@@ -575,6 +575,9 @@ export default function ReactDiagramEditor({
   const canViewXml = fileName !== undefined;
 
   const showReferences = () => {
+    if (!callers) {
+      return null;
+    }
     return (
       <Modal
         open={showingReferences}
@@ -583,7 +586,7 @@ export default function ReactDiagramEditor({
         passiveModal
       >
         <UnorderedList>
-          {callers.map((ref: any) => (
+          {callers.map((ref: ProcessModelCaller) => (
             <li>
               <Link
                 size="lg"
@@ -602,7 +605,7 @@ export default function ReactDiagramEditor({
   };
 
   const getReferencesButton = () => {
-    if (callers.length > 0) {
+    if (callers && callers.length > 0) {
       let buttonText = `View ${callers.length} Reference`;
       if (callers.length > 1) buttonText += 's';
       return (

@@ -330,3 +330,8 @@ export interface ProcessInstanceLogEntry {
   user_id?: number;
   username?: string;
 }
+
+export interface ProcessModelCaller {
+  display_name: string;
+  process_model_id: string;
+}
