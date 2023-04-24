@@ -280,8 +280,6 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
         process_instance.process_model_identifier,
     )
 
-    # _find_human_task_or_raise(process_instance_id, task_guid)
-
     form_schema_file_name = ""
     form_ui_schema_file_name = ""
 
@@ -363,6 +361,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
 
         _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
     _render_instructions_for_end_user(task_model, extensions)
+    task_model.extensions = extensions
     return make_response(jsonify(task_model), 200)
 
 
@@ -380,30 +379,6 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: Optiona
                 wfe.add_note("Failed to render instructions for end user.")
                 raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe
     return ""
-
-
-def process_data_show(
-    process_instance_id: int,
-    process_data_identifier: str,
-    modified_process_model_identifier: str,
-) -> flask.wrappers.Response:
-    """Process_data_show."""
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
-    processor = ProcessInstanceProcessor(process_instance)
-    all_process_data = processor.get_data()
-    process_data_value = None
-    if process_data_identifier in all_process_data:
-        process_data_value = all_process_data[process_data_identifier]
-
-    return make_response(
-        jsonify(
-            {
-                "process_data_identifier": process_data_identifier,
-                "process_data_value": process_data_value,
-            }
-        ),
-        200,
-    )
 
 
 def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[str], None]:

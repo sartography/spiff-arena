@@ -84,6 +84,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     process_model_identifier: Optional[str] = None
     type: Optional[str] = None
     can_complete: Optional[bool] = None
+    extensions: Optional[dict] = None
 
     def get_data(self) -> dict:
         return {**self.python_env_data(), **self.json_data()}
