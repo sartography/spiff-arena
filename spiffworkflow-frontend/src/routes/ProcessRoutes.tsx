@@ -6,7 +6,7 @@ export default function ProcessRoutes() {
   return (
     <Routes>
       <Route
-        path=":process_model_identifier/:process_instance_id/interstitial"
+        path=":modified_process_model_identifier/:process_instance_id/interstitial"
         element={<ProcessInterstitial />}
       />
     </Routes>

@@ -276,7 +276,7 @@ jobs:
         uses: codecov/codecov-action@v3.1.3
 
       - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@v1.8
+        uses: sonarsource/sonarcloud-github-action@v1.9
         # thought about just skipping dependabot
         # if: ${{ github.actor != 'dependabot[bot]' }}
         # but figured all pull requests seems better, since none of them will have access to sonarcloud.

@@ -17,7 +17,6 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
 
@@ -66,9 +65,15 @@ class PermissionToAssign:
     target_uri: str
 
 
+# you can explicitly call out the CRUD actions you want to permit. These include: ["create", "read", "update", "delete"]
+# if you hate typing, you can instead specify "all". If you do this, you might think it would grant access to
+# ["create", "read", "update", "delete"] for everything. instead, we do this cute thing where we, as the API authors,
+# understand that not all verbs are relevant for all API paths. For example, you cannot create logs over the API at this juncture,
+# so for /logs, only "read" is relevant. When you ask for /logs, "all", we give you read.
 # the relevant permissions are the only API methods that are currently available for each path prefix.
 # if we add further API methods, we'll need to evaluate whether they should be added here.
 PATH_SEGMENTS_FOR_PERMISSION_ALL = [
+    {"path": "/event-error-details", "relevant_permissions": ["read"]},
     {"path": "/logs", "relevant_permissions": ["read"]},
     {
         "path": "/process-instances",
@@ -412,27 +417,26 @@ class AuthorizationService:
             ) from exception
 
     @staticmethod
-    def assert_user_can_complete_spiff_task(
+    def assert_user_can_complete_task(
         process_instance_id: int,
-        spiff_task: SpiffTask,
+        task_bpmn_identifier: str,
         user: UserModel,
     ) -> bool:
-        """Assert_user_can_complete_spiff_task."""
         human_task = HumanTaskModel.query.filter_by(
-            task_name=spiff_task.task_spec.name,
+            task_name=task_bpmn_identifier,
             process_instance_id=process_instance_id,
             completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
-                f"Could find an human task with task name '{spiff_task.task_spec.name}'"
+                f"Could find an human task with task name '{task_bpmn_identifier}'"
                 f" for process instance '{process_instance_id}'"
             )
 
         if user not in human_task.potential_owners:
             raise UserDoesNotHaveAccessToTaskError(
                 f"User {user.username} does not have access to update"
-                f" task'{spiff_task.task_spec.name}' for process instance"
+                f" task'{task_bpmn_identifier}' for process instance"
                 f" '{process_instance_id}'"
             )
         return True
@@ -543,6 +547,7 @@ class AuthorizationService:
                 f"/process-instances/for-me/{process_related_path_segment}",
                 f"/logs/{process_related_path_segment}",
                 f"/process-data-file-download/{process_related_path_segment}",
+                f"/event-error-details/{process_related_path_segment}",
             ]:
                 permissions_to_assign.append(PermissionToAssign(permission="read", target_uri=target_uri))
         else:

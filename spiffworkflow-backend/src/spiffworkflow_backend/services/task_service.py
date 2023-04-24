@@ -1,34 +1,36 @@
 import copy
 import json
 import time
-import traceback
 from hashlib import sha256
 from typing import Optional
 from typing import Tuple
 from typing import TypedDict
+from typing import Union
 from uuid import UUID
 
 from flask import current_app
-from flask import g
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
-from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.task import TaskStateNames
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
-from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
+from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 
 
 class StartAndEndTimes(TypedDict):
@@ -39,6 +41,71 @@ class StartAndEndTimes(TypedDict):
 class JsonDataDict(TypedDict):
     hash: str
     data: dict
+
+
+class TaskModelException(Exception):
+    """Copied from SpiffWorkflow.exceptions.WorkflowTaskException.
+
+    Reimplements the exception from SpiffWorkflow to not require a spiff_task.
+    """
+
+    def __init__(
+        self,
+        error_msg: str,
+        task_model: TaskModel,
+        exception: Optional[Exception] = None,
+        line_number: Optional[int] = None,
+        offset: Optional[int] = None,
+        error_line: Optional[str] = None,
+    ):
+        self.task_model = task_model
+        self.line_number = line_number
+        self.offset = offset
+        self.error_line = error_line
+        self.notes: list[str] = []
+
+        if exception:
+            self.error_type = exception.__class__.__name__
+        else:
+            self.error_type = "unknown"
+
+        if isinstance(exception, SyntaxError) and not line_number:
+            self.line_number = exception.lineno
+            self.offset = exception.offset
+        elif isinstance(exception, NameError):
+            self.add_note(
+                WorkflowException.did_you_mean_from_name_error(exception, list(task_model.get_data().keys()))
+            )
+
+        # If encountered in a sub-workflow, this traces back up the stack,
+        # so we can tell how we got to this particular task, no matter how
+        # deeply nested in sub-workflows it is.  Takes the form of:
+        # task-description (file-name)
+        self.task_trace = self.get_task_trace(task_model)
+
+    def add_note(self, note: str) -> None:
+        self.notes.append(note)
+
+    def __str__(self) -> str:
+        """Add notes to the error message."""
+        return super().__str__() + ". " + ". ".join(self.notes)
+
+    @classmethod
+    def get_task_trace(cls, task_model: TaskModel) -> list[str]:
+        task_definition = task_model.task_definition
+        task_bpmn_name = TaskService.get_name_for_display(task_definition)
+        bpmn_process = task_model.bpmn_process
+        spec_reference = TaskService.get_spec_reference_from_bpmn_process(bpmn_process)
+
+        task_trace = [f"{task_bpmn_name} ({spec_reference.file_name})"]
+        while bpmn_process.guid is not None:
+            caller_task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
+            bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
+            spec_reference = TaskService.get_spec_reference_from_bpmn_process(bpmn_process)
+            task_trace.append(
+                f"{TaskService.get_name_for_display(caller_task_model.task_definition)} ({spec_reference.file_name})"
+            )
+        return task_trace
 
 
 class TaskService:
@@ -161,12 +228,14 @@ class TaskService:
         if task_model.state == "COMPLETED":
             event_type = ProcessInstanceEventType.task_completed.value
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
-            process_instance_event, _process_instance_error_detail = TaskService.add_event_to_process_instance(
-                self.process_instance,
-                event_type,
-                task_guid=task_model.guid,
-                timestamp=timestamp,
-                add_to_db_session=False,
+            process_instance_event, _process_instance_error_detail = (
+                ProcessInstanceTmpService.add_event_to_process_instance(
+                    self.process_instance,
+                    event_type,
+                    task_guid=task_model.guid,
+                    timestamp=timestamp,
+                    add_to_db_session=False,
+                )
             )
             self.process_instance_events[task_model.guid] = process_instance_event
 
@@ -489,6 +558,19 @@ class TaskService:
         return json_data_dict
 
     @classmethod
+    def bpmn_process_for_called_activity_or_top_level_process(cls, task_model: TaskModel) -> BpmnProcessModel:
+        """Returns either the bpmn process for the call activity calling the process or the top level bpmn process.
+
+        For example, process_modelA has processA which has a call activity that calls processB which is inside of process_modelB.
+        processB has subprocessA which has taskA. Using taskA this method should return processB and then that can be used with
+        the spec reference cache to find process_modelB.
+        """
+        (bpmn_processes, _task_models) = TaskService.task_models_of_parent_bpmn_processes(
+            task_model, stop_on_first_call_activity=True
+        )
+        return bpmn_processes[0]
+
+    @classmethod
     def bpmn_process_and_descendants(cls, bpmn_processes: list[BpmnProcessModel]) -> list[BpmnProcessModel]:
         bpmn_process_ids = [p.id for p in bpmn_processes]
         direct_children = BpmnProcessModel.query.filter(
@@ -500,27 +582,53 @@ class TaskService:
 
     @classmethod
     def task_models_of_parent_bpmn_processes(
-        cls, task_model: TaskModel
+        cls, task_model: TaskModel, stop_on_first_call_activity: Optional[bool] = False
     ) -> Tuple[list[BpmnProcessModel], list[TaskModel]]:
+        """Returns the list of task models that are associated with the paren bpmn process.
+
+        Example: TopLevelProcess has SubprocessTaskA which has CallActivityTaskA which has ScriptTaskA.
+        SubprocessTaskA corresponds to SpiffSubprocess1.
+        CallActivityTaskA corresponds to SpiffSubprocess2.
+        Using ScriptTaskA this will return:
+            (
+                [TopLevelProcess, SpiffSubprocess1, SpiffSubprocess2],
+                [SubprocessTaskA, CallActivityTaskA]
+            )
+
+        If stop_on_first_call_activity it will stop when it reaches the first task model with a type of 'CallActivity'.
+        This will change the return value in the example to:
+            (
+                [SpiffSubprocess2],
+                [CallActivityTaskA]
+            )
+        """
         bpmn_process = task_model.bpmn_process
         task_models: list[TaskModel] = []
         bpmn_processes: list[BpmnProcessModel] = [bpmn_process]
         if bpmn_process.guid is not None:
             parent_task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
-            if parent_task_model is not None:
-                b, t = cls.task_models_of_parent_bpmn_processes(parent_task_model)
-                return (bpmn_processes + b, [parent_task_model] + t)
+            task_models.append(parent_task_model)
+            if not stop_on_first_call_activity or parent_task_model.task_definition.typename != "CallActivity":
+                if parent_task_model is not None:
+                    b, t = cls.task_models_of_parent_bpmn_processes(
+                        parent_task_model, stop_on_first_call_activity=stop_on_first_call_activity
+                    )
+                    return (b + bpmn_processes, t + task_models)
         return (bpmn_processes, task_models)
 
     @classmethod
     def full_bpmn_process_path(cls, bpmn_process: BpmnProcessModel) -> list[str]:
         """Returns a list of bpmn process identifiers pointing the given bpmn_process."""
-        bpmn_process_identifiers: list[str] = [bpmn_process.bpmn_process_definition.bpmn_identifier]
-        if bpmn_process.direct_parent_process_id is not None:
-            parent_bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
-            if parent_bpmn_process is not None:
-                # always prepend new identifiers since they come first in the path
-                bpmn_process_identifiers = cls.full_bpmn_process_path(parent_bpmn_process) + bpmn_process_identifiers
+        bpmn_process_identifiers: list[str] = []
+        if bpmn_process.guid:
+            task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
+            (
+                parent_bpmn_processes,
+                _task_models_of_parent_bpmn_processes,
+            ) = TaskService.task_models_of_parent_bpmn_processes(task_model)
+            for parent_bpmn_process in parent_bpmn_processes:
+                bpmn_process_identifiers.append(parent_bpmn_process.bpmn_process_definition.bpmn_identifier)
+        bpmn_process_identifiers.append(bpmn_process.bpmn_process_definition.bpmn_identifier)
         return bpmn_process_identifiers
 
     @classmethod
@@ -594,60 +702,30 @@ class TaskService:
             if json_data_dict is not None:
                 json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
-    # TODO: move to process_instance_service once we clean it and the processor up
     @classmethod
-    def add_event_to_process_instance(
-        cls,
-        process_instance: ProcessInstanceModel,
-        event_type: str,
-        task_guid: Optional[str] = None,
-        user_id: Optional[int] = None,
-        exception: Optional[Exception] = None,
-        timestamp: Optional[float] = None,
-        add_to_db_session: Optional[bool] = True,
-    ) -> Tuple[ProcessInstanceEventModel, Optional[ProcessInstanceErrorDetailModel]]:
-        if user_id is None and hasattr(g, "user") and g.user:
-            user_id = g.user.id
-        if timestamp is None:
-            timestamp = time.time()
-
-        process_instance_event = ProcessInstanceEventModel(
-            process_instance_id=process_instance.id, event_type=event_type, timestamp=timestamp, user_id=user_id
+    def get_extensions_from_task_model(cls, task_model: TaskModel) -> dict:
+        task_definition = task_model.task_definition
+        extensions: dict = (
+            task_definition.properties_json["extensions"] if "extensions" in task_definition.properties_json else {}
         )
-        if task_guid:
-            process_instance_event.task_guid = task_guid
+        return extensions
 
-        if add_to_db_session:
-            db.session.add(process_instance_event)
+    @classmethod
+    def get_spec_reference_from_bpmn_process(cls, bpmn_process: BpmnProcessModel) -> SpecReferenceCache:
+        """Get the bpmn file for a given task model.
 
-        process_instance_error_detail = None
-        if exception is not None:
-            # truncate to avoid database errors on large values. We observed that text in mysql is 65K.
-            stacktrace = traceback.format_exc().split("\n")
-            message = str(exception)[0:1023]
-
-            task_line_number = None
-            task_line_contents = None
-            task_trace = None
-            task_offset = None
-            if isinstance(exception, WorkflowTaskException) or (
-                isinstance(exception, ApiError) and exception.error_code == "task_error"
-            ):
-                task_line_number = exception.line_number
-                task_line_contents = exception.error_line[0:255]
-                task_trace = exception.task_trace
-                task_offset = exception.offset
-
-            process_instance_error_detail = ProcessInstanceErrorDetailModel(
-                process_instance_event=process_instance_event,
-                message=message,
-                stacktrace=stacktrace,
-                task_line_number=task_line_number,
-                task_line_contents=task_line_contents,
-                task_trace=task_trace,
-                task_offset=task_offset,
+        This involves several queries so avoid calling in a tight loop.
+        """
+        bpmn_process_definition = bpmn_process.bpmn_process_definition
+        spec_reference: Optional[SpecReferenceCache] = SpecReferenceCache.query.filter_by(
+            identifier=bpmn_process_definition.bpmn_identifier, type="process"
+        ).first()
+        if spec_reference is None:
+            raise SpecReferenceNotFoundError(
+                f"Could not find given process identifier in the cache: {bpmn_process_definition.bpmn_identifier}"
             )
+        return spec_reference
 
-            if add_to_db_session:
-                db.session.add(process_instance_error_detail)
-        return (process_instance_event, process_instance_error_detail)
+    @classmethod
+    def get_name_for_display(cls, entity: Union[TaskDefinitionModel, BpmnProcessDefinitionModel]) -> str:
+        return entity.bpmn_name or entity.bpmn_identifier

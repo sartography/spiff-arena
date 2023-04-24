@@ -8,7 +8,10 @@ export default function InstructionsForEndUser({ task }: any) {
   }
   let instructions =
     'There is no additional instructions or information for this task.';
-  const { properties } = task;
+  let { properties } = task;
+  if (!properties) {
+    properties = task.extensions;
+  }
   const { instructionsForEndUser } = properties;
   if (instructionsForEndUser) {
     instructions = instructionsForEndUser;
