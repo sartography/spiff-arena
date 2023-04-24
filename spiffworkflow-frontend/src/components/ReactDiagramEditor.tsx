@@ -19,7 +19,7 @@ import {
 
 import React, { useRef, useEffect, useState } from 'react';
 // @ts-ignore
-import { Button } from '@carbon/react';
+import { Button, ButtonSet, Modal, UnorderedList, Link } from '@carbon/react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
@@ -58,7 +58,11 @@ import { Can } from '@casl/react';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
-import { getBpmnProcessIdentifiers, makeid } from '../helpers';
+import {
+  getBpmnProcessIdentifiers,
+  makeid,
+  modifyProcessIdentifierForPathParam,
+} from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -85,6 +89,7 @@ type OwnProps = {
   onSearchProcessModels?: (..._args: any[]) => any;
   onElementsChanged?: (..._args: any[]) => any;
   url?: string;
+  callers?: any;
 };
 
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
@@ -110,6 +115,7 @@ export default function ReactDiagramEditor({
   onSearchProcessModels,
   onElementsChanged,
   url,
+  callers,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState(null);
@@ -124,6 +130,8 @@ export default function ReactDiagramEditor({
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
+
+  const [showingReferences, setShowingReferences] = useState(false);
 
   useEffect(() => {
     if (diagramModelerState) {
@@ -566,10 +574,48 @@ export default function ReactDiagramEditor({
 
   const canViewXml = fileName !== undefined;
 
+  const showReferences = () => {
+    return (
+      <Modal
+        open={showingReferences}
+        modalHeading="Process Model References"
+        onRequestClose={() => setShowingReferences(false)}
+        passiveModal
+      >
+        <UnorderedList>
+          {callers.map((ref: any) => (
+            <li>
+              <Link
+                size="lg"
+                href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                  ref.process_model_id
+                )}`}
+              >
+                {`${ref.display_name}`}
+              </Link>{' '}
+              ({ref.process_model_id})
+            </li>
+          ))}
+        </UnorderedList>
+      </Modal>
+    );
+  };
+
+  const getReferencesButton = () => {
+    if (callers.length > 0) {
+      let buttonText = `View ${callers.length} Reference`;
+      if (callers.length > 1) buttonText += 's';
+      return (
+        <Button onClick={() => setShowingReferences(true)}>{buttonText}</Button>
+      );
+    }
+    return null;
+  };
+
   const userActionOptions = () => {
     if (diagramType !== 'readonly') {
       return (
-        <>
+        <ButtonSet>
           <Can
             I="PUT"
             a={targetUris.processModelFileShowPath}
@@ -621,11 +667,17 @@ export default function ReactDiagramEditor({
               </Button>
             )}
           </Can>
-        </>
+          {getReferencesButton()}
+        </ButtonSet>
       );
     }
     return null;
   };
 
-  return <div>{userActionOptions()}</div>;
+  return (
+    <div>
+      {userActionOptions()}
+      {showReferences()}
+    </div>
+  );
 }
