@@ -634,7 +634,7 @@ class TaskService:
                 isinstance(exception, ApiError) and exception.error_code == "task_error"
             ):
                 task_line_number = exception.line_number
-                task_line_contents = exception.error_line
+                task_line_contents = exception.error_line[0:255]
                 task_trace = exception.task_trace
                 task_offset = exception.offset
 
