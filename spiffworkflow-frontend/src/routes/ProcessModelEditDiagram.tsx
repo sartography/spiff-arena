@@ -165,13 +165,10 @@ export default function ProcessModelEditDiagram() {
   }, [processModelPath, params]);
 
   useEffect(() => {
-    const getCallerIds = (result: any) => {
-      setCallers(result.map((r: any) => r.process_model_id)); 
-    }
     if (processModel !== null) {
       HttpService.makeCallToBackend({
         path: `/processes/${processModel.primary_process_id}/callers`,
-        successCallback: getCallerIds,
+        successCallback: setCallers,
       });
     }
   }, [processModel]);
