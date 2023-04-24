@@ -286,9 +286,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
 
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_definition = task_model.task_definition
-    extensions = (
-        task_definition.properties_json["extensions"] if "extensions" in task_definition.properties_json else {}
-    )
+    extensions = TaskService.get_extensions_from_task_model(task_model)
 
     if "properties" in extensions:
         properties = extensions["properties"]
@@ -363,13 +361,14 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
                 task_model.form_ui_schema = ui_form_contents
 
         _munge_form_ui_schema_based_on_hidden_fields_in_task_data(task_model)
-    _render_instructions_for_end_user(task_model)
+    _render_instructions_for_end_user(task_model, extensions)
     return make_response(jsonify(task_model), 200)
 
 
-def _render_instructions_for_end_user(task_model: TaskModel) -> str:
+def _render_instructions_for_end_user(task_model: TaskModel, extensions: Optional[dict] = None) -> str:
     """Assure any instructions for end user are processed for jinja syntax."""
-    extensions = task_model.properties_json["extensions"] if "extensions" in task_model.properties_json else {}
+    if extensions is None:
+        extensions = TaskService.get_extensions_from_task_model(task_model)
     if extensions and "instructionsForEndUser" in extensions:
         if extensions["instructionsForEndUser"]:
             try:
@@ -414,7 +413,6 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[st
     task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
     last_task = None
     while last_task != spiff_task:
-        # import pdb; pdb.set_trace()
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
         instructions = _render_instructions_for_end_user(task_model)
         if instructions and spiff_task.id not in reported_ids:
@@ -687,7 +685,6 @@ def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> 
         template = jinja_environment.from_string(unprocessed_template)
         return template.render(**(task_model.data or {}))
     except jinja2.exceptions.TemplateError as template_error:
-        import pdb; pdb.set_trace()
         wfe = TaskModelException(str(template_error), task_model=task_model, exception=template_error)
         if isinstance(template_error, TemplateSyntaxError):
             wfe.line_number = template_error.lineno

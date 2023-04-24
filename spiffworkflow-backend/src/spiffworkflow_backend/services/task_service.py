@@ -633,6 +633,14 @@ class TaskService:
             if json_data_dict is not None:
                 json_data_dicts[json_data_dict["hash"]] = json_data_dict
 
+    @classmethod
+    def get_extensions_from_task_model(cls, task_model: TaskModel) -> dict:
+        task_definition = task_model.task_definition
+        extensions: dict = (
+            task_definition.properties_json["extensions"] if "extensions" in task_definition.properties_json else {}
+        )
+        return extensions
+
     # TODO: move to process_instance_service once we clean it and the processor up
     @classmethod
     def add_event_to_process_instance(

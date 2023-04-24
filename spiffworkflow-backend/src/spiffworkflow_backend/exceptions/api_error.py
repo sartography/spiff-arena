@@ -1,7 +1,7 @@
 """API Error functionality."""
 from __future__ import annotations
 from typing import Optional
-from spiffworkflow_backend.models.task import TaskException, TaskModel # noqa: F401
+from spiffworkflow_backend.models.task import TaskModelException, TaskModel # noqa: F401
 
 import json
 from dataclasses import dataclass
@@ -126,7 +126,7 @@ class ApiError(Exception):
             instance.task_trace = task_trace
         # TODO: needs implementation
         # else:
-        #     instance.task_trace = TaskException.get_task_trace(task)
+        #     instance.task_trace = TaskModelException.get_task_trace(task)
 
         # Assure that there is nothing in the json data that can't be serialized.
         instance.task_data = ApiError.remove_unserializeable_from_dict(task_model.get_data())
@@ -194,7 +194,7 @@ class ApiError(Exception):
                 error_line=exp.error_line,
                 task_trace=exp.task_trace,
             )
-        elif isinstance(exp, TaskException):
+        elif isinstance(exp, TaskModelException):
             # Note that WorkflowDataExceptions are also WorkflowTaskExceptions
             return ApiError.from_task_model(
                 error_code,

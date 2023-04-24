@@ -101,6 +101,8 @@ class TaskModelException(Exception):
         self.line_number = line_number
         self.offset = offset
         self.error_line = error_line
+        self.notes: list[str] = []
+
         if exception:
             self.error_type = exception.__class__.__name__
         else:
@@ -117,6 +119,12 @@ class TaskModelException(Exception):
         # deeply nested in sub-workflows it is.  Takes the form of:
         # task-description (file-name)
         self.task_trace = self.get_task_trace(task_model)
+
+    def add_note(self, note: str) -> None:
+        self.notes.append(note)
+
+    def __str__(self) -> str:
+        return super().__str__() + ". " + ". ".join(self.notes)
 
     # TODO: implement this with db
     @classmethod
