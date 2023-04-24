@@ -311,6 +311,7 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
         assert process_instance.status == "complete"
 
+    # this test has been failing intermittently for some time on windows, perhaps ever since it was first added
     def test_properly_resets_process_to_given_task_with_call_activity(
         self,
         app: Flask,
@@ -350,12 +351,14 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
 
         processor.suspend()
-        task_model_to_reset_to = (
+        all_task_models_matching_top_level_subprocess_script = (
             TaskModel.query.join(TaskDefinitionModel)
             .filter(TaskDefinitionModel.bpmn_identifier == "top_level_subprocess_script")
             .order_by(TaskModel.id.desc())  # type: ignore
-            .first()
+            .all()
         )
+        assert len(all_task_models_matching_top_level_subprocess_script) == 1
+        task_model_to_reset_to = all_task_models_matching_top_level_subprocess_script[0]
         assert task_model_to_reset_to is not None
         ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid)
 
@@ -364,7 +367,7 @@ class TestProcessInstanceProcessor(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
 
-        # make sure we reset to the task we expected
+        # make sure we did actually reset to the task we expected
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
         top_level_subprocess_script_spiff_task = next(
             task for task in ready_or_waiting_tasks if task.task_spec.name == "top_level_subprocess_script"
@@ -373,7 +376,11 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.resume()
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
+        # reload again, just in case, since the assertion where it says there should be 1 active_human_task
+        # is failing intermittently on windows, so just debugging.
+        process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         assert len(process_instance.active_human_tasks) == 1
+
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)

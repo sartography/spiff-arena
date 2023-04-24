@@ -3,6 +3,7 @@ import enum
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
+from typing import TYPE_CHECKING
 from typing import Union
 
 import marshmallow
@@ -17,6 +18,11 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+
+if TYPE_CHECKING:
+    from spiffworkflow_backend.models.human_task_user import (  # noqa: F401
+        HumanTaskModel,
+    )
 
 
 class TaskNotFoundError(Exception):
@@ -52,6 +58,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     guid: str = db.Column(db.String(36), nullable=False, unique=True)
     bpmn_process_id: int = db.Column(ForeignKey(BpmnProcessModel.id), nullable=False, index=True)  # type: ignore
     bpmn_process = relationship(BpmnProcessModel, back_populates="tasks")
+    human_tasks = relationship("HumanTaskModel", back_populates="task_model", cascade="delete")
     process_instance_id: int = db.Column(ForeignKey("process_instance.id"), nullable=False, index=True)
 
     # find this by looking up the "workflow_name" and "task_spec" from the properties_json
