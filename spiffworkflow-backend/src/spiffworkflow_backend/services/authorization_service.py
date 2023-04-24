@@ -541,6 +541,7 @@ class AuthorizationService:
                 f"/process-instances/for-me/{process_related_path_segment}",
                 f"/logs/{process_related_path_segment}",
                 f"/process-data-file-download/{process_related_path_segment}",
+                f"/event-error-details/{process_related_path_segment}",
             ]:
                 permissions_to_assign.append(PermissionToAssign(permission="read", target_uri=target_uri))
         else:
