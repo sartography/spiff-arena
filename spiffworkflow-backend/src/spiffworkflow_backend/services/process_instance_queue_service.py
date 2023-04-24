@@ -15,7 +15,6 @@ from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
-from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
 
 

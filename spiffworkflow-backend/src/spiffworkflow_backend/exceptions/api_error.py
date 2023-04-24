@@ -1,8 +1,5 @@
 """API Error functionality."""
 from __future__ import annotations
-from spiffworkflow_backend.services.task_service import TaskService
-from typing import Optional
-from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 
 import json
 from dataclasses import dataclass
@@ -24,11 +21,13 @@ from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
 
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
 from spiffworkflow_backend.services.authentication_service import TokenInvalidError
 from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
 from spiffworkflow_backend.services.task_service import TaskModelException
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
@@ -40,18 +39,18 @@ class ApiError(Exception):
 
     error_code: str
     message: str
-    error_line: Optional[str] = ""
-    error_type: Optional[str] = ""
-    file_name: Optional[str] = ""
-    line_number: Optional[int] = 0
-    offset: Optional[int] = 0
-    sentry_link: Optional[str] = None
-    status_code: Optional[int] = 400
-    tag: Optional[str] = ""
-    task_data: Optional[dict | str] = field(default_factory=dict)
-    task_id: Optional[str] = ""
-    task_name: Optional[str] = ""
-    task_trace: Optional[list] = field(default_factory=list)
+    error_line: str | None = ""
+    error_type: str | None = ""
+    file_name: str | None = ""
+    line_number: int | None = 0
+    offset: int | None = 0
+    sentry_link: str | None = None
+    status_code: int | None = 400
+    tag: str | None = ""
+    task_data: dict | str | None = field(default_factory=dict)
+    task_id: str | None = ""
+    task_name: str | None = ""
+    task_trace: list | None = field(default_factory=list)
 
     def __str__(self) -> str:
         """Instructions to print instance as a string."""
@@ -106,12 +105,12 @@ class ApiError(Exception):
         error_code: str,
         message: str,
         task_model: TaskModel,
-        status_code: Optional[int] = 400,
-        line_number: Optional[int] = 0,
-        offset: Optional[int] = 0,
-        error_type: Optional[str] = "",
-        error_line: Optional[str] = "",
-        task_trace: Optional[list] = None,
+        status_code: int | None = 400,
+        line_number: int | None = 0,
+        offset: int | None = 0,
+        error_type: str | None = "",
+        error_line: str | None = "",
+        task_trace: list | None = None,
     ) -> ApiError:
         """Constructs an API Error with details pulled from the current task model."""
         instance = cls(error_code, message, status_code=status_code)
@@ -130,8 +129,8 @@ class ApiError(Exception):
         try:
             spec_reference = TaskService.get_spec_reference_from_bpmn_process(task_model.bpmn_process)
             instance.file_name = spec_reference.file_name
-        except Exception:
-            pass
+        except Exception as exception:
+            current_app.logger.error(exception)
 
         # Assure that there is nothing in the json data that can't be serialized.
         instance.task_data = ApiError.remove_unserializeable_from_dict(task_model.get_data())

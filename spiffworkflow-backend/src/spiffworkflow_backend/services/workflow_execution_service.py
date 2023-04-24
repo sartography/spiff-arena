@@ -1,5 +1,4 @@
 from __future__ import annotations
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 
 import copy
 import time
@@ -26,6 +25,7 @@ from spiffworkflow_backend.services.assertion_service import safe_assertion
 from spiffworkflow_backend.services.process_instance_lock_service import (
     ProcessInstanceLockService,
 )
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.task_service import StartAndEndTimes
 from spiffworkflow_backend.services.task_service import TaskService
 

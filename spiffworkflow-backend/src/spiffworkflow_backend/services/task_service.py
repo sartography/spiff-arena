@@ -1,20 +1,17 @@
 import copy
 import json
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
-from typing import Union
-from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
-from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
-from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 import time
 from hashlib import sha256
 from typing import Optional
 from typing import Tuple
 from typing import TypedDict
+from typing import Union
 from uuid import UUID
 
 from flask import current_app
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
+from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.task import TaskStateNames
@@ -23,13 +20,17 @@ from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
+from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
+from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 
 
 class StartAndEndTimes(TypedDict):
@@ -48,9 +49,15 @@ class TaskModelException(Exception):
     Reimplements the exception from SpiffWorkflow to not require a spiff_task.
     """
 
-    def __init__(self, error_msg: str, task_model: TaskModel, exception: Optional[Exception]=None,
-                 line_number: Optional[int]=None, offset: Optional[int]=None, error_line: Optional[str]=None):
-
+    def __init__(
+        self,
+        error_msg: str,
+        task_model: TaskModel,
+        exception: Optional[Exception] = None,
+        line_number: Optional[int] = None,
+        offset: Optional[int] = None,
+        error_line: Optional[str] = None,
+    ):
         self.task_model = task_model
         self.line_number = line_number
         self.offset = offset
@@ -66,7 +73,9 @@ class TaskModelException(Exception):
             self.line_number = exception.lineno
             self.offset = exception.offset
         elif isinstance(exception, NameError):
-            self.add_note(WorkflowException.did_you_mean_from_name_error(exception, list(task_model.get_data().keys())))
+            self.add_note(
+                WorkflowException.did_you_mean_from_name_error(exception, list(task_model.get_data().keys()))
+            )
 
         # If encountered in a sub-workflow, this traces back up the stack,
         # so we can tell how we got to this particular task, no matter how
@@ -78,6 +87,7 @@ class TaskModelException(Exception):
         self.notes.append(note)
 
     def __str__(self) -> str:
+        """Add notes to the error message."""
         return super().__str__() + ". " + ". ".join(self.notes)
 
     @classmethod
@@ -92,7 +102,9 @@ class TaskModelException(Exception):
             caller_task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
             bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
             spec_reference = TaskService.get_spec_reference_from_bpmn_process(bpmn_process)
-            task_trace.append(f"{TaskService.get_name_for_display(caller_task_model.task_definition)} ({spec_reference.file_name})")
+            task_trace.append(
+                f"{TaskService.get_name_for_display(caller_task_model.task_definition)} ({spec_reference.file_name})"
+            )
         return task_trace
 
 
@@ -216,12 +228,14 @@ class TaskService:
         if task_model.state == "COMPLETED":
             event_type = ProcessInstanceEventType.task_completed.value
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
-            process_instance_event, _process_instance_error_detail = ProcessInstanceTmpService.add_event_to_process_instance(
-                self.process_instance,
-                event_type,
-                task_guid=task_model.guid,
-                timestamp=timestamp,
-                add_to_db_session=False,
+            process_instance_event, _process_instance_error_detail = (
+                ProcessInstanceTmpService.add_event_to_process_instance(
+                    self.process_instance,
+                    event_type,
+                    task_guid=task_model.guid,
+                    timestamp=timestamp,
+                    add_to_db_session=False,
+                )
             )
             self.process_instance_events[task_model.guid] = process_instance_event
 
@@ -703,7 +717,9 @@ class TaskService:
         This involves several queries so avoid calling in a tight loop.
         """
         bpmn_process_definition = bpmn_process.bpmn_process_definition
-        spec_reference: Optional[SpecReferenceCache] = SpecReferenceCache.query.filter_by(identifier=bpmn_process_definition.bpmn_identifier, type='process').first()
+        spec_reference: Optional[SpecReferenceCache] = SpecReferenceCache.query.filter_by(
+            identifier=bpmn_process_definition.bpmn_identifier, type="process"
+        ).first()
         if spec_reference is None:
             raise SpecReferenceNotFoundError(
                 f"Could not find given process identifier in the cache: {bpmn_process_definition.bpmn_identifier}"

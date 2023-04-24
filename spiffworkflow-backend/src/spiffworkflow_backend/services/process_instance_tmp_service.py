@@ -1,16 +1,18 @@
-from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
-import traceback
-from spiffworkflow_backend.models.db import db
-from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
-from typing import Tuple
 import time
-from flask import g
-from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
+import traceback
 from typing import Optional
+from typing import Tuple
+
+from flask import g
+from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
+
+from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_error_detail import ProcessInstanceErrorDetailModel
+from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 
 
-class ProcessInstanceTmpService():
+class ProcessInstanceTmpService:
     """Temporary service to hold methods that should eventually be moved to ProcessInstanceService.
 
     These methods cannot live there due to circular import issues with the ProcessInstanceProcessor.
@@ -52,14 +54,15 @@ class ProcessInstanceTmpService():
             task_line_contents = None
             task_trace = None
             task_offset = None
+
             # check for the class name string for ApiError to avoid circular imports
             if isinstance(exception, WorkflowTaskException) or (
-                    exception.__class__.__name__ == 'ApiError' and exception.error_code == "task_error"
+                exception.__class__.__name__ == "ApiError" and exception.error_code == "task_error"  # type: ignore
             ):
-                task_line_number = exception.line_number
-                task_line_contents = exception.error_line[0:255]
-                task_trace = exception.task_trace
-                task_offset = exception.offset
+                task_line_number = exception.line_number  # type: ignore
+                task_line_contents = exception.error_line[0:255]  # type: ignore
+                task_trace = exception.task_trace  # type: ignore
+                task_offset = exception.offset  # type: ignore
 
             process_instance_error_detail = ProcessInstanceErrorDetailModel(
                 process_instance_event=process_instance_event,
