@@ -297,7 +297,7 @@ export default function TaskShow() {
     let taskData = task.data;
     let jsonSchema = task.form_schema;
     let reactFragmentToHideSubmitButton = null;
-    if (task.type === 'Manual Task') {
+    if (task.type === 'ManualTask') {
       taskData = {};
       jsonSchema = {
         type: 'object',
@@ -333,9 +333,9 @@ export default function TaskShow() {
     if (task.state === 'READY') {
       let submitButtonText = 'Submit';
       let saveAsDraftButton = null;
-      if (task.type === 'Manual Task') {
+      if (task.type === 'ManualTask') {
         submitButtonText = 'Continue';
-      } else if (task.type === 'User Task') {
+      } else if (task.type === 'UserTask') {
         saveAsDraftButton = (
           <Button
             id="save-as-draft-button"
