@@ -18,7 +18,7 @@ import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
-import { ProcessInstanceTask } from '../interfaces';
+import { Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 
@@ -95,7 +95,7 @@ enum FormSubmitType {
 }
 
 export default function TaskShow() {
-  const [task, setTask] = useState<ProcessInstanceTask | null>(null);
+  const [task, setTask] = useState<Task | null>(null);
   const [userTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
@@ -105,7 +105,7 @@ export default function TaskShow() {
 
   const { addError, removeError } = useAPIError();
 
-  const navigateToInterstitial = (myTask: ProcessInstanceTask) => {
+  const navigateToInterstitial = (myTask: Task) => {
     navigate(
       `/process/${modifyProcessIdentifierForPathParam(
         myTask.process_model_identifier
@@ -114,7 +114,7 @@ export default function TaskShow() {
   };
 
   useEffect(() => {
-    const processResult = (result: ProcessInstanceTask) => {
+    const processResult = (result: Task) => {
       setTask(result);
       setDisabled(false);
       if (!result.can_complete) {
@@ -206,7 +206,7 @@ export default function TaskShow() {
         const taskUrl = `/tasks/${params.process_instance_id}/${userTask.id}`;
         if (userTask.id === params.task_id) {
           selectedTabIndex = index;
-          return <Tab selected>{userTask.title}</Tab>;
+          return <Tab selected>{userTask.name_for_display}</Tab>;
         }
         if (userTask.state === 'COMPLETED') {
           return (
@@ -214,12 +214,12 @@ export default function TaskShow() {
               onClick={() => navigate(taskUrl)}
               data-qa={`form-nav-${userTask.name}`}
             >
-              {userTask.title}
+              {userTask.name_for_display}
             </Tab>
           );
         }
         if (userTask.state === 'FUTURE') {
-          return <Tab disabled>{userTask.title}</Tab>;
+          return <Tab disabled>{userTask.name_for_display}</Tab>;
         }
         if (userTask.state === 'READY') {
           return (
@@ -227,7 +227,7 @@ export default function TaskShow() {
               onClick={() => navigate(taskUrl)}
               data-qa={`form-nav-${userTask.name}`}
             >
-              {userTask.title}
+              {userTask.name_for_display}
             </Tab>
           );
         }
@@ -297,7 +297,7 @@ export default function TaskShow() {
     let taskData = task.data;
     let jsonSchema = task.form_schema;
     let reactFragmentToHideSubmitButton = null;
-    if (task.type === 'Manual Task') {
+    if (task.typename === 'ManualTask') {
       taskData = {};
       jsonSchema = {
         type: 'object',
@@ -333,9 +333,9 @@ export default function TaskShow() {
     if (task.state === 'READY') {
       let submitButtonText = 'Submit';
       let saveAsDraftButton = null;
-      if (task.type === 'Manual Task') {
+      if (task.typename === 'ManualTask') {
         submitButtonText = 'Continue';
-      } else if (task.type === 'User Task') {
+      } else if (task.typename === 'UserTask') {
         saveAsDraftButton = (
           <Button
             id="save-as-draft-button"
@@ -404,12 +404,13 @@ export default function TaskShow() {
                 task.process_model_identifier
               )}/${params.process_instance_id}`,
             ],
-            [`Task: ${task.title || task.id}`],
+            [`Task: ${task.name_for_display || task.id}`],
           ]}
         />
         <div>{buildTaskNavigation()}</div>
         <h3>
-          Task: {task.title} ({task.process_model_display_name}){statusString}
+          Task: {task.name_for_display} ({task.process_model_display_name})
+          {statusString}
         </h3>
         <InstructionsForEndUser task={task} />
         {formElement()}

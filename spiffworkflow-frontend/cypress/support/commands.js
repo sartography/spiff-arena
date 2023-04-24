@@ -101,7 +101,7 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 // Intended to be run from the process model show page
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
-  (expectAutoRedirectToHumanTask = false) => {
+  (expectAutoRedirectToHumanTask = false, returnToProcessModelShow = true) => {
     // cy.getBySel('start-process-instance').click();
     // click on button with text Start
     cy.get('button')
@@ -112,11 +112,12 @@ Cypress.Commands.add(
       cy.url().should('include', `/tasks/`);
       cy.contains('Task: ', { timeout: 30000 });
     } else {
-      cy.contains(/Process Instance.*[kK]icked [oO]ff/);
-      cy.reload(true);
-      cy.contains('Process Model:').should('exist');
-      cy.contains(/Process Instance.*[kK]icked [oO]ff/).should('not.exist');
-      cy.getBySel('process-model-show-permissions-loaded').should('exist');
+      cy.url().should('include', `/interstitial`);
+      cy.contains('Status: Completed');
+      if (returnToProcessModelShow) {
+        cy.getBySel('process-model-breadcrumb-link').click();
+        cy.getBySel('process-model-show-permissions-loaded').should('exist');
+      }
     }
   }
 );
