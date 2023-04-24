@@ -2,6 +2,7 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import _strptime  # type: ignore
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 import copy
 import decimal
 import json
@@ -1196,7 +1197,7 @@ class ProcessInstanceProcessor:
             db.session.bulk_save_objects(new_task_models.values())
             TaskService.insert_or_update_json_data_records(new_json_data_dicts)
 
-        TaskService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
+        ProcessInstanceTmpService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
         self.save()
         # Saving the workflow seems to reset the status
         self.suspend()
@@ -1209,7 +1210,7 @@ class ProcessInstanceProcessor:
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
         """Reset a process to an earlier state."""
         # raise Exception("This feature to reset a process instance to a given task is currently unavaiable")
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
 
@@ -1738,7 +1739,7 @@ class ProcessInstanceProcessor:
         TaskService.update_json_data_dicts_using_list(json_data_dict_list, json_data_dict_mapping)
         TaskService.insert_or_update_json_data_records(json_data_dict_mapping)
 
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,
             ProcessInstanceEventType.task_completed.value,
             task_guid=task_model.guid,
@@ -1842,7 +1843,7 @@ class ProcessInstanceProcessor:
         self.save()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_terminated.value
         )
         db.session.commit()
@@ -1851,7 +1852,7 @@ class ProcessInstanceProcessor:
         """Suspend."""
         self.process_instance_model.status = ProcessInstanceStatus.suspended.value
         db.session.add(self.process_instance_model)
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_suspended.value
         )
         db.session.commit()
@@ -1860,7 +1861,7 @@ class ProcessInstanceProcessor:
         """Resume."""
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )
         db.session.commit()
