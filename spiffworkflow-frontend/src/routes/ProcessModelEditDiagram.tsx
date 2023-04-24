@@ -119,6 +119,8 @@ export default function ProcessModelEditDiagram() {
 
   const processModelPath = `process-models/${modifiedProcessModelId}`;
 
+  const [callers, setCallers] = useState<Array<string>>([]);
+
   usePrompt('Changes you made may not be saved.', diagramHasChanges);
 
   useEffect(() => {
@@ -161,6 +163,15 @@ export default function ProcessModelEditDiagram() {
       });
     }
   }, [processModelPath, params]);
+
+  useEffect(() => {
+    if (processModel !== null) {
+      HttpService.makeCallToBackend({
+        path: `/processes/${processModel.primary_process_id}/callers`,
+        successCallback: setCallers,
+      });
+    }
+  }, [processModel]);
 
   const handleFileNameCancel = () => {
     setShowFileNameEditor(false);
@@ -958,6 +969,7 @@ export default function ProcessModelEditDiagram() {
         onDmnFilesRequested={onDmnFilesRequested}
         onSearchProcessModels={onSearchProcessModels}
         onElementsChanged={onElementsChanged}
+        callers={callers}
       />
     );
   };

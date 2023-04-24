@@ -206,6 +206,7 @@ export interface ProcessModel {
   description: string;
   display_name: string;
   primary_file_name: string;
+  primary_process_id: string;
   files: ProcessFile[];
   parent_groups?: ProcessGroupLite[];
   metadata_extraction_paths?: MetadataExtractionPath[];
