@@ -41,6 +41,7 @@ export interface EventDefinition {
 export interface Task {
   id: number;
   guid: string;
+  process_instance_id: number;
   bpmn_identifier: string;
   bpmn_name?: string;
   bpmn_process_direct_parent_guid: string;
@@ -52,6 +53,13 @@ export interface Task {
   task_definition_properties_json: TaskDefinitionPropertiesJson;
 
   event_definition?: EventDefinition;
+
+  process_model_display_name: string;
+  process_model_identifier: string;
+  name_for_display: string;
+  can_complete: boolean;
+  form_schema: any;
+  form_ui_schema: any;
 }
 
 export interface ProcessInstanceTask {
