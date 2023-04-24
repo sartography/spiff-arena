@@ -392,8 +392,7 @@ def process_data_show(
     )
 
 
-def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[str], None]:
-    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, Optional[str], None]:
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # bit of an issue with end tasks showing as getting completed twice.
     spiff_task = processor.next_task()
@@ -432,10 +431,15 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[st
         yield f"data: {current_app.json.dumps(task)} \n\n"
 
 
+def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str, Optional[str], None]:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+    with ProcessInstanceQueueService.dequeued(process_instance):
+        yield from _interstitial_stream(process_instance)
+                
 def interstitial(process_instance_id: int) -> Response:
     """A Server Side Events Stream for watching the execution of engine tasks."""
     return Response(
-        stream_with_context(_interstitial_stream(process_instance_id)),
+        stream_with_context(_dequeued_interstitial_stream(process_instance_id)),
         mimetype="text/event-stream",
         headers={"X-Accel-Buffering": "no"},
     )
