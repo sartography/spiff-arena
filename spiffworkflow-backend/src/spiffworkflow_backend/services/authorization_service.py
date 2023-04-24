@@ -17,7 +17,6 @@ from flask import current_app
 from flask import g
 from flask import request
 from flask import scaffold
-from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from sqlalchemy import or_
 from sqlalchemy import text
 
@@ -412,27 +411,26 @@ class AuthorizationService:
             ) from exception
 
     @staticmethod
-    def assert_user_can_complete_spiff_task(
+    def assert_user_can_complete_task(
         process_instance_id: int,
-        spiff_task: SpiffTask,
+        task_bpmn_identifier: str,
         user: UserModel,
     ) -> bool:
-        """Assert_user_can_complete_spiff_task."""
         human_task = HumanTaskModel.query.filter_by(
-            task_name=spiff_task.task_spec.name,
+            task_name=task_bpmn_identifier,
             process_instance_id=process_instance_id,
             completed=False,
         ).first()
         if human_task is None:
             raise HumanTaskNotFoundError(
-                f"Could find an human task with task name '{spiff_task.task_spec.name}'"
+                f"Could find an human task with task name '{task_bpmn_identifier}'"
                 f" for process instance '{process_instance_id}'"
             )
 
         if user not in human_task.potential_owners:
             raise UserDoesNotHaveAccessToTaskError(
                 f"User {user.username} does not have access to update"
-                f" task'{spiff_task.task_spec.name}' for process instance"
+                f" task'{task_bpmn_identifier}' for process instance"
                 f" '{process_instance_id}'"
             )
         return True

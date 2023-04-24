@@ -4,40 +4,88 @@
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_1g3dpd7</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="Flow_1g3dpd7" sourceRef="StartEvent_1" targetRef="do_nothing" />
+    <bpmn:sequenceFlow id="Flow_1g3dpd7" sourceRef="StartEvent_1" targetRef="level_2b_script_task" />
     <bpmn:endEvent id="Event_18dla68">
       <bpmn:documentation># Main Workflow
 Hello {{my_other_var}}
 
 </bpmn:documentation>
-      <bpmn:incoming>Flow_0l0w6u9</bpmn:incoming>
+      <bpmn:incoming>Flow_0wt4dbv</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0l0w6u9" sourceRef="do_nothing" targetRef="Event_18dla68" />
-    <bpmn:scriptTask id="do_nothing" name="Do Nothing">
+    <bpmn:scriptTask id="level_2b_script_task" name="level_2b_script_task">
       <bpmn:incoming>Flow_1g3dpd7</bpmn:incoming>
-      <bpmn:outgoing>Flow_0l0w6u9</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1mvoqe4</bpmn:outgoing>
       <bpmn:script>a = 1</bpmn:script>
     </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_1mvoqe4" sourceRef="level_2b_script_task" targetRef="level_2b_subprocess" />
+    <bpmn:subProcess id="level_2b_subprocess" name="level_2b_subprocess">
+      <bpmn:incoming>Flow_1mvoqe4</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wt4dbv</bpmn:outgoing>
+      <bpmn:startEvent id="Event_0fpb33c">
+        <bpmn:outgoing>Flow_18nmqzh</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:sequenceFlow id="Flow_18nmqzh" sourceRef="Event_0fpb33c" targetRef="level_2b_subprocess_script_task" />
+      <bpmn:endEvent id="Event_1x11xe3">
+        <bpmn:incoming>Flow_1srjuev</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="Flow_1srjuev" sourceRef="level_2b_subprocess_script_task" targetRef="Event_1x11xe3" />
+      <bpmn:scriptTask id="level_2b_subprocess_script_task" name="level_2b_subprocess_script_task">
+        <bpmn:incoming>Flow_18nmqzh</bpmn:incoming>
+        <bpmn:outgoing>Flow_1srjuev</bpmn:outgoing>
+        <bpmn:script>z = 1</bpmn:script>
+      </bpmn:scriptTask>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_0wt4dbv" sourceRef="level_2b_subprocess" targetRef="Event_18dla68" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Level2b">
       <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
         <dc:Bounds x="179" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_18dla68_di" bpmnElement="Event_18dla68">
-        <dc:Bounds x="432" y="99" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1reqred_di" bpmnElement="do_nothing">
+      <bpmndi:BPMNShape id="Activity_1reqred_di" bpmnElement="level_2b_script_task">
         <dc:Bounds x="260" y="77" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_18dla68_di" bpmnElement="Event_18dla68">
+        <dc:Bounds x="592" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1u9mmh7_di" bpmnElement="level_2b_subprocess">
+        <dc:Bounds x="410" y="77" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1g3dpd7_di" bpmnElement="Flow_1g3dpd7">
         <di:waypoint x="215" y="117" />
         <di:waypoint x="260" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0l0w6u9_di" bpmnElement="Flow_0l0w6u9">
+      <bpmndi:BPMNEdge id="Flow_1mvoqe4_di" bpmnElement="Flow_1mvoqe4">
         <di:waypoint x="360" y="117" />
-        <di:waypoint x="432" y="117" />
+        <di:waypoint x="410" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wt4dbv_di" bpmnElement="Flow_0wt4dbv">
+        <di:waypoint x="510" y="117" />
+        <di:waypoint x="592" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_14p97s9">
+    <bpmndi:BPMNPlane id="BPMNPlane_1qs3lh3" bpmnElement="level_2b_subprocess">
+      <bpmndi:BPMNShape id="Event_0fpb33c_di" bpmnElement="Event_0fpb33c">
+        <dc:Bounds x="332" y="212" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1x11xe3_di" bpmnElement="Event_1x11xe3">
+        <dc:Bounds x="572" y="212" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0oiioqq_di" bpmnElement="level_2b_subprocess_script_task">
+        <dc:Bounds x="420" y="190" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_18nmqzh_di" bpmnElement="Flow_18nmqzh">
+        <di:waypoint x="368" y="230" />
+        <di:waypoint x="420" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1srjuev_di" bpmnElement="Flow_1srjuev">
+        <di:waypoint x="520" y="230" />
+        <di:waypoint x="572" y="230" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

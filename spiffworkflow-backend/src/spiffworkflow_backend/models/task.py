@@ -76,6 +76,19 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     data: Optional[dict] = None
 
+    # these are here to be compatible with task api
+    form_schema: Optional[dict] = None
+    form_ui_schema: Optional[dict] = None
+    process_model_display_name: Optional[str] = None
+    process_model_identifier: Optional[str] = None
+    typename: Optional[str] = None
+    can_complete: Optional[bool] = None
+    extensions: Optional[dict] = None
+    name_for_display: Optional[str] = None
+
+    def get_data(self) -> dict:
+        return {**self.python_env_data(), **self.json_data()}
+
     def python_env_data(self) -> dict:
         return JsonDataModel.find_data_dict_by_hash(self.python_env_data_hash)
 

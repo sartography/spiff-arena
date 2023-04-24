@@ -23,6 +23,8 @@ export default function ProcessInterstitial() {
   }, []);
   const { addError } = useAPIError();
 
+  const processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.modified_process_model_identifier}`;
+
   useEffect(() => {
     fetchEventSource(
       `${BACKEND_BASE_URL}/tasks/${params.process_instance_id}`,
@@ -139,7 +141,10 @@ export default function ProcessInterstitial() {
               entityType: 'process-model-id',
               linkLastItem: true,
             },
-            [`Process Instance Id: ${lastTask.process_instance_id}`],
+            [
+              `Process Instance: ${params.process_instance_id}`,
+              `${processInstanceShowPageBaseUrl}/${params.process_instance_id}`,
+            ],
           ]}
         />
         <div style={{ display: 'flex', alignItems: 'center' }}>

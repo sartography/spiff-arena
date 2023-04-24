@@ -21,10 +21,13 @@ from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.specs.base import TaskSpec  # type: ignore
 from SpiffWorkflow.task import Task  # type: ignore
 
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
 from spiffworkflow_backend.services.authentication_service import TokenInvalidError
 from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
+from spiffworkflow_backend.services.task_service import TaskModelException
+from spiffworkflow_backend.services.task_service import TaskService
 
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
@@ -36,17 +39,17 @@ class ApiError(Exception):
 
     error_code: str
     message: str
-    error_line: str = ""
-    error_type: str = ""
-    file_name: str = ""
-    line_number: int = 0
-    offset: int = 0
+    error_line: str | None = ""
+    error_type: str | None = ""
+    file_name: str | None = ""
+    line_number: int | None = 0
+    offset: int | None = 0
     sentry_link: str | None = None
-    status_code: int = 400
-    tag: str = ""
+    status_code: int | None = 400
+    tag: str | None = ""
     task_data: dict | str | None = field(default_factory=dict)
-    task_id: str = ""
-    task_name: str = ""
+    task_id: str | None = ""
+    task_name: str | None = ""
     task_trace: list | None = field(default_factory=list)
 
     def __str__(self) -> str:
@@ -93,6 +96,44 @@ class ApiError(Exception):
 
         # Assure that there is nothing in the json data that can't be serialized.
         instance.task_data = ApiError.remove_unserializeable_from_dict(task.data)
+
+        return instance
+
+    @classmethod
+    def from_task_model(
+        cls,
+        error_code: str,
+        message: str,
+        task_model: TaskModel,
+        status_code: int | None = 400,
+        line_number: int | None = 0,
+        offset: int | None = 0,
+        error_type: str | None = "",
+        error_line: str | None = "",
+        task_trace: list | None = None,
+    ) -> ApiError:
+        """Constructs an API Error with details pulled from the current task model."""
+        instance = cls(error_code, message, status_code=status_code)
+        task_definition = task_model.task_definition
+        instance.task_id = task_definition.bpmn_identifier
+        instance.task_name = task_definition.bpmn_name or ""
+        instance.line_number = line_number
+        instance.offset = offset
+        instance.error_type = error_type
+        instance.error_line = error_line
+        if task_trace:
+            instance.task_trace = task_trace
+        else:
+            instance.task_trace = TaskModelException.get_task_trace(task_model)
+
+        try:
+            spec_reference = TaskService.get_spec_reference_from_bpmn_process(task_model.bpmn_process)
+            instance.file_name = spec_reference.file_name
+        except Exception as exception:
+            current_app.logger.error(exception)
+
+        # Assure that there is nothing in the json data that can't be serialized.
+        instance.task_data = ApiError.remove_unserializeable_from_dict(task_model.get_data())
 
         return instance
 
@@ -151,6 +192,18 @@ class ApiError(Exception):
                 error_code,
                 message + ". " + str(exp),
                 exp.task,
+                line_number=exp.line_number,
+                offset=exp.offset,
+                error_type=exp.error_type,
+                error_line=exp.error_line,
+                task_trace=exp.task_trace,
+            )
+        elif isinstance(exp, TaskModelException):
+            # Note that WorkflowDataExceptions are also WorkflowTaskExceptions
+            return ApiError.from_task_model(
+                error_code,
+                message + ". " + str(exp),
+                exp.task_model,
                 line_number=exp.line_number,
                 offset=exp.offset,
                 error_type=exp.error_type,
