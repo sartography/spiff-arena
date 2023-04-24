@@ -430,7 +430,8 @@ def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str, Op
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     with ProcessInstanceQueueService.dequeued(process_instance):
         yield from _interstitial_stream(process_instance)
-                
+
+
 def interstitial(process_instance_id: int) -> Response:
     """A Server Side Events Stream for watching the execution of engine tasks."""
     return Response(
