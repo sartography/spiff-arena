@@ -1,5 +1,7 @@
 """API Error functionality."""
 from __future__ import annotations
+from typing import Optional
+from spiffworkflow_backend.models.task import TaskException, TaskModel # noqa: F401
 
 import json
 from dataclasses import dataclass
@@ -36,18 +38,18 @@ class ApiError(Exception):
 
     error_code: str
     message: str
-    error_line: str = ""
-    error_type: str = ""
-    file_name: str = ""
-    line_number: int = 0
-    offset: int = 0
-    sentry_link: str | None = None
-    status_code: int = 400
-    tag: str = ""
-    task_data: dict | str | None = field(default_factory=dict)
-    task_id: str = ""
-    task_name: str = ""
-    task_trace: list | None = field(default_factory=list)
+    error_line: Optional[str] = ""
+    error_type: Optional[str] = ""
+    file_name: Optional[str] = ""
+    line_number: Optional[int] = 0
+    offset: Optional[int] = 0
+    sentry_link: Optional[str] = None
+    status_code: Optional[int] = 400
+    tag: Optional[str] = ""
+    task_data: Optional[dict | str] = field(default_factory=dict)
+    task_id: Optional[str] = ""
+    task_name: Optional[str] = ""
+    task_trace: Optional[list] = field(default_factory=list)
 
     def __str__(self) -> str:
         """Instructions to print instance as a string."""
@@ -93,6 +95,41 @@ class ApiError(Exception):
 
         # Assure that there is nothing in the json data that can't be serialized.
         instance.task_data = ApiError.remove_unserializeable_from_dict(task.data)
+
+        return instance
+
+    @classmethod
+    def from_task_model(
+        cls,
+        error_code: str,
+        message: str,
+        task_model: TaskModel,
+        status_code: Optional[int] = 400,
+        line_number: Optional[int] = 0,
+        offset: Optional[int] = 0,
+        error_type: Optional[str] = "",
+        error_line: Optional[str] = "",
+        task_trace: Optional[list] = None,
+    ) -> ApiError:
+        """Constructs an API Error with details pulled from the current task model."""
+        instance = cls(error_code, message, status_code=status_code)
+        task_definition = task_model.task_definition
+        instance.task_id = task_definition.bpmn_identifier
+        instance.task_name = task_definition.bpmn_name or ""
+        # TODO: find a way to get a file from task model
+        # instance.file_name = task.workflow.spec.file or ""
+        instance.line_number = line_number
+        instance.offset = offset
+        instance.error_type = error_type
+        instance.error_line = error_line
+        if task_trace:
+            instance.task_trace = task_trace
+        # TODO: needs implementation
+        # else:
+        #     instance.task_trace = TaskException.get_task_trace(task)
+
+        # Assure that there is nothing in the json data that can't be serialized.
+        instance.task_data = ApiError.remove_unserializeable_from_dict(task_model.get_data())
 
         return instance
 
@@ -151,6 +188,18 @@ class ApiError(Exception):
                 error_code,
                 message + ". " + str(exp),
                 exp.task,
+                line_number=exp.line_number,
+                offset=exp.offset,
+                error_type=exp.error_type,
+                error_line=exp.error_line,
+                task_trace=exp.task_trace,
+            )
+        elif isinstance(exp, TaskException):
+            # Note that WorkflowDataExceptions are also WorkflowTaskExceptions
+            return ApiError.from_task_model(
+                error_code,
+                message + ". " + str(exp),
+                exp.task_model,
                 line_number=exp.line_number,
                 offset=exp.offset,
                 error_type=exp.error_type,
