@@ -1,6 +1,5 @@
 """Task."""
 import enum
-from SpiffWorkflow.exceptions import WorkflowException # type: ignore
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
@@ -94,7 +93,6 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     def json_data(self) -> dict:
         return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
-
 
 
 class Task:

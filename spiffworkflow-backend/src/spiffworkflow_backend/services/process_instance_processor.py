@@ -2,7 +2,6 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import _strptime  # type: ignore
-from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 import copy
 import decimal
 import json
@@ -97,6 +96,7 @@ from spiffworkflow_backend.services.element_units_service import (
 )
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -1197,7 +1197,9 @@ class ProcessInstanceProcessor:
             db.session.bulk_save_objects(new_task_models.values())
             TaskService.insert_or_update_json_data_records(new_json_data_dicts)
 
-        ProcessInstanceTmpService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
+        ProcessInstanceTmpService.add_event_to_process_instance(
+            self.process_instance_model, event_type, task_guid=task_id
+        )
         self.save()
         # Saving the workflow seems to reset the status
         self.suspend()
