@@ -19,7 +19,7 @@ import {
 
 import React, { useRef, useEffect, useState } from 'react';
 // @ts-ignore
-import { Button } from '@carbon/react';
+import { Button, Modal, UnorderedList, Link } from '@carbon/react';
 
 import 'bpmn-js/dist/assets/diagram-js.css';
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css';
@@ -58,7 +58,11 @@ import { Can } from '@casl/react';
 import HttpService from '../services/HttpService';
 
 import ButtonWithConfirmation from './ButtonWithConfirmation';
-import { getBpmnProcessIdentifiers, makeid } from '../helpers';
+import {
+  getBpmnProcessIdentifiers,
+  makeid,
+  modifyProcessIdentifierForPathParam,
+} from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import { PermissionsToCheck, Task } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
@@ -127,7 +131,7 @@ export default function ReactDiagramEditor({
   const { ability } = usePermissionFetcher(permissionRequestData);
   const navigate = useNavigate();
 
-  console.log(callers);
+  const [showingReferences, setShowingReferences] = useState(false);
 
   useEffect(() => {
     if (diagramModelerState) {
@@ -570,6 +574,42 @@ export default function ReactDiagramEditor({
 
   const canViewXml = fileName !== undefined;
 
+  const showReferences = () => {
+    return (
+      <Modal
+        open={showingReferences}
+        onRequestClose={() => setShowingReferences(false)}
+        passiveModal
+      >
+        <UnorderedList>
+          {callers.map((ref: any) => (
+            <li>
+              <Link
+                size="lg"
+                href={`/admin/process-models/${modifyProcessIdentifierForPathParam(
+                  ref.process_model_id
+                )}`}
+              >
+                {`${ref.display_name}`}
+              </Link>
+            </li>
+          ))}
+        </UnorderedList>
+      </Modal>
+    );
+  };
+
+  const getReferencesButton = () => {
+    if (callers.length > 0) {
+      let buttonText = `View ${callers.length} Reference`;
+      if (callers.length > 1) buttonText += 's';
+      return (
+        <Button onClick={() => setShowingReferences(true)}>{buttonText}</Button>
+      );
+    }
+    return null;
+  };
+
   const userActionOptions = () => {
     if (diagramType !== 'readonly') {
       return (
@@ -631,5 +671,11 @@ export default function ReactDiagramEditor({
     return null;
   };
 
-  return <div>{userActionOptions()}</div>;
+  return (
+    <div>
+      {userActionOptions()}
+      {getReferencesButton()}
+      {showReferences()}
+    </div>
+  );
 }
