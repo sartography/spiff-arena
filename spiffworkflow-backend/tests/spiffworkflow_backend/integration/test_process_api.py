@@ -33,7 +33,7 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.routes.tasks_controller import _interstitial_stream
+from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial_stream
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_caller_service import ProcessCallerService
@@ -1630,7 +1630,7 @@ class TestProcessApi(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         # Call this to assure all engine-steps are fully processed.
-        _interstitial_stream(process_instance_id)
+        _dequeued_interstitial_stream(process_instance_id)
         assert response.json is not None
         assert response.json["next_task"] is not None
 
@@ -1694,7 +1694,7 @@ class TestProcessApi(BaseTest):
 
         # Rather that call the API and deal with the Server Side Events, call the loop directly and covert it to
         # a list.  It tests all of our code.  No reason to test Flasks SSE support.
-        stream_results = _interstitial_stream(process_instance_id)
+        stream_results = _dequeued_interstitial_stream(process_instance_id)
         results = list(stream_results)
         # strip the "data:" prefix and convert remaining string to dict.
         json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
@@ -1717,7 +1717,7 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
 
         # we should now be on a task that does not belong to the original user, and the interstitial page should know this.
-        results = list(_interstitial_stream(process_instance_id))
+        results = list(_dequeued_interstitial_stream(process_instance_id))
         json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
         assert len(results) == 1
         assert json_results[0]["state"] == "READY"
@@ -1732,9 +1732,9 @@ class TestProcessApi(BaseTest):
         )
 
         # We should now be on the end task with a valid message, even after loading it many times.
-        list(_interstitial_stream(process_instance_id))
-        list(_interstitial_stream(process_instance_id))
-        results = list(_interstitial_stream(process_instance_id))
+        list(_dequeued_interstitial_stream(process_instance_id))
+        list(_dequeued_interstitial_stream(process_instance_id))
+        results = list(_dequeued_interstitial_stream(process_instance_id))
         json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
         assert len(json_results) == 1
         assert json_results[0]["state"] == "COMPLETED"
