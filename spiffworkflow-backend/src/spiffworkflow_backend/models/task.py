@@ -1,5 +1,6 @@
 """Task."""
 import enum
+from SpiffWorkflow.exceptions import WorkflowException # type: ignore
 from dataclasses import dataclass
 from typing import Any
 from typing import Optional
@@ -85,6 +86,52 @@ class TaskModel(SpiffworkflowBaseDBModel):
 
     def json_data(self) -> dict:
         return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
+
+
+class TaskModelException(Exception):
+    """Copied from SpiffWorkflow.exceptions.WorkflowTaskException.
+    
+    Reimplements the exception from SpiffWorkflow to not require a spiff_task.
+    """
+
+    def __init__(self, error_msg: str, task_model: TaskModel, exception: Optional[Exception]=None,
+                 line_number: Optional[int]=None, offset: Optional[int]=None, error_line: Optional[str]=None):
+
+        self.task_model = task_model
+        self.line_number = line_number
+        self.offset = offset
+        self.error_line = error_line
+        if exception:
+            self.error_type = exception.__class__.__name__
+        else:
+            self.error_type = "unknown"
+
+        if isinstance(exception, SyntaxError) and not line_number:
+            self.line_number = exception.lineno
+            self.offset = exception.offset
+        elif isinstance(exception, NameError):
+            self.add_note(WorkflowException.did_you_mean_from_name_error(exception, list(task_model.get_data().keys())))
+
+        # If encountered in a sub-workflow, this traces back up the stack,
+        # so we can tell how we got to this particular task, no matter how
+        # deeply nested in sub-workflows it is.  Takes the form of:
+        # task-description (file-name)
+        self.task_trace = self.get_task_trace(task_model)
+
+    # TODO: implement this with db
+    @classmethod
+    def get_task_trace(cls, _task_model: TaskModel) -> list[str]:
+        return []
+    #     task_bpmn_name = task_model.task_definition.bpmn_name
+    #
+    #     task_trace = [f"{task.task_spec.description} ({task.workflow.spec.file})"]
+    #     workflow = task.workflow
+    #     while workflow != workflow.outer_workflow:
+    #         caller = workflow.name
+    #         workflow = workflow.outer_workflow
+    #         task_trace.append(f"{workflow.spec.task_specs[caller].description} ({workflow.spec.file})")
+    #     return task_trace
+
 
 
 class Task:

@@ -43,7 +43,7 @@ from spiffworkflow_backend.models.process_instance import (
 )
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModelException, TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_principal_or_raise,
@@ -376,7 +376,7 @@ def _render_instructions_for_end_user(task_model: TaskModel) -> str:
                 instructions = _render_jinja_template(extensions["instructionsForEndUser"], task_model)
                 extensions["instructionsForEndUser"] = instructions
                 return instructions
-            except WorkflowTaskException as wfe:
+            except TaskModelException as wfe:
                 wfe.add_note("Failed to render instructions for end user.")
                 raise ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe) from wfe
     return ""
@@ -673,7 +673,7 @@ def _prepare_form_data(form_file: str, task_model: TaskModel, process_model: Pro
                     status_code=400,
                 )
             ) from exception
-    except WorkflowTaskException as wfe:
+    except TaskModelException as wfe:
         wfe.add_note(f"Error in Json Form File '{form_file}'")
         api_error = ApiError.from_workflow_exception("instructions_error", str(wfe), exp=wfe)
         api_error.file_name = form_file
@@ -687,7 +687,8 @@ def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> 
         template = jinja_environment.from_string(unprocessed_template)
         return template.render(**(task_model.data or {}))
     except jinja2.exceptions.TemplateError as template_error:
-        wfe = WorkflowTaskException(str(template_error), task=task_model, exception=template_error)
+        import pdb; pdb.set_trace()
+        wfe = TaskModelException(str(template_error), task_model=task_model, exception=template_error)
         if isinstance(template_error, TemplateSyntaxError):
             wfe.line_number = template_error.lineno
             wfe.error_line = template_error.source.split("\n")[template_error.lineno - 1]
@@ -695,7 +696,7 @@ def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> 
         raise wfe from template_error
     except Exception as error:
         _type, _value, tb = exc_info()
-        wfe = WorkflowTaskException(str(error), task=task_model, exception=error)
+        wfe = TaskModelException(str(error), task_model=task_model, exception=error)
         while tb:
             if tb.tb_frame.f_code.co_filename == "<template>":
                 wfe.line_number = tb.tb_lineno
