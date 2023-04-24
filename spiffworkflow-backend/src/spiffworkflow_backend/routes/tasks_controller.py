@@ -1,5 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 import os
 import uuid
 from sys import exc_info
@@ -43,7 +44,7 @@ from spiffworkflow_backend.models.process_instance import (
 )
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.task import TaskModelException, TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_principal_or_raise,
@@ -67,7 +68,7 @@ from spiffworkflow_backend.services.process_instance_service import (
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.services.task_service import TaskService
+from spiffworkflow_backend.services.task_service import TaskModelException, TaskService
 
 
 class TaskDataSelectOption(TypedDict):
@@ -218,7 +219,7 @@ def task_data_update(
             )
             if json_data_dict is not None:
                 TaskService.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
-                TaskService.add_event_to_process_instance(
+                ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_guid
                 )
             try:
@@ -414,9 +415,11 @@ def _interstitial_stream(process_instance_id: int) -> Generator[str, Optional[st
     last_task = None
     while last_task != spiff_task:
         task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-        instructions = _render_instructions_for_end_user(task_model)
+        extensions = TaskService.get_extensions_from_task_model(task_model)
+        instructions = _render_instructions_for_end_user(task_model, extensions)
         if instructions and spiff_task.id not in reported_ids:
             reported_ids.append(spiff_task.id)
+            task.properties = extensions
             yield f"data: {current_app.json.dumps(task)} \n\n"
         last_task = spiff_task
         try:
@@ -696,7 +699,7 @@ def _render_jinja_template(unprocessed_template: str, task_model: TaskModel) -> 
     jinja_environment = jinja2.Environment(autoescape=True, lstrip_blocks=True, trim_blocks=True)
     try:
         template = jinja_environment.from_string(unprocessed_template)
-        return template.render(**(task_model.data or {}))
+        return template.render(**(task_model.get_data()))
     except jinja2.exceptions.TemplateError as template_error:
         wfe = TaskModelException(str(template_error), task_model=task_model, exception=template_error)
         if isinstance(template_error, TemplateSyntaxError):

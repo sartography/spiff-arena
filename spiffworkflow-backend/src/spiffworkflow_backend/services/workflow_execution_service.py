@@ -1,4 +1,5 @@
 from __future__ import annotations
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 
 import copy
 import time
@@ -395,7 +396,7 @@ class WorkflowExecutionService:
             self.process_bpmn_messages()
             self.queue_waiting_receive_messages()
         except WorkflowTaskException as wte:
-            TaskService.add_event_to_process_instance(
+            ProcessInstanceTmpService.add_event_to_process_instance(
                 self.process_instance_model,
                 ProcessInstanceEventType.task_failed.value,
                 exception=wte,

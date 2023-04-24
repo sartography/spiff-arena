@@ -1,7 +1,8 @@
 """API Error functionality."""
 from __future__ import annotations
+from spiffworkflow_backend.services.task_service import TaskService
 from typing import Optional
-from spiffworkflow_backend.models.task import TaskModelException, TaskModel # noqa: F401
+from spiffworkflow_backend.models.task import TaskModel # noqa: F401
 
 import json
 from dataclasses import dataclass
@@ -27,6 +28,7 @@ from spiffworkflow_backend.services.authentication_service import NotAuthorizedE
 from spiffworkflow_backend.services.authentication_service import TokenInvalidError
 from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
+from spiffworkflow_backend.services.task_service import TaskModelException
 
 
 api_error_blueprint = Blueprint("api_error_blueprint", __name__)
@@ -116,17 +118,20 @@ class ApiError(Exception):
         task_definition = task_model.task_definition
         instance.task_id = task_definition.bpmn_identifier
         instance.task_name = task_definition.bpmn_name or ""
-        # TODO: find a way to get a file from task model
-        # instance.file_name = task.workflow.spec.file or ""
         instance.line_number = line_number
         instance.offset = offset
         instance.error_type = error_type
         instance.error_line = error_line
         if task_trace:
             instance.task_trace = task_trace
-        # TODO: needs implementation
-        # else:
-        #     instance.task_trace = TaskModelException.get_task_trace(task)
+        else:
+            instance.task_trace = TaskModelException.get_task_trace(task_model)
+
+        try:
+            spec_reference = TaskService.get_spec_reference_from_bpmn_process(task_model.bpmn_process)
+            instance.file_name = spec_reference.file_name
+        except Exception:
+            pass
 
         # Assure that there is nothing in the json data that can't be serialized.
         instance.task_data = ApiError.remove_unserializeable_from_dict(task_model.get_data())
