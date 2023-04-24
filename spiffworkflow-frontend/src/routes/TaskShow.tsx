@@ -117,10 +117,10 @@ export default function TaskShow() {
     const processResult = (result: ProcessInstanceTask) => {
       setTask(result);
       setDisabled(false);
-
       if (!result.can_complete) {
         navigateToInterstitial(result);
       }
+      window.scrollTo(0, 0); // Scroll back to the top of the page
 
       /*  Disable call to load previous tasks -- do not display menu.
       const url = `/v1.0/process-instances/for-me/${modifyProcessIdentifierForPathParam(
