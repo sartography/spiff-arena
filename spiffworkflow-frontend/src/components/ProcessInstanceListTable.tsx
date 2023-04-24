@@ -30,6 +30,7 @@ import {
   DATE_FORMAT_FOR_DISPLAY,
 } from '../config';
 import {
+  capitalizeFirstLetter,
   convertDateAndTimeStringsToSeconds,
   convertDateObjectToFormattedHoursMinutes,
   convertSecondsToFormattedDateString,
@@ -721,6 +722,9 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  const formatProcessInstanceStatus = (_row: any, value: any) => {
+    return capitalizeFirstLetter((value || '').replaceAll('_', ' '));
+  };
   const processStatusSearch = () => {
     return (
       <MultiSelect
@@ -734,7 +738,7 @@ export default function ProcessInstanceListTable({
           setRequiresRefilter(true);
         }}
         itemToString={(item: any) => {
-          return item || '';
+          return formatProcessInstanceStatus(null, item);
         }}
         selectionFeedback="top-after-reopen"
         selectedItems={processStatusSelection}
@@ -1358,6 +1362,7 @@ export default function ProcessInstanceListTable({
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
       process_model_display_name: formatProcessModelDisplayName,
+      status: formatProcessInstanceStatus,
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
       updated_at_in_seconds: formatSecondsForDisplay,
