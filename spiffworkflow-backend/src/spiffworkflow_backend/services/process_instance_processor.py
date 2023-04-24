@@ -96,6 +96,7 @@ from spiffworkflow_backend.services.element_units_service import (
 )
 from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_instance_queue_service import ProcessInstanceQueueService
+from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
@@ -858,114 +859,6 @@ class ProcessInstanceProcessor:
                 db.session.add(pim)
                 db.session.commit()
 
-    # FIXME: Better to move to SpiffWorkflow and traverse the outer_workflows on the spiff_task
-    # We may need to add whether a subprocess is a call activity or a subprocess in order to do it properly
-    def get_all_processes_with_task_name_list(self) -> dict[str, list[str]]:
-        """Gets the list of processes pointing to a list of task names.
-
-        This is useful for figuring out which process contain which task.
-
-        Rerturns: {process_name: [task_1, task_2, ...], ...}
-        """
-        bpmn_definition_dict = self.full_bpmn_process_dict
-        processes: dict[str, list[str]] = {bpmn_definition_dict["spec"]["name"]: []}
-        for task_name, _task_spec in bpmn_definition_dict["spec"]["task_specs"].items():
-            processes[bpmn_definition_dict["spec"]["name"]].append(task_name)
-        if "subprocess_specs" in bpmn_definition_dict:
-            for subprocess_name, subprocess_details in bpmn_definition_dict["subprocess_specs"].items():
-                processes[subprocess_name] = []
-                if "task_specs" in subprocess_details:
-                    for task_name, _task_spec in subprocess_details["task_specs"].items():
-                        processes[subprocess_name].append(task_name)
-        return processes
-
-    def find_process_model_process_name_by_task_name(
-        self, task_name: str, processes: Optional[dict[str, list[str]]] = None
-    ) -> str:
-        """Gets the top level process of a process model using the task name that the process contains.
-
-        For example, process_modelA has processA which has a call activity that calls processB which is inside of process_modelB.
-        processB has subprocessA which has taskA. Using taskA this method should return processB and then that can be used with
-        the spec reference cache to find process_modelB.
-        """
-        process_name_to_return = task_name
-        if processes is None:
-            processes = self.get_all_processes_with_task_name_list()
-
-        for process_name, task_spec_names in processes.items():
-            if task_name in task_spec_names:
-                process_name_to_return = self.find_process_model_process_name_by_task_name(process_name, processes)
-        return process_name_to_return
-
-    #################################################################
-
-    def get_all_task_specs(self) -> dict[str, dict]:
-        """This looks both at top level task_specs and subprocess_specs in the serialized data.
-
-        It returns a dict of all task specs based on the task name like it is in the serialized form.
-
-        NOTE: this may not fully work for tasks that are NOT call activities since their task_name may not be unique
-        but in our current use case we only care about the call activities here.
-        """
-        bpmn_definition_dict = self.full_bpmn_process_dict
-        spiff_task_json = bpmn_definition_dict["spec"]["task_specs"] or {}
-        if "subprocess_specs" in bpmn_definition_dict:
-            for _subprocess_name, subprocess_details in bpmn_definition_dict["subprocess_specs"].items():
-                if "task_specs" in subprocess_details:
-                    spiff_task_json = spiff_task_json | subprocess_details["task_specs"]
-        return spiff_task_json
-
-    def get_subprocesses_by_child_task_ids(self) -> Tuple[dict, dict]:
-        """Get all subprocess ids based on the child task ids.
-
-        This is useful when trying to link the child task of a call activity back to
-        the call activity that called it to get the appropriate data. For example, if you
-        have a call activity "Log" that you call twice within the same process, the Hammer log file
-        activity within the Log process will get called twice. They will potentially have different
-        task data. We want to be able to differentiate those two activities.
-
-        subprocess structure in the json:
-            "subprocesses": { [subprocess_task_id]: "tasks" : { [task_id]: [bpmn_task_details] }}
-
-        Also note that subprocess_task_id might in fact be a call activity, because spiff treats
-        call activities like subprocesses in terms of the serialization.
-        """
-        process_instance_data_dict = self.full_bpmn_process_dict
-        spiff_task_json = self.get_all_task_specs()
-
-        subprocesses_by_child_task_ids = {}
-        task_typename_by_task_id = {}
-        if "subprocesses" in process_instance_data_dict:
-            for subprocess_id, subprocess_details in process_instance_data_dict["subprocesses"].items():
-                for task_id, task_details in subprocess_details["tasks"].items():
-                    subprocesses_by_child_task_ids[task_id] = subprocess_id
-                    task_name = task_details["task_spec"]
-                    if task_name in spiff_task_json:
-                        task_typename_by_task_id[task_id] = spiff_task_json[task_name]["typename"]
-        return (subprocesses_by_child_task_ids, task_typename_by_task_id)
-
-    def get_highest_level_calling_subprocesses_by_child_task_ids(
-        self, subprocesses_by_child_task_ids: dict, task_typename_by_task_id: dict
-    ) -> dict:
-        """Ensure task ids point to the top level subprocess id.
-
-        This is done by checking if a subprocess is also a task until the subprocess is no longer a task or a Call Activity.
-        """
-        for task_id, subprocess_id in subprocesses_by_child_task_ids.items():
-            if subprocess_id in subprocesses_by_child_task_ids:
-                current_subprocess_id_for_task = subprocesses_by_child_task_ids[task_id]
-                if current_subprocess_id_for_task in task_typename_by_task_id:
-                    # a call activity is like the top-level subprocess since it is the calling subprocess
-                    # according to spiff and the top-level calling subprocess is really what we care about
-                    if task_typename_by_task_id[current_subprocess_id_for_task] == "CallActivity":
-                        continue
-
-                subprocesses_by_child_task_ids[task_id] = subprocesses_by_child_task_ids[subprocess_id]
-                self.get_highest_level_calling_subprocesses_by_child_task_ids(
-                    subprocesses_by_child_task_ids, task_typename_by_task_id
-                )
-        return subprocesses_by_child_task_ids
-
     def _store_bpmn_process_definition(
         self,
         process_bpmn_properties: dict,
@@ -1304,7 +1197,9 @@ class ProcessInstanceProcessor:
             db.session.bulk_save_objects(new_task_models.values())
             TaskService.insert_or_update_json_data_records(new_json_data_dicts)
 
-        TaskService.add_event_to_process_instance(self.process_instance_model, event_type, task_guid=task_id)
+        ProcessInstanceTmpService.add_event_to_process_instance(
+            self.process_instance_model, event_type, task_guid=task_id
+        )
         self.save()
         # Saving the workflow seems to reset the status
         self.suspend()
@@ -1317,7 +1212,7 @@ class ProcessInstanceProcessor:
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
         """Reset a process to an earlier state."""
         # raise Exception("This feature to reset a process instance to a given task is currently unavaiable")
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
 
@@ -1797,10 +1692,10 @@ class ProcessInstanceProcessor:
 
         # If there are no ready tasks, but the thing isn't complete yet, find the first non-complete task
         # and return that
-        next_task = None
+        next_task_to_return = None
         for task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.NOT_FINISHED_MASK):
-            next_task = task
-        return next_task
+            next_task_to_return = task
+        return next_task_to_return
 
     def completed_user_tasks(self) -> List[SpiffTask]:
         """Completed_user_tasks."""
@@ -1846,7 +1741,7 @@ class ProcessInstanceProcessor:
         TaskService.update_json_data_dicts_using_list(json_data_dict_list, json_data_dict_mapping)
         TaskService.insert_or_update_json_data_records(json_data_dict_mapping)
 
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,
             ProcessInstanceEventType.task_completed.value,
             task_guid=task_model.guid,
@@ -1950,7 +1845,7 @@ class ProcessInstanceProcessor:
         self.save()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_terminated.value
         )
         db.session.commit()
@@ -1959,7 +1854,7 @@ class ProcessInstanceProcessor:
         """Suspend."""
         self.process_instance_model.status = ProcessInstanceStatus.suspended.value
         db.session.add(self.process_instance_model)
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_suspended.value
         )
         db.session.commit()
@@ -1968,7 +1863,7 @@ class ProcessInstanceProcessor:
         """Resume."""
         self.process_instance_model.status = ProcessInstanceStatus.waiting.value
         db.session.add(self.process_instance_model)
-        TaskService.add_event_to_process_instance(
+        ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, ProcessInstanceEventType.process_instance_resumed.value
         )
         db.session.commit()
