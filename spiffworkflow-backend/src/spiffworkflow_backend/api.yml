@@ -697,7 +697,7 @@ paths:
         description: Base64 encoded json of report filter by.
         schema:
           type: string
-    get:
+    post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list_for_me
       summary: Returns a list of process instances that are associated with me.
       tags:
@@ -828,7 +828,7 @@ paths:
         description: Base64 encoded json of report filter by.
         schema:
           type: string
-    get:
+    post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list
       summary: Returns a list of process instances.
       tags:

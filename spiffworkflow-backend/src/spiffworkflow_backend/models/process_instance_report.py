@@ -22,7 +22,21 @@ from spiffworkflow_backend.services.process_instance_processor import (
 )
 
 
-ReportMetadata = dict[str, Any]
+class FilterValue(TypedDict):
+    field_name: str
+    field_value: str
+    operator: str
+
+
+class ReportMetadataColumn(TypedDict):
+    Header: str
+    accessor: str
+
+
+class ReportMetadata(TypedDict):
+    columns: list[ReportMetadataColumn]
+    filter_by: list[FilterValue]
+    order_by: list[str]
 
 
 class ProcessInstanceReportAlreadyExistsError(Exception):

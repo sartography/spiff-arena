@@ -114,12 +114,12 @@ export default function ProcessInstanceListTable({
   canCompleteAllTasks = false,
   showActionsColumn = false,
 }: OwnProps) {
-  let apiPath = '/process-instances/for-me';
+  let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
-    apiPath = '/process-instances';
+    processInstanceApiSearchPath = '/process-instances';
   }
   const params = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { addError, removeError } = useAPIError();
 
@@ -284,6 +284,8 @@ export default function ProcessInstanceListTable({
       if (result.report.id) {
         setProcessInstanceReportSelection(result.report);
       }
+      // searchParams.set('key', result.hash);
+      // setSearchParams(searchParams);
     }
     const stopRefreshing = () => {
       if (clearRefreshRef.current) {
@@ -372,9 +374,11 @@ export default function ProcessInstanceListTable({
       }
 
       HttpService.makeCallToBackend({
-        path: `${apiPath}?${queryParamString}`,
+        path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
+        httpMethod: 'POST',
         onUnauthorized: stopRefreshing,
+        postBody: {'report_metadata': {'filter_by': [{'field_name': 'process_model_identifier', 'field_value': 'example/with-milestones' }]}},
       });
     }
     function processResultForProcessModels(result: any) {
@@ -441,7 +445,7 @@ export default function ProcessInstanceListTable({
     perPageOptions,
     reportIdentifier,
     additionalParams,
-    apiPath,
+    processInstanceApiSearchPath,
   ]);
 
   // This sets the filter data using the saved reports returned from the initial instance_list query.
