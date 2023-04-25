@@ -1,7 +1,7 @@
 """Process_instance_report_service."""
 import re
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Generator, Iterable
 from typing import Optional
 from typing import Type
 
@@ -24,7 +24,9 @@ from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
 from spiffworkflow_backend.models.process_instance_report import (
+    FilterValue,
     ProcessInstanceReportModel,
+    ReportMetadata,
 )
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
@@ -236,7 +238,6 @@ class ProcessInstanceReportService:
         report_id: Optional[int] = None,
         report_identifier: Optional[str] = None,
     ) -> ProcessInstanceReportModel:
-        """Report_with_filter."""
         if report_id is not None:
             process_instance_report = ProcessInstanceReportModel.query.filter_by(
                 id=report_id, created_by_id=user.id
@@ -497,24 +498,30 @@ class ProcessInstanceReportService:
         ]
 
     @classmethod
+    def blah(cls, filters: list[FilterValue], filter_key: str) -> Generator:
+        for filter in filters:
+            if filter['field_name'] == filter_key and filter['field_value'] is not None:
+                yield filter['field_value']
+
+    @classmethod
     def run_process_instance_report(
         cls,
-        report_filter: ProcessInstanceReportFilter,
+        # report_filter: ProcessInstanceReportFilter,
+        report_metadata: ReportMetadata,
         process_instance_report: ProcessInstanceReportModel,
         user: UserModel,
         page: int = 1,
         per_page: int = 100,
     ) -> dict:
-        """Run_process_instance_report."""
         process_instance_query = ProcessInstanceModel.query
         # Always join that hot user table for good performance at serialization time.
         process_instance_query = process_instance_query.options(selectinload(ProcessInstanceModel.process_initiator))
+        filters = report_metadata['filter_by']
 
-        if report_filter.process_model_identifier is not None:
+        for value in cls.blah(filters, 'process_model_identifier'):
             process_model = ProcessModelService.get_process_model(
-                f"{report_filter.process_model_identifier}",
+                f"{value}",
             )
-
             process_instance_query = process_instance_query.filter_by(process_model_identifier=process_model.id)
 
         # this can never happen. obviously the class has the columns it defines. this is just to appease mypy.
@@ -527,187 +534,188 @@ class ProcessInstanceReportService:
                 )
             )
 
-        if report_filter.start_from is not None:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.start_in_seconds >= report_filter.start_from
-            )
-        if report_filter.start_to is not None:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.start_in_seconds <= report_filter.start_to
-            )
-        if report_filter.end_from is not None:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.end_in_seconds >= report_filter.end_from
-            )
-        if report_filter.end_to is not None:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.end_in_seconds <= report_filter.end_to
-            )
-        if report_filter.process_status is not None:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
-            )
-
-        if report_filter.initiated_by_me is True:
-            process_instance_query = process_instance_query.filter_by(process_initiator=user)
-
-        if report_filter.has_terminal_status is True:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-            )
-        elif report_filter.has_terminal_status is False:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.status.not_in(ProcessInstanceModel.terminal_statuses())  # type: ignore
-            )
-        if report_filter.has_active_status is True:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.status.in_(ProcessInstanceModel.active_statuses())  # type: ignore
-            )
-
-        if report_filter.process_initiator_username is not None:
-            initiator = UserModel.query.filter_by(username=report_filter.process_initiator_username).first()
-            process_initiator_id = -1
-            if initiator:
-                process_initiator_id = initiator.id
-            process_instance_query = process_instance_query.filter_by(process_initiator_id=process_initiator_id)
-
-        if (
-            not report_filter.with_tasks_completed_by_me
-            and not report_filter.with_tasks_assigned_to_my_group
-            and not report_filter.with_tasks_i_can_complete
-            and report_filter.with_relation_to_me is True
-        ):
-            process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(
-                HumanTaskUserModel,
-                and_(
-                    HumanTaskModel.id == HumanTaskUserModel.human_task_id,
-                    HumanTaskUserModel.user_id == user.id,
-                ),
-            )
-            process_instance_query = process_instance_query.filter(
-                or_(
-                    HumanTaskUserModel.id.is_not(None),
-                    ProcessInstanceModel.process_initiator_id == user.id,
-                )
-            )
-
-        if report_filter.with_tasks_completed_by_me is True:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.process_initiator_id != user.id
-            )
-            process_instance_query = process_instance_query.join(
-                HumanTaskModel,
-                and_(
-                    HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
-                    HumanTaskModel.completed_by_user_id == user.id,
-                ),
-            )
-
-        if report_filter.with_tasks_i_can_complete is True:
-            process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.process_initiator_id != user.id
-            )
-            process_instance_query = process_instance_query.join(
-                HumanTaskModel,
-                and_(
-                    HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
-                    HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
-                ),
-            ).join(
-                HumanTaskUserModel,
-                and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
-            )
-            if report_filter.has_active_status:
-                process_instance_query = process_instance_query.filter(
-                    HumanTaskModel.completed.is_(False)  # type: ignore
-                )
-
-        if report_filter.with_tasks_assigned_to_my_group is True:
-            group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
-            if report_filter.user_group_identifier:
-                group_model_join_conditions.append(GroupModel.identifier == report_filter.user_group_identifier)
-
-            process_instance_query = process_instance_query.join(HumanTaskModel)
-            if report_filter.has_active_status:
-                process_instance_query = process_instance_query.filter(
-                    HumanTaskModel.completed.is_(False)  # type: ignore
-                )
-
-            process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))
-            process_instance_query = process_instance_query.join(
-                UserGroupAssignmentModel,
-                UserGroupAssignmentModel.group_id == GroupModel.id,
-            )
-            process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
-
-        instance_metadata_aliases = {}
-        stock_columns = cls.get_column_names_for_model(ProcessInstanceModel)
-        if isinstance(report_filter.report_column_list, list):
-            process_instance_report.report_metadata["columns"] = report_filter.report_column_list
-        if isinstance(report_filter.report_filter_by_list, list):
-            process_instance_report.report_metadata["filter_by"] = report_filter.report_filter_by_list
-
-        for column in process_instance_report.report_metadata["columns"]:
-            if column["accessor"] in stock_columns:
-                continue
-            instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
-            instance_metadata_aliases[column["accessor"]] = instance_metadata_alias
-
-            filter_for_column = None
-            if "filter_by" in process_instance_report.report_metadata:
-                filter_for_column = next(
-                    (
-                        f
-                        for f in process_instance_report.report_metadata["filter_by"]
-                        if f["field_name"] == column["accessor"]
-                    ),
-                    None,
-                )
-            isouter = True
-            conditions = [
-                ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
-                instance_metadata_alias.key == column["accessor"],
-            ]
-            if filter_for_column:
-                isouter = False
-                conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
-            process_instance_query = process_instance_query.join(
-                instance_metadata_alias, and_(*conditions), isouter=isouter
-            ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
-
-        order_by_query_array = []
-        order_by_array = process_instance_report.report_metadata["order_by"]
-        if len(order_by_array) < 1:
-            order_by_array = ProcessInstanceReportModel.default_order_by()
-        for order_by_option in order_by_array:
-            attribute = re.sub("^-", "", order_by_option)
-            if attribute in stock_columns:
-                if order_by_option.startswith("-"):
-                    order_by_query_array.append(getattr(ProcessInstanceModel, attribute).desc())
-                else:
-                    order_by_query_array.append(getattr(ProcessInstanceModel, attribute).asc())
-            elif attribute in instance_metadata_aliases:
-                if order_by_option.startswith("-"):
-                    order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).desc())
-                else:
-                    order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).asc())
+        # if report_filter.start_from is not None:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.start_in_seconds >= report_filter.start_from
+        #     )
+        # if report_filter.start_to is not None:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.start_in_seconds <= report_filter.start_to
+        #     )
+        # if report_filter.end_from is not None:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.end_in_seconds >= report_filter.end_from
+        #     )
+        # if report_filter.end_to is not None:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.end_in_seconds <= report_filter.end_to
+        #     )
+        # if report_filter.process_status is not None:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.status.in_(report_filter.process_status)  # type: ignore
+        #     )
+        #
+        # if report_filter.initiated_by_me is True:
+        #     process_instance_query = process_instance_query.filter_by(process_initiator=user)
+        #
+        # if report_filter.has_terminal_status is True:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
+        #     )
+        # elif report_filter.has_terminal_status is False:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.status.not_in(ProcessInstanceModel.terminal_statuses())  # type: ignore
+        #     )
+        # if report_filter.has_active_status is True:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.status.in_(ProcessInstanceModel.active_statuses())  # type: ignore
+        #     )
+        #
+        # if report_filter.process_initiator_username is not None:
+        #     initiator = UserModel.query.filter_by(username=report_filter.process_initiator_username).first()
+        #     process_initiator_id = -1
+        #     if initiator:
+        #         process_initiator_id = initiator.id
+        #     process_instance_query = process_instance_query.filter_by(process_initiator_id=process_initiator_id)
+        #
+        # if (
+        #     not report_filter.with_tasks_completed_by_me
+        #     and not report_filter.with_tasks_assigned_to_my_group
+        #     and not report_filter.with_tasks_i_can_complete
+        #     and report_filter.with_relation_to_me is True
+        # ):
+        #     process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(
+        #         HumanTaskUserModel,
+        #         and_(
+        #             HumanTaskModel.id == HumanTaskUserModel.human_task_id,
+        #             HumanTaskUserModel.user_id == user.id,
+        #         ),
+        #     )
+        #     process_instance_query = process_instance_query.filter(
+        #         or_(
+        #             HumanTaskUserModel.id.is_not(None),
+        #             ProcessInstanceModel.process_initiator_id == user.id,
+        #         )
+        #     )
+        #
+        # if report_filter.with_tasks_completed_by_me is True:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.process_initiator_id != user.id
+        #     )
+        #     process_instance_query = process_instance_query.join(
+        #         HumanTaskModel,
+        #         and_(
+        #             HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
+        #             HumanTaskModel.completed_by_user_id == user.id,
+        #         ),
+        #     )
+        #
+        # if report_filter.with_tasks_i_can_complete is True:
+        #     process_instance_query = process_instance_query.filter(
+        #         ProcessInstanceModel.process_initiator_id != user.id
+        #     )
+        #     process_instance_query = process_instance_query.join(
+        #         HumanTaskModel,
+        #         and_(
+        #             HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
+        #             HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+        #         ),
+        #     ).join(
+        #         HumanTaskUserModel,
+        #         and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
+        #     )
+        #     if report_filter.has_active_status:
+        #         process_instance_query = process_instance_query.filter(
+        #             HumanTaskModel.completed.is_(False)  # type: ignore
+        #         )
+        #
+        # if report_filter.with_tasks_assigned_to_my_group is True:
+        #     group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
+        #     if report_filter.user_group_identifier:
+        #         group_model_join_conditions.append(GroupModel.identifier == report_filter.user_group_identifier)
+        #
+        #     process_instance_query = process_instance_query.join(HumanTaskModel)
+        #     if report_filter.has_active_status:
+        #         process_instance_query = process_instance_query.filter(
+        #             HumanTaskModel.completed.is_(False)  # type: ignore
+        #         )
+        #
+        #     process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))
+        #     process_instance_query = process_instance_query.join(
+        #         UserGroupAssignmentModel,
+        #         UserGroupAssignmentModel.group_id == GroupModel.id,
+        #     )
+        #     process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
+        #
+        # instance_metadata_aliases = {}
+        # stock_columns = cls.get_column_names_for_model(ProcessInstanceModel)
+        # if isinstance(report_filter.report_column_list, list):
+        #     process_instance_report.report_metadata["columns"] = report_filter.report_column_list
+        # if isinstance(report_filter.report_filter_by_list, list):
+        #     process_instance_report.report_metadata["filter_by"] = report_filter.report_filter_by_list
+        #
+        # for column in process_instance_report.report_metadata["columns"]:
+        #     if column["accessor"] in stock_columns:
+        #         continue
+        #     instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
+        #     instance_metadata_aliases[column["accessor"]] = instance_metadata_alias
+        #
+        #     filter_for_column = None
+        #     if "filter_by" in process_instance_report.report_metadata:
+        #         filter_for_column = next(
+        #             (
+        #                 f
+        #                 for f in process_instance_report.report_metadata["filter_by"]
+        #                 if f["field_name"] == column["accessor"]
+        #             ),
+        #             None,
+        #         )
+        #     isouter = True
+        #     conditions = [
+        #         ProcessInstanceModel.id == instance_metadata_alias.process_instance_id,
+        #         instance_metadata_alias.key == column["accessor"],
+        #     ]
+        #     if filter_for_column:
+        #         isouter = False
+        #         conditions.append(instance_metadata_alias.value == filter_for_column["field_value"])
+        #     process_instance_query = process_instance_query.join(
+        #         instance_metadata_alias, and_(*conditions), isouter=isouter
+        #     ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
+        #
+        # order_by_query_array = []
+        # order_by_array = process_instance_report.report_metadata["order_by"]
+        # if len(order_by_array) < 1:
+        #     order_by_array = ProcessInstanceReportModel.default_order_by()
+        # for order_by_option in order_by_array:
+        #     attribute = re.sub("^-", "", order_by_option)
+        #     if attribute in stock_columns:
+        #         if order_by_option.startswith("-"):
+        #             order_by_query_array.append(getattr(ProcessInstanceModel, attribute).desc())
+        #         else:
+        #             order_by_query_array.append(getattr(ProcessInstanceModel, attribute).asc())
+        #     elif attribute in instance_metadata_aliases:
+        #         if order_by_option.startswith("-"):
+        #             order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).desc())
+        #         else:
+        #             order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).asc())
 
         process_instances = (
             process_instance_query.group_by(ProcessInstanceModel.id)
             .add_columns(ProcessInstanceModel.id)
-            .order_by(*order_by_query_array)
+            # .order_by(*order_by_query_array)
             .paginate(page=page, per_page=per_page, error_out=False)
         )
         results = cls.add_metadata_columns_to_process_instance(
             process_instances.items, process_instance_report.report_metadata["columns"]
         )
 
-        if report_filter.oldest_open_human_task_fields:
-            results = cls.add_human_task_fields(results, report_filter.oldest_open_human_task_fields)
+        # if report_filter.oldest_open_human_task_fields:
+        #     results = cls.add_human_task_fields(results, report_filter.oldest_open_human_task_fields)
         response_json = {
             "report": process_instance_report,
             "results": results,
-            "filters": report_filter.to_dict(),
+            "filters": filters,
+            "hash": "HEY",
             "pagination": {
                 "count": len(results),
                 "total": process_instances.total,
