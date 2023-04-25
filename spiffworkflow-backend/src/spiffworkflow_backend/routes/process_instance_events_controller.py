@@ -1,4 +1,5 @@
 from typing import Optional
+from typing import Set
 
 import flask.wrappers
 from flask import jsonify
@@ -23,7 +24,7 @@ def log_list(
     process_instance_id: int,
     page: int = 1,
     per_page: int = 100,
-    detailed: bool = False,
+    events: bool = False,
     bpmn_name: Optional[str] = None,
     bpmn_identifier: Optional[str] = None,
     task_type: Optional[str] = None,
@@ -41,7 +42,7 @@ def log_list(
             BpmnProcessDefinitionModel.id == TaskDefinitionModel.bpmn_process_definition_id,
         )
     )
-    if not detailed:
+    if not events:
         log_query = log_query.filter(
             and_(
                 TaskModel.state.in_(["COMPLETED"]),  # type: ignore
@@ -87,14 +88,48 @@ def log_list(
     return make_response(jsonify(response_json), 200)
 
 
-def types() -> flask.wrappers.Response:
+def typeahead_filter_values(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    task_type: Optional[str] = None,
+) -> flask.wrappers.Response:
+    process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
     query = db.session.query(TaskDefinitionModel.typename).distinct()  # type: ignore
     task_types = [t.typename for t in query]
     event_types = ProcessInstanceEventType.list()
-    return make_response(jsonify({"task_types": task_types, "event_types": event_types}), 200)
+    task_definition_query = (
+        db.session.query(TaskDefinitionModel.bpmn_identifier, TaskDefinitionModel.bpmn_name)
+        .distinct(TaskDefinitionModel.bpmn_identifier, TaskDefinitionModel.bpmn_name)  # type: ignore
+        .join(TaskModel, TaskModel.task_definition_id == TaskDefinitionModel.id)
+        .join(ProcessInstanceEventModel, ProcessInstanceEventModel.task_guid == TaskModel.guid)
+        .filter(TaskModel.process_instance_id == process_instance.id)
+    )
+    if task_type is not None:
+        task_definition_query = task_definition_query.filter(TaskDefinitionModel.typename == task_type)
+    task_definitions = task_definition_query.all()
+
+    task_bpmn_names: Set[str] = set()
+    task_bpmn_identifiers: Set[str] = set()
+    for task_definition in task_definitions:
+        # not checking for None so we also exclude empty strings
+        if task_definition.bpmn_name:
+            task_bpmn_names.add(task_definition.bpmn_name)
+        task_bpmn_identifiers.add(task_definition.bpmn_identifier)
+
+    return make_response(
+        jsonify(
+            {
+                "task_types": task_types,
+                "event_types": event_types,
+                "task_bpmn_names": list(task_bpmn_names),
+                "task_bpmn_identifiers": list(task_bpmn_identifiers),
+            }
+        ),
+        200,
+    )
 
 
-def error_details(
+def error_detail_show(
     modified_process_model_identifier: str,
     process_instance_id: int,
     process_instance_event_id: int,

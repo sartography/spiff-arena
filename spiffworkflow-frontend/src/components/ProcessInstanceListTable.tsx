@@ -24,6 +24,7 @@ import {
   FormLabel,
   // @ts-ignore
 } from '@carbon/react';
+import { useDebouncedCallback } from 'use-debounce';
 import {
   PROCESS_STATUSES,
   DATE_FORMAT_CARBON,
@@ -246,6 +247,14 @@ export default function ProcessInstanceListTable({
       });
     }
   };
+
+  const addDebouncedSearchProcessInitiator = useDebouncedCallback(
+    (value: string) => {
+      searchForProcessInitiator(value);
+    },
+    // delay in ms
+    250
+  );
 
   const parametersToGetFromSearchParams = useMemo(() => {
     const figureOutProcessInitiator = (processInitiatorSearchText: string) => {
@@ -1179,7 +1188,7 @@ export default function ProcessInstanceListTable({
                 if (hasAccess) {
                   return (
                     <ComboBox
-                      onInputChange={searchForProcessInitiator}
+                      onInputChange={addDebouncedSearchProcessInitiator}
                       onChange={(event: any) => {
                         setProcessInitiatorSelection(event.selectedItem);
                         setRequiresRefilter(true);

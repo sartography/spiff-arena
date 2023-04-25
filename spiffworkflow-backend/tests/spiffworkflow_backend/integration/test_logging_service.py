@@ -53,7 +53,7 @@ class TestLoggingService(BaseTest):
 
         headers = self.logged_in_headers(with_super_admin_user)
         log_response = client.get(
-            f"/v1.0/logs/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}?detailed=true",
+            f"/v1.0/logs/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}?events=true",
             headers=headers,
         )
         assert log_response.status_code == 200

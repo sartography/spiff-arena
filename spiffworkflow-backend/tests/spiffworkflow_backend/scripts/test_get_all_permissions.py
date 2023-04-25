@@ -48,6 +48,11 @@ class TestGetAllPermissions(BaseTest):
             },
             {
                 "group_identifier": "my_test_group",
+                "uri": "/logs/typeahead-filter-values/hey:group:*",
+                "permissions": ["read"],
+            },
+            {
+                "group_identifier": "my_test_group",
                 "uri": "/process-instances/hey:group:*",
                 "permissions": ["create"],
             },

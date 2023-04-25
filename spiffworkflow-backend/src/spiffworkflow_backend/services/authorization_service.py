@@ -75,6 +75,7 @@ class PermissionToAssign:
 PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/event-error-details", "relevant_permissions": ["read"]},
     {"path": "/logs", "relevant_permissions": ["read"]},
+    {"path": "/logs/typeahead-filter-values", "relevant_permissions": ["read"]},
     {
         "path": "/process-instances",
         "relevant_permissions": ["create", "read", "delete"],
@@ -546,6 +547,7 @@ class AuthorizationService:
             for target_uri in [
                 f"/process-instances/for-me/{process_related_path_segment}",
                 f"/logs/{process_related_path_segment}",
+                f"/logs/typeahead-filter-values/{process_related_path_segment}",
                 f"/process-data-file-download/{process_related_path_segment}",
                 f"/event-error-details/{process_related_path_segment}",
             ]:
@@ -572,7 +574,6 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/service-tasks"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/user-groups/for-current-user"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/logs/types"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/users/exists/by-username"))
         permissions_to_assign.append(
             PermissionToAssign(permission="read", target_uri="/process-instances/find-by-id/*")

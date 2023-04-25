@@ -126,6 +126,7 @@ class TestAuthorizationService(BaseTest):
             [
                 ("/event-error-details/some-process-group:some-process-model:*", "read"),
                 ("/logs/some-process-group:some-process-model:*", "read"),
+                ("/logs/typeahead-filter-values/some-process-group:some-process-model:*", "read"),
                 ("/process-data/some-process-group:some-process-model:*", "read"),
                 (
                     "/process-data-file-download/some-process-group:some-process-model:*",
@@ -180,6 +181,10 @@ class TestAuthorizationService(BaseTest):
                 "read",
             ),
             (
+                "/logs/typeahead-filter-values/some-process-group:some-process-model:*",
+                "read",
+            ),
+            (
                 "/process-data-file-download/some-process-group:some-process-model:*",
                 "read",
             ),
@@ -210,6 +215,7 @@ class TestAuthorizationService(BaseTest):
                     "/process-data-file-download/some-process-group:some-process-model/*",
                     "read",
                 ),
+                ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
                 ("/process-data/some-process-group:some-process-model/*", "read"),
                 (
                     "/process-instance-suspend/some-process-group:some-process-model/*",
@@ -258,6 +264,7 @@ class TestAuthorizationService(BaseTest):
                 "/logs/some-process-group:some-process-model/*",
                 "read",
             ),
+            ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
             (
                 "/process-data-file-download/some-process-group:some-process-model/*",
                 "read",
@@ -282,7 +289,6 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         """Test_explode_permissions_basic."""
         expected_permissions = [
-            ("/logs/types", "read"),
             ("/process-instances/find-by-id/*", "read"),
             ("/process-instances/for-me", "read"),
             ("/process-instances/reports/*", "create"),

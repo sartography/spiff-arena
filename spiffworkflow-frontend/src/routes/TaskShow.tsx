@@ -33,7 +33,7 @@ function TypeAheadWidget({
   options: any;
 }) {
   const pathForCategory = (inputText: string) => {
-    return `/connector-proxy/type-ahead/${category}?prefix=${inputText}&limit=100`;
+    return `/connector-proxy/typeahead/${category}?prefix=${inputText}&limit=100`;
   };
 
   const lastSearchTerm = useRef('');
