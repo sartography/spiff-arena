@@ -9,7 +9,6 @@ import {
   Column,
   ButtonSet,
   Button,
-  TextInput,
   ComboBox,
   Modal,
   Loading,
@@ -21,7 +20,6 @@ import {
   useParams,
   useSearchParams,
 } from 'react-router-dom';
-import { useDebouncedCallback } from 'use-debounce';
 import PaginationForTable from '../components/PaginationForTable';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import {
@@ -54,11 +52,10 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   const [processInstanceLogs, setProcessInstanceLogs] = useState([]);
   const [pagination, setPagination] = useState(null);
 
-  const [taskName, setTaskName] = useState<string>('');
-  const [taskIdentifier, setTaskIdentifier] = useState<string>('');
-
   const [taskTypes, setTaskTypes] = useState<string[]>([]);
   const [eventTypes, setEventTypes] = useState<string[]>([]);
+  const [taskBpmnNames, setTaskBpmnNames] = useState<string[]>([]);
+  const [taskBpmnIdentifiers, setTaskBpmnIdentifiers] = useState<string[]>([]);
 
   const [eventForModal, setEventForModal] =
     useState<ProcessInstanceLogEntry | null>(null);
@@ -84,8 +81,8 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   if (variant === 'all') {
     processInstanceShowPageBaseUrl = `/admin/process-instances/${params.process_model_id}`;
   }
-  const isDetailedView = searchParams.get('detailed') === 'true';
-  const taskNameHeader = isDetailedView ? 'Task Name' : 'Milestone';
+  const isEventsView = searchParams.get('events') === 'true';
+  const taskNameHeader = isEventsView ? 'Task Name' : 'Milestone';
 
   const updateSearchParams = (value: string, key: string) => {
     if (value) {
@@ -95,14 +92,6 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     }
     setSearchParams(searchParams);
   };
-
-  const addDebouncedSearchParams = useDebouncedCallback(
-    (value: string, key: string) => {
-      updateSearchParams(value, key);
-    },
-    // delay in ms
-    1000
-  );
 
   useEffect(() => {
     // Clear out any previous results to avoid a "flicker" effect where columns
@@ -116,7 +105,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     };
 
     const searchParamsToInclude = [
-      'detailed',
+      'events',
       'page',
       'per_page',
       'bpmn_name',
@@ -129,31 +118,31 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
       searchParamsToInclude
     );
 
-    if ('bpmn_name' in pickedSearchParams) {
-      setTaskName(pickedSearchParams.bpmn_name);
-    }
-    if ('bpmn_identifier' in pickedSearchParams) {
-      setTaskIdentifier(pickedSearchParams.bpmn_identifier);
-    }
-
     HttpService.makeCallToBackend({
       path: `${targetUris.processInstanceLogListPath}?${createSearchParams(
         pickedSearchParams
       )}`,
       successCallback: setProcessInstanceLogListFromResult,
     });
+
+    let typeaheadQueryParamString = '';
+    if (!isEventsView) {
+      typeaheadQueryParamString = '?task_type=IntermediateThrowEvent';
+    }
     HttpService.makeCallToBackend({
-      path: `/v1.0/logs/types`,
+      path: `/v1.0/logs/typeahead-filter-values/${params.process_model_id}/${params.process_instance_id}${typeaheadQueryParamString}`,
       successCallback: (result: any) => {
         setTaskTypes(result.task_types);
         setEventTypes(result.event_types);
+        setTaskBpmnNames(result.task_bpmn_names);
+        setTaskBpmnIdentifiers(result.task_bpmn_identifiers);
       },
     });
   }, [
     searchParams,
     params,
     targetUris.processInstanceLogListPath,
-    isDetailedView,
+    isEventsView,
   ]);
 
   const handleErrorEventModalClose = () => {
@@ -251,20 +240,14 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
 
   const getTableRow = (logEntry: ProcessInstanceLogEntry) => {
     const tableRow = [];
-    const taskNameCell = (
-      <td>
-        {logEntry.task_definition_name ||
-          (logEntry.bpmn_task_type === 'StartEvent' ? 'Process Started' : '') ||
-          (logEntry.bpmn_task_type === 'EndEvent' ? 'Process Ended' : '')}
-      </td>
-    );
+    const taskNameCell = <td>{logEntry.task_definition_name}</td>;
     const bpmnProcessCell = (
       <td>
         {logEntry.bpmn_process_definition_name ||
           logEntry.bpmn_process_definition_identifier}
       </td>
     );
-    if (isDetailedView) {
+    if (isEventsView) {
       tableRow.push(
         <>
           <td data-qa="paginated-entity-id">{logEntry.id}</td>
@@ -280,7 +263,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         </>
       );
     }
-    if (isDetailedView) {
+    if (isEventsView) {
       tableRow.push(
         <>
           <td>{logEntry.task_definition_identifier}</td>
@@ -324,7 +307,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     );
 
     const tableHeaders = [];
-    if (isDetailedView) {
+    if (isEventsView) {
       tableHeaders.push(
         <>
           <th>Id</th>
@@ -340,7 +323,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         </>
       );
     }
-    if (isDetailedView) {
+    if (isEventsView) {
       tableHeaders.push(
         <>
           <th>Task Identifier</th>
@@ -362,13 +345,13 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   };
 
   const resetFilters = () => {
-    setTaskIdentifier('');
-    setTaskName('');
-
     ['bpmn_name', 'bpmn_identifier', 'task_type', 'event_type'].forEach(
       (value: string) => searchParams.delete(value)
     );
+  };
 
+  const resetFiltersAndRun = () => {
+    resetFilters();
     setSearchParams(searchParams);
   };
 
@@ -391,34 +374,48 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
     }
 
     const filterElements = [];
+    let taskNameFilterPlaceholder = 'Choose a milestone';
+    if (isEventsView) {
+      taskNameFilterPlaceholder = 'Choose a task bpmn name';
+    }
     filterElements.push(
       <Column md={4}>
-        <TextInput
-          id="task-name-filter"
-          labelText={taskNameHeader}
-          value={taskName}
-          onChange={(event: any) => {
-            const newValue = event.target.value;
-            setTaskName(newValue);
-            addDebouncedSearchParams(newValue, 'bpmn_name');
+        <ComboBox
+          onChange={(value: any) => {
+            updateSearchParams(value.selectedItem, 'bpmn_name');
           }}
+          id="task-name-filter"
+          data-qa="task-type-select"
+          items={taskBpmnNames}
+          itemToString={(value: string) => {
+            return value;
+          }}
+          shouldFilterItem={shouldFilterStringItem}
+          placeholder={taskNameFilterPlaceholder}
+          titleText={taskNameHeader}
+          selectedItem={searchParams.get('bpmn_name')}
         />
       </Column>
     );
 
-    if (isDetailedView) {
+    if (isEventsView) {
       filterElements.push(
         <>
           <Column md={4}>
-            <TextInput
-              id="task-identifier-filter"
-              labelText="Task Identifier"
-              value={taskIdentifier}
-              onChange={(event: any) => {
-                const newValue = event.target.value;
-                setTaskIdentifier(newValue);
-                addDebouncedSearchParams(newValue, 'bpmn_identifier');
+            <ComboBox
+              onChange={(value: any) => {
+                updateSearchParams(value.selectedItem, 'bpmn_identifier');
               }}
+              id="task-identifier-filter"
+              data-qa="task-type-select"
+              items={taskBpmnIdentifiers}
+              itemToString={(value: string) => {
+                return value;
+              }}
+              shouldFilterItem={shouldFilterStringItem}
+              placeholder="Choose a task bpmn identifier"
+              titleText="Task Identifier"
+              selectedItem={searchParams.get('bpmn_identifier')}
             />
           </Column>
           <Column md={4}>
@@ -470,7 +467,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
               <Button
                 kind=""
                 className="button-white-background narrow-button"
-                onClick={resetFilters}
+                onClick={resetFiltersAndRun}
               >
                 Reset
               </Button>
@@ -491,7 +488,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
   };
 
   const tabs = () => {
-    const selectedTabIndex = isDetailedView ? 1 : 0;
+    const selectedTabIndex = isEventsView ? 1 : 0;
     return (
       <Tabs selectedIndex={selectedTabIndex}>
         <TabList aria-label="List of tabs">
@@ -499,7 +496,8 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
             title="Only show a subset of the logs, and show fewer columns"
             data-qa="process-instance-log-simple"
             onClick={() => {
-              searchParams.set('detailed', 'false');
+              resetFilters();
+              searchParams.set('events', 'false');
               setSearchParams(searchParams);
             }}
           >
@@ -507,9 +505,10 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
           </Tab>
           <Tab
             title="Show all logs for this process instance, and show extra columns that may be useful for debugging"
-            data-qa="process-instance-log-detailed"
+            data-qa="process-instance-log-events"
             onClick={() => {
-              searchParams.set('detailed', 'true');
+              resetFilters();
+              searchParams.set('events', 'true');
               setSearchParams(searchParams);
             }}
           >
