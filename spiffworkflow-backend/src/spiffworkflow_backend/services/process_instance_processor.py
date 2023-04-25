@@ -100,7 +100,6 @@ from spiffworkflow_backend.services.process_instance_tmp_service import ProcessI
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.service_task_service import ServiceTaskDelegate
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
-from spiffworkflow_backend.services.task_service import JsonDataDict
 from spiffworkflow_backend.services.task_service import TaskService
 from spiffworkflow_backend.services.user_service import UserService
 from spiffworkflow_backend.services.workflow_execution_service import execution_strategy_named
@@ -1164,38 +1163,34 @@ class ProcessInstanceProcessor:
                 task.complete()
                 spiff_tasks_updated[task.id] = task
 
+        task_service = TaskService(
+            process_instance=self.process_instance_model,
+            serializer=self._serializer,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        )
         for updated_spiff_task in spiff_tasks_updated.values():
             (
                 bpmn_process,
                 task_model,
-                new_task_models,
-                new_json_data_dicts,
-            ) = TaskService.find_or_create_task_model_from_spiff_task(
+            ) = task_service.find_or_create_task_model_from_spiff_task(
                 updated_spiff_task,
-                self.process_instance_model,
-                self._serializer,
-                bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
             )
             bpmn_process_to_use = bpmn_process or task_model.bpmn_process
             bpmn_process_json_data = TaskService.update_task_data_on_bpmn_process(
                 bpmn_process_to_use, updated_spiff_task.workflow.data
             )
             db.session.add(bpmn_process_to_use)
-            json_data_dict_list = TaskService.update_task_model(task_model, updated_spiff_task, self._serializer)
-            for json_data_dict in json_data_dict_list:
-                if json_data_dict is not None:
-                    new_json_data_dicts[json_data_dict["hash"]] = json_data_dict
+            task_service.update_task_model(task_model, updated_spiff_task)
             if bpmn_process_json_data is not None:
-                new_json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
+                task_service.json_data_dicts[bpmn_process_json_data["hash"]] = bpmn_process_json_data
 
             # spiff_task should be the main task we are completing and only it should get the timestamps
             if task_model.guid == str(spiff_task.id):
                 task_model.start_in_seconds = start_in_seconds
                 task_model.end_in_seconds = end_in_seconds
 
-            new_task_models[task_model.guid] = task_model
-            db.session.bulk_save_objects(new_task_models.values())
-            TaskService.insert_or_update_json_data_records(new_json_data_dicts)
+            task_service.task_models[task_model.guid] = task_model
+            task_service.save_objects_to_database()
 
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model, event_type, task_guid=task_id
@@ -1736,22 +1731,19 @@ class ProcessInstanceProcessor:
         human_task.task_status = spiff_task.get_state_name()
         db.session.add(human_task)
 
-        json_data_dict_list = TaskService.update_task_model(task_model, spiff_task, self._serializer)
-        json_data_dict_mapping: dict[str, JsonDataDict] = {}
-        TaskService.update_json_data_dicts_using_list(json_data_dict_list, json_data_dict_mapping)
-        TaskService.insert_or_update_json_data_records(json_data_dict_mapping)
+        task_service = TaskService(
+            process_instance=self.process_instance_model,
+            serializer=self._serializer,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        )
+        task_service.update_task_model(task_model, spiff_task)
+        TaskService.insert_or_update_json_data_records(task_service.json_data_dicts)
 
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,
             ProcessInstanceEventType.task_completed.value,
             task_guid=task_model.guid,
             user_id=user.id,
-        )
-
-        task_service = TaskService(
-            process_instance=self.process_instance_model,
-            serializer=self._serializer,
-            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
         task_service.process_parents_and_children_and_save_to_database(spiff_task)
 
