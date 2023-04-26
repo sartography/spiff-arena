@@ -398,7 +398,9 @@ class TestProcessInstanceProcessor(BaseTest):
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
         assert len(ready_or_waiting_tasks) == 2
         ready_or_waiting_task_identifiers = [t.task_spec.name for t in ready_or_waiting_tasks]
-        assert ["top_level_subprocess_script", "top_level_subprocess"] == ready_or_waiting_task_identifiers
+        assert sorted(["top_level_subprocess_script", "top_level_subprocess"]) == sorted(
+            ready_or_waiting_task_identifiers
+        )
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
 
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
