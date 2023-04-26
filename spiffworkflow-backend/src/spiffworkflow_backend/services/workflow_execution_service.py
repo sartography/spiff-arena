@@ -319,7 +319,9 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
         engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
         while engine_steps and should_continue:
             for task in engine_steps:
-                if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get("instructionsForEndUser", None):
+                if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get(
+                    "instructionsForEndUser", None
+                ):
                     should_continue = False
                     break
                 self.delegate.will_complete_task(task)
@@ -328,7 +330,6 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
             bpmn_process_instance.refresh_waiting_tasks()
             engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
         self.delegate.after_engine_steps(bpmn_process_instance)
-
 
 
 class OneAtATimeExecutionStrategy(ExecutionStrategy):
