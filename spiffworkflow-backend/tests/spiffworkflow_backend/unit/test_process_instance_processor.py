@@ -392,7 +392,9 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         assert top_level_subprocess_script_spiff_task is not None
         processor.resume()
-        assert len(process_instance.human_tasks) == 2, "expected 2 human tasks after resume since resume does not do anything in that regard"
+        assert (
+            len(process_instance.human_tasks) == 2
+        ), "expected 2 human tasks after resume since resume does not do anything in that regard"
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
         assert len(ready_or_waiting_tasks) == 2
         ready_or_waiting_task_identifiers = [t.task_spec.name for t in ready_or_waiting_tasks]
