@@ -163,7 +163,7 @@ export interface MessageInstance {
 
 export interface ReportFilter {
   field_name: string;
-  field_value: string;
+  field_value: string | null;
   operator?: string;
 }
 
