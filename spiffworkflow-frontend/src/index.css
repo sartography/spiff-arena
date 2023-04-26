@@ -29,6 +29,10 @@
   border-color: none;
 }
 
+.cds--loading__stroke {
+  stroke: gray;
+}
+
 /* make this a little less prominent so the actual human beings completing tasks stand out */
 .system-user-log-entry {
   color: #B0B0B0;
@@ -424,3 +428,4 @@ svg.notification-icon {
   margin-bottom: 1em;
   font-weight: bold;
 }
+

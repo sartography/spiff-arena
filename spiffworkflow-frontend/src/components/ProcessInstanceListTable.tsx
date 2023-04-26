@@ -1449,12 +1449,10 @@ export default function ProcessInstanceListTable({
 
         buttonElement = (
           <Button
-            kind={
-              hasAccessToCompleteTask && row.task_id ? 'secondary' : 'ghost'
-            }
+            kind={hasAccessToCompleteTask && row.task_id ? 'secondary' : 'ghost'}
             href={interstitialUrl}
           >
-            {hasAccessToCompleteTask && row.task_id ? 'Go' : 'View'}
+            { hasAccessToCompleteTask && row.task_id ? 'Go' : 'View' }
           </Button>
         );
         currentRow.push(<td>{buttonElement}</td>);
