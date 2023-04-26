@@ -26,7 +26,7 @@ from spiffworkflow_backend.services.authentication_service import NotAuthorizedE
 from spiffworkflow_backend.services.authentication_service import TokenInvalidError
 from spiffworkflow_backend.services.authentication_service import TokenNotProvidedError
 from spiffworkflow_backend.services.authentication_service import UserNotLoggedInError
-from spiffworkflow_backend.services.task_service import TaskModelException
+from spiffworkflow_backend.services.task_service import TaskModelError
 from spiffworkflow_backend.services.task_service import TaskService
 
 
@@ -124,7 +124,7 @@ class ApiError(Exception):
         if task_trace:
             instance.task_trace = task_trace
         else:
-            instance.task_trace = TaskModelException.get_task_trace(task_model)
+            instance.task_trace = TaskModelError.get_task_trace(task_model)
 
         try:
             spec_reference = TaskService.get_spec_reference_from_bpmn_process(task_model.bpmn_process)
@@ -198,7 +198,7 @@ class ApiError(Exception):
                 error_line=exp.error_line,
                 task_trace=exp.task_trace,
             )
-        elif isinstance(exp, TaskModelException):
+        elif isinstance(exp, TaskModelError):
             # Note that WorkflowDataExceptions are also WorkflowTaskExceptions
             return ApiError.from_task_model(
                 error_code,

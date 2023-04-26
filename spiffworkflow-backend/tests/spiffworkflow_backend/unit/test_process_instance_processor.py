@@ -357,7 +357,9 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
-        assert len(process_instance.active_human_tasks) == 0, "expected 0 active human tasks after 2nd one is completed"
+        assert (
+            len(process_instance.active_human_tasks) == 0
+        ), "expected 0 active human tasks after 2nd one is completed"
 
         processor.suspend()
 
@@ -376,7 +378,9 @@ class TestProcessInstanceProcessor(BaseTest):
 
         # make sure sqlalchemy session matches current db state
         db.session.expire_all()
-        assert len(process_instance.human_tasks) == 2, "still expected 2 human tasks after reset and session expire_all"
+        assert (
+            len(process_instance.human_tasks) == 2
+        ), "still expected 2 human tasks after reset and session expire_all"
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)
