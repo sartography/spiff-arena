@@ -430,11 +430,10 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
 
     task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
     if task.id not in reported_ids:
+        task_model = TaskModel.query.filter_by(guid=str(task.id)).first()
+        extensions = TaskService.get_extensions_from_task_model(task_model)
+        task.properties = extensions
         yield f"data: {current_app.json.dumps(task)} \n\n"
-        # Note, this has to be done in case someone leaves the page,
-        # which can otherwise cancel this function and leave completed tasks un-registered.
-        spiff_task = processor.next_task()
-        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:

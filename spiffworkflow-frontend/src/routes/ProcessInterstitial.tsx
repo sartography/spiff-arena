@@ -103,16 +103,16 @@ export default function ProcessInterstitial() {
   const getReturnHomeButton = (index: number) => {
     if (
       index === 0 &&
-      ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED'].includes(getStatus())
+      ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED', 'READY'].includes(getStatus())
     )
       return (
-        <>
-          <br />
-          <br />
+        <div style={{ padding: '10px 0 30px 0' }}>
           <Button kind="secondary" onClick={() => navigate(`/tasks`)}>
             Return to Home
           </Button>
-        </>
+          <hr/>
+        </div>
+
       );
     return '';
   };
