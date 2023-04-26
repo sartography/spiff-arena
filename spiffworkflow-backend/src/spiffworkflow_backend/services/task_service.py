@@ -43,7 +43,7 @@ class JsonDataDict(TypedDict):
     data: dict
 
 
-class TaskModelException(Exception):
+class TaskModelError(Exception):
     """Copied from SpiffWorkflow.exceptions.WorkflowTaskException.
 
     Reimplements the exception from SpiffWorkflow to not require a spiff_task.
