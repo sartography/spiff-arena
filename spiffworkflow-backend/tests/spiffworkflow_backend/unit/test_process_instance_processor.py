@@ -392,7 +392,18 @@ class TestProcessInstanceProcessor(BaseTest):
         )
         assert top_level_subprocess_script_spiff_task is not None
         processor.resume()
+        assert len(process_instance.human_tasks) == 2, "expected 2 human tasks after resume since resume does not do anything in that regard"
+        ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
+        assert len(ready_or_waiting_tasks) == 2
+        ready_or_waiting_task_identifiers = [t.task_spec.name for t in ready_or_waiting_tasks]
+        assert ["top_level_subprocess_script", "top_level_subprocess"] == ready_or_waiting_task_identifiers
         processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+
+        ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
+        assert len(ready_or_waiting_tasks) == 1
+        assert ready_or_waiting_tasks[0].task_spec.name == "top_level_manual_task_two"
+
+        # this assertion is failing intermittently on windows
         assert len(process_instance.human_tasks) == 3, "expected 3 human tasks after reset and do_engine_steps"
 
         spiff_task_guid_strings = [ht.task_id for ht in process_instance.human_tasks]
