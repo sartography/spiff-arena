@@ -269,8 +269,30 @@ export default function ProcessInstanceListTable({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  function setProcessInstancesFromResult(result: any) {
+    setRequiresRefilter(false);
+    const processInstancesFromApi = result.results;
+    setProcessInstances(processInstancesFromApi);
+    setPagination(result.pagination);
+    setProcessInstanceFilters(result.filters);
+
+    setReportMetadata(result.report.report_metadata);
+    if (result.report.id) {
+      setProcessInstanceReportSelection(result.report);
+    }
+    // searchParams.set('key', result.hash);
+    // setSearchParams(searchParams);
+  }
 
   const clearRefreshRef = useRef<any>(null);
+  const stopRefreshing = (error: any) => {
+    if (clearRefreshRef.current) {
+      clearRefreshRef.current();
+    }
+    if (error) {
+      console.error(error);
+    }
+  };
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
@@ -428,24 +450,28 @@ export default function ProcessInstanceListTable({
         queryParamString += `&${additionalParams}`;
       }
 
-      HttpService.makeCallToBackend({
-        path: `${processInstanceApiSearchPath}?${queryParamString}`,
-        successCallback: setProcessInstancesFromResult,
-        httpMethod: 'POST',
-        failureCallback: stopRefreshing,
-        onUnauthorized: stopRefreshing,
-        postBody: {
-          report_metadata: postBody,
-          // report_metadata: {
-          //   filter_by: [
-          //     {
-          //       field_name: 'process_model_identifier',
-          //       field_value: 'example/with-milestones',
-          //     },
-          //   ],
-          // },
-        },
-      });
+      const reportMetadataBase64 = searchParams.get('report_metadata_base64');
+      if (reportMetadataBase64) {
+        const reportMetadata = JSON.parse(decodeBase64(reportMetadataBase64))
+        HttpService.makeCallToBackend({
+          path: `${processInstanceApiSearchPath}?${queryParamString}`,
+          successCallback: setProcessInstancesFromResult,
+          httpMethod: 'POST',
+          failureCallback: stopRefreshing,
+          onUnauthorized: stopRefreshing,
+          postBody: {
+            report_metadata: reportMetadata,
+            // report_metadata: {
+            //   filter_by: [
+            //     {
+            //       field_name: 'process_model_identifier',
+            //       field_value: 'example/with-milestones',
+            //     },
+            //   ],
+            // },
+          },
+        });
+      }
     }
     function processResultForProcessModels(result: any) {
       const processModelFullIdentifierFromSearchParams =
@@ -660,7 +686,10 @@ export default function ProcessInstanceListTable({
   };
 
   const reportColumns = () => {
-    return (reportMetadata as any).columns;
+    if (reportMetadata) {
+      return (reportMetadata as any).columns;
+    }
+    return null;
   };
 
   const reportFilterBy = () => {
@@ -674,6 +703,19 @@ export default function ProcessInstanceListTable({
     navigate(`${processInstanceListPathPrefix}?${queryParamString}`);
   };
 
+  const addFieldValueToReportMetadata = (
+    postBody: ReportMetadata,
+    fieldName: string,
+    fieldValue: string
+  ) => {
+    if (fieldValue) {
+      postBody.filter_by.push({
+        field_name: fieldName,
+        field_value: fieldValue,
+      });
+    }
+  };
+
   const applyFilter = (event: any) => {
     event.preventDefault();
     setProcessInitiatorNotFoundErrorText('');
@@ -685,7 +727,7 @@ export default function ProcessInstanceListTable({
       paginationQueryParamPrefix
     );
     // let queryParamString = `per_page=${perPage}&page=${page}&user_filter=true`;
-    let queryParamString = `per_page=${perPage}&page=${page}`;
+    const queryParamString = `per_page=${perPage}&page=${page}`;
     const {
       valid,
       startFromSeconds,
@@ -713,60 +755,94 @@ export default function ProcessInstanceListTable({
     // {"field_name": "has_terminal_status", "field_value": "true"},
     // ],
     // "order_by": ["-start_in_seconds", "-id"],
+    const postBody: ReportMetadata = {
+      columns: [],
+      filter_by: [],
+      order_by: [],
+    };
 
-    // const postBody = {};
-
-    if (startFromSeconds) {
-      queryParamString += `&start_from=${startFromSeconds}`;
-    }
-    if (startToSeconds) {
-      queryParamString += `&start_to=${startToSeconds}`;
-    }
-    if (endFromSeconds) {
-      queryParamString += `&end_from=${endFromSeconds}`;
-    }
-    if (endToSeconds) {
-      queryParamString += `&end_to=${endToSeconds}`;
-    }
+    addFieldValueToReportMetadata(postBody, 'start_from', startFromSeconds);
+    addFieldValueToReportMetadata(postBody, 'start_to', startToSeconds);
+    addFieldValueToReportMetadata(postBody, 'end_from', endFromSeconds);
+    addFieldValueToReportMetadata(postBody, 'end_to', endToSeconds);
     if (processStatusSelection.length > 0) {
-      queryParamString += `&process_status=${processStatusSelection}`;
+      addFieldValueToReportMetadata(
+        postBody,
+        'process_status',
+        processStatusSelection.join(',')
+      );
     }
 
     if (processModelSelection) {
-      queryParamString += `&process_model_identifier=${processModelSelection.id}`;
+      addFieldValueToReportMetadata(
+        postBody,
+        'process_model_identifier',
+        processModelSelection.id
+      );
     }
 
     if (processInstanceReportSelection) {
-      queryParamString += `&report_id=${processInstanceReportSelection.id}`;
+      addFieldValueToReportMetadata(
+        postBody,
+        'report_id',
+        processInstanceReportSelection.id.toString()
+      );
     }
 
-    const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
-    queryParamString += `&report_columns=${reportColumnsBase64}`;
-    const reportFilterByBase64 = encodeBase64(JSON.stringify(reportFilterBy()));
-    queryParamString += `&report_filter_by=${reportFilterByBase64}`;
+    // console.log('reportColumns()', reportColumns())
+    // const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
+    // queryParamString += `&report_columns=${reportColumnsBase64}`;
+    postBody.columns = reportColumns();
+    // console.log('reportFilterBy()', reportFilterBy())
+    // const reportFilterByBase64 = encodeBase64(JSON.stringify(reportFilterBy()));
+    // queryParamString += `&report_filter_by=${reportFilterByBase64}`;
 
     if (processInitiatorSelection) {
-      queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
-      navigateToNewReport(queryParamString);
-    } else if (processInitiatorText) {
-      HttpService.makeCallToBackend({
-        path: targetUris.userExists,
-        httpMethod: 'POST',
-        postBody: { username: processInitiatorText },
-        successCallback: (result: any) => {
-          if (result.user_found) {
-            queryParamString += `&process_initiator_username=${processInitiatorText}`;
-            navigateToNewReport(queryParamString);
-          } else {
-            setProcessInitiatorNotFoundErrorText(
-              `The provided username is invalid. Please type the exact username.`
-            );
-          }
-        },
-      });
-    } else {
-      navigateToNewReport(queryParamString);
+      // queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
+      addFieldValueToReportMetadata(
+        postBody,
+        'process_initiator_username',
+        processInitiatorSelection.username
+      );
+      // navigateToNewReport(queryParamString);
     }
+    // } else if (processInitiatorText) {
+    // HttpService.makeCallToBackend({
+    //   path: targetUris.userExists,
+    //   httpMethod: 'POST',
+    //   postBody: { username: processInitiatorText },
+    //   successCallback: (result: any) => {
+    //     if (result.user_found) {
+    //       queryParamString += `&process_initiator_username=${processInitiatorText}`;
+    //       // navigateToNewReport(queryParamString);
+    //     } else {
+    //       setProcessInitiatorNotFoundErrorText(
+    //         `The provided username is invalid. Please type the exact username.`
+    //       );
+    //     }
+    //   },
+    // });
+    // } else {
+    //   navigateToNewReport(queryParamString);
+    // }
+
+    // http://localhost:7001/admin/process-instances/for-me?per_page=50&page=1&report_metadata_base64=eyJjb2x1bW5zIjpudWxsLCJmaWx0ZXJfYnkiOlt7ImZpZWxkX25hbWUiOiJwcm9jZXNzX3N0YXR1cyIsImZpZWxkX3ZhbHVlIjoiY29tcGxldGUifV0sIm9yZGVyX2J5IjpbXX0%3D
+    // const queryParamString = `per_page=${perPage}&page=${page}`;
+    searchParams.set('per_page', perPage.toString());
+    searchParams.set('page', page.toString());
+    const reportMetadataBase64 = encodeBase64(JSON.stringify(postBody));
+    searchParams.set('report_metadata_base64', reportMetadataBase64);
+    setSearchParams(searchParams);
+    HttpService.makeCallToBackend({
+      path: `${processInstanceApiSearchPath}?${queryParamString}`,
+      httpMethod: 'POST',
+      postBody: { report_metadata: postBody },
+      failureCallback: stopRefreshing,
+      onUnauthorized: stopRefreshing,
+      successCallback: (result: any) => {
+        setProcessInstancesFromResult(result);
+      },
+    });
   };
 
   const dateComponent = (
@@ -1609,6 +1685,7 @@ export default function ProcessInstanceListTable({
     return null;
   };
 
+  let resultsTable = null;
   if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
     // eslint-disable-next-line prefer-const
     let { page, perPage } = getPageInfoFromSearchParams(
@@ -1630,7 +1707,7 @@ export default function ProcessInstanceListTable({
         </p>
       );
     }
-    const resultsTable = (
+    resultsTable = (
       <>
         {refilterTextComponent}
         <PaginationForTable
@@ -1644,28 +1721,26 @@ export default function ProcessInstanceListTable({
         />
       </>
     );
-    return (
-      <>
-        {reportColumnForm()}
-        {processInstanceReportSaveTag()}
-        <Filters
-          filterOptions={filterOptions}
-          showFilterOptions={showFilterOptions}
-          setShowFilterOptions={setShowFilterOptions}
-          reportSearchComponent={reportSearchComponent}
-          filtersEnabled={filtersEnabled}
-        />
-        {resultsTable}
-      </>
-    );
-  }
-  if (textToShowIfEmpty) {
-    return (
+  } else if (textToShowIfEmpty) {
+    resultsTable = (
       <p className="no-results-message with-large-bottom-margin">
         {textToShowIfEmpty}
       </p>
     );
   }
 
-  return null;
+  return (
+    <>
+      {reportColumnForm()}
+      {processInstanceReportSaveTag()}
+      <Filters
+        filterOptions={filterOptions}
+        showFilterOptions={showFilterOptions}
+        setShowFilterOptions={setShowFilterOptions}
+        reportSearchComponent={reportSearchComponent}
+        filtersEnabled={filtersEnabled}
+      />
+      {resultsTable}
+    </>
+  );
 }
