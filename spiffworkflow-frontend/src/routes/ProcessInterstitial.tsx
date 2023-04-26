@@ -103,7 +103,8 @@ export default function ProcessInterstitial() {
   const getReturnHomeButton = (index: number) => {
     if (
       index === 0 &&
-      ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED'].includes(getStatus()))
+      ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED'].includes(getStatus())
+    )
       return (
         <>
           <br />
@@ -189,7 +190,15 @@ export default function ProcessInterstitial() {
         {data.map((d, index) => (
           <Grid fullWidth style={{ marginBottom: '1em' }}>
             <Column md={6} lg={6} sm={4}>
-              <div className={index < 4? `user_instructions_${index}` : `user_instructions_4`}>{userMessage(d)}</div>
+              <div
+                className={
+                  index < 4
+                    ? `user_instructions_${index}`
+                    : `user_instructions_4`
+                }
+              >
+                {userMessage(d)}
+              </div>
               {getReturnHomeButton(index)}
             </Column>
           </Grid>

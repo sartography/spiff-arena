@@ -348,9 +348,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(process_instance.human_tasks) == 1
 
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        assert (
-            len(process_instance.active_human_tasks) == 1
-        ), "expected 1 active human task"
+        assert len(process_instance.active_human_tasks) == 1, "expected 1 active human task"
 
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
         assert len(process_instance.human_tasks) == 2, "expected 2 human tasks after first one is completed"
