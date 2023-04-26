@@ -299,28 +299,35 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
 
 
 class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
-    """When you want to run tasks until you hit something to report to the end user."""
+    """When you want to run tasks until you hit something to report to the end user.
 
-    def get_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        return list(
-            [
-                t
-                for t in bpmn_process_instance.get_tasks(TaskState.READY)
-                if t.task_spec.spec_type not in ["User Task", "Manual Task"]
-                and not (
-                    hasattr(t.task_spec, "extensions") and t.task_spec.extensions.get("instructionsForEndUser", None)
-                )
-            ]
-        )
+    Note that this will run at least one engine step if possible,
+    but will stop if it hits instructions after the first task.
+    """
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        engine_steps = self.get_engine_steps(bpmn_process_instance)
-        while engine_steps:
+        bpmn_process_instance.refresh_waiting_tasks()
+        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        if len(engine_steps) > 0:
+            self.delegate.will_complete_task(engine_steps[0])
+            engine_steps[0].run()
+            self.delegate.did_complete_task(engine_steps[0])
+
+        should_continue = True
+        bpmn_process_instance.refresh_waiting_tasks()
+        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        while engine_steps and should_continue:
             for task in engine_steps:
+                if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get(
+                    "instructionsForEndUser", None
+                ):
+                    should_continue = False
+                    break
                 self.delegate.will_complete_task(task)
                 task.run()
                 self.delegate.did_complete_task(task)
-            engine_steps = self.get_engine_steps(bpmn_process_instance)
+            bpmn_process_instance.refresh_waiting_tasks()
+            engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
         self.delegate.after_engine_steps(bpmn_process_instance)
 
 
