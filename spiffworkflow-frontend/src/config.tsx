@@ -12,6 +12,7 @@ declare global {
 
 let spiffEnvironment = '';
 let appRoutingStrategy = 'subdomain_based';
+let backendBaseUrl = null;
 if ('spiffworkflowFrontendJsenv' in window) {
   if ('APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv) {
     appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
@@ -19,50 +20,52 @@ if ('spiffworkflowFrontendJsenv' in window) {
   if ('ENVIRONMENT_IDENTIFIER' in window.spiffworkflowFrontendJsenv) {
     spiffEnvironment = window.spiffworkflowFrontendJsenv.ENVIRONMENT_IDENTIFIER;
   }
-}
-
-let hostAndPortAndPathPrefix;
-if (appRoutingStrategy === 'subdomain_based') {
-  hostAndPortAndPathPrefix = `api.${hostname}`;
-} else if (appRoutingStrategy === 'path_based') {
-  hostAndPortAndPathPrefix = `${hostname}/api`;
-} else {
-  throw new Error(`Invalid app routing strategy: ${appRoutingStrategy}`);
-}
-
-if (/^\d+\./.test(hostname) || hostname === 'localhost') {
-  let serverPort = 7000;
-  if (!Number.isNaN(Number(port))) {
-    serverPort = Number(port) - 1;
-  }
-  hostAndPortAndPathPrefix = `${hostname}:${serverPort}`;
-  protocol = 'http';
-
-  if (spiffEnvironment === '') {
-    // using destructuring on an array where we only want the first element
-    // seems super confusing for non-javascript devs to read so let's NOT do that.
-    // eslint-disable-next-line prefer-destructuring
-    spiffEnvironment = hostname.split('.')[0];
+  if ('BACKEND_BASE_URL' in window.spiffworkflowFrontendJsenv) {
+    backendBaseUrl = window.spiffworkflowFrontendJsenv.BACKEND_BASE_URL;
   }
 }
 
-if (
-  'spiffworkflowFrontendJsenv' in window &&
-  'APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv
-) {
-  appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
+if (!backendBaseUrl) {
+  let hostAndPortAndPathPrefix;
+  if (appRoutingStrategy === 'subdomain_based') {
+    hostAndPortAndPathPrefix = `api.${hostname}`;
+  } else if (appRoutingStrategy === 'path_based') {
+    hostAndPortAndPathPrefix = `${hostname}/api`;
+  } else {
+    throw new Error(`Invalid app routing strategy: ${appRoutingStrategy}`);
+  }
+
+  if (/^\d+\./.test(hostname) || hostname === 'localhost') {
+    let serverPort = 7000;
+    if (!Number.isNaN(Number(port))) {
+      serverPort = Number(port) - 1;
+    }
+    hostAndPortAndPathPrefix = `${hostname}:${serverPort}`;
+    protocol = 'http';
+
+    if (spiffEnvironment === '') {
+      // using destructuring on an array where we only want the first element
+      // seems super confusing for non-javascript devs to read so let's NOT do that.
+      // eslint-disable-next-line prefer-destructuring
+      spiffEnvironment = hostname.split('.')[0];
+    }
+  }
+
+  backendBaseUrl = `${protocol}://${hostAndPortAndPathPrefix}/v1.0`;
+
+  // this can only ever work locally since this is a static site.
+  // use spiffworkflowFrontendJsenv if you want to inject env vars
+  // that can be read by the static site.
+  if (process.env.REACT_APP_BACKEND_BASE_URL) {
+    backendBaseUrl = process.env.REACT_APP_BACKEND_BASE_URL;
+  }
 }
 
-let url = `${protocol}://${hostAndPortAndPathPrefix}/v1.0`;
-
-// this can only ever work locally since this is a static site.
-// use spiffworkflowFrontendJsenv if you want to inject env vars
-// that can be read by the static site.
-if (process.env.REACT_APP_BACKEND_BASE_URL) {
-  url = process.env.REACT_APP_BACKEND_BASE_URL;
+if (!backendBaseUrl.endsWith('/v1.0')) {
+  backendBaseUrl += '/v1.0';
 }
 
-export const BACKEND_BASE_URL = url;
+export const BACKEND_BASE_URL = backendBaseUrl;
 
 export const PROCESS_STATUSES = [
   'not_started',
