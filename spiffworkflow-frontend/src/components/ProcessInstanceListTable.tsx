@@ -1408,6 +1408,7 @@ export default function ProcessInstanceListTable({
     );
   };
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity
   const buildTable = () => {
     const headerLabels: Record<string, string> = {
       id: 'Id',
@@ -1449,11 +1450,11 @@ export default function ProcessInstanceListTable({
         buttonElement = (
           <Button
             kind={
-              hasAccessToCompleteTask && row.task_id ? 'secondary' : 'tertiary'
+              hasAccessToCompleteTask && row.task_id ? 'secondary' : 'ghost'
             }
             href={interstitialUrl}
           >
-            Go
+            {hasAccessToCompleteTask && row.task_id ? 'Go' : 'View'}
           </Button>
         );
         currentRow.push(<td>{buttonElement}</td>);
