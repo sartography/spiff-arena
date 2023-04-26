@@ -320,7 +320,6 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
                 if hasattr(task.task_spec, "extensions") and task.task_spec.extensions.get(
                     "instructionsForEndUser", None
                 ):
-                    should_continue = False
                     break
                 self.delegate.will_complete_task(task)
                 task.run()
