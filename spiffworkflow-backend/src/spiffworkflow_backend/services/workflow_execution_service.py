@@ -312,7 +312,6 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
             self.delegate.will_complete_task(engine_steps[0])
             engine_steps[0].run()
             self.delegate.did_complete_task(engine_steps[0])
-        bpmn_process_instance.refresh_waiting_tasks()
 
         should_continue = True
         bpmn_process_instance.refresh_waiting_tasks()
