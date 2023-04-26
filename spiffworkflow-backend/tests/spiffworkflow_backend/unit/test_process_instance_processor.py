@@ -405,7 +405,9 @@ class TestProcessInstanceProcessor(BaseTest):
 
         ready_or_waiting_tasks = processor.get_all_ready_or_waiting_tasks()
         assert len(ready_or_waiting_tasks) == 1
-        assert ready_or_waiting_tasks[0].task_spec.name == "top_level_manual_task_two"
+
+        # this assertion is failing intermittently on windows
+        assert ready_or_waiting_tasks[0].task_spec.name == "top_level_manual_task_two" # it's top_level_subprocess on windows sometimes
 
         # this assertion is failing intermittently on windows
         assert len(process_instance.human_tasks) == 3, "expected 3 human tasks after reset and do_engine_steps"
