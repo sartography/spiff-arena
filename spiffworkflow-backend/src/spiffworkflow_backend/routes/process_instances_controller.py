@@ -68,9 +68,9 @@ from spiffworkflow_backend.services.process_instance_queue_service import (
 from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceQueueService,
 )
-from spiffworkflow_backend.services.process_instance_report_service import (
-    ProcessInstanceReportFilter,
-)
+# from spiffworkflow_backend.services.process_instance_report_service import (
+#     ProcessInstanceReportFilter,
+# )
 from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportService,
 )
