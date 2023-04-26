@@ -435,17 +435,17 @@ svg.notification-icon {
 }
 
 .user_instructions_1 {
-  filter: opacity(90%);
-}
-
-.user_instructions_2 {
   filter: opacity(70%);
 }
 
-.user_instructions_3 {
+.user_instructions_2 {
   filter: opacity(50%);
 }
 
-.user_instructions_4 {
+.user_instructions_3 {
   filter: opacity(30%);
+}
+
+.user_instructions_4 {
+  filter: opacity(10%);
 }
