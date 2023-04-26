@@ -60,7 +60,8 @@ class ProcessInstanceTmpService:
                 exception.__class__.__name__ == "ApiError" and exception.error_code == "task_error"  # type: ignore
             ):
                 task_line_number = exception.line_number  # type: ignore
-                task_line_contents = exception.error_line[0:255]  # type: ignore
+                error_line = exception.error_line  # type: ignore
+                task_line_contents = None if error_line is None else error_line[0:255]
                 task_trace = exception.task_trace  # type: ignore
                 task_offset = exception.offset  # type: ignore
 
