@@ -35,7 +35,7 @@ export default function ProcessInterstitial() {
           if ('error_code' in retValue) {
             addError(retValue);
           } else {
-            setData((prevData) => [...prevData, retValue]);
+            setData((prevData) => [retValue, ...prevData]);
             setLastTask(retValue);
           }
         },
@@ -100,8 +100,10 @@ export default function ProcessInterstitial() {
     }
   };
 
-  const getReturnHomeButton = () => {
-    if (['WAITING', 'ERROR', 'LOCKED', 'COMPLETED'].includes(getStatus()))
+  const getReturnHomeButton = (index: number) => {
+    if (
+      index === 0 &&
+      ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED'].includes(getStatus()))
       return (
         <>
           <br />
@@ -184,14 +186,14 @@ export default function ProcessInterstitial() {
         </div>
         <br />
         <br />
-        {data.map((d) => (
+        {data.map((d, index) => (
           <Grid fullWidth style={{ marginBottom: '1em' }}>
             <Column md={6} lg={6} sm={4}>
-              {userMessage(d)}
+              <div className={index < 4? `user_instructions_${index}` : `user_instructions_4`}>{userMessage(d)}</div>
+              {getReturnHomeButton(index)}
             </Column>
           </Grid>
         ))}
-        {getReturnHomeButton()}
       </>
     );
   }

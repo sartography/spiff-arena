@@ -429,3 +429,23 @@ svg.notification-icon {
   font-weight: bold;
 }
 
+
+.user_instructions_0 {
+  filter: opacity(1);
+}
+
+.user_instructions_1 {
+  filter: opacity(90%);
+}
+
+.user_instructions_2 {
+  filter: opacity(70%);
+}
+
+.user_instructions_3 {
+  filter: opacity(50%);
+}
+
+.user_instructions_4 {
+  filter: opacity(30%);
+}
