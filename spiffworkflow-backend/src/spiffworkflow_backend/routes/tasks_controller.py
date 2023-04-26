@@ -20,7 +20,7 @@ from flask import make_response
 from flask import stream_with_context
 from flask.wrappers import Response
 from jinja2 import TemplateSyntaxError
-from SpiffWorkflow.bpmn.workflow import BpmnWorkflow
+from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
@@ -388,7 +388,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
 
-    def get_reportable_tasks():
+    def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
         )
@@ -435,7 +435,8 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
         spiff_task = processor.next_task()
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
 
-def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow):
+
+def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     return len(
         list(
             [
@@ -445,6 +446,7 @@ def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow):
             ]
         )
     )
+
 
 def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str, Optional[str], None]:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
