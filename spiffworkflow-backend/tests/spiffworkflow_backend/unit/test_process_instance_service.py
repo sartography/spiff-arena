@@ -1,4 +1,5 @@
 """Test_process_instance_processor."""
+from datetime import datetime, timezone
 from typing import Optional
 
 from flask.app import Flask
@@ -213,3 +214,27 @@ class TestProcessInstanceService(BaseTest):
         assert len(models) == 2
         self._check_sample_file_data_model("File", 0, models[0])
         self._check_sample_file_data_model("File", 1, models[1])
+
+    def test_does_not_skip_events_it_does_not_know_about(self):
+        assert ProcessInstanceService.waiting_event_can_be_skipped(
+            {'event_type': 'Unknown', 'name': None, 'value': '2023-04-27T20:15:10.626656+00:00'},
+            datetime.now(timezone.utc)
+        ) == False
+
+    def test_does_skip_duration_timer_events_for_the_future(self):
+        assert ProcessInstanceService.waiting_event_can_be_skipped(
+            {'event_type': 'Duration Timer', 'name': None, 'value': '2023-04-27T20:15:10.626656+00:00'},
+            datetime.fromisoformat('2023-04-26T20:15:10.626656+00:00')
+        )
+
+    def test_does_not_skip_duration_timer_events_for_the_past(self):
+        assert ProcessInstanceService.waiting_event_can_be_skipped(
+            {'event_type': 'Duration Timer', 'name': None, 'value': '2023-04-27T20:15:10.626656+00:00'},
+            datetime.fromisoformat('2023-04-28T20:15:10.626656+00:00')
+        ) == False
+
+    def test_does_not_skip_duration_timer_events_for_now(self):
+        assert ProcessInstanceService.waiting_event_can_be_skipped(
+            {'event_type': 'Duration Timer', 'name': None, 'value': '2023-04-27T20:15:10.626656+00:00'},
+            datetime.fromisoformat('2023-04-27T20:15:10.626656+00:00')
+        ) == False
