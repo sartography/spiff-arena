@@ -161,7 +161,7 @@ class ProcessInstanceReportService:
                     {"Header": "Task", "accessor": "task_title"},
                     {"Header": "Waiting For", "accessor": "waiting_for"},
                     {"Header": "Started", "accessor": "start_in_seconds"},
-                    {"Header": "Last Updated", "accessor": "updated_at_in_seconds"},
+                    {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds"},
                     {"Header": "status", "accessor": "status"},
                 ],
                 "filter_by": [
@@ -186,7 +186,7 @@ class ProcessInstanceReportService:
                     {"Header": "Task", "accessor": "task_title"},
                     {"Header": "Started By", "accessor": "process_initiator_username"},
                     {"Header": "Started", "accessor": "start_in_seconds"},
-                    {"Header": "Last Updated", "accessor": "updated_at_in_seconds"},
+                    {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds"},
                 ],
                 "filter_by": [
                     {"field_name": "with_tasks_i_can_complete", "field_value": "true"},
@@ -208,7 +208,7 @@ class ProcessInstanceReportService:
                     {"Header": "Task", "accessor": "task_title"},
                     {"Header": "Started By", "accessor": "process_initiator_username"},
                     {"Header": "Started", "accessor": "start_in_seconds"},
-                    {"Header": "Last Updated", "accessor": "updated_at_in_seconds"},
+                    {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds"},
                 ],
                 "filter_by": [
                     {

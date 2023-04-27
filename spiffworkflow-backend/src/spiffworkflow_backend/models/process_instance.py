@@ -123,6 +123,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "process_initiator_username": self.process_initiator.username,
+            "task_updated_at_in_seconds": self.task_updated_at_in_seconds,
         }
 
     def serialized_with_metadata(self) -> dict[str, Any]:
