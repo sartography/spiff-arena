@@ -348,8 +348,13 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(process_instance.human_tasks) == 1
 
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        assert len(process_instance.active_human_tasks) == 1, "expected 1 active human task"
+
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
         assert len(process_instance.human_tasks) == 2, "expected 2 human tasks after first one is completed"
+        assert (
+            len(process_instance.active_human_tasks) == 1
+        ), "expected 1 active human tasks after 1st one is completed"
 
         # unnecessary lookup just in case on windows
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
@@ -359,8 +364,8 @@ class TestProcessInstanceProcessor(BaseTest):
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
         import pdb; pdb.set_trace()
         assert (
-            len(process_instance.active_human_tasks) == 0
-        ), "expected 0 active human tasks after 2nd one is completed"
+            len(process_instance.active_human_tasks) == 1
+        ), "expected 1 active human tasks after 2nd one is completed, as we have looped back around."
 
         processor.suspend()
 
@@ -373,7 +378,7 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(all_task_models_matching_top_level_subprocess_script) == 1
         task_model_to_reset_to = all_task_models_matching_top_level_subprocess_script[0]
         assert task_model_to_reset_to is not None
-        assert len(process_instance.human_tasks) == 2, "expected 2 human tasks before reset"
+        assert len(process_instance.human_tasks) == 3, "expected 3 human tasks before reset"
         ProcessInstanceProcessor.reset_process(process_instance, task_model_to_reset_to.guid)
         assert len(process_instance.human_tasks) == 2, "still expected 2 human tasks after reset"
 
@@ -381,7 +386,7 @@ class TestProcessInstanceProcessor(BaseTest):
         db.session.expire_all()
         assert (
             len(process_instance.human_tasks) == 2
-        ), "still expected 2 human tasks after reset and session expire_all"
+        ), "still expected 3 human tasks after reset and session expire_all"
 
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
         processor = ProcessInstanceProcessor(process_instance)

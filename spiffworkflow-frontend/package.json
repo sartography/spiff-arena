@@ -33,7 +33,7 @@
     "bootstrap": "^5.2.0",
     "bpmn-js": "^9.3.2",
     "bpmn-js-properties-panel": "^1.10.0",
-    "bpmn-js-spiffworkflow": "sartography/bpmn-js-spiffworkflow#main",
+    "bpmn-js-spiffworkflow": "github:sartography/bpmn-js-spiffworkflow#main",
     "cookie": "^0.5.0",
     "craco": "^0.0.3",
     "cypress-slow-down": "^1.2.1",
