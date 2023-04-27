@@ -519,16 +519,16 @@ paths:
               schema:
                 type: string
 
-  /processes/{bpmn_process_identifier}/callers:
+  /processes/callers:
     parameters:
       - name: bpmn_process_identifier
-        in: path
+        in: query
         required: true
-        description: the modified process model id
+        description: the bpmn process identifier/id (not the name with spaces and not the process model identifier)
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_caller_lists
+      operationId: spiffworkflow_backend.routes.process_api_blueprint.process_caller_list
       summary:
         Return a list of information about all processes that call the provided process id
       tags:
