@@ -15,14 +15,12 @@ from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.task import TaskStateNames
-from sqlalchemy.dialects.mysql import insert as mysql_insert
-from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
+from spiffworkflow_backend.models.json_data import JsonDataDict, JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -36,11 +34,6 @@ from spiffworkflow_backend.services.process_instance_tmp_service import ProcessI
 class StartAndEndTimes(TypedDict):
     start_in_seconds: Optional[float]
     end_in_seconds: Optional[float]
-
-
-class JsonDataDict(TypedDict):
-    hash: str
-    data: dict
 
 
 class TaskModelError(Exception):
@@ -130,7 +123,7 @@ class TaskService:
         db.session.bulk_save_objects(self.bpmn_processes.values())
         db.session.bulk_save_objects(self.task_models.values())
         db.session.bulk_save_objects(self.process_instance_events.values())
-        self.__class__.insert_or_update_json_data_records(self.json_data_dicts)
+        JsonDataModel.insert_or_update_json_data_records(self.json_data_dicts)
 
     def process_parents_and_children_and_save_to_database(
         self,
@@ -484,10 +477,6 @@ class TaskService:
         return json_data_dict
 
     @classmethod
-    def insert_or_update_json_data_dict(cls, json_data_dict: JsonDataDict) -> None:
-        TaskService.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
-
-    @classmethod
     def update_task_data_on_task_model_and_return_dict_if_updated(
         cls, task_model: TaskModel, task_data_dict: dict, task_model_data_column: str
     ) -> Optional[JsonDataDict]:
@@ -609,21 +598,6 @@ class TaskService:
         new_properties_json = copy.copy(task_model.properties_json)
         new_properties_json["state"] = getattr(TaskState, state)
         task_model.properties_json = new_properties_json
-
-    @classmethod
-    def insert_or_update_json_data_records(
-        cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]
-    ) -> None:
-        list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
-        if len(list_of_dicts) > 0:
-            on_duplicate_key_stmt = None
-            if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
-                insert_stmt = mysql_insert(JsonDataModel).values(list_of_dicts)
-                on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(data=insert_stmt.inserted.data)
-            else:
-                insert_stmt = postgres_insert(JsonDataModel).values(list_of_dicts)
-                on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["hash"])
-            db.session.execute(on_duplicate_key_stmt)
 
     @classmethod
     def get_extensions_from_task_model(cls, task_model: TaskModel) -> dict:
