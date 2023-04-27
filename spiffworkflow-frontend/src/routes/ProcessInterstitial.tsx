@@ -110,9 +110,8 @@ export default function ProcessInterstitial() {
           <Button kind="secondary" onClick={() => navigate(`/tasks`)}>
             Return to Home
           </Button>
-          <hr/>
+          <hr />
         </div>
-
       );
     return '';
   };
