@@ -335,25 +335,42 @@ def process_instance_list(
         user=g.user,
     )
 
-    json_data_hash = sha256(json.dumps(body['report_metadata'], sort_keys=True).encode("utf8")).hexdigest()
-    TaskService.insert_or_update_json_data_dict({'hash': json_data_hash, 'data': body['report_metadata']})
-    db.session.commit()
-    # json_data = JsonDataModel.query.filter_by(json_data_hash)
+    json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(body['report_metadata'])
     response_json['report_hash'] = json_data_hash
+    db.session.commit()
 
     return make_response(jsonify(response_json), 200)
 
 
-def process_instance_report_metadata_show(
-    report_hash: str,
+def process_instance_report_show(
+    report_hash: Optional[str] = None,
+    report_id: Optional[int] = None,
+    report_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
-    json_data = JsonDataModel.query.filter_by(hash=report_hash).first()
-    if json_data is None:
+
+    if report_hash is None and report_id is None and report_identifier is None:
         raise ApiError(
-            error_code="report_metadata_not_found",
-            message=f"Could not find report metadata for {report_hash}.",
+            error_code="report_key_missing",
+            message="A report key is needed to lookup a report. Either choose a report_hash, report_id, or report_identifier.",
         )
-    return make_response(jsonify(json_data.data), 200)
+    response_result = {}
+    if report_hash is not None:
+        json_data = JsonDataModel.query.filter_by(hash=report_hash).first()
+        if json_data is None:
+            raise ApiError(
+                error_code="report_metadata_not_found",
+                message=f"Could not find report metadata for {report_hash}.",
+            )
+        response_result = {
+            "id": 0,
+            "identifier": "custom",
+            "name": "custom",
+            "report_metadata": json_data.data,
+        }
+    else:
+        response_result = ProcessInstanceReportService.report_with_identifier(g.user, report_id, report_identifier)
+
+    return make_response(jsonify(response_result), 200)
 
 
 def process_instance_report_column_list(
@@ -490,39 +507,39 @@ def process_instance_report_delete(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-def process_instance_report_show(
-    report_id: int,
-    page: int = 1,
-    per_page: int = 100,
-) -> flask.wrappers.Response:
-    """Process_instance_report_show."""
-    process_instances = ProcessInstanceModel.query.order_by(
-        ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-    ).paginate(page=page, per_page=per_page, error_out=False)
-
-    process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        id=report_id,
-        created_by_id=g.user.id,
-    ).first()
-    if process_instance_report is None:
-        raise ApiError(
-            error_code="unknown_process_instance_report",
-            message="Unknown process instance report",
-            status_code=404,
-        )
-
-    substitution_variables = request.args.to_dict()
-    result_dict = process_instance_report.generate_report(process_instances.items, substitution_variables)
-
-    # update this if we go back to a database query instead of filtering in memory
-    result_dict["pagination"] = {
-        "count": len(result_dict["results"]),
-        "total": len(result_dict["results"]),
-        "pages": 1,
-    }
-
-    return Response(json.dumps(result_dict), status=200, mimetype="application/json")
-
+# def process_instance_report_show(
+#     report_id: int,
+#     page: int = 1,
+#     per_page: int = 100,
+# ) -> flask.wrappers.Response:
+#     """Process_instance_report_show."""
+#     process_instances = ProcessInstanceModel.query.order_by(
+#         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
+#     ).paginate(page=page, per_page=per_page, error_out=False)
+#
+#     process_instance_report = ProcessInstanceReportModel.query.filter_by(
+#         id=report_id,
+#         created_by_id=g.user.id,
+#     ).first()
+#     if process_instance_report is None:
+#         raise ApiError(
+#             error_code="unknown_process_instance_report",
+#             message="Unknown process instance report",
+#             status_code=404,
+#         )
+#
+#     substitution_variables = request.args.to_dict()
+#     result_dict = process_instance_report.generate_report(process_instances.items, substitution_variables)
+#
+#     # update this if we go back to a database query instead of filtering in memory
+#     result_dict["pagination"] = {
+#         "count": len(result_dict["results"]),
+#         "total": len(result_dict["results"]),
+#         "pages": 1,
+#     }
+#
+#     return Response(json.dumps(result_dict), status=200, mimetype="application/json")
+#
 
 def process_instance_task_list_without_task_data_for_me(
     modified_process_model_identifier: str,

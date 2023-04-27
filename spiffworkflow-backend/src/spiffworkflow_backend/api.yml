@@ -1298,17 +1298,29 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
 
-  /process-instances/report-metadata/{report_hash}:
+  /process-instances/report-metadata:
     parameters:
       - name: report_hash
-        in: path
-        required: true
-        description: The unique id of an existing report
+        in: query
+        required: false
+        description: The hash of a query that has been searched before.
+        schema:
+          type: string
+      - name: report_id
+        in: query
+        required: false
+        description: The unique id of an existing report.
+        schema:
+          type: integer
+      - name: report_identifier
+        in: query
+        required: false
+        description: Specifies the identifier of a report to use, if any
         schema:
           type: string
     get:
-      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_metadata_show
-      summary: Returns the metadata associated with a given report hash.
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_show
+      summary: Returns the metadata associated with a given report key. This favors report_hash over report_id and report_identifier.
       tags:
         - Process Instances
       responses:
@@ -1341,20 +1353,20 @@ paths:
         description: The page number to return. Defaults to page 1.
         schema:
           type: integer
-    get:
-      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_show
-      summary: Returns a report of process instances for a given process model
-      tags:
-        - Process Instances
-      responses:
-        "200":
-          description: Workflow.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Workflow"
+    # get:
+    #   operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_show
+    #   summary: Returns a report of process instances for a given process model
+    #   tags:
+    #     - Process Instances
+    #   responses:
+    #     "200":
+    #       description: Workflow.
+    #       content:
+    #         application/json:
+    #           schema:
+    #             type: array
+    #             items:
+    #               $ref: "#/components/schemas/Workflow"
     put:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_update
       summary: Updates a process instance report

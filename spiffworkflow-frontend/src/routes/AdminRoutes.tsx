@@ -8,7 +8,6 @@ import ProcessGroupEdit from './ProcessGroupEdit';
 import ProcessModelShow from './ProcessModelShow';
 import ProcessModelEditDiagram from './ProcessModelEditDiagram';
 import ProcessInstanceList from './ProcessInstanceList';
-import ProcessInstanceReportShow from './ProcessInstanceReportShow';
 import ProcessModelNew from './ProcessModelNew';
 import ProcessModelEdit from './ProcessModelEdit';
 import ProcessInstanceShow from './ProcessInstanceShow';
@@ -87,10 +86,6 @@ export default function AdminRoutes() {
         <Route
           path="process-instances/reports"
           element={<ProcessInstanceReportList />}
-        />
-        <Route
-          path="process-instances/reports/:report_identifier"
-          element={<ProcessInstanceReportShow />}
         />
         <Route
           path="process-instances/reports/new"

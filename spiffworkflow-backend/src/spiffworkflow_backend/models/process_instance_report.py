@@ -1,5 +1,6 @@
 """Process_instance."""
 from __future__ import annotations
+from spiffworkflow_backend.models.json_data import JsonDataModel # noqa: F401
 
 from dataclasses import dataclass
 from typing import Any
@@ -88,6 +89,11 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     created_at_in_seconds = db.Column(db.Integer)
     updated_at_in_seconds = db.Column(db.Integer)
 
+    json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
+
+    def get_report_metadata(self) -> dict:
+        return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
+
     @classmethod
     def default_order_by(cls) -> list[str]:
         """Default_order_by."""
@@ -154,10 +160,13 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                 f"Process instance report with identifier already exists: {identifier}"
             )
 
+        json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(report_metadata)
+
         process_instance_report = cls(
             identifier=identifier,
             created_by_id=user.id,
             report_metadata=report_metadata,
+            json_data_hash=json_data_hash,
         )
         db.session.add(process_instance_report)
         db.session.commit()
