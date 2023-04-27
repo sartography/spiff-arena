@@ -155,6 +155,9 @@ export default function ProcessInstanceListTable({
   const [requiresRefilter, setRequiresRefilter] = useState<boolean>(false);
   const [lastColumnFilter, setLastColumnFilter] = useState<string>('');
 
+  const [listHasBeenFiltered, setListHasBeenFiltered] =
+    useState<boolean>(false);
+
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
 
@@ -280,8 +283,10 @@ export default function ProcessInstanceListTable({
     if (result.report.id) {
       setProcessInstanceReportSelection(result.report);
     }
-    // searchParams.set('key', result.hash);
-    // setSearchParams(searchParams);
+    if (result.report_hash) {
+      searchParams.set('report_hash', result.report_hash);
+      setSearchParams(searchParams);
+    }
   }
 
   const clearRefreshRef = useRef<any>(null);
@@ -296,6 +301,10 @@ export default function ProcessInstanceListTable({
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
+    // we apparently cannot use a state set in a useEffect from within that same useEffect
+    // so use a variable instead
+    let processModelSelectionItemsForUseEffect: ProcessModel[] = [];
+
     function setProcessInstancesFromResult(result: any) {
       setRequiresRefilter(false);
       const processInstancesFromApi = result.results;
@@ -307,8 +316,6 @@ export default function ProcessInstanceListTable({
       if (result.report.id) {
         setProcessInstanceReportSelection(result.report);
       }
-      // searchParams.set('key', result.hash);
-      // setSearchParams(searchParams);
     }
 
     // Useful to stop refreshing if an api call gets an error
@@ -321,7 +328,115 @@ export default function ProcessInstanceListTable({
         console.error(error);
       }
     };
-    function getProcessInstances() {
+    function getProcessInstances(
+      reportMetadataBody: ReportMetadata | null = null
+    ) {
+      if (listHasBeenFiltered) {
+        return;
+      }
+      let reportMetadataBodyToUse = reportMetadataBody;
+      if (!reportMetadataBodyToUse) {
+        reportMetadataBodyToUse = {
+          columns: [],
+          filter_by: [],
+          order_by: [],
+        };
+      }
+
+      let selectedProcessModelIdentifier = processModelFullIdentifier;
+      reportMetadataBodyToUse.filter_by.forEach(
+        (reportFilter: ReportFilter) => {
+          if (reportFilter.field_name === 'process_status') {
+            setProcessStatusSelection(
+              (reportFilter.field_value || '').split(',')
+            );
+          } else if (reportFilter.field_name === 'process_model_identifier') {
+            selectedProcessModelIdentifier =
+              reportFilter.field_value || undefined;
+          } else if (dateParametersToAlwaysFilterBy[reportFilter.field_name]) {
+            const dateFunctionToCall =
+              dateParametersToAlwaysFilterBy[reportFilter.field_name][0];
+            const timeFunctionToCall =
+              dateParametersToAlwaysFilterBy[reportFilter.field_name][1];
+            if (reportFilter.field_value) {
+              const dateString = convertSecondsToFormattedDateString(
+                reportFilter.field_value as any
+              );
+              dateFunctionToCall(dateString);
+              const timeString = convertSecondsToFormattedTimeHoursMinutes(
+                reportFilter.field_value as any
+              );
+              timeFunctionToCall(timeString);
+              setShowFilterOptions(true);
+            }
+          }
+        }
+      );
+
+      processModelSelectionItemsForUseEffect.forEach(
+        (processModel: ProcessModel) => {
+          if (processModel.id === selectedProcessModelIdentifier) {
+            setProcessModelSelection(processModel);
+          }
+        }
+      );
+
+      // const postBody: ReportMetadata = {
+      //   columns: [],
+      //   filter_by: [],
+      //   order_by: [],
+      // };
+      //
+      // if (searchParams.get('report_id')) {
+      //   queryParamString += `&report_id=${searchParams.get('report_id')}`;
+      // } else if (reportIdentifier) {
+      //   queryParamString += `&report_identifier=${reportIdentifier}`;
+      // }
+
+      // if (searchParams.get('report_columns')) {
+      //   const reportColumnsBase64 = searchParams.get('report_columns');
+      //   if (reportColumnsBase64) {
+      //     const reportColumnsList = JSON.parse(
+      //       decodeBase64(reportColumnsBase64)
+      //     );
+      //     postBody.columns = reportColumnsList;
+      //   }
+      // }
+      // if (searchParams.get('report_filter_by')) {
+      //   const reportFilterByBase64 = searchParams.get('report_filter_by');
+      //   if (reportFilterByBase64) {
+      //     const reportFilterByList = JSON.parse(
+      //       decodeBase64(reportFilterByBase64)
+      //     );
+      //     postBody.filter_by = reportFilterByList;
+      //   }
+      // }
+      //
+      // Object.keys(parametersToGetFromSearchParams).forEach(
+      //   (paramName: string) => {
+      //     if (
+      //       paramName === 'process_model_identifier' &&
+      //       processModelFullIdentifier
+      //     ) {
+      //       postBody.filter_by.push({
+      //         field_name: 'process_model_identifier',
+      //         field_value: processModelFullIdentifier,
+      //       });
+      //     } else if (searchParams.get(paramName)) {
+      //       // @ts-expect-error TS(7053) FIXME:
+      //       const functionToCall = parametersToGetFromSearchParams[paramName];
+      //       postBody.filter_by.push({
+      //         field_name: paramName,
+      //         field_value: searchParams.get(paramName),
+      //       });
+      //       if (functionToCall !== null) {
+      //         functionToCall(searchParams.get(paramName) || '');
+      //       }
+      //       setShowFilterOptions(true);
+      //     }
+      //   }
+      // );
+
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
         searchParams,
@@ -334,172 +449,52 @@ export default function ProcessInstanceListTable({
         perPage = perPageOptions[1];
       }
       let queryParamString = `per_page=${perPage}&page=${page}`;
-
-      // "columns": [
-      // {"Header": "id", "accessor": "id"},
-      // {
-      //   "Header": "process_model_display_name",
-      //   "accessor": "process_model_display_name",
-      // },
-      // {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-      // {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-      // {"Header": "status", "accessor": "status"},
-      // ],
-      // "filter_by": [
-      // {"field_name": "initiated_by_me", "field_value": "true"},
-      // {"field_name": "has_terminal_status", "field_value": "true"},
-      // ],
-      // "order_by": ["-start_in_seconds", "-id"],
-      const postBody: ReportMetadata = {
-        columns: [],
-        filter_by: [],
-        order_by: [],
-      };
-
-      // const userAppliedFilter = searchParams.get('user_filter');
-      // if (userAppliedFilter) {
-      //   queryParamString += `&user_filter=${userAppliedFilter}`;
-      // }
-
-      if (searchParams.get('report_id')) {
-        queryParamString += `&report_id=${searchParams.get('report_id')}`;
-      } else if (reportIdentifier) {
-        queryParamString += `&report_identifier=${reportIdentifier}`;
-      }
-
-      if (searchParams.get('report_columns')) {
-        // queryParamString += `&report_columns=${searchParams.get(
-        //   'report_columns'
-        // )}`;
-        // const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
-        const reportColumnsBase64 = searchParams.get('report_columns');
-        if (reportColumnsBase64) {
-          const reportColumnsList = JSON.parse(
-            decodeBase64(reportColumnsBase64)
-          );
-          postBody.columns = reportColumnsList;
-        }
-      }
-      if (searchParams.get('report_filter_by')) {
-        // queryParamString += `&report_filter_by=${searchParams.get(
-        //   'report_filter_by'
-        // )}`;
-        const reportFilterByBase64 = searchParams.get('report_filter_by');
-        if (reportFilterByBase64) {
-          const reportFilterByList = JSON.parse(
-            decodeBase64(reportFilterByBase64)
-          );
-          postBody.filter_by = reportFilterByList;
-        }
-      }
-
-      Object.keys(dateParametersToAlwaysFilterBy).forEach(
-        (paramName: string) => {
-          const dateFunctionToCall =
-            dateParametersToAlwaysFilterBy[paramName][0];
-          const timeFunctionToCall =
-            dateParametersToAlwaysFilterBy[paramName][1];
-          const searchParamValue = searchParams.get(paramName);
-          if (searchParamValue) {
-            // queryParamString += `&${paramName}=${searchParamValue}`;
-            postBody.filter_by.push({
-              field_name: paramName,
-              field_value: searchParamValue,
-            });
-            const dateString = convertSecondsToFormattedDateString(
-              searchParamValue as any
-            );
-            dateFunctionToCall(dateString);
-            const timeString = convertSecondsToFormattedTimeHoursMinutes(
-              searchParamValue as any
-            );
-            timeFunctionToCall(timeString);
-            setShowFilterOptions(true);
-          }
-        }
-      );
-
-      Object.keys(parametersToGetFromSearchParams).forEach(
-        (paramName: string) => {
-          if (
-            paramName === 'process_model_identifier' &&
-            processModelFullIdentifier
-          ) {
-            // queryParamString += `&process_model_identifier=${processModelFullIdentifier}`;
-            postBody.filter_by.push({
-              field_name: 'process_model_identifier',
-              field_value: processModelFullIdentifier,
-            });
-          } else if (searchParams.get(paramName)) {
-            // @ts-expect-error TS(7053) FIXME:
-            const functionToCall = parametersToGetFromSearchParams[paramName];
-            // queryParamString += `&${paramName}=${searchParams.get(paramName)}`;
-            postBody.filter_by.push({
-              field_name: paramName,
-              field_value: searchParams.get(paramName),
-            });
-            if (functionToCall !== null) {
-              functionToCall(searchParams.get(paramName) || '');
-            }
-            setShowFilterOptions(true);
-          }
-        }
-      );
-
       if (additionalParams) {
         queryParamString += `&${additionalParams}`;
       }
 
-      const reportMetadataBase64 = searchParams.get('report_metadata_base64');
-      if (reportMetadataBase64) {
-        const reportMetadata = JSON.parse(decodeBase64(reportMetadataBase64))
+      HttpService.makeCallToBackend({
+        path: `${processInstanceApiSearchPath}?${queryParamString}`,
+        successCallback: setProcessInstancesFromResult,
+        httpMethod: 'POST',
+        failureCallback: stopRefreshing,
+        onUnauthorized: stopRefreshing,
+        postBody: {
+          report_metadata: reportMetadataBody,
+        },
+      });
+    }
+    function getReportMetadataWithReportHash() {
+      if (listHasBeenFiltered) {
+        return;
+      }
+      const reportHash = searchParams.get('report_hash');
+      if (reportHash) {
         HttpService.makeCallToBackend({
-          path: `${processInstanceApiSearchPath}?${queryParamString}`,
-          successCallback: setProcessInstancesFromResult,
-          httpMethod: 'POST',
-          failureCallback: stopRefreshing,
-          onUnauthorized: stopRefreshing,
-          postBody: {
-            report_metadata: reportMetadata,
-            // report_metadata: {
-            //   filter_by: [
-            //     {
-            //       field_name: 'process_model_identifier',
-            //       field_value: 'example/with-milestones',
-            //     },
-            //   ],
-            // },
-          },
+          path: `/process-instances/report-metadata/${reportHash}`,
+          successCallback: getProcessInstances,
         });
+      } else {
+        getProcessInstances();
       }
     }
     function processResultForProcessModels(result: any) {
-      const processModelFullIdentifierFromSearchParams =
-        getProcessModelFullIdentifierFromSearchParams(searchParams);
       const selectionArray = result.results.map((item: any) => {
         const label = `${item.id}`;
         Object.assign(item, { label });
-        if (label === processModelFullIdentifierFromSearchParams) {
-          setProcessModelSelection(item);
-        }
         return item;
       });
+      processModelSelectionItemsForUseEffect = selectionArray;
       setProcessModelAvailableItems(selectionArray);
 
-      const processStatusSelectedArray: string[] = [];
       const processStatusAllOptionsArray = PROCESS_STATUSES.map(
         (processStatusOption: any) => {
-          const regex = new RegExp(`\\b${processStatusOption}\\b`);
-          if ((searchParams.get('process_status') || '').match(regex)) {
-            processStatusSelectedArray.push(processStatusOption);
-          }
           return processStatusOption;
         }
       );
-      setProcessStatusSelection(processStatusSelectedArray);
       setProcessStatusAllOptions(processStatusAllOptionsArray);
 
-      getProcessInstances();
+      getReportMetadataWithReportHash();
     }
     const checkFiltersAndRun = () => {
       if (filtersEnabled) {
@@ -509,7 +504,7 @@ export default function ProcessInstanceListTable({
           successCallback: processResultForProcessModels,
         });
       } else {
-        getProcessInstances();
+        getReportMetadataWithReportHash();
       }
     };
 
@@ -540,59 +535,59 @@ export default function ProcessInstanceListTable({
     processInstanceApiSearchPath,
   ]);
 
-  // This sets the filter data using the saved reports returned from the initial instance_list query.
-  // This could probably be merged into the main useEffect but it works here now.
-  useEffect(() => {
-    const filters = processInstanceFilters as any;
-    Object.keys(dateParametersToAlwaysFilterBy).forEach((paramName: string) => {
-      const dateFunctionToCall = dateParametersToAlwaysFilterBy[paramName][0];
-      const timeFunctionToCall = dateParametersToAlwaysFilterBy[paramName][1];
-      const paramValue = filters[paramName];
-      dateFunctionToCall('');
-      timeFunctionToCall('');
-      if (paramValue) {
-        const dateString = convertSecondsToFormattedDateString(
-          paramValue as any
-        );
-        dateFunctionToCall(dateString);
-        const timeString = convertSecondsToFormattedTimeHoursMinutes(
-          paramValue as any
-        );
-        timeFunctionToCall(timeString);
-        setShowFilterOptions(true);
-      }
-    });
-
-    setProcessModelSelection(null);
-    processModelAvailableItems.forEach((item: any) => {
-      if (item.id === filters.process_model_identifier) {
-        setProcessModelSelection(item);
-      }
-    });
-
-    if (filters.process_initiator_username) {
-      const functionToCall =
-        parametersToGetFromSearchParams.process_initiator_username;
-      functionToCall(filters.process_initiator_username);
-    }
-
-    const processStatusSelectedArray: string[] = [];
-    if (filters.process_status) {
-      PROCESS_STATUSES.forEach((processStatusOption: any) => {
-        const regex = new RegExp(`\\b${processStatusOption}\\b`);
-        if (filters.process_status.match(regex)) {
-          processStatusSelectedArray.push(processStatusOption);
-        }
-      });
-      setShowFilterOptions(true);
-    }
-    setProcessStatusSelection(processStatusSelectedArray);
-  }, [
-    processInstanceFilters,
-    dateParametersToAlwaysFilterBy,
-    parametersToGetFromSearchParams,
-    processModelAvailableItems,
-  ]);
+  // // This sets the filter data using the saved reports returned from the initial instance_list query.
+  // // This could probably be merged into the main useEffect but it works here now.
+  // useEffect(() => {
+  //   const filters = processInstanceFilters as any;
+  //   // Object.keys(dateParametersToAlwaysFilterBy).forEach((paramName: string) => {
+  //   //   const dateFunctionToCall = dateParametersToAlwaysFilterBy[paramName][0];
+  //   //   const timeFunctionToCall = dateParametersToAlwaysFilterBy[paramName][1];
+  //   //   const paramValue = filters[paramName];
+  //   //   dateFunctionToCall('');
+  //   //   timeFunctionToCall('');
+  //   //   if (paramValue) {
+  //   //     const dateString = convertSecondsToFormattedDateString(
+  //   //       paramValue as any
+  //   //     );
+  //   //     dateFunctionToCall(dateString);
+  //   //     const timeString = convertSecondsToFormattedTimeHoursMinutes(
+  //   //       paramValue as any
+  //   //     );
+  //   //     timeFunctionToCall(timeString);
+  //   //     setShowFilterOptions(true);
+  //   //   }
+  //   // });
+  //
+  //   // setProcessModelSelection(null);
+  //   // processModelAvailableItems.forEach((item: any) => {
+  //   //   if (item.id === filters.process_model_identifier) {
+  //   //     setProcessModelSelection(item);
+  //   //   }
+  //   // });
+  //
+  //   if (filters.process_initiator_username) {
+  //     const functionToCall =
+  //       parametersToGetFromSearchParams.process_initiator_username;
+  //     functionToCall(filters.process_initiator_username);
+  //   }
+  //
+  //   const processStatusSelectedArray: string[] = [];
+  //   if (filters.process_status) {
+  //     PROCESS_STATUSES.forEach((processStatusOption: any) => {
+  //       const regex = new RegExp(`\\b${processStatusOption}\\b`);
+  //       if (filters.process_status.match(regex)) {
+  //         processStatusSelectedArray.push(processStatusOption);
+  //       }
+  //     });
+  //     setShowFilterOptions(true);
+  //   }
+  //   // setProcessStatusSelection(processStatusSelectedArray);
+  // }, [
+  //   processInstanceFilters,
+  //   dateParametersToAlwaysFilterBy,
+  //   parametersToGetFromSearchParams,
+  //   processModelAvailableItems,
+  // ]);
 
   const processInstanceReportSaveTag = () => {
     if (processInstanceReportJustSaved) {
@@ -740,21 +735,6 @@ export default function ProcessInstanceListTable({
       return;
     }
 
-    // "columns": [
-    // {"Header": "id", "accessor": "id"},
-    // {
-    //   "Header": "process_model_display_name",
-    //   "accessor": "process_model_display_name",
-    // },
-    // {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-    // {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-    // {"Header": "status", "accessor": "status"},
-    // ],
-    // "filter_by": [
-    // {"field_name": "initiated_by_me", "field_value": "true"},
-    // {"field_name": "has_terminal_status", "field_value": "true"},
-    // ],
-    // "order_by": ["-start_in_seconds", "-id"],
     const postBody: ReportMetadata = {
       columns: [],
       filter_by: [],
@@ -789,16 +769,9 @@ export default function ProcessInstanceListTable({
       );
     }
 
-    // console.log('reportColumns()', reportColumns())
-    // const reportColumnsBase64 = encodeBase64(JSON.stringify(reportColumns()));
-    // queryParamString += `&report_columns=${reportColumnsBase64}`;
     postBody.columns = reportColumns();
-    // console.log('reportFilterBy()', reportFilterBy())
-    // const reportFilterByBase64 = encodeBase64(JSON.stringify(reportFilterBy()));
-    // queryParamString += `&report_filter_by=${reportFilterByBase64}`;
 
     if (processInitiatorSelection) {
-      // queryParamString += `&process_initiator_username=${processInitiatorSelection.username}`;
       addFieldValueToReportMetadata(
         postBody,
         'process_initiator_username',
@@ -828,11 +801,15 @@ export default function ProcessInstanceListTable({
 
     // http://localhost:7001/admin/process-instances/for-me?per_page=50&page=1&report_metadata_base64=eyJjb2x1bW5zIjpudWxsLCJmaWx0ZXJfYnkiOlt7ImZpZWxkX25hbWUiOiJwcm9jZXNzX3N0YXR1cyIsImZpZWxkX3ZhbHVlIjoiY29tcGxldGUifV0sIm9yZGVyX2J5IjpbXX0%3D
     // const queryParamString = `per_page=${perPage}&page=${page}`;
+
+    setListHasBeenFiltered(true);
     searchParams.set('per_page', perPage.toString());
     searchParams.set('page', page.toString());
-    const reportMetadataBase64 = encodeBase64(JSON.stringify(postBody));
-    searchParams.set('report_metadata_base64', reportMetadataBase64);
+
+    // const reportMetadataBase64 = encodeBase64(JSON.stringify(postBody));
+    // searchParams.set('report_metadata_base64', reportMetadataBase64);
     setSearchParams(searchParams);
+
     HttpService.makeCallToBackend({
       path: `${processInstanceApiSearchPath}?${queryParamString}`,
       httpMethod: 'POST',

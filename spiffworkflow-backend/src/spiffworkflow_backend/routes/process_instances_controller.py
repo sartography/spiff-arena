@@ -1,5 +1,7 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import base64
+from hashlib import sha256
+from spiffworkflow_backend.models.json_data import JsonDataModel # noqa: F401
 import json
 from typing import Any
 from typing import Dict
@@ -333,7 +335,25 @@ def process_instance_list(
         user=g.user,
     )
 
+    json_data_hash = sha256(json.dumps(body['report_metadata'], sort_keys=True).encode("utf8")).hexdigest()
+    TaskService.insert_or_update_json_data_dict({'hash': json_data_hash, 'data': body['report_metadata']})
+    db.session.commit()
+    # json_data = JsonDataModel.query.filter_by(json_data_hash)
+    response_json['report_hash'] = json_data_hash
+
     return make_response(jsonify(response_json), 200)
+
+
+def process_instance_report_metadata_show(
+    report_hash: str,
+) -> flask.wrappers.Response:
+    json_data = JsonDataModel.query.filter_by(hash=report_hash).first()
+    if json_data is None:
+        raise ApiError(
+            error_code="report_metadata_not_found",
+            message=f"Could not find report metadata for {report_hash}.",
+        )
+    return make_response(jsonify(json_data.data), 200)
 
 
 def process_instance_report_column_list(

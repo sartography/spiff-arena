@@ -357,6 +357,7 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, initiator_user, human_task_one)
+        import pdb; pdb.set_trace()
         assert (
             len(process_instance.active_human_tasks) == 0
         ), "expected 0 active human tasks after 2nd one is completed"
