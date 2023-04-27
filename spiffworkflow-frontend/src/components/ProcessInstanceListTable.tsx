@@ -134,7 +134,6 @@ export default function ProcessInstanceListTable({
   const [processInstances, setProcessInstances] = useState([]);
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
-  const [processInstanceFilters, setProcessInstanceFilters] = useState({});
 
   const oneHourInSeconds = 3600;
   const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
@@ -197,11 +196,10 @@ export default function ProcessInstanceListTable({
 
   const [processInstanceInitiatorOptions, setProcessInstanceInitiatorOptions] =
     useState<string[]>([]);
-  const [processInitiatorSelection, setProcessInitiatorSelection] =
-    useState<User | null>(null);
-  const [processInitiatorText, setProcessInitiatorText] = useState<
+  const [processInitiatorSelection, setProcessInitiatorSelection] = useState<
     string | null
   >(null);
+
   const [
     processInitiatorNotFoundErrorText,
     setProcessInitiatorNotFoundErrorText,
@@ -232,10 +230,12 @@ export default function ProcessInstanceListTable({
     inputText: string
   ) => {
     if (lastRequestedInitatorSearchTerm.current === result.username_prefix) {
-      setProcessInstanceInitiatorOptions(result.users);
+      setProcessInstanceInitiatorOptions(
+        result.users.map((user: User) => user.username)
+      );
       result.users.forEach((user: User) => {
         if (user.username === inputText) {
-          setProcessInitiatorSelection(user);
+          setProcessInitiatorSelection(user.username);
         }
       });
     }
@@ -272,69 +272,46 @@ export default function ProcessInstanceListTable({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  function setProcessInstancesFromResult(result: any) {
+
+  const setProcessInstancesFromResult = useCallback((result: any) => {
     setRequiresRefilter(false);
     const processInstancesFromApi = result.results;
     setProcessInstances(processInstancesFromApi);
     setPagination(result.pagination);
-    setProcessInstanceFilters(result.filters);
 
-    setReportMetadata(result.report.report_metadata);
-    // if (processInstanceReport) {
-    //   if (processInstanceReport.id > 0) {
-    //     setProcessInstanceReportSelection(processInstanceReport);
-    //   }
-    // }
+    setReportMetadata(result.report_metadata);
+  }, []);
+
+  const setProcessInstancesFromApplyFilter = (result: any) => {
+    setProcessInstancesFromResult(result);
     if (result.report_hash) {
       searchParams.set('report_hash', result.report_hash);
       setSearchParams(searchParams);
     }
-  }
+  };
 
+  // Useful to stop refreshing if an api call gets an error
+  // since those errors can make the page unusable in any way
   const clearRefreshRef = useRef<any>(null);
-  const stopRefreshing = (error: any) => {
+  const stopRefreshing = useCallback((error: any) => {
     if (clearRefreshRef.current) {
       clearRefreshRef.current();
     }
     if (error) {
       console.error(error);
     }
-  };
-
-  const getData = useCallback(() => {
-    console.log('WE DO STUFF');
-    stopRefreshing(null);
   }, []);
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
   useEffect(() => {
     if (!permissionsLoaded) {
-      return;
+      return undefined;
     }
 
     // we apparently cannot use a state set in a useEffect from within that same useEffect
     // so use a variable instead
     let processModelSelectionItemsForUseEffect: ProcessModel[] = [];
 
-    function setProcessInstancesFromResult(result: any) {
-      setRequiresRefilter(false);
-      const processInstancesFromApi = result.results;
-      setProcessInstances(processInstancesFromApi);
-      setPagination(result.pagination);
-      setProcessInstanceFilters(result.filters);
-      setReportMetadata(result.report.report_metadata);
-    }
-
-    // Useful to stop refreshing if an api call gets an error
-    // since those errors can make the page unusable in any way
-    const stopRefreshing = (error: any) => {
-      if (clearRefreshRef.current) {
-        clearRefreshRef.current();
-      }
-      if (error) {
-        console.error(error);
-      }
-    };
     function getProcessInstances(
       processInstanceReport: ProcessInstanceReport | null = null
     ) {
@@ -362,7 +339,7 @@ export default function ProcessInstanceListTable({
             );
             setShowFilterOptions(true);
           } else if (reportFilter.field_name === 'process_initiator_username') {
-            searchForProcessInitiator(reportFilter.field_value || '');
+            setProcessInitiatorSelection(reportFilter.field_value || '');
             setShowFilterOptions(true);
           } else if (reportFilter.field_name === 'process_model_identifier') {
             selectedProcessModelIdentifier =
@@ -416,8 +393,8 @@ export default function ProcessInstanceListTable({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
         httpMethod: 'POST',
-        failureCallback: getData,
-        onUnauthorized: getData,
+        failureCallback: stopRefreshing,
+        onUnauthorized: stopRefreshing,
         postBody: {
           report_metadata: reportMetadataBodyToUse,
         },
@@ -502,61 +479,10 @@ export default function ProcessInstanceListTable({
     additionalParams,
     processInstanceApiSearchPath,
     permissionsLoaded,
+    listHasBeenFiltered,
+    setProcessInstancesFromResult,
+    stopRefreshing,
   ]);
-
-  // // This sets the filter data using the saved reports returned from the initial instance_list query.
-  // // This could probably be merged into the main useEffect but it works here now.
-  // useEffect(() => {
-  //   const filters = processInstanceFilters as any;
-  //   // Object.keys(dateParametersToAlwaysFilterBy).forEach((paramName: string) => {
-  //   //   const dateFunctionToCall = dateParametersToAlwaysFilterBy[paramName][0];
-  //   //   const timeFunctionToCall = dateParametersToAlwaysFilterBy[paramName][1];
-  //   //   const paramValue = filters[paramName];
-  //   //   dateFunctionToCall('');
-  //   //   timeFunctionToCall('');
-  //   //   if (paramValue) {
-  //   //     const dateString = convertSecondsToFormattedDateString(
-  //   //       paramValue as any
-  //   //     );
-  //   //     dateFunctionToCall(dateString);
-  //   //     const timeString = convertSecondsToFormattedTimeHoursMinutes(
-  //   //       paramValue as any
-  //   //     );
-  //   //     timeFunctionToCall(timeString);
-  //   //     setShowFilterOptions(true);
-  //   //   }
-  //   // });
-  //
-  //   // setProcessModelSelection(null);
-  //   // processModelAvailableItems.forEach((item: any) => {
-  //   //   if (item.id === filters.process_model_identifier) {
-  //   //     setProcessModelSelection(item);
-  //   //   }
-  //   // });
-  //
-  //   if (filters.process_initiator_username) {
-  //     const functionToCall =
-  //       parametersToGetFromSearchParams.process_initiator_username;
-  //     functionToCall(filters.process_initiator_username);
-  //   }
-  //
-  //   const processStatusSelectedArray: string[] = [];
-  //   if (filters.process_status) {
-  //     PROCESS_STATUSES.forEach((processStatusOption: any) => {
-  //       const regex = new RegExp(`\\b${processStatusOption}\\b`);
-  //       if (filters.process_status.match(regex)) {
-  //         processStatusSelectedArray.push(processStatusOption);
-  //       }
-  //     });
-  //     setShowFilterOptions(true);
-  //   }
-  //   // setProcessStatusSelection(processStatusSelectedArray);
-  // }, [
-  //   processInstanceFilters,
-  //   dateParametersToAlwaysFilterBy,
-  //   parametersToGetFromSearchParams,
-  //   processModelAvailableItems,
-  // ]);
 
   const processInstanceReportSaveTag = () => {
     if (processInstanceReportJustSaved) {
@@ -656,20 +582,6 @@ export default function ProcessInstanceListTable({
     return [];
   };
 
-  // const reportFilterBy = () => {
-  //   if (reportMetadata) {
-  //   return reportMetadata.filter_by;
-  //   }
-  //   return null
-  // };
-
-  const navigateToNewReport = (queryParamString: string) => {
-    removeError();
-    setProcessInstanceReportJustSaved(null);
-    setProcessInstanceFilters({});
-    navigate(`${processInstanceListPathPrefix}?${queryParamString}`);
-  };
-
   const removeFieldFromReportMetadata = (
     postBody: ReportMetadata,
     fieldName: string
@@ -677,21 +589,21 @@ export default function ProcessInstanceListTable({
     const filtersToKeep = postBody.filter_by.filter(
       (rf: ReportFilter) => rf.field_name !== fieldName
     );
+    // eslint-disable-next-line no-param-reassign
     postBody.filter_by = filtersToKeep;
   };
 
-  const addFieldValueToReportMetadata = (
+  const insertOrUpdateFieldInReportMetadata = (
     postBody: ReportMetadata,
     fieldName: string,
     fieldValue: string
   ) => {
+    removeFieldFromReportMetadata(postBody, fieldName);
     if (fieldValue) {
       postBody.filter_by.push({
         field_name: fieldName,
         field_value: fieldValue,
       });
-    } else {
-      removeFieldFromReportMetadata(postBody, fieldName);
     }
   };
 
@@ -720,24 +632,29 @@ export default function ProcessInstanceListTable({
       };
     }
 
-    addFieldValueToReportMetadata(
+    insertOrUpdateFieldInReportMetadata(
       newReportMetadata,
       'start_from',
       startFromSeconds
     );
-    addFieldValueToReportMetadata(
+    insertOrUpdateFieldInReportMetadata(
       newReportMetadata,
       'start_to',
       startToSeconds
     );
-    addFieldValueToReportMetadata(
+    insertOrUpdateFieldInReportMetadata(
       newReportMetadata,
       'end_from',
       endFromSeconds
     );
-    addFieldValueToReportMetadata(newReportMetadata, 'end_to', endToSeconds);
+    insertOrUpdateFieldInReportMetadata(
+      newReportMetadata,
+      'end_to',
+      endToSeconds
+    );
+
     if (processStatusSelection.length > 0) {
-      addFieldValueToReportMetadata(
+      insertOrUpdateFieldInReportMetadata(
         newReportMetadata,
         'process_status',
         processStatusSelection.join(',')
@@ -747,7 +664,7 @@ export default function ProcessInstanceListTable({
     }
 
     if (processModelSelection) {
-      addFieldValueToReportMetadata(
+      insertOrUpdateFieldInReportMetadata(
         newReportMetadata,
         'process_model_identifier',
         processModelSelection.id
@@ -760,10 +677,10 @@ export default function ProcessInstanceListTable({
     }
 
     if (processInitiatorSelection) {
-      addFieldValueToReportMetadata(
+      insertOrUpdateFieldInReportMetadata(
         newReportMetadata,
         'process_initiator_username',
-        processInitiatorSelection.username
+        processInitiatorSelection
       );
     } else {
       removeFieldFromReportMetadata(
@@ -800,7 +717,7 @@ export default function ProcessInstanceListTable({
       failureCallback: stopRefreshing,
       onUnauthorized: stopRefreshing,
       successCallback: (result: any) => {
-        setProcessInstancesFromResult(result);
+        setProcessInstancesFromApplyFilter(result);
       },
     });
   };
@@ -892,7 +809,6 @@ export default function ProcessInstanceListTable({
     setEndToDate('');
     setEndToTime('');
     setProcessInitiatorSelection(null);
-    setProcessInitiatorText('');
     setRequiresRefilter(true);
     if (reportMetadata) {
       reportMetadata.filter_by = [];
@@ -929,35 +845,18 @@ export default function ProcessInstanceListTable({
   };
 
   const saveAsReportComponent = () => {
-    const {
-      valid,
-      startFromSeconds,
-      startToSeconds,
-      endFromSeconds,
-      endToSeconds,
-    } = calculateStartAndEndSeconds(false);
-
     const newReportMetadata = getNewReportMetadataBasedOnPageWidgets();
 
-    if (!valid || !reportMetadata || !newReportMetadata) {
+    if (!newReportMetadata) {
       return null;
     }
     return (
       <ProcessInstanceListSaveAsReport
         onSuccess={onSaveReportSuccess}
         buttonClassName="button-white-background narrow-button"
-        columnArray={reportColumns()}
-        orderBy=""
         buttonText="Save"
-        processModelSelection={processModelSelection}
-        processInitiatorSelection={processInitiatorSelection}
-        processStatusSelection={processStatusSelection}
         processInstanceReportSelection={processInstanceReportSelection}
         reportMetadata={newReportMetadata}
-        startFromSeconds={startFromSeconds}
-        startToSeconds={startToSeconds}
-        endFromSeconds={endFromSeconds}
-        endToSeconds={endToSeconds}
       />
     );
   };
@@ -1325,7 +1224,7 @@ export default function ProcessInstanceListTable({
                       items={processInstanceInitiatorOptions}
                       itemToString={(processInstanceInitatorOption: User) => {
                         if (processInstanceInitatorOption) {
-                          return processInstanceInitatorOption.username;
+                          return processInstanceInitatorOption;
                         }
                         return null;
                       }}
@@ -1343,7 +1242,7 @@ export default function ProcessInstanceListTable({
                     invalid={processInitiatorNotFoundErrorText !== ''}
                     invalidText={processInitiatorNotFoundErrorText}
                     onChange={(event: any) => {
-                      setProcessInitiatorText(event.target.value);
+                      setProcessInitiatorSelection(event.target.value);
                       setRequiresRefilter(true);
                     }}
                   />

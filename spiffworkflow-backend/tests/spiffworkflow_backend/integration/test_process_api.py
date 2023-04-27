@@ -25,9 +25,8 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_metadata import (
     ProcessInstanceMetadataModel,
 )
-from spiffworkflow_backend.models.process_instance_report import (
-    ProcessInstanceReportModel,
-)
+from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
+from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
@@ -1975,7 +1974,7 @@ class TestProcessApi(BaseTest):
         self.logged_in_headers(with_super_admin_user)
 
         report_identifier = "testreport"
-        report_metadata = {"order_by": ["month"]}
+        report_metadata: ReportMetadata = {"order_by": ["month"], "filter_by": [], "columns": []}
         ProcessInstanceReportModel.create_with_attributes(
             identifier=report_identifier,
             report_metadata=report_metadata,
@@ -3078,12 +3077,12 @@ class TestProcessApi(BaseTest):
         ).all()
         assert len(process_instance_metadata) == 3
 
-        report_metadata = {
+        report_metadata: ReportMetadata = {
             "columns": [
-                {"Header": "ID", "accessor": "id"},
-                {"Header": "Status", "accessor": "status"},
-                {"Header": "Key One", "accessor": "key1"},
-                {"Header": "Key Two", "accessor": "key2"},
+                {"Header": "ID", "accessor": "id", "filterable": False},
+                {"Header": "Status", "accessor": "status", "filterable": False},
+                {"Header": "Key One", "accessor": "key1", "filterable": False},
+                {"Header": "Key Two", "accessor": "key2", "filterable": False},
             ],
             "order_by": ["status"],
             "filter_by": [],
@@ -3130,11 +3129,11 @@ class TestProcessApi(BaseTest):
         self.create_process_instance_from_process_model(process_model=process_model, user=user_one)
         self.create_process_instance_from_process_model(process_model=process_model, user=with_super_admin_user)
 
-        dne_report_metadata = {
+        dne_report_metadata: ReportMetadata = {
             "columns": [
-                {"Header": "ID", "accessor": "id"},
-                {"Header": "Status", "accessor": "status"},
-                {"Header": "Process Initiator", "accessor": "username"},
+                {"Header": "ID", "accessor": "id", "filterable": False},
+                {"Header": "Status", "accessor": "status", "filterable": False},
+                {"Header": "Process Initiator", "accessor": "username", "filterable": False},
             ],
             "order_by": ["status"],
             "filter_by": [
@@ -3146,11 +3145,11 @@ class TestProcessApi(BaseTest):
             ],
         }
 
-        user_one_report_metadata = {
+        user_one_report_metadata: ReportMetadata = {
             "columns": [
-                {"Header": "ID", "accessor": "id"},
-                {"Header": "Status", "accessor": "status"},
-                {"Header": "Process Initiator", "accessor": "username"},
+                {"Header": "ID", "accessor": "id", "filterable": False},
+                {"Header": "Status", "accessor": "status", "filterable": False},
+                {"Header": "Process Initiator", "accessor": "username", "filterable": False},
             ],
             "order_by": ["status"],
             "filter_by": [
@@ -3308,12 +3307,13 @@ class TestProcessApi(BaseTest):
         processor.do_engine_steps(save=True)
         assert process_instance_two.status == "complete"
 
-        report_metadata = {
+        report_metadata: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id"},
-                {"Header": "Time", "accessor": "time_ns"},
+                {"Header": "id", "accessor": "id", "filterable": True},
+                {"Header": "Time", "accessor": "time_ns", "filterable": True},
             ],
             "order_by": ["time_ns"],
+            "filter_by": [],
         }
         report_one = ProcessInstanceReportModel.create_with_attributes(
             identifier="report_one",
@@ -3333,10 +3333,11 @@ class TestProcessApi(BaseTest):
 
         report_metadata = {
             "columns": [
-                {"Header": "id", "accessor": "id"},
-                {"Header": "Time", "accessor": "time_ns"},
+                {"Header": "id", "accessor": "id", "filterable": True},
+                {"Header": "Time", "accessor": "time_ns", "filterable": True},
             ],
             "order_by": ["-time_ns"],
+            "filter_by": [],
         }
         report_two = ProcessInstanceReportModel.create_with_attributes(
             identifier="report_two",

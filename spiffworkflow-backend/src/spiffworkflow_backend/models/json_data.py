@@ -1,8 +1,10 @@
 from __future__ import annotations
+
 import json
 from hashlib import sha256
-from flask import current_app
 from typing import TypedDict
+
+from flask import current_app
 from sqlalchemy.dialects.mysql import insert as mysql_insert
 from sqlalchemy.dialects.postgresql import insert as postgres_insert
 
@@ -76,6 +78,6 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
     @classmethod
     def create_and_insert_json_data_from_dict(cls, data: dict) -> str:
         json_data_hash = sha256(json.dumps(data, sort_keys=True).encode("utf8")).hexdigest()
-        cls.insert_or_update_json_data_dict({'hash': json_data_hash, 'data': data})
+        cls.insert_or_update_json_data_dict({"hash": json_data_hash, "data": data})
         db.session.commit()
         return json_data_hash

@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from spiffworkflow_backend.models.json_data import JsonDataModel # noqa: F401
 import os
 import uuid
 from sys import exc_info
@@ -37,6 +36,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
