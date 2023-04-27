@@ -29,6 +29,10 @@
   border-color: none;
 }
 
+.cds--loading__stroke {
+  stroke: gray;
+}
+
 /* make this a little less prominent so the actual human beings completing tasks stand out */
 .system-user-log-entry {
   color: #B0B0B0;
@@ -423,4 +427,25 @@ svg.notification-icon {
 .please-press-filter-button {
   margin-bottom: 1em;
   font-weight: bold;
+}
+
+
+.user_instructions_0 {
+  filter: opacity(1);
+}
+
+.user_instructions_1 {
+  filter: opacity(60%);
+}
+
+.user_instructions_2 {
+  filter: opacity(40%);
+}
+
+.user_instructions_3 {
+  filter: opacity(20%);
+}
+
+.user_instructions_4 {
+  filter: opacity(10%);
 }

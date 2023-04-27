@@ -20,6 +20,7 @@ from flask import make_response
 from flask import stream_with_context
 from flask.wrappers import Response
 from jinja2 import TemplateSyntaxError
+from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
@@ -385,45 +386,88 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: Optiona
 
 def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, Optional[str], None]:
     processor = ProcessInstanceProcessor(process_instance)
-    reported_ids = []  # bit of an issue with end tasks showing as getting completed twice.
-    spiff_task = processor.next_task()
-    task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-    last_task = None
-    while last_task != spiff_task:
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+    reported_ids = []  # A list of all the ids reported by this endpoint so far.
+
+    def get_reportable_tasks() -> Any:
+        return processor.bpmn_process_instance.get_tasks(
+            TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
+        )
+
+    def render_instructions(spiff_task: SpiffTask) -> str:
+        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
         extensions = TaskService.get_extensions_from_task_model(task_model)
-        instructions = _render_instructions_for_end_user(task_model, extensions)
-        if instructions and spiff_task.id not in reported_ids:
-            reported_ids.append(spiff_task.id)
-            task.properties = extensions
-            yield f"data: {current_app.json.dumps(task)} \n\n"
-        last_task = spiff_task
+        return _render_instructions_for_end_user(task_model, extensions)
+
+    tasks = get_reportable_tasks()
+    while True:
+        for spiff_task in tasks:
+            try:
+                instructions = render_instructions(spiff_task)
+            except Exception as e:
+                api_error = ApiError(
+                    error_code="engine_steps_error",
+                    message=f"Failed to complete an automated task. Error was: {str(e)}",
+                    status_code=400,
+                )
+                yield f"data: {current_app.json.dumps(api_error)} \n\n"
+                raise e
+            if instructions and spiff_task.id not in reported_ids:
+                task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
+                task.properties = {"instructionsForEndUser": instructions}
+                yield f"data: {current_app.json.dumps(task)} \n\n"
+                reported_ids.append(spiff_task.id)
+            if spiff_task.state == TaskState.READY:
+                try:
+                    processor.do_engine_steps(execution_strategy_name="one_at_a_time")
+                    processor.do_engine_steps(execution_strategy_name="run_until_user_message")
+                    processor.save()  # Fixme - maybe find a way not to do this on every loop?
+                except WorkflowTaskException as wfe:
+                    api_error = ApiError.from_workflow_exception(
+                        "engine_steps_error", "Failed complete an automated task.", exp=wfe
+                    )
+                    yield f"data: {current_app.json.dumps(api_error)} \n\n"
+                    return
+                except Exception as e:
+                    api_error = ApiError(
+                        error_code="engine_steps_error",
+                        message=f"Failed to complete an automated task. Error was: {str(e)}",
+                        status_code=400,
+                    )
+                    yield f"data: {current_app.json.dumps(api_error)} \n\n"
+                    return
+        processor.bpmn_process_instance.refresh_waiting_tasks()
+        ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
+        tasks = get_reportable_tasks()
+        if ready_engine_task_count == 0:
+            break  # No more tasks to report
+
+    spiff_task = processor.next_task()
+    task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+    if task.id not in reported_ids:
         try:
-            processor.do_engine_steps(execution_strategy_name="one_at_a_time")
-            processor.do_engine_steps(execution_strategy_name="run_until_user_message")
-            processor.save()  # Fixme - maybe find a way not to do this on every loop?
-        except WorkflowTaskException as wfe:
-            api_error = ApiError.from_workflow_exception(
-                "engine_steps_error", "Failed complete an automated task.", exp=wfe
-            )
-            yield f"data: {current_app.json.dumps(api_error)} \n\n"
+            instructions = render_instructions(spiff_task)
         except Exception as e:
             api_error = ApiError(
                 error_code="engine_steps_error",
-                message=f"Failed complete an automated task. Error was: {str(e)}",
+                message=f"Failed to complete an automated task. Error was: {str(e)}",
                 status_code=400,
             )
             yield f"data: {current_app.json.dumps(api_error)} \n\n"
-
-        # Note, this has to be done in case someone leaves the page,
-        # which can otherwise cancel this function and leave completed tasks un-registered.
-        spiff_task = processor.next_task()
-        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-
-    # Always provide some response, in the event no instructions were provided.
-    if len(reported_ids) == 0:
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+            raise e
+        task.properties = {"instructionsForEndUser": instructions}
         yield f"data: {current_app.json.dumps(task)} \n\n"
+
+
+def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
+    return len(
+        list(
+            [
+                t
+                for t in bpmn_process_instance.get_tasks(TaskState.READY)
+                if bpmn_process_instance._is_engine_task(t.task_spec)
+            ]
+        )
+    )
 
 
 def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str, Optional[str], None]:
