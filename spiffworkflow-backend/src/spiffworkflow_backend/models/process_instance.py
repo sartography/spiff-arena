@@ -95,6 +95,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     start_in_seconds: int | None = db.Column(db.Integer, index=True)
     end_in_seconds: int | None = db.Column(db.Integer, index=True)
+    task_updated_at_in_seconds: int = db.Column(db.Integer, nullable=True)
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
     status: str = db.Column(db.String(50), index=True)
