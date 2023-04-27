@@ -141,7 +141,7 @@ export default function ProcessInterstitial() {
           <h4 className="heading-compact-01">Waiting on Someone Else</h4>
           <p>
             This next task is assigned to a different person or team. There is
-            no action for you take at this time.
+            no action for you to take at this time.
           </p>
         </>
       );
