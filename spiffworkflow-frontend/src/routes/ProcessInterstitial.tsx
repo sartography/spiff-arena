@@ -120,12 +120,12 @@ export default function ProcessInterstitial() {
     if (index === 0) {
       return (
         <div style={{ padding: '10px 0 50px 0' }}>
-          <hr/>
+          <hr />
         </div>
-      )
+      );
     }
-    return "";
-  }
+    return '';
+  };
 
   function capitalize(str: string): string {
     if (str && str.length > 0) {
