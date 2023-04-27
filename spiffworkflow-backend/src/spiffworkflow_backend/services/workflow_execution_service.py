@@ -306,13 +306,6 @@ class RunUntilUserTaskOrMessageExecutionStrategy(ExecutionStrategy):
     """
 
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
-        bpmn_process_instance.refresh_waiting_tasks()
-        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
-        if len(engine_steps) > 0:
-            self.delegate.will_complete_task(engine_steps[0])
-            engine_steps[0].run()
-            self.delegate.did_complete_task(engine_steps[0])
-
         should_continue = True
         bpmn_process_instance.refresh_waiting_tasks()
         engine_steps = self.get_ready_engine_steps(bpmn_process_instance)

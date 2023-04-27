@@ -406,6 +406,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
                 try:
+                    processor.do_engine_steps(execution_strategy_name="one_at_a_time")
                     processor.do_engine_steps(execution_strategy_name="run_until_user_message")
                     processor.save()  # Fixme - maybe find a way not to do this on every loop?
                 except WorkflowTaskException as wfe:
@@ -432,6 +433,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
     if task.id not in reported_ids:
         task_model = TaskModel.query.filter_by(guid=str(task.id)).first()
         extensions = TaskService.get_extensions_from_task_model(task_model)
+        instructions = _render_instructions_for_end_user(task_model, extensions)
         task.properties = extensions
         yield f"data: {current_app.json.dumps(task)} \n\n"
 
