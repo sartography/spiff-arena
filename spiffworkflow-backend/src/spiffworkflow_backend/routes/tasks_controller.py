@@ -441,6 +441,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
         if ready_engine_task_count == 0:
             break  # No more tasks to report
 
+    spiff_task = processor.next_task()
     task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
     if task.id not in reported_ids:
         try:
