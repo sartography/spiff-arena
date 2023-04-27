@@ -103,18 +103,29 @@ export default function ProcessInterstitial() {
   const getReturnHomeButton = (index: number) => {
     if (
       index === 0 &&
+      state !== 'REDIRECTING' &&
       ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED', 'READY'].includes(getStatus())
     )
       return (
-        <div style={{ padding: '10px 0 50px 0' }}>
+        <div style={{ padding: '10px 0 0 0' }}>
           <Button kind="secondary" onClick={() => navigate(`/tasks`)}>
             Return to Home
           </Button>
-          <hr />
         </div>
       );
     return '';
   };
+
+  const getHr = (index: number) => {
+    if (index === 0) {
+      return (
+        <div style={{ padding: '10px 0 50px 0' }}>
+          <hr/>
+        </div>
+      )
+    }
+    return "";
+  }
 
   function capitalize(str: string): string {
     if (str && str.length > 0) {
@@ -188,7 +199,7 @@ export default function ProcessInterstitial() {
         <br />
         {data.map((d, index) => (
           <Grid fullWidth style={{ marginBottom: '1em' }}>
-            <Column md={6} lg={6} sm={4}>
+            <Column md={6} lg={8} sm={4}>
               <div
                 className={
                   index < 4
@@ -199,6 +210,7 @@ export default function ProcessInterstitial() {
                 {userMessage(d)}
               </div>
               {getReturnHomeButton(index)}
+              {getHr(index)}
             </Column>
           </Grid>
         ))}

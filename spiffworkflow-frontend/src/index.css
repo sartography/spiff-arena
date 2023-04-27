@@ -435,15 +435,15 @@ svg.notification-icon {
 }
 
 .user_instructions_1 {
-  filter: opacity(70%);
+  filter: opacity(60%);
 }
 
 .user_instructions_2 {
-  filter: opacity(50%);
+  filter: opacity(40%);
 }
 
 .user_instructions_3 {
-  filter: opacity(30%);
+  filter: opacity(20%);
 }
 
 .user_instructions_4 {
