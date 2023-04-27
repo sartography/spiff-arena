@@ -384,6 +384,9 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: Optiona
     return ""
 
 
+
+
+
 def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, Optional[str], None]:
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
@@ -393,15 +396,28 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
         )
 
+    def render_instructions(spiff_task: SpiffTask):
+        task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
+        extensions = TaskService.get_extensions_from_task_model(task_model)
+        return _render_instructions_for_end_user(task_model, extensions)
+
+
     tasks = get_reportable_tasks()
     while True:
         for spiff_task in tasks:
-            task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
-            extensions = TaskService.get_extensions_from_task_model(task_model)
-            instructions = _render_instructions_for_end_user(task_model, extensions)
+            try:
+                instructions = render_instructions(spiff_task)
+            except Exception as e:
+                api_error = ApiError(
+                    error_code="engine_steps_error",
+                    message=f"Failed to complete an automated task. Error was: {str(e)}",
+                    status_code=400,
+                )
+                yield f"data: {current_app.json.dumps(api_error)} \n\n"
+                raise e
             if instructions and spiff_task.id not in reported_ids:
                 task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
-                task.properties = extensions
+                task.properties = {'instructionsForEndUser': instructions}
                 yield f"data: {current_app.json.dumps(task)} \n\n"
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
@@ -418,7 +434,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                 except Exception as e:
                     api_error = ApiError(
                         error_code="engine_steps_error",
-                        message=f"Failed complete an automated task. Error was: {str(e)}",
+                        message=f"Failed to complete an automated task. Error was: {str(e)}",
                         status_code=400,
                     )
                     yield f"data: {current_app.json.dumps(api_error)} \n\n"
@@ -431,10 +447,17 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
 
     task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
     if task.id not in reported_ids:
-        task_model = TaskModel.query.filter_by(guid=str(task.id)).first()
-        extensions = TaskService.get_extensions_from_task_model(task_model)
-        instructions = _render_instructions_for_end_user(task_model, extensions)
-        task.properties = extensions
+        try:
+            instructions = render_instructions(spiff_task)
+        except Exception as e:
+            api_error = ApiError(
+                error_code="engine_steps_error",
+                message=f"Failed to complete an automated task. Error was: {str(e)}",
+                status_code=400,
+            )
+            yield f"data: {current_app.json.dumps(api_error)} \n\n"
+            raise e
+        task.properties = []
         yield f"data: {current_app.json.dumps(task)} \n\n"
 
 
