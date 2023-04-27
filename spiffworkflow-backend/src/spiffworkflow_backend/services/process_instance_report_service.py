@@ -412,11 +412,16 @@ class ProcessInstanceReportService:
     ) -> list[dict]:
         """Add_metadata_columns_to_process_instance."""
         results = []
+        non_metadata_columns = cls.non_metadata_columns()
         for process_instance_row in process_instance_sqlalchemy_rows:
             process_instance_mapping = process_instance_row._mapping
             process_instance_dict = process_instance_row[0].serialized
+            # import pdb; pdb.set_trace()
             for metadata_column in metadata_columns:
+                # if metadata_column["accessor"] not in non_metadata_columns:
+                # if metadata_column["accessor"] not in cls.process_instance_stock_columns():
                 if metadata_column["accessor"] not in process_instance_dict:
+                    # import pdb; pdb.set_trace()
                     process_instance_dict[metadata_column["accessor"]] = process_instance_mapping[
                         metadata_column["accessor"]
                     ]
@@ -476,6 +481,14 @@ class ProcessInstanceReportService:
     def get_column_names_for_model(cls, model: Type[SpiffworkflowBaseDBModel]) -> list[str]:
         """Get_column_names_for_model."""
         return [i.name for i in model.__table__.columns]
+
+    @classmethod
+    def process_instance_stock_columns(cls) -> list[str]:
+        return cls.get_column_names_for_model(ProcessInstanceModel)
+
+    @classmethod
+    def non_metadata_columns(cls) -> list[str]:
+        return cls.process_instance_stock_columns() + ['process_initiator_username']
 
     @classmethod
     def builtin_column_options(cls) -> list[dict]:
@@ -663,16 +676,15 @@ class ProcessInstanceReportService:
             process_instance_query = process_instance_query.filter(UserGroupAssignmentModel.user_id == user.id)
 
         instance_metadata_aliases = {}
-        report_column_list = cls.get_filter_value(filters, 'report_column_list')
-        report_filter_by_list = cls.get_filter_value(filters, 'report_filter_by_list')
-        stock_columns = cls.get_column_names_for_model(ProcessInstanceModel)
-        if isinstance(report_column_list, list):
-            process_instance_report.report_metadata["columns"] = report_column_list
-        if isinstance(report_filter_by_list, list):
-            process_instance_report.report_metadata["filter_by"] = report_filter_by_list
+        # print(f"report_metadata['columns']: {report_metadata['columns']}")
+        # import pdb; pdb.set_trace()
+        if report_metadata['columns'] and len(report_metadata['columns']) > 0:
+            process_instance_report.report_metadata["columns"] = report_metadata['columns']
+        if report_metadata['filter_by'] and len(report_metadata['filter_by']) > 0:
+            process_instance_report.report_metadata["filter_by"] = report_metadata['filter_by']
 
         for column in process_instance_report.report_metadata["columns"]:
-            if column["accessor"] in stock_columns:
+            if column["accessor"] in cls.non_metadata_columns():
                 continue
             instance_metadata_alias = aliased(ProcessInstanceMetadataModel)
             instance_metadata_aliases[column["accessor"]] = instance_metadata_alias
@@ -699,32 +711,33 @@ class ProcessInstanceReportService:
                 instance_metadata_alias, and_(*conditions), isouter=isouter
             ).add_columns(func.max(instance_metadata_alias.value).label(column["accessor"]))
 
-        order_by_query_array = []
-        order_by_array = process_instance_report.report_metadata["order_by"]
-        if len(order_by_array) < 1:
-            order_by_array = ProcessInstanceReportModel.default_order_by()
-        for order_by_option in order_by_array:
-            attribute = re.sub("^-", "", order_by_option)
-            if attribute in stock_columns:
-                if order_by_option.startswith("-"):
-                    order_by_query_array.append(getattr(ProcessInstanceModel, attribute).desc())
-                else:
-                    order_by_query_array.append(getattr(ProcessInstanceModel, attribute).asc())
-            elif attribute in instance_metadata_aliases:
-                if order_by_option.startswith("-"):
-                    order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).desc())
-                else:
-                    order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).asc())
+        # order_by_query_array = []
+        # order_by_array = process_instance_report.report_metadata["order_by"]
+        # if len(order_by_array) < 1:
+        #     order_by_array = ProcessInstanceReportModel.default_order_by()
+        # for order_by_option in order_by_array:
+        #     attribute = re.sub("^-", "", order_by_option)
+        #     if attribute in cls.process_instance_stock_columns():
+        #         if order_by_option.startswith("-"):
+        #             order_by_query_array.append(getattr(ProcessInstanceModel, attribute).desc())
+        #         else:
+        #             order_by_query_array.append(getattr(ProcessInstanceModel, attribute).asc())
+        #     elif attribute in instance_metadata_aliases:
+        #         if order_by_option.startswith("-"):
+        #             order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).desc())
+        #         else:
+        #             order_by_query_array.append(func.max(instance_metadata_aliases[attribute].value).asc())
 
         process_instances = (
             process_instance_query.group_by(ProcessInstanceModel.id)
             .add_columns(ProcessInstanceModel.id)
-            .order_by(*order_by_query_array)
+            # .order_by(*order_by_query_array)
             .paginate(page=page, per_page=per_page, error_out=False)
         )
         results = cls.add_metadata_columns_to_process_instance(
             process_instances.items, process_instance_report.report_metadata["columns"]
         )
+        # import pdb; pdb.set_trace()
 
         for value in cls.check_filter_value(filters, 'oldest_open_human_task_fields'):
             results = cls.add_human_task_fields(results, value)
