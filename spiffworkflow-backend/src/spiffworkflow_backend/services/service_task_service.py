@@ -1,6 +1,5 @@
 """ServiceTask_service."""
 import json
-import logging
 from typing import Any
 
 import requests
