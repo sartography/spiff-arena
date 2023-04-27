@@ -148,6 +148,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /debug/test-raise-error:
+    get:
+      operationId: spiffworkflow_backend.routes.debug_controller.test_raise_error
+      summary: Returns an unhandled exception that should notify sentry, if sentry is configured
+      tags:
+        - Status
+      responses:
+        "500":
+          description: The server raises a test error as expected.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
+
   /process-groups:
     parameters:
       - name: process_group_identifier
