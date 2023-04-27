@@ -2,7 +2,8 @@
 import base64
 import hashlib
 import time
-from datetime import datetime, timezone
+from datetime import datetime
+from datetime import timezone
 from typing import Any
 from typing import Dict
 from typing import Generator
@@ -102,7 +103,7 @@ class ProcessInstanceService:
             event_value = waiting_event.get("value")
             if event_value is not None:
                 event_datetime = TimerEventDefinition.get_datetime(event_value)
-                return event_datetime > now_in_utc
+                return event_datetime > now_in_utc  # type: ignore
         return False
 
     @classmethod
