@@ -1298,6 +1298,29 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
 
+  /process-instances/report-metadata/{report_hash}:
+    parameters:
+      - name: report_hash
+        in: path
+        required: true
+        description: The unique id of an existing report
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_metadata_show
+      summary: Returns the metadata associated with a given report hash.
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Workflow.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+
   /process-instances/reports/{report_id}:
     parameters:
       - name: report_id
