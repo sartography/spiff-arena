@@ -310,6 +310,7 @@ class AuthorizationService:
         swagger_functions = ["get_json_spec"]
         authentication_exclusion_list = [
             "status",
+            "test_raise_error",
             "authentication_callback",
             "github_webhook_receive",
         ]
