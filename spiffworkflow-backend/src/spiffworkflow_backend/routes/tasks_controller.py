@@ -384,9 +384,6 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: Optiona
     return ""
 
 
-
-
-
 def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, Optional[str], None]:
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
@@ -396,11 +393,10 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
             TaskState.WAITING | TaskState.STARTED | TaskState.READY | TaskState.ERROR
         )
 
-    def render_instructions(spiff_task: SpiffTask):
+    def render_instructions(spiff_task: SpiffTask) -> str:
         task_model = TaskModel.query.filter_by(guid=str(spiff_task.id)).first()
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
-
 
     tasks = get_reportable_tasks()
     while True:
@@ -417,7 +413,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                 raise e
             if instructions and spiff_task.id not in reported_ids:
                 task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
-                task.properties = {'instructionsForEndUser': instructions}
+                task.properties = {"instructionsForEndUser": instructions}
                 yield f"data: {current_app.json.dumps(task)} \n\n"
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
@@ -457,7 +453,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
             )
             yield f"data: {current_app.json.dumps(api_error)} \n\n"
             raise e
-        task.properties = []
+        task.properties = {"instructionsForEndUser": instructions}
         yield f"data: {current_app.json.dumps(task)} \n\n"
 
 
