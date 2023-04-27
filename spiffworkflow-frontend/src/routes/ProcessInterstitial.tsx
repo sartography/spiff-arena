@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
-import { Loading, Grid, Column } from '@carbon/react';
+import { Loading, Grid, Column, Button } from '@carbon/react';
 import { BACKEND_BASE_URL } from '../config';
 import { getBasicHeaders } from '../services/HttpService';
 
@@ -35,7 +35,7 @@ export default function ProcessInterstitial() {
           if ('error_code' in retValue) {
             addError(retValue);
           } else {
-            setData((prevData) => [...prevData, retValue]);
+            setData((prevData) => [retValue, ...prevData]);
             setLastTask(retValue);
           }
         },
@@ -100,6 +100,33 @@ export default function ProcessInterstitial() {
     }
   };
 
+  const getReturnHomeButton = (index: number) => {
+    if (
+      index === 0 &&
+      state !== 'REDIRECTING' &&
+      ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED', 'READY'].includes(getStatus())
+    )
+      return (
+        <div style={{ padding: '10px 0 0 0' }}>
+          <Button kind="secondary" onClick={() => navigate(`/tasks`)}>
+            Return to Home
+          </Button>
+        </div>
+      );
+    return '';
+  };
+
+  const getHr = (index: number) => {
+    if (index === 0) {
+      return (
+        <div style={{ padding: '10px 0 50px 0' }}>
+          <hr />
+        </div>
+      );
+    }
+    return '';
+  };
+
   function capitalize(str: string): string {
     if (str && str.length > 0) {
       return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
@@ -109,7 +136,15 @@ export default function ProcessInterstitial() {
 
   const userMessage = (myTask: ProcessInstanceTask) => {
     if (!myTask.can_complete && userTasks.includes(myTask.type)) {
-      return <div>This next task must be completed by a different person.</div>;
+      return (
+        <>
+          <h4 className="heading-compact-01">Waiting on Someone Else</h4>
+          <p>
+            This next task is assigned to a different person or team. There is
+            no action for you to take at this time.
+          </p>
+        </>
+      );
     }
     if (shouldRedirect(myTask)) {
       return <div>Redirecting you to the next task now ...</div>;
@@ -120,7 +155,10 @@ export default function ProcessInterstitial() {
 
     return (
       <div>
-        <InstructionsForEndUser task={myTask} />
+        <InstructionsForEndUser
+          task={myTask}
+          defaultMessage="There are no additional instructions or information for this task."
+        />
       </div>
     );
   };
@@ -147,7 +185,7 @@ export default function ProcessInterstitial() {
             ],
           ]}
         />
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {getStatusImage()}
           <div>
             <h1 style={{ marginBottom: '0em' }}>
@@ -159,13 +197,20 @@ export default function ProcessInterstitial() {
         </div>
         <br />
         <br />
-        {data.map((d) => (
+        {data.map((d, index) => (
           <Grid fullWidth style={{ marginBottom: '1em' }}>
-            <Column md={2} lg={4} sm={2}>
-              Task: <em>{d.title}</em>
-            </Column>
-            <Column md={6} lg={6} sm={4}>
-              {userMessage(d)}
+            <Column md={6} lg={8} sm={4}>
+              <div
+                className={
+                  index < 4
+                    ? `user_instructions_${index}`
+                    : `user_instructions_4`
+                }
+              >
+                {userMessage(d)}
+              </div>
+              {getReturnHomeButton(index)}
+              {getHr(index)}
             </Column>
           </Grid>
         ))}

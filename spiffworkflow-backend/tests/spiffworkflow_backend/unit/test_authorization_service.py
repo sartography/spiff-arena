@@ -296,6 +296,7 @@ class TestAuthorizationService(BaseTest):
             ("/process-instances/reports/*", "read"),
             ("/process-instances/reports/*", "update"),
             ("/processes", "read"),
+            ("/processes/callers", "read"),
             ("/service-tasks", "read"),
             ("/tasks/*", "create"),
             ("/tasks/*", "delete"),

@@ -220,14 +220,15 @@ class TaskService:
         if task_model.state == "COMPLETED":
             event_type = ProcessInstanceEventType.task_completed.value
             timestamp = task_model.end_in_seconds or task_model.start_in_seconds or time.time()
-            process_instance_event, _process_instance_error_detail = (
-                ProcessInstanceTmpService.add_event_to_process_instance(
-                    self.process_instance,
-                    event_type,
-                    task_guid=task_model.guid,
-                    timestamp=timestamp,
-                    add_to_db_session=False,
-                )
+            (
+                process_instance_event,
+                _process_instance_error_detail,
+            ) = ProcessInstanceTmpService.add_event_to_process_instance(
+                self.process_instance,
+                event_type,
+                task_guid=task_model.guid,
+                timestamp=timestamp,
+                add_to_db_session=False,
             )
             self.process_instance_events[task_model.guid] = process_instance_event
 
@@ -454,7 +455,6 @@ class TaskService:
                     spiff_task,
                     self.bpmn_definition_to_task_definitions_mappings,
                 )
-
             self.update_task_model(task_model, spiff_task)
             self.task_models[task_model.guid] = task_model
 
