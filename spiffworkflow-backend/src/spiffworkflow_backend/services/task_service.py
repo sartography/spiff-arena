@@ -8,7 +8,6 @@ from typing import TypedDict
 from typing import Union
 from uuid import UUID
 
-from flask import current_app
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
@@ -20,7 +19,8 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.json_data import JsonDataDict, JsonDataModel  # noqa: F401
+from spiffworkflow_backend.models.json_data import JsonDataDict
+from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventModel
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType

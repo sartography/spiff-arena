@@ -6,27 +6,11 @@ import {
   Modal,
   // @ts-ignore
 } from '@carbon/react';
-import {
-  ReportFilter,
-  ProcessInstanceReport,
-  ProcessModel,
-  ReportColumn,
-  ReportMetadata,
-  User,
-} from '../interfaces';
+import { ProcessInstanceReport, ReportMetadata } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 type OwnProps = {
   onSuccess: (..._args: any[]) => any;
-  columnArray: ReportColumn[];
-  orderBy: string;
-  processModelSelection: ProcessModel | null;
-  processInitiatorSelection: User | null;
-  processStatusSelection: string[];
-  startFromSeconds: string | null;
-  startToSeconds: string | null;
-  endFromSeconds: string | null;
-  endToSeconds: string | null;
   buttonText?: string;
   buttonClassName?: string;
   processInstanceReportSelection?: ProcessInstanceReport | null;
@@ -35,16 +19,7 @@ type OwnProps = {
 
 export default function ProcessInstanceListSaveAsReport({
   onSuccess,
-  columnArray,
-  orderBy,
-  processModelSelection,
-  processInitiatorSelection,
   processInstanceReportSelection,
-  processStatusSelection,
-  startFromSeconds,
-  startToSeconds,
-  endFromSeconds,
-  endToSeconds,
   buttonClassName,
   buttonText = 'Save as Perspective',
   reportMetadata,
@@ -74,74 +49,6 @@ export default function ProcessInstanceListSaveAsReport({
 
   const addProcessInstanceReport = (event: any) => {
     event.preventDefault();
-
-    // // TODO: make a field to set this
-    // let orderByArray = ['-start_in_seconds', '-id'];
-    // if (orderBy) {
-    //   orderByArray = orderBy.split(',').filter((n) => n);
-    // }
-    // const filterByArray: any = [];
-    //
-    // if (processModelSelection) {
-    //   filterByArray.push({
-    //     field_name: 'process_model_identifier',
-    //     field_value: processModelSelection.id,
-    //   });
-    // }
-    //
-    // if (processInitiatorSelection) {
-    //   filterByArray.push({
-    //     field_name: 'process_initiator_username',
-    //     field_value: processInitiatorSelection.username,
-    //   });
-    // }
-    //
-    // if (processStatusSelection.length > 0) {
-    //   filterByArray.push({
-    //     field_name: 'process_status',
-    //     field_value: processStatusSelection.join(','),
-    //     operator: 'in',
-    //   });
-    // }
-    //
-    // if (startFromSeconds) {
-    //   filterByArray.push({
-    //     field_name: 'start_from',
-    //     field_value: startFromSeconds,
-    //   });
-    // }
-    //
-    // if (startToSeconds) {
-    //   filterByArray.push({
-    //     field_name: 'start_to',
-    //     field_value: startToSeconds,
-    //   });
-    // }
-    //
-    // if (endFromSeconds) {
-    //   filterByArray.push({
-    //     field_name: 'end_from',
-    //     field_value: endFromSeconds,
-    //   });
-    // }
-    //
-    // if (endToSeconds) {
-    //   filterByArray.push({
-    //     field_name: 'end_to',
-    //     field_value: endToSeconds,
-    //   });
-    // }
-    //
-    // reportMetadata.filter_by.forEach((reportFilter: ReportFilter) => {
-    //   columnArray.forEach((reportColumn: ReportColumn) => {
-    //     if (
-    //       reportColumn.accessor === reportFilter.field_name &&
-    //       reportColumn.filterable
-    //     ) {
-    //       filterByArray.push(reportFilter);
-    //     }
-    //   });
-    // });
 
     let path = `/process-instances/reports`;
     let httpMethod = 'POST';

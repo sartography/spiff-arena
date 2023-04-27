@@ -1,21 +1,20 @@
 """Process_instance."""
 from __future__ import annotations
-from spiffworkflow_backend.models.json_data import JsonDataModel # noqa: F401
 
+import typing
 from dataclasses import dataclass
 from typing import Any
 from typing import cast
+from typing import NotRequired
 from typing import Optional
 from typing import TypedDict
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 
-from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
-    ProcessEntityNotFoundError,
-)
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
+from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -25,13 +24,14 @@ from spiffworkflow_backend.services.process_instance_processor import (
 
 class FilterValue(TypedDict):
     field_name: str
-    field_value: str
-    operator: str
+    field_value: str | int | bool
+    operator: NotRequired[str]
 
 
 class ReportMetadataColumn(TypedDict):
     Header: str
     accessor: str
+    filterable: NotRequired[bool]
 
 
 class ReportMetadata(TypedDict):
@@ -83,7 +83,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
 
     id: int = db.Column(db.Integer, primary_key=True)
     identifier: str = db.Column(db.String(50), nullable=False, index=True)
-    report_metadata: dict = db.Column(db.JSON)
+    report_metadata: ReportMetadata = db.Column(db.JSON)
     created_by_id = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
     created_by = relationship("UserModel")
     created_at_in_seconds = db.Column(db.Integer)
@@ -98,49 +98,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
     def default_order_by(cls) -> list[str]:
         """Default_order_by."""
         return ["-start_in_seconds", "-id"]
-
-    @classmethod
-    def add_fixtures(cls) -> None:
-        """Add_fixtures."""
-        try:
-            # process_model = ProcessModelService.get_process_model(
-            #     process_model_id="sartography-admin/ticket"
-            # )
-            user = UserModel.query.first()
-            columns = [
-                {"Header": "id", "accessor": "id"},
-                {"Header": "month", "accessor": "month"},
-                {"Header": "milestone", "accessor": "milestone"},
-                {"Header": "req_id", "accessor": "req_id"},
-                {"Header": "feature", "accessor": "feature"},
-                {"Header": "dev_days", "accessor": "dev_days"},
-                {"Header": "priority", "accessor": "priority"},
-            ]
-            json = {"order": "month asc", "columns": columns}
-
-            cls.create_report(
-                identifier="standard",
-                user=user,
-                report_metadata=json,
-            )
-            cls.create_report(
-                identifier="for-month",
-                user=user,
-                report_metadata=cls.ticket_for_month_report(),
-            )
-            cls.create_report(
-                identifier="for-month-3",
-                user=user,
-                report_metadata=cls.ticket_for_month_3_report(),
-            )
-            cls.create_report(
-                identifier="hot-report",
-                user=user,
-                report_metadata=cls.process_model_with_form_report_fixture(),
-            )
-
-        except ProcessEntityNotFoundError:
-            print("Did not find process models so not adding report fixtures for them")
 
     @classmethod
     def create_report(
@@ -160,7 +117,8 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                 f"Process instance report with identifier already exists: {identifier}"
             )
 
-        json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(report_metadata)
+        report_metadata_dict = typing.cast(typing.Dict[str, Any], report_metadata)
+        json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(report_metadata_dict)
 
         process_instance_report = cls(
             identifier=identifier,
@@ -174,68 +132,10 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         return process_instance_report  # type: ignore
 
     @classmethod
-    def ticket_for_month_report(cls) -> dict:
-        """Ticket_for_month_report."""
-        return {
-            "columns": [
-                {"Header": "id", "accessor": "id"},
-                {"Header": "month", "accessor": "month"},
-                {"Header": "milestone", "accessor": "milestone"},
-                {"Header": "req_id", "accessor": "req_id"},
-                {"Header": "feature", "accessor": "feature"},
-                {"Header": "priority", "accessor": "priority"},
-            ],
-            "order": "month asc",
-            "filter_by": [
-                {
-                    "field_name": "month",
-                    "operator": "equals",
-                    "field_value": "{{month}}",
-                }
-            ],
-        }
-
-    @classmethod
-    def ticket_for_month_3_report(cls) -> dict:
-        """Ticket_for_month_report."""
-        return {
-            "columns": [
-                {"Header": "id", "accessor": "id"},
-                {"Header": "month", "accessor": "month"},
-                {"Header": "milestone", "accessor": "milestone"},
-                {"Header": "req_id", "accessor": "req_id"},
-                {"Header": "feature", "accessor": "feature"},
-                {"Header": "dev_days", "accessor": "dev_days"},
-                {"Header": "priority", "accessor": "priority"},
-            ],
-            "order": "month asc",
-            "filter_by": [{"field_name": "month", "operator": "equals", "field_value": "3"}],
-        }
-
-    @classmethod
-    def process_model_with_form_report_fixture(cls) -> dict:
-        """Process_model_with_form_report_fixture."""
-        return {
-            "columns": [
-                {"Header": "id", "accessor": "id"},
-                {
-                    "Header": "system_generated_number",
-                    "accessor": "system_generated_number",
-                },
-                {
-                    "Header": "user_generated_number",
-                    "accessor": "user_generated_number",
-                },
-                {"Header": "product", "accessor": "product"},
-            ],
-            "order": "-id",
-        }
-
-    @classmethod
     def create_with_attributes(
         cls,
         identifier: str,
-        report_metadata: dict,
+        report_metadata: ReportMetadata,
         user: UserModel,
     ) -> ProcessInstanceReportModel:
         """Create_with_attributes."""
