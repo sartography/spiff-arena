@@ -6,7 +6,7 @@ import {
   Modal,
   // @ts-ignore
 } from '@carbon/react';
-import { ProcessInstanceReport, ReportMetadata } from '../interfaces';
+import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
 
 type OwnProps = {

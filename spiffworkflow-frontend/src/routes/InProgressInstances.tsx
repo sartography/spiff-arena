@@ -35,7 +35,9 @@ export default function InProgressInstances() {
             reportIdentifier="system_report_in_progress_instances_with_tasks_for_my_group"
             showReports={false}
             textToShowIfEmpty="This group has no instances waiting on it at this time."
-            additionalParams={`user_group_identifier=${userGroup}`}
+            additionalReportFilters={[
+              { field_name: 'user_group_identifier', field_value: userGroup },
+            ]}
             canCompleteAllTasks
             showActionsColumn
             autoReload

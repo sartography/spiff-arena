@@ -527,7 +527,7 @@ class ProcessInstanceReportService:
         results = cls.add_metadata_columns_to_process_instance(process_instances.items, report_metadata["columns"])
 
         for value in cls.check_filter_value(filters, "oldest_open_human_task_fields"):
-            results = cls.add_human_task_fields(results, value)
+            results = cls.add_human_task_fields(results, value.split(","))
         response_json = {
             "report_metadata": report_metadata,
             "results": results,
