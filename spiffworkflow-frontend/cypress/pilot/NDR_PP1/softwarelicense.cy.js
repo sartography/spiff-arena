@@ -125,7 +125,7 @@ describe('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -188,7 +188,10 @@ describe('Software and Licenses Path - Without Files', () => {
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -267,7 +270,7 @@ describe('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -330,7 +333,10 @@ describe('Software and Licenses Path - Without Files', () => {
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -425,7 +431,7 @@ describe('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -475,7 +481,10 @@ describe('Software and Licenses Path - Without Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -529,7 +538,7 @@ describe('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -579,7 +588,10 @@ describe('Software and Licenses Path - Without Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -673,7 +685,7 @@ describe('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -724,7 +736,10 @@ describe('Software and Licenses Path - Without Files', () => {
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -788,7 +803,7 @@ describe('Software and Licenses Path - With Files', () => {
     Cypress._.times(1, () => {
 
         //Everyone approves with CP
-        it('Everyone approves with CP', () => {
+        it.only('Everyone approves with CP', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -820,7 +835,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -924,8 +939,11 @@ describe('Software and Licenses Path - With Files', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1004,7 +1022,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1097,8 +1115,11 @@ describe('Software and Licenses Path - With Files', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1193,7 +1214,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1285,8 +1306,11 @@ describe('Software and Licenses Path - With Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1308,7 +1332,7 @@ describe('Software and Licenses Path - With Files', () => {
         });
 
         //Budget owner request for additional details
-        it.only('Budget owner need more info', () => {
+        it('Budget owner need more info', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);
@@ -1340,7 +1364,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1432,7 +1456,10 @@ describe('Software and Licenses Path - With Files', () => {
                     .click();
 
                 cy.wait(9000);
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1527,7 +1554,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1620,8 +1647,11 @@ describe('Software and Licenses Path - With Files', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1716,7 +1746,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1832,8 +1862,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1912,7 +1945,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2027,8 +2060,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2123,7 +2159,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2236,8 +2272,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2291,7 +2330,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2404,8 +2443,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2500,7 +2542,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2614,8 +2656,11 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2673,7 +2718,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
 });
 
 //Software and Licenses Path - Without Files and with only mandatory fields
-describe('Software and Licenses Path -  Without Files and with only mandatory fields', () => {
+describe.only('Software and Licenses Path -  Without Files and with only mandatory fields', () => {
 
     Cypress._.times(1, () => {
 
@@ -2710,7 +2755,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2760,7 +2805,10 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2839,7 +2887,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2889,7 +2937,10 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2984,7 +3035,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -3034,7 +3085,10 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -3088,7 +3142,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -3138,7 +3192,10 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -3232,7 +3289,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -3283,7 +3340,10 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
