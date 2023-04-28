@@ -40,6 +40,13 @@ class ReportMetadata(TypedDict):
     order_by: list[str]
 
 
+class Report(TypedDict):
+    id: int
+    identifier: str
+    name: str
+    report_metadata: ReportMetadata
+
+
 class ProcessInstanceReportAlreadyExistsError(Exception):
     """ProcessInstanceReportAlreadyExistsError."""
 
@@ -91,8 +98,10 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
 
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
-    def get_report_metadata(self) -> dict:
-        return JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
+    def get_report_metadata(self) -> ReportMetadata:
+        rdata_dict = JsonDataModel.find_data_dict_by_hash(self.json_data_hash)
+        rdata = typing.cast(ReportMetadata, rdata_dict)
+        return rdata
 
     @classmethod
     def default_order_by(cls) -> list[str]:
@@ -106,7 +115,6 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
         user: UserModel,
         report_metadata: ReportMetadata,
     ) -> ProcessInstanceReportModel:
-        """Make_fixture_report."""
         process_instance_report = ProcessInstanceReportModel.query.filter_by(
             identifier=identifier,
             created_by_id=user.id,
@@ -131,25 +139,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
 
         return process_instance_report  # type: ignore
 
-    @classmethod
-    def create_with_attributes(
-        cls,
-        identifier: str,
-        report_metadata: ReportMetadata,
-        user: UserModel,
-    ) -> ProcessInstanceReportModel:
-        """Create_with_attributes."""
-        process_instance_report = cls(
-            identifier=identifier,
-            created_by_id=user.id,
-            report_metadata=report_metadata,
-        )
-        db.session.add(process_instance_report)
-        db.session.commit()
-        return process_instance_report
-
     def with_substitutions(self, field_value: Any, substitution_variables: dict) -> Any:
-        """With_substitutions."""
         if substitution_variables is not None:
             for key, value in substitution_variables.items():
                 if isinstance(value, str) or isinstance(value, int):

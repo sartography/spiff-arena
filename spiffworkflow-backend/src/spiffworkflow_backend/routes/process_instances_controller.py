@@ -3,6 +3,7 @@ import json
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import Union
 
 import flask.wrappers
 from flask import current_app
@@ -35,9 +36,8 @@ from spiffworkflow_backend.models.process_instance_metadata import (
 from spiffworkflow_backend.models.process_instance_queue import (
     ProcessInstanceQueueModel,
 )
-from spiffworkflow_backend.models.process_instance_report import (
-    ProcessInstanceReportModel,
-)
+from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
+from spiffworkflow_backend.models.process_instance_report import Report
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
@@ -231,7 +231,6 @@ def process_instance_list_for_me(
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
-    """Process_instance_list_for_me."""
     return process_instance_list(
         process_model_identifier=process_model_identifier,
         page=page,
@@ -273,7 +272,7 @@ def process_instance_report_show(
                 " report_identifier."
             ),
         )
-    response_result = {}
+    response_result: Optional[Union[Report, ProcessInstanceReportModel]] = None
     if report_hash is not None:
         json_data = JsonDataModel.query.filter_by(hash=report_hash).first()
         if json_data is None:
@@ -365,7 +364,6 @@ def process_instance_delete(
 
 
 def process_instance_report_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Process_instance_report_list."""
     process_instance_reports = ProcessInstanceReportModel.query.filter_by(
         created_by_id=g.user.id,
     ).all()

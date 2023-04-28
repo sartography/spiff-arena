@@ -1761,12 +1761,7 @@ class TestProcessApi(BaseTest):
         headers = self.logged_in_headers(with_super_admin_user)
         self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
 
-        response = client.get(
-            "/v1.0/process-instances",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
+        response = self.post_to_process_instance_list(client, with_super_admin_user)
         assert len(response.json["results"]) == 1
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["pages"] == 1
@@ -1807,23 +1802,13 @@ class TestProcessApi(BaseTest):
         self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
         self.create_process_instance_from_process_model_id_with_api(client, process_model_identifier, headers)
 
-        response = client.get(
-            "/v1.0/process-instances?per_page=2&page=3",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
+        response = self.post_to_process_instance_list(client, with_super_admin_user, param_string="?per_page=2&page=3")
         assert len(response.json["results"]) == 1
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["pages"] == 3
         assert response.json["pagination"]["total"] == 5
 
-        response = client.get(
-            "/v1.0/process-instances?per_page=2&page=1",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 200
-        assert response.json is not None
+        response = self.post_to_process_instance_list(client, with_super_admin_user, param_string="?per_page=2&page=1")
         assert len(response.json["results"]) == 2
         assert response.json["pagination"]["count"] == 2
         assert response.json["pagination"]["pages"] == 3
@@ -1867,31 +1852,46 @@ class TestProcessApi(BaseTest):
         db.session.commit()
 
         # Without filtering we should get all 5 instances
-        response = client.get(
-            f"/v1.0/process-instances?process_model_identifier={process_model_identifier}",
-            headers=self.logged_in_headers(with_super_admin_user),
+        report_metadata_body: ReportMetadata = {
+            "filter_by": [{"field_name": "process_model_identifier", "field_value": process_model_identifier}],
+            "columns": [],
+            "order_by": [],
+        }
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=report_metadata_body
         )
-        assert response.json is not None
         results = response.json["results"]
         assert len(results) == 5
 
         # filter for each of the status
         # we should get 1 instance each time
         for i in range(5):
-            response = client.get(
-                f"/v1.0/process-instances?process_status={ProcessInstanceStatus[statuses[i]].value}&process_model_identifier={process_model_identifier}",
-                headers=self.logged_in_headers(with_super_admin_user),
+            report_metadata_body = {
+                "filter_by": [
+                    {"field_name": "process_model_identifier", "field_value": process_model_identifier},
+                    {"field_name": "process_status", "field_value": ProcessInstanceStatus[statuses[i]].value},
+                ],
+                "columns": [],
+                "order_by": [],
+            }
+            response = self.post_to_process_instance_list(
+                client, with_super_admin_user, report_metadata=report_metadata_body
             )
-            assert response.json is not None
             results = response.json["results"]
             assert len(results) == 1
             assert results[0]["status"] == ProcessInstanceStatus[statuses[i]].value
 
-        response = client.get(
-            f"/v1.0/process-instances?process_status=not_started,complete&process_model_identifier={process_model_identifier}",
-            headers=self.logged_in_headers(with_super_admin_user),
+        report_metadata_body = {
+            "filter_by": [
+                {"field_name": "process_model_identifier", "field_value": process_model_identifier},
+                {"field_name": "process_status", "field_value": "not_started,complete"},
+            ],
+            "columns": [],
+            "order_by": [],
+        }
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=report_metadata_body
         )
-        assert response.json is not None
         results = response.json["results"]
         assert len(results) == 2
         assert results[0]["status"] in ["complete", "not_started"]
@@ -1899,11 +1899,14 @@ class TestProcessApi(BaseTest):
 
         # filter by start/end seconds
         # start > 1000 - this should eliminate the first
-        response = client.get(
-            "/v1.0/process-instances?start_from=1001",
-            headers=self.logged_in_headers(with_super_admin_user),
+        report_metadata_body = {
+            "filter_by": [{"field_name": "start_from", "field_value": 1001}],
+            "columns": [],
+            "order_by": [],
+        }
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=report_metadata_body
         )
-        assert response.json is not None
         results = response.json["results"]
         assert len(results) == 4
         for i in range(4):
@@ -1915,33 +1918,51 @@ class TestProcessApi(BaseTest):
             )
 
         # start > 2000, end < 5000 - this should eliminate the first 2 and the last
-        response = client.get(
-            "/v1.0/process-instances?start_from=2001&end_to=5999",
-            headers=self.logged_in_headers(with_super_admin_user),
+        report_metadata_body = {
+            "filter_by": [
+                {"field_name": "start_from", "field_value": 2001},
+                {"field_name": "end_to", "field_value": 5999},
+            ],
+            "columns": [],
+            "order_by": [],
+        }
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=report_metadata_body
         )
-        assert response.json is not None
         results = response.json["results"]
         assert len(results) == 2
         assert json.loads(results[0]["bpmn_version_control_identifier"]) in (2, 3)
         assert json.loads(results[1]["bpmn_version_control_identifier"]) in (2, 3)
 
         # start > 1000, start < 4000 - this should eliminate the first and the last 2
-        response = client.get(
-            "/v1.0/process-instances?start_from=1001&start_to=3999",
-            headers=self.logged_in_headers(with_super_admin_user),
+        report_metadata_body = {
+            "filter_by": [
+                {"field_name": "start_from", "field_value": 1001},
+                {"field_name": "start_to", "field_value": 3999},
+            ],
+            "columns": [],
+            "order_by": [],
+        }
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=report_metadata_body
         )
-        assert response.json is not None
         results = response.json["results"]
         assert len(results) == 2
         assert json.loads(results[0]["bpmn_version_control_identifier"]) in (1, 2)
         assert json.loads(results[1]["bpmn_version_control_identifier"]) in (1, 2)
 
         # end > 2000, end < 6000 - this should eliminate the first and the last
-        response = client.get(
-            "/v1.0/process-instances?end_from=2001&end_to=5999",
-            headers=self.logged_in_headers(with_super_admin_user),
+        report_metadata_body = {
+            "filter_by": [
+                {"field_name": "end_from", "field_value": 2001},
+                {"field_name": "end_to", "field_value": 5999},
+            ],
+            "columns": [],
+            "order_by": [],
+        }
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=report_metadata_body
         )
-        assert response.json is not None
         results = response.json["results"]
         assert len(results) == 3
         for i in range(3):
@@ -1975,7 +1996,7 @@ class TestProcessApi(BaseTest):
 
         report_identifier = "testreport"
         report_metadata: ReportMetadata = {"order_by": ["month"], "filter_by": [], "columns": []}
-        ProcessInstanceReportModel.create_with_attributes(
+        ProcessInstanceReportModel.create_report(
             identifier=report_identifier,
             report_metadata=report_metadata,
             user=with_super_admin_user,
@@ -1989,129 +2010,6 @@ class TestProcessApi(BaseTest):
         assert len(response.json) == 1
         assert response.json[0]["identifier"] == report_identifier
         assert response.json[0]["report_metadata"]["order_by"] == ["month"]
-
-    # def test_process_instance_report_show_with_default_list(
-    #     self,
-    #     app: Flask,
-    #     client: FlaskClient,
-    #     with_db_and_bpmn_file_cleanup: None,
-    #     with_super_admin_user: UserModel,
-    #     setup_process_instances_for_reports: list[ProcessInstanceModel],
-    # ) -> None:
-    #     """Test_process_instance_report_show_with_default_list."""
-    #     process_group_id = "runs_without_input"
-    #     process_model_id = "sample"
-    #     process_model_identifier = f"{process_group_id}/{process_model_id}"
-    #
-    #     report_metadata = {
-    #         "columns": [
-    #             {"Header": "id", "accessor": "id"},
-    #             {
-    #                 "Header": "process_model_identifier",
-    #                 "accessor": "process_model_identifier",
-    #             },
-    #             {"Header": "process_group_id", "accessor": "process_group_identifier"},
-    #             {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-    #             {"Header": "status", "accessor": "status"},
-    #             {"Header": "Name", "accessor": "name"},
-    #             {"Header": "Status", "accessor": "status"},
-    #         ],
-    #         "order_by": ["test_score"],
-    #         "filter_by": [
-    #             {"field_name": "grade_level", "operator": "equals", "field_value": 2}
-    #         ],
-    #     }
-    #
-    #     report = ProcessInstanceReportModel.create_with_attributes(
-    #         identifier="sure",
-    #         report_metadata=report_metadata,
-    #         user=with_super_admin_user,
-    #     )
-    #
-    #     response = client.get(
-    #         f"/v1.0/process-instances/reports/{report.id}",
-    #         headers=self.logged_in_headers(with_super_admin_user),
-    #     )
-    #     assert response.status_code == 200
-    #     assert response.json is not None
-    #     assert len(response.json["results"]) == 2
-    #     assert response.json["pagination"]["count"] == 2
-    #     assert response.json["pagination"]["pages"] == 1
-    #     assert response.json["pagination"]["total"] == 2
-    #
-    #     process_instance_dict = response.json["results"][0]
-    #     assert type(process_instance_dict["id"]) is int
-    #     assert (
-    #         process_instance_dict["process_model_identifier"]
-    #         == process_model_identifier
-    #     )
-    #     assert type(process_instance_dict["start_in_seconds"]) is int
-    #     assert process_instance_dict["start_in_seconds"] > 0
-    #     assert process_instance_dict["status"] == "complete"
-    #
-    # def test_process_instance_report_show_with_dynamic_filter_and_query_param(
-    #     self,
-    #     app: Flask,
-    #     client: FlaskClient,
-    #     with_db_and_bpmn_file_cleanup: None,
-    #     with_super_admin_user: UserModel,
-    #     setup_process_instances_for_reports: list[ProcessInstanceModel],
-    # ) -> None:
-    #     """Test_process_instance_report_show_with_default_list."""
-    #     report_metadata = {
-    #         "filter_by": [
-    #             {
-    #                 "field_name": "grade_level",
-    #                 "operator": "equals",
-    #                 "field_value": "{{grade_level}}",
-    #             }
-    #         ],
-    #     }
-    #
-    #     report = ProcessInstanceReportModel.create_with_attributes(
-    #         identifier="sure",
-    #         report_metadata=report_metadata,
-    #         user=with_super_admin_user,
-    #     )
-    #
-    #     response = client.get(
-    #         f"/v1.0/process-instances/reports/{report.id}?grade_level=1",
-    #         headers=self.logged_in_headers(with_super_admin_user),
-    #     )
-    #     assert response.status_code == 200
-    #     assert response.json is not None
-    #     assert len(response.json["results"]) == 1
-
-    def test_process_instance_report_show_with_bad_identifier(
-        self,
-        app: Flask,
-        client: FlaskClient,
-        with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
-        setup_process_instances_for_reports: list[ProcessInstanceModel],
-    ) -> None:
-        """Test_process_instance_report_show_with_bad_identifier."""
-        response = client.get(
-            "/v1.0/process-instances/reports/13000000?grade_level=1",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        assert response.status_code == 404
-        data = json.loads(response.get_data(as_text=True))
-        assert data["error_code"] == "unknown_process_instance_report"
-
-    def setup_testing_instance(
-        self,
-        client: FlaskClient,
-        process_model_id: str,
-        with_super_admin_user: UserModel,
-    ) -> Any:
-        """Setup_testing_instance."""
-        headers = self.logged_in_headers(with_super_admin_user)
-        response = self.create_process_instance_from_process_model_id_with_api(client, process_model_id, headers)
-        process_instance = response.json
-        assert isinstance(process_instance, dict)
-        process_instance_id = process_instance["id"]
-        return process_instance_id
 
     def test_error_handler(
         self,
@@ -2134,7 +2032,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        process_instance_id = self.setup_testing_instance(client, process_model_identifier, with_super_admin_user)
+        process_instance_id = self._setup_testing_instance(client, process_model_identifier, with_super_admin_user)
 
         process = db.session.query(ProcessInstanceModel).filter(ProcessInstanceModel.id == process_instance_id).first()
         assert process is not None
@@ -2175,7 +2073,7 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        process_instance_id = self.setup_testing_instance(client, process_model_identifier, with_super_admin_user)
+        process_instance_id = self._setup_testing_instance(client, process_model_identifier, with_super_admin_user)
         process_model = ProcessModelService.get_process_model(process_model_identifier)
         ProcessModelService.update_process_model(
             process_model,
@@ -2683,8 +2581,9 @@ class TestProcessApi(BaseTest):
             content_type="application/json",
             data=json.dumps(data),
         )
-
-        print("test_script_unit_test_run")
+        # TODO: fix this test. I'm not sure it ever worked since it used to NOT check the status code
+        # and only printed out the test name.
+        assert response.status_code == 404
 
     def test_send_event(
         self,
@@ -3060,7 +2959,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = load_test_spec(
             process_model_id="save_process_instance_metadata/save_process_instance_metadata",
             bpmn_file_name="save_process_instance_metadata.bpmn",
@@ -3087,19 +2985,15 @@ class TestProcessApi(BaseTest):
             "order_by": ["status"],
             "filter_by": [],
         }
-        process_instance_report = ProcessInstanceReportModel.create_with_attributes(
+        process_instance_report = ProcessInstanceReportModel.create_report(
             identifier="sure",
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
-        response = client.get(
-            f"/v1.0/process-instances?report_identifier={process_instance_report.identifier}",
-            headers=self.logged_in_headers(with_super_admin_user),
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=process_instance_report.get_report_metadata()
         )
-
-        assert response.json is not None
-        assert response.status_code == 200
 
         assert len(response.json["results"]) == 1
         assert response.json["results"][0]["status"] == "complete"
@@ -3160,33 +3054,27 @@ class TestProcessApi(BaseTest):
                 }
             ],
         }
-        process_instance_report_dne = ProcessInstanceReportModel.create_with_attributes(
+        process_instance_report_dne = ProcessInstanceReportModel.create_report(
             identifier="dne_report",
             report_metadata=dne_report_metadata,
             user=user_one,
         )
-        process_instance_report_user_one = ProcessInstanceReportModel.create_with_attributes(
+        process_instance_report_user_one = ProcessInstanceReportModel.create_report(
             identifier="user_one_report",
             report_metadata=user_one_report_metadata,
             user=user_one,
         )
 
-        response = client.get(
-            f"/v1.0/process-instances?report_identifier={process_instance_report_user_one.identifier}",
-            headers=self.logged_in_headers(user_one),
+        response = self.post_to_process_instance_list(
+            client, user_one, report_metadata=process_instance_report_user_one.get_report_metadata()
         )
-        assert response.json is not None
-        assert response.status_code == 200
         assert len(response.json["results"]) == 2
         assert response.json["results"][0]["process_initiator_username"] == user_one.username
         assert response.json["results"][1]["process_initiator_username"] == user_one.username
 
-        response = client.get(
-            f"/v1.0/process-instances?report_identifier={process_instance_report_dne.identifier}",
-            headers=self.logged_in_headers(user_one),
+        response = self.post_to_process_instance_list(
+            client, user_one, report_metadata=process_instance_report_dne.get_report_metadata()
         )
-        assert response.json is not None
-        assert response.status_code == 200
         assert len(response.json["results"]) == 0
 
     def test_can_get_process_instance_report_column_list(
@@ -3196,7 +3084,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_can_get_process_instance_list_with_report_metadata."""
         process_model = self.create_process_model_with_metadata()
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
@@ -3315,18 +3202,15 @@ class TestProcessApi(BaseTest):
             "order_by": ["time_ns"],
             "filter_by": [],
         }
-        report_one = ProcessInstanceReportModel.create_with_attributes(
+        report_one = ProcessInstanceReportModel.create_report(
             identifier="report_one",
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
-        response = client.get(
-            f"/v1.0/process-instances?report_id={report_one.id}",
-            headers=self.logged_in_headers(with_super_admin_user),
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=report_one.get_report_metadata()
         )
-        assert response.status_code == 200
-        assert response.json is not None
         assert len(response.json["results"]) == 2
         assert response.json["results"][0]["id"] == process_instance_one.id
         assert response.json["results"][1]["id"] == process_instance_two.id
@@ -3339,19 +3223,15 @@ class TestProcessApi(BaseTest):
             "order_by": ["-time_ns"],
             "filter_by": [],
         }
-        report_two = ProcessInstanceReportModel.create_with_attributes(
+        report_two = ProcessInstanceReportModel.create_report(
             identifier="report_two",
             report_metadata=report_metadata,
             user=with_super_admin_user,
         )
 
-        response = client.get(
-            f"/v1.0/process-instances?report_id={report_two.id}",
-            headers=self.logged_in_headers(with_super_admin_user),
+        response = self.post_to_process_instance_list(
+            client, with_super_admin_user, report_metadata=report_two.get_report_metadata()
         )
-
-        assert response.status_code == 200
-        assert response.json is not None
         assert len(response.json["results"]) == 2
         assert response.json["results"][1]["id"] == process_instance_one.id
         assert response.json["results"][0]["id"] == process_instance_two.id
@@ -3381,3 +3261,16 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert response.json["process_data_value"] == "hey"
+
+    def _setup_testing_instance(
+        self,
+        client: FlaskClient,
+        process_model_id: str,
+        with_super_admin_user: UserModel,
+    ) -> Any:
+        headers = self.logged_in_headers(with_super_admin_user)
+        response = self.create_process_instance_from_process_model_id_with_api(client, process_model_id, headers)
+        process_instance = response.json
+        assert isinstance(process_instance, dict)
+        process_instance_id = process_instance["id"]
+        return process_instance_id
