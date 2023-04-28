@@ -1,3 +1,8 @@
+// TODO:
+//    add drop down for user_group_identifier and one for the 2 system reports:
+//      with_tasks_completed_by_me
+//      with_tasks_i_can_complete
+//    add checkbox to show with_oldest_open_task
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Link,

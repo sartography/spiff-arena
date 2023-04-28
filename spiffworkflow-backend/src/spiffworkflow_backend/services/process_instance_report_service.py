@@ -1,5 +1,6 @@
 """Process_instance_report_service."""
 import re
+import copy
 from typing import Any
 from typing import Generator
 from typing import Optional
@@ -41,8 +42,10 @@ class ProcessInstanceReportService:
 
     @classmethod
     def system_metadata_map(cls, metadata_key: str) -> Optional[ReportMetadata]:
-        """System_metadata_map."""
         # TODO replace with system reports that are loaded on launch (or similar)
+        terminal_status_values = ','.join(ProcessInstanceModel.terminal_statuses())
+        non_terminal_status_values = ','.join(ProcessInstanceModel.non_terminal_statuses())
+        active_status_values = ','.join(ProcessInstanceModel.active_statuses())
         default: ReportMetadata = {
             "columns": cls.builtin_column_options(),
             "filter_by": [],
@@ -61,7 +64,7 @@ class ProcessInstanceReportService:
             ],
             "filter_by": [
                 {"field_name": "initiated_by_me", "field_value": True},
-                {"field_name": "has_terminal_status", "field_value": True},
+                {"field_name": "process_status", "field_value": terminal_status_values},
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
@@ -69,18 +72,14 @@ class ProcessInstanceReportService:
             "columns": cls.builtin_column_options(),
             "filter_by": [
                 {"field_name": "with_tasks_completed_by_me", "field_value": True},
-                {"field_name": "has_terminal_status", "field_value": True},
+                {"field_name": "process_status", "field_value": terminal_status_values},
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
         system_report_completed_instances_with_tasks_completed_by_my_groups: ReportMetadata = {
             "columns": cls.builtin_column_options(),
             "filter_by": [
-                {
-                    "field_name": "with_tasks_assigned_to_my_group",
-                    "field_value": True,
-                },
-                {"field_name": "has_terminal_status", "field_value": True},
+                {"field_name": "process_status", "field_value": terminal_status_values},
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
@@ -99,12 +98,10 @@ class ProcessInstanceReportService:
             ],
             "filter_by": [
                 {"field_name": "initiated_by_me", "field_value": True},
-                {"field_name": "has_terminal_status", "field_value": False},
+                {"field_name": "process_status", "field_value": non_terminal_status_values},
                 {
-                    "field_name": "oldest_open_human_task_fields",
-                    "field_value": (
-                        "task_id,task_title,task_name,potential_owner_usernames,assigned_user_group_identifier"
-                    ),
+                    "field_name": "with_oldest_open_task",
+                    "field_value": True,
                 },
             ],
             "order_by": ["-start_in_seconds", "-id"],
@@ -123,10 +120,10 @@ class ProcessInstanceReportService:
             ],
             "filter_by": [
                 {"field_name": "with_tasks_i_can_complete", "field_value": True},
-                {"field_name": "has_active_status", "field_value": True},
+                {"field_name": "process_status", "field_value": active_status_values},
                 {
-                    "field_name": "oldest_open_human_task_fields",
-                    "field_value": "task_id,task_title,task_name",
+                    "field_name": "with_oldest_open_task",
+                    "field_value": True,
                 },
             ],
             "order_by": ["-start_in_seconds", "-id"],
@@ -144,14 +141,10 @@ class ProcessInstanceReportService:
                 {"Header": "Last Updated", "accessor": "updated_at_in_seconds"},
             ],
             "filter_by": [
+                {"field_name": "process_status", "field_value": active_status_values},
                 {
-                    "field_name": "with_tasks_assigned_to_my_group",
+                    "field_name": "with_oldest_open_task",
                     "field_value": True,
-                },
-                {"field_name": "has_active_status", "field_value": True},
-                {
-                    "field_name": "oldest_open_human_task_fields",
-                    "field_value": "task_id,task_title,task_name",
                 },
             ],
             "order_by": ["-start_in_seconds", "-id"],
@@ -177,6 +170,18 @@ class ProcessInstanceReportService:
         if metadata_key not in temp_system_metadata_map:
             return None
         return temp_system_metadata_map[metadata_key]
+
+    @classmethod
+    def compile_report(cls, report_metadata: ReportMetadata, user: UserModel) -> None:
+        compiled_filters: list[FilterValue] = []
+        old_filters = copy.deepcopy(report_metadata['filter_by'])
+        for filter in old_filters:
+            if filter['field_name'] == 'initiated_by_me':
+                compiled_filters.append({'field_name': 'process_initiator_username', 'field_value': user.username})
+            else:
+                compiled_filters.append(filter)
+
+        report_metadata['filter_by'] = compiled_filters
 
     @classmethod
     def report_with_identifier(
@@ -206,6 +211,7 @@ class ProcessInstanceReportService:
             raise ProcessInstanceReportNotFoundError(
                 f"Could not find a report with identifier '{report_identifier}' for user '{user.username}'"
             )
+        cls.compile_report(report_metadata, user=user)
 
         process_instance_report = ProcessInstanceReportModel(
             identifier=report_identifier,
@@ -238,8 +244,9 @@ class ProcessInstanceReportService:
 
     @classmethod
     def add_human_task_fields(
-        cls, process_instance_dicts: list[dict], oldest_open_human_task_fields: list
+        cls, process_instance_dicts: list[dict]
     ) -> list[dict]:
+        fields_to_return = ["task_id", "task_title", "task_name", "potential_owner_usernames", "assigned_user_group_identifier"]
         for process_instance_dict in process_instance_dicts:
             assigned_user = aliased(UserModel)
             human_task_query = (
@@ -265,7 +272,7 @@ class ProcessInstanceReportService:
                 .first()
             )
             if human_task is not None:
-                for field in oldest_open_human_task_fields:
+                for field in fields_to_return:
                     process_instance_dict[field] = getattr(human_task, field)
         return process_instance_dicts
 
@@ -378,25 +385,18 @@ class ProcessInstanceReportService:
             process_instance_query = process_instance_query.filter(ProcessInstanceModel.end_in_seconds >= value)
         for value in cls.check_filter_value(filters, "end_to"):
             process_instance_query = process_instance_query.filter(ProcessInstanceModel.end_in_seconds <= value)
-        for value in cls.check_filter_value(filters, "process_status"):
+
+        process_status = cls.get_filter_value(filters, "process_status")
+        if process_status is not None:
             process_instance_query = process_instance_query.filter(
-                ProcessInstanceModel.status.in_(value.split(","))  # type: ignore
+                ProcessInstanceModel.status.in_(process_status.split(","))  # type: ignore
             )
 
-        for value in cls.check_filter_value(filters, "initiated_by_me"):
-            if value is True:
-                # process_instance_query = process_instance_query.filter_by(process_initiator=user)
-                cls.add_or_update_filter(filters, {'field_name': 'process_initiator_username', 'field_value': user.username})
+        for _value in cls.check_filter_value(filters, "initiated_by_me"):
+            raise Exception("DEPRECATED: initiated_by_me")
 
         for value in cls.check_filter_value(filters, "has_terminal_status"):
-            if value is True:
-                process_instance_query = process_instance_query.filter(
-                    ProcessInstanceModel.status.in_(ProcessInstanceModel.terminal_statuses())  # type: ignore
-                )
-            elif value is False:
-                process_instance_query = process_instance_query.filter(
-                    ProcessInstanceModel.status.not_in(ProcessInstanceModel.terminal_statuses())  # type: ignore
-                )
+            raise Exception("DEPRECATED: has_terminal_status")
 
         has_active_status = cls.get_filter_value(filters, "has_active_status")
         if has_active_status:
@@ -412,12 +412,15 @@ class ProcessInstanceReportService:
             process_instance_query = process_instance_query.filter_by(process_initiator_id=process_initiator_id)
 
         with_tasks_completed_by_me = cls.get_filter_value(filters, "with_tasks_completed_by_me")
-        with_tasks_assigned_to_my_group = cls.get_filter_value(filters, "with_tasks_assigned_to_my_group")
         with_tasks_i_can_complete = cls.get_filter_value(filters, "with_tasks_i_can_complete")
+        user_group_identifier = cls.get_filter_value(filters, "user_group_identifier")
+
+        # builtin only - for the for-me paths
         with_relation_to_me = cls.get_filter_value(filters, "with_relation_to_me")
+
         if (
             not with_tasks_completed_by_me
-            and not with_tasks_assigned_to_my_group
+            and not user_group_identifier
             and not with_tasks_i_can_complete
             and with_relation_to_me is True
         ):
@@ -465,17 +468,18 @@ class ProcessInstanceReportService:
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
             )
 
-        if with_tasks_assigned_to_my_group is True:
-            user_group_identifier = cls.get_filter_value(filters, "user_group_identifier")
+        if user_group_identifier is not None:
             group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
             if user_group_identifier:
                 group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
 
             process_instance_query = process_instance_query.join(HumanTaskModel)
-            if has_active_status:
-                process_instance_query = process_instance_query.filter(
-                    HumanTaskModel.completed.is_(False)  # type: ignore
-                )
+            if process_status is not None:
+                non_active_statuses = [s for s in process_status.split(',') if s not in ProcessInstanceModel.active_statuses()]
+                if len(non_active_statuses) == 0:
+                    process_instance_query = process_instance_query.filter(
+                        HumanTaskModel.completed.is_(False)  # type: ignore
+                    )
 
             process_instance_query = process_instance_query.join(GroupModel, and_(*group_model_join_conditions))
             process_instance_query = process_instance_query.join(
@@ -537,8 +541,10 @@ class ProcessInstanceReportService:
         )
         results = cls.add_metadata_columns_to_process_instance(process_instances.items, report_metadata["columns"])
 
-        for value in cls.check_filter_value(filters, "oldest_open_human_task_fields"):
-            results = cls.add_human_task_fields(results, value.split(","))
+        for value in cls.check_filter_value(filters, "with_oldest_open_task"):
+            if value is True:
+                results = cls.add_human_task_fields(results)
+
         report_metadata['filter_by'] = filters
         response_json = {
             "report_metadata": report_metadata,
