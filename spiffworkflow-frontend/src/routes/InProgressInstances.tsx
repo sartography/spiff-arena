@@ -40,7 +40,7 @@ export default function InProgressInstances() {
             ]}
             canCompleteAllTasks
             showActionsColumn
-            autoReload
+            autoReload={false}
           />
         </>
       );
@@ -67,9 +67,11 @@ export default function InProgressInstances() {
         showReports={false}
         textToShowIfEmpty="There are no open instances you started at this time."
         paginationClassName="with-large-bottom-margin"
+        showLinkToReport
         showActionsColumn
-        autoReload
+        autoReload={false}
       />
+      {/*
       <h2
         title={waitingForMeTitleText}
         className="process-instance-table-header"
@@ -89,6 +91,7 @@ export default function InProgressInstances() {
         autoReload
       />
       {groupTableComponents()}
+      */}
     </>
   );
 }

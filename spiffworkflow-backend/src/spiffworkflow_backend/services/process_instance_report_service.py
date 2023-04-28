@@ -331,6 +331,17 @@ class ProcessInstanceReportService:
             yield value
 
     @classmethod
+    def add_or_update_filter(cls, filters: list[FilterValue], new_filter: FilterValue) -> None:
+        filter_found = False
+        for filter in filters:
+            if filter["field_name"] == new_filter['field_name']:
+                filter['field_value'] = new_filter['field_value']
+                filter_found = True
+        if filter_found is False:
+            filters.append(new_filter)
+
+
+    @classmethod
     def run_process_instance_report(
         cls,
         report_metadata: ReportMetadata,
@@ -374,7 +385,8 @@ class ProcessInstanceReportService:
 
         for value in cls.check_filter_value(filters, "initiated_by_me"):
             if value is True:
-                process_instance_query = process_instance_query.filter_by(process_initiator=user)
+                # process_instance_query = process_instance_query.filter_by(process_initiator=user)
+                cls.add_or_update_filter(filters, {'field_name': 'process_initiator_username', 'field_value': user.username})
 
         for value in cls.check_filter_value(filters, "has_terminal_status"):
             if value is True:
@@ -385,11 +397,12 @@ class ProcessInstanceReportService:
                 process_instance_query = process_instance_query.filter(
                     ProcessInstanceModel.status.not_in(ProcessInstanceModel.terminal_statuses())  # type: ignore
                 )
-        for value in cls.check_filter_value(filters, "has_active_status"):
-            if value is True:
-                process_instance_query = process_instance_query.filter(
-                    ProcessInstanceModel.status.in_(ProcessInstanceModel.active_statuses())  # type: ignore
-                )
+
+        has_active_status = cls.get_filter_value(filters, "has_active_status")
+        if has_active_status:
+            process_instance_query = process_instance_query.filter(
+                ProcessInstanceModel.status.in_(ProcessInstanceModel.active_statuses())  # type: ignore
+            )
 
         for value in cls.check_filter_value(filters, "process_initiator_username"):
             initiator = UserModel.query.filter_by(username=value).first()
@@ -402,8 +415,6 @@ class ProcessInstanceReportService:
         with_tasks_assigned_to_my_group = cls.get_filter_value(filters, "with_tasks_assigned_to_my_group")
         with_tasks_i_can_complete = cls.get_filter_value(filters, "with_tasks_i_can_complete")
         with_relation_to_me = cls.get_filter_value(filters, "with_relation_to_me")
-        has_active_status = cls.get_filter_value(filters, "has_active_status")
-        user_group_identifier = cls.get_filter_value(filters, "user_group_identifier")
         if (
             not with_tasks_completed_by_me
             and not with_tasks_assigned_to_my_group
@@ -436,6 +447,8 @@ class ProcessInstanceReportService:
                 ),
             )
 
+        # this excludes some tasks you can complete, because that's the way the requirements were described.
+        # if it's assigned to one of your groups, it does not get returned by this query.
         if with_tasks_i_can_complete is True:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
@@ -445,17 +458,15 @@ class ProcessInstanceReportService:
                 and_(
                     HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
                     HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
+                    HumanTaskModel.completed.is_(False)  # type: ignore
                 ),
             ).join(
                 HumanTaskUserModel,
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
             )
-            if has_active_status:
-                process_instance_query = process_instance_query.filter(
-                    HumanTaskModel.completed.is_(False)  # type: ignore
-                )
 
         if with_tasks_assigned_to_my_group is True:
+            user_group_identifier = cls.get_filter_value(filters, "user_group_identifier")
             group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
             if user_group_identifier:
                 group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
@@ -528,10 +539,10 @@ class ProcessInstanceReportService:
 
         for value in cls.check_filter_value(filters, "oldest_open_human_task_fields"):
             results = cls.add_human_task_fields(results, value.split(","))
+        report_metadata['filter_by'] = filters
         response_json = {
             "report_metadata": report_metadata,
             "results": results,
-            "filters": filters,
             "pagination": {
                 "count": len(results),
                 "total": process_instances.total,
