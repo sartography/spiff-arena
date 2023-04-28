@@ -31,7 +31,6 @@ import {
   DATE_FORMAT_FOR_DISPLAY,
 } from '../config';
 import {
-  capitalizeFirstLetter,
   convertDateAndTimeStringsToSeconds,
   convertDateObjectToFormattedHoursMinutes,
   convertSecondsToFormattedDateString,
@@ -42,6 +41,7 @@ import {
   refreshAtInterval,
   REFRESH_INTERVAL_SECONDS,
   REFRESH_TIMEOUT_SECONDS,
+  titleizeString,
 } from '../helpers';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 
@@ -337,10 +337,8 @@ export default function ProcessInstanceListTable({
             setProcessStatusSelection(
               (reportFilter.field_value || '').split(',')
             );
-            setShowFilterOptions(true);
           } else if (reportFilter.field_name === 'process_initiator_username') {
             setProcessInitiatorSelection(reportFilter.field_value || '');
-            setShowFilterOptions(true);
           } else if (reportFilter.field_name === 'process_model_identifier') {
             selectedProcessModelIdentifier =
               reportFilter.field_value || undefined;
@@ -358,7 +356,6 @@ export default function ProcessInstanceListTable({
                 reportFilter.field_value as any
               );
               timeFunctionToCall(timeString);
-              setShowFilterOptions(true);
             }
           }
         }
@@ -368,10 +365,13 @@ export default function ProcessInstanceListTable({
         (processModel: ProcessModel) => {
           if (processModel.id === selectedProcessModelIdentifier) {
             setProcessModelSelection(processModel);
-            setShowFilterOptions(true);
           }
         }
       );
+
+      if (reportMetadataBodyToUse.filter_by.length > 1) {
+        setShowFilterOptions(true);
+      }
 
       // eslint-disable-next-line prefer-const
       let { page, perPage } = getPageInfoFromSearchParams(
@@ -774,7 +774,7 @@ export default function ProcessInstanceListTable({
   };
 
   const formatProcessInstanceStatus = (_row: any, value: any) => {
-    return capitalizeFirstLetter((value || '').replaceAll('_', ' '));
+    return titleizeString((value || '').replaceAll('_', ' '));
   };
   const processStatusSearch = () => {
     return (
@@ -845,18 +845,13 @@ export default function ProcessInstanceListTable({
   };
 
   const saveAsReportComponent = () => {
-    const newReportMetadata = getNewReportMetadataBasedOnPageWidgets();
-
-    if (!newReportMetadata) {
-      return null;
-    }
     return (
       <ProcessInstanceListSaveAsReport
         onSuccess={onSaveReportSuccess}
         buttonClassName="button-white-background narrow-button"
         buttonText="Save"
         processInstanceReportSelection={processInstanceReportSelection}
-        reportMetadata={newReportMetadata}
+        getReportMetadataCallback={getNewReportMetadataBasedOnPageWidgets}
       />
     );
   };
