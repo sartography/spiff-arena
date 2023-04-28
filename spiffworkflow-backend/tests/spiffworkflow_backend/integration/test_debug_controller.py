@@ -4,7 +4,6 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 
 class TestDebugController(BaseTest):
-
     def test_test_raise_error(
         self,
         app: Flask,
