@@ -14,7 +14,7 @@ type OwnProps = {
   buttonText?: string;
   buttonClassName?: string;
   processInstanceReportSelection?: ProcessInstanceReport | null;
-  reportMetadata: ReportMetadata;
+  getReportMetadataCallback: Function;
 };
 
 export default function ProcessInstanceListSaveAsReport({
@@ -22,7 +22,7 @@ export default function ProcessInstanceListSaveAsReport({
   processInstanceReportSelection,
   buttonClassName,
   buttonText = 'Save as Perspective',
-  reportMetadata,
+  getReportMetadataCallback,
 }: OwnProps) {
   const [identifier, setIdentifier] = useState<string>(
     processInstanceReportSelection?.identifier || ''
@@ -49,6 +49,11 @@ export default function ProcessInstanceListSaveAsReport({
 
   const addProcessInstanceReport = (event: any) => {
     event.preventDefault();
+
+    const reportMetadata = getReportMetadataCallback();
+    if (!reportMetadata) {
+      return;
+    }
 
     let path = `/process-instances/reports`;
     let httpMethod = 'POST';
