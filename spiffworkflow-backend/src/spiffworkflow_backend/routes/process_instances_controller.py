@@ -231,6 +231,7 @@ def process_instance_list_for_me(
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
+    ProcessInstanceReportService.add_or_update_filter(body['report_metadata']['filter_by'], {"field_name": 'with_relation_to_me', "field_value": True})
     return process_instance_list(
         process_model_identifier=process_model_identifier,
         page=page,

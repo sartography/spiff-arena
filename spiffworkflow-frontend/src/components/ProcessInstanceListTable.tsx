@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom';
 
 // @ts-ignore
 import { Close, AddAlt } from '@carbon/icons-react';
@@ -91,6 +96,7 @@ type OwnProps = {
   variant?: string;
   canCompleteAllTasks?: boolean;
   showActionsColumn?: boolean;
+  showLinkToReport?: boolean;
 };
 
 interface dateParameters {
@@ -111,6 +117,7 @@ export default function ProcessInstanceListTable({
   variant = 'for-me',
   canCompleteAllTasks = false,
   showActionsColumn = false,
+  showLinkToReport = false,
 }: OwnProps) {
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
@@ -200,6 +207,8 @@ export default function ProcessInstanceListTable({
     string | null
   >(null);
 
+  const [reportHash, setReportHash] = useState<string | null>(null);
+
   const [
     processInitiatorNotFoundErrorText,
     setProcessInitiatorNotFoundErrorText,
@@ -280,6 +289,9 @@ export default function ProcessInstanceListTable({
     setPagination(result.pagination);
 
     setReportMetadata(result.report_metadata);
+    if (result.report_hash) {
+      setReportHash(result.report_hash);
+    }
   }, []);
 
   const setProcessInstancesFromApplyFilter = (result: any) => {
@@ -1550,6 +1562,15 @@ export default function ProcessInstanceListTable({
     return null;
   };
 
+  const linkToReport = () => {
+    if (!showLinkToReport) {
+      return null;
+    }
+    return (
+      <Link to={`/admin/process-instances?report_hash=${reportHash}`}>Hey</Link>
+    );
+  };
+
   let resultsTable = null;
   if (pagination && (!textToShowIfEmpty || pagination.total > 0)) {
     // eslint-disable-next-line prefer-const
@@ -1598,6 +1619,7 @@ export default function ProcessInstanceListTable({
     <>
       {reportColumnForm()}
       {processInstanceReportSaveTag()}
+      {linkToReport()}
       <Filters
         filterOptions={filterOptions}
         showFilterOptions={showFilterOptions}
