@@ -125,7 +125,7 @@
 #     substitution_variables: Optional[dict] = None,
 # ) -> list[dict]:
 #     """Do_report_with_metadata_and_instances."""
-#     process_instance_report = ProcessInstanceReportModel.create_with_attributes(
+#     process_instance_report = ProcessInstanceReportModel.create_report(
 #         identifier="sure",
 #         report_metadata=report_metadata,
 #         user=BaseTest.find_or_create_user(),

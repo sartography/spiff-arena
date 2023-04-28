@@ -583,24 +583,24 @@ export default function ProcessInstanceListTable({
   };
 
   const removeFieldFromReportMetadata = (
-    postBody: ReportMetadata,
+    reportMetadataToUse: ReportMetadata,
     fieldName: string
   ) => {
-    const filtersToKeep = postBody.filter_by.filter(
+    const filtersToKeep = reportMetadataToUse.filter_by.filter(
       (rf: ReportFilter) => rf.field_name !== fieldName
     );
     // eslint-disable-next-line no-param-reassign
-    postBody.filter_by = filtersToKeep;
+    reportMetadataToUse.filter_by = filtersToKeep;
   };
 
   const insertOrUpdateFieldInReportMetadata = (
-    postBody: ReportMetadata,
+    reportMetadataToUse: ReportMetadata,
     fieldName: string,
     fieldValue: string
   ) => {
-    removeFieldFromReportMetadata(postBody, fieldName);
+    removeFieldFromReportMetadata(reportMetadataToUse, fieldName);
     if (fieldValue) {
-      postBody.filter_by.push({
+      reportMetadataToUse.filter_by.push({
         field_name: fieldName,
         field_value: fieldValue,
       });
