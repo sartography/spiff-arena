@@ -87,7 +87,7 @@ type OwnProps = {
   textToShowIfEmpty?: string;
   paginationClassName?: string;
   autoReload?: boolean;
-  additionalParams?: string;
+  additionalReportFilters?: ReportFilter[];
   variant?: string;
   canCompleteAllTasks?: boolean;
   showActionsColumn?: boolean;
@@ -102,7 +102,7 @@ export default function ProcessInstanceListTable({
   processModelFullIdentifier,
   paginationQueryParamPrefix,
   perPageOptions,
-  additionalParams,
+  additionalReportFilters,
   showReports = true,
   reportIdentifier,
   textToShowIfEmpty,
@@ -330,6 +330,9 @@ export default function ProcessInstanceListTable({
         }
       }
 
+      // this is the code to re-populate the widgets on the page
+      // with values from the report metadata, which is derived
+      // from the searchParams (often report_hash)
       let selectedProcessModelIdentifier = processModelFullIdentifier;
       reportMetadataBodyToUse.filter_by.forEach(
         (reportFilter: ReportFilter) => {
@@ -360,7 +363,6 @@ export default function ProcessInstanceListTable({
           }
         }
       );
-
       processModelSelectionItemsForUseEffect.forEach(
         (processModel: ProcessModel) => {
           if (processModel.id === selectedProcessModelIdentifier) {
@@ -384,9 +386,13 @@ export default function ProcessInstanceListTable({
         // eslint-disable-next-line prefer-destructuring
         perPage = perPageOptions[1];
       }
-      let queryParamString = `per_page=${perPage}&page=${page}`;
-      if (additionalParams) {
-        queryParamString += `&${additionalParams}`;
+      const queryParamString = `per_page=${perPage}&page=${page}`;
+      if (additionalReportFilters) {
+        additionalReportFilters.forEach((arf: ReportFilter) => {
+          if (!reportMetadataBodyToUse.filter_by.includes(arf)) {
+            reportMetadataBodyToUse.filter_by.push(arf);
+          }
+        });
       }
 
       HttpService.makeCallToBackend({
@@ -405,13 +411,14 @@ export default function ProcessInstanceListTable({
         return;
       }
       const queryParams: string[] = [];
-      ['report_hash', 'report_id', 'report_identifier'].forEach(
-        (paramName: string) => {
-          if (searchParams.get(paramName)) {
-            queryParams.push(`${paramName}=${searchParams.get(paramName)}`);
-          }
+      ['report_hash', 'report_id'].forEach((paramName: string) => {
+        if (searchParams.get(paramName)) {
+          queryParams.push(`${paramName}=${searchParams.get(paramName)}`);
         }
-      );
+      });
+      if (reportIdentifier) {
+        queryParams.push(`report_identifier=${reportIdentifier}`);
+      }
 
       if (queryParams.length > 0) {
         const queryParamString = `?${queryParams.join('&')}`;
@@ -476,7 +483,7 @@ export default function ProcessInstanceListTable({
     processModelFullIdentifier,
     perPageOptions,
     reportIdentifier,
-    additionalParams,
+    additionalReportFilters,
     processInstanceApiSearchPath,
     permissionsLoaded,
     listHasBeenFiltered,
