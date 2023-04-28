@@ -124,7 +124,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -206,7 +206,10 @@ describe('Equipment Path - Without Files', () => {
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -276,7 +279,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -328,7 +331,10 @@ describe('Equipment Path - Without Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -396,7 +402,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -446,7 +452,10 @@ describe('Equipment Path - Without Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -541,7 +550,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -592,7 +601,10 @@ describe('Equipment Path - Without Files', () => {
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -646,7 +658,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -697,7 +709,10 @@ describe('Equipment Path - Without Files', () => {
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -751,7 +766,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -802,7 +817,10 @@ describe('Equipment Path - Without Files', () => {
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -874,7 +892,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -925,7 +943,10 @@ describe('Equipment Path - Without Files', () => {
                     .click();
 
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -993,7 +1014,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1043,7 +1064,10 @@ describe('Equipment Path - Without Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1111,7 +1135,7 @@ describe('Equipment Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1161,7 +1185,10 @@ describe('Equipment Path - Without Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.visit('/');
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1254,7 +1281,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1376,8 +1403,11 @@ describe('Equipment Path - With Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1445,7 +1475,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1536,8 +1566,11 @@ describe('Equipment Path - With Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1605,7 +1638,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1695,8 +1728,11 @@ describe('Equipment Path - With Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1791,7 +1827,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1883,8 +1919,11 @@ describe('Equipment Path - With Files', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -1938,7 +1977,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2030,8 +2069,11 @@ describe('Equipment Path - With Files', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2085,7 +2127,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2176,8 +2218,11 @@ describe('Equipment Path - With Files', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2249,7 +2294,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2340,8 +2385,11 @@ describe('Equipment Path - With Files', () => {
                     .click();
 
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2409,7 +2457,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2499,8 +2547,11 @@ describe('Equipment Path - With Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(9000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
@@ -2568,7 +2619,7 @@ describe('Equipment Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(15000);
+            cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2659,8 +2710,11 @@ describe('Equipment Path - With Files', () => {
                     .contains(/^Submit$/)
                     .click();
 
-                cy.wait(6000);
-                cy.visit('/');
+                cy.wait(20000);
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
                 cy.wait(2000);
