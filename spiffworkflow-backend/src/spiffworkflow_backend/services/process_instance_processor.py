@@ -684,7 +684,7 @@ class ProcessInstanceProcessor:
                 )
             if element_unit_process_dict is not None:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
-                spiff_bpmn_process_dict["subprocess_specs"] = {} #element_unit_process_dict["subprocess_specs"]
+                spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
@@ -694,6 +694,10 @@ class ProcessInstanceProcessor:
                 bpmn_subprocesses = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id).all()
                 bpmn_subprocess_id_to_guid_mappings = {}
                 for bpmn_subprocess in bpmn_subprocesses:
+                    subprocess_identifier = bpmn_subprocess.bpmn_process_definition.bpmn_identifier
+                    if subprocess_identifier not in spiff_bpmn_process_dict["subprocess_specs"]:
+                        current_app.logger.info(f"Skipping subprocess '{subprocess_identifier}'")
+                        continue
                     bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = bpmn_subprocess.guid
                     single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess)
                     spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess.guid] = single_bpmn_process_dict
@@ -702,7 +706,7 @@ class ProcessInstanceProcessor:
                     TaskModel.bpmn_process_id.in_(bpmn_subprocess_id_to_guid_mappings.keys())  # type: ignore
                 ).all()
                 cls._get_tasks_dict(tasks, spiff_bpmn_process_dict, bpmn_subprocess_id_to_guid_mappings)
-
+                
         return spiff_bpmn_process_dict
 
     def current_user(self) -> Any:

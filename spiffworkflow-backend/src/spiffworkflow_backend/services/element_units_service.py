@@ -48,6 +48,8 @@ class ElementUnitsService:
             # moving
             import spiff_element_units
 
+            current_app.logger.info(f"Checking element unit cache @ {cache_key} :: '{process_id}' - '{element_id}'")
+
             bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(
                 cls._cache_dir(), cache_key, process_id, element_id
             )
