@@ -38,7 +38,7 @@ class ElementUnitsService:
         return None
 
     @classmethod
-    def workflow_from_cached_element_unit(cls, cache_key: str, element_id: str) -> Optional[BpmnSpecDict]:
+    def workflow_from_cached_element_unit(cls, cache_key: str, process_id: str, element_id: str) -> Optional[BpmnSpecDict]:
         if not cls._enabled():
             return None
 
@@ -49,7 +49,7 @@ class ElementUnitsService:
             import spiff_element_units
 
             bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(
-                cls._cache_dir(), cache_key, element_id
+                cls._cache_dir(), cache_key, process_id, element_id
             )
             return json.loads(bpmn_spec_json)  # type: ignore
         except Exception as e:

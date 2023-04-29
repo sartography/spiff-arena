@@ -680,10 +680,11 @@ class ProcessInstanceProcessor:
                 element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
                     full_process_model_hash,
                     bpmn_process_definition.bpmn_identifier,
+                    bpmn_process_definition.bpmn_identifier,
                 )
             if element_unit_process_dict is not None:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
-                spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
+                spiff_bpmn_process_dict["subprocess_specs"] = {} #element_unit_process_dict["subprocess_specs"]
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
