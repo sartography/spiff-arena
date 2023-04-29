@@ -18,10 +18,19 @@ list_of_unused_things="$(dead | grep -E '^[a-z].*is never read')"
 
 while read -r line; do
   function_name="$(echo "$line" | awk '{print $1}')"
-  echo "function_name: ${function_name}"
+  echo "possible function_name: ${function_name}"
   file_name_and_line_number="$(echo "$line" | perl -p -e "s/.*is never read, defined in //g")"
   file_name="$(echo "$file_name_and_line_number" | awk -F ':' '{print $1}')"
+  if ! grep "def $function_name" "$file_name" >/dev/null 2>&1; then
+    echo "skipping $function_name in ${file_name} because it's not a function"
+    continue
+  fi
+  if grep -E codemod <<< "$file_name" >/dev/null 2>&1; then
+    echo "skipping ${file_name} because it's a codemod file"
+    continue
+  fi
   echo "trying to remove $function_name from: ${file_name}"
+
   if python bin/codemod/update_file_to_remove_function.py "$file_name" "$function_name"; then
     # TODO: run exhaustive tests, and if they pass, report success
     echo "function ${function_name} removed from ${file_name}. yay!"

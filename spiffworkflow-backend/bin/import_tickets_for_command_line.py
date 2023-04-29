@@ -11,17 +11,6 @@ from spiffworkflow_backend.services.process_instance_processor import (
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
-
-
-def print_process_instance_count(process_model_identifier_ticket: str) -> None:
-    """Print process instance count."""
-    process_instances = ProcessInstanceModel.query.filter_by(
-        process_model_identifier=process_model_identifier_ticket
-    ).all()
-    process_instance_count = len(process_instances)
-    print(f"process_instance_count: {process_instance_count}")
-
-
 def main():
     """Main."""
     app = get_hacked_up_app_for_script()
