@@ -13,7 +13,7 @@ def remove_function(filename: str, function_name: str) -> None:
     bowler_query = (Query(filename)
         .select_function(function_name)
         .modify(remove_statement)
-        .execute(write=True))
+        .execute(write=True, silent=True, interactive=False))
 
     if len(bowler_query.exceptions) > 0:
         print(f"Failed to remove function {function_name} from {filename}.")
