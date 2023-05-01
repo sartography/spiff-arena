@@ -494,7 +494,7 @@ export default function ProcessInstanceLogList({ variant }: OwnProps) {
         <TabList aria-label="List of tabs">
           <Tab
             title="Only show a subset of the logs, and show fewer columns"
-            data-qa="process-instance-log-simple"
+            data-qa="process-instance-log-milestones"
             onClick={() => {
               resetFilters();
               searchParams.set('events', 'false');
