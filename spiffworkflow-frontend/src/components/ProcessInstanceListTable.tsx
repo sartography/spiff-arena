@@ -1692,7 +1692,7 @@ export default function ProcessInstanceListTable({
             data-qa="process-instance-list-link"
             kind="ghost"
             renderIcon={ArrowRight}
-            iconDescription="Go to Filterable List"
+            iconDescription="View Filterable List"
             hasIconOnly
             size="lg"
             onClick={() =>
