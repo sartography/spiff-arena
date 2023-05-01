@@ -1,5 +1,5 @@
+"""This is used by bin/codemod/remove_all_unused_functions to remove a function from a file."""
 from bowler import Query
-from bowler.types import Leaf
 
 # This came about because vulture (actually dead, from the list of Similar programs at https://pypi.org/project/vulture/)
 # actually found unused stuff, and I wanted to remove it.
@@ -7,6 +7,8 @@ from bowler.types import Leaf
 
 
 def remove_function(filename: str, function_name: str) -> None:
+    """Does the dirty work of actually removing the function from the file in place, or failing if it cannot."""
+
     def remove_statement(node, capture, filename):
         node.remove()
 
