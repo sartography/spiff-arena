@@ -5,15 +5,17 @@ from bowler.types import Leaf
 # actually found unused stuff, and I wanted to remove it.
 # See also https://github.com/craigds/decrapify
 
-def remove_function(filename: str, function_name: str) -> None:
 
+def remove_function(filename: str, function_name: str) -> None:
     def remove_statement(node, capture, filename):
         node.remove()
 
-    bowler_query = (Query(filename)
+    bowler_query = (
+        Query(filename)
         .select_function(function_name)
         .modify(remove_statement)
-        .execute(write=True, silent=True, interactive=False))
+        .execute(write=True, silent=True, interactive=False)
+    )
 
     if len(bowler_query.exceptions) > 0:
         print(f"Failed to remove function {function_name} from {filename}.")

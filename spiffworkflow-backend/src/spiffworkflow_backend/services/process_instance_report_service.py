@@ -1,6 +1,6 @@
 """Process_instance_report_service."""
-import re
 import copy
+import re
 from typing import Any
 from typing import Generator
 from typing import Optional
@@ -43,9 +43,9 @@ class ProcessInstanceReportService:
     @classmethod
     def system_metadata_map(cls, metadata_key: str) -> Optional[ReportMetadata]:
         # TODO replace with system reports that are loaded on launch (or similar)
-        terminal_status_values = ','.join(ProcessInstanceModel.terminal_statuses())
-        non_terminal_status_values = ','.join(ProcessInstanceModel.non_terminal_statuses())
-        active_status_values = ','.join(ProcessInstanceModel.active_statuses())
+        terminal_status_values = ",".join(ProcessInstanceModel.terminal_statuses())
+        non_terminal_status_values = ",".join(ProcessInstanceModel.non_terminal_statuses())
+        active_status_values = ",".join(ProcessInstanceModel.active_statuses())
         default: ReportMetadata = {
             "columns": cls.builtin_column_options(),
             "filter_by": [],
@@ -174,14 +174,14 @@ class ProcessInstanceReportService:
     @classmethod
     def compile_report(cls, report_metadata: ReportMetadata, user: UserModel) -> None:
         compiled_filters: list[FilterValue] = []
-        old_filters = copy.deepcopy(report_metadata['filter_by'])
+        old_filters = copy.deepcopy(report_metadata["filter_by"])
         for filter in old_filters:
-            if filter['field_name'] == 'initiated_by_me':
-                compiled_filters.append({'field_name': 'process_initiator_username', 'field_value': user.username})
+            if filter["field_name"] == "initiated_by_me":
+                compiled_filters.append({"field_name": "process_initiator_username", "field_value": user.username})
             else:
                 compiled_filters.append(filter)
 
-        report_metadata['filter_by'] = compiled_filters
+        report_metadata["filter_by"] = compiled_filters
 
     @classmethod
     def report_with_identifier(
@@ -243,10 +243,14 @@ class ProcessInstanceReportService:
         return results
 
     @classmethod
-    def add_human_task_fields(
-        cls, process_instance_dicts: list[dict]
-    ) -> list[dict]:
-        fields_to_return = ["task_id", "task_title", "task_name", "potential_owner_usernames", "assigned_user_group_identifier"]
+    def add_human_task_fields(cls, process_instance_dicts: list[dict]) -> list[dict]:
+        fields_to_return = [
+            "task_id",
+            "task_title",
+            "task_name",
+            "potential_owner_usernames",
+            "assigned_user_group_identifier",
+        ]
         for process_instance_dict in process_instance_dicts:
             assigned_user = aliased(UserModel)
             human_task_query = (
@@ -341,12 +345,11 @@ class ProcessInstanceReportService:
     def add_or_update_filter(cls, filters: list[FilterValue], new_filter: FilterValue) -> None:
         filter_found = False
         for filter in filters:
-            if filter["field_name"] == new_filter['field_name']:
-                filter['field_value'] = new_filter['field_value']
+            if filter["field_name"] == new_filter["field_name"]:
+                filter["field_value"] = new_filter["field_value"]
                 filter_found = True
         if filter_found is False:
             filters.append(new_filter)
-
 
     @classmethod
     def run_process_instance_report(
@@ -391,12 +394,6 @@ class ProcessInstanceReportService:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.status.in_(process_status.split(","))  # type: ignore
             )
-
-        for _value in cls.check_filter_value(filters, "initiated_by_me"):
-            raise Exception("DEPRECATED: initiated_by_me")
-
-        for value in cls.check_filter_value(filters, "has_terminal_status"):
-            raise Exception("DEPRECATED: has_terminal_status")
 
         has_active_status = cls.get_filter_value(filters, "has_active_status")
         if has_active_status:
@@ -461,7 +458,7 @@ class ProcessInstanceReportService:
                 and_(
                     HumanTaskModel.process_instance_id == ProcessInstanceModel.id,
                     HumanTaskModel.lane_assignment_id.is_(None),  # type: ignore
-                    HumanTaskModel.completed.is_(False)  # type: ignore
+                    HumanTaskModel.completed.is_(False),  # type: ignore
                 ),
             ).join(
                 HumanTaskUserModel,
@@ -475,7 +472,9 @@ class ProcessInstanceReportService:
 
             process_instance_query = process_instance_query.join(HumanTaskModel)
             if process_status is not None:
-                non_active_statuses = [s for s in process_status.split(',') if s not in ProcessInstanceModel.active_statuses()]
+                non_active_statuses = [
+                    s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()
+                ]
                 if len(non_active_statuses) == 0:
                     process_instance_query = process_instance_query.filter(
                         HumanTaskModel.completed.is_(False)  # type: ignore
@@ -545,7 +544,7 @@ class ProcessInstanceReportService:
             if value is True:
                 results = cls.add_human_task_fields(results)
 
-        report_metadata['filter_by'] = filters
+        report_metadata["filter_by"] = filters
         response_json = {
             "report_metadata": report_metadata,
             "results": results,
