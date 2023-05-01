@@ -1311,6 +1311,7 @@ export default function ProcessInstanceListTable({
               }}
               processModels={processModelAvailableItems}
               selectedItem={processModelSelection}
+              truncateProcessModelDisplayName
             />
           </Column>
           <Column md={4}>
