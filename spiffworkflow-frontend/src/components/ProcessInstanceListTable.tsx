@@ -1521,6 +1521,7 @@ export default function ProcessInstanceListTable({
       start_in_seconds: formatSecondsForDisplay,
       end_in_seconds: formatSecondsForDisplay,
       updated_at_in_seconds: formatSecondsForDisplay,
+      task_updated_at_in_seconds: formatSecondsForDisplay,
     };
     const formatter =
       reportColumnFormatters[column.accessor] ?? defaultFormatter;
@@ -1543,6 +1544,13 @@ export default function ProcessInstanceListTable({
       return (
         <TableCellWithTimeAgoInWords
           timeInSeconds={row.updated_at_in_seconds}
+        />
+      );
+    }
+    if (column.accessor === 'task_updated_at_in_seconds') {
+      return (
+        <TableCellWithTimeAgoInWords
+          timeInSeconds={row.task_updated_at_in_seconds}
         />
       );
     }
