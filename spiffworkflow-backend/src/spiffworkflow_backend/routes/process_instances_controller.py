@@ -427,41 +427,6 @@ def process_instance_report_delete(
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
 
 
-# def process_instance_report_show(
-#     report_id: int,
-#     page: int = 1,
-#     per_page: int = 100,
-# ) -> flask.wrappers.Response:
-#     """Process_instance_report_show."""
-#     process_instances = ProcessInstanceModel.query.order_by(
-#         ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-#     ).paginate(page=page, per_page=per_page, error_out=False)
-#
-#     process_instance_report = ProcessInstanceReportModel.query.filter_by(
-#         id=report_id,
-#         created_by_id=g.user.id,
-#     ).first()
-#     if process_instance_report is None:
-#         raise ApiError(
-#             error_code="unknown_process_instance_report",
-#             message="Unknown process instance report",
-#             status_code=404,
-#         )
-#
-#     substitution_variables = request.args.to_dict()
-#     result_dict = process_instance_report.generate_report(process_instances.items, substitution_variables)
-#
-#     # update this if we go back to a database query instead of filtering in memory
-#     result_dict["pagination"] = {
-#         "count": len(result_dict["results"]),
-#         "total": len(result_dict["results"]),
-#         "pages": 1,
-#     }
-#
-#     return Response(json.dumps(result_dict), status=200, mimetype="application/json")
-#
-
-
 def process_instance_task_list_without_task_data_for_me(
     modified_process_model_identifier: str,
     process_instance_id: int,

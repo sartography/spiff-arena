@@ -1191,20 +1191,6 @@ paths:
         description: The page number to return. Defaults to page 1.
         schema:
           type: integer
-    # get:
-    #   operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_show
-    #   summary: Returns a report of process instances for a given process model
-    #   tags:
-    #     - Process Instances
-    #   responses:
-    #     "200":
-    #       description: Workflow.
-    #       content:
-    #         application/json:
-    #           schema:
-    #             type: array
-    #             items:
-    #               $ref: "#/components/schemas/Workflow"
     put:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_update
       summary: Updates a process instance report
