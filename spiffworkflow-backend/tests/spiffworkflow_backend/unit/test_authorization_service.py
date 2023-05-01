@@ -291,6 +291,7 @@ class TestAuthorizationService(BaseTest):
         expected_permissions = [
             ("/process-instances/find-by-id/*", "read"),
             ("/process-instances/for-me", "read"),
+            ("/process-instances/report-metadata", "read"),
             ("/process-instances/reports/*", "create"),
             ("/process-instances/reports/*", "delete"),
             ("/process-instances/reports/*", "read"),
