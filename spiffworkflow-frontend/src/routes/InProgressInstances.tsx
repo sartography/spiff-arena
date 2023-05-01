@@ -35,7 +35,7 @@ export default function InProgressInstances() {
           ).replace('-', '_')}`}
           paginationClassName="with-large-bottom-margin"
           perPageOptions={[2, 5, 25]}
-          reportIdentifier="system_report_in_progress_instances_with_tasks_for_my_group"
+          reportIdentifier="system_report_in_progress_instances_with_tasks"
           showReports={false}
           textToShowIfEmpty="This group has no instances waiting on it at this time."
           additionalReportFilters={[

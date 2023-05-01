@@ -197,7 +197,10 @@ class TestProcessInstanceReportService(BaseTest):
 
         process_instance_report = ProcessInstanceReportService.report_with_identifier(
             user=user_one,
-            report_identifier="system_report_completed_instances_with_tasks_completed_by_my_groups",
+            report_identifier="system_report_completed_instances",
+        )
+        process_instance_report.report_metadata["filter_by"].append(
+            {"field_name": "user_group_identifier", "field_value": user_one.groups[0].identifier}
         )
         response_json = ProcessInstanceReportService.run_process_instance_report(
             report_metadata=process_instance_report.report_metadata,

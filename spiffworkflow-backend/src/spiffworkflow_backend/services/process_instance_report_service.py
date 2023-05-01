@@ -76,7 +76,7 @@ class ProcessInstanceReportService:
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
-        system_report_completed_instances_with_tasks_completed_by_my_groups: ReportMetadata = {
+        system_report_completed_instances: ReportMetadata = {
             "columns": cls.builtin_column_options(),
             "filter_by": [
                 {"field_name": "process_status", "field_value": terminal_status_values},
@@ -128,7 +128,7 @@ class ProcessInstanceReportService:
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
-        system_report_in_progress_instances_with_tasks_for_my_group: ReportMetadata = {
+        system_report_in_progress_instances_with_tasks: ReportMetadata = {
             "columns": [
                 {"Header": "id", "accessor": "id"},
                 {
@@ -156,16 +156,12 @@ class ProcessInstanceReportService:
             "system_report_completed_instances_with_tasks_completed_by_me": (
                 system_report_completed_instances_with_tasks_completed_by_me
             ),
-            "system_report_completed_instances_with_tasks_completed_by_my_groups": (
-                system_report_completed_instances_with_tasks_completed_by_my_groups
-            ),
+            "system_report_completed_instances": system_report_completed_instances,
             "system_report_in_progress_instances_initiated_by_me": system_report_in_progress_instances_initiated_by_me,
             "system_report_in_progress_instances_with_tasks_for_me": (
                 system_report_in_progress_instances_with_tasks_for_me
             ),
-            "system_report_in_progress_instances_with_tasks_for_my_group": (
-                system_report_in_progress_instances_with_tasks_for_my_group
-            ),
+            "system_report_in_progress_instances_with_tasks": system_report_in_progress_instances_with_tasks,
         }
         if metadata_key not in temp_system_metadata_map:
             return None
