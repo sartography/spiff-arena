@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { DATE_FORMAT, PROCESS_STATUSES } from '../../src/config';
+import { titleizeString } from '../../src/helpers';
 
 const filterByDate = (fromDate) => {
   cy.get('#date-picker-start-from').clear().type(format(fromDate, DATE_FORMAT));
@@ -160,7 +161,7 @@ describe('process-instances', () => {
     cy.getBySel('process-instance-list-link').click();
     cy.getBySel('process-instance-show-link-id').first().click();
     cy.getBySel('process-instance-log-list-link').click();
-    cy.getBySel('process-instance-log-detailed').click();
+    cy.getBySel('process-instance-log-events').click();
     cy.contains('process_model_one');
     cy.contains('task_completed');
     cy.basicPaginationTest();
@@ -172,14 +173,19 @@ describe('process-instances', () => {
     cy.contains('All Process Instances');
     cy.assertAtLeastOneItemInPaginatedResults();
 
+    cy.getBySel('filter-section-expand-toggle').click();
+
     const statusSelect = '#process-instance-status-select';
     PROCESS_STATUSES.forEach((processStatus) => {
       if (!['all', 'waiting'].includes(processStatus)) {
         cy.get(statusSelect).click();
-        cy.get(statusSelect).contains(processStatus).click();
+        cy.get(statusSelect).contains(titleizeString(processStatus)).click();
         cy.get(statusSelect).click();
         cy.getBySel('filter-button').click();
-        cy.url().should('include', `status=${processStatus}`);
+
+        // make sure that there is 1 status item selected in the multiselect
+        cy.get(`${statusSelect} .cds--tag`).contains('1');
+
         cy.assertAtLeastOneItemInPaginatedResults();
         cy.getBySel(`process-instance-status-${processStatus}`);
 

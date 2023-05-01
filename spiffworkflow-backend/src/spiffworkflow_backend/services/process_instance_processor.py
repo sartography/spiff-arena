@@ -1737,7 +1737,7 @@ class ProcessInstanceProcessor:
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
         task_service.update_task_model(task_model, spiff_task)
-        TaskService.insert_or_update_json_data_records(task_service.json_data_dicts)
+        JsonDataModel.insert_or_update_json_data_records(task_service.json_data_dicts)
 
         ProcessInstanceTmpService.add_event_to_process_instance(
             self.process_instance_model,

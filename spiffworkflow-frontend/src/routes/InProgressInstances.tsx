@@ -20,44 +20,55 @@ export default function InProgressInstances() {
 
     return userGroups.map((userGroup: string) => {
       const titleText = `This is a list of instances with tasks that are waiting for the ${userGroup} group.`;
+      const headerElement = (
+        <h2 title={titleText} className="process-instance-table-header">
+          Waiting for <strong>{userGroup}</strong>
+        </h2>
+      );
       return (
-        <>
-          <h2 title={titleText} className="process-instance-table-header">
-            Waiting for <strong>{userGroup}</strong>
-          </h2>
-          <ProcessInstanceListTable
-            filtersEnabled={false}
-            paginationQueryParamPrefix={`waiting_for_${slugifyString(
-              userGroup
-            ).replace('-', '_')}`}
-            paginationClassName="with-large-bottom-margin"
-            perPageOptions={[2, 5, 25]}
-            reportIdentifier="system_report_in_progress_instances_with_tasks_for_my_group"
-            showReports={false}
-            textToShowIfEmpty="This group has no instances waiting on it at this time."
-            additionalParams={`user_group_identifier=${userGroup}`}
-            canCompleteAllTasks
-            showActionsColumn
-            autoReload
-          />
-        </>
+        <ProcessInstanceListTable
+          headerElement={headerElement}
+          showLinkToReport
+          filtersEnabled={false}
+          paginationQueryParamPrefix={`waiting_for_${slugifyString(
+            userGroup
+          ).replace('-', '_')}`}
+          paginationClassName="with-large-bottom-margin"
+          perPageOptions={[2, 5, 25]}
+          reportIdentifier="system_report_in_progress_instances_with_tasks"
+          showReports={false}
+          textToShowIfEmpty="This group has no instances waiting on it at this time."
+          additionalReportFilters={[
+            { field_name: 'user_group_identifier', field_value: userGroup },
+          ]}
+          canCompleteAllTasks
+          showActionsColumn
+          autoReload={false}
+        />
       );
     });
   };
 
   const startedByMeTitleText =
     'This is a list of open instances that you started.';
+  const startedByMeHeaderElement = (
+    <h2 title={startedByMeTitleText} className="process-instance-table-header">
+      Started by me
+    </h2>
+  );
+
   const waitingForMeTitleText =
     'This is a list of instances that have tasks that you can complete.';
+  const waitingForMeHeaderElement = (
+    <h2 title={waitingForMeTitleText} className="process-instance-table-header">
+      Waiting for me
+    </h2>
+  );
+
   return (
     <>
-      <h2
-        title={startedByMeTitleText}
-        className="process-instance-table-header"
-      >
-        Started by me
-      </h2>
       <ProcessInstanceListTable
+        headerElement={startedByMeHeaderElement}
         filtersEnabled={false}
         paginationQueryParamPrefix="open_instances_started_by_me"
         perPageOptions={[2, 5, 25]}
@@ -65,16 +76,13 @@ export default function InProgressInstances() {
         showReports={false}
         textToShowIfEmpty="There are no open instances you started at this time."
         paginationClassName="with-large-bottom-margin"
+        showLinkToReport
         showActionsColumn
-        autoReload
+        autoReload={false}
       />
-      <h2
-        title={waitingForMeTitleText}
-        className="process-instance-table-header"
-      >
-        Waiting for me
-      </h2>
       <ProcessInstanceListTable
+        headerElement={waitingForMeHeaderElement}
+        showLinkToReport
         filtersEnabled={false}
         paginationQueryParamPrefix="waiting_for_me"
         perPageOptions={[2, 5, 25]}

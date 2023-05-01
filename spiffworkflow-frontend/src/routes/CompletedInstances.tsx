@@ -29,10 +29,12 @@ export default function CompletedInstances() {
             paginationQueryParamPrefix="group_completed_instances"
             paginationClassName="with-large-bottom-margin"
             perPageOptions={[2, 5, 25]}
-            reportIdentifier="system_report_completed_instances_with_tasks_completed_by_my_groups"
+            reportIdentifier="system_report_completed_instances"
             showReports={false}
             textToShowIfEmpty="This group has no completed instances at this time."
-            additionalParams={`user_group_identifier=${userGroup}`}
+            additionalReportFilters={[
+              { field_name: 'user_group_identifier', field_value: userGroup },
+            ]}
             showActionsColumn
           />
         </>

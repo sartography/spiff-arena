@@ -41,6 +41,10 @@ export const capitalizeFirstLetter = (string: any) => {
   return string.charAt(0).toUpperCase() + string.slice(1);
 };
 
+export const titleizeString = (string: any) => {
+  return capitalizeFirstLetter((string || '').replaceAll('_', ' '));
+};
+
 export const convertDateToSeconds = (
   date: any,
   onChangeFunction: any = null

@@ -23,7 +23,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 # We need to call this before importing spiffworkflow_backend
 # otherwise typeguard cannot work. hence the noqa: E402
 if os.environ.get("RUN_TYPEGUARD") == "true":
-    from typeguard.importhook import install_import_hook
+    from typeguard import install_import_hook
 
     install_import_hook(packages="spiffworkflow_backend")
 

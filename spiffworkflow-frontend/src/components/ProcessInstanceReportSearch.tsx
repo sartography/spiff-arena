@@ -5,7 +5,6 @@ import {
   FormLabel,
   // @ts-ignore
 } from '@carbon/react';
-import { useSearchParams } from 'react-router-dom';
 import { truncateString } from '../helpers';
 import { ProcessInstanceReport } from '../interfaces';
 import HttpService from '../services/HttpService';
@@ -14,32 +13,42 @@ type OwnProps = {
   onChange: (..._args: any[]) => any;
   selectedItem?: ProcessInstanceReport | null;
   titleText?: string;
+  selectedReportId?: string | null;
+  handleSetSelectedReportCallback?: Function;
 };
 
 export default function ProcessInstanceReportSearch({
   selectedItem,
   onChange,
+  selectedReportId,
+  handleSetSelectedReportCallback,
   titleText = 'Process instance perspectives',
 }: OwnProps) {
   const [processInstanceReports, setProcessInstanceReports] = useState<
     ProcessInstanceReport[] | null
   >(null);
 
-  const [searchParams] = useSearchParams();
-  const reportId = searchParams.get('report_id');
-
   useEffect(() => {
+    const selectedReportIdAsNumber = Number(selectedReportId);
+
     function setProcessInstanceReportsFromResult(
       result: ProcessInstanceReport[]
     ) {
       setProcessInstanceReports(result);
+      if (selectedReportId && handleSetSelectedReportCallback) {
+        result.forEach((processInstanceReport: ProcessInstanceReport) => {
+          if (processInstanceReport.id === selectedReportIdAsNumber) {
+            handleSetSelectedReportCallback(processInstanceReport);
+          }
+        });
+      }
     }
 
     HttpService.makeCallToBackend({
       path: `/process-instances/reports`,
       successCallback: setProcessInstanceReportsFromResult,
     });
-  }, [reportId]);
+  }, [handleSetSelectedReportCallback, selectedReportId]);
 
   const reportSelectionString = (
     processInstanceReport: ProcessInstanceReport

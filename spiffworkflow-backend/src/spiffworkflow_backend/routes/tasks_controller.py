@@ -36,6 +36,7 @@ from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
@@ -220,7 +221,7 @@ def task_data_update(
                 task_model, new_task_data_dict, "json_data_hash"
             )
             if json_data_dict is not None:
-                TaskService.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
+                JsonDataModel.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
                 ProcessInstanceTmpService.add_event_to_process_instance(
                     process_instance, ProcessInstanceEventType.task_data_edited.value, task_guid=task_guid
                 )
@@ -537,7 +538,7 @@ def _task_submit_shared(
             task_model, spiff_task.data, "json_data_hash"
         )
         if json_data_dict is not None:
-            TaskService.insert_or_update_json_data_dict(json_data_dict)
+            JsonDataModel.insert_or_update_json_data_dict(json_data_dict)
             db.session.add(task_model)
             db.session.commit()
     else:

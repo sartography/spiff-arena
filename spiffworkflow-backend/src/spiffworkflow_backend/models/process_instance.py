@@ -166,6 +166,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
         return ["complete", "error", "terminated"]
 
     @classmethod
+    def non_terminal_statuses(cls) -> list[str]:
+        terminal_status_values = cls.terminal_statuses()
+        return [s for s in ProcessInstanceStatus.list() if s not in terminal_status_values]
+
+    @classmethod
     def active_statuses(cls) -> list[str]:
         return ["user_input_required", "waiting"]
 
