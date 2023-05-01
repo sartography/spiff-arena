@@ -1,23 +1,19 @@
-// TODO:
-//    add drop down for user_group_identifier and one for the 2 system reports:
-//      with_tasks_completed_by_me
-//      with_tasks_i_can_complete
-//    add checkbox to show with_oldest_open_task
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  Link,
-  useNavigate,
-  useParams,
-  useSearchParams,
-} from 'react-router-dom';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-// @ts-ignore
-import { Close, AddAlt } from '@carbon/icons-react';
+import { Close, AddAlt, ArrowRight } from '@carbon/icons-react';
 import {
   Button,
   ButtonSet,
   DatePicker,
   DatePickerInput,
+  Dropdown,
   Table,
   Grid,
   Column,
@@ -32,7 +28,7 @@ import {
   ComboBox,
   TextInput,
   FormLabel,
-  // @ts-ignore
+  Checkbox,
 } from '@carbon/react';
 import { useDebouncedCallback } from 'use-debounce';
 import {
@@ -102,6 +98,7 @@ type OwnProps = {
   canCompleteAllTasks?: boolean;
   showActionsColumn?: boolean;
   showLinkToReport?: boolean;
+  headerElement?: React.ReactElement;
 };
 
 interface dateParameters {
@@ -123,13 +120,13 @@ export default function ProcessInstanceListTable({
   canCompleteAllTasks = false,
   showActionsColumn = false,
   showLinkToReport = false,
+  headerElement,
 }: OwnProps) {
   let processInstanceApiSearchPath = '/process-instances/for-me';
   if (variant === 'all') {
     processInstanceApiSearchPath = '/process-instances';
   }
 
-  const params = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { addError, removeError } = useAPIError();
@@ -147,8 +144,6 @@ export default function ProcessInstanceListTable({
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
-  const oneHourInSeconds = 3600;
-  const oneMonthInSeconds = oneHourInSeconds * 24 * 30;
   const [startFromDate, setStartFromDate] = useState<string>('');
   const [startToDate, setStartToDate] = useState<string>('');
   const [endFromDate, setEndFromDate] = useState<string>('');
@@ -157,12 +152,13 @@ export default function ProcessInstanceListTable({
   const [startToTime, setStartToTime] = useState<string>('');
   const [endFromTime, setEndFromTime] = useState<string>('');
   const [endToTime, setEndToTime] = useState<string>('');
-  const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
   const [startFromTimeInvalid, setStartFromTimeInvalid] =
     useState<boolean>(false);
   const [startToTimeInvalid, setStartToTimeInvalid] = useState<boolean>(false);
   const [endFromTimeInvalid, setEndFromTimeInvalid] = useState<boolean>(false);
   const [endToTimeInvalid, setEndToTimeInvalid] = useState<boolean>(false);
+
+  const [showFilterOptions, setShowFilterOptions] = useState<boolean>(false);
   const [requiresRefilter, setRequiresRefilter] = useState<boolean>(false);
   const [lastColumnFilter, setLastColumnFilter] = useState<string>('');
 
@@ -211,6 +207,18 @@ export default function ProcessInstanceListTable({
   const [processInitiatorSelection, setProcessInitiatorSelection] = useState<
     string | null
   >(null);
+
+  const [showAdvancedOptions, setShowAdvancedOptions] =
+    useState<boolean>(false);
+  const [withOldestOpenTask, setWithOldestOpenTask] = useState<boolean>(false);
+  const [systemReport, setSystemReport] = useState<string | null>(null);
+  const [selectedUserGroup, setSelectedUserGroup] = useState<string | null>(
+    null
+  );
+  const [userGroups, setUserGroups] = useState<string[]>([]);
+  const systemReportOptions: string[] = useMemo(() => {
+    return ['with_tasks_i_can_complete', 'with_tasks_completed_by_me'];
+  }, []);
 
   const [reportHash, setReportHash] = useState<string | null>(null);
 
@@ -274,19 +282,6 @@ export default function ProcessInstanceListTable({
     250
   );
 
-  const parametersToGetFromSearchParams = useMemo(() => {
-    const figureOutProcessInitiator = (processInitiatorSearchText: string) => {
-      searchForProcessInitiator(processInitiatorSearchText);
-    };
-
-    return {
-      process_model_identifier: null,
-      process_status: null,
-      process_initiator_username: figureOutProcessInitiator,
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const setProcessInstancesFromResult = useCallback((result: any) => {
     setRequiresRefilter(false);
     const processInstancesFromApi = result.results;
@@ -319,19 +314,15 @@ export default function ProcessInstanceListTable({
     }
   }, []);
 
-  // eslint-disable-next-line sonarjs/cognitive-complexity
-  useEffect(() => {
-    if (!permissionsLoaded) {
-      return undefined;
-    }
+  // we apparently cannot use a state set in a useEffect from within that same useEffect
+  // so use a variable instead
+  const processModelSelectionItemsForUseEffect = useRef<ProcessModel[]>([]);
 
-    // we apparently cannot use a state set in a useEffect from within that same useEffect
-    // so use a variable instead
-    let processModelSelectionItemsForUseEffect: ProcessModel[] = [];
-
-    function getProcessInstances(
+  const getProcessInstances = useCallback(
+    (
       processInstanceReport: ProcessInstanceReport | null = null
-    ) {
+      // eslint-disable-next-line sonarjs/cognitive-complexity
+    ) => {
       if (listHasBeenFiltered) {
         return;
       }
@@ -359,6 +350,12 @@ export default function ProcessInstanceListTable({
             );
           } else if (reportFilter.field_name === 'process_initiator_username') {
             setProcessInitiatorSelection(reportFilter.field_value || '');
+          } else if (reportFilter.field_name === 'with_oldest_open_task') {
+            setWithOldestOpenTask(reportFilter.field_value);
+          } else if (reportFilter.field_name === 'user_group_identifier') {
+            setSelectedUserGroup(reportFilter.field_value);
+          } else if (systemReportOptions.includes(reportFilter.field_name)) {
+            setSystemReport(reportFilter.field_name);
           } else if (reportFilter.field_name === 'process_model_identifier') {
             selectedProcessModelIdentifier =
               reportFilter.field_value || undefined;
@@ -380,7 +377,7 @@ export default function ProcessInstanceListTable({
           }
         }
       );
-      processModelSelectionItemsForUseEffect.forEach(
+      processModelSelectionItemsForUseEffect.current.forEach(
         (processModel: ProcessModel) => {
           if (processModel.id === selectedProcessModelIdentifier) {
             setProcessModelSelection(processModel);
@@ -412,6 +409,13 @@ export default function ProcessInstanceListTable({
         });
       }
 
+      if (filtersEnabled) {
+        HttpService.makeCallToBackend({
+          path: `/user-groups/for-current-user`,
+          successCallback: setUserGroups,
+        });
+      }
+
       HttpService.makeCallToBackend({
         path: `${processInstanceApiSearchPath}?${queryParamString}`,
         successCallback: setProcessInstancesFromResult,
@@ -422,7 +426,28 @@ export default function ProcessInstanceListTable({
           report_metadata: reportMetadataBodyToUse,
         },
       });
+    },
+    [
+      additionalReportFilters,
+      dateParametersToAlwaysFilterBy,
+      filtersEnabled,
+      listHasBeenFiltered,
+      paginationQueryParamPrefix,
+      perPageOptions,
+      processInstanceApiSearchPath,
+      processModelFullIdentifier,
+      searchParams,
+      setProcessInstancesFromResult,
+      stopRefreshing,
+      systemReportOptions,
+    ]
+  );
+
+  useEffect(() => {
+    if (!permissionsLoaded) {
+      return undefined;
     }
+
     function getReportMetadataWithReportHash() {
       if (listHasBeenFiltered) {
         return;
@@ -453,7 +478,7 @@ export default function ProcessInstanceListTable({
         Object.assign(item, { label });
         return item;
       });
-      processModelSelectionItemsForUseEffect = selectionArray;
+      processModelSelectionItemsForUseEffect.current = selectionArray;
       setProcessModelAvailableItems(selectionArray);
 
       const processStatusAllOptionsArray = PROCESS_STATUSES.map(
@@ -489,23 +514,12 @@ export default function ProcessInstanceListTable({
     return undefined;
   }, [
     autoReload,
-    searchParams,
-    params,
-    oneMonthInSeconds,
-    oneHourInSeconds,
-    dateParametersToAlwaysFilterBy,
-    parametersToGetFromSearchParams,
     filtersEnabled,
-    paginationQueryParamPrefix,
-    processModelFullIdentifier,
-    perPageOptions,
-    reportIdentifier,
-    additionalReportFilters,
-    processInstanceApiSearchPath,
-    permissionsLoaded,
+    getProcessInstances,
     listHasBeenFiltered,
-    setProcessInstancesFromResult,
-    stopRefreshing,
+    permissionsLoaded,
+    reportIdentifier,
+    searchParams,
   ]);
 
   const processInstanceReportSaveTag = () => {
@@ -620,7 +634,7 @@ export default function ProcessInstanceListTable({
   const insertOrUpdateFieldInReportMetadata = (
     reportMetadataToUse: ReportMetadata,
     fieldName: string,
-    fieldValue: string
+    fieldValue: any
   ) => {
     removeFieldFromReportMetadata(reportMetadataToUse, fieldName);
     if (fieldValue) {
@@ -644,7 +658,7 @@ export default function ProcessInstanceListTable({
       return null;
     }
 
-    let newReportMetadata = null;
+    let newReportMetadata: ReportMetadata | null = null;
     if (reportMetadata) {
       newReportMetadata = { ...reportMetadata };
     }
@@ -677,41 +691,44 @@ export default function ProcessInstanceListTable({
       endToSeconds
     );
 
-    if (processStatusSelection.length > 0) {
-      insertOrUpdateFieldInReportMetadata(
-        newReportMetadata,
-        'process_status',
-        processStatusSelection.join(',')
-      );
-    } else {
-      removeFieldFromReportMetadata(newReportMetadata, 'process_status');
-    }
+    insertOrUpdateFieldInReportMetadata(
+      newReportMetadata,
+      'process_status',
+      processStatusSelection.length > 0
+        ? processStatusSelection.join(',')
+        : null
+    );
+    insertOrUpdateFieldInReportMetadata(
+      newReportMetadata,
+      'process_model_identifier',
+      processModelSelection ? processModelSelection.id : null
+    );
+    insertOrUpdateFieldInReportMetadata(
+      newReportMetadata,
+      'process_initiator_username',
+      processInitiatorSelection
+    );
 
-    if (processModelSelection) {
-      insertOrUpdateFieldInReportMetadata(
-        newReportMetadata,
-        'process_model_identifier',
-        processModelSelection.id
-      );
-    } else {
-      removeFieldFromReportMetadata(
-        newReportMetadata,
-        'process_model_identifier'
-      );
-    }
+    insertOrUpdateFieldInReportMetadata(
+      newReportMetadata,
+      'with_oldest_open_task',
+      withOldestOpenTask
+    );
+    insertOrUpdateFieldInReportMetadata(
+      newReportMetadata,
+      'user_group_identifier',
+      selectedUserGroup
+    );
+    systemReportOptions.forEach((systemReportOption: string) => {
+      if (newReportMetadata) {
+        insertOrUpdateFieldInReportMetadata(
+          newReportMetadata,
+          systemReportOption,
+          systemReport === systemReportOption
+        );
+      }
+    });
 
-    if (processInitiatorSelection) {
-      insertOrUpdateFieldInReportMetadata(
-        newReportMetadata,
-        'process_initiator_username',
-        processInitiatorSelection
-      );
-    } else {
-      removeFieldFromReportMetadata(
-        newReportMetadata,
-        'process_initiator_username'
-      );
-    }
     return newReportMetadata;
   };
 
@@ -843,14 +860,19 @@ export default function ProcessInstanceListTable({
     clearFilters();
     const selectedReport = selection.selectedItem;
     setProcessInstanceReportSelection(selectedReport);
+    removeError();
+    setProcessInstanceReportJustSaved(mode || null);
+    setListHasBeenFiltered(false);
 
     let queryParamString = '';
     if (selectedReport) {
       queryParamString = `?report_id=${selectedReport.id}`;
-    }
 
-    removeError();
-    setProcessInstanceReportJustSaved(mode || null);
+      HttpService.makeCallToBackend({
+        path: `/process-instances/report-metadata${queryParamString}`,
+        successCallback: getProcessInstances,
+      });
+    }
     navigate(`${processInstanceListPathPrefix}${queryParamString}`);
   };
 
@@ -1181,6 +1203,75 @@ export default function ProcessInstanceListTable({
     return null;
   };
 
+  const handleAdvancedOptionsClose = () => {
+    setShowAdvancedOptions(false);
+  };
+
+  const advancedOptionsModal = () => {
+    if (!showAdvancedOptions) {
+      return null;
+    }
+    const formElements = (
+      <>
+        <Grid fullWidth>
+          <Column md={4} lg={8} sm={2}>
+            <Dropdown
+              id="system-report-dropdown"
+              titleText="System Report"
+              items={['', ...systemReportOptions]}
+              itemToString={(item: any) => item}
+              selectedItem={systemReport}
+              onChange={(value: any) => {
+                setSystemReport(value.selectedItem);
+                setRequiresRefilter(true);
+              }}
+            />
+          </Column>
+          <Column md={4} lg={8} sm={2}>
+            <Dropdown
+              id="user-group-dropdown"
+              titleText="User Group"
+              items={['', ...userGroups]}
+              itemToString={(item: any) => item}
+              selectedItem={selectedUserGroup}
+              onChange={(value: any) => {
+                setSelectedUserGroup(value.selectedItem);
+                setRequiresRefilter(true);
+              }}
+            />
+          </Column>
+        </Grid>
+        <br />
+        <Grid fullWidth>
+          <Column md={4} lg={8} sm={2}>
+            <Checkbox
+              labelText="Include oldest open task information"
+              id="with-oldest-open-task-checkbox"
+              checked={withOldestOpenTask}
+              onChange={(value: any) => {
+                setWithOldestOpenTask(value.target.checked);
+                setRequiresRefilter(true);
+              }}
+            />
+          </Column>
+        </Grid>
+        <div className="vertical-spacer-to-allow-combo-box-to-expand-in-modal" />
+      </>
+    );
+    return (
+      <Modal
+        open={showAdvancedOptions}
+        modalHeading="Advanced filter options"
+        primaryButtonText="Close"
+        onRequestSubmit={handleAdvancedOptionsClose}
+        onRequestClose={handleAdvancedOptionsClose}
+        hasScrollingContent
+      >
+        {formElements}
+      </Modal>
+    );
+  };
+
   const filterOptions = () => {
     if (!showFilterOptions) {
       return null;
@@ -1366,9 +1457,19 @@ export default function ProcessInstanceListTable({
               </Button>
             </ButtonSet>
           </Column>
-          <Column sm={4} md={4} lg={8}>
+          <Column sm={3} md={3} lg={7}>
             {saveAsReportComponent()}
             {deleteReportComponent()}
+          </Column>
+          <Column sm={1} md={1} lg={1}>
+            <Button
+              kind="ghost"
+              onClick={() => setShowAdvancedOptions(true)}
+              data-qa="advanced-options-filters"
+              className="narrow-button button-link float-right"
+            >
+              Advanced
+            </Button>
           </Column>
         </Grid>
       </>
@@ -1567,12 +1668,39 @@ export default function ProcessInstanceListTable({
     return null;
   };
 
-  const linkToReport = () => {
-    if (!showLinkToReport) {
+  const tableTitleLine = () => {
+    if (!showLinkToReport && !headerElement) {
       return null;
     }
+    let filterButtonLink = null;
+    if (showLinkToReport) {
+      filterButtonLink = (
+        <Column
+          sm={{ span: 1, offset: 3 }}
+          md={{ span: 1, offset: 7 }}
+          lg={{ span: 1, offset: 15 }}
+        >
+          <Button
+            data-qa="process-instance-list-link"
+            kind="ghost"
+            renderIcon={ArrowRight}
+            iconDescription="Go to Filterable List"
+            hasIconOnly
+            size="lg"
+            onClick={() =>
+              navigate(`/admin/process-instances?report_hash=${reportHash}`)
+            }
+          />
+        </Column>
+      );
+    }
     return (
-      <Link to={`/admin/process-instances?report_hash=${reportHash}`}>Hey</Link>
+      <Grid fullWidth condensed>
+        <Column sm={{ span: 3 }} md={{ span: 4 }} lg={{ span: 3 }}>
+          {headerElement}
+        </Column>
+        {filterButtonLink}
+      </Grid>
     );
   };
 
@@ -1623,8 +1751,9 @@ export default function ProcessInstanceListTable({
   return (
     <>
       {reportColumnForm()}
+      {advancedOptionsModal()}
       {processInstanceReportSaveTag()}
-      {linkToReport()}
+      {tableTitleLine()}
       <Filters
         filterOptions={filterOptions}
         showFilterOptions={showFilterOptions}
