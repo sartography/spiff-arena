@@ -1704,7 +1704,7 @@ export default function ProcessInstanceListTable({
     }
     return (
       <Grid fullWidth condensed>
-        <Column sm={{ span: 3 }} md={{ span: 4 }} lg={{ span: 3 }}>
+        <Column sm={{ span: 3 }} md={{ span: 7 }} lg={{ span: 15 }}>
           {headerElement}
         </Column>
         {filterButtonLink}
