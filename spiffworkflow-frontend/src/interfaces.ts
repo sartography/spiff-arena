@@ -163,7 +163,8 @@ export interface MessageInstance {
 
 export interface ReportFilter {
   field_name: string;
-  field_value: string | null;
+  // using any here so we can use this as a string and boolean
+  field_value: any;
   operator?: string;
 }
 
@@ -335,3 +336,5 @@ export interface ProcessModelCaller {
   display_name: string;
   process_model_id: string;
 }
+
+export interface UserGroup {}
