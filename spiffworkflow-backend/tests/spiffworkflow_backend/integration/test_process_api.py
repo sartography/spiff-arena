@@ -792,7 +792,6 @@ class TestProcessApi(BaseTest):
             content_type="multipart/form-data",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-
         assert response.status_code == 400
         assert response.json is not None
         assert response.json["error_code"] == "no_file_given"
@@ -1853,7 +1852,13 @@ class TestProcessApi(BaseTest):
 
         # Without filtering we should get all 5 instances
         report_metadata_body: ReportMetadata = {
-            "filter_by": [{"field_name": "process_model_identifier", "field_value": process_model_identifier}],
+            "filter_by": [
+                {
+                    "field_name": "process_model_identifier",
+                    "field_value": process_model_identifier,
+                    "operator": "equals",
+                }
+            ],
             "columns": [],
             "order_by": [],
         }
@@ -1868,8 +1873,16 @@ class TestProcessApi(BaseTest):
         for i in range(5):
             report_metadata_body = {
                 "filter_by": [
-                    {"field_name": "process_model_identifier", "field_value": process_model_identifier},
-                    {"field_name": "process_status", "field_value": ProcessInstanceStatus[statuses[i]].value},
+                    {
+                        "field_name": "process_model_identifier",
+                        "field_value": process_model_identifier,
+                        "operator": "equals",
+                    },
+                    {
+                        "field_name": "process_status",
+                        "field_value": ProcessInstanceStatus[statuses[i]].value,
+                        "operator": "equals",
+                    },
                 ],
                 "columns": [],
                 "order_by": [],
@@ -1883,8 +1896,12 @@ class TestProcessApi(BaseTest):
 
         report_metadata_body = {
             "filter_by": [
-                {"field_name": "process_model_identifier", "field_value": process_model_identifier},
-                {"field_name": "process_status", "field_value": "not_started,complete"},
+                {
+                    "field_name": "process_model_identifier",
+                    "field_value": process_model_identifier,
+                    "operator": "equals",
+                },
+                {"field_name": "process_status", "field_value": "not_started,complete", "operator": "equals"},
             ],
             "columns": [],
             "order_by": [],
@@ -1900,7 +1917,7 @@ class TestProcessApi(BaseTest):
         # filter by start/end seconds
         # start > 1000 - this should eliminate the first
         report_metadata_body = {
-            "filter_by": [{"field_name": "start_from", "field_value": 1001}],
+            "filter_by": [{"field_name": "start_from", "field_value": 1001, "operator": "equals"}],
             "columns": [],
             "order_by": [],
         }
@@ -1920,8 +1937,8 @@ class TestProcessApi(BaseTest):
         # start > 2000, end < 5000 - this should eliminate the first 2 and the last
         report_metadata_body = {
             "filter_by": [
-                {"field_name": "start_from", "field_value": 2001},
-                {"field_name": "end_to", "field_value": 5999},
+                {"field_name": "start_from", "field_value": 2001, "operator": "equals"},
+                {"field_name": "end_to", "field_value": 5999, "operator": "equals"},
             ],
             "columns": [],
             "order_by": [],
@@ -1937,8 +1954,8 @@ class TestProcessApi(BaseTest):
         # start > 1000, start < 4000 - this should eliminate the first and the last 2
         report_metadata_body = {
             "filter_by": [
-                {"field_name": "start_from", "field_value": 1001},
-                {"field_name": "start_to", "field_value": 3999},
+                {"field_name": "start_from", "field_value": 1001, "operator": "equals"},
+                {"field_name": "start_to", "field_value": 3999, "operator": "equals"},
             ],
             "columns": [],
             "order_by": [],
@@ -1954,8 +1971,8 @@ class TestProcessApi(BaseTest):
         # end > 2000, end < 6000 - this should eliminate the first and the last
         report_metadata_body = {
             "filter_by": [
-                {"field_name": "end_from", "field_value": 2001},
-                {"field_name": "end_to", "field_value": 5999},
+                {"field_name": "end_from", "field_value": 2001, "operator": "equals"},
+                {"field_name": "end_to", "field_value": 5999, "operator": "equals"},
             ],
             "columns": [],
             "order_by": [],

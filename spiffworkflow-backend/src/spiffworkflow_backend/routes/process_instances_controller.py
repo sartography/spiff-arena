@@ -692,7 +692,7 @@ def _find_process_instance_for_me_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:
     """_find_process_instance_for_me_or_raise."""
-    process_instance: ProcessInstanceModel = (
+    process_instance: Optional[ProcessInstanceModel] = (
         ProcessInstanceModel.query.filter_by(id=process_instance_id)
         .outerjoin(HumanTaskModel)
         .outerjoin(

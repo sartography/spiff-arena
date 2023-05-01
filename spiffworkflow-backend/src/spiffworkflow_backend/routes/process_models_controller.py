@@ -438,7 +438,7 @@ def process_model_create_with_natural_language(
 
 def _get_file_from_request() -> FileStorage:
     """Get_file_from_request."""
-    request_file: FileStorage = connexion.request.files.get("file")
+    request_file: Optional[FileStorage] = connexion.request.files.get("file")
     if not request_file:
         raise ApiError(
             error_code="no_file_given",
