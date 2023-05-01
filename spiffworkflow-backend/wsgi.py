@@ -7,8 +7,10 @@ from spiffworkflow_backend.services.acceptance_test_fixtures import (
 )
 
 app = create_app()
-if os.environ.get("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX") == "true":
+
+if app.config["SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX"]:
     from werkzeug.middleware.proxy_fix import ProxyFix
+
     app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
 
 # this is in here because when we put it in the create_app function,
