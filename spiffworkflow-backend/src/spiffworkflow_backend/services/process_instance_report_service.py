@@ -53,98 +53,105 @@ class ProcessInstanceReportService:
         }
         system_report_completed_instances_initiated_by_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id"},
+                {"Header": "id", "accessor": "id", "filterable": False},
                 {
                     "Header": "process_model_display_name",
                     "accessor": "process_model_display_name",
+                    "filterable": False,
                 },
-                {"Header": "start_in_seconds", "accessor": "start_in_seconds"},
-                {"Header": "end_in_seconds", "accessor": "end_in_seconds"},
-                {"Header": "status", "accessor": "status"},
+                {"Header": "start_in_seconds", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "end_in_seconds", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
-                {"field_name": "initiated_by_me", "field_value": True},
-                {"field_name": "process_status", "field_value": terminal_status_values},
+                {"field_name": "initiated_by_me", "field_value": True, "operator": "equals"},
+                {"field_name": "process_status", "field_value": terminal_status_values, "operator": "equals"},
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
         system_report_completed_instances_with_tasks_completed_by_me: ReportMetadata = {
             "columns": cls.builtin_column_options(),
             "filter_by": [
-                {"field_name": "with_tasks_completed_by_me", "field_value": True},
-                {"field_name": "process_status", "field_value": terminal_status_values},
+                {"field_name": "with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
+                {"field_name": "process_status", "field_value": terminal_status_values, "operator": "equals"},
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
         system_report_completed_instances: ReportMetadata = {
             "columns": cls.builtin_column_options(),
             "filter_by": [
-                {"field_name": "process_status", "field_value": terminal_status_values},
+                {"field_name": "process_status", "field_value": terminal_status_values, "operator": "equals"},
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
         system_report_in_progress_instances_initiated_by_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id"},
+                {"Header": "id", "accessor": "id", "filterable": False},
                 {
                     "Header": "process_model_display_name",
                     "accessor": "process_model_display_name",
+                    "filterable": False,
                 },
-                {"Header": "Task", "accessor": "task_title"},
-                {"Header": "Waiting For", "accessor": "waiting_for"},
-                {"Header": "Started", "accessor": "start_in_seconds"},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds"},
-                {"Header": "status", "accessor": "status"},
+                {"Header": "Task", "accessor": "task_title", "filterable": False},
+                {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
+                {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
+                {"Header": "status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
-                {"field_name": "initiated_by_me", "field_value": True},
-                {"field_name": "process_status", "field_value": non_terminal_status_values},
+                {"field_name": "initiated_by_me", "field_value": True, "operator": "equals"},
+                {"field_name": "process_status", "field_value": non_terminal_status_values, "operator": "equals"},
                 {
                     "field_name": "with_oldest_open_task",
                     "field_value": True,
+                    "operator": "equals",
                 },
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
         system_report_in_progress_instances_with_tasks_for_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id"},
+                {"Header": "id", "accessor": "id", "filterable": False},
                 {
                     "Header": "process_model_display_name",
                     "accessor": "process_model_display_name",
+                    "filterable": False,
                 },
-                {"Header": "Task", "accessor": "task_title"},
-                {"Header": "Started By", "accessor": "process_initiator_username"},
-                {"Header": "Started", "accessor": "start_in_seconds"},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds"},
+                {"Header": "Task", "accessor": "task_title", "filterable": False},
+                {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
             ],
             "filter_by": [
-                {"field_name": "with_tasks_i_can_complete", "field_value": True},
-                {"field_name": "process_status", "field_value": active_status_values},
+                {"field_name": "with_tasks_i_can_complete", "field_value": True, "operator": "equals"},
+                {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
                 {
                     "field_name": "with_oldest_open_task",
                     "field_value": True,
+                    "operator": "equals",
                 },
             ],
             "order_by": ["-start_in_seconds", "-id"],
         }
         system_report_in_progress_instances_with_tasks: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id"},
+                {"Header": "id", "accessor": "id", "filterable": False},
                 {
                     "Header": "process_model_display_name",
                     "accessor": "process_model_display_name",
+                    "filterable": False,
                 },
-                {"Header": "Task", "accessor": "task_title"},
-                {"Header": "Started By", "accessor": "process_initiator_username"},
-                {"Header": "Started", "accessor": "start_in_seconds"},
-                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds"},
+                {"Header": "Task", "accessor": "task_title", "filterable": False},
+                {"Header": "Started By", "accessor": "process_initiator_username", "filterable": False},
+                {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
             ],
             "filter_by": [
-                {"field_name": "process_status", "field_value": active_status_values},
+                {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
                 {
                     "field_name": "with_oldest_open_task",
                     "field_value": True,
+                    "operator": "equals",
                 },
             ],
             "order_by": ["-start_in_seconds", "-id"],
@@ -165,7 +172,8 @@ class ProcessInstanceReportService:
         }
         if metadata_key not in temp_system_metadata_map:
             return None
-        return temp_system_metadata_map[metadata_key]
+        return_value: ReportMetadata = temp_system_metadata_map[metadata_key]
+        return return_value
 
     @classmethod
     def compile_report(cls, report_metadata: ReportMetadata, user: UserModel) -> None:
@@ -173,7 +181,9 @@ class ProcessInstanceReportService:
         old_filters = copy.deepcopy(report_metadata["filter_by"])
         for filter in old_filters:
             if filter["field_name"] == "initiated_by_me":
-                compiled_filters.append({"field_name": "process_initiator_username", "field_value": user.username})
+                compiled_filters.append(
+                    {"field_name": "process_initiator_username", "field_value": user.username, "operator": "equals"}
+                )
             else:
                 compiled_filters.append(filter)
 
