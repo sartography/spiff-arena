@@ -572,7 +572,9 @@ class AuthorizationService:
         """Set_basic_permissions."""
         permissions_to_assign: list[PermissionToAssign] = []
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/process-instances/for-me"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata"))
+        permissions_to_assign.append(
+            PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata")
+        )
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes/callers"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/service-tasks"))
