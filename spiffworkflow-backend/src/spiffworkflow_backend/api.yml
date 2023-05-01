@@ -616,107 +616,18 @@ paths:
         description: The page number to return. Defaults to page 1.
         schema:
           type: integer
-      - name: start_from
-        in: query
-        required: false
-        description: For filtering - beginning of start window - in seconds since epoch
-        schema:
-          type: integer
-      - name: start_to
-        in: query
-        required: false
-        description: For filtering - end of start window - in seconds since epoch
-        schema:
-          type: integer
-      - name: end_from
-        in: query
-        required: false
-        description: For filtering - beginning of end window - in seconds since epoch
-        schema:
-          type: integer
-      - name: end_to
-        in: query
-        required: false
-        description: For filtering - end of end window - in seconds since epoch
-        schema:
-          type: integer
-      - name: process_status
-        in: query
-        required: false
-        description: For filtering - not_started, user_input_required, waiting, complete, error, or suspended
-        schema:
-          type: string
-      - name: initiated_by_me
-        in: query
-        required: false
-        description: For filtering - show instances initiated by me
-        schema:
-          type: boolean
-      - name: with_tasks_completed_by_me
-        in: query
-        required: false
-        description: For filtering - show instances with tasks completed by me
-        schema:
-          type: boolean
-      - name: with_tasks_completed_by_my_group
-        in: query
-        required: false
-        description: For filtering - show instances with tasks completed by my group
-        schema:
-          type: boolean
-      - name: with_relation_to_me
-        in: query
-        required: false
-        description: For filtering - show instances that have something to do with me
-        schema:
-          type: boolean
-      - name: user_filter
-        in: query
-        required: false
-        description: For filtering - indicates the user has manually entered a query
-        schema:
-          type: boolean
-      - name: report_identifier
-        in: query
-        required: false
-        description: Specifies the identifier of a report to use, if any
-        schema:
-          type: string
-      - name: report_id
-        in: query
-        required: false
-        description: Specifies the identifier of a report to use, if any
-        schema:
-          type: integer
-      - name: user_group_identifier
-        in: query
-        required: false
-        description: The identifier of the group to get the process instances for
-        schema:
-          type: string
-      - name: process_initiator_username
-        in: query
-        required: false
-        description: The username of the process initiator
-        schema:
-          type: string
-      - name: report_columns
-        in: query
-        required: false
-        description: Base64 encoded json of report columns.
-        schema:
-          type: string
-      - name: report_filter_by
-        in: query
-        required: false
-        description: Base64 encoded json of report filter by.
-        schema:
-          type: string
-    get:
+    post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list_for_me
       summary: Returns a list of process instances that are associated with me.
       tags:
         - Process Instances
+      requestBody:
+        description: Report dictionary to use.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessInstanceReport"
       responses:
         "200":
           description: Workflow.
@@ -747,107 +658,18 @@ paths:
         description: The page number to return. Defaults to page 1.
         schema:
           type: integer
-      - name: start_from
-        in: query
-        required: false
-        description: For filtering - beginning of start window - in seconds since epoch
-        schema:
-          type: integer
-      - name: start_to
-        in: query
-        required: false
-        description: For filtering - end of start window - in seconds since epoch
-        schema:
-          type: integer
-      - name: end_from
-        in: query
-        required: false
-        description: For filtering - beginning of end window - in seconds since epoch
-        schema:
-          type: integer
-      - name: end_to
-        in: query
-        required: false
-        description: For filtering - end of end window - in seconds since epoch
-        schema:
-          type: integer
-      - name: process_status
-        in: query
-        required: false
-        description: For filtering - not_started, user_input_required, waiting, complete, error, or suspended
-        schema:
-          type: string
-      - name: initiated_by_me
-        in: query
-        required: false
-        description: For filtering - show instances initiated by me
-        schema:
-          type: boolean
-      - name: with_tasks_completed_by_me
-        in: query
-        required: false
-        description: For filtering - show instances with tasks completed by me
-        schema:
-          type: boolean
-      - name: with_tasks_completed_by_my_group
-        in: query
-        required: false
-        description: For filtering - show instances with tasks completed by my group
-        schema:
-          type: boolean
-      - name: with_relation_to_me
-        in: query
-        required: false
-        description: For filtering - show instances that have something to do with me
-        schema:
-          type: boolean
-      - name: user_filter
-        in: query
-        required: false
-        description: For filtering - indicates the user has manually entered a query
-        schema:
-          type: boolean
-      - name: report_identifier
-        in: query
-        required: false
-        description: Specifies the identifier of a report to use, if any
-        schema:
-          type: string
-      - name: report_id
-        in: query
-        required: false
-        description: Specifies the identifier of a report to use, if any
-        schema:
-          type: integer
-      - name: user_group_identifier
-        in: query
-        required: false
-        description: The identifier of the group to get the process instances for
-        schema:
-          type: string
-      - name: process_initiator_username
-        in: query
-        required: false
-        description: The username of the process initiator
-        schema:
-          type: string
-      - name: report_columns
-        in: query
-        required: false
-        description: Base64 encoded json of report columns.
-        schema:
-          type: string
-      - name: report_filter_by
-        in: query
-        required: false
-        description: Base64 encoded json of report filter by.
-        schema:
-          type: string
-    get:
+    post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_list
       summary: Returns a list of process instances.
       tags:
         - Process Instances
+      requestBody:
+        description: Report dictionary to use.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessInstanceReport"
       responses:
         "200":
           description: Workflow.
@@ -1268,15 +1090,16 @@ paths:
       summary: Returns all process instance reports for process model
       tags:
         - Process Instances
+        - Process Instances Reports
       responses:
         "200":
-          description: Workflow.
+          description: Process Instance Report
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/Workflow"
+                  $ref: "#/components/schemas/ProcessInstanceReport"
     post:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_create
       summary: Returns all process instance reports for process model
@@ -1313,6 +1136,41 @@ paths:
                 items:
                   $ref: "#/components/schemas/Workflow"
 
+  /process-instances/report-metadata:
+    parameters:
+      - name: report_hash
+        in: query
+        required: false
+        description: The hash of a query that has been searched before.
+        schema:
+          type: string
+      - name: report_id
+        in: query
+        required: false
+        description: The unique id of an existing report.
+        schema:
+          type: integer
+      - name: report_identifier
+        in: query
+        required: false
+        description: Specifies the identifier of a report to use, if any
+        schema:
+          type: string
+    get:
+      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_show
+      summary: Returns the metadata associated with a given report key. This favors report_hash over report_id and report_identifier.
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Workflow.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Workflow"
+
   /process-instances/reports/{report_id}:
     parameters:
       - name: report_id
@@ -1333,20 +1191,6 @@ paths:
         description: The page number to return. Defaults to page 1.
         schema:
           type: integer
-    get:
-      operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_show
-      summary: Returns a report of process instances for a given process model
-      tags:
-        - Process Instances
-      responses:
-        "200":
-          description: Workflow.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Workflow"
     put:
       operationId: spiffworkflow_backend.routes.process_instances_controller.process_instance_report_update
       summary: Updates a process instance report
@@ -3063,3 +2907,53 @@ components:
           description: The timestamp returned in the log
           type: number
           example: 123456789.12345
+
+    ProcessInstanceReport:
+      properties:
+        id:
+          type: number
+          nullable: true
+        identifier:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        report_metadata:
+          nullable: false
+          $ref: "#/components/schemas/ReportMetadata"
+    ReportMetadata:
+      properties:
+        columns:
+          type: array
+          nullable: false
+          $ref: "#/components/schemas/ReportMetadataColumn"
+        filter_by:
+          type: array
+          nullable: false
+          $ref: "#/components/schemas/FilterValue"
+        order_by:
+          type: array
+          nullable: false
+    ReportMetadataColumn:
+      properties:
+        Header:
+          type: string
+          nullable: false
+        accessor:
+          type: string
+          nullable: false
+        fiilterable:
+          type: boolean
+          nullable: true
+    FilterValue:
+      properties:
+        field_name:
+          type: string
+          nullable: false
+        field_value:
+          type: string
+          nullable: false
+        fiilterable:
+          type: string
+          nullable: false

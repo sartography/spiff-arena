@@ -174,6 +174,7 @@ export default function ReactFormEditor() {
         <span>
           <input
             name="file_name"
+            id="process_model_file_name"
             type="text"
             value={newFileName}
             onChange={(e) => setNewFileName(e.target.value)}

@@ -105,10 +105,12 @@ h2 {
 }
 .cds--btn--ghost.button-link:hover {
   color: #0062fe;
+  background-color: white;
   padding-left: 0;
 }
 .cds--btn--ghost.button-link:visited:hover {
   color: #0062fe;
+  background-color: white;
   padding-left: 0;
 }
 
@@ -448,4 +450,8 @@ svg.notification-icon {
 
 .user_instructions_4 {
   filter: opacity(10%);
+}
+
+.float-right {
+  float: right;
 }

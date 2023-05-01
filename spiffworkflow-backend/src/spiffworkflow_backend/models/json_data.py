@@ -1,11 +1,24 @@
 from __future__ import annotations
 
+import json
+from hashlib import sha256
+from typing import TypedDict
+
+from flask import current_app
+from sqlalchemy.dialects.mysql import insert as mysql_insert
+from sqlalchemy.dialects.postgresql import insert as postgres_insert
+
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.db import SpiffworkflowBaseDBModel
 
 
 class JsonDataModelNotFoundError(Exception):
     pass
+
+
+class JsonDataDict(TypedDict):
+    hash: str
+    data: dict
 
 
 # delta algorithm <- just to save it for when we want to try to implement it:
@@ -42,3 +55,29 @@ class JsonDataModel(SpiffworkflowBaseDBModel):
     @classmethod
     def find_data_dict_by_hash(cls, hash: str) -> dict:
         return cls.find_object_by_hash(hash).data
+
+    @classmethod
+    def insert_or_update_json_data_records(
+        cls, json_data_hash_to_json_data_dict_mapping: dict[str, JsonDataDict]
+    ) -> None:
+        list_of_dicts = [*json_data_hash_to_json_data_dict_mapping.values()]
+        if len(list_of_dicts) > 0:
+            on_duplicate_key_stmt = None
+            if current_app.config["SPIFFWORKFLOW_BACKEND_DATABASE_TYPE"] == "mysql":
+                insert_stmt = mysql_insert(JsonDataModel).values(list_of_dicts)
+                on_duplicate_key_stmt = insert_stmt.on_duplicate_key_update(data=insert_stmt.inserted.data)
+            else:
+                insert_stmt = postgres_insert(JsonDataModel).values(list_of_dicts)
+                on_duplicate_key_stmt = insert_stmt.on_conflict_do_nothing(index_elements=["hash"])
+            db.session.execute(on_duplicate_key_stmt)
+
+    @classmethod
+    def insert_or_update_json_data_dict(cls, json_data_dict: JsonDataDict) -> None:
+        cls.insert_or_update_json_data_records({json_data_dict["hash"]: json_data_dict})
+
+    @classmethod
+    def create_and_insert_json_data_from_dict(cls, data: dict) -> str:
+        json_data_hash = sha256(json.dumps(data, sort_keys=True).encode("utf8")).hexdigest()
+        cls.insert_or_update_json_data_dict({"hash": json_data_hash, "data": data})
+        db.session.commit()
+        return json_data_hash
