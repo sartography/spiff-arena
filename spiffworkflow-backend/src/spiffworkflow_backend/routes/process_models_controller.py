@@ -1,4 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
+from hashlib import sha256
 import json
 import os
 import re
@@ -18,7 +19,6 @@ from werkzeug.datastructures import FileStorage
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.interfaces import IdToProcessGroupMapping
-from spiffworkflow_backend.models.file import FileSchema
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_instance_report import (
     ProcessInstanceReportModel,
@@ -245,10 +245,9 @@ def process_model_list(
     return make_response(jsonify(response_json), 200)
 
 
-def process_model_file_update(modified_process_model_identifier: str, file_name: str) -> flask.wrappers.Response:
-    """Process_model_file_update."""
+def process_model_file_update(modified_process_model_identifier: str, file_name: str, file_contents_hash: str) -> flask.wrappers.Response:
     message = f"User: {g.user.username} clicked save for"
-    return _create_or_update_process_model_file(modified_process_model_identifier, message, 200)
+    return _create_or_update_process_model_file(modified_process_model_identifier, message, 200, file_contents_hash=file_contents_hash)
 
 
 def process_model_file_delete(modified_process_model_identifier: str, file_name: str) -> flask.wrappers.Response:
@@ -293,7 +292,6 @@ def process_model_file_create(
 
 
 def process_model_file_show(modified_process_model_identifier: str, file_name: str) -> Any:
-    """Process_model_file_show."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     process_model = _get_process_model(process_model_identifier)
     files = SpecFileService.get_files(process_model, file_name)
@@ -309,8 +307,10 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     file = files[0]
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
+    file_contents_hash = sha256(file_contents).hexdigest()
+    file.file_contents_hash = file_contents_hash
     file.process_model_id = process_model.id
-    return FileSchema().dump(file)
+    return make_response(jsonify(file), 200)
 
 
 #   {
@@ -477,6 +477,7 @@ def _create_or_update_process_model_file(
     modified_process_model_identifier: str,
     message_for_git_commit: str,
     http_status_to_return: int,
+    file_contents_hash: Optional[str],
 ) -> flask.wrappers.Response:
     """_create_or_update_process_model_file."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
@@ -498,6 +499,16 @@ def _create_or_update_process_model_file(
             status_code=400,
         )
 
+    current_file_contents_bytes = SpecFileService.get_data(process_model, request_file.filename)
+    if current_file_contents_bytes and file_contents_hash:
+        current_file_contents_hash = sha256(current_file_contents_bytes).hexdigest()
+        if current_file_contents_hash != file_contents_hash:
+            raise ApiError(
+                error_code="process_model_file_has_changed",
+                message=f"Process model file: {request_file.filename} was already changed by someone else. Please reload before making changes.",
+                status_code=409,
+            )
+
     file = None
     try:
         file = SpecFileService.update_file(process_model, request_file.filename, request_file_contents)
@@ -514,8 +525,4 @@ def _create_or_update_process_model_file(
     file.process_model_id = process_model.id
     _commit_and_push_to_git(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
-    return Response(
-        json.dumps(FileSchema().dump(file)),
-        status=http_status_to_return,
-        mimetype="application/json",
-    )
+    return make_response(jsonify(file), http_status_to_return)

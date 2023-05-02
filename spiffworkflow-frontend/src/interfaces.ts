@@ -114,6 +114,7 @@ export interface ProcessFile {
   size: number;
   type: string;
   file_contents?: string;
+  file_contents_hash?: string;
 }
 
 export interface ProcessInstanceMetadata {
