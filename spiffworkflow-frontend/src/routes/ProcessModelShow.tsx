@@ -561,38 +561,6 @@ export default function ProcessModelShow() {
     );
   };
 
-  const processInstanceListTableButton = () => {
-    if (processModel) {
-      return (
-        <Grid fullWidth condensed>
-          <Column sm={{ span: 3 }} md={{ span: 4 }} lg={{ span: 3 }}>
-            <h2>My Process Instances</h2>
-          </Column>
-          <Column
-            sm={{ span: 1, offset: 3 }}
-            md={{ span: 1, offset: 7 }}
-            lg={{ span: 1, offset: 15 }}
-          >
-            <Button
-              data-qa="process-instance-list-link"
-              kind="ghost"
-              renderIcon={ArrowRight}
-              iconDescription="Go to Filterable List"
-              hasIconOnly
-              size="lg"
-              onClick={() =>
-                navigate(
-                  `/admin/process-instances?process_model_identifier=${processModel.id}`
-                )
-              }
-            />
-          </Column>
-        </Grid>
-      );
-    }
-    return null;
-  };
-
   const processModelPublishMessage = () => {
     if (processModelPublished) {
       const prUrl: string = processModelPublished.pr_url;
@@ -683,11 +651,17 @@ export default function ProcessModelShow() {
         </Stack>
         {processModelFilesSection()}
         <Can I="GET" a={targetUris.processInstanceListPath} ability={ability}>
-          {processInstanceListTableButton()}
           <ProcessInstanceListTable
+            headerElement={<h2>My Process Instances</h2>}
             filtersEnabled={false}
+            showLinkToReport
             variant="for-me"
-            processModelFullIdentifier={processModel.id}
+            additionalReportFilters={[
+              {
+                field_name: 'process_model_identifier',
+                field_value: processModel.id,
+              },
+            ]}
             perPageOptions={[2, 5, 25]}
             showReports={false}
           />
