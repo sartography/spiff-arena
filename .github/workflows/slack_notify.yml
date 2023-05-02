@@ -2,7 +2,7 @@ name: Slack Notification
 
 on:
   workflow_run:
-    workflows: ["Backend Tests"]
+    workflows: ["Backend Tests", "Frontend Tests", "Docker Image For Main Builds", "Release Builds"]
     types: [completed]
 
 jobs:
@@ -13,5 +13,5 @@ jobs:
         if: ${{ github.event.workflow_run.conclusion != 'success' }}
         run: |
           curl -X POST -H 'Content-type: application/json' \
-          --data '{"text":"Workflow <${{ github.event.workflow_run.html_url }}|${{ github.event.workflow.name }}> failed!"}' \
+            --data '{"text":"spiff-arena workflow <${{ github.event.workflow_run.html_url }}|${{ github.event.workflow.name }}> ended with conclusion ${{github.event.workflow_run.conclusion}}!"}' \
           ${{ secrets.SLACK_WEBHOOK_URL }}
