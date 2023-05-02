@@ -288,6 +288,7 @@ def task_show(process_instance_id: int, task_guid: str = "next") -> flask.wrappe
     task_model = _get_task_model_from_guid_or_raise(task_guid, process_instance_id)
     task_definition = task_model.task_definition
     extensions = TaskService.get_extensions_from_task_model(task_model)
+    task_model.signal_buttons = TaskService.get_ready_signals_with_button_labels(process_instance_id)
 
     if "properties" in extensions:
         properties = extensions["properties"]

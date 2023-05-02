@@ -58,7 +58,6 @@ export default function ProcessInterstitial() {
     // Added this seperate use effect so that the timer interval will be cleared if
     // we end up redirecting back to the TaskShow page.
     if (shouldRedirect(lastTask)) {
-      setState('REDIRECTING');
       lastTask.properties.instructionsForEndUser = '';
       const timerId = setInterval(() => {
         navigate(`/tasks/${lastTask.process_instance_id}/${lastTask.id}`);
@@ -103,16 +102,17 @@ export default function ProcessInterstitial() {
   const getReturnHomeButton = (index: number) => {
     if (
       index === 0 &&
-      state !== 'REDIRECTING' &&
+      !shouldRedirect(lastTask) &&
       ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED', 'READY'].includes(getStatus())
-    )
+    ) {
       return (
-        <div style={{ padding: '10px 0 0 0' }}>
+        <div style={{padding: '10px 0 0 0'}}>
           <Button kind="secondary" onClick={() => navigate(`/tasks`)}>
             Return to Home
           </Button>
         </div>
       );
+    }
     return '';
   };
 
@@ -165,7 +165,7 @@ export default function ProcessInterstitial() {
 
   /** In the event there is no task information and the connection closed,
    * redirect to the home page. */
-  if (state === 'closed' && lastTask === null) {
+  if (state === 'CLOSED' && lastTask === null) {
     navigate(`/tasks`);
   }
   if (lastTask) {

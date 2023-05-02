@@ -37,6 +37,11 @@ export interface EventDefinition {
   message_var?: string;
 }
 
+export interface SignalButton {
+  label: string;
+  event: EventDefinition;
+}
+
 // TODO: merge with ProcessInstanceTask
 export interface Task {
   id: number;
@@ -60,6 +65,7 @@ export interface Task {
   can_complete: boolean;
   form_schema: any;
   form_ui_schema: any;
+  signal_buttons: SignalButton[];
 }
 
 export interface ProcessInstanceTask {

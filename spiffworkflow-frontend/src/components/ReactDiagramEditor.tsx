@@ -1,7 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... Remove this comment to see the full error message
 import BpmnModeler from 'bpmn-js/lib/Modeler';
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... Remove this comment to see the full error message
 import BpmnViewer from 'bpmn-js/lib/Viewer';
 import {
   BpmnPropertiesPanelModule,
