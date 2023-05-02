@@ -2,6 +2,7 @@
 import enum
 from dataclasses import dataclass
 from typing import Any
+from typing import List
 from typing import Optional
 from typing import TYPE_CHECKING
 from typing import Union
@@ -85,7 +86,7 @@ class TaskModel(SpiffworkflowBaseDBModel):
     can_complete: Optional[bool] = None
     extensions: Optional[dict] = None
     name_for_display: Optional[str] = None
-    signal_buttons: Optional[dict] = None
+    signal_buttons: Optional[List[dict]] = None
 
     def get_data(self) -> dict:
         return {**self.python_env_data(), **self.json_data()}

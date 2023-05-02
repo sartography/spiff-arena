@@ -18,7 +18,7 @@ import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
-import {EventDefinition, Task} from '../interfaces';
+import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 
@@ -196,7 +196,7 @@ export default function TaskShow() {
   };
 
   const handleSignalSubmit = (event: EventDefinition) => {
-    console.log("Signal Event ", event)
+    console.log('Signal Event ', event);
     if (disabled || !task) {
       return;
     }
@@ -211,7 +211,7 @@ export default function TaskShow() {
       httpMethod: 'POST',
       postBody: event,
     });
-  }
+  };
 
   const buildTaskNavigation = () => {
     let userTasksElement;
@@ -367,19 +367,25 @@ export default function TaskShow() {
           </Button>
         );
       }
-      reactFragmentToHideSubmitButton = <ButtonSet>
+      reactFragmentToHideSubmitButton = (
+        <ButtonSet>
           <Button type="submit" id="submit-button" disabled={disabled}>
             {submitButtonText}
           </Button>
           {saveAsDraftButton}
           <>
-            {task.signal_buttons.map((signal, i) =>
-              <Button name={`signal.signal`} disabled={disabled} onClick={() => handleSignalSubmit(signal.event)}>
+            {task.signal_buttons.map((signal) => (
+              <Button
+                name="signal.signal"
+                disabled={disabled}
+                onClick={() => handleSignalSubmit(signal.event)}
+              >
                 {signal.label}
               </Button>
-            )}
+            ))}
           </>
-        </ButtonSet>;
+        </ButtonSet>
+      );
     }
 
     const customValidate = (formData: any, errors: any) => {
