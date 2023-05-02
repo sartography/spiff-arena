@@ -85,7 +85,6 @@ import Filters from './Filters';
 
 type OwnProps = {
   filtersEnabled?: boolean;
-  processModelFullIdentifier?: string;
   paginationQueryParamPrefix?: string;
   perPageOptions?: number[];
   showReports?: boolean;
@@ -107,7 +106,6 @@ interface dateParameters {
 
 export default function ProcessInstanceListTable({
   filtersEnabled = true,
-  processModelFullIdentifier,
   paginationQueryParamPrefix,
   perPageOptions,
   additionalReportFilters,
@@ -341,7 +339,6 @@ export default function ProcessInstanceListTable({
       // this is the code to re-populate the widgets on the page
       // with values from the report metadata, which is derived
       // from the searchParams (often report_hash)
-      let selectedProcessModelIdentifier = processModelFullIdentifier;
       reportMetadataBodyToUse.filter_by.forEach(
         (reportFilter: ReportFilter) => {
           if (reportFilter.field_name === 'process_status') {
@@ -357,8 +354,15 @@ export default function ProcessInstanceListTable({
           } else if (systemReportOptions.includes(reportFilter.field_name)) {
             setSystemReport(reportFilter.field_name);
           } else if (reportFilter.field_name === 'process_model_identifier') {
-            selectedProcessModelIdentifier =
-              reportFilter.field_value || undefined;
+            if (reportFilter.field_value) {
+              processModelSelectionItemsForUseEffect.current.forEach(
+                (processModel: ProcessModel) => {
+                  if (processModel.id === reportFilter.field_value) {
+                    setProcessModelSelection(processModel);
+                  }
+                }
+              );
+            }
           } else if (dateParametersToAlwaysFilterBy[reportFilter.field_name]) {
             const dateFunctionToCall =
               dateParametersToAlwaysFilterBy[reportFilter.field_name][0];
@@ -374,13 +378,6 @@ export default function ProcessInstanceListTable({
               );
               timeFunctionToCall(timeString);
             }
-          }
-        }
-      );
-      processModelSelectionItemsForUseEffect.current.forEach(
-        (processModel: ProcessModel) => {
-          if (processModel.id === selectedProcessModelIdentifier) {
-            setProcessModelSelection(processModel);
           }
         }
       );
@@ -435,7 +432,6 @@ export default function ProcessInstanceListTable({
       paginationQueryParamPrefix,
       perPageOptions,
       processInstanceApiSearchPath,
-      processModelFullIdentifier,
       searchParams,
       setProcessInstancesFromResult,
       stopRefreshing,
@@ -1682,7 +1678,7 @@ export default function ProcessInstanceListTable({
       return null;
     }
     let filterButtonLink = null;
-    if (showLinkToReport) {
+    if (showLinkToReport && processInstances.length > 0) {
       filterButtonLink = (
         <Column
           sm={{ span: 1, offset: 3 }}
@@ -1691,7 +1687,6 @@ export default function ProcessInstanceListTable({
         >
           <Button
             data-qa="process-instance-list-link"
-            kind="ghost"
             renderIcon={ArrowRight}
             iconDescription="View Filterable List"
             hasIconOnly
