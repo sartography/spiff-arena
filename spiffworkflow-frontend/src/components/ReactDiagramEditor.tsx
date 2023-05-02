@@ -142,11 +142,14 @@ export default function ReactDiagramEditor({
     }
 
     const temp = document.createElement('template');
+    const panelId: string =
+      diagramType === 'readonly'
+        ? 'hidden-properties-panel'
+        : 'js-properties-panel';
     temp.innerHTML = `
       <div class="content with-diagram" id="js-drop-zone">
-        <div class="canvas ${canvasClass}" id="canvas"
-                            ></div>
-        <div class="properties-panel-parent" id="js-properties-panel"></div>
+        <div class="canvas ${canvasClass}" id="canvas"></div>
+        <div class="properties-panel-parent" id="${panelId}"></div>
       </div>
     `;
     const frag = temp.content;
