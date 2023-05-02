@@ -1,12 +1,17 @@
-on: push
-name: Slack Notification Demo
+name: Slack Notification
+
+on:
+  workflow_run:
+    workflows: ["Backend Tests"]
+    types: [completed]
+
 jobs:
-  slackNotification:
-    name: Slack Notification
+  send_notification:
+    if: ${{ failure() }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - name: Slack Notification
-      uses: rtCamp/action-slack-notify@v2
-      env:
-        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Send Slack notification
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"Workflow <${{ github.event.workflow_run.html_url }}|${{ github.event.workflow.name }}> failed!"}' \
+          ${{ secrets.SLACK_WEBHOOK_URL }}
