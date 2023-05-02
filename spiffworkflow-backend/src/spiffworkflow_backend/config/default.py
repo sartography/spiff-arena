@@ -153,3 +153,9 @@ SPIFFWORKFLOW_BACKEND_FEATURE_ELEMENT_UNITS_ENABLED = (
 SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR = environ.get(
     "SPIFFWORKFLOW_BACKEND_ELEMENT_UNITS_CACHE_DIR", default=None
 )
+
+# adds the ProxyFix to Flask on http by processing the 'X-Forwarded-Proto' header
+# to make SpiffWorkflow aware that it should return https for the server urls etc rather than http.
+SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX = (
+    environ.get("SPIFFWORKFLOW_BACKEND_USE_WERKZEUG_MIDDLEWARE_PROXY_FIX", default="false") == "true"
+)

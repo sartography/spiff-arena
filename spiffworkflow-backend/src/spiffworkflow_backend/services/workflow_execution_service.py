@@ -157,6 +157,7 @@ class TaskModelSavingDelegate(EngineStepDelegate):
             # # self._add_parents(spiff_task)
 
             self.last_completed_spiff_task = spiff_task
+        self.process_instance.task_updated_at_in_seconds = round(time.time())
         if self.secondary_engine_step_delegate:
             self.secondary_engine_step_delegate.did_complete_task(spiff_task)
 

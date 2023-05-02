@@ -1,16 +1,15 @@
 """APIs for dealing with process groups, process models, and process instances."""
-import base64
 import json
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import Union
 
 import flask.wrappers
 from flask import current_app
 from flask import g
 from flask import jsonify
 from flask import make_response
-from flask import request
 from flask.wrappers import Response
 from sqlalchemy import and_
 from sqlalchemy import or_
@@ -24,6 +23,7 @@ from spiffworkflow_backend.models.bpmn_process_definition import (
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
+from spiffworkflow_backend.models.json_data import JsonDataModel  # noqa: F401
 from spiffworkflow_backend.models.process_instance import ProcessInstanceApiSchema
 from spiffworkflow_backend.models.process_instance import (
     ProcessInstanceCannotBeDeletedError,
@@ -36,9 +36,8 @@ from spiffworkflow_backend.models.process_instance_metadata import (
 from spiffworkflow_backend.models.process_instance_queue import (
     ProcessInstanceQueueModel,
 )
-from spiffworkflow_backend.models.process_instance_report import (
-    ProcessInstanceReportModel,
-)
+from spiffworkflow_backend.models.process_instance_report import ProcessInstanceReportModel
+from spiffworkflow_backend.models.process_instance_report import Report
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
@@ -69,9 +68,6 @@ from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceQueueService,
 )
 from spiffworkflow_backend.services.process_instance_report_service import (
-    ProcessInstanceReportFilter,
-)
-from spiffworkflow_backend.services.process_instance_report_service import (
     ProcessInstanceReportService,
 )
 from spiffworkflow_backend.services.process_instance_service import (
@@ -80,6 +76,10 @@ from spiffworkflow_backend.services.process_instance_service import (
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import SpecFileService
 from spiffworkflow_backend.services.task_service import TaskService
+
+# from spiffworkflow_backend.services.process_instance_report_service import (
+#     ProcessInstanceReportFilter,
+# )
 
 
 def process_instance_create(
@@ -226,110 +226,73 @@ def process_instance_resume(
 
 
 def process_instance_list_for_me(
+    body: Dict[str, Any],
     process_model_identifier: Optional[str] = None,
     page: int = 1,
     per_page: int = 100,
-    start_from: Optional[int] = None,
-    start_to: Optional[int] = None,
-    end_from: Optional[int] = None,
-    end_to: Optional[int] = None,
-    process_status: Optional[str] = None,
-    user_filter: Optional[bool] = False,
-    report_identifier: Optional[str] = None,
-    report_id: Optional[int] = None,
-    user_group_identifier: Optional[str] = None,
-    process_initiator_username: Optional[str] = None,
-    report_columns: Optional[str] = None,
-    report_filter_by: Optional[str] = None,
 ) -> flask.wrappers.Response:
-    """Process_instance_list_for_me."""
+    ProcessInstanceReportService.add_or_update_filter(
+        body["report_metadata"]["filter_by"], {"field_name": "with_relation_to_me", "field_value": True}
+    )
     return process_instance_list(
         process_model_identifier=process_model_identifier,
         page=page,
         per_page=per_page,
-        start_from=start_from,
-        start_to=start_to,
-        end_from=end_from,
-        end_to=end_to,
-        process_status=process_status,
-        user_filter=user_filter,
-        report_identifier=report_identifier,
-        report_id=report_id,
-        user_group_identifier=user_group_identifier,
-        with_relation_to_me=True,
-        report_columns=report_columns,
-        report_filter_by=report_filter_by,
-        process_initiator_username=process_initiator_username,
+        body=body,
     )
 
 
 def process_instance_list(
+    body: Dict[str, Any],
     process_model_identifier: Optional[str] = None,
     page: int = 1,
     per_page: int = 100,
-    start_from: Optional[int] = None,
-    start_to: Optional[int] = None,
-    end_from: Optional[int] = None,
-    end_to: Optional[int] = None,
-    process_status: Optional[str] = None,
-    with_relation_to_me: Optional[bool] = None,
-    user_filter: Optional[bool] = False,
-    report_identifier: Optional[str] = None,
-    report_id: Optional[int] = None,
-    user_group_identifier: Optional[str] = None,
-    process_initiator_username: Optional[str] = None,
-    report_columns: Optional[str] = None,
-    report_filter_by: Optional[str] = None,
 ) -> flask.wrappers.Response:
-    """Process_instance_list."""
-    process_instance_report = ProcessInstanceReportService.report_with_identifier(g.user, report_id, report_identifier)
-
-    report_column_list = None
-    if report_columns:
-        report_column_list = json.loads(base64.b64decode(report_columns))
-    report_filter_by_list = None
-    if report_filter_by:
-        report_filter_by_list = json.loads(base64.b64decode(report_filter_by))
-
-    if user_filter:
-        report_filter = ProcessInstanceReportFilter(
-            process_model_identifier=process_model_identifier,
-            user_group_identifier=user_group_identifier,
-            start_from=start_from,
-            start_to=start_to,
-            end_from=end_from,
-            end_to=end_to,
-            with_relation_to_me=with_relation_to_me,
-            process_status=process_status.split(",") if process_status else None,
-            process_initiator_username=process_initiator_username,
-            report_column_list=report_column_list,
-            report_filter_by_list=report_filter_by_list,
-        )
-    else:
-        report_filter = ProcessInstanceReportService.filter_from_metadata_with_overrides(
-            process_instance_report=process_instance_report,
-            process_model_identifier=process_model_identifier,
-            user_group_identifier=user_group_identifier,
-            start_from=start_from,
-            start_to=start_to,
-            end_from=end_from,
-            end_to=end_to,
-            process_status=process_status,
-            with_relation_to_me=with_relation_to_me,
-            process_initiator_username=process_initiator_username,
-            report_column_list=report_column_list,
-            report_filter_by_list=report_filter_by_list,
-        )
-
     response_json = ProcessInstanceReportService.run_process_instance_report(
-        report_filter=report_filter,
-        process_instance_report=process_instance_report,
+        report_metadata=body["report_metadata"],
         page=page,
         per_page=per_page,
         user=g.user,
     )
 
+    json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(body["report_metadata"])
+    response_json["report_hash"] = json_data_hash
+    db.session.commit()
+
     return make_response(jsonify(response_json), 200)
+
+
+def process_instance_report_show(
+    report_hash: Optional[str] = None,
+    report_id: Optional[int] = None,
+    report_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    if report_hash is None and report_id is None and report_identifier is None:
+        raise ApiError(
+            error_code="report_key_missing",
+            message=(
+                "A report key is needed to lookup a report. Either choose a report_hash, report_id, or"
+                " report_identifier."
+            ),
+        )
+    response_result: Optional[Union[Report, ProcessInstanceReportModel]] = None
+    if report_hash is not None:
+        json_data = JsonDataModel.query.filter_by(hash=report_hash).first()
+        if json_data is None:
+            raise ApiError(
+                error_code="report_metadata_not_found",
+                message=f"Could not find report metadata for {report_hash}.",
+            )
+        response_result = {
+            "id": 0,
+            "identifier": "custom",
+            "name": "custom",
+            "report_metadata": json_data.data,
+        }
+    else:
+        response_result = ProcessInstanceReportService.report_with_identifier(g.user, report_id, report_identifier)
+
+    return make_response(jsonify(response_result), 200)
 
 
 def process_instance_report_column_list(
@@ -404,7 +367,6 @@ def process_instance_delete(
 
 
 def process_instance_report_list(page: int = 1, per_page: int = 100) -> flask.wrappers.Response:
-    """Process_instance_report_list."""
     process_instance_reports = ProcessInstanceReportModel.query.filter_by(
         created_by_id=g.user.id,
     ).all()
@@ -413,7 +375,6 @@ def process_instance_report_list(page: int = 1, per_page: int = 100) -> flask.wr
 
 
 def process_instance_report_create(body: Dict[str, Any]) -> flask.wrappers.Response:
-    """Process_instance_report_create."""
     process_instance_report = ProcessInstanceReportModel.create_report(
         identifier=body["identifier"],
         user=g.user,
@@ -464,40 +425,6 @@ def process_instance_report_delete(
     db.session.commit()
 
     return Response(json.dumps({"ok": True}), status=200, mimetype="application/json")
-
-
-def process_instance_report_show(
-    report_id: int,
-    page: int = 1,
-    per_page: int = 100,
-) -> flask.wrappers.Response:
-    """Process_instance_report_show."""
-    process_instances = ProcessInstanceModel.query.order_by(
-        ProcessInstanceModel.start_in_seconds.desc(), ProcessInstanceModel.id.desc()  # type: ignore
-    ).paginate(page=page, per_page=per_page, error_out=False)
-
-    process_instance_report = ProcessInstanceReportModel.query.filter_by(
-        id=report_id,
-        created_by_id=g.user.id,
-    ).first()
-    if process_instance_report is None:
-        raise ApiError(
-            error_code="unknown_process_instance_report",
-            message="Unknown process instance report",
-            status_code=404,
-        )
-
-    substitution_variables = request.args.to_dict()
-    result_dict = process_instance_report.generate_report(process_instances.items, substitution_variables)
-
-    # update this if we go back to a database query instead of filtering in memory
-    result_dict["pagination"] = {
-        "count": len(result_dict["results"]),
-        "total": len(result_dict["results"]),
-        "pages": 1,
-    }
-
-    return Response(json.dumps(result_dict), status=200, mimetype="application/json")
 
 
 def process_instance_task_list_without_task_data_for_me(
@@ -765,7 +692,7 @@ def _find_process_instance_for_me_or_raise(
     process_instance_id: int,
 ) -> ProcessInstanceModel:
     """_find_process_instance_for_me_or_raise."""
-    process_instance: ProcessInstanceModel = (
+    process_instance: Optional[ProcessInstanceModel] = (
         ProcessInstanceModel.query.filter_by(id=process_instance_id)
         .outerjoin(HumanTaskModel)
         .outerjoin(

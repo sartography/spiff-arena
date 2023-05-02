@@ -95,6 +95,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     start_in_seconds: int | None = db.Column(db.Integer, index=True)
     end_in_seconds: int | None = db.Column(db.Integer, index=True)
+    task_updated_at_in_seconds: int = db.Column(db.Integer, nullable=True)
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
     status: str = db.Column(db.String(50), index=True)
@@ -122,6 +123,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
             "bpmn_version_control_identifier": self.bpmn_version_control_identifier,
             "bpmn_version_control_type": self.bpmn_version_control_type,
             "process_initiator_username": self.process_initiator.username,
+            "task_updated_at_in_seconds": self.task_updated_at_in_seconds,
         }
 
     def serialized_with_metadata(self) -> dict[str, Any]:
@@ -162,6 +164,11 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
     @classmethod
     def terminal_statuses(cls) -> list[str]:
         return ["complete", "error", "terminated"]
+
+    @classmethod
+    def non_terminal_statuses(cls) -> list[str]:
+        terminal_status_values = cls.terminal_statuses()
+        return [s for s in ProcessInstanceStatus.list() if s not in terminal_status_values]
 
     @classmethod
     def active_statuses(cls) -> list[str]:

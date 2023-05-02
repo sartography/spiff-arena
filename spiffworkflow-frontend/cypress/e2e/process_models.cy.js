@@ -1,8 +1,5 @@
-import { slowCypressDown } from 'cypress-slow-down';
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
 import { miscDisplayName } from '../support/helpers';
-
-// slowCypressDown(500);
 
 describe('process-models', () => {
   beforeEach(() => {
@@ -15,7 +12,7 @@ describe('process-models', () => {
   const groupDisplayName = 'Acceptance Tests Group One';
   const deleteProcessModelButtonId = 'delete-process-model-button';
   const saveChangesButtonText = 'Save Changes';
-  const fileNameInputSelector = 'input[name=file_name]';
+  const fileNameInputSelector = 'input#process_model_file_name';
 
   it('can perform crud operations', () => {
     const uuid = () => Cypress._.random(0, 1e6);
@@ -36,7 +33,8 @@ describe('process-models', () => {
     cy.contains(`Process Model: ${modelDisplayName}`);
 
     cy.getBySel('edit-process-model-button').click();
-    cy.get('input[name=display_name]').clear().type(newModelDisplayName);
+    cy.get('input[name=display_name]').clear();
+    cy.get('input[name=display_name]').type(newModelDisplayName);
     cy.contains('Submit').click();
     cy.contains(`Process Model: ${newModelDisplayName}`);
 
@@ -50,7 +48,6 @@ describe('process-models', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const directParentGroupId = 'acceptance-tests-group-one';
-    const directParentGroupName = 'Acceptance Tests Group One';
     const groupId = `misc/${directParentGroupId}`;
     const modelDisplayName = `Test Model 2 ${id}`;
     const modelId = `test-model-2-${id}`;
@@ -58,7 +55,7 @@ describe('process-models', () => {
     const bpmnFileName = `bpmn_test_file_${id}`;
     const dmnFileName = `dmn_test_file_${id}`;
     const jsonFileName = `json_test_file_${id}`;
-    const decision_acceptance_test_id = `decision_acceptance_test_${id}`;
+    const decisionAcceptanceTestId = `decision_acceptance_test_${id}`;
 
     cy.contains(miscDisplayName).click();
     cy.contains(groupDisplayName).click();
@@ -79,9 +76,10 @@ describe('process-models', () => {
     // add new bpmn file
     cy.contains('New BPMN File').click();
     cy.contains(/^Process Model File$/);
-    cy.get('g[data-element-id=StartEvent_1]').click().should('exist');
+    cy.get('g[data-element-id=StartEvent_1]').click();
     cy.contains('General').click();
-    cy.get('#bio-properties-panel-name').clear().type('Start Event Name');
+    cy.get('#bio-properties-panel-name').clear();
+    cy.get('#bio-properties-panel-name').type('Start Event Name');
     cy.wait(500);
     cy.contains('Save').click();
     cy.contains('Start Event Name');
@@ -96,11 +94,10 @@ describe('process-models', () => {
     // add new dmn file
     cy.contains('New DMN File').click();
     cy.contains(/^Process Model File$/);
-    cy.get('g[data-element-id=decision_1]').click().should('exist');
+    cy.get('g[data-element-id=decision_1]').click();
     cy.contains('General').click();
-    cy.get('#bio-properties-panel-id')
-      .clear()
-      .type(decision_acceptance_test_id);
+    cy.get('#bio-properties-panel-id').clear();
+    cy.get('#bio-properties-panel-id').type(decisionAcceptanceTestId);
     cy.contains('General').click();
     cy.contains('Save').click();
     cy.get(fileNameInputSelector).type(dmnFileName);
@@ -135,7 +132,7 @@ describe('process-models', () => {
     cy.get('.tile-process-group-content-container').should('exist');
   });
 
-  it.only('can upload and run a bpmn file', () => {
+  it('can upload and run a bpmn file', () => {
     const uuid = () => Cypress._.random(0, 1e6);
     const id = uuid();
     const directParentGroupId = 'acceptance-tests-group-one';
@@ -192,7 +189,8 @@ describe('process-models', () => {
   });
 
   it('can allow searching for model', () => {
-    cy.getBySel('process-model-selection').click().type('model-3');
+    cy.getBySel('process-model-selection').click();
+    cy.getBySel('process-model-selection').type('model-3');
     cy.contains('acceptance-tests-group-one/acceptance-tests-model-3').click();
     cy.contains('Acceptance Tests Model 3');
   });

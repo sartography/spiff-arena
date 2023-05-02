@@ -11,6 +11,8 @@ from spiffworkflow_backend.services.process_instance_processor import (
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
+
+
 def main():
     """Main."""
     app = get_hacked_up_app_for_script()

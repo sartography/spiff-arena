@@ -19,6 +19,7 @@ from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
 from spiffworkflow_backend.models.process_group import ProcessGroupSchema
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
+from spiffworkflow_backend.models.process_instance_report import ReportMetadata
 from spiffworkflow_backend.models.process_model import NotificationType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
@@ -379,3 +380,26 @@ class BaseTest:
             },
         )
         return process_model
+
+    def post_to_process_instance_list(
+        self,
+        client: FlaskClient,
+        user: UserModel,
+        report_metadata: Optional[ReportMetadata] = None,
+        param_string: Optional[str] = "",
+    ) -> TestResponse:
+        report_metadata_to_use = report_metadata
+        if report_metadata_to_use is None:
+            report_metadata_to_use = self.empty_report_metadata_body()
+        response = client.post(
+            f"/v1.0/process-instances{param_string}",
+            headers=self.logged_in_headers(user),
+            content_type="application/json",
+            data=json.dumps({"report_metadata": report_metadata_to_use}),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        return response
+
+    def empty_report_metadata_body(self) -> ReportMetadata:
+        return {"filter_by": [], "columns": [], "order_by": []}
