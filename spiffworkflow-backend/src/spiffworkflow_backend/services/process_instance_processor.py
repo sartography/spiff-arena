@@ -683,8 +683,11 @@ class ProcessInstanceProcessor:
                     bpmn_process_definition.bpmn_identifier,
                 )
             if element_unit_process_dict is not None:
+                size_before = len(json.dumps(spiff_bpmn_process_dict))
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
                 spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
+                size_after = len(json.dumps(spiff_bpmn_process_dict))
+                current_app.logger.info(f"Full specs size: {size_before}, element unit size: {size_after}, delta: {size_before-size_after}")
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
