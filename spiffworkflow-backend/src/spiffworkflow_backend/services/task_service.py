@@ -2,7 +2,8 @@ import copy
 import json
 import time
 from hashlib import sha256
-from typing import Optional, List
+from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import TypedDict
 from typing import Union
@@ -642,16 +643,18 @@ class TaskService:
         for task_model in waiting_tasks:
             task_definition = task_model.task_definition
             extensions: dict = (
-                task_definition.properties_json["extensions"] if "extensions" in task_definition.properties_json else {}
+                task_definition.properties_json["extensions"]
+                if "extensions" in task_definition.properties_json
+                else {}
             )
             event_definition: dict = (
-                task_definition.properties_json["event_definition"] if "event_definition" in task_definition.properties_json else {}
+                task_definition.properties_json["event_definition"]
+                if "event_definition" in task_definition.properties_json
+                else {}
             )
-            if 'signalButtonLabel' in extensions and 'name' in event_definition:
-                result.append({'event': event_definition, 'label': extensions['signalButtonLabel']})
+            if "signalButtonLabel" in extensions and "name" in event_definition:
+                result.append({"event": event_definition, "label": extensions["signalButtonLabel"]})
         return result
-
-
 
     @classmethod
     def get_spec_reference_from_bpmn_process(cls, bpmn_process: BpmnProcessModel) -> SpecReferenceCache:

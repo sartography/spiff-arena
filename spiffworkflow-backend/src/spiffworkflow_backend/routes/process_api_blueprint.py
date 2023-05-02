@@ -18,7 +18,6 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
 )
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance_file_data import (
     ProcessInstanceFileDataModel,
 )

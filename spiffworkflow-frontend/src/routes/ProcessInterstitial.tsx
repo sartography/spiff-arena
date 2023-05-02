@@ -106,7 +106,7 @@ export default function ProcessInterstitial() {
       ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED', 'READY'].includes(getStatus())
     ) {
       return (
-        <div style={{padding: '10px 0 0 0'}}>
+        <div style={{ padding: '10px 0 0 0' }}>
           <Button kind="secondary" onClick={() => navigate(`/tasks`)}>
             Return to Home
           </Button>
