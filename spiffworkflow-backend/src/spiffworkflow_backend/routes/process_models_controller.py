@@ -1,8 +1,8 @@
 """APIs for dealing with process groups, process models, and process instances."""
-from hashlib import sha256
 import json
 import os
 import re
+from hashlib import sha256
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -245,9 +245,13 @@ def process_model_list(
     return make_response(jsonify(response_json), 200)
 
 
-def process_model_file_update(modified_process_model_identifier: str, file_name: str, file_contents_hash: str) -> flask.wrappers.Response:
+def process_model_file_update(
+    modified_process_model_identifier: str, file_name: str, file_contents_hash: str
+) -> flask.wrappers.Response:
     message = f"User: {g.user.username} clicked save for"
-    return _create_or_update_process_model_file(modified_process_model_identifier, message, 200, file_contents_hash=file_contents_hash)
+    return _create_or_update_process_model_file(
+        modified_process_model_identifier, message, 200, file_contents_hash=file_contents_hash
+    )
 
 
 def process_model_file_delete(modified_process_model_identifier: str, file_name: str) -> flask.wrappers.Response:
@@ -297,10 +301,8 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     files = SpecFileService.get_files(process_model, file_name)
     if len(files) == 0:
         raise ApiError(
-            error_code="unknown file",
-            message=(
-                f"No information exists for file {file_name} it does not exist in workflow {process_model_identifier}."
-            ),
+            error_code="process_model_file_not_found",
+            message=f"File {file_name} not found in workflow {process_model_identifier}.",
             status_code=404,
         )
 
@@ -477,7 +479,7 @@ def _create_or_update_process_model_file(
     modified_process_model_identifier: str,
     message_for_git_commit: str,
     http_status_to_return: int,
-    file_contents_hash: Optional[str],
+    file_contents_hash: Optional[str] = None,
 ) -> flask.wrappers.Response:
     """_create_or_update_process_model_file."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
@@ -499,15 +501,20 @@ def _create_or_update_process_model_file(
             status_code=400,
         )
 
-    current_file_contents_bytes = SpecFileService.get_data(process_model, request_file.filename)
-    if current_file_contents_bytes and file_contents_hash:
-        current_file_contents_hash = sha256(current_file_contents_bytes).hexdigest()
-        if current_file_contents_hash != file_contents_hash:
-            raise ApiError(
-                error_code="process_model_file_has_changed",
-                message=f"Process model file: {request_file.filename} was already changed by someone else. Please reload before making changes.",
-                status_code=409,
-            )
+    if file_contents_hash is not None:
+        current_file_contents_bytes = SpecFileService.get_data(process_model, request_file.filename)
+        if current_file_contents_bytes and file_contents_hash:
+            current_file_contents_hash = sha256(current_file_contents_bytes).hexdigest()
+            if current_file_contents_hash != file_contents_hash:
+                raise ApiError(
+                    error_code="process_model_file_has_changed",
+                    message=(
+                        f"Process model file: {request_file.filename} was already changed by someone else. If you made"
+                        " changes you do not want to lose, click the Download button and make sure your changes are"
+                        " in the resulting file. If you do not need your changes, you can safely reload this page."
+                    ),
+                    status_code=409,
+                )
 
     file = None
     try:
