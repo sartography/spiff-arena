@@ -113,7 +113,6 @@ class BaseTest:
         process_group_id: str,
         display_name: str = "",
     ) -> str:
-        """Create_process_group."""
         process_group = ProcessGroup(id=process_group_id, display_name=display_name, display_order=0, admin=False)
         response = client.post(
             "/v1.0/process-groups",
@@ -138,7 +137,6 @@ class BaseTest:
         primary_file_name: Optional[str] = None,
         user: Optional[UserModel] = None,
     ) -> TestResponse:
-        """Create_process_model."""
         if process_model_id is not None:
             # make sure we have a group
             process_group_id, _ = os.path.split(process_model_id)

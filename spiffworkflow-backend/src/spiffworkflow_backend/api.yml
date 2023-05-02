@@ -1248,7 +1248,7 @@ paths:
       parameters:
         - name: file_contents_hash
           in: query
-          required: true
+          required: false
           description: The hash of the file contents that originally came with the file.
           schema:
             type: string

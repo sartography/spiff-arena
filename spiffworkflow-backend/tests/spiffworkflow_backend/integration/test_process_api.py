@@ -3,6 +3,7 @@ import io
 import json
 import os
 import time
+from hashlib import sha256
 from typing import Any
 from typing import Dict
 
@@ -232,7 +233,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_primary_process_id_updates_via_xml."""
         process_group_id = "test_group"
         process_model_id = "sample"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
@@ -258,10 +258,11 @@ class TestProcessApi(BaseTest):
         updated_bpmn_file_data_string = bpmn_file_data_string.replace(old_string, new_string)
         updated_bpmn_file_data_bytes = bytearray(updated_bpmn_file_data_string, "utf-8")
         data = {"file": (io.BytesIO(updated_bpmn_file_data_bytes), bpmn_file_name)}
+        file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
         modified_process_model_id = process_model_identifier.replace("/", ":")
         response = client.put(
-            f"/v1.0/process-models/{modified_process_model_id}/files/{bpmn_file_name}",
+            f"/v1.0/process-models/{modified_process_model_id}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -780,13 +781,12 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_file_update."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         modified_process_model_id = process_model_identifier.replace("/", ":")
 
         data = {"key1": "THIS DATA"}
         response = client.put(
-            f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg",
+            f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg?file_contents_hash=does_not_matter",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -803,13 +803,12 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_file_update."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         modified_process_model_id = process_model_identifier.replace("/", ":")
 
         data = {"file": (io.BytesIO(b""), "random_fact.svg")}
         response = client.put(
-            f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg",
+            f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg?file_contents_hash=does_not_matter",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -827,30 +826,22 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_model_file_update."""
         process_group_id = "test_group"
-        process_group_description = "Test Group"
-        process_model_id = "random_fact"
+        process_model_id = "simple_form"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
-        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_description)
-        self.create_process_model_with_api(
-            client,
+        bpmn_file_name = "simple_form.json"
+        load_test_spec(
             process_model_id=process_model_identifier,
-            user=with_super_admin_user,
+            process_model_source_directory="simple_form",
         )
-
-        bpmn_file_name = "random_fact.bpmn"
-        original_file = load_test_spec(
-            process_model_id=process_model_id,
-            bpmn_file_name=bpmn_file_name,
-            process_model_source_directory="random_fact",
-        )
+        bpmn_file_data_bytes = self.get_test_data_file_contents(bpmn_file_name, process_model_id)
+        file_contents_hash = sha256(bpmn_file_data_bytes).hexdigest()
 
         modified_process_model_id = process_model_identifier.replace("/", ":")
         new_file_contents = b"THIS_IS_NEW_DATA"
-        data = {"file": (io.BytesIO(new_file_contents), "random_fact.svg")}
+        data = {"file": (io.BytesIO(new_file_contents), bpmn_file_name)}
         response = client.put(
-            f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg",
+            f"/v1.0/process-models/{modified_process_model_id}/files/{bpmn_file_name}?file_contents_hash={file_contents_hash}",
             data=data,
             follow_redirects=True,
             content_type="multipart/form-data",
@@ -862,12 +853,11 @@ class TestProcessApi(BaseTest):
         assert response.json["file_contents"] is not None
 
         response = client.get(
-            f"/v1.0/process-models/{modified_process_model_id}/files/random_fact.svg",
+            f"/v1.0/process-models/{modified_process_model_id}/files/simple_form.json",
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
         updated_file = json.loads(response.get_data(as_text=True))
-        assert original_file != updated_file
         assert updated_file["file_contents"] == new_file_contents.decode()
 
     def test_process_model_file_delete_when_bad_process_model(
@@ -879,9 +869,6 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_process_model_file_update."""
         process_model_identifier = self.create_group_and_model_with_bpmn(client, with_super_admin_user)
-        # self.create_spec_file(client, user=with_super_admin_user)
-
-        # process_model = load_test_spec("random_fact")
         bad_process_model_identifier = f"x{process_model_identifier}"
         modified_bad_process_model_identifier = bad_process_model_identifier.replace("/", ":")
         response = client.delete(

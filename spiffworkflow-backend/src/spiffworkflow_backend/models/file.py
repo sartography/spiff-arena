@@ -1,9 +1,9 @@
 from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any
 from dataclasses import field
 from datetime import datetime
-from typing import Optional
+from typing import Any
 
 from spiffworkflow_backend.helpers.spiff_enum import SpiffEnum
 from spiffworkflow_backend.models.spec_reference import SpecReference
@@ -71,10 +71,10 @@ class File:
     type: str
     last_modified: datetime
     size: int
-    references: Optional[list[SpecReference]] = None
-    file_contents: Optional[bytes] = None
-    process_model_id: Optional[str] = None
-    file_contents_hash: Optional[str] = None
+    references: list[SpecReference] | None = None
+    file_contents: bytes | None = None
+    process_model_id: str | None = None
+    file_contents_hash: str | None = None
 
     def __post_init__(self) -> None:
         """__post_init__."""
@@ -88,7 +88,7 @@ class File:
         content_type: str,
         last_modified: datetime,
         file_size: int,
-    ) -> "File":
+    ) -> File:
         """From_file_system."""
         instance = cls(
             name=file_name,
@@ -103,5 +103,5 @@ class File:
     def serialized(self) -> dict[str, Any]:
         dictionary = self.__dict__
         if isinstance(self.file_contents, bytes):
-            dictionary['file_contents'] = self.file_contents.decode('utf-8')
+            dictionary["file_contents"] = self.file_contents.decode("utf-8")
         return dictionary
