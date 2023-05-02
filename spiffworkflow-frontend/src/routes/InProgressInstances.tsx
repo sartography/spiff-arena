@@ -43,7 +43,7 @@ export default function InProgressInstances() {
           ]}
           canCompleteAllTasks
           showActionsColumn
-          autoReload={false}
+          autoReload
         />
       );
     });
@@ -78,7 +78,7 @@ export default function InProgressInstances() {
         paginationClassName="with-large-bottom-margin"
         showLinkToReport
         showActionsColumn
-        autoReload={false}
+        autoReload
       />
       <ProcessInstanceListTable
         headerElement={waitingForMeHeaderElement}
