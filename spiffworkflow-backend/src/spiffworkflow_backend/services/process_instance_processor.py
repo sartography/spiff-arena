@@ -1544,7 +1544,7 @@ class ProcessInstanceProcessor:
             db.session.add(message_instance)
             db.session.commit()
 
-    def specs_loader(self, process_id: str, element_id: str) -> Optional[Tuple[Any, Any]]:
+    def specs_loader(self, process_id: str, element_id: str) -> Optional[Dict[str, Any]]:
         full_process_model_hash = self.process_instance_model.bpmn_process_definition.full_process_model_hash
         current_app.logger.info(f"____hash: {full_process_model_hash}")
         
@@ -1555,15 +1555,21 @@ class ProcessInstanceProcessor:
         )
 
         if element_unit_process_dict is not None:
-            current_app.logger.info("LOADED SOMETHING")
-            current_app.logger.info(element_unit_process_dict)
-            pass
+            spec_dict = element_unit_process_dict["spec"]
+            subprocess_specs_dict = element_unit_process_dict["subprocess_specs"]
+            
+            restored_specs = {
+                k: self.wf_spec_converter.restore(v) for k, v in subprocess_specs_dict.items()
+            }
+            restored_specs[spec_dict["name"]] = self.wf_spec_converter.restore(spec_dict)
+            
+            return restored_specs
         
         return None
 
     def load_future_subprocess_specs(self) -> None:
         tasks = self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK)
-        current_app.logger.info(f"definite tasks: {tasks}")
+        #current_app.logger.info(f"definite tasks: {tasks}")
         loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
         for task in tasks:
             if task.task_spec.spec_type != "Call Activity":
@@ -1572,13 +1578,9 @@ class ProcessInstanceProcessor:
             current_app.logger.info(f"checking: {spec_to_check}")
         
             if spec_to_check not in loaded_specs:
-                lazy_load = self.specs_loader(spec_to_check, spec_to_check)
-                current_app.logger.info(f"lazy: {lazy_load}")
-                if lazy_load is None:
+                lazy_subprocess_specs = self.specs_loader(spec_to_check, spec_to_check)
+                if lazy_subprocess_specs is None:
                     continue
-                
-                lazy_spec, lazy_subprocess_specs = lazy_load
-                lazy_subprocess_specs[missing_spec] = lazy_spec
 
                 for name, spec in lazy_subprocess_specs.items():
                     if name not in loaded_specs:
@@ -1586,7 +1588,6 @@ class ProcessInstanceProcessor:
                         loaded_specs.add(name)
 
     def refresh_waiting_tasks(self) -> None:
-        current_app.logger.info("REFRESHING")
         self.load_future_subprocess_specs()
         self.bpmn_process_instance.refresh_waiting_tasks()
 
