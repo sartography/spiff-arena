@@ -1,7 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... Remove this comment to see the full error message
 import BpmnModeler from 'bpmn-js/lib/Modeler';
-// @ts-expect-error TS(7016) FIXME: Could not find a declaration file for module 'bpmn... Remove this comment to see the full error message
 import BpmnViewer from 'bpmn-js/lib/Viewer';
 import {
   BpmnPropertiesPanelModule,
@@ -144,11 +142,14 @@ export default function ReactDiagramEditor({
     }
 
     const temp = document.createElement('template');
+    const panelId: string =
+      diagramType === 'readonly'
+        ? 'hidden-properties-panel'
+        : 'js-properties-panel';
     temp.innerHTML = `
       <div class="content with-diagram" id="js-drop-zone">
-        <div class="canvas ${canvasClass}" id="canvas"
-                            ></div>
-        <div class="properties-panel-parent" id="js-properties-panel"></div>
+        <div class="canvas ${canvasClass}" id="canvas"></div>
+        <div class="properties-panel-parent" id="${panelId}"></div>
       </div>
     `;
     const frag = temp.content;
