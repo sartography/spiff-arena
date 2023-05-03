@@ -34,7 +34,11 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 
 
 class ProcessInstanceReportNotFoundError(Exception):
-    """ProcessInstanceReportNotFoundError."""
+    pass
+
+
+class ProcessInstanceReportMetadataInvalidError(Exception):
+    pass
 
 
 class ProcessInstanceReportService:
@@ -441,6 +445,15 @@ class ProcessInstanceReportService:
                 )
             )
 
+        if with_tasks_completed_by_me is True and with_tasks_i_can_complete is True:
+            raise ProcessInstanceReportMetadataInvalidError(
+                "Cannot set both 'with_tasks_completed_by_me' and 'with_tasks_i_can_complete' to true. You must choose"
+                " one."
+            )
+
+        # ensure we only join with HumanTaskModel once
+        human_task_already_joined = False
+
         if with_tasks_completed_by_me is True:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
@@ -452,6 +465,7 @@ class ProcessInstanceReportService:
                     HumanTaskModel.completed_by_user_id == user.id,
                 ),
             )
+            human_task_already_joined = True
 
         # this excludes some tasks you can complete, because that's the way the requirements were described.
         # if it's assigned to one of your groups, it does not get returned by this query.
@@ -470,13 +484,15 @@ class ProcessInstanceReportService:
                 HumanTaskUserModel,
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
             )
+            human_task_already_joined = True
 
         if user_group_identifier is not None:
             group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
             if user_group_identifier:
                 group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
 
-            process_instance_query = process_instance_query.join(HumanTaskModel)
+            if human_task_already_joined is False:
+                process_instance_query = process_instance_query.join(HumanTaskModel)
             if process_status is not None:
                 non_active_statuses = [
                     s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()
