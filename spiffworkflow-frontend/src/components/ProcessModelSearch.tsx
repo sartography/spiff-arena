@@ -33,9 +33,14 @@ export default function ProcessModelSearch({
   const getProcessModelLabelForDisplay = (processModel: ProcessModel) => {
     let processModelId = processModel.id;
     if (truncateProcessModelDisplayName) {
-      processModelId = processModelId.split('/').slice(-2).join('/');
+      let processModelIdArray = processModelId.split('/');
+      if (processModelIdArray.length > 2) {
+        processModelIdArray = processModelIdArray.slice(-2);
+        processModelIdArray.unshift('...');
+      }
+      processModelId = processModelIdArray.join('/');
     }
-    return `${processModel.display_name} (${processModelId})`;
+    return `${processModel.display_name} - ${processModelId}`;
   };
 
   const getProcessModelLabelForSearch = (processModel: ProcessModel) => {

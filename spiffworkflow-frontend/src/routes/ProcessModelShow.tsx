@@ -8,7 +8,6 @@ import {
   Favorite,
   Edit,
   View,
-  ArrowRight,
   // @ts-ignore
 } from '@carbon/icons-react';
 import {
