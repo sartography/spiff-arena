@@ -163,6 +163,50 @@ paths:
                 $ref: "#/components/schemas/OkTrue"
 
 
+  /active-users/updates/{last_visited_identifier}:
+    parameters:
+      - name: last_visited_identifier
+        in: path
+        required: true
+        description: The identifier for the last visited page for the user.
+        schema:
+          type: string
+    get:
+      tags:
+        - Active User
+      operationId: spiffworkflow_backend.routes.active_users_controller.active_user_updates
+      summary: An SSE (Server Sent Events) endpoint that returns what users are also currently viewing the same page as you.
+      responses:
+        "200":
+          description: list of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /active-users/unregister/{last_visited_identifier}:
+    parameters:
+      - name: last_visited_identifier
+        in: path
+        required: true
+        description: The identifier for the last visited page for the user.
+        schema:
+          type: string
+    get:
+      tags:
+        - Active User
+      operationId: spiffworkflow_backend.routes.active_users_controller.active_user_unregister
+      summary: Unregisters a user from a page. To be used when the /active-users/updates endpoint is closed.
+      responses:
+        "200":
+          description: The current user has unregistered.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
+
   /process-groups:
     parameters:
       - name: process_group_identifier
@@ -1701,6 +1745,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ServiceTask"
+
   /tasks/{process_instance_id}:
     parameters:
       - name: process_instance_id
@@ -1721,7 +1766,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Task"
-
 
   /tasks/{process_instance_id}/{task_guid}:
     parameters:

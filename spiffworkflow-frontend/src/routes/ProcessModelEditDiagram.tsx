@@ -25,9 +25,11 @@ import Col from 'react-bootstrap/Col';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 
 import MDEditor from '@uiw/react-md-editor';
+import { fetchEventSource } from '@microsoft/fetch-event-source';
+import { BACKEND_BASE_URL } from '../config';
+import HttpService, { getBasicHeaders } from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
-import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { makeid, modifyProcessIdentifierForPathParam } from '../helpers';
 import {
@@ -36,6 +38,7 @@ import {
   ProcessModel,
   ProcessModelCaller,
   ProcessReference,
+  User,
 } from '../interfaces';
 import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
@@ -66,6 +69,7 @@ export default function ProcessModelEditDiagram() {
     useState<boolean>(false);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
+  const [activeUsers, setActiveUsers] = useState<User[]>([]);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -125,21 +129,49 @@ export default function ProcessModelEditDiagram() {
   usePrompt('Changes you made may not be saved.', diagramHasChanges);
 
   useEffect(() => {
-    // Grab all available process models in case we need to search for them.
-    // Taken from the Process Group List
-    const processResults = (result: any) => {
-      const selectionArray = result.map((item: any) => {
-        const label = `${item.display_name} (${item.identifier})`;
-        Object.assign(item, { label });
-        return item;
-      });
-      setProcesses(selectionArray);
-    };
-    HttpService.makeCallToBackend({
-      path: `/processes`,
-      successCallback: processResults,
-    });
-  }, []);
+    const lastVisitedIdentifier = 'HEY';
+    fetchEventSource(
+      `${BACKEND_BASE_URL}/active-users/updates/${lastVisitedIdentifier}`,
+      {
+        headers: getBasicHeaders(),
+        onmessage(ev) {
+          const retValue = JSON.parse(ev.data);
+          if ('error_code' in retValue) {
+            addError(retValue);
+          } else {
+            setActiveUsers(retValue);
+          }
+        },
+        onclose() {
+          HttpService.makeCallToBackend({
+            path: `/active-users/unregister/${lastVisitedIdentifier}`,
+            successCallback: setActiveUsers,
+          });
+        },
+        onerror(err: any) {
+          throw err;
+        },
+      }
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // it is critical to only run this once.
+
+  // useEffect(() => {
+  //   // Grab all available process models in case we need to search for them.
+  //   // Taken from the Process Group List
+  //   const processResults = (result: any) => {
+  //     const selectionArray = result.map((item: any) => {
+  //       const label = `${item.display_name} (${item.identifier})`;
+  //       Object.assign(item, { label });
+  //       return item;
+  //     });
+  //     setProcesses(selectionArray);
+  //   };
+  //   HttpService.makeCallToBackend({
+  //     path: `/processes`,
+  //     successCallback: processResults,
+  //   });
+  // }, []);
 
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
@@ -989,6 +1021,17 @@ export default function ProcessModelEditDiagram() {
     return null;
   };
 
+  const activeUserElement = () => {
+    const au = activeUsers.map((activeUser: User) => {
+      return (
+        <div title={activeUser.username} className="user-circle">
+          {activeUser.username.charAt(0).toUpperCase()}
+        </div>
+      );
+    });
+    return <div className="user-list">{au}</div>;
+  };
+
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
   if ((bpmnXmlForDiagramRendering || !params.file_name) && processModel) {
     const processModelFileName = processModelFile ? processModelFile.name : '';
@@ -1009,6 +1052,7 @@ export default function ProcessModelEditDiagram() {
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h1>
+        {activeUserElement()}
         {saveFileMessage()}
         {appropriateEditor()}
         {newFileNameBox()}
