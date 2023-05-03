@@ -18,7 +18,6 @@ from spiffworkflow_backend.exceptions.process_entity_not_found_error import (
 )
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModelSchema
 from spiffworkflow_backend.models.process_instance_file_data import (
     ProcessInstanceFileDataModel,
 )
@@ -32,6 +31,7 @@ from spiffworkflow_backend.services.process_caller_service import ProcessCallerS
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -199,16 +199,13 @@ def send_bpmn_event(
     if process_instance:
         processor = ProcessInstanceProcessor(process_instance)
         processor.send_bpmn_event(body)
+        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+        return make_response(jsonify(task), 200)
     else:
         raise ApiError(
             error_code="send_bpmn_event_error",
             message=f"Could not send event to Instance: {process_instance_id}",
         )
-    return Response(
-        json.dumps(ProcessInstanceModelSchema().dump(process_instance)),
-        status=200,
-        mimetype="application/json",
-    )
 
 
 def _commit_and_push_to_git(message: str) -> None:

@@ -156,3 +156,30 @@ class TestTaskService(BaseTest):
         assert task_model_level_3 is not None
         bpmn_process = TaskService.bpmn_process_for_called_activity_or_top_level_process(task_model_level_3)
         assert bpmn_process.bpmn_process_definition.bpmn_identifier == "Level3"
+
+    def test_get_button_labels_for_waiting_signal_event_tasks(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        process_model = load_test_spec(
+            "test_group/signal_event_extensions",
+            process_model_source_directory="signal_event_extensions",
+            bpmn_file_name="signal_event_extensions",
+        )
+        load_test_spec(
+            "test_group/SpiffCatchEventExtensions",
+            process_model_source_directory="call_activity_nested",
+            bpmn_file_name="SpiffCatchEventExtensions",
+        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True, execution_strategy_name="greedy")
+        events = TaskService.get_ready_signals_with_button_labels(process_instance.id)
+        assert len(events) == 1
+        signal_event = events[0]
+        assert signal_event["event"]["name"] == "eat_spam"
+        assert signal_event["event"]["typename"] == "SignalEventDefinition"
+        assert signal_event["label"] == "Eat Spam"
+
+        print(events)
