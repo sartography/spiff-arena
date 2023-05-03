@@ -217,7 +217,10 @@ export default function ProcessInstanceListTable({
   );
   const [userGroups, setUserGroups] = useState<string[]>([]);
   const systemReportOptions: string[] = useMemo(() => {
-    return ['with_tasks_i_can_complete', 'with_tasks_completed_by_me'];
+    return [
+      'instances_with_tasks_waiting_for_me',
+      'instances_with_tasks_completed_by_me',
+    ];
   }, []);
 
   const [reportHash, setReportHash] = useState<string | null>(null);
@@ -1215,9 +1218,9 @@ export default function ProcessInstanceListTable({
           <Column md={4} lg={8} sm={2}>
             <Dropdown
               id="system-report-dropdown"
-              titleText="System Report"
+              titleText="System report"
               items={['', ...systemReportOptions]}
-              itemToString={(item: any) => item}
+              itemToString={(item: any) => titleizeString(item)}
               selectedItem={systemReport}
               onChange={(value: any) => {
                 setSystemReport(value.selectedItem);
@@ -1228,7 +1231,7 @@ export default function ProcessInstanceListTable({
           <Column md={4} lg={8} sm={2}>
             <Dropdown
               id="user-group-dropdown"
-              titleText="User Group"
+              titleText="Assigned user group"
               items={['', ...userGroups]}
               itemToString={(item: any) => item}
               selectedItem={selectedUserGroup}
@@ -1264,6 +1267,7 @@ export default function ProcessInstanceListTable({
         onRequestSubmit={handleAdvancedOptionsClose}
         onRequestClose={handleAdvancedOptionsClose}
         hasScrollingContent
+        size="lg"
       >
         {formElements}
       </Modal>
@@ -1338,7 +1342,7 @@ export default function ProcessInstanceListTable({
                         return null;
                       }}
                       placeholder="Start typing username"
-                      titleText="Started By"
+                      titleText="Started by"
                       selectedItem={processInitiatorSelection}
                     />
                   );
@@ -1347,7 +1351,7 @@ export default function ProcessInstanceListTable({
                   <TextInput
                     id="process-instance-initiator-search"
                     placeholder="Enter username"
-                    labelText="Started By"
+                    labelText="Started by"
                     invalid={processInitiatorNotFoundErrorText !== ''}
                     invalidText={processInitiatorNotFoundErrorText}
                     onChange={(event: any) => {

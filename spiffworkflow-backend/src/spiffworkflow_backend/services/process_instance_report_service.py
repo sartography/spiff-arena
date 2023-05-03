@@ -76,7 +76,7 @@ class ProcessInstanceReportService:
         system_report_completed_instances_with_tasks_completed_by_me: ReportMetadata = {
             "columns": cls.builtin_column_options(),
             "filter_by": [
-                {"field_name": "with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
                 {"field_name": "process_status", "field_value": terminal_status_values, "operator": "equals"},
             ],
             "order_by": ["-start_in_seconds", "-id"],
@@ -127,7 +127,7 @@ class ProcessInstanceReportService:
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
             ],
             "filter_by": [
-                {"field_name": "with_tasks_i_can_complete", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
                 {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
                 {
                     "field_name": "with_oldest_open_task",
@@ -418,17 +418,17 @@ class ProcessInstanceReportService:
                 process_initiator_id = initiator.id
             process_instance_query = process_instance_query.filter_by(process_initiator_id=process_initiator_id)
 
-        with_tasks_completed_by_me = cls.get_filter_value(filters, "with_tasks_completed_by_me")
-        with_tasks_i_can_complete = cls.get_filter_value(filters, "with_tasks_i_can_complete")
+        instances_with_tasks_completed_by_me = cls.get_filter_value(filters, "instances_with_tasks_completed_by_me")
+        instances_with_tasks_waiting_for_me = cls.get_filter_value(filters, "instances_with_tasks_waiting_for_me")
         user_group_identifier = cls.get_filter_value(filters, "user_group_identifier")
 
         # builtin only - for the for-me paths
         with_relation_to_me = cls.get_filter_value(filters, "with_relation_to_me")
 
         if (
-            not with_tasks_completed_by_me
+            not instances_with_tasks_completed_by_me
             and not user_group_identifier
-            and not with_tasks_i_can_complete
+            and not instances_with_tasks_waiting_for_me
             and with_relation_to_me is True
         ):
             process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(
@@ -445,16 +445,16 @@ class ProcessInstanceReportService:
                 )
             )
 
-        if with_tasks_completed_by_me is True and with_tasks_i_can_complete is True:
+        if instances_with_tasks_completed_by_me is True and instances_with_tasks_waiting_for_me is True:
             raise ProcessInstanceReportMetadataInvalidError(
-                "Cannot set both 'with_tasks_completed_by_me' and 'with_tasks_i_can_complete' to true. You must choose"
-                " one."
+                "Cannot set both 'instances_with_tasks_completed_by_me' and 'instances_with_tasks_waiting_for_me' to"
+                " true. You must choose one."
             )
 
         # ensure we only join with HumanTaskModel once
         human_task_already_joined = False
 
-        if with_tasks_completed_by_me is True:
+        if instances_with_tasks_completed_by_me is True:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
             )
@@ -469,7 +469,7 @@ class ProcessInstanceReportService:
 
         # this excludes some tasks you can complete, because that's the way the requirements were described.
         # if it's assigned to one of your groups, it does not get returned by this query.
-        if with_tasks_i_can_complete is True:
+        if instances_with_tasks_waiting_for_me is True:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
             )
