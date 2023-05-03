@@ -2649,7 +2649,8 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert response.json["status"] == "complete"
+        assert response.json["type"] == "End Event"
+        assert response.json["state"] == "COMPLETED"
 
         response = client.get(
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}/task-info?all_tasks=true",

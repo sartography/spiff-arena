@@ -1,4 +1,5 @@
 """Test_process_instance_report_service."""
+import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -7,9 +8,9 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
-from spiffworkflow_backend.services.process_instance_report_service import (
-    ProcessInstanceReportService,
-)
+from spiffworkflow_backend.models.process_instance_report import ReportMetadata
+from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportMetadataInvalidError
+from spiffworkflow_backend.services.process_instance_report_service import ProcessInstanceReportService
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -51,6 +52,62 @@ class TestProcessInstanceReportService(BaseTest):
         assert response_json["results"][1]["process_initiator_id"] == user_one.id
         assert response_json["results"][0]["status"] == "complete"
         assert response_json["results"][1]["status"] == "complete"
+
+    def test_raises_if_filtering_with_both_task_i_can_complete_and_tasks_completed_by_me(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user_one = self.find_or_create_user(username="user_one")
+        report_metadata: ReportMetadata = {
+            "columns": [],
+            "filter_by": [
+                {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
+            ],
+            "order_by": [],
+        }
+        with pytest.raises(ProcessInstanceReportMetadataInvalidError):
+            ProcessInstanceReportService.run_process_instance_report(
+                report_metadata=report_metadata,
+                user=user_one,
+            )
+
+    def test_with_group_identifier_does_not_conflict_with_system_filters(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        user_one = self.find_or_create_user(username="user_one")
+        report_metadata: ReportMetadata = {
+            "columns": [],
+            "filter_by": [
+                {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
+                {"field_name": "user_group_identifier", "field_value": "group_one", "operator": "equals"},
+            ],
+            "order_by": [],
+        }
+        result = ProcessInstanceReportService.run_process_instance_report(
+            report_metadata=report_metadata,
+            user=user_one,
+        )
+        assert result is not None
+
+        report_metadata = {
+            "columns": [],
+            "filter_by": [
+                {"field_name": "instances_with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
+                {"field_name": "user_group_identifier", "field_value": "group_one", "operator": "equals"},
+            ],
+            "order_by": [],
+        }
+        result = ProcessInstanceReportService.run_process_instance_report(
+            report_metadata=report_metadata,
+            user=user_one,
+        )
+        assert result is not None
 
     def test_can_filter_by_completed_instances_with_tasks_completed_by_me(
         self,

@@ -138,7 +138,9 @@ export default function ProcessInstanceListTable({
   );
   const canSearchUsers: boolean = ability.can('GET', targetUris.userSearch);
 
-  const [processInstances, setProcessInstances] = useState([]);
+  const [processInstances, setProcessInstances] = useState<ProcessInstance[]>(
+    []
+  );
   const [reportMetadata, setReportMetadata] = useState<ReportMetadata | null>();
   const [pagination, setPagination] = useState<PaginationObject | null>(null);
 
@@ -215,7 +217,10 @@ export default function ProcessInstanceListTable({
   );
   const [userGroups, setUserGroups] = useState<string[]>([]);
   const systemReportOptions: string[] = useMemo(() => {
-    return ['with_tasks_i_can_complete', 'with_tasks_completed_by_me'];
+    return [
+      'instances_with_tasks_waiting_for_me',
+      'instances_with_tasks_completed_by_me',
+    ];
   }, []);
 
   const [reportHash, setReportHash] = useState<string | null>(null);
@@ -846,6 +851,9 @@ export default function ProcessInstanceListTable({
     setEndToDate('');
     setEndToTime('');
     setProcessInitiatorSelection(null);
+    setWithOldestOpenTask(false);
+    setSystemReport(null);
+    setSelectedUserGroup(null);
     setRequiresRefilter(true);
     if (reportMetadata) {
       reportMetadata.filter_by = [];
@@ -1213,9 +1221,9 @@ export default function ProcessInstanceListTable({
           <Column md={4} lg={8} sm={2}>
             <Dropdown
               id="system-report-dropdown"
-              titleText="System Report"
+              titleText="System report"
               items={['', ...systemReportOptions]}
-              itemToString={(item: any) => item}
+              itemToString={(item: any) => titleizeString(item)}
               selectedItem={systemReport}
               onChange={(value: any) => {
                 setSystemReport(value.selectedItem);
@@ -1226,7 +1234,7 @@ export default function ProcessInstanceListTable({
           <Column md={4} lg={8} sm={2}>
             <Dropdown
               id="user-group-dropdown"
-              titleText="User Group"
+              titleText="Assigned user group"
               items={['', ...userGroups]}
               itemToString={(item: any) => item}
               selectedItem={selectedUserGroup}
@@ -1262,6 +1270,7 @@ export default function ProcessInstanceListTable({
         onRequestSubmit={handleAdvancedOptionsClose}
         onRequestClose={handleAdvancedOptionsClose}
         hasScrollingContent
+        size="lg"
       >
         {formElements}
       </Modal>
@@ -1336,7 +1345,7 @@ export default function ProcessInstanceListTable({
                         return null;
                       }}
                       placeholder="Start typing username"
-                      titleText="Started By"
+                      titleText="Started by"
                       selectedItem={processInitiatorSelection}
                     />
                   );
@@ -1345,7 +1354,7 @@ export default function ProcessInstanceListTable({
                   <TextInput
                     id="process-instance-initiator-search"
                     placeholder="Enter username"
-                    labelText="Started By"
+                    labelText="Started by"
                     invalid={processInitiatorNotFoundErrorText !== ''}
                     invalidText={processInitiatorNotFoundErrorText}
                     onChange={(event: any) => {
@@ -1509,7 +1518,7 @@ export default function ProcessInstanceListTable({
     return value;
   };
 
-  const formattedColumn = (row: any, column: any) => {
+  const formattedColumn = (row: ProcessInstance, column: ReportColumn) => {
     const reportColumnFormatters: Record<string, any> = {
       id: formatProcessInstanceId,
       process_model_identifier: formatProcessModelIdentifier,
@@ -1520,40 +1529,41 @@ export default function ProcessInstanceListTable({
       updated_at_in_seconds: formatSecondsForDisplay,
       task_updated_at_in_seconds: formatSecondsForDisplay,
     };
+    const columnAccessor = column.accessor as keyof ProcessInstance;
     const formatter =
-      reportColumnFormatters[column.accessor] ?? defaultFormatter;
-    const value = row[column.accessor];
+      reportColumnFormatters[columnAccessor] ?? defaultFormatter;
+    const value = row[columnAccessor];
 
-    if (column.accessor === 'status') {
+    if (columnAccessor === 'status') {
       return (
         <td data-qa={`process-instance-status-${value}`}>
           {formatter(row, value)}
         </td>
       );
     }
-    if (column.accessor === 'process_model_display_name') {
+    if (columnAccessor === 'process_model_display_name') {
       return <td> {formatter(row, value)} </td>;
     }
-    if (column.accessor === 'waiting_for') {
+    if (columnAccessor === 'waiting_for') {
       return <td> {getWaitingForTableCellComponent(row)} </td>;
     }
-    if (column.accessor === 'updated_at_in_seconds') {
+    if (columnAccessor === 'updated_at_in_seconds') {
       return (
         <TableCellWithTimeAgoInWords
           timeInSeconds={row.updated_at_in_seconds}
         />
       );
     }
-    if (column.accessor === 'task_updated_at_in_seconds') {
+    if (columnAccessor === 'task_updated_at_in_seconds') {
       return (
         <TableCellWithTimeAgoInWords
-          timeInSeconds={row.task_updated_at_in_seconds}
+          timeInSeconds={row.task_updated_at_in_seconds || 0}
         />
       );
     }
     return (
       // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
-      <td data-qa={`process-instance-show-link-${column.accessor}`}>
+      <td data-qa={`process-instance-show-link-${columnAccessor}`}>
         {formatter(row, value)}
       </td>
     );
@@ -1561,27 +1571,15 @@ export default function ProcessInstanceListTable({
 
   // eslint-disable-next-line sonarjs/cognitive-complexity
   const buildTable = () => {
-    const headerLabels: Record<string, string> = {
-      id: 'Id',
-      process_model_identifier: 'Process',
-      process_model_display_name: 'Process',
-      start_in_seconds: 'Start Time',
-      end_in_seconds: 'End Time',
-      status: 'Status',
-      process_initiator_username: 'Started By',
-    };
-    const getHeaderLabel = (header: string) => {
-      return headerLabels[header] ?? header;
-    };
-    const headers = reportColumns().map((column: any) => {
-      return getHeaderLabel((column as any).Header);
+    const headers = reportColumns().map((column: ReportColumn) => {
+      return column.Header;
     });
     if (showActionsColumn) {
       headers.push('Action');
     }
 
-    const rows = processInstances.map((row: any) => {
-      const currentRow = reportColumns().map((column: any) => {
+    const rows = processInstances.map((row: ProcessInstance) => {
+      const currentRow = reportColumns().map((column: ReportColumn) => {
         return formattedColumn(row, column);
       });
       if (showActionsColumn) {
