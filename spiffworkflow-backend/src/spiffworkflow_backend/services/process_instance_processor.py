@@ -1544,8 +1544,51 @@ class ProcessInstanceProcessor:
             db.session.add(message_instance)
             db.session.commit()
 
-    def spec_loader(self, process_id: str, element_id: str) -> Optional[Tuple[Any, Any]]:
+    def specs_loader(self, process_id: str, element_id: str) -> Optional[Tuple[Any, Any]]:
+        full_process_model_hash = self.process_instance_model.bpmn_process_definition.full_process_model_hash
+        current_app.logger.info(f"____hash: {full_process_model_hash}")
+        
+        element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
+            full_process_model_hash,
+            process_id,
+            element_id,
+        )
+
+        if element_unit_process_dict is not None:
+            current_app.logger.info("LOADED SOMETHING")
+            current_app.logger.info(element_unit_process_dict)
+            pass
+        
         return None
+
+    def load_future_subprocess_specs(self) -> None:
+        tasks = self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK)
+        current_app.logger.info(f"definite tasks: {tasks}")
+        loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
+        for task in tasks:
+            if task.task_spec.spec_type != "Call Activity":
+                continue
+            spec_to_check = task.task_spec.spec
+            current_app.logger.info(f"checking: {spec_to_check}")
+        
+            if spec_to_check not in loaded_specs:
+                lazy_load = self.specs_loader(spec_to_check, spec_to_check)
+                current_app.logger.info(f"lazy: {lazy_load}")
+                if lazy_load is None:
+                    continue
+                
+                lazy_spec, lazy_subprocess_specs = lazy_load
+                lazy_subprocess_specs[missing_spec] = lazy_spec
+
+                for name, spec in lazy_subprocess_specs.items():
+                    if name not in loaded_specs:
+                        self.bpmn_process_instance.subprocess_specs[name] = spec
+                        loaded_specs.add(name)
+
+    def refresh_waiting_tasks(self) -> None:
+        current_app.logger.info("REFRESHING")
+        self.load_future_subprocess_specs()
+        self.bpmn_process_instance.refresh_waiting_tasks()
 
     def do_engine_steps(
         self,
@@ -1580,7 +1623,7 @@ class ProcessInstanceProcessor:
                 "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
             )
 
-        execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate, self.spec_loader)
+        execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate, self.load_future_subprocess_specs)
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,

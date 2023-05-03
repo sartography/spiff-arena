@@ -437,7 +437,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     )
                     yield f"data: {current_app.json.dumps(api_error)} \n\n"
                     return
-        processor.bpmn_process_instance.refresh_waiting_tasks()
+        processor.refresh_waiting_tasks()
         ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
         tasks = get_reportable_tasks()
         if ready_engine_task_count == 0:

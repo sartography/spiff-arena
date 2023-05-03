@@ -74,15 +74,15 @@ class EngineStepDelegate:
         pass
 
 # TODO: what types for the Anys?
-SpecLoader = Callable[[str, str], Optional[Tuple[Any, Any]]]
+FutureSubprocessSpecLoader = Callable[[], Optional[Tuple[Any, Any]]]
 
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
-    def __init__(self, delegate: EngineStepDelegate, spec_loader: SpecLoader):
+    def __init__(self, delegate: EngineStepDelegate, future_subprocess_spec_loader: FutureSubProcessSpecLoader):
         """__init__."""
         self.delegate = delegate
-        self.spec_loader = spec_loader
+        self.future_subprocess_spec_loader = future_subprocess_spec_loader
 
     @abstractmethod
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
@@ -94,27 +94,6 @@ class ExecutionStrategy:
     def save(self, bpmn_process_instance: BpmnWorkflow) -> None:
         self.delegate.save(bpmn_process_instance)
 
-    def load_future_subprocess_specs(self, bpmn_process_instance: BpmnWorkflow) -> None:
-        future_tasks = bpmn_process_instance.get_tasks(TaskState.FUTURE)
-        loaded_specs = set(bpmn_process_instance.subprocess_specs.keys())
-        for task in future_tasks:
-            if task.task_spec.spec_type != "Call Activity":
-                continue
-            missing_spec = task.task_spec.spec
-        
-            if missing_spec not in loaded_specs:
-                lazy_load = self.specs_loader(missing_spec, missing_spec)
-                if lazy_load is None:
-                    continue
-                
-                lazy_spec, lazy_subprocess_specs = lazy_load
-                lazy_subprocess_specs[missing_spec] = lazy_spec
-
-                for name, spec in lazy_subprocess_specs.items():
-                    if name not in loaded_specs:
-                        bpmn_process_instance.subprocess_specs[name] = spec
-                        loaded_specs.add(name)
-
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
         tasks = list(
             [
@@ -123,9 +102,9 @@ class ExecutionStrategy:
                 if bpmn_process_instance._is_engine_task(t.task_spec)
             ]
         )
-
+        
         if len(tasks) > 0:
-            self.load_future_subprocess_specs(bpmn_process_instance)
+            self.future_subprocess_spec_loader()
             tasks = [tasks[0]]
 
         return tasks
@@ -302,12 +281,12 @@ class GreedyExecutionStrategy(ExecutionStrategy):
                 self.bpmn_process_instance.refresh_waiting_tasks()
             engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
 
-            ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
-            non_human_waiting_task = next(
-                (p for p in ready_tasks if p.task_spec.spec_type not in ["User Task", "Manual Task"]), None
-            )
-            if non_human_waiting_task is not None:
-                engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
+            #ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
+            #non_human_waiting_task = next(
+            #    (p for p in ready_tasks if p.task_spec.spec_type not in ["User Task", "Manual Task"]), None
+            #)
+            #if non_human_waiting_task is not None:
+            #    engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
 
 
 class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
