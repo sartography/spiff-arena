@@ -851,6 +851,9 @@ export default function ProcessInstanceListTable({
     setEndToDate('');
     setEndToTime('');
     setProcessInitiatorSelection(null);
+    setWithOldestOpenTask(false);
+    setSystemReport(null);
+    setSelectedUserGroup(null);
     setRequiresRefilter(true);
     if (reportMetadata) {
       reportMetadata.filter_by = [];
