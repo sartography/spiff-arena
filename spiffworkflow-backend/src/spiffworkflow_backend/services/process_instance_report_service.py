@@ -100,7 +100,7 @@ class ProcessInstanceReportService:
                 {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "status", "accessor": "status", "filterable": False},
+                {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "initiated_by_me", "field_value": True, "operator": "equals"},
