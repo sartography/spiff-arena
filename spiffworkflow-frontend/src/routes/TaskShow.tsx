@@ -196,7 +196,6 @@ export default function TaskShow() {
   };
 
   const handleSignalSubmit = (event: EventDefinition) => {
-    console.log('Signal Event ', event);
     if (disabled || !task) {
       return;
     }
