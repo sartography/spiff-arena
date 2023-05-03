@@ -53,15 +53,15 @@ class ProcessInstanceReportService:
         }
         system_report_completed_instances_initiated_by_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id", "filterable": False},
+                {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "process_model_display_name",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
-                {"Header": "start_in_seconds", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "end_in_seconds", "accessor": "end_in_seconds", "filterable": False},
-                {"Header": "status", "accessor": "status", "filterable": False},
+                {"Header": "Start Time", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "End Time", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "initiated_by_me", "field_value": True, "operator": "equals"},
@@ -86,9 +86,9 @@ class ProcessInstanceReportService:
         }
         system_report_in_progress_instances_initiated_by_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id", "filterable": False},
+                {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "process_model_display_name",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
@@ -111,9 +111,9 @@ class ProcessInstanceReportService:
         }
         system_report_in_progress_instances_with_tasks_for_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id", "filterable": False},
+                {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "process_model_display_name",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
@@ -135,9 +135,9 @@ class ProcessInstanceReportService:
         }
         system_report_in_progress_instances_with_tasks: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id", "filterable": False},
+                {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "process_model_display_name",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
