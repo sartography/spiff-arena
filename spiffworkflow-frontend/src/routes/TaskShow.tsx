@@ -18,7 +18,7 @@ import Form from '../themes/carbon';
 import HttpService from '../services/HttpService';
 import useAPIError from '../hooks/UseApiError';
 import { modifyProcessIdentifierForPathParam } from '../helpers';
-import { Task } from '../interfaces';
+import { EventDefinition, Task } from '../interfaces';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 
@@ -195,6 +195,23 @@ export default function TaskShow() {
     });
   };
 
+  const handleSignalSubmit = (event: EventDefinition) => {
+    if (disabled || !task) {
+      return;
+    }
+    HttpService.makeCallToBackend({
+      path: `/send-event/${modifyProcessIdentifierForPathParam(
+        task.process_model_identifier
+      )}/${params.process_instance_id}`,
+      successCallback: processSubmitResult,
+      failureCallback: (error: any) => {
+        addError(error);
+      },
+      httpMethod: 'POST',
+      postBody: event,
+    });
+  };
+
   const buildTaskNavigation = () => {
     let userTasksElement;
     let selectedTabIndex = 0;
@@ -355,6 +372,17 @@ export default function TaskShow() {
             {submitButtonText}
           </Button>
           {saveAsDraftButton}
+          <>
+            {task.signal_buttons.map((signal) => (
+              <Button
+                name="signal.signal"
+                disabled={disabled}
+                onClick={() => handleSignalSubmit(signal.event)}
+              >
+                {signal.label}
+              </Button>
+            ))}
+          </>
         </ButtonSet>
       );
     }
