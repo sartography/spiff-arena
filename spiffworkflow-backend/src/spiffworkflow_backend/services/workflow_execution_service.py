@@ -263,19 +263,21 @@ class GreedyExecutionStrategy(ExecutionStrategy):
 
         spiff.refresh_waiting_tasks is the thing that pushes some waiting tasks to READY.
         """
-        self.bpmn_process_instance.do_engine_steps(
-            exit_at=exit_at,
-            will_complete_task=self.delegate.will_complete_task,
-            did_complete_task=self.delegate.did_complete_task,
-        )
+        engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
+        while engine_steps:
+            for spiff_task in engine_steps:
+                self.delegate.will_complete_task(spiff_task)
+                spiff_task.run()
+                self.delegate.did_complete_task(spiff_task)
+                self.bpmn_process_instance.refresh_waiting_tasks()
+            engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
 
-        self.bpmn_process_instance.refresh_waiting_tasks()
-        ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
-        non_human_waiting_task = next(
-            (p for p in ready_tasks if p.task_spec.spec_type not in ["User Task", "Manual Task"]), None
-        )
-        if non_human_waiting_task is not None:
-            self.run_until_user_input_required(exit_at)
+            ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
+            non_human_waiting_task = next(
+                (p for p in ready_tasks if p.task_spec.spec_type not in ["User Task", "Manual Task"]), None
+            )
+            if non_human_waiting_task is not None:
+                engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
 
 
 class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
