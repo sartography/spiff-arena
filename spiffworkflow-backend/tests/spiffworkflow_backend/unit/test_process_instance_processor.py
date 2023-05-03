@@ -435,11 +435,11 @@ class TestProcessInstanceProcessor(BaseTest):
         assert process_instance.status == "complete"
 
     def test_properly_resets_process_on_tasks_with_boundary_events(
-            self,
-            app: Flask,
-            client: FlaskClient,
-            with_db_and_bpmn_file_cleanup: None,
-            with_super_admin_user: UserModel,
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
     ) -> None:
         self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
@@ -454,21 +454,23 @@ class TestProcessInstanceProcessor(BaseTest):
         assert len(process_instance.active_human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
         spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        ProcessInstanceService.complete_form_task(processor, spiff_manual_task, {}, with_super_admin_user, human_task_one)
+        ProcessInstanceService.complete_form_task(
+            processor, spiff_manual_task, {}, with_super_admin_user, human_task_one
+        )
         assert (
-                len(process_instance.active_human_tasks) == 1
+            len(process_instance.active_human_tasks) == 1
         ), "expected 1 active human tasks after 2nd one is completed"
-        assert process_instance.active_human_tasks[0].task_title == 'Final'
+        assert process_instance.active_human_tasks[0].task_title == "Final"
 
         # Reset the process back to the task within the call activity that contains a timer_boundary event.
-        reset_to_spiff_task = processor.__class__.get_task_by_bpmn_identifier(
-            'manual_task_1', processor.bpmn_process_instance
+        reset_to_spiff_task: SpiffTask = processor.__class__.get_task_by_bpmn_identifier(
+            "manual_task_1", processor.bpmn_process_instance
         )
         processor.suspend()
         processor = ProcessInstanceProcessor(process_instance)
         ProcessInstanceProcessor.reset_process(process_instance, str(reset_to_spiff_task.id))
         human_task_one = process_instance.active_human_tasks[0]
-        assert human_task_one.task_title == 'Manual Task #1'
+        assert human_task_one.task_title == "Manual Task #1"
         processor = ProcessInstanceProcessor(process_instance)
         processor.manual_complete_task(str(spiff_manual_task.id), execute=True)
         processor = ProcessInstanceProcessor(process_instance)
@@ -476,10 +478,11 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True)
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance.id).first()
 
-        assert (len(process_instance.active_human_tasks) == 1)
-        assert process_instance.active_human_tasks[0].task_title == 'Final', \
-            "once we reset, resume, and complete the task, we should be back to the Final step again, and not" \
+        assert len(process_instance.active_human_tasks) == 1
+        assert process_instance.active_human_tasks[0].task_title == "Final", (
+            "once we reset, resume, and complete the task, we should be back to the Final step again, and not"
             "stuck waiting for the call activity to complete (which was happening in a bug I'm fixing right now)"
+        )
 
     def test_properly_saves_tasks_when_running(
         self,
