@@ -34,7 +34,11 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 
 
 class ProcessInstanceReportNotFoundError(Exception):
-    """ProcessInstanceReportNotFoundError."""
+    pass
+
+
+class ProcessInstanceReportMetadataInvalidError(Exception):
+    pass
 
 
 class ProcessInstanceReportService:
@@ -53,15 +57,15 @@ class ProcessInstanceReportService:
         }
         system_report_completed_instances_initiated_by_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id", "filterable": False},
+                {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "process_model_display_name",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
-                {"Header": "start_in_seconds", "accessor": "start_in_seconds", "filterable": False},
-                {"Header": "end_in_seconds", "accessor": "end_in_seconds", "filterable": False},
-                {"Header": "status", "accessor": "status", "filterable": False},
+                {"Header": "Start Time", "accessor": "start_in_seconds", "filterable": False},
+                {"Header": "End Time", "accessor": "end_in_seconds", "filterable": False},
+                {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "initiated_by_me", "field_value": True, "operator": "equals"},
@@ -72,7 +76,7 @@ class ProcessInstanceReportService:
         system_report_completed_instances_with_tasks_completed_by_me: ReportMetadata = {
             "columns": cls.builtin_column_options(),
             "filter_by": [
-                {"field_name": "with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
                 {"field_name": "process_status", "field_value": terminal_status_values, "operator": "equals"},
             ],
             "order_by": ["-start_in_seconds", "-id"],
@@ -86,9 +90,9 @@ class ProcessInstanceReportService:
         }
         system_report_in_progress_instances_initiated_by_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id", "filterable": False},
+                {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "process_model_display_name",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
@@ -96,7 +100,7 @@ class ProcessInstanceReportService:
                 {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
                 {"Header": "Started", "accessor": "start_in_seconds", "filterable": False},
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
-                {"Header": "status", "accessor": "status", "filterable": False},
+                {"Header": "Status", "accessor": "status", "filterable": False},
             ],
             "filter_by": [
                 {"field_name": "initiated_by_me", "field_value": True, "operator": "equals"},
@@ -111,9 +115,9 @@ class ProcessInstanceReportService:
         }
         system_report_in_progress_instances_with_tasks_for_me: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id", "filterable": False},
+                {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "process_model_display_name",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
@@ -123,7 +127,7 @@ class ProcessInstanceReportService:
                 {"Header": "Last Updated", "accessor": "task_updated_at_in_seconds", "filterable": False},
             ],
             "filter_by": [
-                {"field_name": "with_tasks_i_can_complete", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
                 {"field_name": "process_status", "field_value": active_status_values, "operator": "equals"},
                 {
                     "field_name": "with_oldest_open_task",
@@ -135,9 +139,9 @@ class ProcessInstanceReportService:
         }
         system_report_in_progress_instances_with_tasks: ReportMetadata = {
             "columns": [
-                {"Header": "id", "accessor": "id", "filterable": False},
+                {"Header": "Id", "accessor": "id", "filterable": False},
                 {
-                    "Header": "process_model_display_name",
+                    "Header": "Process",
                     "accessor": "process_model_display_name",
                     "filterable": False,
                 },
@@ -414,17 +418,17 @@ class ProcessInstanceReportService:
                 process_initiator_id = initiator.id
             process_instance_query = process_instance_query.filter_by(process_initiator_id=process_initiator_id)
 
-        with_tasks_completed_by_me = cls.get_filter_value(filters, "with_tasks_completed_by_me")
-        with_tasks_i_can_complete = cls.get_filter_value(filters, "with_tasks_i_can_complete")
+        instances_with_tasks_completed_by_me = cls.get_filter_value(filters, "instances_with_tasks_completed_by_me")
+        instances_with_tasks_waiting_for_me = cls.get_filter_value(filters, "instances_with_tasks_waiting_for_me")
         user_group_identifier = cls.get_filter_value(filters, "user_group_identifier")
 
         # builtin only - for the for-me paths
         with_relation_to_me = cls.get_filter_value(filters, "with_relation_to_me")
 
         if (
-            not with_tasks_completed_by_me
+            not instances_with_tasks_completed_by_me
             and not user_group_identifier
-            and not with_tasks_i_can_complete
+            and not instances_with_tasks_waiting_for_me
             and with_relation_to_me is True
         ):
             process_instance_query = process_instance_query.outerjoin(HumanTaskModel).outerjoin(
@@ -441,7 +445,16 @@ class ProcessInstanceReportService:
                 )
             )
 
-        if with_tasks_completed_by_me is True:
+        if instances_with_tasks_completed_by_me is True and instances_with_tasks_waiting_for_me is True:
+            raise ProcessInstanceReportMetadataInvalidError(
+                "Cannot set both 'instances_with_tasks_completed_by_me' and 'instances_with_tasks_waiting_for_me' to"
+                " true. You must choose one."
+            )
+
+        # ensure we only join with HumanTaskModel once
+        human_task_already_joined = False
+
+        if instances_with_tasks_completed_by_me is True:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
             )
@@ -452,10 +465,11 @@ class ProcessInstanceReportService:
                     HumanTaskModel.completed_by_user_id == user.id,
                 ),
             )
+            human_task_already_joined = True
 
         # this excludes some tasks you can complete, because that's the way the requirements were described.
         # if it's assigned to one of your groups, it does not get returned by this query.
-        if with_tasks_i_can_complete is True:
+        if instances_with_tasks_waiting_for_me is True:
             process_instance_query = process_instance_query.filter(
                 ProcessInstanceModel.process_initiator_id != user.id
             )
@@ -470,13 +484,15 @@ class ProcessInstanceReportService:
                 HumanTaskUserModel,
                 and_(HumanTaskUserModel.human_task_id == HumanTaskModel.id, HumanTaskUserModel.user_id == user.id),
             )
+            human_task_already_joined = True
 
         if user_group_identifier is not None:
             group_model_join_conditions = [GroupModel.id == HumanTaskModel.lane_assignment_id]
             if user_group_identifier:
                 group_model_join_conditions.append(GroupModel.identifier == user_group_identifier)
 
-            process_instance_query = process_instance_query.join(HumanTaskModel)
+            if human_task_already_joined is False:
+                process_instance_query = process_instance_query.join(HumanTaskModel)
             if process_status is not None:
                 non_active_statuses = [
                     s for s in process_status.split(",") if s not in ProcessInstanceModel.active_statuses()

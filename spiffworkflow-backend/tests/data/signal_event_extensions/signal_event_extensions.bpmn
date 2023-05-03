@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="SpiffCatchEventExtensions" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_0elszck</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_0elszck" sourceRef="StartEvent_1" targetRef="Activity_0cmmlen" />
+    <bpmn:endEvent id="Event_1mjvim4">
+      <bpmn:incoming>Flow_1akz8b3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1akz8b3" sourceRef="Activity_0cmmlen" targetRef="Event_1mjvim4" />
+    <bpmn:sequenceFlow id="Flow_0uenxs3" sourceRef="SpamEvent" targetRef="Activity_1u4om4i" />
+    <bpmn:endEvent id="Event_1dvll15">
+      <bpmn:incoming>Flow_16bzuvz</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_16bzuvz" sourceRef="Activity_1u4om4i" targetRef="Event_1dvll15" />
+    <bpmn:manualTask id="Activity_0cmmlen" name="My Manual Task">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser># Welcome
+This manual task has Two Buttons!  The first is standard submit button that will take you to the end.  The second button will fire a signal event and take you to a different manual task.</spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0elszck</bpmn:incoming>
+      <bpmn:outgoing>Flow_1akz8b3</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="Activity_1u4om4i" name="Spam Message">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser># Spam Eaten!
+Congratulations!  You have selected the Eat Additional Spam option, which opens up new doors to vast previously uncharted culinary eating experiences!   Oh the Joy!  Oh the Reward!  Sweet savory wonderful Spam!  </spiffworkflow:instructionsForEndUser>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0uenxs3</bpmn:incoming>
+      <bpmn:outgoing>Flow_16bzuvz</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:boundaryEvent id="SpamEvent" name="Spam Event" attachedToRef="Activity_0cmmlen">
+      <bpmn:extensionElements>
+        <spiffworkflow:signalButtonLabel>Eat Spam</spiffworkflow:signalButtonLabel>
+      </bpmn:extensionElements>
+      <bpmn:outgoing>Flow_0uenxs3</bpmn:outgoing>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_11tlwya" signalRef="Signal_17t90lm" />
+    </bpmn:boundaryEvent>
+  </bpmn:process>
+  <bpmn:signal id="Signal_17t90lm" name="eat_spam" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_z1jgvu5">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1mjvim4_di" bpmnElement="Event_1mjvim4">
+        <dc:Bounds x="432" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1dvll15_di" bpmnElement="Event_1dvll15">
+        <dc:Bounds x="562" y="282" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0zxmtux_di" bpmnElement="Activity_0cmmlen">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0tll58x_di" bpmnElement="Activity_1u4om4i">
+        <dc:Bounds x="410" y="260" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0vnraxp_di" bpmnElement="SpamEvent">
+        <dc:Bounds x="322" y="199" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="311" y="242" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0elszck_di" bpmnElement="Flow_0elszck">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1akz8b3_di" bpmnElement="Flow_1akz8b3">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="432" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0uenxs3_di" bpmnElement="Flow_0uenxs3">
+        <di:waypoint x="340" y="235" />
+        <di:waypoint x="340" y="300" />
+        <di:waypoint x="410" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16bzuvz_di" bpmnElement="Flow_16bzuvz">
+        <di:waypoint x="510" y="300" />
+        <di:waypoint x="562" y="300" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

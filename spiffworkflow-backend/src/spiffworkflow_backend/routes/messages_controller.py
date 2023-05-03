@@ -69,7 +69,6 @@ def message_send(
     message_name: str,
     body: Dict[str, Any],
 ) -> flask.wrappers.Response:
-    """Message_start."""
     if "payload" not in body:
         raise (
             ApiError(
