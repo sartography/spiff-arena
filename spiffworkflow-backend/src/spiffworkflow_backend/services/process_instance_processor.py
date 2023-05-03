@@ -1544,6 +1544,9 @@ class ProcessInstanceProcessor:
             db.session.add(message_instance)
             db.session.commit()
 
+    def spec_loader(self, process_id: str, element_id: str) -> Optional[Tuple[Any, Any]]:
+        return None
+
     def do_engine_steps(
         self,
         exit_at: None = None,
@@ -1577,7 +1580,7 @@ class ProcessInstanceProcessor:
                 "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
             )
 
-        execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
+        execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate, self.spec_loader)
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,
