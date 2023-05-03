@@ -63,8 +63,8 @@ class TestProcessInstanceReportService(BaseTest):
         report_metadata: ReportMetadata = {
             "columns": [],
             "filter_by": [
-                {"field_name": "with_tasks_i_can_complete", "field_value": True, "operator": "equals"},
-                {"field_name": "with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
             ],
             "order_by": [],
         }
@@ -84,7 +84,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_metadata: ReportMetadata = {
             "columns": [],
             "filter_by": [
-                {"field_name": "with_tasks_i_can_complete", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_waiting_for_me", "field_value": True, "operator": "equals"},
                 {"field_name": "user_group_identifier", "field_value": "group_one", "operator": "equals"},
             ],
             "order_by": [],
@@ -98,7 +98,7 @@ class TestProcessInstanceReportService(BaseTest):
         report_metadata = {
             "columns": [],
             "filter_by": [
-                {"field_name": "with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
+                {"field_name": "instances_with_tasks_completed_by_me", "field_value": True, "operator": "equals"},
                 {"field_name": "user_group_identifier", "field_value": "group_one", "operator": "equals"},
             ],
             "order_by": [],
