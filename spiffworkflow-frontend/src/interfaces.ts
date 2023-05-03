@@ -143,6 +143,12 @@ export interface ProcessInstance {
   bpmn_version_control_type: string;
   process_metadata?: ProcessInstanceMetadata[];
   process_model_with_diagram_identifier?: string;
+
+  // from tasks
+  potential_owner_usernames?: string;
+  task_id?: string;
+  task_updated_at_in_seconds?: number;
+  waiting_for?: string;
 }
 
 export interface MessageCorrelationProperties {
