@@ -141,7 +141,7 @@ def get_users() -> Any:
     """Load users from a local configuration file."""
     global permission_cache
     if not permission_cache:
-        with open(current_app.config["PERMISSIONS_FILE_FULLPATH"]) as file:
+        with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:
             permission_cache = yaml.safe_load(file)
     if "users" in permission_cache:
         return permission_cache["users"]
