@@ -680,6 +680,7 @@ class ProcessInstanceProcessor:
                 element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
                     full_process_model_hash,
                     bpmn_process_definition.bpmn_identifier,
+                    bpmn_process_definition.bpmn_identifier,
                 )
             if element_unit_process_dict is not None:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
@@ -693,6 +694,10 @@ class ProcessInstanceProcessor:
                 bpmn_subprocesses = BpmnProcessModel.query.filter_by(top_level_process_id=bpmn_process.id).all()
                 bpmn_subprocess_id_to_guid_mappings = {}
                 for bpmn_subprocess in bpmn_subprocesses:
+                    subprocess_identifier = bpmn_subprocess.bpmn_process_definition.bpmn_identifier
+                    if subprocess_identifier not in spiff_bpmn_process_dict["subprocess_specs"]:
+                        current_app.logger.info(f"Deferring subprocess spec: '{subprocess_identifier}'")
+                        continue
                     bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = bpmn_subprocess.guid
                     single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess)
                     spiff_bpmn_process_dict["subprocesses"][bpmn_subprocess.guid] = single_bpmn_process_dict
@@ -1544,6 +1549,50 @@ class ProcessInstanceProcessor:
             db.session.add(message_instance)
             db.session.commit()
 
+    def element_unit_specs_loader(self, process_id: str, element_id: str) -> Optional[Dict[str, Any]]:
+        full_process_model_hash = self.process_instance_model.bpmn_process_definition.full_process_model_hash
+        if full_process_model_hash is None:
+            return None
+
+        element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
+            full_process_model_hash,
+            process_id,
+            element_id,
+        )
+
+        if element_unit_process_dict is not None:
+            spec_dict = element_unit_process_dict["spec"]
+            subprocess_specs_dict = element_unit_process_dict["subprocess_specs"]
+
+            restored_specs = {k: self.wf_spec_converter.restore(v) for k, v in subprocess_specs_dict.items()}
+            restored_specs[spec_dict["name"]] = self.wf_spec_converter.restore(spec_dict)
+
+            return restored_specs
+
+        return None
+
+    def lazy_load_subprocess_specs(self) -> None:
+        tasks = self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK)
+        loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
+        for task in tasks:
+            if task.task_spec.spec_type != "Call Activity":
+                continue
+            spec_to_check = task.task_spec.spec
+
+            if spec_to_check not in loaded_specs:
+                lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
+                if lazy_subprocess_specs is None:
+                    continue
+
+                for name, spec in lazy_subprocess_specs.items():
+                    if name not in loaded_specs:
+                        self.bpmn_process_instance.subprocess_specs[name] = spec
+                        loaded_specs.add(name)
+
+    def refresh_waiting_tasks(self) -> None:
+        self.lazy_load_subprocess_specs()
+        self.bpmn_process_instance.refresh_waiting_tasks()
+
     def do_engine_steps(
         self,
         exit_at: None = None,
@@ -1577,7 +1626,9 @@ class ProcessInstanceProcessor:
                 "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
             )
 
-        execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate)
+        execution_strategy = execution_strategy_named(
+            execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
+        )
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,

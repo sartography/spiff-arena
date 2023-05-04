@@ -29,16 +29,23 @@ class ElementUnitsService:
             # for now we are importing inside each of these functions, not sure the best
             # way to do this in an overall feature flagged strategy but this gets things
             # moving
-            import spiff_element_units  # type: ignore
+            import spiff_element_units
+
+            cache_dir = cls._cache_dir()
+            if cache_dir is None:
+                # make mypy happy
+                return None
 
             bpmn_spec_json = json.dumps(bpmn_spec_dict)
-            spiff_element_units.cache_element_units_for_workflow(cls._cache_dir(), cache_key, bpmn_spec_json)
+            spiff_element_units.cache_element_units_for_workflow(cache_dir, cache_key, bpmn_spec_json)
         except Exception as e:
             current_app.logger.exception(e)
         return None
 
     @classmethod
-    def workflow_from_cached_element_unit(cls, cache_key: str, element_id: str) -> Optional[BpmnSpecDict]:
+    def workflow_from_cached_element_unit(
+        cls, cache_key: str, process_id: str, element_id: str
+    ) -> Optional[BpmnSpecDict]:
         if not cls._enabled():
             return None
 
@@ -48,8 +55,15 @@ class ElementUnitsService:
             # moving
             import spiff_element_units
 
+            cache_dir = cls._cache_dir()
+            if cache_dir is None:
+                # make mypy happy
+                return None
+
+            current_app.logger.info(f"Checking element unit cache @ {cache_key} :: '{process_id}' - '{element_id}'")
+
             bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(
-                cls._cache_dir(), cache_key, element_id
+                cache_dir, cache_key, process_id, element_id
             )
             return json.loads(bpmn_spec_json)  # type: ignore
         except Exception as e:

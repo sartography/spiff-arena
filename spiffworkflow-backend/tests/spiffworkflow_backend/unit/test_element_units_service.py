@@ -93,7 +93,7 @@ class TestElementUnitsService(BaseTest):
         self,
         app_disabled: Flask,
     ) -> None:
-        result = ElementUnitsService.workflow_from_cached_element_unit("", "")
+        result = ElementUnitsService.workflow_from_cached_element_unit("", "", "")
         assert result is None
 
     def test_can_write_to_cache(
@@ -122,12 +122,12 @@ class TestElementUnitsService(BaseTest):
         example_specs_dict: BpmnSpecDict,
     ) -> None:
         ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_dict)
-        cached_specs_dict = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks")
-        assert cached_specs_dict == example_specs_dict
+        cached_specs_dict = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks", "no_tasks")
+        assert cached_specs_dict["spec"]["name"] == example_specs_dict["spec"]["name"]  # type: ignore
 
     def test_reading_element_unit_for_uncached_process_returns_none(
         self,
         app_enabled_tmp_cache_dir: Flask,
     ) -> None:
-        cached_specs_dict = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks")
+        cached_specs_dict = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks", "")
         assert cached_specs_dict is None
