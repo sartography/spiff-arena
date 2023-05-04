@@ -31,7 +31,6 @@ from spiffworkflow_backend.services.process_caller_service import ProcessCallerS
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
