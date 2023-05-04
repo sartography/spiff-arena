@@ -83,10 +83,10 @@ SubprocessSpecLoader = Callable[[], Optional[Dict[str, Any]]]
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
-    def __init__(self, delegate: EngineStepDelegate, future_subprocess_spec_loader: SubprocessSpecLoader):
+    def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader):
         """__init__."""
         self.delegate = delegate
-        self.future_subprocess_spec_loader = future_subprocess_spec_loader
+        self.subprocess_spec_loader = subprocess_spec_loader
 
     @abstractmethod
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
@@ -108,7 +108,7 @@ class ExecutionStrategy:
         )
 
         if len(tasks) > 0:
-            self.future_subprocess_spec_loader()
+            self.subprocess_spec_loader()
             tasks = [tasks[0]]
 
         return tasks
@@ -284,13 +284,6 @@ class GreedyExecutionStrategy(ExecutionStrategy):
                 self.delegate.did_complete_task(spiff_task)
                 self.bpmn_process_instance.refresh_waiting_tasks()
             engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
-
-            # ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
-            # non_human_waiting_task = next(
-            #    (p for p in ready_tasks if p.task_spec.spec_type not in ["User Task", "Manual Task"]), None
-            # )
-            # if non_human_waiting_task is not None:
-            #    engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
 
 
 class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):

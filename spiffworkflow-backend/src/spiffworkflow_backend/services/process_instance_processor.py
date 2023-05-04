@@ -683,13 +683,8 @@ class ProcessInstanceProcessor:
                     bpmn_process_definition.bpmn_identifier,
                 )
             if element_unit_process_dict is not None:
-                size_before = len(json.dumps(spiff_bpmn_process_dict))
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
                 spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
-                size_after = len(json.dumps(spiff_bpmn_process_dict))
-                current_app.logger.info(
-                    f"Full specs size: {size_before}, element unit size: {size_after}, delta: {size_before-size_after}"
-                )
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
@@ -701,7 +696,7 @@ class ProcessInstanceProcessor:
                 for bpmn_subprocess in bpmn_subprocesses:
                     subprocess_identifier = bpmn_subprocess.bpmn_process_definition.bpmn_identifier
                     if subprocess_identifier not in spiff_bpmn_process_dict["subprocess_specs"]:
-                        current_app.logger.info(f"Skipping subprocess '{subprocess_identifier}'")
+                        current_app.logger.info(f"Deferring subprocess spec: '{subprocess_identifier}'")
                         continue
                     bpmn_subprocess_id_to_guid_mappings[bpmn_subprocess.id] = bpmn_subprocess.guid
                     single_bpmn_process_dict = cls._get_bpmn_process_dict(bpmn_subprocess)
@@ -1546,7 +1541,7 @@ class ProcessInstanceProcessor:
             db.session.add(message_instance)
             db.session.commit()
 
-    def specs_loader(self, process_id: str, element_id: str) -> Optional[Dict[str, Any]]:
+    def element_unit_specs_loader(self, process_id: str, element_id: str) -> Optional[Dict[str, Any]]:
         full_process_model_hash = self.process_instance_model.bpmn_process_definition.full_process_model_hash
         if full_process_model_hash is None:
             return None
@@ -1568,18 +1563,16 @@ class ProcessInstanceProcessor:
 
         return None
 
-    def load_future_subprocess_specs(self) -> None:
+    def lazy_load_subprocess_specs(self) -> None:
         tasks = self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK)
-        # current_app.logger.info(f"definite tasks: {tasks}")
         loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
         for task in tasks:
             if task.task_spec.spec_type != "Call Activity":
                 continue
             spec_to_check = task.task_spec.spec
-            current_app.logger.info(f"checking: {spec_to_check}")
 
             if spec_to_check not in loaded_specs:
-                lazy_subprocess_specs = self.specs_loader(spec_to_check, spec_to_check)
+                lazy_subprocess_specs = self.element_unit_specs_loader(spec_to_check, spec_to_check)
                 if lazy_subprocess_specs is None:
                     continue
 
@@ -1589,7 +1582,7 @@ class ProcessInstanceProcessor:
                         loaded_specs.add(name)
 
     def refresh_waiting_tasks(self) -> None:
-        self.load_future_subprocess_specs()
+        self.lazy_load_subprocess_specs()
         self.bpmn_process_instance.refresh_waiting_tasks()
 
     def do_engine_steps(
@@ -1626,7 +1619,7 @@ class ProcessInstanceProcessor:
             )
 
         execution_strategy = execution_strategy_named(
-            execution_strategy_name, task_model_delegate, self.load_future_subprocess_specs
+            execution_strategy_name, task_model_delegate, self.lazy_load_subprocess_specs
         )
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
