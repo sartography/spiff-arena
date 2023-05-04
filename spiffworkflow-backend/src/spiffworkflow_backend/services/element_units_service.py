@@ -62,7 +62,7 @@ class ElementUnitsService:
 
             current_app.logger.info(f"Checking element unit cache @ {cache_key} :: '{process_id}' - '{element_id}'")
 
-            bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(  # type: ignore
+            bpmn_spec_json = spiff_element_units.workflow_from_cached_element_unit(
                 cache_dir, cache_key, process_id, element_id
             )
             return json.loads(bpmn_spec_json)  # type: ignore
