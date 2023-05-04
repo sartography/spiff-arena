@@ -197,7 +197,7 @@ class AuthorizationService:
             )
 
         permission_configs = None
-        with open(current_app.config["PERMISSIONS_FILE_FULLPATH"]) as file:
+        with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:
             permission_configs = yaml.safe_load(file)
 
         default_group = None
