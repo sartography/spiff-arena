@@ -84,6 +84,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-data", "relevant_permissions": ["read"]},
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
+    {"path": "/send-event", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
@@ -531,9 +532,12 @@ class AuthorizationService:
         # we were thinking that if you can start an instance, you ought to be able to:
         #   1. view your own instances.
         #   2. view the logs for these instances.
+        #   3. click on buttons in user tasks that sends signal events to these instances
         if permission_set == "start":
-            target_uri = f"/process-instances/{process_related_path_segment}"
-            permissions_to_assign.append(PermissionToAssign(permission="create", target_uri=target_uri))
+            path_prefixes_that_allow_create_access = ["process-instances", "send-event"]
+            for path_prefix in path_prefixes_that_allow_create_access:
+                target_uri = f"/{path_prefix}/{process_related_path_segment}"
+                permissions_to_assign.append(PermissionToAssign(permission="create", target_uri=target_uri))
 
             # giving people access to all logs for an instance actually gives them a little bit more access
             # than would be optimal. ideally, you would only be able to view the logs for instances that you started
