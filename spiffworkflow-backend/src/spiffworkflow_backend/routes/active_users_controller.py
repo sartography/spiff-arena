@@ -1,29 +1,22 @@
 import json
-import os
 import time
-from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.db import db
 from typing import Generator
-from flask import stream_with_context
-import re
-from typing import Any
-from typing import Dict
-from typing import Optional
-from typing import Union
 
-import connexion  # type: ignore
 import flask.wrappers
 from flask import current_app
 from flask import g
-from flask import jsonify
-from flask import make_response
+from flask import stream_with_context
 from flask.wrappers import Response
+
 from spiffworkflow_backend.models.active_user import ActiveUserModel
-from werkzeug.datastructures import FileStorage
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.user import UserModel
 
 
 def active_user_updates(last_visited_identifier: str) -> Response:
-    active_user = ActiveUserModel.query.filter_by(user_id=g.user.id, last_visited_identifier=last_visited_identifier).first()
+    active_user = ActiveUserModel.query.filter_by(
+        user_id=g.user.id, last_visited_identifier=last_visited_identifier
+    ).first()
     if active_user is None:
         active_user = ActiveUserModel(user_id=g.user.id, last_visited_identifier=last_visited_identifier)
         db.session.add(active_user)
@@ -42,23 +35,23 @@ def _active_user_updates(last_visited_identifier: str, active_user: ActiveUserMo
         db.session.add(active_user)
         db.session.commit()
 
-        time.sleep(1)
-        cutoff_time_in_seconds = time.time() - 7
+        cutoff_time_in_seconds = time.time() - 15
         active_users = (
-            UserModel.query
-            .join(ActiveUserModel)
+            UserModel.query.join(ActiveUserModel)
             .filter(ActiveUserModel.last_visited_identifier == last_visited_identifier)
             .filter(ActiveUserModel.last_seen_in_seconds > cutoff_time_in_seconds)
-            # .filter(UserModel.id != g.user.id)
+            .filter(UserModel.id != g.user.id)
             .all()
         )
         yield f"data: {current_app.json.dumps(active_users)} \n\n"
 
+        time.sleep(5)
 
-def active_user_unregister(
-    last_visited_identifier: str
-) -> flask.wrappers.Response:
-    active_user = ActiveUserModel.query.filter_by(user_id=g.user.id, last_visited_identifier=last_visited_identifier).first()
+
+def active_user_unregister(last_visited_identifier: str) -> flask.wrappers.Response:
+    active_user = ActiveUserModel.query.filter_by(
+        user_id=g.user.id, last_visited_identifier=last_visited_identifier
+    ).first()
     if active_user is not None:
         db.session.delete(active_user)
         db.session.commit()

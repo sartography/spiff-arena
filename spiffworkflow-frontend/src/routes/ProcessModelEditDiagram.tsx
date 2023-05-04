@@ -31,7 +31,11 @@ import HttpService, { getBasicHeaders } from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
-import { makeid, modifyProcessIdentifierForPathParam } from '../helpers';
+import {
+  makeid,
+  modifyProcessIdentifierForPathParam,
+  encodeBase64,
+} from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
   ProcessFile,
@@ -128,8 +132,29 @@ export default function ProcessModelEditDiagram() {
 
   usePrompt('Changes you made may not be saved.', diagramHasChanges);
 
+  const lastVisitedIdentifier = encodeBase64(window.location.pathname);
   useEffect(() => {
-    const lastVisitedIdentifier = 'HEY';
+    // Grab all available process models in case we need to search for them.
+    // Taken from the Process Group List
+    const processResults = (result: any) => {
+      const selectionArray = result.map((item: any) => {
+        const label = `${item.display_name} (${item.identifier})`;
+        Object.assign(item, { label });
+        return item;
+      });
+      setProcesses(selectionArray);
+    };
+    HttpService.makeCallToBackend({
+      path: `/processes`,
+      successCallback: processResults,
+    });
+
+    const unregisterUser = () => {
+      HttpService.makeCallToBackend({
+        path: `/active-users/unregister/${lastVisitedIdentifier}`,
+        successCallback: setActiveUsers,
+      });
+    };
     fetchEventSource(
       `${BACKEND_BASE_URL}/active-users/updates/${lastVisitedIdentifier}`,
       {
@@ -143,51 +168,30 @@ export default function ProcessModelEditDiagram() {
           }
         },
         onclose() {
-          HttpService.makeCallToBackend({
-            path: `/active-users/unregister/${lastVisitedIdentifier}`,
-            successCallback: setActiveUsers,
-          });
+          unregisterUser();
         },
         onerror(err: any) {
           throw err;
         },
       }
     );
+
+    // FIXME: this is not getting called when navigating away from this page.
+    // we do not know why yet.
+    return unregisterUser;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
-
-  // useEffect(() => {
-  //   // Grab all available process models in case we need to search for them.
-  //   // Taken from the Process Group List
-  //   const processResults = (result: any) => {
-  //     const selectionArray = result.map((item: any) => {
-  //       const label = `${item.display_name} (${item.identifier})`;
-  //       Object.assign(item, { label });
-  //       return item;
-  //     });
-  //     setProcesses(selectionArray);
-  //   };
-  //   HttpService.makeCallToBackend({
-  //     path: `/processes`,
-  //     successCallback: processResults,
-  //   });
-  // }, []);
-
-  useEffect(() => {
-    const processResult = (result: ProcessModel) => {
-      setProcessModel(result);
-    };
-    HttpService.makeCallToBackend({
-      path: `/${processModelPath}?include_file_references=true`,
-      successCallback: processResult,
-    });
-  }, [processModelPath]);
 
   useEffect(() => {
     const fileResult = (result: any) => {
       setProcessModelFile(result);
       setBpmnXmlForDiagramRendering(result.file_contents);
     };
+
+    HttpService.makeCallToBackend({
+      path: `/${processModelPath}?include_file_references=true`,
+      successCallback: setProcessModel,
+    });
 
     if (params.file_name) {
       HttpService.makeCallToBackend({
@@ -962,6 +966,20 @@ export default function ProcessModelEditDiagram() {
     return searchParams.get('file_type') === 'dmn' || fileName.endsWith('.dmn');
   };
 
+  const activeUserElement = () => {
+    const au = activeUsers.map((activeUser: User) => {
+      return (
+        <div
+          title={`${activeUser.username} is also viewing this page`}
+          className="user-circle"
+        >
+          {activeUser.username.charAt(0).toUpperCase()}
+        </div>
+      );
+    });
+    return <div className="user-list">{au}</div>;
+  };
+
   const appropriateEditor = () => {
     if (isDmn()) {
       return (
@@ -1006,6 +1024,7 @@ export default function ProcessModelEditDiagram() {
         onSearchProcessModels={onSearchProcessModels}
         onElementsChanged={onElementsChanged}
         callers={callers}
+        activeUserElement={activeUserElement()}
       />
     );
   };
@@ -1022,17 +1041,6 @@ export default function ProcessModelEditDiagram() {
       );
     }
     return null;
-  };
-
-  const activeUserElement = () => {
-    const au = activeUsers.map((activeUser: User) => {
-      return (
-        <div title={activeUser.username} className="user-circle">
-          {activeUser.username.charAt(0).toUpperCase()}
-        </div>
-      );
-    });
-    return <div className="user-list">{au}</div>;
   };
 
   // if a file name is not given then this is a new model and the ReactDiagramEditor component will handle it
@@ -1055,7 +1063,6 @@ export default function ProcessModelEditDiagram() {
           Process Model File{processModelFile ? ': ' : ''}
           {processModelFileName}
         </h1>
-        {activeUserElement()}
         {saveFileMessage()}
         {appropriateEditor()}
         {newFileNameBox()}

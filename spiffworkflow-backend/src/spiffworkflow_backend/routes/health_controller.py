@@ -9,10 +9,6 @@ def status() -> Response:
     """Status."""
     ProcessInstanceModel.query.filter().first()
     return make_response({"ok": True}, 200)
-def status2() -> Response:
-    """Status."""
-    ProcessInstanceModel.query.filter().first()
-    return make_response({"ok": True}, 200)
 
 
 def test_raise_error() -> Response:
