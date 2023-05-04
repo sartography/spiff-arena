@@ -206,8 +206,11 @@ export default function ProcessModelEditDiagram() {
     setProcessModelFileInvalidText('');
   };
 
-  const navigateToProcessModelFile = (_result: any) => {
+  const navigateToProcessModelFile = (file: ProcessFile) => {
     setDisplaySaveFileMessage(true);
+    if (file.file_contents_hash) {
+      setProcessModelFile(file);
+    }
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${searchParams.get(
         'file_type'
