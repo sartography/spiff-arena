@@ -298,8 +298,8 @@ def process_instance_report_show(
 def process_instance_report_column_list(
     process_model_identifier: Optional[str] = None,
 ) -> flask.wrappers.Response:
-    """Process_instance_report_column_list."""
     table_columns = ProcessInstanceReportService.builtin_column_options()
+    system_report_column_options = ProcessInstanceReportService.system_report_column_options()
     columns_for_metadata_query = (
         db.session.query(ProcessInstanceMetadataModel.key)
         .order_by(ProcessInstanceMetadataModel.key)
@@ -315,7 +315,7 @@ def process_instance_report_column_list(
     columns_for_metadata_strings = [
         {"Header": i[0], "accessor": i[0], "filterable": True} for i in columns_for_metadata
     ]
-    return make_response(jsonify(table_columns + columns_for_metadata_strings), 200)
+    return make_response(jsonify(table_columns + system_report_column_options + columns_for_metadata_strings), 200)
 
 
 def process_instance_show_for_me(
@@ -640,6 +640,38 @@ def process_instance_find_by_id(
         "uri_type": uri_type,
     }
     return make_response(jsonify(response_json), 200)
+
+
+def send_user_signal_event(
+    process_instance_id: int,
+    body: Dict,
+) -> Response:
+    """Send a user signal event to a process instance."""
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    return _send_bpmn_event(process_instance, body)
+
+
+def send_bpmn_event(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    body: Dict,
+) -> Response:
+    """Send a bpmn event to a process instance."""
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    if process_instance:
+        return _send_bpmn_event(process_instance, body)
+    else:
+        raise ApiError(
+            error_code="send_bpmn_event_error",
+            message=f"Could not send event to Instance: {process_instance_id}",
+        )
+
+
+def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Response:
+    processor = ProcessInstanceProcessor(process_instance)
+    processor.send_bpmn_event(body)
+    task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+    return make_response(jsonify(task), 200)
 
 
 def _get_process_instance(

@@ -1115,59 +1115,54 @@ class ProcessInstanceProcessor:
 
     def manual_complete_task(self, task_id: str, execute: bool) -> None:
         """Mark the task complete optionally executing it."""
-        spiff_tasks_updated = {}
         start_in_seconds = time.time()
         spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
+        start_time = time.time()
+
         if execute:
             current_app.logger.info(
                 f"Manually executing Task {spiff_task.task_spec.name} of process"
                 f" instance {self.process_instance_model.id}"
             )
-            # Executing a subworkflow manually will restart its subprocess and allow stepping through it
+            # Executing a sub-workflow manually will restart its subprocess and allow stepping through it
             if isinstance(spiff_task.task_spec, SubWorkflowTask):
                 subprocess = self.bpmn_process_instance.get_subprocess(spiff_task)
                 # We have to get to the actual start event
-                for task in self.bpmn_process_instance.get_tasks(workflow=subprocess):
-                    task.complete()
-                    spiff_tasks_updated[task.id] = task
-                    if isinstance(task.task_spec, StartEvent):
+                for spiff_task in self.bpmn_process_instance.get_tasks(workflow=subprocess):
+                    spiff_task.run()
+                    if isinstance(spiff_task.task_spec, StartEvent):
                         break
             else:
-                spiff_task.complete()
-                spiff_tasks_updated[spiff_task.id] = spiff_task
-                for child in spiff_task.children:
-                    spiff_tasks_updated[child.id] = child
+                spiff_task.run()
             event_type = ProcessInstanceEventType.task_executed_manually.value
         else:
             spiff_logger = logging.getLogger("spiff")
             spiff_logger.info(f"Skipped task {spiff_task.task_spec.name}", extra=spiff_task.log_info())
-            spiff_task._set_state(TaskState.COMPLETED)
-            for child in spiff_task.children:
-                child.task_spec._update(child)
-                spiff_tasks_updated[child.id] = child
+            spiff_task.complete()
             spiff_task.workflow.last_task = spiff_task
-            spiff_tasks_updated[spiff_task.id] = spiff_task
-
         end_in_seconds = time.time()
 
         if isinstance(spiff_task.task_spec, EndEvent):
             for task in self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK, workflow=spiff_task.workflow):
                 task.complete()
-                spiff_tasks_updated[task.id] = task
 
         # A subworkflow task will become ready when its workflow is complete.  Engine steps would normally
         # then complete it, but we have to do it ourselves here.
         for task in self.bpmn_process_instance.get_tasks(TaskState.READY):
             if isinstance(task.task_spec, SubWorkflowTask):
                 task.complete()
-                spiff_tasks_updated[task.id] = task
 
         task_service = TaskService(
             process_instance=self.process_instance_model,
             serializer=self._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
+
+        spiff_tasks_updated = {}
+        for task in self.bpmn_process_instance.get_tasks():
+            if task.last_state_change > start_time:
+                spiff_tasks_updated[task.id] = task
         for updated_spiff_task in spiff_tasks_updated.values():
             (
                 bpmn_process,
@@ -1216,6 +1211,14 @@ class ProcessInstanceProcessor:
             raise TaskNotFoundError(
                 f"Cannot find a task with guid '{to_task_guid}' for process instance '{process_instance.id}'"
             )
+        # If this task model has a parent boundary event, reset to that point instead,
+        # so we can reset all the boundary timers, etc...
+        parent_id = to_task_model.properties_json.get("parent", "")
+        parent = TaskModel.query.filter_by(guid=parent_id).first()
+        is_boundary_parent = False
+        if parent and parent.task_definition.typename == "_BoundaryEventParent":
+            to_task_model = parent
+            is_boundary_parent = True  # Will need to complete this task at the end so we are on the correct process.
 
         # NOTE: run ALL queries before making changes to ensure we get everything before anything changes
         parent_bpmn_processes, task_models_of_parent_bpmn_processes = TaskService.task_models_of_parent_bpmn_processes(
@@ -1320,6 +1323,11 @@ class ProcessInstanceProcessor:
         db.session.commit()
 
         processor = ProcessInstanceProcessor(process_instance)
+
+        # If this as a boundary event parent, run it, so we get back to an active task.
+        if is_boundary_parent:
+            processor.do_engine_steps(execution_strategy_name="one_at_a_time")
+
         processor.save()
         processor.suspend()
 
