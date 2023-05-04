@@ -15,27 +15,6 @@ from spiffworkflow_backend.routes.tasks_controller import _dequeued_interstitial
 class TestForGoodErrors(BaseTest):
     """Assure when certain errors happen when rendering a jinaj2 error that it makes some sense."""
 
-    def get_next_user_task(
-        self,
-        process_instance_id: int,
-        client: FlaskClient,
-        with_super_admin_user: UserModel,
-    ) -> Any:
-        # Call this to assure all engine-steps are fully processed before we search for human tasks.
-        _dequeued_interstitial_stream(process_instance_id)
-
-        """Returns the next available user task for a given process instance, if possible."""
-        human_tasks = (
-            db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
-        )
-        assert len(human_tasks) > 0, "No human tasks found for process."
-        human_task = human_tasks[0]
-        response = client.get(
-            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
-            headers=self.logged_in_headers(with_super_admin_user),
-        )
-        return response
-
     def test_invalid_form(
         self,
         app: Flask,
@@ -61,7 +40,7 @@ class TestForGoodErrors(BaseTest):
             headers=self.logged_in_headers(with_super_admin_user),
         )
         assert response.status_code == 200
-        response = self.get_next_user_task(process_instance_id, client, with_super_admin_user)
+        response = self._get_next_user_task(process_instance_id, client, with_super_admin_user)
         assert response.json is not None
         assert response.json["error_type"] == "TemplateSyntaxError"
         assert response.json["line_number"] == 3
@@ -88,7 +67,7 @@ class TestForGoodErrors(BaseTest):
             f"/v1.0/process-instances/{self.modify_process_identifier_for_path_param(process_model.id)}/{process_instance.id}/run",
             headers=self.logged_in_headers(with_super_admin_user),
         )
-        response = self.get_next_user_task(process_instance.id, client, with_super_admin_user)
+        response = self._get_next_user_task(process_instance.id, client, with_super_admin_user)
 
         assert response.status_code == 400
         assert response.json is not None
@@ -99,3 +78,24 @@ class TestForGoodErrors(BaseTest):
         assert "instructions for end user" in response.json["message"]
         assert "Jinja2" in response.json["message"]
         assert "unexpected '='" in response.json["message"]
+
+    def _get_next_user_task(
+        self,
+        process_instance_id: int,
+        client: FlaskClient,
+        with_super_admin_user: UserModel,
+    ) -> Any:
+        # Call this to assure all engine-steps are fully processed before we search for human tasks.
+        _dequeued_interstitial_stream(process_instance_id)
+
+        """Returns the next available user task for a given process instance, if possible."""
+        human_tasks = (
+            db.session.query(HumanTaskModel).filter(HumanTaskModel.process_instance_id == process_instance_id).all()
+        )
+        assert len(human_tasks) > 0, "No human tasks found for process."
+        human_task = human_tasks[0]
+        response = client.get(
+            f"/v1.0/tasks/{process_instance_id}/{human_task.task_id}",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        return response

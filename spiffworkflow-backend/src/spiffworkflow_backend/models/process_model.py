@@ -87,7 +87,7 @@ class ProcessModelInfoSchema(Schema):
     display_order = marshmallow.fields.Integer(allow_none=True)
     primary_file_name = marshmallow.fields.String(allow_none=True)
     primary_process_id = marshmallow.fields.String(allow_none=True)
-    files = marshmallow.fields.List(marshmallow.fields.Nested("FileSchema"))
+    files = marshmallow.fields.List(marshmallow.fields.Nested("File"))
     fault_or_suspend_on_exception = marshmallow.fields.String()
     exception_notification_addresses = marshmallow.fields.List(marshmallow.fields.String)
     metadata_extraction_paths = marshmallow.fields.List(

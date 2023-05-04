@@ -238,6 +238,9 @@ export default function ProcessModelEditDiagram() {
       httpMethod = 'POST';
     } else {
       url += `/${fileNameWithExtension}`;
+      if (processModelFile && processModelFile.file_contents_hash) {
+        url += `?file_contents_hash=${processModelFile.file_contents_hash}`;
+      }
     }
     if (!fileNameWithExtension) {
       handleShowFileNameEditor();
