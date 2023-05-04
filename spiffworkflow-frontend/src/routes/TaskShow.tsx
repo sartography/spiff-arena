@@ -200,9 +200,7 @@ export default function TaskShow() {
       return;
     }
     HttpService.makeCallToBackend({
-      path: `/send-event/${modifyProcessIdentifierForPathParam(
-        task.process_model_identifier
-      )}/${params.process_instance_id}`,
+      path: `/tasks/${params.process_instance_id}/send-user-signal-event`,
       successCallback: processSubmitResult,
       failureCallback: (error: any) => {
         addError(error);
