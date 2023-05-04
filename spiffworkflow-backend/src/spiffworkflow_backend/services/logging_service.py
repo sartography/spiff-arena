@@ -130,6 +130,7 @@ def setup_logger(app: Flask) -> None:
 
     # these loggers have been deemed too verbose to be useful
     garbage_loggers_to_exclude = ["connexion", "flask_cors.extension"]
+    loggers_to_exclude_from_debug = ["sqlalchemy"]
 
     # make all loggers act the same
     for name in logging.root.manager.loggerDict:
@@ -149,8 +150,17 @@ def setup_logger(app: Flask) -> None:
                         for garbage_logger in garbage_loggers_to_exclude:
                             if name.startswith(garbage_logger):
                                 exclude_logger_name_from_logging = True
+
+                        exclude_logger_name_from_debug = False
+                        for logger_to_exclude_from_debug in loggers_to_exclude_from_debug:
+                            if name.startswith(logger_to_exclude_from_debug):
+                                exclude_logger_name_from_debug = True
+                        if exclude_logger_name_from_debug:
+                            the_logger.setLevel("INFO")
+
                         if not exclude_logger_name_from_logging:
                             the_logger.addHandler(logging.StreamHandler(sys.stdout))
+
                 for the_handler in the_logger.handlers:
                     the_handler.setFormatter(log_formatter)
                     the_handler.setLevel(log_level)

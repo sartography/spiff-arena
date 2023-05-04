@@ -88,6 +88,7 @@ type OwnProps = {
   onElementsChanged?: (..._args: any[]) => any;
   url?: string;
   callers?: ProcessModelCaller[];
+  activeUserElement?: React.ReactElement;
 };
 
 // https://codesandbox.io/s/quizzical-lake-szfyo?file=/src/App.js was a handy reference
@@ -114,6 +115,7 @@ export default function ReactDiagramEditor({
   onElementsChanged,
   url,
   callers,
+  activeUserElement,
 }: OwnProps) {
   const [diagramXMLString, setDiagramXMLString] = useState('');
   const [diagramModelerState, setDiagramModelerState] = useState(null);
@@ -672,6 +674,7 @@ export default function ReactDiagramEditor({
             )}
           </Can>
           {getReferencesButton()}
+          {activeUserElement || null}
         </ButtonSet>
       );
     }
@@ -679,9 +682,9 @@ export default function ReactDiagramEditor({
   };
 
   return (
-    <div>
+    <>
       {userActionOptions()}
       {showReferences()}
-    </div>
+    </>
   );
 }
