@@ -3,7 +3,10 @@ from __future__ import annotations
 import copy
 import time
 from abc import abstractmethod
-from typing import Callable, Optional, Any, Tuple
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Optional
 from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -73,13 +76,14 @@ class EngineStepDelegate:
     def on_exception(self, bpmn_process_instance: BpmnWorkflow) -> None:
         pass
 
-# TODO: what types for the Anys?
-FutureSubprocessSpecLoader = Callable[[], Optional[Tuple[Any, Any]]]
+
+SubprocessSpecLoader = Callable[[], Optional[Dict[str, Any]]]
+
 
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
-    def __init__(self, delegate: EngineStepDelegate, future_subprocess_spec_loader: FutureSubProcessSpecLoader):
+    def __init__(self, delegate: EngineStepDelegate, future_subprocess_spec_loader: SubprocessSpecLoader):
         """__init__."""
         self.delegate = delegate
         self.future_subprocess_spec_loader = future_subprocess_spec_loader
@@ -102,7 +106,7 @@ class ExecutionStrategy:
                 if bpmn_process_instance._is_engine_task(t.task_spec)
             ]
         )
-        
+
         if len(tasks) > 0:
             self.future_subprocess_spec_loader()
             tasks = [tasks[0]]
@@ -281,11 +285,11 @@ class GreedyExecutionStrategy(ExecutionStrategy):
                 self.bpmn_process_instance.refresh_waiting_tasks()
             engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
 
-            #ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
-            #non_human_waiting_task = next(
+            # ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
+            # non_human_waiting_task = next(
             #    (p for p in ready_tasks if p.task_spec.spec_type not in ["User Task", "Manual Task"]), None
-            #)
-            #if non_human_waiting_task is not None:
+            # )
+            # if non_human_waiting_task is not None:
             #    engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
 
 
@@ -349,7 +353,9 @@ class OneAtATimeExecutionStrategy(ExecutionStrategy):
         self.delegate.after_engine_steps(bpmn_process_instance)
 
 
-def execution_strategy_named(name: str, delegate: EngineStepDelegate, spec_loader: SpecLoader) -> ExecutionStrategy:
+def execution_strategy_named(
+    name: str, delegate: EngineStepDelegate, spec_loader: SubprocessSpecLoader
+) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
         "run_until_service_task": RunUntilServiceTaskExecutionStrategy,

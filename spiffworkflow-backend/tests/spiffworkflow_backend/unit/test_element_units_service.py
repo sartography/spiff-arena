@@ -123,7 +123,7 @@ class TestElementUnitsService(BaseTest):
     ) -> None:
         ElementUnitsService.cache_element_units_for_workflow("testing", example_specs_dict)
         cached_specs_dict = ElementUnitsService.workflow_from_cached_element_unit("testing", "no_tasks", "no_tasks")
-        assert cached_specs_dict["spec"]["name"] == example_specs_dict["spec"]["name"]
+        assert cached_specs_dict["spec"]["name"] == example_specs_dict["spec"]["name"]  # type: ignore
 
     def test_reading_element_unit_for_uncached_process_returns_none(
         self,

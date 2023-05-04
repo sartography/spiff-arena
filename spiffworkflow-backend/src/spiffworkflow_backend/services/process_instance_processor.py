@@ -687,7 +687,9 @@ class ProcessInstanceProcessor:
                 spiff_bpmn_process_dict["spec"] = element_unit_process_dict["spec"]
                 spiff_bpmn_process_dict["subprocess_specs"] = element_unit_process_dict["subprocess_specs"]
                 size_after = len(json.dumps(spiff_bpmn_process_dict))
-                current_app.logger.info(f"Full specs size: {size_before}, element unit size: {size_after}, delta: {size_before-size_after}")
+                current_app.logger.info(
+                    f"Full specs size: {size_before}, element unit size: {size_after}, delta: {size_before-size_after}"
+                )
 
             bpmn_process = process_instance_model.bpmn_process
             if bpmn_process is not None:
@@ -709,7 +711,7 @@ class ProcessInstanceProcessor:
                     TaskModel.bpmn_process_id.in_(bpmn_subprocess_id_to_guid_mappings.keys())  # type: ignore
                 ).all()
                 cls._get_tasks_dict(tasks, spiff_bpmn_process_dict, bpmn_subprocess_id_to_guid_mappings)
-                
+
         return spiff_bpmn_process_dict
 
     def current_user(self) -> Any:
@@ -1546,8 +1548,9 @@ class ProcessInstanceProcessor:
 
     def specs_loader(self, process_id: str, element_id: str) -> Optional[Dict[str, Any]]:
         full_process_model_hash = self.process_instance_model.bpmn_process_definition.full_process_model_hash
-        current_app.logger.info(f"____hash: {full_process_model_hash}")
-        
+        if full_process_model_hash is None:
+            return None
+
         element_unit_process_dict = ElementUnitsService.workflow_from_cached_element_unit(
             full_process_model_hash,
             process_id,
@@ -1557,26 +1560,24 @@ class ProcessInstanceProcessor:
         if element_unit_process_dict is not None:
             spec_dict = element_unit_process_dict["spec"]
             subprocess_specs_dict = element_unit_process_dict["subprocess_specs"]
-            
-            restored_specs = {
-                k: self.wf_spec_converter.restore(v) for k, v in subprocess_specs_dict.items()
-            }
+
+            restored_specs = {k: self.wf_spec_converter.restore(v) for k, v in subprocess_specs_dict.items()}
             restored_specs[spec_dict["name"]] = self.wf_spec_converter.restore(spec_dict)
-            
+
             return restored_specs
-        
+
         return None
 
     def load_future_subprocess_specs(self) -> None:
         tasks = self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK)
-        #current_app.logger.info(f"definite tasks: {tasks}")
+        # current_app.logger.info(f"definite tasks: {tasks}")
         loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
         for task in tasks:
             if task.task_spec.spec_type != "Call Activity":
                 continue
             spec_to_check = task.task_spec.spec
             current_app.logger.info(f"checking: {spec_to_check}")
-        
+
             if spec_to_check not in loaded_specs:
                 lazy_subprocess_specs = self.specs_loader(spec_to_check, spec_to_check)
                 if lazy_subprocess_specs is None:
@@ -1624,7 +1625,9 @@ class ProcessInstanceProcessor:
                 "SPIFFWORKFLOW_BACKEND_ENGINE_STEP_DEFAULT_STRATEGY_WEB has not been set"
             )
 
-        execution_strategy = execution_strategy_named(execution_strategy_name, task_model_delegate, self.load_future_subprocess_specs)
+        execution_strategy = execution_strategy_named(
+            execution_strategy_name, task_model_delegate, self.load_future_subprocess_specs
+        )
         execution_service = WorkflowExecutionService(
             self.bpmn_process_instance,
             self.process_instance_model,
