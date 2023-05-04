@@ -733,7 +733,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     if ('payload' in eventToSend)
       eventToSend.payload = JSON.parse(eventPayload);
     HttpService.makeCallToBackend({
-      path: `/send-event/${modifiedProcessModelId}/${params.process_instance_id}`,
+      path: targetUris.processInstanceSendEventPath,
       httpMethod: 'POST',
       successCallback: saveTaskDataResult,
       failureCallback: addError,

@@ -642,6 +642,41 @@ def process_instance_find_by_id(
     return make_response(jsonify(response_json), 200)
 
 
+def send_user_signal_event(
+    process_instance_id: int,
+    body: Dict,
+) -> Response:
+    """Send a user signal event to a process instance."""
+    process_instance = _find_process_instance_for_me_or_raise(process_instance_id)
+    return _send_bpmn_event(process_instance, body)
+
+
+def send_bpmn_event(
+    modified_process_model_identifier: str,
+    process_instance_id: int,
+    body: Dict,
+) -> Response:
+    """Send a bpmn event to a process instance."""
+    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
+    if process_instance:
+        return _send_bpmn_event(process_instance, body)
+    else:
+        raise ApiError(
+            error_code="send_bpmn_event_error",
+            message=f"Could not send event to Instance: {process_instance_id}",
+        )
+
+
+def _send_bpmn_event(
+    process_instance: ProcessInstanceModel,
+    body: dict
+) -> Response:
+    processor = ProcessInstanceProcessor(process_instance)
+    processor.send_bpmn_event(body)
+    task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
+    return make_response(jsonify(task), 200)
+
+
 def _get_process_instance(
     modified_process_model_identifier: str,
     process_instance: ProcessInstanceModel,

@@ -1588,9 +1588,9 @@ paths:
         required: true
         description: The unique id of the process instance
         schema:
-          type: string
+          type: integer
     post:
-      operationId: spiffworkflow_backend.routes.process_api_blueprint.send_bpmn_event
+      operationId: spiffworkflow_backend.routes.process_instances_controller.send_bpmn_event
       summary: Send a BPMN event to the process
       tags:
         - Process Instances
@@ -1778,6 +1778,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OkTrue"
+
+  /tasks/{process_instance_id}/send-user-signal-event:
+    parameters:
+      - name: process_instance_id
+        in: path
+        required: true
+        description: The unique id of the process instance
+        schema:
+          type: integer
+    post:
+      operationId: spiffworkflow_backend.routes.process_instances_controller.send_user_signal_event
+      summary: Send a BPMN event to the process
+      tags:
+        - Process Instances
+      responses:
+        "200":
+          description: Event Sent Successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Workflow"
 
   /messages:
     parameters:
