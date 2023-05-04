@@ -14,4 +14,4 @@ class ActiveUserModel(SpiffworkflowBaseDBModel):
     id: int = db.Column(db.Integer, primary_key=True)
     user_id: int = db.Column(ForeignKey(UserModel.id), nullable=False, index=True)  # type: ignore
     last_visited_identifier: str = db.Column(db.String(255), nullable=False, index=True)
-    last_seen_in_seconds: int = db.Column(db.Integer)
+    last_seen_in_seconds: int = db.Column(db.Integer, nullable=False, index=True)

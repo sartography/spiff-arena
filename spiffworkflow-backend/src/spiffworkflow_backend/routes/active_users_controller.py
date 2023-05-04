@@ -18,7 +18,9 @@ def active_user_updates(last_visited_identifier: str) -> Response:
         user_id=g.user.id, last_visited_identifier=last_visited_identifier
     ).first()
     if active_user is None:
-        active_user = ActiveUserModel(user_id=g.user.id, last_visited_identifier=last_visited_identifier)
+        active_user = ActiveUserModel(
+            user_id=g.user.id, last_visited_identifier=last_visited_identifier, last_seen_in_seconds=round(time.time())
+        )
         db.session.add(active_user)
         db.session.commit()
 
