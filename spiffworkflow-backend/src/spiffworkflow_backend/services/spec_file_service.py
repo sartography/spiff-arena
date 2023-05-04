@@ -175,7 +175,6 @@ class SpecFileService(FileSystemService):
 
     @classmethod
     def update_file(cls, process_model_info: ProcessModelInfo, file_name: str, binary_data: bytes) -> File:
-        """Update_file."""
         SpecFileService.assert_valid_file_name(file_name)
         cls.validate_bpmn_xml(file_name, binary_data)
 
