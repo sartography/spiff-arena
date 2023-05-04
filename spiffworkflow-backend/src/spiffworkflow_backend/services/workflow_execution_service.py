@@ -3,7 +3,10 @@ from __future__ import annotations
 import copy
 import time
 from abc import abstractmethod
+from typing import Any
 from typing import Callable
+from typing import Dict
+from typing import Optional
 from uuid import UUID
 
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
@@ -74,12 +77,16 @@ class EngineStepDelegate:
         pass
 
 
+SubprocessSpecLoader = Callable[[], Optional[Dict[str, Any]]]
+
+
 class ExecutionStrategy:
     """Interface of sorts for a concrete execution strategy."""
 
-    def __init__(self, delegate: EngineStepDelegate):
+    def __init__(self, delegate: EngineStepDelegate, subprocess_spec_loader: SubprocessSpecLoader):
         """__init__."""
         self.delegate = delegate
+        self.subprocess_spec_loader = subprocess_spec_loader
 
     @abstractmethod
     def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
@@ -92,13 +99,19 @@ class ExecutionStrategy:
         self.delegate.save(bpmn_process_instance)
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        return list(
+        tasks = list(
             [
                 t
                 for t in bpmn_process_instance.get_tasks(TaskState.READY)
                 if bpmn_process_instance._is_engine_task(t.task_spec)
             ]
         )
+
+        if len(tasks) > 0:
+            self.subprocess_spec_loader()
+            tasks = [tasks[0]]
+
+        return tasks
 
 
 class TaskModelSavingDelegate(EngineStepDelegate):
@@ -263,19 +276,14 @@ class GreedyExecutionStrategy(ExecutionStrategy):
 
         spiff.refresh_waiting_tasks is the thing that pushes some waiting tasks to READY.
         """
-        self.bpmn_process_instance.do_engine_steps(
-            exit_at=exit_at,
-            will_complete_task=self.delegate.will_complete_task,
-            did_complete_task=self.delegate.did_complete_task,
-        )
-
-        self.bpmn_process_instance.refresh_waiting_tasks()
-        ready_tasks = self.bpmn_process_instance.get_tasks(TaskState.READY)
-        non_human_waiting_task = next(
-            (p for p in ready_tasks if p.task_spec.spec_type not in ["User Task", "Manual Task"]), None
-        )
-        if non_human_waiting_task is not None:
-            self.run_until_user_input_required(exit_at)
+        engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
+        while engine_steps:
+            for spiff_task in engine_steps:
+                self.delegate.will_complete_task(spiff_task)
+                spiff_task.run()
+                self.delegate.did_complete_task(spiff_task)
+                self.bpmn_process_instance.refresh_waiting_tasks()
+            engine_steps = self.get_ready_engine_steps(self.bpmn_process_instance)
 
 
 class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
@@ -338,7 +346,9 @@ class OneAtATimeExecutionStrategy(ExecutionStrategy):
         self.delegate.after_engine_steps(bpmn_process_instance)
 
 
-def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> ExecutionStrategy:
+def execution_strategy_named(
+    name: str, delegate: EngineStepDelegate, spec_loader: SubprocessSpecLoader
+) -> ExecutionStrategy:
     cls = {
         "greedy": GreedyExecutionStrategy,
         "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
@@ -346,7 +356,7 @@ def execution_strategy_named(name: str, delegate: EngineStepDelegate) -> Executi
         "one_at_a_time": OneAtATimeExecutionStrategy,
     }[name]
 
-    return cls(delegate)  # type: ignore
+    return cls(delegate, spec_loader)  # type: ignore
 
 
 ProcessInstanceCompleter = Callable[[BpmnWorkflow], None]

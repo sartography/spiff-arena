@@ -3263,23 +3263,23 @@ test = ["pytest"]
 
 [[package]]
 name = "spiff-element-units"
-version = "0.1.0"
+version = "0.3.0"
 description = ""
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.9"
 files = [
-    {file = "spiff_element_units-0.1.0-cp39-abi3-macosx_10_7_x86_64.whl", hash = "sha256:fc34e1012a922037cf5d04c154a37119bc1ba83cc536d79fde601da42703d5f7"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:664197124c2a81c780d83a60750ad4411dda22a31e0db7615007a3905393fa4b"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:34409c2a1f24dfca99afafd3b1caa9e2fba66c81864954f7f9ebf8030bc632c8"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:dcc1307447f30f597d31224d855c979f5c8cca5906792cbf7d9418ee2bcac54b"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:f40788203884db9d15e1e2c6b5d7b019b38606750f3df75f66d6c14fe492b5b4"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:78afa90e8ee48dfe84b8accb3399212297cb2b05f7e5288ae57614f68a2cffd8"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:aab909b3d8f896eb2f2ed64273a7e013564a708e875883dafe76cdb34e459cb3"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:1a264c4ad717d83fe1d7b31d4c9a26143a3a9eff9cfdb09216f4fc1ef029e178"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-win32.whl", hash = "sha256:9b2e25b8b18ae006c39cd0b8bac11b08d60bf0e53b60a9cca9a3cec3750f0176"},
-    {file = "spiff_element_units-0.1.0-cp39-abi3-win_amd64.whl", hash = "sha256:825594fa95496db3a9a7826c9cbf95b90b6a5676838bbd9fe23c5ff32a2d2920"},
-    {file = "spiff_element_units-0.1.0.tar.gz", hash = "sha256:807e207562220f350cd0f0b6a46484c7b976c4effe4b194701179add7abe871a"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-macosx_10_7_x86_64.whl", hash = "sha256:35d2ede30e4d2fc715882c44b19e70e7289e1bb6fdff213198ba1e5d073987d1"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-macosx_11_0_arm64.whl", hash = "sha256:d2a9dde576144ba040ca7fb11ee5487e7c7507b8ee7f1c6c12d24066b67c24c7"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:15e6d02e5fd59c99484afec41f7f96272e38b7f933e17be9a29b2e3bd43b8396"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_armv7l.manylinux2014_armv7l.whl", hash = "sha256:49e2f6472d5eb5c90978295042e2b3d000e3b88e833fd655d3fe30a1ba7d225b"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:eed527049bded8ea25ead384547e1ea35e99fe97353c78fd4ad014c8cd2b12b8"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_s390x.manylinux2014_s390x.whl", hash = "sha256:63a0f60ce401641dba142a95952330bb18f6a9f77f1ff99f8ef2a392e08774b4"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:43b13dcd21f722758c5cc6e16c317680dd7011e0b9aca83fd478c28b13eb25e0"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:2625b15d2c705fe07f6e472f75142e0f036d3bd567e6e5e946f75fd96dc8396a"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-win32.whl", hash = "sha256:fe07bbe1e6e036ffb1fd78d719f5e83c160e657cf5e6eeee5938946e9b940116"},
+    {file = "spiff_element_units-0.3.0-cp39-abi3-win_amd64.whl", hash = "sha256:beacf2857ba196b39a66f481e9989513e4df607e6d2157d4c1c1e463890ca806"},
+    {file = "spiff_element_units-0.3.0.tar.gz", hash = "sha256:5c740c70adf7e0fc39c9a3a199c4f1d5d5941d61b28c90637b64df4dc3df57dd"},
 ]
 
 [[package]]
@@ -3938,4 +3938,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.12"
-content-hash = "53f3340f73de770b4fbebff3fcd396cdf1bc2c082b929ade350f31a9df6c3860"
+content-hash = "bc4e0dabc679dd84e7803930d043a934276298715657bf85226ec9541eeebfb9"
