@@ -530,6 +530,8 @@ def _create_or_update_process_model_file(
     file_contents = SpecFileService.get_data(process_model, file.name)
     file.file_contents = file_contents
     file.process_model_id = process_model.id
+    file_contents_hash = sha256(file_contents).hexdigest()
+    file.file_contents_hash = file_contents_hash
     _commit_and_push_to_git(f"{message_for_git_commit} {process_model_identifier}/{file.name}")
 
     return make_response(jsonify(file), http_status_to_return)
