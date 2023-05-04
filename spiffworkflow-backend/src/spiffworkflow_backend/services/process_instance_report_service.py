@@ -320,7 +320,7 @@ class ProcessInstanceReportService:
 
     @classmethod
     def builtin_column_options(cls) -> list[ReportMetadataColumn]:
-        """Builtin_column_options."""
+        """Columns that are actually in the process instance table."""
         return_value: list[ReportMetadataColumn] = [
             {"Header": "Id", "accessor": "id", "filterable": False},
             {
@@ -336,6 +336,15 @@ class ProcessInstanceReportService:
                 "filterable": False,
             },
             {"Header": "Status", "accessor": "status", "filterable": False},
+        ]
+        return return_value
+
+    @classmethod
+    def system_report_column_options(cls) -> list[ReportMetadataColumn]:
+        """Columns that are used with certain system reports."""
+        return_value: list[ReportMetadataColumn] = [
+            {"Header": "Task", "accessor": "task_title", "filterable": False},
+            {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
         ]
         return return_value
 
