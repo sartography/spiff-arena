@@ -127,8 +127,8 @@ class ApiError(Exception):
             instance.task_trace = TaskModelError.get_task_trace(task_model)
 
         try:
-            spec_reference = TaskService.get_spec_reference_from_bpmn_process(task_model.bpmn_process)
-            instance.file_name = spec_reference.file_name
+            spec_reference_filename = TaskService.get_spec_filename_from_bpmn_process(task_model.bpmn_process)
+            instance.file_name = spec_reference_filename
         except Exception as exception:
             current_app.logger.error(exception)
 

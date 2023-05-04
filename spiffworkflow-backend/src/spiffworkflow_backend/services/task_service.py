@@ -89,15 +89,15 @@ class TaskModelError(Exception):
         task_definition = task_model.task_definition
         task_bpmn_name = TaskService.get_name_for_display(task_definition)
         bpmn_process = task_model.bpmn_process
-        spec_reference = TaskService.get_spec_reference_from_bpmn_process(bpmn_process)
+        spec_reference_filename = TaskService.get_spec_filename_from_bpmn_process(bpmn_process)
 
-        task_trace = [f"{task_bpmn_name} ({spec_reference.file_name})"]
+        task_trace = [f"{task_bpmn_name} ({spec_reference_filename})"]
         while bpmn_process.guid is not None:
             caller_task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
             bpmn_process = BpmnProcessModel.query.filter_by(id=bpmn_process.direct_parent_process_id).first()
-            spec_reference = TaskService.get_spec_reference_from_bpmn_process(bpmn_process)
+            spec_reference_filename = TaskService.get_spec_filename_from_bpmn_process(bpmn_process)
             task_trace.append(
-                f"{TaskService.get_name_for_display(caller_task_model.task_definition)} ({spec_reference.file_name})"
+                f"{TaskService.get_name_for_display(caller_task_model.task_definition)} ({spec_reference_filename})"
             )
         return task_trace
 
@@ -629,6 +629,15 @@ class TaskService:
             if "signalButtonLabel" in extensions and "name" in event_definition:
                 result.append({"event": event_definition, "label": extensions["signalButtonLabel"]})
         return result
+
+    @classmethod
+    def get_spec_filename_from_bpmn_process(cls, bpmn_process: BpmnProcessModel) -> Optional[str]:
+        """Just return the filename if the bpmn process is found in spec reference cache."""
+        try:
+            filename: Optional[str] = cls.get_spec_reference_from_bpmn_process(bpmn_process).file_name
+            return filename
+        except SpecReferenceNotFoundError:
+            return None
 
     @classmethod
     def get_spec_reference_from_bpmn_process(cls, bpmn_process: BpmnProcessModel) -> SpecReferenceCache:
