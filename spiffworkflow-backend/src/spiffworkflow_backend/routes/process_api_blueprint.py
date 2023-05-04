@@ -189,25 +189,6 @@ def _get_required_parameter_or_raise(parameter: str, post_body: dict[str, Any]) 
     return return_value
 
 
-def send_bpmn_event(
-    modified_process_model_identifier: str,
-    process_instance_id: str,
-    body: Dict,
-) -> Response:
-    """Send a bpmn event to a workflow."""
-    process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
-    if process_instance:
-        processor = ProcessInstanceProcessor(process_instance)
-        processor.send_bpmn_event(body)
-        task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
-        return make_response(jsonify(task), 200)
-    else:
-        raise ApiError(
-            error_code="send_bpmn_event_error",
-            message=f"Could not send event to Instance: {process_instance_id}",
-        )
-
-
 def _commit_and_push_to_git(message: str) -> None:
     """Commit_and_push_to_git."""
     if current_app.config["SPIFFWORKFLOW_BACKEND_GIT_COMMIT_ON_SAVE"]:

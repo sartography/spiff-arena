@@ -125,7 +125,6 @@ class TestAuthorizationService(BaseTest):
         expected_permissions = sorted(
             [
                 ("/event-error-details/some-process-group:some-process-model:*", "read"),
-                ("/send-event/some-process-group:some-process-model:*", "create"),
                 ("/logs/some-process-group:some-process-model:*", "read"),
                 ("/logs/typeahead-filter-values/some-process-group:some-process-model:*", "read"),
                 ("/process-data/some-process-group:some-process-model:*", "read"),
