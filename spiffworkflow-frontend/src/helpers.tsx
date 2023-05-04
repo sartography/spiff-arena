@@ -247,15 +247,21 @@ export const splitProcessModelId = (processModelId: string) => {
 export const refreshAtInterval = (
   interval: number,
   timeout: number,
-  func: Function
+  periodicFunction: Function,
+  cleanupFunction?: Function
 ) => {
-  const intervalRef = setInterval(() => func(), interval * 1000);
-  const timeoutRef = setTimeout(
-    () => clearInterval(intervalRef),
-    timeout * 1000
-  );
+  const intervalRef = setInterval(() => periodicFunction(), interval * 1000);
+  const timeoutRef = setTimeout(() => {
+    clearInterval(intervalRef);
+    if (cleanupFunction) {
+      cleanupFunction();
+    }
+  }, timeout * 1000);
   return () => {
     clearInterval(intervalRef);
+    if (cleanupFunction) {
+      cleanupFunction();
+    }
     clearTimeout(timeoutRef);
   };
 };
