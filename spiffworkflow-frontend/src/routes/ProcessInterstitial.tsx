@@ -31,12 +31,17 @@ export default function ProcessInterstitial() {
       {
         headers: getBasicHeaders(),
         onmessage(ev) {
+          console.log('ev', ev);
           const retValue = JSON.parse(ev.data);
-          if ('error_code' in retValue) {
-            addError(retValue);
-          } else {
-            setData((prevData) => [retValue, ...prevData]);
+          if (retValue.type === 'error') {
+            addError(retValue.error);
+          } else if (retValue.type === 'task') {
+            setData((prevData) => [retValue.task, ...prevData]);
             setLastTask(retValue);
+            // } else if (retValue.type === 'unrunnable_instance') {
+            //   // setData((prevData) => [retValue.task, ...prevData]);
+            //   // setLastTask(retValue);
+            //   setState('CLOSED');
           }
         },
         onclose() {
