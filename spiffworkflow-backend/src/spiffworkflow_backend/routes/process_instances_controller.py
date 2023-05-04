@@ -667,10 +667,7 @@ def send_bpmn_event(
         )
 
 
-def _send_bpmn_event(
-    process_instance: ProcessInstanceModel,
-    body: dict
-) -> Response:
+def _send_bpmn_event(process_instance: ProcessInstanceModel, body: dict) -> Response:
     processor = ProcessInstanceProcessor(process_instance)
     processor.send_bpmn_event(body)
     task = ProcessInstanceService.spiff_task_to_api_task(processor, processor.next_task())
