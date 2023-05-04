@@ -25,9 +25,7 @@ import Col from 'react-bootstrap/Col';
 import Editor, { DiffEditor } from '@monaco-editor/react';
 
 import MDEditor from '@uiw/react-md-editor';
-import { fetchEventSource } from '@microsoft/fetch-event-source';
-import { BACKEND_BASE_URL } from '../config';
-import HttpService, { getBasicHeaders } from '../services/HttpService';
+import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
@@ -35,6 +33,8 @@ import {
   makeid,
   modifyProcessIdentifierForPathParam,
   encodeBase64,
+  refreshAtInterval,
+  REFRESH_TIMEOUT_SECONDS,
 } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
@@ -134,6 +134,12 @@ export default function ProcessModelEditDiagram() {
 
   const lastVisitedIdentifier = encodeBase64(window.location.pathname);
   useEffect(() => {
+    const updateActiveUsers = () => {
+      HttpService.makeCallToBackend({
+        path: `/active-users/updates/${lastVisitedIdentifier}`,
+        successCallback: setActiveUsers,
+      });
+    };
     // Grab all available process models in case we need to search for them.
     // Taken from the Process Group List
     const processResults = (result: any) => {
@@ -155,30 +161,14 @@ export default function ProcessModelEditDiagram() {
         successCallback: setActiveUsers,
       });
     };
-    fetchEventSource(
-      `${BACKEND_BASE_URL}/active-users/updates/${lastVisitedIdentifier}`,
-      {
-        headers: getBasicHeaders(),
-        onmessage(ev) {
-          const retValue = JSON.parse(ev.data);
-          if ('error_code' in retValue) {
-            addError(retValue);
-          } else {
-            setActiveUsers(retValue);
-          }
-        },
-        onclose() {
-          unregisterUser();
-        },
-        onerror(err: any) {
-          throw err;
-        },
-      }
-    );
+    updateActiveUsers();
 
-    // FIXME: this is not getting called when navigating away from this page.
-    // we do not know why yet.
-    return unregisterUser;
+    return refreshAtInterval(
+      15,
+      REFRESH_TIMEOUT_SECONDS,
+      updateActiveUsers,
+      unregisterUser
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 

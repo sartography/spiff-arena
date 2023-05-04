@@ -1,11 +1,10 @@
 import json
 import time
-from typing import Generator
 
 import flask.wrappers
-from flask import current_app
 from flask import g
-from flask import stream_with_context
+from flask import jsonify
+from flask import make_response
 from flask.wrappers import Response
 
 from spiffworkflow_backend.models.active_user import ActiveUserModel
@@ -24,30 +23,19 @@ def active_user_updates(last_visited_identifier: str) -> Response:
         db.session.add(active_user)
         db.session.commit()
 
-    return Response(
-        stream_with_context(_active_user_updates(last_visited_identifier, active_user=active_user)),
-        mimetype="text/event-stream",
-        headers={"X-Accel-Buffering": "no"},
+    active_user.last_seen_in_seconds = round(time.time())
+    db.session.add(active_user)
+    db.session.commit()
+
+    cutoff_time_in_seconds = time.time() - 30
+    active_users = (
+        UserModel.query.join(ActiveUserModel)
+        .filter(ActiveUserModel.last_visited_identifier == last_visited_identifier)
+        .filter(ActiveUserModel.last_seen_in_seconds > cutoff_time_in_seconds)
+        .filter(UserModel.id != g.user.id)
+        .all()
     )
-
-
-def _active_user_updates(last_visited_identifier: str, active_user: ActiveUserModel) -> Generator[str, None, None]:
-    while True:
-        active_user.last_seen_in_seconds = round(time.time())
-        db.session.add(active_user)
-        db.session.commit()
-
-        cutoff_time_in_seconds = time.time() - 15
-        active_users = (
-            UserModel.query.join(ActiveUserModel)
-            .filter(ActiveUserModel.last_visited_identifier == last_visited_identifier)
-            .filter(ActiveUserModel.last_seen_in_seconds > cutoff_time_in_seconds)
-            .filter(UserModel.id != g.user.id)
-            .all()
-        )
-        yield f"data: {current_app.json.dumps(active_users)} \n\n"
-
-        time.sleep(5)
+    return make_response(jsonify(active_users), 200)
 
 
 def active_user_unregister(last_visited_identifier: str) -> flask.wrappers.Response:
