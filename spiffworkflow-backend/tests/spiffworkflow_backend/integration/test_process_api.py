@@ -3139,6 +3139,8 @@ class TestProcessApi(BaseTest):
                 "filterable": False,
             },
             {"Header": "Status", "accessor": "status", "filterable": False},
+            {"Header": "Task", "accessor": "task_title", "filterable": False},
+            {"Header": "Waiting For", "accessor": "waiting_for", "filterable": False},
             {"Header": "awesome_var", "accessor": "awesome_var", "filterable": True},
             {"Header": "invoice_number", "accessor": "invoice_number", "filterable": True},
             {"Header": "key1", "accessor": "key1", "filterable": True},
@@ -3155,6 +3157,8 @@ class TestProcessApi(BaseTest):
             "end_in_seconds",
             "process_initiator_username",
             "status",
+            "task_title",
+            "waiting_for",
         ]
         assert accessors == stock_columns + ["awesome_var", "invoice_number", "key1", "key2", "key3"]
 
