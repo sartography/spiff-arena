@@ -1,0 +1,25 @@
+default_group: everybody
+
+groups:
+  admin:
+    users:
+      - jason@sartography.com
+      - kevin@sartography.com
+      - dan@sartography.com
+      - alex@sartography.com
+      - jon@sartography.com
+      - elizabeth@sartography.com
+      - madhurya@sartography.com
+
+  tech_writers:
+    users:
+      - usama@sartography.com
+      - phillana@sartography.com
+
+permissions:
+  admin:
+    groups: [admin, tech_writers]
+    users: []
+    allowed_permissions: [create, read, update, delete]
+    uri: /*
+
