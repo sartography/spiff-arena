@@ -216,11 +216,18 @@ class ProcessModelService(FileSystemService):
 
         permission_to_check = "read"
         permission_base_uri = "/v1.0/process-models"
+        user = UserService.current_user()
         if filter_runnable_by_user:
             permission_to_check = "create"
             permission_base_uri = "/v1.0/process-instances"
 
-        user = UserService.current_user()
+        # if user has access to uri/* with that permission then there's no reason to check each one individually
+        has_permission = AuthorizationService.user_has_permission(
+            user=user, permission=permission_to_check, target_uri=f"{permission_base_uri}/%"
+        )
+        if has_permission:
+            return process_models
+
         new_process_model_list = []
         for process_model in process_models:
             modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_model.id)
@@ -276,8 +283,15 @@ class ProcessModelService(FileSystemService):
 
         permission_to_check = "read"
         permission_base_uri = "/v1.0/process-groups"
-
         user = UserService.current_user()
+
+        # if user has access to uri/* with that permission then there's no reason to check each one individually
+        has_permission = AuthorizationService.user_has_permission(
+            user=user, permission=permission_to_check, target_uri=f"{permission_base_uri}/%"
+        )
+        if has_permission:
+            return process_groups
+
         new_process_group_list = []
         for process_group in process_groups:
             modified_process_group_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_group.id)
