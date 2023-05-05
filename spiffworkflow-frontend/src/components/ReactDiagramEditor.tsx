@@ -674,7 +674,14 @@ export default function ReactDiagramEditor({
             )}
           </Can>
           {getReferencesButton()}
-          {activeUserElement || null}
+          {/* only show other users if the current user can save the current diagram */}
+          <Can
+            I="PUT"
+            a={targetUris.processModelFileShowPath}
+            ability={ability}
+          >
+            {activeUserElement || null}
+          </Can>
         </ButtonSet>
       );
     }
