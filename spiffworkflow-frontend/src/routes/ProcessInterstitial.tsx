@@ -9,12 +9,14 @@ import { getBasicHeaders } from '../services/HttpService';
 // @ts-ignore
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
-import { ProcessInstanceTask } from '../interfaces';
+import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import useAPIError from '../hooks/UseApiError';
 
 export default function ProcessInterstitial() {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
+  const [processInstance, setProcessInstance] =
+    useState<ProcessInstance | null>(null);
   const [state, setState] = useState<string>('RUNNING');
   const params = useParams();
   const navigate = useNavigate();
@@ -31,17 +33,14 @@ export default function ProcessInterstitial() {
       {
         headers: getBasicHeaders(),
         onmessage(ev) {
-          console.log('ev', ev);
           const retValue = JSON.parse(ev.data);
           if (retValue.type === 'error') {
             addError(retValue.error);
           } else if (retValue.type === 'task') {
             setData((prevData) => [retValue.task, ...prevData]);
-            setLastTask(retValue);
-            // } else if (retValue.type === 'unrunnable_instance') {
-            //   // setData((prevData) => [retValue.task, ...prevData]);
-            //   // setLastTask(retValue);
-            //   setState('CLOSED');
+            setLastTask(retValue.task);
+          } else if (retValue.type === 'unrunnable_instance') {
+            setProcessInstance(retValue.unrunnable_instance);
           }
         },
         onclose() {
@@ -54,9 +53,14 @@ export default function ProcessInterstitial() {
 
   const shouldRedirect = useCallback(
     (myTask: ProcessInstanceTask): boolean => {
-      return myTask && myTask.can_complete && userTasks.includes(myTask.type);
+      return (
+        !processInstance &&
+        myTask &&
+        myTask.can_complete &&
+        userTasks.includes(myTask.type)
+      );
     },
-    [userTasks]
+    [userTasks, processInstance]
   );
 
   useEffect(() => {
@@ -73,6 +77,9 @@ export default function ProcessInterstitial() {
   }, [lastTask, navigate, userTasks, shouldRedirect]);
 
   const getStatus = (): string => {
+    if (processInstance) {
+      return 'LOCKED';
+    }
     if (!lastTask.can_complete && userTasks.includes(lastTask.type)) {
       return 'LOCKED';
     }
@@ -158,12 +165,15 @@ export default function ProcessInterstitial() {
       return <div>{myTask.error_message}</div>;
     }
 
+    let message =
+      'There are no additional instructions or information for this task.';
+    if (processInstance && processInstance.status !== 'completed') {
+      message = `The tasks cannot be completed on this instance because its status is "${processInstance.status}".`;
+    }
+
     return (
       <div>
-        <InstructionsForEndUser
-          task={myTask}
-          defaultMessage="There are no additional instructions or information for this task."
-        />
+        <InstructionsForEndUser task={myTask} defaultMessage={message} />
       </div>
     );
   };
