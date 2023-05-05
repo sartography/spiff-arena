@@ -29,24 +29,18 @@ import HttpService from '../services/HttpService';
 import ReactDiagramEditor from '../components/ReactDiagramEditor';
 import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import useAPIError from '../hooks/UseApiError';
-import {
-  makeid,
-  modifyProcessIdentifierForPathParam,
-  encodeBase64,
-  refreshAtInterval,
-  REFRESH_TIMEOUT_SECONDS,
-} from '../helpers';
+import { makeid, modifyProcessIdentifierForPathParam } from '../helpers';
 import {
   CarbonComboBoxProcessSelection,
   ProcessFile,
   ProcessModel,
   ProcessModelCaller,
   ProcessReference,
-  User,
 } from '../interfaces';
 import ProcessSearch from '../components/ProcessSearch';
 import { Notification } from '../components/Notification';
 import { usePrompt } from '../hooks/UsePrompt';
+import ActiveUsers from '../components/ActiveUsers';
 
 export default function ProcessModelEditDiagram() {
   const [showFileNameEditor, setShowFileNameEditor] = useState(false);
@@ -73,7 +67,6 @@ export default function ProcessModelEditDiagram() {
     useState<boolean>(false);
   const [processModelFileInvalidText, setProcessModelFileInvalidText] =
     useState<string>('');
-  const [activeUsers, setActiveUsers] = useState<User[]>([]);
 
   const handleShowMarkdownEditor = () => setShowMarkdownEditor(true);
 
@@ -132,14 +125,7 @@ export default function ProcessModelEditDiagram() {
 
   usePrompt('Changes you made may not be saved.', diagramHasChanges);
 
-  const lastVisitedIdentifier = encodeBase64(window.location.pathname);
   useEffect(() => {
-    const updateActiveUsers = () => {
-      HttpService.makeCallToBackend({
-        path: `/active-users/updates/${lastVisitedIdentifier}`,
-        successCallback: setActiveUsers,
-      });
-    };
     // Grab all available process models in case we need to search for them.
     // Taken from the Process Group List
     const processResults = (result: any) => {
@@ -154,21 +140,6 @@ export default function ProcessModelEditDiagram() {
       path: `/processes`,
       successCallback: processResults,
     });
-
-    const unregisterUser = () => {
-      HttpService.makeCallToBackend({
-        path: `/active-users/unregister/${lastVisitedIdentifier}`,
-        successCallback: setActiveUsers,
-      });
-    };
-    updateActiveUsers();
-
-    return refreshAtInterval(
-      15,
-      REFRESH_TIMEOUT_SECONDS,
-      updateActiveUsers,
-      unregisterUser
-    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 
@@ -959,20 +930,6 @@ export default function ProcessModelEditDiagram() {
     return searchParams.get('file_type') === 'dmn' || fileName.endsWith('.dmn');
   };
 
-  const activeUserElement = () => {
-    const au = activeUsers.map((activeUser: User) => {
-      return (
-        <div
-          title={`${activeUser.username} is also viewing this page`}
-          className="user-circle"
-        >
-          {activeUser.username.charAt(0).toUpperCase()}
-        </div>
-      );
-    });
-    return <div className="user-list">{au}</div>;
-  };
-
   const appropriateEditor = () => {
     if (isDmn()) {
       return (
@@ -1017,7 +974,7 @@ export default function ProcessModelEditDiagram() {
         onSearchProcessModels={onSearchProcessModels}
         onElementsChanged={onElementsChanged}
         callers={callers}
-        activeUserElement={activeUserElement()}
+        activeUserElement={<ActiveUsers />}
       />
     );
   };
