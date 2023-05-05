@@ -87,8 +87,11 @@ export default function ReactFormEditor() {
     }
   }, [params, modifiedProcessModelId]);
 
-  const navigateToProcessModelFile = (_result: any) => {
+  const navigateToProcessModelFile = (file: ProcessFile) => {
     setDisplaySaveFileMessage(true);
+    if (file.file_contents_hash) {
+      setProcessModelFile(file);
+    }
     if (!params.file_name) {
       const fileNameWithExtension = `${newFileName}.${fileExtension}`;
       navigate(
@@ -110,6 +113,9 @@ export default function ReactFormEditor() {
       httpMethod = 'POST';
     } else {
       url += `/${fileNameWithExtension}`;
+      if (processModelFile && processModelFile.file_contents_hash) {
+        url += `?file_contents_hash=${processModelFile.file_contents_hash}`;
+      }
     }
     if (!fileNameWithExtension) {
       handleShowFileNameEditor();
