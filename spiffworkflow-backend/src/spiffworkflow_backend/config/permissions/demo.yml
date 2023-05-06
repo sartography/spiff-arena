@@ -22,4 +22,3 @@ permissions:
     users: []
     allowed_permissions: [create, read, update, delete]
     uri: /*
-
