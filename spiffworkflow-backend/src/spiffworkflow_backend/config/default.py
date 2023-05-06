@@ -62,12 +62,15 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_CLIENT_SECRET_KEY = environ.get(
     default="JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
 )  # noqa: S105
 
-# Tenant specific fields is a comma separated list of field names that we will convert to list of strings
+# Tenant specific fields is a comma separated list of field names that we will be converted to list of strings
 # and store in the user table's tenant_specific_field_n columns. You can have up to three items in this
 # comma-separated list.
 SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS = environ.get(
     "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"
 )
+
+# loggers to use is a comma separated list of logger prefixes that we will be converted to list of strings
+SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE = environ.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE")
 
 # cryptography or simple-crypt
 SPIFFWORKFLOW_BACKEND_ENCRYPTION_LIB = environ.get(
