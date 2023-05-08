@@ -23,10 +23,11 @@ export default function Configuration() {
     [targetUris.authenticationListPath]: ['GET'],
     [targetUris.secretListPath]: ['GET'],
   };
-  const { ability } = usePermissionFetcher(permissionRequestData);
+  const { ability, permissionsLoaded } = usePermissionFetcher(
+    permissionRequestData
+  );
 
   useEffect(() => {
-    console.log('Configuration remove error');
     removeError();
     let newSelectedTabIndex = 0;
     if (location.pathname.match(/^\/admin\/configuration\/authentications\b/)) {
@@ -34,6 +35,13 @@ export default function Configuration() {
     }
     setSelectedTabIndex(newSelectedTabIndex);
   }, [location, removeError]);
+
+  // wow, if you do not check to see if the permissions are loaded, then in safari,
+  // you will get {null} inside the <TabList> which totally explodes carbon (in safari!).
+  // we *think* that null inside a TabList works fine in all other browsers.
+  if (!permissionsLoaded) {
+    return null;
+  }
 
   return (
     <>
