@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+import uuid
 from glob import glob
 from typing import Any
 from typing import List
@@ -222,8 +223,11 @@ class ProcessModelService(FileSystemService):
             permission_base_uri = "/v1.0/process-instances"
 
         # if user has access to uri/* with that permission then there's no reason to check each one individually
+        guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
         has_permission = AuthorizationService.user_has_permission(
-            user=user, permission=permission_to_check, target_uri=f"{permission_base_uri}/%"
+            user=user,
+            permission=permission_to_check,
+            target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
         )
         if has_permission:
             return process_models
@@ -286,8 +290,11 @@ class ProcessModelService(FileSystemService):
         user = UserService.current_user()
 
         # if user has access to uri/* with that permission then there's no reason to check each one individually
+        guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
         has_permission = AuthorizationService.user_has_permission(
-            user=user, permission=permission_to_check, target_uri=f"{permission_base_uri}/%"
+            user=user,
+            permission=permission_to_check,
+            target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
         )
         if has_permission:
             return process_groups
