@@ -43,5 +43,5 @@ else
   fi
 
   # this line blocks
-  SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER="${SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER}" FLASK_APP=src/spiffworkflow_backend poetry run flask run -p "$port"
+  SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER="${SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER}" FLASK_APP=src/spiffworkflow_backend poetry run flask run -p "$port" --host=0.0.0.0
 fi
