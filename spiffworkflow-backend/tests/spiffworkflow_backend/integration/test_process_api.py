@@ -1689,11 +1689,11 @@ class TestProcessApi(BaseTest):
         # The Manual Task should then return a message as well.
         assert len(results) == 2
         # import pdb; pdb.set_trace()
-        assert json_results[0]['task']["state"] == "READY"
-        assert json_results[0]['task']["title"] == "Script Task #2"
-        assert json_results[0]['task']["properties"]["instructionsForEndUser"] == "I am Script Task 2"
-        assert json_results[1]['task']["state"] == "READY"
-        assert json_results[1]['task']["title"] == "Manual Task"
+        assert json_results[0]["task"]["state"] == "READY"
+        assert json_results[0]["task"]["title"] == "Script Task #2"
+        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am Script Task 2"
+        assert json_results[1]["task"]["state"] == "READY"
+        assert json_results[1]["task"]["title"] == "Manual Task"
 
         response = client.put(
             f"/v1.0/tasks/{process_instance_id}/{json_results[1]['task']['id']}",
@@ -1706,10 +1706,10 @@ class TestProcessApi(BaseTest):
         results = list(_dequeued_interstitial_stream(process_instance_id))
         json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
         assert len(results) == 1
-        assert json_results[0]['task']["state"] == "READY"
-        assert json_results[0]['task']["can_complete"] is False
-        assert json_results[0]['task']["title"] == "Please Approve"
-        assert json_results[0]['task']["properties"]["instructionsForEndUser"] == "I am a manual task in another lane"
+        assert json_results[0]["task"]["state"] == "READY"
+        assert json_results[0]["task"]["can_complete"] is False
+        assert json_results[0]["task"]["title"] == "Please Approve"
+        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am a manual task in another lane"
 
         # Complete task as the finance user.
         response = client.put(
@@ -1723,8 +1723,8 @@ class TestProcessApi(BaseTest):
         results = list(_dequeued_interstitial_stream(process_instance_id))
         json_results = list(map(lambda x: json.loads(x[5:]), results))  # type: ignore
         assert len(json_results) == 1
-        assert json_results[0]['task']["state"] == "COMPLETED"
-        assert json_results[0]['task']["properties"]["instructionsForEndUser"] == "I am the end task"
+        assert json_results[0]["task"]["state"] == "COMPLETED"
+        assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am the end task"
 
     def test_process_instance_list_with_default_list(
         self,
