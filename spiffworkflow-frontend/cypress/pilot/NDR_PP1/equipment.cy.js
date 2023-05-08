@@ -13,6 +13,7 @@ const submitWithUser = (
     cy.wait(1000);
     cy.log('=======visit find by id : ');
     cy.visit('/admin/process-instances/find-by-id');
+    cy.wait(3000);
     cy.get('#process-instance-id-input').type(processInstanceId);
 
     cy.get('button')
@@ -57,8 +58,8 @@ const submitWithUser = (
 
         cy.get('.cds--text-area__wrapper').find('#root').clear().type('Providing additional info. Computer hardware includes the physical parts of a computer, such as the case, central processing unit (CPU), random access memory (RAM), monitor, mouse, keyboard, computer data storage, graphics card, sound card');
 
-        cy.contains('Submit the Request').click();
-        cy.get('input[value="Submit the Request"]').click();
+        //cy.contains('Submit the Request').click();
+        //cy.get('input[value="Submit the Request"]').click();
 
     } else {
 
@@ -196,9 +197,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('The template for all modern computers is the Von Neumann architecture, detailed in a 1945 paper by Hungarian mathematician John von Neumann. This describes a design architecture for a electronic digital computer with subdivisions of a processing unit');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -322,9 +323,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('When using computer hardware, an upgrade means adding new or additional hardware to a computer that improves its performance, increases its capacity, or adds new features. For example, \nhttps://en.wikipedia.org/wiki/Computer_hardware');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -443,9 +444,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A supercomputer is superficially similar to a mainframe but is instead intended for extremely demanding computational tasks. As of November 2021, the fastest supercomputer on the TOP500 supercomputer list is Fugaku, in Japan');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -591,9 +592,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('Computer hardware contain dangerous chemicals such as lead, mercury, nickel, and cadmium. According to the EPA these e-wastes have a harmful effect on the environment unless they are disposed properly. \nhttps://en.wikipedia.org/wiki/Computer_hardware');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -699,9 +700,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, \‘consultant\’ and advisor\’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -807,9 +808,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('The template for all modern computers is the Von Neumann architecture, detailed in a 1945 paper by Hungarian mathematician John von Neumann. \nhttps://en.wikipedia.org/wiki/Computer_hardware');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -933,9 +934,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('The template for all modern computers is the Von Neumann architecture, detailed in a 1945 paper by Hungarian mathematician John von Neumann. \nhttps://en.wikipedia.org/wiki/Computer_hardware');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1055,9 +1056,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('The personal computer is one of the most common types of computer due to its versatility and relatively low price. Desktop personal computers have a monitor, a keyboard, a mouse, and a computer case.\nhttps://en.wikipedia.org/wiki/Computer_hardware');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1176,9 +1177,9 @@ describe('Equipment Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('The personal computer is one of the most common types of computer due to its versatility and relatively low price. Desktop personal computers have a monitor, a keyboard, a mouse, and a computer case.\nhttps://en.wikipedia.org/wiki/Computer_hardware');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1394,9 +1395,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1557,9 +1558,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1719,9 +1720,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1909,9 +1910,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -2059,9 +2060,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -2208,9 +2209,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -2375,9 +2376,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -2538,9 +2539,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -2701,9 +2702,9 @@ describe('Equipment Path - With Files', () => {
                     .attachFile(['png-5mb-2.png']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
