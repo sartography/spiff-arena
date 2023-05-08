@@ -401,7 +401,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
 
-    def render_data(return_type: str, entity: Union[ApiError, Task]) -> str:
+    def render_data(return_type: str, entity: Union[ApiError, Task, ProcessInstanceModel]) -> str:
         return_hash: dict = {"type": return_type}
         return_hash[return_type] = entity
         return f"data: {current_app.json.dumps(return_hash)} \n\n"
