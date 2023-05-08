@@ -351,3 +351,15 @@ export interface ProcessModelCaller {
 }
 
 export interface UserGroup {}
+
+type InterstitialPageResponseType =
+  | 'task_update'
+  | 'error'
+  | 'unrunnable_instance';
+
+export interface InterstitialPageResponse {
+  type: InterstitialPageResponseType;
+  error?: any;
+  task?: ProcessInstanceTask;
+  process_instance?: ProcessInstance;
+}
