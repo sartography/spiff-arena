@@ -1037,10 +1037,14 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_group_and_model_with_bpmn(client, with_super_admin_user, process_group_id="admin_only", process_model_id='random_fact')
-        self.create_group_and_model_with_bpmn(client, with_super_admin_user, process_group_id="all_users", process_model_id='hello_world')
-        user_one = self.create_user_with_permission(username="user_one", target_uri='/v1.0/process-groups/all_users:*')
-        self.add_permissions_to_user(user=user_one, target_uri='/v1.0/process-groups', permission_names=['read'])
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="admin_only", process_model_id="random_fact"
+        )
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="all_users", process_model_id="hello_world"
+        )
+        user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/all_users:*")
+        self.add_permissions_to_user(user=user_one, target_uri="/v1.0/process-groups", permission_names=["read"])
 
         response = client.get(
             "/v1.0/process-groups",
@@ -1060,7 +1064,7 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert len(response.json["results"]) == 1
-        assert response.json['results'][0]['id'] == 'all_users'
+        assert response.json["results"][0]["id"] == "all_users"
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["total"] == 1
         assert response.json["pagination"]["pages"] == 1
@@ -1072,10 +1076,14 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_group_and_model_with_bpmn(client, with_super_admin_user, process_group_id="admin_only", process_model_id='random_fact')
-        self.create_group_and_model_with_bpmn(client, with_super_admin_user, process_group_id="all_users", process_model_id='hello_world')
-        user_one = self.create_user_with_permission(username="user_one", target_uri='/v1.0/process-models/all_users:*')
-        self.add_permissions_to_user(user=user_one, target_uri='/v1.0/process-models', permission_names=['read'])
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="admin_only", process_model_id="random_fact"
+        )
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="all_users", process_model_id="hello_world"
+        )
+        user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-models/all_users:*")
+        self.add_permissions_to_user(user=user_one, target_uri="/v1.0/process-models", permission_names=["read"])
 
         response = client.get(
             "/v1.0/process-models?recursive=true",
@@ -1095,7 +1103,7 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert len(response.json["results"]) == 1
-        assert response.json['results'][0]['id'] == 'all_users/hello_world'
+        assert response.json["results"][0]["id"] == "all_users/hello_world"
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["total"] == 1
         assert response.json["pagination"]["pages"] == 1
