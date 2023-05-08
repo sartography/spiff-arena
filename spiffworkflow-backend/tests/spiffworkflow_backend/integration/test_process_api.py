@@ -702,7 +702,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_process_group_list."""
         # add 5 groups
         for i in range(5):
             group_id = f"test_process_group_{i}"
@@ -997,14 +996,13 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert "test_group/random_fact" == response.json["process_model_identifier"]
 
-    def test_get_process_groups_when_none(
+    def test_process_group_list_when_none(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_process_groups_when_none."""
         response = client.get(
             "/v1.0/process-groups",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -1013,14 +1011,13 @@ class TestProcessApi(BaseTest):
         assert response.json is not None
         assert response.json["results"] == []
 
-    def test_get_process_groups_when_there_are_some(
+    def test_process_group_list_when_there_are_some(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_get_process_groups_when_there_are_some."""
         self.create_group_and_model_with_bpmn(client, with_super_admin_user)
         response = client.get(
             "/v1.0/process-groups",
@@ -1029,6 +1026,84 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
         assert len(response.json["results"]) == 1
+        assert response.json["pagination"]["count"] == 1
+        assert response.json["pagination"]["total"] == 1
+        assert response.json["pagination"]["pages"] == 1
+
+    def test_process_group_list_when_user_has_resticted_access(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="admin_only", process_model_id="random_fact"
+        )
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="all_users", process_model_id="hello_world"
+        )
+        user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-groups/all_users:*")
+        self.add_permissions_to_user(user=user_one, target_uri="/v1.0/process-groups", permission_names=["read"])
+
+        response = client.get(
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 2
+        assert response.json["pagination"]["count"] == 2
+        assert response.json["pagination"]["total"] == 2
+        assert response.json["pagination"]["pages"] == 1
+
+        response = client.get(
+            "/v1.0/process-groups",
+            headers=self.logged_in_headers(user_one),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 1
+        assert response.json["results"][0]["id"] == "all_users"
+        assert response.json["pagination"]["count"] == 1
+        assert response.json["pagination"]["total"] == 1
+        assert response.json["pagination"]["pages"] == 1
+
+    def test_process_model_list_when_user_has_resticted_access(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="admin_only", process_model_id="random_fact"
+        )
+        self.create_group_and_model_with_bpmn(
+            client, with_super_admin_user, process_group_id="all_users", process_model_id="hello_world"
+        )
+        user_one = self.create_user_with_permission(username="user_one", target_uri="/v1.0/process-models/all_users:*")
+        self.add_permissions_to_user(user=user_one, target_uri="/v1.0/process-models", permission_names=["read"])
+
+        response = client.get(
+            "/v1.0/process-models?recursive=true",
+            headers=self.logged_in_headers(with_super_admin_user),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 2
+        assert response.json["pagination"]["count"] == 2
+        assert response.json["pagination"]["total"] == 2
+        assert response.json["pagination"]["pages"] == 1
+
+        response = client.get(
+            "/v1.0/process-models?recursive=true",
+            headers=self.logged_in_headers(user_one),
+        )
+        assert response.status_code == 200
+        assert response.json is not None
+        assert len(response.json["results"]) == 1
+        assert response.json["results"][0]["id"] == "all_users/hello_world"
         assert response.json["pagination"]["count"] == 1
         assert response.json["pagination"]["total"] == 1
         assert response.json["pagination"]["pages"] == 1

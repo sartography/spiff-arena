@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+import uuid
 from glob import glob
 from typing import Any
 from typing import List
@@ -187,9 +188,7 @@ class ProcessModelService(FileSystemService):
         cls,
         process_group_id: Optional[str] = None,
         recursive: Optional[bool] = False,
-        filter_runnable_by_user: Optional[bool] = False,
     ) -> List[ProcessModelInfo]:
-        """Get process models."""
         process_models = []
         root_path = FileSystemService.root_path()
         if process_group_id:
@@ -205,21 +204,44 @@ class ProcessModelService(FileSystemService):
             process_model = cls.get_process_model_from_relative_path(os.path.dirname(process_model_relative_path))
             process_models.append(process_model)
         process_models.sort()
-
-        if filter_runnable_by_user:
-            user = UserService.current_user()
-            new_process_model_list = []
-            for process_model in process_models:
-                modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_model.id)
-                uri = f"/v1.0/process-instances/{modified_process_model_id}"
-                has_permission = AuthorizationService.user_has_permission(
-                    user=user, permission="create", target_uri=uri
-                )
-                if has_permission:
-                    new_process_model_list.append(process_model)
-            return new_process_model_list
-
         return process_models
+
+    @classmethod
+    def get_process_models_for_api(
+        cls,
+        process_group_id: Optional[str] = None,
+        recursive: Optional[bool] = False,
+        filter_runnable_by_user: Optional[bool] = False,
+    ) -> List[ProcessModelInfo]:
+        process_models = cls.get_process_models(process_group_id, recursive)
+
+        permission_to_check = "read"
+        permission_base_uri = "/v1.0/process-models"
+        user = UserService.current_user()
+        if filter_runnable_by_user:
+            permission_to_check = "create"
+            permission_base_uri = "/v1.0/process-instances"
+
+        # if user has access to uri/* with that permission then there's no reason to check each one individually
+        guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
+        has_permission = AuthorizationService.user_has_permission(
+            user=user,
+            permission=permission_to_check,
+            target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
+        )
+        if has_permission:
+            return process_models
+
+        new_process_model_list = []
+        for process_model in process_models:
+            modified_process_model_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_model.id)
+            uri = f"{permission_base_uri}/{modified_process_model_id}"
+            has_permission = AuthorizationService.user_has_permission(
+                user=user, permission=permission_to_check, target_uri=uri
+            )
+            if has_permission:
+                new_process_model_list.append(process_model)
+        return new_process_model_list
 
     @classmethod
     def get_parent_group_array_and_cache_it(
@@ -255,6 +277,38 @@ class ProcessModelService(FileSystemService):
         process_groups = cls.__scan_process_groups(process_group_id)
         process_groups.sort()
         return process_groups
+
+    @classmethod
+    def get_process_groups_for_api(
+        cls,
+        process_group_id: Optional[str] = None,
+    ) -> List[ProcessGroup]:
+        process_groups = cls.get_process_groups(process_group_id)
+
+        permission_to_check = "read"
+        permission_base_uri = "/v1.0/process-groups"
+        user = UserService.current_user()
+
+        # if user has access to uri/* with that permission then there's no reason to check each one individually
+        guid_of_non_existent_item_to_check_perms_against = str(uuid.uuid4())
+        has_permission = AuthorizationService.user_has_permission(
+            user=user,
+            permission=permission_to_check,
+            target_uri=f"{permission_base_uri}/{guid_of_non_existent_item_to_check_perms_against}",
+        )
+        if has_permission:
+            return process_groups
+
+        new_process_group_list = []
+        for process_group in process_groups:
+            modified_process_group_id = ProcessModelInfo.modify_process_identifier_for_path_param(process_group.id)
+            uri = f"{permission_base_uri}/{modified_process_group_id}"
+            has_permission = AuthorizationService.user_has_permission(
+                user=user, permission=permission_to_check, target_uri=uri
+            )
+            if has_permission:
+                new_process_group_list.append(process_group)
+        return new_process_group_list
 
     @classmethod
     def get_process_group(cls, process_group_id: str, find_direct_nested_items: bool = True) -> ProcessGroup:

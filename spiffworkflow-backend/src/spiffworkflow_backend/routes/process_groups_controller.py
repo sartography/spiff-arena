@@ -87,11 +87,7 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
 def process_group_list(
     process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
-    """Process_group_list."""
-    if process_group_identifier is not None:
-        process_groups = ProcessModelService.get_process_groups(process_group_identifier)
-    else:
-        process_groups = ProcessModelService.get_process_groups()
+    process_groups = ProcessModelService.get_process_groups_for_api(process_group_identifier)
     batch = ProcessModelService().get_batch(items=process_groups, page=page, per_page=per_page)
     pages = len(process_groups) // per_page
     remainder = len(process_groups) % per_page
