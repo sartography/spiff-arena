@@ -56,6 +56,17 @@ function SelectWidget({
     errorMessageForField = rawErrors[0];
   }
 
+  // ok. so in safari, the select widget showed the first option, whereas in chrome it forced you to select an option.
+  // this change causes chrome to also show the first option. now all browsers are consistent on our site. you no longer have to select anything.
+  // setting the value prop causes it to show the first option.
+  // calling onChange actually gets it set in the form data.
+  if (value === undefined) {
+    if (enumOptions) {
+      value = enumOptions[0].value;
+      onChange(value);
+    }
+  }
+
   // maybe use placeholder somehow. it was previously jammed into the helperText field,
   // but allowing ui:help to grab that spot seems much more appropriate.
 
