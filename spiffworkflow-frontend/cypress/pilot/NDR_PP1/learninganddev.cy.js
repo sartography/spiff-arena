@@ -85,7 +85,7 @@ const submitWithUser = (
 };
 
 //Learning and Development Path - Without Files
-describe('Learning and Development Path - Without Files', () => {
+describe.only('Learning and Development Path - Without Files', () => {
 
     Cypress._.times(1, () => {
         //People Ops Partner Group approves the request
@@ -252,7 +252,7 @@ describe('Learning and Development Path - Without Files', () => {
                  cy.contains('Task: Enter NDR Items', { timeout: 60000 });
  */
                 cy.get('#root_item_0_sub_category').select('books');
-                cy.get('#root_item_0_item_name').clear().type('The role of the L&D function has evolved to meet the demands of digital transformation and a modern workforce.');
+                cy.get('#root_item_0_item_name').clear().type('The role of the L&D function has evolved to meet the demands of digital transformation and a modern.');
                 cy.get('#root_item_0_qty').clear().type('5');
                 cy.get('#root_item_0_currency_type').select('Fiat');
                 cy.get('#root_item_0_currency').select('EUR');

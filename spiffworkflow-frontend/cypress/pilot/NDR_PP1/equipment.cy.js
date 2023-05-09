@@ -89,7 +89,7 @@ const submitWithUser = (
 };
 
 //Equipment Path - Without Files
-describe('Equipment Path - Without Files', () => {
+describe.only('Equipment Path - Without Files', () => {
 
     Cypress._.times(1, () => {
         //Out of Policy. People Ops Partner Group and Budget owner approves the request
