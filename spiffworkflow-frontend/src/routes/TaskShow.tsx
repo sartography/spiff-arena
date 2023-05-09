@@ -176,6 +176,9 @@ export default function TaskShow() {
     if (disabled) {
       return;
     }
+    if (!formObject) {
+      navigate(`/tasks`);
+    }
     let queryParams = '';
     if (submitType === FormSubmitType.Draft) {
       queryParams = '?save_as_draft=true';
