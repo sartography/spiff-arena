@@ -88,7 +88,7 @@ const submitWithUser = (
 };
 
 //Software and Licenses Path - Without Files
-describe('Software and Licenses Path - Without Files', () => {
+describe.only('Software and Licenses Path - Without Files', () => {
 
     Cypress._.times(1, () => {
 

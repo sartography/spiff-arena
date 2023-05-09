@@ -59,11 +59,13 @@ Cypress.Commands.add('login', (username, password) => {
 });
 
 Cypress.Commands.add('logout', (selector, ...args) => {
-  cy.getBySel('logout-button').click();
-
+  cy.wait(2000);
+  //cy.getBySel('logout-button').click();
+  cy.get('#root > div > header > div.cds--header__global > span:nth-child(3) > button > svg').click();
   if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
     // otherwise we can click logout, quickly load the next page, and the javascript
     // doesn't have time to actually sign you out
+    //cy.wait(4000);
     cy.contains('Sign in to your account');
   } else {
     cy.get('#spiff-login-button').should('exist');
@@ -104,7 +106,10 @@ Cypress.Commands.add(
   (expectAutoRedirectToHumanTask = false, returnToProcessModelShow = true) => {
     // cy.getBySel('start-process-instance').click();
     // click on button with text Start
-    cy.get('button')
+    //cy.get('button')
+    //cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/new-demand-request-procurement > div > button')
+    cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/request-goods-services > div > button')
+      //cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/raise-new-demand-request > div > button')
       .contains(/^Start$/)
       .click();
     if (expectAutoRedirectToHumanTask) {
