@@ -60,11 +60,8 @@ function SelectWidget({
   // this change causes chrome to also show the first option. now all browsers are consistent on our site. you no longer have to select anything.
   // setting the value prop causes it to show the first option.
   // calling onChange actually gets it set in the form data.
-  if (value === undefined) {
-    if (enumOptions) {
-      value = enumOptions[0].value;
-      onChange(value);
-    }
+  if (enumOptions && enumOptions[0].value !== '') {
+    enumOptions.unshift({ value: '', label: '' });
   }
 
   // maybe use placeholder somehow. it was previously jammed into the helperText field,
