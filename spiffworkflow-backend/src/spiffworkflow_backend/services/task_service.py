@@ -575,30 +575,6 @@ class TaskService:
         task_model["start_in_seconds"] = None
         task_model["end_in_seconds"] = None
 
-    @classmethod
-    def reset_task_model(
-        cls,
-        task_model: TaskModel,
-        state: str,
-        json_data_hash: Optional[str] = None,
-        python_env_data_hash: Optional[str] = None,
-    ) -> None:
-        if json_data_hash is None:
-            cls.update_task_data_on_task_model_and_return_dict_if_updated(task_model, {}, "json_data_hash")
-        else:
-            task_model.json_data_hash = json_data_hash
-        if python_env_data_hash is None:
-            cls.update_task_data_on_task_model_and_return_dict_if_updated(task_model, {}, "python_env_data")
-        else:
-            task_model.python_env_data_hash = python_env_data_hash
-
-        task_model.state = state
-        task_model.start_in_seconds = None
-        task_model.end_in_seconds = None
-
-        new_properties_json = copy.copy(task_model.properties_json)
-        new_properties_json["state"] = getattr(TaskState, state)
-        task_model.properties_json = new_properties_json
 
     @classmethod
     def get_extensions_from_task_model(cls, task_model: TaskModel) -> dict:
