@@ -86,7 +86,7 @@ const submitWithUser = (
 };
 
 //Consulting Fees Path - Without Files
-describe('Consulting Fees Path - Without Files', () => {
+describe.only('Consulting Fees Path - Without Files', () => {
   Cypress._.times(1, () => {
     //Budget owner approves the request
     it('Budget owner approves', () => {
