@@ -114,6 +114,23 @@ h2 {
   padding-left: 0;
 }
 
+.cds--btn--ghost.button-link-for-popover {
+  color: #f4f4f4;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link-for-popover:visited {
+  color: #f4f4f4;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link-for-popover:hover {
+  color: #f4f4f4;
+  padding-left: 0;
+}
+.cds--btn--ghost.button-link-for-popover:visited:hover {
+  color: #f4f4f4;
+  padding-left: 0;
+}
+
 .cds--header__global .cds--btn--primary {
   background-color: #161616
 }
@@ -198,6 +215,22 @@ h1.with-icons {
 
 .with-bottom-margin {
   margin-bottom: 1em;
+}
+
+#profile-user-button {
+  margin-right: 8px;
+}
+
+.hot-button:hover {
+  background-color: #161616;
+}
+
+#profile-user-button .cds--popover--tab-tip__button::after {
+  content: none;
+}
+
+#profile-user-button .cds--popover--tab-tip.cds--popover--open .cds--popover--tab-tip__button{
+  background-color: #161616;
 }
 
 .with-top-margin {
@@ -471,47 +504,10 @@ svg.notification-icon {
   border-radius: 50%;
   color: #fff;
   font-weight: bold;
+}
+
+.user-circle-for-list {
   margin-right: 10px;
-}
-
-.user-circle.color-1 {
-  background-color: #8e8e8e;
-}
-
-.user-circle.color-2 {
-  background-color: #a57c63;
-}
-
-.user-circle.color-3 {
-  background-color: #8f7c7c;
-}
-
-.user-circle.color-4 {
-  background-color: #9a927f;
-}
-
-.user-circle.color-5 {
-  background-color: #5e5d5d;
-}
-
-.user-circle.color-6 {
-  background-color: #676767;
-}
-
-.user-circle.color-7 {
-  background-color: #6d7d6d;
-}
-
-.user-circle.color-8 {
-  background-color: #7a7171;
-}
-
-.user-circle.color-9 {
-  background-color: #837d63;
-}
-
-.user-circle.color-10 {
-  background-color: #686a70;
 }
 
 /* Randomize color assignment */

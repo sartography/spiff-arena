@@ -1,6 +1,12 @@
 import {
+  Popover,
+  PopoverContent,
+  Button,
+  RadioButtonGroup,
+  RadioButton,
   Header,
   HeaderContainer,
+  HeaderMenu,
   HeaderMenuButton,
   SkipToContent,
   SideNav,
@@ -14,7 +20,7 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 // @ts-ignore
-import { Logout, Login } from '@carbon/icons-react';
+import { Settings, Logout, Login } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Can } from '@casl/react';
@@ -77,6 +83,40 @@ export default function NavigationBar() {
     return activeKey === menuItemPath;
   };
 
+  const [openTwo, setOpenTwo] = useState<boolean>(false);
+
+  const popover = (
+    <div style={{ display: 'flex' }} id="profile-user-button">
+      <Popover open={openTwo} isTabTip align="bottom-right">
+        <button
+          aria-label="User Actions"
+          className="hot-button"
+          type="button"
+          onClick={() => {
+            setOpenTwo(!openTwo);
+          }}
+        >
+          <div className="user-circle with-top-margin">
+            {UserService.getPreferredUsername()[0].toUpperCase()}
+          </div>
+        </button>
+        <PopoverContent className="p-3">
+          <p>{UserService.getPreferredUsername()}</p>
+          <p>{UserService.getUserEmail()}</p>
+          <hr />
+          <Button
+            kind="ghost"
+            className="button-link-for-popover"
+            onClick={handleLogout}
+          >
+            <Logout />
+            &nbsp;&nbsp;Sign out
+          </Button>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+
   const loginAndLogoutAction = () => {
     if (UserService.isLoggedIn()) {
       return (
@@ -86,16 +126,7 @@ export default function NavigationBar() {
               {SPIFF_ENVIRONMENT}
             </HeaderGlobalAction>
           ) : null}
-          <HeaderGlobalAction className="username-header-text unclickable-text">
-            {UserService.getPreferredUsername()}
-          </HeaderGlobalAction>
-          <HeaderGlobalAction
-            aria-label="Logout"
-            onClick={handleLogout}
-            data-qa="logout-button"
-          >
-            <Logout />
-          </HeaderGlobalAction>
+          {popover}
         </>
       );
     }
