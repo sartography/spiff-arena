@@ -405,7 +405,7 @@ describe('Initiate a Request - Without Files', () => {
                 cy.get('#root_item_1_unit_price').type('4500');
 
                 cy.get('button')
-                    .contains(/^Save as draft$/)
+                    .contains(/^Close$/)
                     .click();
 
                 //cy.get('button')
@@ -505,7 +505,7 @@ describe('Initiate a Request - Without Files', () => {
                 cy.get('.cds--text-area__wrapper').find('#root').type('2021 Newest HP 17.3 inch FHD Laptop, AMD Ryzen 5 5500U 6core(Beat i7-1160G7, up to 4.0GHz),16GB RAM, 1TB PCIe SSD, Bluetooth 4.2, WiFi, HDMI, USB-A&C, Windows 10 S, w/Ghost Manta Accessories, Silver\nhttps://www.amazon.com/HP-i7-11G7-Bluetooth-Windows');
 
                 cy.get('button')
-                    .contains(/^Save as draft$/)
+                    .contains(/^Close$/)
                     .click();
 
                // cy.get('button')

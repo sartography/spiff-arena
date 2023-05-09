@@ -347,20 +347,21 @@ export default function TaskShow() {
 
     if (task.state === 'READY') {
       let submitButtonText = 'Submit';
-      let saveAsDraftButton = null;
+      let closeButton = null;
       if (task.typename === 'ManualTask') {
         submitButtonText = 'Continue';
       } else if (task.typename === 'UserTask') {
-        saveAsDraftButton = (
+        closeButton = (
           <Button
-            id="save-as-draft-button"
+            id="close-button"
             disabled={disabled}
             kind="secondary"
+            title="Save changes without submitting."
             onClick={() =>
               handleFormSubmit(currentFormObject, null, FormSubmitType.Draft)
             }
           >
-            Save as draft
+            Close
           </Button>
         );
       }
@@ -369,7 +370,7 @@ export default function TaskShow() {
           <Button type="submit" id="submit-button" disabled={disabled}>
             {submitButtonText}
           </Button>
-          {saveAsDraftButton}
+          {closeButton}
           <>
             {task.signal_buttons.map((signal) => (
               <Button
