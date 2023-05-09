@@ -1,6 +1,6 @@
 
 //Software and License - Without Files
-describe('Initiate a Request - Without Files', () => {
+describe.only('Initiate a Request - Without Files', () => {
     Cypress._.times(1, () => {
         //Submit a Software and License request - Without Files
         it('Submit a Software and License request', () => {
@@ -610,7 +610,7 @@ describe('Initiate a Request - Without Files', () => {
         });
 
         //Cancel a Software and License request 2- Without Files
-        it.only('Cancel a Software and License request 2', () => {
+        it('Cancel a Software and License request 2', () => {
             let username = Cypress.env('requestor_username');
             let password = Cypress.env('requestor_password');
             cy.log('=====username : ' + username);

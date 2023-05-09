@@ -85,7 +85,7 @@ const submitWithUser = (
   cy.wait(2000);
 };
 
-describe('Other Fees Path - Without Files', () => {
+describe.only('Other Fees Path - Without Files', () => {
 
   Cypress._.times(1, () => {
     //Budget owner approves the request
