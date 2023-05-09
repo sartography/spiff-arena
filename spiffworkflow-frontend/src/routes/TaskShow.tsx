@@ -267,7 +267,6 @@ export default function TaskShow() {
     formData: any,
     errors: any
   ) => {
-    console.log('errors', errors);
     if ('properties' in jsonSchema) {
       Object.keys(jsonSchema.properties).forEach((propertyKey: string) => {
         const propertyMetadata = jsonSchema.properties[propertyKey];
