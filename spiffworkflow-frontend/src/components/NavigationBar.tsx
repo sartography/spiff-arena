@@ -1,4 +1,7 @@
 import {
+  Toggletip,
+  ToggletipButton,
+  ToggletipContent,
   Popover,
   PopoverContent,
   Button,
@@ -117,6 +120,33 @@ export default function NavigationBar() {
     </div>
   );
 
+  const toggletip = (
+    <div style={{ display: 'flex' }} id="profile-user-button">
+      <Toggletip defaultOpen isTabTip align="bottom-right">
+        <ToggletipButton
+          aria-label="User Actions"
+          className="profile-user-toggle-button"
+          type="button"
+        >
+          <div className="user-circle">
+            {UserService.getPreferredUsername()[0].toUpperCase()}
+          </div>
+        </ToggletipButton>
+        <ToggletipContent className="profile-user-toggletip">
+          <p>
+            <strong>{UserService.getPreferredUsername()}</strong>
+          </p>
+          <p>{UserService.getUserEmail()}</p>
+          <hr />
+          <Button className="button-link" onClick={handleLogout}>
+            <Logout />
+            &nbsp;&nbsp;Sign out
+          </Button>
+        </ToggletipContent>
+      </Toggletip>
+    </div>
+  );
+
   const loginAndLogoutAction = () => {
     if (UserService.isLoggedIn()) {
       return (
@@ -126,7 +156,7 @@ export default function NavigationBar() {
               {SPIFF_ENVIRONMENT}
             </HeaderGlobalAction>
           ) : null}
-          {popover}
+          {toggletip}
         </>
       );
     }

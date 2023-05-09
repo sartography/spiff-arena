@@ -114,20 +114,9 @@ h2 {
   padding-left: 0;
 }
 
-.cds--btn--ghost.button-link-for-popover {
+.cds--header__global .cds--btn--primary.button-link {
   color: #f4f4f4;
-  padding-left: 0;
-}
-.cds--btn--ghost.button-link-for-popover:visited {
-  color: #f4f4f4;
-  padding-left: 0;
-}
-.cds--btn--ghost.button-link-for-popover:hover {
-  color: #f4f4f4;
-  padding-left: 0;
-}
-.cds--btn--ghost.button-link-for-popover:visited:hover {
-  color: #f4f4f4;
+  background-color: #393939;
   padding-left: 0;
 }
 
@@ -217,11 +206,21 @@ h1.with-icons {
   margin-bottom: 1em;
 }
 
+.profile-user-toggletip {
+  background-color: #393939;
+  color: #f4f4f4;
+  margin-right: 8px;
+  margin-top: -20px;
+}
 #profile-user-button {
+  margin-top: 8px;
   margin-right: 8px;
 }
+#profile-user-button .cds--popover-content::before {
+  content: none;
+}
 
-.hot-button:hover {
+.profile-user-toggle-button:hover {
   background-color: #161616;
 }
 
