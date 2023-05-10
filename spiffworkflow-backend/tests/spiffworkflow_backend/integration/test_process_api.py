@@ -1623,6 +1623,10 @@ class TestProcessApi(BaseTest):
         assert process_instance.status == "terminated"
         assert ready_task.state == "CANCELLED"
 
+        # TODO: uncomment this once spiff is returning deleted tasks on cancel
+        # remaining_tasks = TaskModel.query.filter_by(process_instance_id=process_instance_id).all()
+        # assert len(remaining_tasks) == 3
+
     def test_process_instance_delete(
         self,
         app: Flask,
