@@ -1891,8 +1891,17 @@ class ProcessInstanceProcessor:
         return None
 
     def terminate(self) -> None:
-        """Terminate."""
-        self.bpmn_process_instance.cancel()
+        start_time = time.time()
+        deleted_tasks = self.bpmn_process_instance.cancel() or []
+        spiff_tasks = self.bpmn_process_instance.get_tasks()
+
+        task_service = TaskService(
+            process_instance=self.process_instance_model,
+            serializer=self._serializer,
+            bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
+        )
+        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
+
         self.save()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
