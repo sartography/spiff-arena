@@ -45,7 +45,8 @@ from spiffworkflow_backend.models.process_instance import (
 )
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import Task
+from spiffworkflow_backend.models.task import TaskModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _find_principal_or_raise,
@@ -400,6 +401,11 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
         extensions = TaskService.get_extensions_from_task_model(task_model)
         return _render_instructions_for_end_user(task_model, extensions)
 
+    def render_data(return_type: str, entity: Union[ApiError, Task, ProcessInstanceModel]) -> str:
+        return_hash: dict = {"type": return_type}
+        return_hash[return_type] = entity
+        return f"data: {current_app.json.dumps(return_hash)} \n\n"
+
     tasks = get_reportable_tasks()
     while True:
         for spiff_task in tasks:
@@ -411,23 +417,27 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     message=f"Failed to complete an automated task. Error was: {str(e)}",
                     status_code=400,
                 )
-                yield f"data: {current_app.json.dumps(api_error)} \n\n"
+                yield render_data("error", api_error)
                 raise e
             if instructions and spiff_task.id not in reported_ids:
                 task = ProcessInstanceService.spiff_task_to_api_task(processor, spiff_task)
                 task.properties = {"instructionsForEndUser": instructions}
-                yield f"data: {current_app.json.dumps(task)} \n\n"
+                yield render_data("task", task)
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
+                # do not do any processing if the instance is not currently active
+                if process_instance.status not in ProcessInstanceModel.active_statuses():
+                    yield render_data("unrunnable_instance", process_instance)
+                    break
                 try:
                     processor.do_engine_steps(execution_strategy_name="one_at_a_time")
                     processor.do_engine_steps(execution_strategy_name="run_until_user_message")
                     processor.save()  # Fixme - maybe find a way not to do this on every loop?
                 except WorkflowTaskException as wfe:
                     api_error = ApiError.from_workflow_exception(
-                        "engine_steps_error", "Failed complete an automated task.", exp=wfe
+                        "engine_steps_error", "Failed to complete an automated task.", exp=wfe
                     )
-                    yield f"data: {current_app.json.dumps(api_error)} \n\n"
+                    yield render_data("error", api_error)
                     return
                 except Exception as e:
                     api_error = ApiError(
@@ -435,7 +445,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                         message=f"Failed to complete an automated task. Error was: {str(e)}",
                         status_code=400,
                     )
-                    yield f"data: {current_app.json.dumps(api_error)} \n\n"
+                    yield render_data("error", api_error)
                     return
         processor.refresh_waiting_tasks()
         ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
@@ -454,10 +464,10 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                 message=f"Failed to complete an automated task. Error was: {str(e)}",
                 status_code=400,
             )
-            yield f"data: {current_app.json.dumps(api_error)} \n\n"
+            yield render_data("error", api_error)
             raise e
         task.properties = {"instructionsForEndUser": instructions}
-        yield f"data: {current_app.json.dumps(task)} \n\n"
+        yield render_data("task", task)
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
@@ -472,8 +482,9 @@ def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
     )
 
 
-def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[str, Optional[str], None]:
+def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[Optional[str], Optional[str], None]:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
+
     with ProcessInstanceQueueService.dequeued(process_instance):
         yield from _interstitial_stream(process_instance)
 

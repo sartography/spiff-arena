@@ -7,10 +7,15 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
+port="${SPIFFWORKFLOW_BACKEND_PORT:-7000}"
+
 arg="${1:-}"
 if [[ "$arg" == "acceptance" ]]; then
   export SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA=true
   export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME=acceptance_tests.yml
+elif [[ "$arg" == "localopenid" ]]; then
+  export SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL="http://localhost:$port/openid"
+  export SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME="example.yml"
 fi
 
 if [[ -z "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]]; then
@@ -38,5 +43,5 @@ else
   fi
 
   # this line blocks
-  SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER="${SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER}" FLASK_APP=src/spiffworkflow_backend poetry run flask run -p 7000
+  SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER="${SPIFFWORKFLOW_BACKEND_RUN_BACKGROUND_SCHEDULER}" FLASK_APP=src/spiffworkflow_backend poetry run flask run -p "$port" --host=0.0.0.0
 fi

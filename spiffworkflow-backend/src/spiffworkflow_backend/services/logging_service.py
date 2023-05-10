@@ -129,8 +129,27 @@ def setup_logger(app: Flask) -> None:
         spiff_logger_filehandler.setFormatter(log_formatter)
 
     # these loggers have been deemed too verbose to be useful
-    garbage_loggers_to_exclude = ["connexion", "flask_cors.extension"]
-    loggers_to_exclude_from_debug = ["sqlalchemy"]
+    garbage_loggers_to_exclude = ["connexion", "flask_cors.extension", "flask_cors.core", "sqlalchemy"]
+
+    # if you actually want one of these excluded loggers, there is a config option to turn it on
+    loggers_to_use = app.config.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE", [])
+    if loggers_to_use is None or loggers_to_use == "":
+        loggers_to_use = []
+    else:
+        loggers_to_use = loggers_to_use.split(",")
+    for logger_to_use in loggers_to_use:
+        if logger_to_use in garbage_loggers_to_exclude:
+            garbage_loggers_to_exclude.remove(logger_to_use)
+        else:
+            app.logger.warning(
+                f"Logger '{logger_to_use}' not found in garbage_loggers_to_exclude. You do not need to add it to"
+                " SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE."
+            )
+
+    loggers_to_exclude_from_debug = []
+
+    if "sqlalchemy" not in garbage_loggers_to_exclude:
+        loggers_to_exclude_from_debug.append("sqlalchemy")
 
     # make all loggers act the same
     for name in logging.root.manager.loggerDict:
