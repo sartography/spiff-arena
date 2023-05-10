@@ -21,6 +21,7 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.json_data import JsonDataDict
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -454,15 +455,14 @@ class TaskService:
             self.task_models[task_model.guid] = task_model
 
     def update_all_tasks_from_spiff_tasks(
-        self,
-        spiff_tasks: list[SpiffTask],
-        deleted_spiff_tasks: list[SpiffTask],
-        start_time: float
+        self, spiff_tasks: list[SpiffTask], deleted_spiff_tasks: list[SpiffTask], start_time: float
     ) -> None:
         # Remove all the deleted/pruned tasks from the database.
         deleted_task_ids = list(map(lambda t: str(t.id), deleted_spiff_tasks))
         tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_ids)).all()  # type: ignore
-        human_tasks_to_clear = HumanTaskModel.query.filter(HumanTaskModel.task_id.in_(deleted_task_ids)).all()  # type: ignore
+        human_tasks_to_clear = HumanTaskModel.query.filter(
+            HumanTaskModel.task_id.in_(deleted_task_ids)  # type: ignore
+        ).all()
         for task in tasks_to_clear + human_tasks_to_clear:
             db.session.delete(task)
 
