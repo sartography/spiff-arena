@@ -33,3 +33,5 @@ cypress/screenshots
 
 # Editors
 .idea
+
+/cypress.env
