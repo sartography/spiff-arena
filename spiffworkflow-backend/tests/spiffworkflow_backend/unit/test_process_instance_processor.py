@@ -473,7 +473,7 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_title == "Manual Task #1"
         processor = ProcessInstanceProcessor(process_instance)
-        processor.manual_complete_task(str(spiff_manual_task.id), execute=True)
+        processor.manual_complete_task(str(human_task_one.task_id), execute=True)
         processor = ProcessInstanceProcessor(process_instance)
         processor.resume()
         processor.do_engine_steps(save=True)

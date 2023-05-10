@@ -415,7 +415,6 @@ class ProcessInstanceProcessor:
         self.setup_processor_with_process_instance(
             process_instance_model=process_instance_model, validate_only=validate_only
         )
-        self.initialization_time = time.time()
 
     def setup_processor_with_process_instance(
         self, process_instance_model: ProcessInstanceModel, validate_only: bool = False
@@ -1200,10 +1199,7 @@ class ProcessInstanceProcessor:
         # Saving the workflow seems to reset the status
         self.suspend()
 
-    # FIXME: this currently cannot work for multi-instance tasks and loopback. It can somewhat for not those
-    #   if we can properly handling resetting children tasks. Right now if we set them all to FUTURE then
-    #   they never get picked up by spiff and processed. The process instance just stops after the to_task_guid
-    #   and marks itself complete without processing any of the children.
+
     @classmethod
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
         """Reset a process to an earlier state."""
@@ -1214,31 +1210,32 @@ class ProcessInstanceProcessor:
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
         processor = ProcessInstanceProcessor(process_instance)
-        processor.bpmn_process_instance.reset_task_from_id(UUID(to_task_guid))
+        deleted_tasks = processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
 
+        # Remove all the deleted/pruned tasks from the database.
+        deleted_task_ids = list(map(lambda t: str(t.id), deleted_tasks))
+        tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_ids)).all()
+        human_tasks_to_clear = HumanTaskModel.query.filter(HumanTaskModel.task_id.in_(deleted_task_ids)).all()
+        for task in tasks_to_clear + human_tasks_to_clear:
+            db.session.delete(task)
+
+        # Update the database with new taskss - Perhaps we should pull this out into it's own method, as it should help
+        # anytime we need to update the database with all modified tasks.
         spiff_tasks_updated = {}
-        for task in processor.bpmn_process_instance.get_tasks():
-             if task.last_state_change > start_time:
-                 spiff_tasks_updated[str(task.id)] = task
-
-        # Remove any human tasks that were updated.
-        human_tasks_to_clear = HumanTaskModel.query.filter(
-            HumanTaskModel.task_id.in_(list(spiff_tasks_updated.keys())  # type: ignore
-        )).all()
-        for record in human_tasks_to_clear:
-            db.session.delete(record)
-
+        # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
+        for spiff_task in processor.bpmn_process_instance.get_tasks():
+            if spiff_task.last_state_change > start_time:
+                spiff_tasks_updated[str(spiff_task.id)] = spiff_task
         task_service = TaskService(
             process_instance=processor.process_instance_model,
             serializer=processor._serializer,
             bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
         )
-
         for id, spiff_task in spiff_tasks_updated.items():
             task_service.update_task_model_with_spiff_task(spiff_task)
         task_service.save_objects_to_database()
 
-        # Why can't we just do this?
+        # Save the process
         processor.save()
         processor.suspend()
 
