@@ -86,43 +86,11 @@ export default function NavigationBar() {
     return activeKey === menuItemPath;
   };
 
-  const [openTwo, setOpenTwo] = useState<boolean>(false);
-
-  const popover = (
-    <div style={{ display: 'flex' }} id="profile-user-button">
-      <Popover open={openTwo} isTabTip align="bottom-right">
-        <button
-          aria-label="User Actions"
-          className="hot-button"
-          type="button"
-          onClick={() => {
-            setOpenTwo(!openTwo);
-          }}
-        >
-          <div className="user-circle with-top-margin">
-            {UserService.getPreferredUsername()[0].toUpperCase()}
-          </div>
-        </button>
-        <PopoverContent className="p-3">
-          <p>{UserService.getPreferredUsername()}</p>
-          <p>{UserService.getUserEmail()}</p>
-          <hr />
-          <Button
-            kind="ghost"
-            className="button-link-for-popover"
-            onClick={handleLogout}
-          >
-            <Logout />
-            &nbsp;&nbsp;Sign out
-          </Button>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
+  const [openProfileMenu, setOpenProfileMenu] = useState<boolean>(false);
 
   const toggletip = (
     <div style={{ display: 'flex' }} id="profile-user-button">
-      <Toggletip defaultOpen isTabTip align="bottom-right">
+      <Toggletip open={openProfileMenu} isTabTip align="bottom-right">
         <ToggletipButton
           aria-label="User Actions"
           className="profile-user-toggle-button"
