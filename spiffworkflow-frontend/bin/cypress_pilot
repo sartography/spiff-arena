@@ -30,6 +30,14 @@ if [[ -z "${CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK:-}" ]]; then
   export CYPRESS_SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK=true
 fi
 
+if [[ -f cypress.env ]]; then
+  # shellcheck disable=1091
+  source cypress.env
+else
+  >&2 echo "ERROR: This requires a cypress.env file to run. You may be able to use generate_pp1_cypress_env_configs."
+  exit 1
+fi
+
 cypress_run_file="/var/tmp/cypress_run"
 echo "Recording stats to ${cypress_run_file}"
 
@@ -44,7 +52,6 @@ for attempt in $(seq 1 "$ATTEMPTS" ); do
 
   start_time=$(date +%s)
   success="false"
-  # spec_pattern="cypress/pilot/**/*.cy.{js,jsx,ts,tsx}"
   spec_pattern="cypress/pilot/**/*.cy.{js,jsx,ts,tsx}"
   if ./node_modules/.bin/cypress "$command" -c specPattern="${spec_pattern}" --e2e --browser chrome "$@"; then
     success="true"

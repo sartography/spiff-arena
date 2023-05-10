@@ -1786,6 +1786,18 @@ class ProcessInstanceProcessor:
         )
         task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
 
+        # we may want to move this to task_service.update_all_tasks_from_spiff_tasks but not sure it's always good to it.
+        # for cancelled tasks, spiff only returns tasks that were cancelled, not the ones that were deleted so we have to find them
+        spiff_task_guids = [str(st.id) for st in spiff_tasks]
+        tasks_no_longer_in_spiff = TaskModel.query.filter(
+            and_(
+                TaskModel.process_instance_id == self.process_instance_model.id,
+                TaskModel.guid.not_in(spiff_task_guids),  # type: ignore
+            )
+        ).all()
+        for task in tasks_no_longer_in_spiff:
+            db.session.delete(task)
+
         self.save()
         self.process_instance_model.status = "terminated"
         db.session.add(self.process_instance_model)
