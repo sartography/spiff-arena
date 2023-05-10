@@ -20,6 +20,7 @@ from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessNotFoundError
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.json_data import JsonDataDict
 from spiffworkflow_backend.models.json_data import JsonDataModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
@@ -451,6 +452,28 @@ class TaskService:
                 )
             self.update_task_model(task_model, spiff_task)
             self.task_models[task_model.guid] = task_model
+
+    def update_all_tasks_from_spiff_tasks(
+        self, spiff_tasks: list[SpiffTask], deleted_spiff_tasks: list[SpiffTask], start_time: float
+    ) -> None:
+        # Remove all the deleted/pruned tasks from the database.
+        deleted_task_ids = list(map(lambda t: str(t.id), deleted_spiff_tasks))
+        tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_ids)).all()  # type: ignore
+        human_tasks_to_clear = HumanTaskModel.query.filter(
+            HumanTaskModel.task_id.in_(deleted_task_ids)  # type: ignore
+        ).all()
+        for task in tasks_to_clear + human_tasks_to_clear:
+            db.session.delete(task)
+
+        # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
+        # and other things may have been COMPLETED and are now MAYBE
+        spiff_tasks_updated = {}
+        for spiff_task in spiff_tasks:
+            if spiff_task.last_state_change > start_time:
+                spiff_tasks_updated[str(spiff_task.id)] = spiff_task
+        for _id, spiff_task in spiff_tasks_updated.items():
+            self.update_task_model_with_spiff_task(spiff_task)
+        self.save_objects_to_database()
 
     @classmethod
     def remove_spiff_task_from_parent(cls, spiff_task: SpiffTask, task_models: dict[str, TaskModel]) -> None:
