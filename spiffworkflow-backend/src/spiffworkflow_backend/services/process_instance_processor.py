@@ -2,7 +2,6 @@
 # TODO: clean up this service for a clear distinction between it and the process_instance_service
 #   where this points to the pi service
 import _strptime  # type: ignore
-import copy
 import decimal
 import json
 import logging
@@ -52,8 +51,6 @@ from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ign
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from SpiffWorkflow.util.deep_merge import DeepMerge  # type: ignore
-from sqlalchemy import and_
-from sqlalchemy import or_
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
@@ -423,9 +420,9 @@ class ProcessInstanceProcessor:
         tld.process_instance_id = process_instance_model.id
 
         # we want this to be the fully qualified path to the process model including all group subcomponents
-        current_app.config["THREAD_LOCAL_DATA"].process_model_identifier = (
-            f"{process_instance_model.process_model_identifier}"
-        )
+        current_app.config[
+            "THREAD_LOCAL_DATA"
+        ].process_model_identifier = f"{process_instance_model.process_model_identifier}"
 
         self.process_instance_model = process_instance_model
         self.process_model_service = ProcessModelService()
@@ -585,9 +582,9 @@ class ProcessInstanceProcessor:
                 bpmn_subprocess_definition.bpmn_identifier
             ] = bpmn_process_definition_dict
             spiff_bpmn_process_dict["subprocess_specs"][bpmn_subprocess_definition.bpmn_identifier]["task_specs"] = {}
-            bpmn_subprocess_definition_bpmn_identifiers[bpmn_subprocess_definition.id] = (
-                bpmn_subprocess_definition.bpmn_identifier
-            )
+            bpmn_subprocess_definition_bpmn_identifiers[
+                bpmn_subprocess_definition.id
+            ] = bpmn_subprocess_definition.bpmn_identifier
 
         task_definitions = TaskDefinitionModel.query.filter(
             TaskDefinitionModel.bpmn_process_definition_id.in_(  # type: ignore
@@ -1199,7 +1196,6 @@ class ProcessInstanceProcessor:
         # Saving the workflow seems to reset the status
         self.suspend()
 
-
     @classmethod
     def reset_process(cls, process_instance: ProcessInstanceModel, to_task_guid: str) -> None:
         """Reset a process to an earlier state."""
@@ -1223,8 +1219,6 @@ class ProcessInstanceProcessor:
         # Save the process
         processor.save()
         processor.suspend()
-
-
 
     @staticmethod
     def get_parser() -> MyCustomParser:
