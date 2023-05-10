@@ -83,7 +83,6 @@ function TypeAheadWidget({
       items={items}
       itemToString={itemToString}
       placeholder={`Start typing to search for ${category}...`}
-      titleText={`Type ahead search for ${category}`}
       selectedItem={selectedItem}
     />
   );
