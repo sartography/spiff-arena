@@ -462,7 +462,10 @@ class TaskService:
         human_tasks_to_clear = HumanTaskModel.query.filter(
             HumanTaskModel.task_id.in_(deleted_task_ids)  # type: ignore
         ).all()
-        for task in tasks_to_clear + human_tasks_to_clear:
+
+        # delete human tasks first to avoid potential conflicts when deleting tasks.
+        # otherwise sqlalchemy returns several warnings.
+        for task in human_tasks_to_clear + tasks_to_clear:
             db.session.delete(task)
 
         # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
@@ -473,6 +476,7 @@ class TaskService:
                 spiff_tasks_updated[str(spiff_task.id)] = spiff_task
         for _id, spiff_task in spiff_tasks_updated.items():
             self.update_task_model_with_spiff_task(spiff_task)
+
         self.save_objects_to_database()
 
     @classmethod
