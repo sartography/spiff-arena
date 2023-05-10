@@ -121,8 +121,8 @@ describe.only('Other Fees Path - Without Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -241,8 +241,8 @@ describe.only('Other Fees Path - Without Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -348,8 +348,8 @@ describe.only('Other Fees Path - Without Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -479,8 +479,8 @@ describe('Other Fees Path - With Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -639,8 +639,8 @@ describe('Other Fees Path - With Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -789,8 +789,8 @@ describe('Other Fees Path - With Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];

@@ -121,7 +121,7 @@ describe.only('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -229,7 +229,7 @@ describe.only('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -336,7 +336,7 @@ describe.only('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -462,7 +462,7 @@ describe.only('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -605,7 +605,7 @@ describe.only('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -712,7 +712,7 @@ describe.only('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -846,7 +846,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -996,7 +996,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1146,7 +1146,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1314,7 +1314,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1499,7 +1499,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1649,7 +1649,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
