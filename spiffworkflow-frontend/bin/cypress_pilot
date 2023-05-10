@@ -45,7 +45,7 @@ for attempt in $(seq 1 "$ATTEMPTS" ); do
   start_time=$(date +%s)
   success="false"
   # spec_pattern="cypress/pilot/**/*.cy.{js,jsx,ts,tsx}"
-  spec_pattern="cypress/pilot/*.cy.{js,jsx,ts,tsx}"
+  spec_pattern="cypress/pilot/**/*.cy.{js,jsx,ts,tsx}"
   if ./node_modules/.bin/cypress "$command" -c specPattern="${spec_pattern}" --e2e --browser chrome "$@"; then
     success="true"
   fi

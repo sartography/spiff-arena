@@ -1607,6 +1607,10 @@ class TestProcessApi(BaseTest):
         assert response.status_code == 200
         assert response.json is not None
 
+        ready_tasks = TaskModel.query.filter_by(process_instance_id=process_instance_id, state="READY").all()
+        assert len(ready_tasks) == 1
+        ready_task = ready_tasks[0]
+
         response = client.post(
             f"/v1.0/process-instance-terminate/{self.modify_process_identifier_for_path_param(process_model_identifier)}/{process_instance_id}",
             headers=self.logged_in_headers(with_super_admin_user),
@@ -1617,6 +1621,11 @@ class TestProcessApi(BaseTest):
         process_instance = ProcessInstanceModel.query.filter_by(id=process_instance_id).first()
         assert process_instance
         assert process_instance.status == "terminated"
+        assert ready_task.state == "CANCELLED"
+
+        # TODO: uncomment this once spiff is returning deleted tasks on cancel
+        # remaining_tasks = TaskModel.query.filter_by(process_instance_id=process_instance_id).all()
+        # assert len(remaining_tasks) == 3
 
     def test_process_instance_delete(
         self,
