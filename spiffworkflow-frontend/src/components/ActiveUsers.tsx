@@ -42,7 +42,7 @@ export default function ActiveUsers() {
     return (
       <div
         title={`${activeUser.username} is also viewing this page`}
-        className="user-circle"
+        className="user-circle user-circle-for-list"
       >
         {activeUser.username.charAt(0).toUpperCase()}
       </div>
