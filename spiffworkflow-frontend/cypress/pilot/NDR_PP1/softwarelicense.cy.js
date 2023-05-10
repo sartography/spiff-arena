@@ -14,7 +14,7 @@ const submitWithUser = (
     cy.log('=======visit find by id : ');
     cy.visit('/admin/process-instances/find-by-id');
     cy.wait(3000);
-    cy.get('#process-instance-id-input').type(processInstanceId);    
+    cy.get('#process-instance-id-input').type(processInstanceId);
     cy.get('button')
         .contains(/^Submit$/)
         .click();
@@ -125,7 +125,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(2000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -270,7 +270,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -378,7 +378,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
                     null,
                     "approve"
                 );
-                
+
                 submitWithUser(
                     infrasmeUsername,
                     infrasmePassword,
@@ -431,7 +431,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -538,7 +538,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -685,7 +685,7 @@ describe.only('Software and Licenses Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -835,7 +835,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -967,7 +967,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1115,7 +1115,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1222,7 +1222,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1369,7 +1369,7 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1519,7 +1519,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1706,7 +1706,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1898,7 +1898,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2048,7 +2048,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2238,7 +2238,7 @@ describe('Software and Licenses Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2430,7 +2430,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2629,7 +2629,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -2843,7 +2843,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -3014,7 +3014,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -3226,7 +3226,7 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
