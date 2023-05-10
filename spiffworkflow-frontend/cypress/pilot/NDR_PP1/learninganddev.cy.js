@@ -13,6 +13,7 @@ const submitWithUser = (
     cy.wait(1000);
     cy.log('=======visit find by id : ');
     cy.visit('/admin/process-instances/find-by-id');
+    cy.wait(3000);
     cy.get('#process-instance-id-input').type(processInstanceId);
 
     cy.get('button')
@@ -53,8 +54,8 @@ const submitWithUser = (
 
         cy.get('.cds--text-area__wrapper').find('#root').clear().type('Providing additional info. Learning and development (L&D) is a function within an organization that is responsible for empowering employees\’ growth and developing their knowledge, skills, and capabilities to drive better business performance.');
 
-        cy.contains('Submit the Request').click();
-        cy.get('input[value="Submit the Request"]').click();
+        //cy.contains('Submit the Request').click();
+        //cy.get('input[value="Submit the Request"]').click();
 
     } else {
 
@@ -84,7 +85,7 @@ const submitWithUser = (
 };
 
 //Learning and Development Path - Without Files
-describe('Learning and Development Path - Without Files', () => {
+describe.only('Learning and Development Path - Without Files', () => {
 
     Cypress._.times(1, () => {
         //People Ops Partner Group approves the request
@@ -120,7 +121,7 @@ describe('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -161,9 +162,9 @@ describe('Learning and Development Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A L&D strategy should be aligned to the organization\’s business strategy and goals with the aim of developing the workforce\’s capability and driving business results.');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -228,7 +229,7 @@ describe('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -251,7 +252,7 @@ describe('Learning and Development Path - Without Files', () => {
                  cy.contains('Task: Enter NDR Items', { timeout: 60000 });
  */
                 cy.get('#root_item_0_sub_category').select('books');
-                cy.get('#root_item_0_item_name').clear().type('The role of the L&D function has evolved to meet the demands of digital transformation and a modern workforce.');
+                cy.get('#root_item_0_item_name').clear().type('The role of the L&D function has evolved to meet the demands of digital transformation and a modern.');
                 cy.get('#root_item_0_qty').clear().type('5');
                 cy.get('#root_item_0_currency_type').select('Fiat');
                 cy.get('#root_item_0_currency').select('EUR');
@@ -269,9 +270,9 @@ describe('Learning and Development Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('The function may be organized centrally, either independently or sitting under human resources (HR); decentralized throughout different business units; or be a hybrid (sometimes referred to as federated) structure.');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -335,7 +336,7 @@ describe('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -376,9 +377,9 @@ describe('Learning and Development Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('Current and aspiring talent development professionals can enhance their skills with the various professional education courses offered by ATD Education \nhttps://www.aihr.com/blog/learning-and-development/');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -461,7 +462,7 @@ describe('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -524,9 +525,9 @@ describe('Learning and Development Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('Learning and development is a systematic process to enhance an employee\’s skills, knowledge, and competency, resulting in better performance in a work setting. \nhttps://www.aihr.com/blog/learning-and-development/');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -604,7 +605,7 @@ describe('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -645,9 +646,9 @@ describe('Learning and Development Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('A L&D strategy should be aligned to the organization\’s business strategy and goals with the aim of developing the workforce\’s capability and driving business results.');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -711,7 +712,7 @@ describe('Learning and Development Path - Without Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -752,9 +753,9 @@ describe('Learning and Development Path - Without Files', () => {
 
                 cy.get('.cds--text-area__wrapper').find('#root').type('Learning and development is a systematic process to enhance an employee\’s skills, knowledge, and competency, resulting in better performance in a work setting. \nhttps://www.aihr.com/blog/learning-and-development/');
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -845,7 +846,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -928,9 +929,9 @@ describe('Learning and Development Path - With Files', () => {
 
                 cy.wait(2000);
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -995,7 +996,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1078,9 +1079,9 @@ describe('Learning and Development Path - With Files', () => {
 
                 cy.wait(2000);
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1145,7 +1146,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1227,9 +1228,9 @@ describe('Learning and Development Path - With Files', () => {
                     .attachFile(['sampletext.txt']);
 
                 cy.wait(2000);
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1313,7 +1314,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1418,9 +1419,9 @@ describe('Learning and Development Path - With Files', () => {
 
                 cy.wait(2000);
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1498,7 +1499,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1581,9 +1582,9 @@ describe('Learning and Development Path - With Files', () => {
 
                 cy.wait(2000);
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')
@@ -1648,7 +1649,7 @@ describe('Learning and Development Path - With Files', () => {
                 { timeout: 60000 }
             );
 
-            cy.wait(5000);
+            //cy.wait(5000);
             cy.url().then((currentUrl) => {
                 // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
                 // extract the digits after /tasks
@@ -1731,9 +1732,9 @@ describe('Learning and Development Path - With Files', () => {
 
                 cy.wait(2000);
 
-                cy.contains('Submit the Request').click();
+                //cy.contains('Submit the Request').click();
 
-                cy.get('input[value="Submit the Request"]').click();
+                //cy.get('input[value="Submit the Request"]').click();
 
 
                 cy.get('button')

@@ -172,7 +172,7 @@ class ProcessInstanceModel(SpiffworkflowBaseDBModel):
 
     @classmethod
     def active_statuses(cls) -> list[str]:
-        return ["user_input_required", "waiting"]
+        return ["not_started", "user_input_required", "waiting"]
 
 
 class ProcessInstanceModelSchema(Schema):

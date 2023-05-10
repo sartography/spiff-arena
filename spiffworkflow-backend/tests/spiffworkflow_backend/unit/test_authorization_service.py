@@ -287,9 +287,9 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_basic."""
         expected_permissions = [
             ("/active-users/*", "read"),
+            ("/process-groups", "read"),
             ("/process-instances/find-by-id/*", "read"),
             ("/process-instances/for-me", "create"),
             ("/process-instances/report-metadata", "read"),
@@ -297,6 +297,7 @@ class TestAuthorizationService(BaseTest):
             ("/process-instances/reports/*", "delete"),
             ("/process-instances/reports/*", "read"),
             ("/process-instances/reports/*", "update"),
+            ("/process-models", "read"),
             ("/processes", "read"),
             ("/processes/callers", "read"),
             ("/service-tasks", "read"),

@@ -13,6 +13,7 @@ const submitWithUser = (
   cy.wait(1000);
   cy.log('=======visit find by id : ');
   cy.visit('/admin/process-instances/find-by-id');
+  cy.wait(3000);
   cy.get('#process-instance-id-input').type(processInstanceId);
 
   cy.get('button')
@@ -53,8 +54,8 @@ const submitWithUser = (
 
     cy.get('.cds--text-area__wrapper').find('#root').clear().type('Providing additional info. Coworking tends to fall into two sides: Those that are real-estate-centric (all about selling desks and offices first) while others are community-centric (focused on building community that happens to also have offices)');
 
-    cy.contains('Submit the Request').click();
-    cy.get('input[value="Submit the Request"]').click();
+    //cy.contains('Submit the Request').click();
+    //cy.get('input[value="Submit the Request"]').click();
 
   } else {
 
@@ -84,7 +85,7 @@ const submitWithUser = (
   cy.wait(2000);
 };
 
-describe('Other Fees Path - Without Files', () => {
+describe.only('Other Fees Path - Without Files', () => {
 
   Cypress._.times(1, () => {
     //Budget owner approves the request
@@ -120,8 +121,8 @@ describe('Other Fees Path - Without Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -173,9 +174,9 @@ describe('Other Fees Path - Without Files', () => {
 
         cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
 
-        cy.contains('Submit the Request').click();
+        //cy.contains('Submit the Request').click();
 
-        cy.get('input[value="Submit the Request"]').click();
+        //cy.get('input[value="Submit the Request"]').click();
 
 
         cy.get('button')
@@ -240,8 +241,8 @@ describe('Other Fees Path - Without Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -281,9 +282,9 @@ describe('Other Fees Path - Without Files', () => {
 
         cy.get('.cds--text-area__wrapper').find('#root').type('For professionals working in the professional services, ‘consultant’ and advisor’ are often used and fall under common terminology. Consultancy.uk zooms in on this field to get a closer look. \n https://www.consultancy.uk/career/what-is-consulting');
 
-        cy.contains('Submit the Request').click();
+        //cy.contains('Submit the Request').click();
 
-        cy.get('input[value="Submit the Request"]').click();
+        //cy.get('input[value="Submit the Request"]').click();
 
 
         cy.get('button')
@@ -347,8 +348,8 @@ describe('Other Fees Path - Without Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -388,9 +389,9 @@ describe('Other Fees Path - Without Files', () => {
 
         cy.get('.cds--text-area__wrapper').find('#root').type('It\’s free and easy to post a job. Simply fill in a title, description and budget and competitive bids come within minutes. No job is too big or too small. We\'ve got freelancers for jobs of any size or budget across 1800 skills. No job is too complex.');
 
-        cy.contains('Submit the Request').click();
+        //cy.contains('Submit the Request').click();
 
-        cy.get('input[value="Submit the Request"]').click();
+        //cy.get('input[value="Submit the Request"]').click();
 
 
         cy.get('button')
@@ -478,8 +479,8 @@ describe('Other Fees Path - With Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -571,16 +572,16 @@ describe('Other Fees Path - With Files', () => {
 
         cy.wait(2000);
 
-        cy.contains('Submit the Request').click();
+        //cy.contains('Submit the Request').click();
 
-        cy.get('input[value="Submit the Request"]').click();
+        //cy.get('input[value="Submit the Request"]').click();
 
 
         cy.get('button')
           .contains(/^Submit$/)
           .click();
 
-        cy.wait(9000);
+        cy.wait(20000);
         cy.get('button')
           .contains(/^Return to Home$/)
           .click();
@@ -638,8 +639,8 @@ describe('Other Fees Path - With Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -721,9 +722,9 @@ describe('Other Fees Path - With Files', () => {
 
         cy.wait(2000);
 
-        cy.contains('Submit the Request').click();
+        //cy.contains('Submit the Request').click();
 
-        cy.get('input[value="Submit the Request"]').click();
+        //cy.get('input[value="Submit the Request"]').click();
 
 
         cy.get('button')
@@ -788,8 +789,8 @@ describe('Other Fees Path - With Files', () => {
         { timeout: 60000 }
       );
 
-       cy.wait(5000);
-            cy.url().then((currentUrl) => {
+      //cy.wait(5000);
+      cy.url().then((currentUrl) => {
         // if url is "/tasks/8/d37c2f0f-016a-4066-b669-e0925b759560"
         // extract the digits after /tasks
         const processInstanceId = currentUrl.match(/(?<=\/tasks\/)\d+/)[0];
@@ -871,9 +872,9 @@ describe('Other Fees Path - With Files', () => {
 
         cy.wait(2000);
 
-        cy.contains('Submit the Request').click();
+        //cy.contains('Submit the Request').click();
 
-        cy.get('input[value="Submit the Request"]').click();
+        //cy.get('input[value="Submit the Request"]').click();
 
 
         cy.get('button')

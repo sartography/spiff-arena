@@ -214,8 +214,7 @@ def process_model_list(
     page: int = 1,
     per_page: int = 100,
 ) -> flask.wrappers.Response:
-    """Process model list!"""
-    process_models = ProcessModelService.get_process_models(
+    process_models = ProcessModelService.get_process_models_for_api(
         process_group_id=process_group_identifier,
         recursive=recursive,
         filter_runnable_by_user=filter_runnable_by_user,

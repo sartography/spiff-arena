@@ -1578,32 +1578,38 @@ export default function ProcessInstanceListTable({
       headers.push('Action');
     }
 
-    const rows = processInstances.map((row: ProcessInstance) => {
+    const rows = processInstances.map((processInstance: ProcessInstance) => {
       const currentRow = reportColumns().map((column: ReportColumn) => {
-        return formattedColumn(row, column);
+        return formattedColumn(processInstance, column);
       });
       if (showActionsColumn) {
         let buttonElement = null;
         const interstitialUrl = `/process/${modifyProcessIdentifierForPathParam(
-          row.process_model_identifier
-        )}/${row.id}/interstitial`;
+          processInstance.process_model_identifier
+        )}/${processInstance.id}/interstitial`;
         const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
         let hasAccessToCompleteTask = false;
         if (
           canCompleteAllTasks ||
-          (row.potential_owner_usernames || '').match(regex)
+          (processInstance.potential_owner_usernames || '').match(regex)
         ) {
           hasAccessToCompleteTask = true;
         }
 
+        let buttonText = 'View';
+        let buttonKind = 'ghost';
+        if (
+          processInstance.status !== 'suspended' &&
+          hasAccessToCompleteTask &&
+          processInstance.task_id
+        ) {
+          buttonText = 'Go';
+          buttonKind = 'secondary';
+        }
+
         buttonElement = (
-          <Button
-            kind={
-              hasAccessToCompleteTask && row.task_id ? 'secondary' : 'ghost'
-            }
-            href={interstitialUrl}
-          >
-            {hasAccessToCompleteTask && row.task_id ? 'Go' : 'View'}
+          <Button kind={buttonKind} href={interstitialUrl}>
+            {buttonText}
           </Button>
         );
         currentRow.push(<td>{buttonElement}</td>);
@@ -1611,18 +1617,18 @@ export default function ProcessInstanceListTable({
 
       const rowStyle = { cursor: 'pointer' };
       const modifiedModelId = modifyProcessIdentifierForPathParam(
-        row.process_model_identifier
+        processInstance.process_model_identifier
       );
       const navigateToProcessInstance = () => {
         navigate(
-          `${processInstanceShowPathPrefix}/${modifiedModelId}/${row.id}`
+          `${processInstanceShowPathPrefix}/${modifiedModelId}/${processInstance.id}`
         );
       };
       return (
         // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
         <tr
           style={rowStyle}
-          key={row.id}
+          key={processInstance.id}
           onClick={navigateToProcessInstance}
           onKeyDown={navigateToProcessInstance}
         >
