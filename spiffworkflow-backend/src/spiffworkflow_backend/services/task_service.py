@@ -1,6 +1,5 @@
 import copy
 import json
-from spiffworkflow_backend.models.human_task import HumanTaskModel
 import time
 from hashlib import sha256
 from typing import List
@@ -598,7 +597,6 @@ class TaskService:
         task_model["state"] = state
         task_model["start_in_seconds"] = None
         task_model["end_in_seconds"] = None
-
 
     @classmethod
     def get_extensions_from_task_model(cls, task_model: TaskModel) -> dict:
