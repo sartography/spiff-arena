@@ -1211,29 +1211,14 @@ class ProcessInstanceProcessor:
         )
         processor = ProcessInstanceProcessor(process_instance)
         deleted_tasks = processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
+        spiff_tasks = processor.bpmn_process_instance.get_tasks()
 
-        # Remove all the deleted/pruned tasks from the database.
-        deleted_task_ids = list(map(lambda t: str(t.id), deleted_tasks))
-        tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_ids)).all()
-        human_tasks_to_clear = HumanTaskModel.query.filter(HumanTaskModel.task_id.in_(deleted_task_ids)).all()
-        for task in tasks_to_clear + human_tasks_to_clear:
-            db.session.delete(task)
-
-        # Update the database with new taskss - Perhaps we should pull this out into it's own method, as it should help
-        # anytime we need to update the database with all modified tasks.
-        spiff_tasks_updated = {}
-        # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
-        for spiff_task in processor.bpmn_process_instance.get_tasks():
-            if spiff_task.last_state_change > start_time:
-                spiff_tasks_updated[str(spiff_task.id)] = spiff_task
         task_service = TaskService(
             process_instance=processor.process_instance_model,
             serializer=processor._serializer,
             bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
         )
-        for id, spiff_task in spiff_tasks_updated.items():
-            task_service.update_task_model_with_spiff_task(spiff_task)
-        task_service.save_objects_to_database()
+        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
 
         # Save the process
         processor.save()
