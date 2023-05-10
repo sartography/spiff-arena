@@ -435,7 +435,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     processor.save()  # Fixme - maybe find a way not to do this on every loop?
                 except WorkflowTaskException as wfe:
                     api_error = ApiError.from_workflow_exception(
-                        "engine_steps_error", "Failed complete an automated task.", exp=wfe
+                        "engine_steps_error", "Failed to complete an automated task.", exp=wfe
                     )
                     yield render_data("error", api_error)
                     return
