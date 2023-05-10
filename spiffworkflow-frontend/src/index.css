@@ -224,6 +224,8 @@ h1.with-icons {
 #profile-user-button .cds--popover--bottom-right .cds--popover-content {
   bottom: 11px;
   right: -2px;
+  border-radius: 5px;
+  border: 3px solid black;
 }
 
 #profile-user-button .cds--popover-caret {
