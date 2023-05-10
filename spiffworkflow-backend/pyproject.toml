@@ -30,7 +30,7 @@ werkzeug = "*"
 #SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "main"}
 # SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "6cad2981712bb61eca23af1adfafce02d3277cb9"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
-SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "032bedea65"}
+SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "309937362638ccc"}
 sentry-sdk = "^1.10"
 sphinx-autoapi = "^2.0"
 flask-bpmn = {git = "https://github.com/sartography/flask-bpmn", rev = "main"}
