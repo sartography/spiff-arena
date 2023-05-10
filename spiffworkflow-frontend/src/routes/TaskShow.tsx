@@ -176,8 +176,10 @@ export default function TaskShow() {
     if (disabled) {
       return;
     }
-    if (!formObject) {
+    const dataToSubmit = formObject?.formData;
+    if (!dataToSubmit) {
       navigate(`/tasks`);
+      return;
     }
     let queryParams = '';
     if (submitType === FormSubmitType.Draft) {
@@ -185,7 +187,6 @@ export default function TaskShow() {
     }
     setDisabled(true);
     removeError();
-    const dataToSubmit = formObject.formData;
     delete dataToSubmit.isManualTask;
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,
