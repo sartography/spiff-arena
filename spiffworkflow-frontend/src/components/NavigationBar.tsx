@@ -99,7 +99,11 @@ export default function NavigationBar() {
           </p>
           <p>{UserService.getUserEmail()}</p>
           <hr />
-          <Button className="button-link" onClick={handleLogout}>
+          <Button
+            data-qa="logout-button"
+            className="button-link"
+            onClick={handleLogout}
+          >
             <Logout />
             &nbsp;&nbsp;Sign out
           </Button>

@@ -44,13 +44,16 @@ Cypress.Commands.add('navigateToAdmin', () => {
 
 Cypress.Commands.add('login', (username, password) => {
   cy.visit('/admin');
-  console.log('username', username);
-  if (!username) {
-    username = Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
-    password = Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
+  let usernameToUse = username;
+  let passwordToUse = password;
+  if (!usernameToUse) {
+    usernameToUse =
+      Cypress.env('SPIFFWORKFLOW_FRONTEND_USERNAME') || 'ciadmin1';
+    passwordToUse =
+      Cypress.env('SPIFFWORKFLOW_FRONTEND_PASSWORD') || 'ciadmin1';
   }
-  cy.get('#username').type(username);
-  cy.get('#password').type(password);
+  cy.get('#username').type(usernameToUse);
+  cy.get('#password').type(passwordToUse);
   if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
     cy.get('#kc-login').click();
   } else {
@@ -58,14 +61,13 @@ Cypress.Commands.add('login', (username, password) => {
   }
 });
 
-Cypress.Commands.add('logout', (selector, ...args) => {
-  cy.wait(2000);
-  //cy.getBySel('logout-button').click();
-  cy.get('#root > div > header > div.cds--header__global > span:nth-child(3) > button > svg').click();
+Cypress.Commands.add('logout', (_selector, ..._args) => {
+  cy.get('#user-profile-toggletip').click();
+  cy.getBySel('logout-button').click();
   if (Cypress.env('SPIFFWORKFLOW_FRONTEND_AUTH_WITH_KEYCLOAK') === true) {
     // otherwise we can click logout, quickly load the next page, and the javascript
     // doesn't have time to actually sign you out
-    //cy.wait(4000);
+    // cy.wait(4000);
     cy.contains('Sign in to your account');
   } else {
     cy.get('#spiff-login-button').should('exist');
@@ -104,16 +106,10 @@ Cypress.Commands.add('createModel', (groupId, modelId, modelDisplayName) => {
 Cypress.Commands.add(
   'runPrimaryBpmnFile',
   (expectAutoRedirectToHumanTask = false, returnToProcessModelShow = true) => {
-    // cy.getBySel('start-process-instance').click();
-    // click on button with text Start
-    //cy.get('button')
-    //cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/new-demand-request-procurement > div > button')
-    cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/request-goods-services > div > button')
-      //cy.get('#process-model-tile-manage-procurement\\/procurement\\/requisition-order-management\\/raise-new-demand-request > div > button')
-      .contains(/^Start$/)
-      .click();
+    cy.getBySel('start-process-instance').click();
     if (expectAutoRedirectToHumanTask) {
-      // the url changes immediately, so also make sure we get some content from the next page, "Task:", or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
+      // the url changes immediately, so also make sure we get some content from the next page, "Task:",
+      // or else when we try to interact with the page, it'll re-render and we'll get an error with cypress.
       cy.url().should('include', `/tasks/`);
       cy.contains('Task: ', { timeout: 30000 });
     } else {

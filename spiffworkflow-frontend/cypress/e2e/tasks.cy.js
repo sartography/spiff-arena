@@ -81,7 +81,7 @@ describe('tasks', () => {
     cy.navigateToHome();
 
     // look for somethig to make sure the homepage has loaded
-    cy.contains('Waiting for me').should('exist');
+    cy.contains('Instances with tasks waiting for me').should('exist');
 
     // FIXME: this will probably need a better way to link to the proper form that we want
     cy.contains('Go').click();
