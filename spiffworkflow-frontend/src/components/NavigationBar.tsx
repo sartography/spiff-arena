@@ -2,14 +2,9 @@ import {
   Toggletip,
   ToggletipButton,
   ToggletipContent,
-  Popover,
-  PopoverContent,
   Button,
-  RadioButtonGroup,
-  RadioButton,
   Header,
   HeaderContainer,
-  HeaderMenu,
   HeaderMenuButton,
   SkipToContent,
   SideNav,
@@ -23,7 +18,7 @@ import {
   // @ts-ignore
 } from '@carbon/react';
 // @ts-ignore
-import { Settings, Logout, Login } from '@carbon/icons-react';
+import { Logout, Login } from '@carbon/icons-react';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Can } from '@casl/react';
@@ -86,21 +81,19 @@ export default function NavigationBar() {
     return activeKey === menuItemPath;
   };
 
-  const [openProfileMenu, setOpenProfileMenu] = useState<boolean>(false);
-
-  const toggletip = (
-    <div style={{ display: 'flex' }} id="profile-user-button">
-      <Toggletip open={openProfileMenu} isTabTip align="bottom-right">
+  const profileToggletip = (
+    <div style={{ display: 'flex' }} id="user-profile-toggletip">
+      <Toggletip isTabTip align="bottom-right">
         <ToggletipButton
           aria-label="User Actions"
-          className="profile-user-toggle-button"
+          className="user-profile-toggletip-button"
           type="button"
         >
           <div className="user-circle">
             {UserService.getPreferredUsername()[0].toUpperCase()}
           </div>
         </ToggletipButton>
-        <ToggletipContent className="profile-user-toggletip">
+        <ToggletipContent className="user-profile-toggletip-content">
           <p>
             <strong>{UserService.getPreferredUsername()}</strong>
           </p>
@@ -127,7 +120,7 @@ export default function NavigationBar() {
               {SPIFF_ENVIRONMENT}
             </HeaderGlobalAction>
           ) : null}
-          {toggletip}
+          {profileToggletip}
         </>
       );
     }

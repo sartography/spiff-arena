@@ -206,41 +206,41 @@ h1.with-icons {
   margin-bottom: 1em;
 }
 
-.profile-user-toggletip {
+.user-profile-toggletip-content {
   background-color: #393939;
   color: #f4f4f4;
   margin-right: 8px;
   margin-top: -20px;
 }
 
-#profile-user-button {
+#user-profile-toggletip {
   margin-top: 8px;
-  margin-right: 8px;
+  margin-right: 12px;
 }
-#profile-user-button .cds--popover-content::before {
+#user-profile-toggletip .cds--popover-content::before {
   content: none;
 }
 
-#profile-user-button .cds--popover--bottom-right .cds--popover-content {
+#user-profile-toggletip .cds--popover--bottom-right .cds--popover-content {
   bottom: 11px;
   right: -2px;
   border-radius: 5px;
   border: 3px solid black;
 }
 
-#profile-user-button .cds--popover-caret {
+#user-profile-toggletip .cds--popover-caret {
   display: none;
 }
 
-.profile-user-toggle-button:hover {
+.user-profile-toggletip-button:hover {
   background-color: #161616;
 }
 
-#profile-user-button .cds--popover--tab-tip__button::after {
+#user-profile-toggletip .cds--popover--tab-tip__button::after {
   content: none;
 }
 
-#profile-user-button .cds--popover--tab-tip.cds--popover--open .cds--popover--tab-tip__button{
+#user-profile-toggletip .cds--popover--tab-tip.cds--popover--open .cds--popover--tab-tip__button{
   background-color: #161616;
 }
 
