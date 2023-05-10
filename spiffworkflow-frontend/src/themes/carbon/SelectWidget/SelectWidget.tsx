@@ -19,7 +19,8 @@ function SelectWidget({
   placeholder,
   rawErrors = [],
 }: WidgetProps) {
-  const { enumOptions, enumDisabled } = options;
+  const { enumOptions } = options;
+  let { enumDisabled } = options;
 
   const emptyValue = multiple ? [] : '';
 
@@ -54,6 +55,36 @@ function SelectWidget({
     invalid = true;
     // errorMessageForField = `${labelToUse.replace(/\*$/, '')} ${rawErrors[0]}`;
     errorMessageForField = rawErrors[0];
+  }
+
+  // ok. so in safari, the select widget showed the first option, whereas in chrome it forced you to select an option.
+  // this change causes causes safari to act a little bit more like chrome, but it's different because we are actually adding
+  // an element to the dropdown.
+  //
+  // https://stackoverflow.com/a/7944490/6090676 safari detection
+  let isSafari = false;
+  const ua = navigator.userAgent.toLowerCase();
+  if (ua.indexOf('safari') != -1) {
+    if (ua.indexOf('chrome') === -1) {
+      isSafari = true;
+    }
+  }
+
+  if (isSafari) {
+    if (enumOptions && enumOptions[0].value !== '') {
+      enumOptions.unshift({
+        value: '',
+        label: '',
+      });
+    }
+    // enumDisabled is a list of values for which the option should be disabled.
+    // we don't really want users to select the fake empty option we are creating here.
+    // they cannot select it in chrome, after all.
+    // google is always right. https://news.ycombinator.com/item?id=35862041
+    if (enumDisabled === undefined) {
+      enumDisabled = [];
+    }
+    enumDisabled.push('');
   }
 
   // maybe use placeholder somehow. it was previously jammed into the helperText field,
