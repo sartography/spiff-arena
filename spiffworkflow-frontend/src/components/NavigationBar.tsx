@@ -152,7 +152,10 @@ export default function NavigationBar() {
       return (
         <>
           {SPIFF_ENVIRONMENT ? (
-            <HeaderGlobalAction className="spiff-environment-header-text unclickable-text">
+            <HeaderGlobalAction
+              title={`The current SpiffWorkflow environment is: ${SPIFF_ENVIRONMENT}`}
+              className="spiff-environment-header-text unclickable-text"
+            >
               {SPIFF_ENVIRONMENT}
             </HeaderGlobalAction>
           ) : null}

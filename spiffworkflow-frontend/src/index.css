@@ -212,12 +212,22 @@ h1.with-icons {
   margin-right: 8px;
   margin-top: -20px;
 }
+
 #profile-user-button {
   margin-top: 8px;
   margin-right: 8px;
 }
 #profile-user-button .cds--popover-content::before {
   content: none;
+}
+
+#profile-user-button .cds--popover--bottom-right .cds--popover-content {
+  bottom: 11px;
+  right: -2px;
+}
+
+#profile-user-button .cds--popover-caret {
+  display: none;
 }
 
 .profile-user-toggle-button:hover {
