@@ -17,5 +17,5 @@ def typeahead(category: str, prefix: str, limit: int) -> flask.wrappers.Response
     proxy_response = requests.get(url)
     status = proxy_response.status_code
     response = proxy_response.text
-        
+
     return Response(response, status=status, mimetype="application/json")
