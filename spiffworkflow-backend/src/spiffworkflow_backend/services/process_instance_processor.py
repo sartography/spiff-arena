@@ -1778,19 +1778,22 @@ class ProcessInstanceProcessor:
 
     def terminate(self) -> None:
         start_time = time.time()
-        deleted_tasks = self.bpmn_process_instance.cancel() or []
-        spiff_tasks = self.bpmn_process_instance.get_tasks()
+        initial_spiff_tasks = self.bpmn_process_instance.get_tasks()
+
+        self.bpmn_process_instance.cancel()
+        current_spiff_tasks = self.bpmn_process_instance.get_tasks()
+        deleted_spiff_tasks = [t for t in initial_spiff_tasks if t not in current_spiff_tasks]
 
         task_service = TaskService(
             process_instance=self.process_instance_model,
             serializer=self._serializer,
             bpmn_definition_to_task_definitions_mappings=self.bpmn_definition_to_task_definitions_mappings,
         )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
+        task_service.update_all_tasks_from_spiff_tasks(current_spiff_tasks, deleted_spiff_tasks, start_time)
 
         # we may want to move this to task_service.update_all_tasks_from_spiff_tasks but not sure it's always good to it.
         # for cancelled tasks, spiff only returns tasks that were cancelled, not the ones that were deleted so we have to find them
-        spiff_task_guids = [str(st.id) for st in spiff_tasks]
+        spiff_task_guids = [str(st.id) for st in current_spiff_tasks]
         tasks_no_longer_in_spiff = TaskModel.query.filter(
             and_(
                 TaskModel.process_instance_id == self.process_instance_model.id,
