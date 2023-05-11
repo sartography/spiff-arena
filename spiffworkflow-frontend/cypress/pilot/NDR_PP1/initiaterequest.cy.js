@@ -791,6 +791,10 @@ describe.only('Initiate a Request - Without Files', () => {
                     .contains(/^Cancel Request$/)
                     .click();
 
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
 
@@ -1399,7 +1403,7 @@ describe('Initiate a Request - With Files', () => {
                     .contains(/^Close$/)
                     .click();
 
-                    cy.wait(3000);
+                cy.wait(3000);
 
                 // cy.get('button')
                 //     .contains(/^Return to Home$/)
