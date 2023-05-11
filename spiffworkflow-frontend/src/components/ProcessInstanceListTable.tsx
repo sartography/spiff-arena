@@ -1597,22 +1597,27 @@ export default function ProcessInstanceListTable({
         }
 
         let buttonText = 'View';
-        let buttonKind = 'ghost';
-        if (
-          processInstance.status !== 'suspended' &&
-          hasAccessToCompleteTask &&
-          processInstance.task_id
-        ) {
+        if (hasAccessToCompleteTask && processInstance.task_id) {
           buttonText = 'Go';
-          buttonKind = 'secondary';
         }
 
         buttonElement = (
-          <Button kind={buttonKind} href={interstitialUrl}>
+          <Button kind='secondary' href={interstitialUrl}>
             {buttonText}
           </Button>
         );
-        currentRow.push(<td>{buttonElement}</td>);
+
+        console.log(processInstance.status);
+        if (
+          processInstance.status === 'not_started' ||
+          processInstance.status === 'user_input_required' ||
+          processInstance.status === 'waiting' ||
+          processInstance.status === 'complete'
+        ) {
+          currentRow.push(<td>{buttonElement}</td>);
+        } else {
+          currentRow.push(<td />);
+        }
       }
 
       const rowStyle = { cursor: 'pointer' };
