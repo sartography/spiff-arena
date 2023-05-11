@@ -1207,15 +1207,18 @@ class ProcessInstanceProcessor:
             process_instance, ProcessInstanceEventType.process_instance_rewound_to_task.value, task_guid=to_task_guid
         )
         processor = ProcessInstanceProcessor(process_instance)
-        deleted_tasks = processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
-        spiff_tasks = processor.bpmn_process_instance.get_tasks()
+        initial_spiff_tasks = processor.bpmn_process_instance.get_tasks()
+
+        processor.bpmn_process_instance.reset_from_task_id(UUID(to_task_guid))
+        current_spiff_tasks = processor.bpmn_process_instance.get_tasks()
+        deleted_spiff_tasks = [t for t in initial_spiff_tasks if t not in current_spiff_tasks]
 
         task_service = TaskService(
             process_instance=processor.process_instance_model,
             serializer=processor._serializer,
             bpmn_definition_to_task_definitions_mappings=processor.bpmn_definition_to_task_definitions_mappings,
         )
-        task_service.update_all_tasks_from_spiff_tasks(spiff_tasks, deleted_tasks, start_time)
+        task_service.update_all_tasks_from_spiff_tasks(current_spiff_tasks, deleted_spiff_tasks, start_time)
 
         # Save the process
         processor.save()
@@ -1662,9 +1665,7 @@ class ProcessInstanceProcessor:
         """Complete_task."""
         task_model = TaskModel.query.filter_by(guid=human_task.task_id).first()
         if task_model is None:
-            raise TaskNotFoundError(
-                f"Cannot find a task with guid {self.process_instance_model.id} and task_id is {human_task.task_id}"
-            )
+            raise TaskNotFoundError(f"Cannot find a task with guid {human_task.task_id}")
 
         task_model.start_in_seconds = time.time()
         self.bpmn_process_instance.run_task_from_id(spiff_task.id)

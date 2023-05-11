@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import {
   useParams,
@@ -40,6 +40,7 @@ import {
 import ButtonWithConfirmation from '../components/ButtonWithConfirmation';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import {
+  ErrorForDisplay,
   EventDefinition,
   PermissionsToCheck,
   ProcessData,
@@ -128,12 +129,18 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     processInstanceLogListPageBaseUrl = `/admin/logs/${params.process_model_id}/${params.process_instance_id}`;
   }
 
+  const handleAddErrorInUseEffect = useCallback((value: ErrorForDisplay) => {
+    addError(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (!permissionsLoaded) {
       return undefined;
     }
-    const processTaskFailure = () => {
+    const processTaskFailure = (result: any) => {
       setTasksCallHadError(true);
+      handleAddErrorInUseEffect(result);
     };
     const processTasksSuccess = (results: Task[]) => {
       if (params.to_task_guid) {
@@ -190,6 +197,7 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
     searchParams,
     taskListPath,
     variant,
+    handleAddErrorInUseEffect,
   ]);
 
   const deleteProcessInstance = () => {
