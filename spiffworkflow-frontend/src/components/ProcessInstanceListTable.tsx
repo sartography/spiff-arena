@@ -1607,7 +1607,6 @@ export default function ProcessInstanceListTable({
           </Button>
         );
 
-        console.log(processInstance.status);
         if (
           processInstance.status === 'not_started' ||
           processInstance.status === 'user_input_required' ||
