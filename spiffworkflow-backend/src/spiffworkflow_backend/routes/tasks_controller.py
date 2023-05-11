@@ -388,8 +388,6 @@ def _render_instructions_for_end_user(task_model: TaskModel, extensions: Optiona
 
 
 def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[str, Optional[str], None]:
-    processor = ProcessInstanceProcessor(process_instance)
-    reported_ids = []  # A list of all the ids reported by this endpoint so far.
 
     def get_reportable_tasks() -> Any:
         return processor.bpmn_process_instance.get_tasks(
@@ -406,6 +404,13 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
         return_hash[return_type] = entity
         return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
+    # do not do any processing if the instance is not currently active
+    if process_instance.status not in ProcessInstanceModel.active_statuses():
+        yield render_data("unrunnable_instance", process_instance)
+        return
+
+    processor = ProcessInstanceProcessor(process_instance)
+    reported_ids = []  # A list of all the ids reported by this endpoint so far.
     tasks = get_reportable_tasks()
     while True:
         for spiff_task in tasks:
@@ -425,10 +430,6 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                 yield render_data("task", task)
                 reported_ids.append(spiff_task.id)
             if spiff_task.state == TaskState.READY:
-                # do not do any processing if the instance is not currently active
-                if process_instance.status not in ProcessInstanceModel.active_statuses():
-                    yield render_data("unrunnable_instance", process_instance)
-                    break
                 try:
                     processor.do_engine_steps(execution_strategy_name="one_at_a_time")
                     processor.do_engine_steps(execution_strategy_name="run_until_user_message")
