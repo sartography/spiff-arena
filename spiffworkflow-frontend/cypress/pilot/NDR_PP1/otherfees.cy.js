@@ -99,7 +99,7 @@ describe.only('Other Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
@@ -219,7 +219,7 @@ describe.only('Other Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
@@ -326,7 +326,7 @@ describe.only('Other Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
@@ -457,7 +457,7 @@ describe('Other Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
@@ -617,7 +617,7 @@ describe('Other Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
@@ -767,7 +767,7 @@ describe('Other Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
