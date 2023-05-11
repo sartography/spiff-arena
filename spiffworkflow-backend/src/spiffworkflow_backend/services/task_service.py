@@ -29,6 +29,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 
@@ -456,17 +457,27 @@ class TaskService:
     def update_all_tasks_from_spiff_tasks(
         self, spiff_tasks: list[SpiffTask], deleted_spiff_tasks: list[SpiffTask], start_time: float
     ) -> None:
+        """Update given spiff tasks in the database and remove deleted tasks."""
         # Remove all the deleted/pruned tasks from the database.
-        deleted_task_ids = list(map(lambda t: str(t.id), deleted_spiff_tasks))
-        tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_ids)).all()  # type: ignore
+        deleted_task_guids = list(map(lambda t: str(t.id), deleted_spiff_tasks))
+        tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
         human_tasks_to_clear = HumanTaskModel.query.filter(
-            HumanTaskModel.task_id.in_(deleted_task_ids)  # type: ignore
+            HumanTaskModel.task_id.in_(deleted_task_guids)  # type: ignore
         ).all()
 
         # delete human tasks first to avoid potential conflicts when deleting tasks.
         # otherwise sqlalchemy returns several warnings.
         for task in human_tasks_to_clear + tasks_to_clear:
             db.session.delete(task)
+        db.session.commit()
+
+        bpmn_processes_to_delete = (
+            BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(deleted_task_guids))  # type: ignore
+            .order_by(BpmnProcessModel.id.desc())  # type: ignore
+            .all()
+        )
+        for bpmn_process in bpmn_processes_to_delete:
+            db.session.delete(bpmn_process)
 
         # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
         # and other things may have been COMPLETED and are now MAYBE
@@ -570,6 +581,10 @@ class TaskService:
         bpmn_process_identifiers: list[str] = []
         if bpmn_process.guid:
             task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
+            if task_model is None:
+                raise TaskNotFoundError(
+                    f"Cannot find the corresponding task for the bpmn process with guid {bpmn_process.guid}."
+                )
             (
                 parent_bpmn_processes,
                 _task_models_of_parent_bpmn_processes,
