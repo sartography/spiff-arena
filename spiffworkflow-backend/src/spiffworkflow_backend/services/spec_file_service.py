@@ -131,12 +131,12 @@ class SpecFileService(FileSystemService):
                 has_lanes = sub_parser.has_lanes()
                 is_executable = sub_parser.process_executable
                 start_messages = sub_parser.start_messages()
-                is_primary = sub_parser.get_id() == process_model_info.primary_process_id
+                is_primary = sub_parser.bpmn_id == process_model_info.primary_process_id
                 called_element_ids = sub_parser.called_element_ids()
 
             references.append(
                 SpecReference(
-                    identifier=sub_parser.get_id(),
+                    identifier=sub_parser.bpmn_id,
                     display_name=sub_parser.get_name(),
                     process_model_id=process_model_info.id,
                     type=parser_type,

@@ -20,8 +20,8 @@ from flask import make_response
 from flask import stream_with_context
 from flask.wrappers import Response
 from jinja2 import TemplateSyntaxError
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 from sqlalchemy import and_
@@ -471,15 +471,7 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
 
 
 def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
-    return len(
-        list(
-            [
-                t
-                for t in bpmn_process_instance.get_tasks(TaskState.READY)
-                if bpmn_process_instance._is_engine_task(t.task_spec)
-            ]
-        )
-    )
+    return len(list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual]))
 
 
 def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[Optional[str], Optional[str], None]:
