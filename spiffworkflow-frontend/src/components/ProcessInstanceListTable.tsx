@@ -1602,7 +1602,7 @@ export default function ProcessInstanceListTable({
         }
 
         buttonElement = (
-          <Button kind='secondary' href={interstitialUrl}>
+          <Button kind="secondary" href={interstitialUrl}>
             {buttonText}
           </Button>
         );
