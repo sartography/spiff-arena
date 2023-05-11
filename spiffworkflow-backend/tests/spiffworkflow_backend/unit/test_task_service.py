@@ -181,5 +181,3 @@ class TestTaskService(BaseTest):
         assert signal_event["event"]["name"] == "eat_spam"
         assert signal_event["event"]["typename"] == "SignalEventDefinition"
         assert signal_event["label"] == "Eat Spam"
-
-        print(events)
