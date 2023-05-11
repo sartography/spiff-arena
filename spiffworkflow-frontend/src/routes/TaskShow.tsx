@@ -23,7 +23,7 @@ import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
 import InstructionsForEndUser from '../components/InstructionsForEndUser';
 
 // TODO: move this somewhere else
-function TypeAheadWidget({
+function TypeaheadWidget({
   id,
   onChange,
   options: { category, itemFormat },
@@ -60,7 +60,7 @@ function TypeAheadWidget({
     }
   };
 
-  const typeAheadSearch = (inputText: string) => {
+  const typeaheadSearch = (inputText: string) => {
     if (inputText) {
       lastSearchTerm.current = inputText;
       // TODO: check cache of prefixes -> results
@@ -74,7 +74,7 @@ function TypeAheadWidget({
 
   return (
     <ComboBox
-      onInputChange={typeAheadSearch}
+      onInputChange={typeaheadSearch}
       onChange={(event: any) => {
         setSelectedItem(event.selectedItem);
         onChange(itemToString(event.selectedItem));
@@ -393,7 +393,7 @@ export default function TaskShow() {
       return getFieldsWithDateValidations(jsonSchema, formData, errors);
     };
 
-    const widgets = { typeAhead: TypeAheadWidget };
+    const widgets = { typeahead: TypeaheadWidget };
 
     return (
       <Grid fullWidth condensed>
