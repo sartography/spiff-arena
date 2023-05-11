@@ -226,14 +226,18 @@ class TestProcessInstanceService(BaseTest):
 
     def test_does_skip_duration_timer_events_for_the_future(self) -> None:
         assert ProcessInstanceService.waiting_event_can_be_skipped(
-            {"event_type": "Duration Timer", "name": None, "value": "2023-04-27T20:15:10.626656+00:00"},
+            {"event_type": "DurationTimerEventDefinition", "name": None, "value": "2023-04-27T20:15:10.626656+00:00"},
             datetime.fromisoformat("2023-04-26T20:15:10.626656+00:00"),
         )
 
     def test_does_not_skip_duration_timer_events_for_the_past(self) -> None:
         assert not (
             ProcessInstanceService.waiting_event_can_be_skipped(
-                {"event_type": "Duration Timer", "name": None, "value": "2023-04-27T20:15:10.626656+00:00"},
+                {
+                    "event_type": "DurationTimerEventDefinition",
+                    "name": None,
+                    "value": "2023-04-27T20:15:10.626656+00:00",
+                },
                 datetime.fromisoformat("2023-04-28T20:15:10.626656+00:00"),
             )
         )
@@ -241,7 +245,11 @@ class TestProcessInstanceService(BaseTest):
     def test_does_not_skip_duration_timer_events_for_now(self) -> None:
         assert not (
             ProcessInstanceService.waiting_event_can_be_skipped(
-                {"event_type": "Duration Timer", "name": None, "value": "2023-04-27T20:15:10.626656+00:00"},
+                {
+                    "event_type": "DurationTimerEventDefinition",
+                    "name": None,
+                    "value": "2023-04-27T20:15:10.626656+00:00",
+                },
                 datetime.fromisoformat("2023-04-27T20:15:10.626656+00:00"),
             )
         )

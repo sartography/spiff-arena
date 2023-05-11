@@ -1778,7 +1778,6 @@ class TestProcessApi(BaseTest):
         # The second script task should produce rendered jinja text
         # The Manual Task should then return a message as well.
         assert len(results) == 2
-        # import pdb; pdb.set_trace()
         assert json_results[0]["task"]["state"] == "READY"
         assert json_results[0]["task"]["title"] == "Script Task #2"
         assert json_results[0]["task"]["properties"]["instructionsForEndUser"] == "I am Script Task 2"
@@ -2740,7 +2739,7 @@ class TestProcessApi(BaseTest):
         )
         assert response.status_code == 200
         assert response.json is not None
-        assert response.json["type"] == "End Event"
+        assert response.json["type"] == "Default End Event"
         assert response.json["state"] == "COMPLETED"
 
         response = client.get(

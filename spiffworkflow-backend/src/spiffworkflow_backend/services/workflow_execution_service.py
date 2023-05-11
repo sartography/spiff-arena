@@ -9,10 +9,10 @@ from typing import Dict
 from typing import Optional
 from uuid import UUID
 
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import SpiffWorkflowException  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
 
@@ -99,13 +99,7 @@ class ExecutionStrategy:
         self.delegate.save(bpmn_process_instance)
 
     def get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        tasks = list(
-            [
-                t
-                for t in bpmn_process_instance.get_tasks(TaskState.READY)
-                if bpmn_process_instance._is_engine_task(t.task_spec)
-            ]
-        )
+        tasks = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
 
         if len(tasks) > 0:
             self.subprocess_spec_loader()
@@ -297,7 +291,7 @@ class RunUntilServiceTaskExecutionStrategy(ExecutionStrategy):
         engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
         while engine_steps:
             for spiff_task in engine_steps:
-                if spiff_task.task_spec.spec_type == "Service Task":
+                if spiff_task.task_spec.description == "Service Task":
                     return
                 self.delegate.will_complete_task(spiff_task)
                 spiff_task.run()
@@ -427,7 +421,6 @@ class WorkflowExecutionService:
                 self.process_instance_saver()
 
     def process_bpmn_messages(self) -> None:
-        """Process_bpmn_messages."""
         bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
         for bpmn_message in bpmn_messages:
             message_instance = MessageInstanceModel(
@@ -452,9 +445,8 @@ class WorkflowExecutionService:
             db.session.commit()
 
     def queue_waiting_receive_messages(self) -> None:
-        """Queue_waiting_receive_messages."""
         waiting_events = self.bpmn_process_instance.waiting_events()
-        waiting_message_events = filter(lambda e: e["event_type"] == "Message", waiting_events)
+        waiting_message_events = filter(lambda e: e["event_type"] == "MessageEventDefinition", waiting_events)
 
         for event in waiting_message_events:
             # Ensure we are only creating one message instance for each waiting message

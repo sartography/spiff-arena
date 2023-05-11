@@ -4,7 +4,7 @@ from typing import Optional
 from typing import Tuple
 
 from flask import g
-from SpiffWorkflow.exceptions import WorkflowTaskException  # type: ignore
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
