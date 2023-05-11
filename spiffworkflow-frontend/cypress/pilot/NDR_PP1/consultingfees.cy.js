@@ -42,7 +42,7 @@ const submitWithUser = (
     cy.get('button')
       .contains(/^Submit$/)
       .click();
-    //Form 2      
+    //Form 2
     /*cy.contains('Task: Enter NDR Items', { timeout: 60000 });
     cy.get('button')
       .contains(/^Submit$/)
@@ -99,18 +99,18 @@ describe.only('Consulting Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
       /*      cy.contains('Please select the type of request to start the process.');
             // wait a second to ensure we can click the radio button
-      
+
             cy.wait(2000);
             cy.get('input#root-procurement').click();
             cy.wait(2000);
-      
-      
+
+
             cy.get('button')
               .contains(/^Submit$/)
               .click();
@@ -228,18 +228,18 @@ describe.only('Consulting Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
       /*      cy.contains('Please select the type of request to start the process.');
             // wait a second to ensure we can click the radio button
-      
+
             cy.wait(2000);
             cy.get('input#root-procurement').click();
             cy.wait(2000);
-      
-      
+
+
             cy.get('button')
               .contains(/^Submit$/)
               .click();
@@ -357,18 +357,18 @@ describe.only('Consulting Fees Path - Without Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
       /*      cy.contains('Please select the type of request to start the process.');
             // wait a second to ensure we can click the radio button
-      
+
             cy.wait(2000);
             cy.get('input#root-procurement').click();
             cy.wait(2000);
-      
-      
+
+
             cy.get('button')
               .contains(/^Submit$/)
               .click();
@@ -511,18 +511,18 @@ describe('Consulting Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
       /*      cy.contains('Please select the type of request to start the process.');
             // wait a second to ensure we can click the radio button
-      
+
             cy.wait(2000);
             cy.get('input#root-procurement').click();
             cy.wait(2000);
-      
-      
+
+
             cy.get('button')
               .contains(/^Submit$/)
               .click();
@@ -679,18 +679,18 @@ describe('Consulting Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
       /*      cy.contains('Please select the type of request to start the process.');
             // wait a second to ensure we can click the radio button
-      
+
             cy.wait(2000);
             cy.get('input#root-procurement').click();
             cy.wait(2000);
-      
-      
+
+
             cy.get('button')
               .contains(/^Submit$/)
               .click();
@@ -850,18 +850,18 @@ describe('Consulting Fees Path - With Files', () => {
       cy.visit('/');
 
       cy.contains('Start New +').click();
-      cy.contains('Request Goods or Services');
+      cy.contains('Request Goods or Services').click();
 
       cy.runPrimaryBpmnFile(true);
 
       /*      cy.contains('Please select the type of request to start the process.');
             // wait a second to ensure we can click the radio button
-      
+
             cy.wait(2000);
             cy.get('input#root-procurement').click();
             cy.wait(2000);
-      
-      
+
+
             cy.get('button')
               .contains(/^Submit$/)
               .click();
@@ -1026,5 +1026,3 @@ describe('Consulting Fees Path - With Files', () => {
 
   });
 });
-
-

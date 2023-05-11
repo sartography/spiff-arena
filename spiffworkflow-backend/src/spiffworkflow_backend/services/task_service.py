@@ -29,6 +29,7 @@ from spiffworkflow_backend.models.process_instance_event import ProcessInstanceE
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
 from spiffworkflow_backend.models.spec_reference import SpecReferenceNotFoundError
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
+from spiffworkflow_backend.models.task import TaskNotFoundError
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
 from spiffworkflow_backend.services.process_instance_tmp_service import ProcessInstanceTmpService
 
@@ -456,14 +457,27 @@ class TaskService:
     def update_all_tasks_from_spiff_tasks(
         self, spiff_tasks: list[SpiffTask], deleted_spiff_tasks: list[SpiffTask], start_time: float
     ) -> None:
+        """Update given spiff tasks in the database and remove deleted tasks."""
         # Remove all the deleted/pruned tasks from the database.
-        deleted_task_ids = list(map(lambda t: str(t.id), deleted_spiff_tasks))
-        tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_ids)).all()  # type: ignore
+        deleted_task_guids = list(map(lambda t: str(t.id), deleted_spiff_tasks))
+        tasks_to_clear = TaskModel.query.filter(TaskModel.guid.in_(deleted_task_guids)).all()  # type: ignore
         human_tasks_to_clear = HumanTaskModel.query.filter(
-            HumanTaskModel.task_id.in_(deleted_task_ids)  # type: ignore
+            HumanTaskModel.task_id.in_(deleted_task_guids)  # type: ignore
         ).all()
-        for task in tasks_to_clear + human_tasks_to_clear:
+
+        # delete human tasks first to avoid potential conflicts when deleting tasks.
+        # otherwise sqlalchemy returns several warnings.
+        for task in human_tasks_to_clear + tasks_to_clear:
             db.session.delete(task)
+        db.session.commit()
+
+        bpmn_processes_to_delete = (
+            BpmnProcessModel.query.filter(BpmnProcessModel.guid.in_(deleted_task_guids))  # type: ignore
+            .order_by(BpmnProcessModel.id.desc())  # type: ignore
+            .all()
+        )
+        for bpmn_process in bpmn_processes_to_delete:
+            db.session.delete(bpmn_process)
 
         # Note: Can't restrict this to definite, because some things are updated and are now CANCELLED
         # and other things may have been COMPLETED and are now MAYBE
@@ -473,6 +487,7 @@ class TaskService:
                 spiff_tasks_updated[str(spiff_task.id)] = spiff_task
         for _id, spiff_task in spiff_tasks_updated.items():
             self.update_task_model_with_spiff_task(spiff_task)
+
         self.save_objects_to_database()
 
     @classmethod
@@ -566,6 +581,10 @@ class TaskService:
         bpmn_process_identifiers: list[str] = []
         if bpmn_process.guid:
             task_model = TaskModel.query.filter_by(guid=bpmn_process.guid).first()
+            if task_model is None:
+                raise TaskNotFoundError(
+                    f"Cannot find the corresponding task for the bpmn process with guid {bpmn_process.guid}."
+                )
             (
                 parent_bpmn_processes,
                 _task_models_of_parent_bpmn_processes,
@@ -597,31 +616,6 @@ class TaskService:
         task_model["state"] = state
         task_model["start_in_seconds"] = None
         task_model["end_in_seconds"] = None
-
-    @classmethod
-    def reset_task_model(
-        cls,
-        task_model: TaskModel,
-        state: str,
-        json_data_hash: Optional[str] = None,
-        python_env_data_hash: Optional[str] = None,
-    ) -> None:
-        if json_data_hash is None:
-            cls.update_task_data_on_task_model_and_return_dict_if_updated(task_model, {}, "json_data_hash")
-        else:
-            task_model.json_data_hash = json_data_hash
-        if python_env_data_hash is None:
-            cls.update_task_data_on_task_model_and_return_dict_if_updated(task_model, {}, "python_env_data")
-        else:
-            task_model.python_env_data_hash = python_env_data_hash
-
-        task_model.state = state
-        task_model.start_in_seconds = None
-        task_model.end_in_seconds = None
-
-        new_properties_json = copy.copy(task_model.properties_json)
-        new_properties_json["state"] = getattr(TaskState, state)
-        task_model.properties_json = new_properties_json
 
     @classmethod
     def get_extensions_from_task_model(cls, task_model: TaskModel) -> dict:

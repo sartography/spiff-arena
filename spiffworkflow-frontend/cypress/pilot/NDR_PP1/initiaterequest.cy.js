@@ -13,7 +13,7 @@ describe.only('Initiate a Request - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -117,7 +117,7 @@ describe.only('Initiate a Request - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -210,7 +210,7 @@ describe.only('Initiate a Request - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -342,7 +342,7 @@ describe.only('Initiate a Request - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -430,7 +430,7 @@ describe.only('Initiate a Request - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -519,7 +519,7 @@ describe.only('Initiate a Request - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -619,7 +619,7 @@ describe.only('Initiate a Request - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -709,7 +709,7 @@ describe.only('Initiate a Request - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -791,6 +791,10 @@ describe.only('Initiate a Request - Without Files', () => {
                     .contains(/^Cancel Request$/)
                     .click();
 
+                cy.get('button')
+                    .contains(/^Return to Home$/)
+                    .click();
+
                 cy.contains('Started by me', { timeout: 60000 });
                 cy.logout();
 
@@ -814,7 +818,7 @@ describe('Initiate a Request - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -961,7 +965,7 @@ describe('Initiate a Request - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1119,7 +1123,7 @@ describe('Initiate a Request - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1292,7 +1296,7 @@ describe('Initiate a Request - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1399,7 +1403,7 @@ describe('Initiate a Request - With Files', () => {
                     .contains(/^Close$/)
                     .click();
 
-                    cy.wait(3000);
+                cy.wait(3000);
 
                 // cy.get('button')
                 //     .contains(/^Return to Home$/)
@@ -1423,7 +1427,7 @@ describe('Initiate a Request - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
