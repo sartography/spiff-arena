@@ -98,8 +98,8 @@ class ProcessInstanceService:
         #
         # example: {'event_type': 'Duration Timer', 'name': None, 'value': '2023-04-27T20:15:10.626656+00:00'}
         #
-        event_type = waiting_event.get("event_type")
-        if event_type == "Duration Timer":
+        spiff_event_type = waiting_event.get("event_type")
+        if spiff_event_type == "DurationTimerEventDefinition":
             event_value = waiting_event.get("value")
             if event_value is not None:
                 event_datetime = TimerEventDefinition.get_datetime(event_value)
@@ -456,7 +456,7 @@ class ProcessInstanceService:
         calling_subprocess_task_id: Optional[str] = None,
     ) -> Task:
         """Spiff_task_to_api_task."""
-        task_type = spiff_task.task_spec.spec_type
+        task_type = spiff_task.task_spec.description
 
         props = {}
         if hasattr(spiff_task.task_spec, "extensions"):
@@ -500,8 +500,8 @@ class ProcessInstanceService:
 
         task = Task(
             spiff_task.id,
-            spiff_task.task_spec.name,
-            spiff_task.task_spec.description,
+            spiff_task.task_spec.bpmn_id,
+            spiff_task.task_spec.bpmn_name,
             task_type,
             spiff_task.get_state_name(),
             can_complete=can_complete,

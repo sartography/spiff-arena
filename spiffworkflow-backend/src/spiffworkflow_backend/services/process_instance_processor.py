@@ -28,6 +28,7 @@ from flask import current_app
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.parser.ValidationException import ValidationException  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
 from SpiffWorkflow.bpmn.PythonScriptEngineEnvironment import BasePythonScriptEngineEnvironment  # type: ignore
@@ -39,12 +40,9 @@ from SpiffWorkflow.bpmn.serializer.task_spec import (  # type: ignore
 )
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
-from SpiffWorkflow.bpmn.specs.events.EndEvent import EndEvent  # type: ignore
-from SpiffWorkflow.bpmn.specs.events.StartEvent import StartEvent  # type: ignore
 from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
-from SpiffWorkflow.exceptions import WorkflowTaskException
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
 from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from SpiffWorkflow.spiff.serializer.config import SPIFF_SPEC_CONFIG  # type: ignore
@@ -68,10 +66,6 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
 from spiffworkflow_backend.models.human_task_user import HumanTaskUserModel
 from spiffworkflow_backend.models.json_data import JsonDataModel
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.message_instance_correlation import (
-    MessageInstanceCorrelationRuleModel,
-)
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
@@ -901,9 +895,8 @@ class ProcessInstanceProcessor:
                 bpmn_process_definition.bpmn_identifier,
                 bpmn_process_definition=bpmn_process_definition,
             )
-
             for task_bpmn_identifier, task_bpmn_properties in task_specs.items():
-                task_bpmn_name = task_bpmn_properties["description"]
+                task_bpmn_name = task_bpmn_properties["bpmn_name"]
                 task_definition = TaskDefinitionModel(
                     bpmn_process_definition=bpmn_process_definition,
                     bpmn_identifier=task_bpmn_identifier,
@@ -1036,7 +1029,7 @@ class ProcessInstanceProcessor:
         for ready_or_waiting_task in ready_or_waiting_tasks:
             # filter out non-usertasks
             task_spec = ready_or_waiting_task.task_spec
-            if not self.bpmn_process_instance._is_engine_task(task_spec):
+            if task_spec.manual:
                 potential_owner_hash = self.get_potential_owner_ids_from_task(ready_or_waiting_task)
                 extensions = task_spec.extensions
 
@@ -1073,8 +1066,8 @@ class ProcessInstanceProcessor:
                         ui_form_file_name=ui_form_file_name,
                         task_model_id=task_model.id,
                         task_id=task_guid,
-                        task_name=ready_or_waiting_task.task_spec.name,
-                        task_title=ready_or_waiting_task.task_spec.description,
+                        task_name=ready_or_waiting_task.task_spec.bpmn_id,
+                        task_title=ready_or_waiting_task.task_spec.bpmn_name,
                         task_type=ready_or_waiting_task.task_spec.__class__.__name__,
                         task_status=ready_or_waiting_task.get_state_name(),
                         lane_assignment_id=potential_owner_hash["lane_assignment_id"],
@@ -1134,7 +1127,7 @@ class ProcessInstanceProcessor:
                 # We have to get to the actual start event
                 for spiff_task in self.bpmn_process_instance.get_tasks(workflow=subprocess):
                     spiff_task.run()
-                    if isinstance(spiff_task.task_spec, StartEvent):
+                    if spiff_task.task_spec.__class__.__name__ == "StartEvent":
                         break
             else:
                 spiff_task.run()
@@ -1146,7 +1139,7 @@ class ProcessInstanceProcessor:
             spiff_task.workflow.last_task = spiff_task
         end_in_seconds = time.time()
 
-        if isinstance(spiff_task.task_spec, EndEvent):
+        if spiff_task.task_spec.__class__.__name__ == "EndEvent":
             for task in self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK, workflow=spiff_task.workflow):
                 task.complete()
 
@@ -1387,56 +1380,6 @@ class ProcessInstanceProcessor:
         # current_app.logger.debug(f"the_status: {the_status} for instance {self.process_instance_model.id}")
         return the_status
 
-    def process_bpmn_messages(self) -> None:
-        """Process_bpmn_messages."""
-        bpmn_messages = self.bpmn_process_instance.get_bpmn_messages()
-        for bpmn_message in bpmn_messages:
-            message_instance = MessageInstanceModel(
-                process_instance_id=self.process_instance_model.id,
-                user_id=self.process_instance_model.process_initiator_id,  # TODO: use the correct swimlane user when that is set up
-                message_type="send",
-                name=bpmn_message.name,
-                payload=bpmn_message.payload,
-                correlation_keys=self.bpmn_process_instance.correlations,
-            )
-            db.session.add(message_instance)
-            db.session.commit()
-
-    def queue_waiting_receive_messages(self) -> None:
-        """Queue_waiting_receive_messages."""
-        waiting_events = self.bpmn_process_instance.waiting_events()
-        waiting_message_events = filter(lambda e: e["event_type"] == "Message", waiting_events)
-
-        for event in waiting_message_events:
-            # Ensure we are only creating one message instance for each waiting message
-            if (
-                MessageInstanceModel.query.filter_by(
-                    process_instance_id=self.process_instance_model.id,
-                    message_type="receive",
-                    name=event["name"],
-                ).count()
-                > 0
-            ):
-                continue
-
-            # Create a new Message Instance
-            message_instance = MessageInstanceModel(
-                process_instance_id=self.process_instance_model.id,
-                user_id=self.process_instance_model.process_initiator_id,
-                message_type="receive",
-                name=event["name"],
-                correlation_keys=self.bpmn_process_instance.correlations,
-            )
-            for correlation_property in event["value"]:
-                message_correlation = MessageInstanceCorrelationRuleModel(
-                    message_instance_id=message_instance.id,
-                    name=correlation_property.name,
-                    retrieval_expression=correlation_property.retrieval_expression,
-                )
-                message_instance.correlation_rules.append(message_correlation)
-            db.session.add(message_instance)
-            db.session.commit()
-
     def element_unit_specs_loader(self, process_id: str, element_id: str) -> Optional[Dict[str, Any]]:
         full_process_model_hash = self.process_instance_model.bpmn_process_definition.full_process_model_hash
         if full_process_model_hash is None:
@@ -1463,7 +1406,7 @@ class ProcessInstanceProcessor:
         tasks = self.bpmn_process_instance.get_tasks(TaskState.DEFINITE_MASK)
         loaded_specs = set(self.bpmn_process_instance.subprocess_specs.keys())
         for task in tasks:
-            if task.task_spec.spec_type != "Call Activity":
+            if task.task_spec.description != "Call Activity":
                 continue
             spec_to_check = task.task_spec.spec
 
@@ -1587,10 +1530,13 @@ class ProcessInstanceProcessor:
 
         endtasks = []
         if self.bpmn_process_instance.is_completed():
-            for task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.ANY_MASK):
+            for spiff_task in SpiffTask.Iterator(self.bpmn_process_instance.task_tree, TaskState.ANY_MASK):
                 # Assure that we find the end event for this process_instance, and not for any sub-process_instances.
-                if isinstance(task.task_spec, EndEvent) and task.workflow == self.bpmn_process_instance:
-                    endtasks.append(task)
+                if (
+                    spiff_task.task_spec.__class__.__name__ == "EndEvent"
+                    and spiff_task.workflow == self.bpmn_process_instance
+                ):
+                    endtasks.append(spiff_task)
             if len(endtasks) > 0:
                 return endtasks[-1]
 
@@ -1645,7 +1591,7 @@ class ProcessInstanceProcessor:
         user_tasks.reverse()
         user_tasks = list(
             filter(
-                lambda task: not self.bpmn_process_instance._is_engine_task(task.task_spec),
+                lambda task: task.task_spec.manual,
                 user_tasks,
             )
         )
@@ -1741,16 +1687,11 @@ class ProcessInstanceProcessor:
     def get_all_user_tasks(self) -> List[SpiffTask]:
         """Get_all_user_tasks."""
         all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
-        return [t for t in all_tasks if not self.bpmn_process_instance._is_engine_task(t.task_spec)]
+        return [t for t in all_tasks if t.task_spec.manual]
 
     def get_all_completed_tasks(self) -> list[SpiffTask]:
         all_tasks = self.bpmn_process_instance.get_tasks(TaskState.ANY_MASK)
-        return [
-            t
-            for t in all_tasks
-            if not self.bpmn_process_instance._is_engine_task(t.task_spec)
-            and t.state in [TaskState.COMPLETED, TaskState.CANCELLED]
-        ]
+        return [t for t in all_tasks if t.task_spec.manual and t.state in [TaskState.COMPLETED, TaskState.CANCELLED]]
 
     def get_all_waiting_tasks(self) -> list[SpiffTask]:
         """Get_all_ready_or_waiting_tasks."""
