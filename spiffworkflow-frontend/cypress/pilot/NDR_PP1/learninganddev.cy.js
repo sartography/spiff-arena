@@ -99,7 +99,7 @@ describe.only('Learning and Development Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -207,7 +207,7 @@ describe.only('Learning and Development Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -314,7 +314,7 @@ describe.only('Learning and Development Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -440,7 +440,7 @@ describe.only('Learning and Development Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -583,7 +583,7 @@ describe.only('Learning and Development Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -690,7 +690,7 @@ describe.only('Learning and Development Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -824,7 +824,7 @@ describe('Learning and Development Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -974,7 +974,7 @@ describe('Learning and Development Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1124,7 +1124,7 @@ describe('Learning and Development Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1292,7 +1292,7 @@ describe('Learning and Development Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1477,7 +1477,7 @@ describe('Learning and Development Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1627,7 +1627,7 @@ describe('Learning and Development Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 

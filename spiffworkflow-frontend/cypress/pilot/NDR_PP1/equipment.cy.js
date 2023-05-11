@@ -103,7 +103,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -258,7 +258,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -381,7 +381,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -529,7 +529,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -637,7 +637,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -745,7 +745,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -871,7 +871,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -993,7 +993,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1114,7 +1114,7 @@ describe.only('Equipment Path - Without Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1260,7 +1260,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1454,7 +1454,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1617,7 +1617,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1806,7 +1806,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -1956,7 +1956,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -2106,7 +2106,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -2273,7 +2273,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -2436,7 +2436,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
@@ -2598,7 +2598,7 @@ describe('Equipment Path - With Files', () => {
             cy.visit('/');
 
             cy.contains('Start New +').click();
-            cy.contains('Request Goods or Services');
+            cy.contains('Request Goods or Services').click();
 
             cy.runPrimaryBpmnFile(true);
 
