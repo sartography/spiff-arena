@@ -485,6 +485,39 @@ class TestProcessInstanceProcessor(BaseTest):
             "stuck waiting for the call activity to complete (which was happening in a bug I'm fixing right now)"
         )
 
+    def test_step_through_gateway(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+        with_super_admin_user: UserModel,
+    ) -> None:
+        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
+        process_model = load_test_spec(
+            process_model_id="test_group/step_through_gateway",
+            process_model_source_directory="step_through_gateway",
+        )
+        process_instance = self.create_process_instance_from_process_model(
+            process_model=process_model, user=with_super_admin_user
+        )
+        processor = ProcessInstanceProcessor(process_instance)
+        processor.do_engine_steps(save=True)
+        assert len(process_instance.active_human_tasks) == 1
+        human_task_one = process_instance.active_human_tasks[0]
+        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        processor.manual_complete_task(str(human_task_one.task_id), execute=True)
+        processor.save()
+        processor = ProcessInstanceProcessor(process_instance)
+        assert processor.get_task_by_bpmn_identifier('step_1', processor.bpmn_process_instance).state == TaskState.COMPLETED
+        assert processor.get_task_by_bpmn_identifier('Gateway_Open', processor.bpmn_process_instance).state == TaskState.READY
+
+        gateway_task = processor.bpmn_process_instance.get_tasks(TaskState.READY)[0]
+        processor.manual_complete_task(str(gateway_task.id), execute=True)
+        processor.save()
+        processor = ProcessInstanceProcessor(process_instance)
+        assert processor.get_task_by_bpmn_identifier('Gateway_Open', processor.bpmn_process_instance).state == TaskState.COMPLETED
+        print(processor)
+
     def test_properly_saves_tasks_when_running(
         self,
         app: Flask,
