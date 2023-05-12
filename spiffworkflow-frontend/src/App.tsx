@@ -6,6 +6,7 @@ import { defineAbility } from '@casl/ability';
 import NavigationBar from './components/NavigationBar';
 
 import HomePageRoutes from './routes/HomePageRoutes';
+import About from './routes/About';
 import ErrorBoundary from './components/ErrorBoundary';
 import AdminRoutes from './routes/AdminRoutes';
 import ProcessRoutes from './routes/ProcessRoutes';
@@ -35,6 +36,7 @@ export default function App() {
               <ErrorBoundary>
                 <Routes>
                   <Route path="/*" element={<HomePageRoutes />} />
+                  <Route path="/about" element={<About />} />
                   <Route path="/tasks/*" element={<HomePageRoutes />} />
                   <Route path="/process/*" element={<ProcessRoutes />} />
                   <Route path="/admin/*" element={<AdminRoutes />} />
