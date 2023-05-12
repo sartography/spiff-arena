@@ -162,9 +162,6 @@ export default function ProcessInstanceListTable({
   const [requiresRefilter, setRequiresRefilter] = useState<boolean>(false);
   const [lastColumnFilter, setLastColumnFilter] = useState<string>('');
 
-  const [listHasBeenFiltered, setListHasBeenFiltered] =
-    useState<boolean>(false);
-
   const preferredUsername = UserService.getPreferredUsername();
   const userEmail = UserService.getUserEmail();
 
@@ -223,6 +220,9 @@ export default function ProcessInstanceListTable({
     ];
   }, []);
 
+  // this is used from pages like the home page that have multiple tables
+  // and cannot store the report hash in the query params.
+  // it can be used to create a link to the process instances list page to reconstruct the report.
   const [reportHash, setReportHash] = useState<string | null>(null);
 
   const [
@@ -321,14 +321,35 @@ export default function ProcessInstanceListTable({
   // so use a variable instead
   const processModelSelectionItemsForUseEffect = useRef<ProcessModel[]>([]);
 
+  const clearFilters = useCallback((updateRequiresRefilter: boolean = true) => {
+    setProcessModelSelection(null);
+    setProcessStatusSelection([]);
+    setStartFromDate('');
+    setStartFromTime('');
+    setStartToDate('');
+    setStartToTime('');
+    setEndFromDate('');
+    setEndFromTime('');
+    setEndToDate('');
+    setEndToTime('');
+    setProcessInitiatorSelection(null);
+    setWithOldestOpenTask(false);
+    setSystemReport(null);
+    setSelectedUserGroup(null);
+    if (updateRequiresRefilter) {
+      setRequiresRefilter(true);
+    }
+    if (reportMetadata) {
+      reportMetadata.filter_by = [];
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const getProcessInstances = useCallback(
     (
       processInstanceReport: ProcessInstanceReport | null = null
       // eslint-disable-next-line sonarjs/cognitive-complexity
     ) => {
-      if (listHasBeenFiltered) {
-        return;
-      }
       let reportMetadataBodyToUse: ReportMetadata = {
         columns: [],
         filter_by: [],
@@ -340,6 +361,11 @@ export default function ProcessInstanceListTable({
           setProcessInstanceReportSelection(processInstanceReport);
         }
       }
+
+      // a bit hacky, clear out all filters before setting them from report metadata
+      // to ensure old filters are cleared out.
+      // this is really for going between the 'For Me' and 'All' tabs.
+      clearFilters(false);
 
       // this is the code to re-populate the widgets on the page
       // with values from the report metadata, which is derived
@@ -433,7 +459,6 @@ export default function ProcessInstanceListTable({
       additionalReportFilters,
       dateParametersToAlwaysFilterBy,
       filtersEnabled,
-      listHasBeenFiltered,
       paginationQueryParamPrefix,
       perPageOptions,
       processInstanceApiSearchPath,
@@ -441,6 +466,7 @@ export default function ProcessInstanceListTable({
       setProcessInstancesFromResult,
       stopRefreshing,
       systemReportOptions,
+      clearFilters,
     ]
   );
 
@@ -448,11 +474,7 @@ export default function ProcessInstanceListTable({
     if (!permissionsLoaded) {
       return undefined;
     }
-
     function getReportMetadataWithReportHash() {
-      if (listHasBeenFiltered) {
-        return;
-      }
       const queryParams: string[] = [];
       ['report_hash', 'report_id'].forEach((paramName: string) => {
         if (searchParams.get(paramName)) {
@@ -517,7 +539,6 @@ export default function ProcessInstanceListTable({
     autoReload,
     filtersEnabled,
     getProcessInstances,
-    listHasBeenFiltered,
     permissionsLoaded,
     reportIdentifier,
     searchParams,
@@ -632,17 +653,34 @@ export default function ProcessInstanceListTable({
     reportMetadataToUse.filter_by = filtersToKeep;
   };
 
+  const getFilterByFromReportMetadata = (reportColumnAccessor: string) => {
+    if (reportMetadata) {
+      return reportMetadata.filter_by.find((reportFilter: ReportFilter) => {
+        return reportColumnAccessor === reportFilter.field_name;
+      });
+    }
+    return null;
+  };
+
   const insertOrUpdateFieldInReportMetadata = (
     reportMetadataToUse: ReportMetadata,
     fieldName: string,
     fieldValue: any
   ) => {
-    removeFieldFromReportMetadata(reportMetadataToUse, fieldName);
     if (fieldValue) {
-      reportMetadataToUse.filter_by.push({
-        field_name: fieldName,
-        field_value: fieldValue,
-      });
+      let existingReportFilter = getFilterByFromReportMetadata(fieldName);
+      if (existingReportFilter) {
+        existingReportFilter.field_value = fieldValue;
+      } else {
+        existingReportFilter = {
+          field_name: fieldName,
+          field_value: fieldValue,
+          operator: 'equals',
+        };
+        reportMetadataToUse.filter_by.push(existingReportFilter);
+      }
+    } else {
+      removeFieldFromReportMetadata(reportMetadataToUse, fieldName);
     }
   };
 
@@ -747,11 +785,7 @@ export default function ProcessInstanceListTable({
     page = 1; // Reset page back to 0
 
     const newReportMetadata = getNewReportMetadataBasedOnPageWidgets();
-    setListHasBeenFiltered(true);
     setReportMetadata(newReportMetadata);
-    searchParams.set('per_page', perPage.toString());
-    searchParams.set('page', page.toString());
-    setSearchParams(searchParams);
 
     const queryParamString = `per_page=${perPage}&page=${page}`;
     HttpService.makeCallToBackend({
@@ -820,6 +854,7 @@ export default function ProcessInstanceListTable({
   const formatProcessInstanceStatus = (_row: any, value: any) => {
     return titleizeString((value || '').replaceAll('_', ' '));
   };
+
   const processStatusSearch = () => {
     return (
       <MultiSelect
@@ -841,34 +876,12 @@ export default function ProcessInstanceListTable({
     );
   };
 
-  const clearFilters = () => {
-    setProcessModelSelection(null);
-    setProcessStatusSelection([]);
-    setStartFromDate('');
-    setStartFromTime('');
-    setStartToDate('');
-    setStartToTime('');
-    setEndFromDate('');
-    setEndFromTime('');
-    setEndToDate('');
-    setEndToTime('');
-    setProcessInitiatorSelection(null);
-    setWithOldestOpenTask(false);
-    setSystemReport(null);
-    setSelectedUserGroup(null);
-    setRequiresRefilter(true);
-    if (reportMetadata) {
-      reportMetadata.filter_by = [];
-    }
-  };
-
   const processInstanceReportDidChange = (selection: any, mode?: string) => {
     clearFilters();
     const selectedReport = selection.selectedItem;
     setProcessInstanceReportSelection(selectedReport);
     removeError();
     setProcessInstanceReportJustSaved(mode || null);
-    setListHasBeenFiltered(false);
 
     let queryParamString = '';
     if (selectedReport) {
@@ -937,15 +950,6 @@ export default function ProcessInstanceListTable({
     setShowReportColumnForm(false);
     setReportColumnFormMode('');
     setReportColumnToOperateOn(null);
-  };
-
-  const getFilterByFromReportMetadata = (reportColumnAccessor: string) => {
-    if (reportMetadata) {
-      return reportMetadata.filter_by.find((reportFilter: ReportFilter) => {
-        return reportColumnAccessor === reportFilter.field_name;
-      });
-    }
-    return null;
   };
 
   const getNewFiltersFromReportForEditing = (
