@@ -737,12 +737,14 @@ export default function ProcessInstanceListTable({
     event.preventDefault();
     setProcessInitiatorNotFoundErrorText('');
 
-    const { page, perPage } = getPageInfoFromSearchParams(
+    // eslint-disable-next-line prefer-const
+    let { page, perPage } = getPageInfoFromSearchParams(
       searchParams,
       undefined,
       undefined,
       paginationQueryParamPrefix
     );
+    page = 1; // Reset page back to 0
 
     const newReportMetadata = getNewReportMetadataBasedOnPageWidgets();
     setListHasBeenFiltered(true);
