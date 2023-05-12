@@ -185,13 +185,19 @@ def create_app() -> flask.app.Flask:
     return app  # type: ignore
 
 
+def get_version_info_data() -> dict[str, Any]:
+    version_info_data_dict = {}
+    if os.path.isfile("version_info.json"):
+        with open("version_info.json") as f:
+            version_info_data_dict = json.load(f)
+    return version_info_data_dict
+
+
 def _setup_prometheus_metrics(app: flask.app.Flask, connexion_app: connexion.apps.flask_app.FlaskApp) -> None:
     metrics = ConnexionPrometheusMetrics(connexion_app)
     app.config["PROMETHEUS_METRICS"] = metrics
-    if os.path.isfile("version_info.json"):
-        version_info_data = {}
-        with open("version_info.json") as f:
-            version_info_data = json.load(f)
+    version_info_data = get_version_info_data()
+    if len(version_info_data) > 0:
         # prometheus does not allow periods in key names
         version_info_data_normalized = {k.replace(".", "_"): v for k, v in version_info_data.items()}
         metrics.info("version_info", "Application Version Info", **version_info_data_normalized)

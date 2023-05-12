@@ -562,3 +562,7 @@ svg.notification-icon {
 .user-circle:nth-child(n+11) {
   background-color: #8e8e8e;
 }
+
+.version-info-column {
+  width: 50%;
+}
