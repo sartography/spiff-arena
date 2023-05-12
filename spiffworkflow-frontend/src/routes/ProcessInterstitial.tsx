@@ -119,7 +119,11 @@ export default function ProcessInterstitial() {
     ) {
       return (
         <div style={{ padding: '10px 0 0 0' }}>
-          <Button kind="secondary" onClick={() => navigate(`/tasks`)}>
+          <Button
+            kind="secondary"
+            data-qa="return-to-home-button"
+            onClick={() => navigate(`/tasks`)}
+          >
             Return to Home
           </Button>
         </div>
