@@ -93,7 +93,7 @@ const submitWithUser = (
 describe.only('Software and Licenses Path - Without Files', () => {
   Cypress._.times(1, () => {
     // Everyone approves with CP
-    it.only('Everyone approves with CP', () => {
+    it('Everyone approves with CP', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
