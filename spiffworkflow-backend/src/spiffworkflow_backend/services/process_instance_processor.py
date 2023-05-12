@@ -24,7 +24,8 @@ from uuid import UUID
 
 import dateparser
 import pytz
-from flask import current_app, g
+from flask import current_app
+from flask import g
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
@@ -40,7 +41,6 @@ from SpiffWorkflow.bpmn.serializer.task_spec import (  # type: ignore
 )
 from SpiffWorkflow.bpmn.serializer.workflow import BpmnWorkflowSerializer  # type: ignore
 from SpiffWorkflow.bpmn.specs.BpmnProcessSpec import BpmnProcessSpec  # type: ignore
-from SpiffWorkflow.bpmn.specs.SubWorkflowTask import SubWorkflowTask  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.exceptions import WorkflowException  # type: ignore
 from SpiffWorkflow.serializer.exceptions import MissingSpecError  # type: ignore
@@ -1111,7 +1111,7 @@ class ProcessInstanceProcessor:
 
     def manual_complete_task(self, task_id: str, execute: bool) -> None:
         """Mark the task complete optionally executing it."""
-        start_in_seconds = time.time()
+        time.time()
         spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
         start_time = time.time()

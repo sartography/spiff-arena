@@ -403,7 +403,6 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
         return_hash[return_type] = entity
         return f"data: {current_app.json.dumps(return_hash)} \n\n"
 
-
     processor = ProcessInstanceProcessor(process_instance)
     reported_ids = []  # A list of all the ids reported by this endpoint so far.
     tasks = get_reportable_tasks()

@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 
 from spiffworkflow_backend.models.bpmn_process_definition import BpmnProcessDefinitionModel
 from spiffworkflow_backend.models.db import db
@@ -38,8 +38,7 @@ class BpmnProcessModel(SpiffworkflowBaseDBModel):
     json_data_hash: str = db.Column(db.String(255), nullable=False, index=True)
 
     tasks = relationship("TaskModel", back_populates="bpmn_process", cascade="delete")  # type: ignore
-    child_processes = relationship("BpmnProcessModel", foreign_keys=[direct_parent_process_id],
-                                   cascade="all")  # type: ignore
+    child_processes = relationship("BpmnProcessModel", foreign_keys=[direct_parent_process_id], cascade="all")
 
     # FIXME: find out how to set this but it'd be cool
     start_in_seconds: float = db.Column(db.DECIMAL(17, 6))

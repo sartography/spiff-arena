@@ -504,18 +504,27 @@ class TestProcessInstanceProcessor(BaseTest):
         processor.do_engine_steps(save=True)
         assert len(process_instance.active_human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
-        spiff_manual_task = processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
+        processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
         processor.manual_complete_task(str(human_task_one.task_id), execute=True)
         processor.save()
         processor = ProcessInstanceProcessor(process_instance)
-        assert processor.get_task_by_bpmn_identifier('step_1', processor.bpmn_process_instance).state == TaskState.COMPLETED
-        assert processor.get_task_by_bpmn_identifier('Gateway_Open', processor.bpmn_process_instance).state == TaskState.READY
+        assert (
+            processor.get_task_by_bpmn_identifier("step_1", processor.bpmn_process_instance).state  # type: ignore
+            == TaskState.COMPLETED
+        )
+        assert (
+            processor.get_task_by_bpmn_identifier("Gateway_Open", processor.bpmn_process_instance).state  # type: ignore
+            == TaskState.READY
+        )
 
         gateway_task = processor.bpmn_process_instance.get_tasks(TaskState.READY)[0]
         processor.manual_complete_task(str(gateway_task.id), execute=True)
         processor.save()
         processor = ProcessInstanceProcessor(process_instance)
-        assert processor.get_task_by_bpmn_identifier('Gateway_Open', processor.bpmn_process_instance).state == TaskState.COMPLETED
+        assert (
+            processor.get_task_by_bpmn_identifier("Gateway_Open", processor.bpmn_process_instance).state  # type: ignore
+            == TaskState.COMPLETED
+        )
         print(processor)
 
     def test_properly_saves_tasks_when_running(
