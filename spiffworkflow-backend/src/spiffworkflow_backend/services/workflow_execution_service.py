@@ -339,6 +339,17 @@ class OneAtATimeExecutionStrategy(ExecutionStrategy):
             self.delegate.did_complete_task(spiff_task)
         self.delegate.after_engine_steps(bpmn_process_instance)
 
+class SkipOneExecutionStrategy(ExecutionStrategy):
+    """When you want to to skip over the next task, rather than execute it."""
+
+    def spiff_run(self, bpmn_process_instance: BpmnWorkflow, exit_at: None = None) -> None:
+        engine_steps = self.get_ready_engine_steps(bpmn_process_instance)
+        if len(engine_steps) > 0:
+            spiff_task = engine_steps[0]
+            self.delegate.will_complete_task(spiff_task)
+            spiff_task.complete()
+            self.delegate.did_complete_task(spiff_task)
+        self.delegate.after_engine_steps(bpmn_process_instance)
 
 def execution_strategy_named(
     name: str, delegate: EngineStepDelegate, spec_loader: SubprocessSpecLoader
@@ -348,6 +359,7 @@ def execution_strategy_named(
         "run_until_service_task": RunUntilServiceTaskExecutionStrategy,
         "run_until_user_message": RunUntilUserTaskOrMessageExecutionStrategy,
         "one_at_a_time": OneAtATimeExecutionStrategy,
+        "skip_one": SkipOneExecutionStrategy,
     }[name]
 
     return cls(delegate, spec_loader)  # type: ignore
