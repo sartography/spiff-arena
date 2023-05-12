@@ -15,8 +15,8 @@ from urllib.parse import unquote
 import sentry_sdk
 from flask import current_app
 from flask import g
-from SpiffWorkflow.bpmn.specs.events.event_definitions import TimerEventDefinition  # type: ignore
-from SpiffWorkflow.bpmn.specs.events.IntermediateEvent import _BoundaryEventParent  # type: ignore
+from SpiffWorkflow.bpmn.specs.control import _BoundaryEventParent  # type: ignore
+from SpiffWorkflow.bpmn.specs.event_definitions import TimerEventDefinition  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 
 from spiffworkflow_backend import db
