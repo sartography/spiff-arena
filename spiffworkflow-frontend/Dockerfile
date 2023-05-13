@@ -29,8 +29,7 @@ RUN ./bin/build
 # Final image without setup dependencies.
 FROM base AS final
 
-LABEL source="https://github.com/sartography/spiff-arena"
-LABEL description="Software development platform for building, running, and monitoring executable diagrams"
+LABEL org.opencontainers.image.description="Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
 
 # WARNING: On localhost frontend assumes backend is one port lowe.
 ENV PORT0=7001
