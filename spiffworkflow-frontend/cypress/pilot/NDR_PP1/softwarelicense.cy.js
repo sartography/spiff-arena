@@ -76,18 +76,41 @@ const submitWithUser = (
     .contains(/^Submit$/)
     .click();
 
-  // if (expectAdditionalApprovalInfoPage) {
-  //   cy.contains(expectAdditionalApprovalInfoPage, { timeout: 60000 });
-  //
-  //   cy.get('button')
-  //     .contains(/^Continue$/)
-  //     .click();
-  // }
+  if (expectAdditionalApprovalInfoPage === 'Task: Update Application Landscape') {
+    cy.contains(expectAdditionalApprovalInfoPage, { timeout: 60000 });
+  
+    cy.get('button')
+      .contains(/^Continue$/)
+      .click();
+  }
 
   // cy.getBySel('return-to-home-button', { timeout: 60000 });
   cy.get('button').contains('Return to Home', { timeout: 60000 });
   cy.logout();
 };
+
+    //Check if the process instance is completed successfully
+    const checkProcessInstanceCompleted = (
+      username,
+      password,
+      processInstanceId
+  ) => {
+        cy.wait(2000);
+        cy.log('========Login with : ', username);
+        cy.log('========processInstanceId: ', processInstanceId);
+        cy.login(username, password);
+  
+        cy.wait(1000);
+        cy.visit('/admin/process-instances/find-by-id');
+        cy.get('#process-instance-id-input').type(processInstanceId);
+  
+        cy.get('button')
+            .contains(/^Submit$/)
+            .click();
+  
+        cy.wait(2000);
+        cy.get('#tag-1 > span').contains('complete');
+  }
 
 // Software and Licenses Path - Without Files
 describe.only('Software and Licenses Path - Without Files', () => {
@@ -226,6 +249,8 @@ describe.only('Software and Licenses Path - Without Files', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -390,11 +415,13 @@ describe.only('Software and Licenses Path - Without Files', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
     // Budget owner rejects the request
-    it('Budget owner rejects', () => {
+    it.only('Budget owner rejects', () => {
       const username = Cypress.env('requestor_username');
       const password = Cypress.env('requestor_password');
       cy.log(`=====username : ${username}`);
@@ -498,6 +525,8 @@ describe.only('Software and Licenses Path - Without Files', () => {
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -645,6 +674,8 @@ describe.only('Software and Licenses Path - Without Files', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -786,6 +817,8 @@ describe.only('Software and Licenses Path - Without Files', () => {
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
   });
@@ -912,6 +945,8 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -1049,6 +1084,8 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -1145,6 +1182,8 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -1280,6 +1319,8 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -1409,6 +1450,8 @@ describe('Software and Licenses Path -  Without Files and with only mandatory fi
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
   });
@@ -1614,6 +1657,8 @@ describe('Software and Licenses Path - With Files', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -1817,6 +1862,8 @@ describe('Software and Licenses Path - With Files', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -1979,6 +2026,8 @@ describe('Software and Licenses Path - With Files', () => {
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -2181,6 +2230,8 @@ describe('Software and Licenses Path - With Files', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -2378,6 +2429,8 @@ describe('Software and Licenses Path - With Files', () => {
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
   });
@@ -2602,6 +2655,8 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -2836,6 +2891,8 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -3030,6 +3087,8 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -3261,6 +3320,8 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           null,
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -3481,6 +3542,8 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
   });
