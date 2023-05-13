@@ -1,8 +1,10 @@
+import { ObjectWithStringKeysAndValues } from '../interfaces';
+
 const appVersionInfo = () => {
   const versionInfoFromHtmlMetaTag = document.querySelector(
     'meta[name="version-info"]'
   );
-  let versionInfo: { [key: string]: string } = {};
+  let versionInfo: ObjectWithStringKeysAndValues = {};
   if (versionInfoFromHtmlMetaTag) {
     const versionInfoContentString =
       versionInfoFromHtmlMetaTag.getAttribute('content');
@@ -13,11 +15,6 @@ const appVersionInfo = () => {
       versionInfo = JSON.parse(versionInfoContentString);
     }
   }
-  versionInfo = {
-    version: '1.0.0',
-    git_sha: 'sdkfjksd',
-    sure: '3',
-  };
 
   return versionInfo;
 };
