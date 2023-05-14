@@ -43,7 +43,6 @@ FROM deployment AS final
 
 LABEL source="https://github.com/sartography/spiff-arena"
 LABEL description="Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
-LABEL org.opencontainers.image.description="Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams"
 
 COPY --from=setup /app /app
 

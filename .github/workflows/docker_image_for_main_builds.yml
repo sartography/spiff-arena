@@ -59,6 +59,8 @@ jobs:
         uses: docker/metadata-action@v4.4.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.description=Frontend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
           tags: |
             type=ref,event=branch,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
@@ -103,6 +105,8 @@ jobs:
         uses: docker/metadata-action@v4.4.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.description=Backend component of SpiffWorkflow, a software development platform for building, running, and monitoring executable diagrams
           tags: |
             type=ref,event=branch,suffix=-latest
             type=ref,event=branch,suffix=-${{ steps.date.outputs.date }}
