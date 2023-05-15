@@ -46,9 +46,9 @@ fi
 
 # HACK: if loading fixtures for acceptance tests when we do not need multiple workers
 # it causes issues with attempting to add duplicate data to the db
-workers=3
+worker_count=4
 if [[ "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" == "true" ]]; then
-  workers=1
+  worker_count=1
 fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
@@ -67,11 +67,31 @@ fi
 git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 git config --global --add safe.directory "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 
+# default to 3 * 2 = 6 threads per worker
+# you may want to configure threads_to_use_per_core based on whether your workload is more cpu intensive or more I/O intensive:
+#   cpu heavy, make it smaller
+#   I/O heavy, make it larger
+threads_to_use_per_core=3
+num_cores_multiple_for_threads=2
+
+# https://stackoverflow.com/a/55423170/6090676
+# if we had access to python (i'm not sure i want to run another python script here),
+# we could do something like this (on linux) to get the number of cores available to this process and a better estimate of a
+# reasonable num_cores_multiple_for_threads
+# if hasattr(os, 'sched_getaffinity')
+#   number_of_available_cores = os.sched_getaffinity(0)
+
+threads_per_worker=$((threads_to_use_per_core * num_cores_multiple_for_threads))
+
+# --worker-class is not strictly necessary, since setting threads will automatically set the worker class to gthread, but meh
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
 exec poetry run gunicorn ${additional_args}  \
   --bind "0.0.0.0:$port"  \
-  --workers="$workers"  \
+  --preload \
+  --worker-class "gthread" \
+  --workers="$worker_count"  \
+  --threads "$threads_per_worker" \
   --limit-request-line 8192  \
   --timeout "$GUNICORN_TIMEOUT_SECONDS"  \
   --capture-output  \
