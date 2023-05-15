@@ -3089,7 +3089,7 @@ lxml = "*"
 type = "git"
 url = "https://github.com/sartography/SpiffWorkflow"
 reference = "main"
-resolved_reference = "a68dec77ebb0960dd8097341df7575a34e435501"
+resolved_reference = "340e9983b5afd2e6e71df883e74f7dc20d4474dd"
 
 [[package]]
 name = "sqlalchemy"
