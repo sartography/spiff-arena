@@ -871,6 +871,19 @@ describe.only('Learning and Development Path - Without Files', () => {
           'Task: Reminder: Check Existing Budget',
           'approve'
         );
+        
+        const peopleOpsUsername = Cypress.env('peopleopssme_username');
+        const peopleOpsPassword = Cypress.env('peopleopssme_password');
+        cy.log(`=====peopleOpsUsername : ${peopleOpsUsername}`);
+        cy.log(`=====peopleOpsPassword : ${peopleOpsPassword}`);
+
+        submitWithUser(
+          peopleOpsUsername,
+          peopleOpsPassword,
+          processInstanceId,
+          null,
+          'approve'
+        );
         checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
