@@ -100,12 +100,15 @@ export default function BaseInputTemplate<
   if (type === 'date') {
     // display the date in a date input box as the config wants.
     // it should in be y-m-d when it gets here.
-    let dateValue: string | null = '';
+    let dateValue: string | null = value;
     if (value || value === 0) {
       if (value.length < 10) {
         dateValue = value;
       } else {
-        dateValue = ymdDateStringToConfiguredFormat(value);
+        try {
+          dateValue = ymdDateStringToConfiguredFormat(value);
+          // let the date component and form validators handle bad dates and do not blow up
+        } catch (RangeError) {}
       }
     }
 
