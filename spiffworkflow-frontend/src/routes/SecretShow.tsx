@@ -87,7 +87,7 @@ export default function SecretShow() {
                   <input
                     id="secret_value"
                     name="secret_value"
-                    type="password"
+                    type="text"
                     value={secretValue || secret.value}
                     onChange={handleSecretValueChange}
                   />
