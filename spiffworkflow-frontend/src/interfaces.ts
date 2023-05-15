@@ -23,6 +23,7 @@ export interface RecentProcessModel {
 
 export interface TaskPropertiesJson {
   parent: string;
+  last_state_change: number;
 }
 
 export interface TaskDefinitionPropertiesJson {
