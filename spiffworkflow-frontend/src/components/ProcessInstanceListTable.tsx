@@ -744,7 +744,7 @@ export default function ProcessInstanceListTable({
       undefined,
       paginationQueryParamPrefix
     );
-    page = 1; // Reset page back to 0
+    page = 1;
 
     const newReportMetadata = getNewReportMetadataBasedOnPageWidgets();
     setListHasBeenFiltered(true);

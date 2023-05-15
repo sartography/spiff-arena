@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
 import { Loading, Grid, Column, Button } from '@carbon/react';
@@ -7,53 +7,59 @@ import { BACKEND_BASE_URL } from '../config';
 import { getBasicHeaders } from '../services/HttpService';
 
 // @ts-ignore
-import InstructionsForEndUser from '../components/InstructionsForEndUser';
-import ProcessBreadcrumb from '../components/ProcessBreadcrumb';
+import InstructionsForEndUser from './InstructionsForEndUser';
+import ProcessBreadcrumb from './ProcessBreadcrumb';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import useAPIError from '../hooks/UseApiError';
 
-export default function ProcessInterstitial() {
+type OwnProps = {
+  processInstanceId: number;
+  modifiedProcessModelIdentifier: string;
+  allowRedirect: boolean;
+};
+
+export default function ProcessInterstitial({
+  processInstanceId,
+  modifiedProcessModelIdentifier,
+  allowRedirect,
+}: OwnProps) {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
+  const [state, setState] = useState<string>('RUNNING');
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
-  const [state, setState] = useState<string>('RUNNING');
-  const params = useParams();
+  const processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${modifiedProcessModelIdentifier}`;
   const navigate = useNavigate();
   const userTasks = useMemo(() => {
     return ['User Task', 'Manual Task'];
   }, []);
   const { addError } = useAPIError();
 
-  const processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${params.modified_process_model_identifier}`;
-
   useEffect(() => {
-    fetchEventSource(
-      `${BACKEND_BASE_URL}/tasks/${params.process_instance_id}`,
-      {
-        headers: getBasicHeaders(),
-        onmessage(ev) {
-          const retValue = JSON.parse(ev.data);
-          if (retValue.type === 'error') {
-            addError(retValue.error);
-          } else if (retValue.type === 'task') {
-            setData((prevData) => [retValue.task, ...prevData]);
-            setLastTask(retValue.task);
-          } else if (retValue.type === 'unrunnable_instance') {
-            setProcessInstance(retValue.unrunnable_instance);
-          }
-        },
-        onclose() {
-          setState('CLOSED');
-        },
-      }
-    );
+    fetchEventSource(`${BACKEND_BASE_URL}/tasks/${processInstanceId}`, {
+      headers: getBasicHeaders(),
+      onmessage(ev) {
+        const retValue = JSON.parse(ev.data);
+        if (retValue.type === 'error') {
+          addError(retValue.error);
+        } else if (retValue.type === 'task') {
+          setData((prevData) => [retValue.task, ...prevData]);
+          setLastTask(retValue.task);
+        } else if (retValue.type === 'unrunnable_instance') {
+          setProcessInstance(retValue.unrunnable_instance);
+        }
+      },
+      onclose() {
+        setState('CLOSED');
+      },
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 
   const shouldRedirect = useCallback(
     (myTask: ProcessInstanceTask): boolean => {
       return (
+        allowRedirect &&
         !processInstance &&
         myTask &&
         myTask.can_complete &&
@@ -166,6 +172,9 @@ export default function ProcessInterstitial() {
       if (shouldRedirect(myTask)) {
         return <div>Redirecting you to the next task now ...</div>;
       }
+      if (myTask && myTask.can_complete && userTasks.includes(myTask.type)) {
+        return `The task ${myTask.title} is ready for you to complete.`;
+      }
       if (myTask.error_message) {
         return <div>{myTask.error_message}</div>;
       }
@@ -201,8 +210,8 @@ export default function ProcessInterstitial() {
               linkLastItem: true,
             },
             [
-              `Process Instance: ${params.process_instance_id}`,
-              `${processInstanceShowPageBaseUrl}/${params.process_instance_id}`,
+              `Process Instance: ${processInstanceId}`,
+              `${processInstanceShowPageBaseUrl}/${processInstanceId}`,
             ],
           ]}
         />
