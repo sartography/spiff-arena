@@ -1608,7 +1608,7 @@ export default function ProcessInstanceListTable({
         }
 
         buttonElement = (
-          <Button kind="secondary" href={interstitialUrl} style={{width:"100%"}}>
+          <Button kind="secondary" href={interstitialUrl} style={{width:"60px"}}>
             {buttonText}
           </Button>
         );
