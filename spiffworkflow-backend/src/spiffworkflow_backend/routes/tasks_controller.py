@@ -438,14 +438,6 @@ def _interstitial_stream(process_instance: ProcessInstanceModel) -> Generator[st
                     )
                     yield render_data("error", api_error)
                     return
-                except Exception as e:
-                    api_error = ApiError(
-                        error_code="engine_steps_error",
-                        message=f"Failed to complete an automated task. Error was: {str(e)}",
-                        status_code=400,
-                    )
-                    yield render_data("error", api_error)
-                    return
         processor.refresh_waiting_tasks()
         ready_engine_task_count = get_ready_engine_step_count(processor.bpmn_process_instance)
         tasks = get_reportable_tasks()

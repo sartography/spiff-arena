@@ -49,12 +49,14 @@ pipeline {
   stages {
     stage('Prep') {
       steps { script {
-        def jobMetaJson = new JsonBuilder([
-          git_commit: env.GIT_COMMIT.take(7),
-          git_branch: env.GIT_BRANCH,
-          build_id:   env.BUILD_ID,
-        ]).toPrettyString()
-        sh "echo '${jobMetaJson}' > version_info.json"
+        dir("spiffworkflow-${params.COMPONENT}") {
+          def jobMetaJson = new JsonBuilder([
+            git_commit: env.GIT_COMMIT.take(7),
+            git_branch: env.GIT_BRANCH,
+            build_id:   env.BUILD_ID,
+          ]).toPrettyString()
+          sh "echo '${jobMetaJson}' > version_info.json"
+        }
       } }
     }
 
