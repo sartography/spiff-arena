@@ -111,6 +111,16 @@ export default function ProcessInterstitial() {
     }
   };
 
+  const getLoadingIcon = () => {
+    if(getStatus() === 'RUNNING') {
+    return (
+        <Loading description="Active loading indicator" withOverlay={false} style={{margin: "auto"}}/>
+    );
+    } else {
+      return null;
+    }
+  }
+
   const getReturnHomeButton = (index: number) => {
     if (
       index === 0 &&
@@ -123,6 +133,7 @@ export default function ProcessInterstitial() {
             kind="secondary"
             data-qa="return-to-home-button"
             onClick={() => navigate(`/tasks`)}
+            style={{marginBottom:30}}
           >
             Return to Home
           </Button>
@@ -155,7 +166,6 @@ export default function ProcessInterstitial() {
       if (!myTask.can_complete && userTasks.includes(myTask.type)) {
         return (
           <>
-            <h4 className="heading-compact-01">Waiting on Someone Else</h4>
             <p>
               This next task is assigned to a different person or team. There is
               no action for you to take at this time.
@@ -189,6 +199,8 @@ export default function ProcessInterstitial() {
   if (state === 'CLOSED' && lastTask === null) {
     navigate(`/tasks`);
   }
+
+
   if (lastTask) {
     return (
       <>
@@ -206,21 +218,10 @@ export default function ProcessInterstitial() {
             ],
           ]}
         />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {getStatusImage()}
-          <div>
-            <h1 style={{ marginBottom: '0em' }}>
-              {lastTask.process_model_display_name}:{' '}
-              {lastTask.process_instance_id}
-            </h1>
-            <div>Status: {capitalize(getStatus())}</div>
-          </div>
-        </div>
-        <br />
-        <br />
+        {getLoadingIcon()}
+        <div style={{maxWidth:800, margin:"auto", padding:50}}>
         {data.map((d, index) => (
-          <Grid fullWidth style={{ marginBottom: '1em' }}>
-            <Column md={6} lg={8} sm={4}>
+          <>
               <div
                 className={
                   index < 4
@@ -231,10 +232,9 @@ export default function ProcessInterstitial() {
                 {userMessage(d)}
               </div>
               {getReturnHomeButton(index)}
-              {getHr(index)}
-            </Column>
-          </Grid>
+          </>
         ))}
+        </div>
       </>
     );
   }
