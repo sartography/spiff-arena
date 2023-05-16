@@ -88,19 +88,12 @@ function TypeaheadWidget({
   );
 }
 
-enum FormSubmitType {
-  Default,
-  Draft,
-}
-
 export default function TaskShow() {
   const [task, setTask] = useState<Task | null>(null);
   const [userTasks] = useState(null);
   const params = useParams();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
-  // save current form data so that we can avoid validations in certain situations
-  const [currentFormObject, setCurrentFormObject] = useState<any>({});
 
   const { addError, removeError } = useAPIError();
 
@@ -167,11 +160,7 @@ export default function TaskShow() {
     }
   };
 
-  const handleFormSubmit = (
-    formObject: any,
-    _event: any,
-    submitType: FormSubmitType = FormSubmitType.Default
-  ) => {
+  const handleFormSubmit = (formObject: any, event: any) => {
     if (disabled) {
       return;
     }
@@ -181,7 +170,7 @@ export default function TaskShow() {
       return;
     }
     let queryParams = '';
-    if (submitType === FormSubmitType.Draft) {
+    if (event && event.submitter.id === 'close-button') {
       queryParams = '?save_as_draft=true';
     }
     setDisabled(true);
@@ -301,11 +290,6 @@ export default function TaskShow() {
     return errors;
   };
 
-  const updateFormData = (formObject: any) => {
-    currentFormObject.formData = formObject.formData;
-    setCurrentFormObject(currentFormObject);
-  };
-
   const formElement = () => {
     if (!task) {
       return null;
@@ -357,12 +341,10 @@ export default function TaskShow() {
         closeButton = (
           <Button
             id="close-button"
+            type="submit"
             disabled={disabled}
             kind="secondary"
             title="Save changes without submitting."
-            onClick={() =>
-              handleFormSubmit(currentFormObject, null, FormSubmitType.Draft)
-            }
           >
             Save and Close
           </Button>
@@ -406,10 +388,8 @@ export default function TaskShow() {
             uiSchema={formUiSchema}
             widgets={widgets}
             validator={validator}
-            onChange={updateFormData}
             customValidate={customValidate}
             omitExtraData
-            liveOmit
           >
             {reactFragmentToHideSubmitButton}
           </Form>
