@@ -1601,14 +1601,14 @@ export default function ProcessInstanceListTable({
         ) {
           hasAccessToCompleteTask = true;
         }
-
+        console.log("Has Access to complete task?", hasAccessToCompleteTask, regex, processInstance.potential_owner_usernames)
         let buttonText = 'View';
         if (hasAccessToCompleteTask && processInstance.task_id) {
           buttonText = 'Go';
         }
 
         buttonElement = (
-          <Button kind="secondary" href={interstitialUrl}>
+          <Button kind="secondary" href={interstitialUrl} style={{width:"100%"}}>
             {buttonText}
           </Button>
         );
