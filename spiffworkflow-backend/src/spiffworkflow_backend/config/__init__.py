@@ -13,8 +13,7 @@ class ConfigurationError(Exception):
     """ConfigurationError."""
 
 
-def setup_database_uri(app: Flask) -> None:
-    """Setup_database_uri."""
+def setup_database_configs(app: Flask) -> None:
     if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI") is None:
         database_name = f"spiffworkflow_backend_{app.config['ENV_IDENTIFIER']}"
         if app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "sqlite":
@@ -34,6 +33,25 @@ def setup_database_uri(app: Flask) -> None:
     else:
         app.config["SQLALCHEMY_DATABASE_URI"] = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_URI")
 
+    # if pool size came in from the environment, it's a string, but we need an int
+    # if it didn't come in from the environment, base it on the number of threads
+    # note that max_overflow defaults to 10, so that will give extra buffer.
+    pool_size = app.config.get("SPIFFWORKFLOW_BACKEND_DATABASE_POOL_SIZE")
+    if pool_size is not None:
+        pool_size = int(pool_size)
+    else:
+        # this one doesn't come from app config and isn't documented in default.py because we don't want to give people the impression
+        # that setting it in flask python configs will work. on the contrary, it's used by a bash
+        # script that starts the backend, so it can only be set in the environment.
+        threads_per_worker_config = os.environ.get("SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER")
+        if threads_per_worker_config is not None:
+            pool_size = int(threads_per_worker_config)
+        else:
+            # this is a sqlalchemy default, if we don't have any better ideas
+            pool_size = 5
+
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
+    app.config['SQLALCHEMY_ENGINE_OPTIONS']['pool_size'] = pool_size
 
 def load_config_file(app: Flask, env_config_module: str) -> None:
     """Load_config_file."""
@@ -115,7 +133,7 @@ def setup_config(app: Flask) -> None:
 
     app.config["PROCESS_UUID"] = uuid.uuid4()
 
-    setup_database_uri(app)
+    setup_database_configs(app)
     setup_logger(app)
 
     if app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"] == "":
