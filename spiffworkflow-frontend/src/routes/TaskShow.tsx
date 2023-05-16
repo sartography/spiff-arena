@@ -364,7 +364,7 @@ export default function TaskShow() {
               handleFormSubmit(currentFormObject, null, FormSubmitType.Draft)
             }
           >
-            Close
+            Save and Close
           </Button>
         );
       }
