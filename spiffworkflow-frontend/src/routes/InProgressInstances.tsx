@@ -22,7 +22,7 @@ export default function InProgressInstances() {
       const titleText = `This is a list of instances with tasks that are waiting for the ${userGroup} group.`;
       const headerElement = (
         <h2 title={titleText} className="process-instance-table-header">
-          Instances with tasks waiting for <strong>{userGroup}</strong>
+          Waiting for <strong>{userGroup}</strong>
         </h2>
       );
       return (
@@ -61,7 +61,7 @@ export default function InProgressInstances() {
     'This is a list of instances that have tasks that you can complete.';
   const waitingForMeHeaderElement = (
     <h2 title={waitingForMeTitleText} className="process-instance-table-header">
-      Instances with tasks waiting for me
+      Waiting for me
     </h2>
   );
 

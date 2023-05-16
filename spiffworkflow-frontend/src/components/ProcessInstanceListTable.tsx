@@ -1601,14 +1601,17 @@ export default function ProcessInstanceListTable({
         ) {
           hasAccessToCompleteTask = true;
         }
-
         let buttonText = 'View';
         if (hasAccessToCompleteTask && processInstance.task_id) {
           buttonText = 'Go';
         }
 
         buttonElement = (
-          <Button kind="secondary" href={interstitialUrl}>
+          <Button
+            kind="secondary"
+            href={interstitialUrl}
+            style={{ width: '60px' }}
+          >
             {buttonText}
           </Button>
         );
