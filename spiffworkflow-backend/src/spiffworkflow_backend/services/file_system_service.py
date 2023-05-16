@@ -49,13 +49,12 @@ class FileSystemService:
         """Id_string_to_relative_path."""
         return id_string.replace("/", os.sep)
 
-    @staticmethod
-    def process_group_path(name: str) -> str:
-        """Category_path."""
+    @classmethod
+    def full_path_from_id(cls, id: str) -> str:
         return os.path.abspath(
             os.path.join(
-                FileSystemService.root_path(),
-                FileSystemService.id_string_to_relative_path(name),
+                cls.root_path(),
+                cls.id_string_to_relative_path(id),
             )
         )
 
@@ -65,36 +64,33 @@ class FileSystemService:
         return os.path.join(FileSystemService.root_path(), relative_path)
 
     @staticmethod
-    def process_model_relative_path(spec: ProcessModelInfo) -> str:
+    def process_model_relative_path(process_model: ProcessModelInfo) -> str:
         """Get the file path to a process model relative to SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR.
 
         If the full path is /path/to/process-group-a/group-b/process-model-a, it will return:
         process-group-a/group-b/process-model-a
         """
-        workflow_path = FileSystemService.workflow_path(spec)
+        workflow_path = FileSystemService.process_model_full_path(process_model)
         return os.path.relpath(workflow_path, start=FileSystemService.root_path())
 
     @staticmethod
-    def process_group_path_for_spec(spec: ProcessModelInfo) -> str:
-        """Category_path_for_spec."""
+    def process_group_path_for_spec(process_model: ProcessModelInfo) -> str:
         # os.path.split apparently returns 2 element tulple like: (first/path, last_item)
-        process_group_id, _ = os.path.split(spec.id_for_file_path())
-        return FileSystemService.process_group_path(process_group_id)
+        process_group_id, _ = os.path.split(process_model.id_for_file_path())
+        return FileSystemService.full_path_from_id(process_group_id)
+
+    @classmethod
+    def process_model_full_path(cls, process_model: ProcessModelInfo) -> str:
+        return cls.full_path_from_id(process_model.id)
 
     @staticmethod
-    def workflow_path(spec: ProcessModelInfo) -> str:
-        """Workflow_path."""
-        process_model_path = os.path.join(FileSystemService.root_path(), spec.id_for_file_path())
-        return process_model_path
-
-    @staticmethod
-    def full_path_to_process_model_file(spec: ProcessModelInfo) -> str:
+    def full_path_to_process_model_file(process_model: ProcessModelInfo) -> str:
         """Full_path_to_process_model_file."""
-        return os.path.join(FileSystemService.workflow_path(spec), spec.primary_file_name)  # type: ignore
+        return os.path.join(FileSystemService.process_model_full_path(process_model), process_model.primary_file_name)  # type: ignore
 
-    def next_display_order(self, spec: ProcessModelInfo) -> int:
+    def next_display_order(self, process_model: ProcessModelInfo) -> int:
         """Next_display_order."""
-        path = self.process_group_path_for_spec(spec)
+        path = self.process_group_path_for_spec(process_model)
         if os.path.exists(path):
             return len(next(os.walk(path))[1])
         else:

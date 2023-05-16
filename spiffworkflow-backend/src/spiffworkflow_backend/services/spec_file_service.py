@@ -221,37 +221,37 @@ class SpecFileService(FileSystemService):
         return spec_file_data
 
     @staticmethod
-    def full_file_path(spec: ProcessModelInfo, file_name: str) -> str:
+    def full_file_path(process_model: ProcessModelInfo, file_name: str) -> str:
         """File_path."""
-        return os.path.abspath(os.path.join(SpecFileService.workflow_path(spec), file_name))
+        return os.path.abspath(os.path.join(SpecFileService.process_model_full_path(process_model), file_name))
 
     @staticmethod
-    def last_modified(spec: ProcessModelInfo, file_name: str) -> datetime:
+    def last_modified(process_model: ProcessModelInfo, file_name: str) -> datetime:
         """Last_modified."""
-        full_file_path = SpecFileService.full_file_path(spec, file_name)
+        full_file_path = SpecFileService.full_file_path(process_model, file_name)
         return FileSystemService._last_modified(full_file_path)
 
     @staticmethod
-    def timestamp(spec: ProcessModelInfo, file_name: str) -> float:
+    def timestamp(process_model: ProcessModelInfo, file_name: str) -> float:
         """Timestamp."""
-        full_file_path = SpecFileService.full_file_path(spec, file_name)
+        full_file_path = SpecFileService.full_file_path(process_model, file_name)
         return FileSystemService._timestamp(full_file_path)
 
     @staticmethod
-    def delete_file(spec: ProcessModelInfo, file_name: str) -> None:
+    def delete_file(process_model: ProcessModelInfo, file_name: str) -> None:
         """Delete_file."""
-        # Fixme: Remember to remove the lookup files when the spec file is removed.
+        # Fixme: Remember to remove the lookup files when the process_model file is removed.
         # lookup_files = session.query(LookupFileModel).filter_by(file_model_id=file_id).all()
         # for lf in lookup_files:
         #     session.query(LookupDataModel).filter_by(lookup_file_model_id=lf.id).delete()
         #     session.query(LookupFileModel).filter_by(id=lf.id).delete()
-        full_file_path = SpecFileService.full_file_path(spec, file_name)
+        full_file_path = SpecFileService.full_file_path(process_model, file_name)
         os.remove(full_file_path)
 
     @staticmethod
-    def delete_all_files(spec: ProcessModelInfo) -> None:
+    def delete_all_files(process_model: ProcessModelInfo) -> None:
         """Delete_all_files."""
-        dir_path = SpecFileService.workflow_path(spec)
+        dir_path = SpecFileService.process_model_full_path(process_model)
         if os.path.exists(dir_path):
             shutil.rmtree(dir_path)
 
