@@ -60,12 +60,7 @@ class ProcessModelService(FileSystemService):
     def is_process_group_identifier(cls, process_group_identifier: str) -> bool:
         """Is_process_group_identifier."""
         if os.path.exists(FileSystemService.root_path()):
-            process_group_path = os.path.abspath(
-                os.path.join(
-                    FileSystemService.root_path(),
-                    FileSystemService.id_string_to_relative_path(process_group_identifier),
-                )
-            )
+            process_group_path = FileSystemService.full_path_from_id(process_group_identifier)
             return cls.is_process_group(process_group_path)
 
         return False
@@ -82,12 +77,7 @@ class ProcessModelService(FileSystemService):
     def is_process_model_identifier(cls, process_model_identifier: str) -> bool:
         """Is_process_model_identifier."""
         if os.path.exists(FileSystemService.root_path()):
-            process_model_path = os.path.abspath(
-                os.path.join(
-                    FileSystemService.root_path(),
-                    FileSystemService.id_string_to_relative_path(process_model_identifier),
-                )
-            )
+            process_model_path = FileSystemService.full_path_from_id(process_model_identifier)
             return cls.is_process_model(process_model_path)
 
         return False
@@ -149,13 +139,13 @@ class ProcessModelService(FileSystemService):
                 f"We cannot delete the model `{process_model_id}`, there are existing instances that depend on it."
             )
         process_model = self.get_process_model(process_model_id)
-        path = self.workflow_path(process_model)
+        path = self.process_model_full_path(process_model)
         shutil.rmtree(path)
 
     def process_model_move(self, original_process_model_id: str, new_location: str) -> ProcessModelInfo:
         """Process_model_move."""
         process_model = self.get_process_model(original_process_model_id)
-        original_model_path = self.workflow_path(process_model)
+        original_model_path = self.process_model_full_path(process_model)
         _, model_id = os.path.split(original_model_path)
         new_relative_path = os.path.join(new_location, model_id)
         new_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_relative_path))
@@ -314,12 +304,7 @@ class ProcessModelService(FileSystemService):
     def get_process_group(cls, process_group_id: str, find_direct_nested_items: bool = True) -> ProcessGroup:
         """Look for a given process_group, and return it."""
         if os.path.exists(FileSystemService.root_path()):
-            process_group_path = os.path.abspath(
-                os.path.join(
-                    FileSystemService.root_path(),
-                    FileSystemService.id_string_to_relative_path(process_group_id),
-                )
-            )
+            process_group_path = FileSystemService.full_path_from_id(process_group_id)
             if cls.is_process_group(process_group_path):
                 return cls.find_or_create_process_group(
                     process_group_path,
@@ -336,7 +321,7 @@ class ProcessModelService(FileSystemService):
     @classmethod
     def update_process_group(cls, process_group: ProcessGroup) -> ProcessGroup:
         """Update_process_group."""
-        cat_path = cls.process_group_path(process_group.id)
+        cat_path = cls.full_path_from_id(process_group.id)
         os.makedirs(cat_path, exist_ok=True)
         json_path = os.path.join(cat_path, cls.PROCESS_GROUP_JSON_FILE)
         serialized_process_group = process_group.serialized
@@ -348,7 +333,7 @@ class ProcessModelService(FileSystemService):
 
     def process_group_move(self, original_process_group_id: str, new_location: str) -> ProcessGroup:
         """Process_group_move."""
-        original_group_path = self.process_group_path(original_process_group_id)
+        original_group_path = self.full_path_from_id(original_process_group_id)
         _, original_group_id = os.path.split(original_group_path)
         new_root = os.path.join(FileSystemService.root_path(), new_location)
         new_group_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_root, original_group_id))
@@ -370,7 +355,7 @@ class ProcessModelService(FileSystemService):
     def process_group_delete(self, process_group_id: str) -> None:
         """Delete_process_group."""
         problem_models = []
-        path = self.process_group_path(process_group_id)
+        path = self.full_path_from_id(process_group_id)
         if os.path.exists(path):
             nested_models = self.__get_all_nested_models(path)
             for process_model in nested_models:
