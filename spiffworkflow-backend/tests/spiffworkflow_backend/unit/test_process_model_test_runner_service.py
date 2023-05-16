@@ -29,6 +29,16 @@ class TestProcessModelTestRunnerService(BaseTest):
         test_runner_service.run()
         assert test_runner_service.process_model_test_runner.all_test_cases_passed()
 
+    def test_can_test_multiple_process_models(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_mocked_root_path: any,
+    ) -> None:
+        test_runner_service = ProcessModelTestRunnerService(FileSystemService.root_path())
+        test_runner_service.run()
+        assert test_runner_service.process_model_test_runner.all_test_cases_passed() is False
+
     @pytest.fixture()
     def with_mocked_root_path(self, mocker: MockerFixture) -> None:
         path = os.path.join(

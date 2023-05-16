@@ -30,6 +30,10 @@ class UnrunnableTestCaseError(Exception):
     pass
 
 
+class MissingBpmnFileForTestCaseError(Exception):
+    pass
+
+
 @dataclass
 class TestCaseResult:
     passed: bool
@@ -122,6 +126,8 @@ class ProcessModelTestRunner:
             bpmn_file_path = os.path.join(file_dir, bpmn_file_name)
             if os.path.isfile(bpmn_file_path):
                 test_mappings[file] = bpmn_file_path
+            else:
+                raise MissingBpmnFileForTestCaseError(f"Cannot find a matching bpmn file for test case json file: '{file}'")
         return test_mappings
 
 
