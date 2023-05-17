@@ -40,7 +40,8 @@ def setup_database_configs(app: Flask) -> None:
     if pool_size is not None:
         pool_size = int(pool_size)
     else:
-        # this one doesn't come from app config and isn't documented in default.py because we don't want to give people the impression
+        # this one doesn't come from app config and isn't documented in default.py
+        # because we don't want to give people the impression
         # that setting it in flask python configs will work. on the contrary, it's used by a bash
         # script that starts the backend, so it can only be set in the environment.
         threads_per_worker_config = os.environ.get("SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER")
@@ -50,8 +51,9 @@ def setup_database_configs(app: Flask) -> None:
             # this is a sqlalchemy default, if we don't have any better ideas
             pool_size = 5
 
-    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {}
-    app.config['SQLALCHEMY_ENGINE_OPTIONS']['pool_size'] = pool_size
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {}
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"]["pool_size"] = pool_size
+
 
 def load_config_file(app: Flask, env_config_module: str) -> None:
     """Load_config_file."""
