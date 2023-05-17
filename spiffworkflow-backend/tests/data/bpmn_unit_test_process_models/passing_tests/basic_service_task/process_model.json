@@ -1,0 +1,10 @@
+{
+    "description": "A.1.0.2",
+    "display_name": "A.1.0.2 - Service Task",
+    "display_order": 13,
+    "exception_notification_addresses": [],
+    "fault_or_suspend_on_exception": "fault",
+    "files": [],
+    "primary_file_name": "A.1.0.2.bpmn",
+    "primary_process_id": "Process_test_a102_A_1_0_2_bd2e724"
+}

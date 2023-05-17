@@ -36,6 +36,10 @@ class MissingBpmnFileForTestCaseError(Exception):
     pass
 
 
+class NoTestCasesFoundError(Exception):
+    pass
+
+
 @dataclass
 class TestCaseResult:
     passed: bool
@@ -95,6 +99,8 @@ class ProcessModelTestRunner:
         return len(failed_tests) < 1
 
     def run(self) -> None:
+        if len(self.test_mappings.items()) < 1:
+            raise NoTestCasesFoundError(f"Could not find any test cases in given directory: {self.process_model_directory_for_test_discovery}")
         for json_test_case_file, bpmn_file in self.test_mappings.items():
             with open(json_test_case_file) as f:
                 json_file_contents = json.loads(f.read())
@@ -189,21 +195,14 @@ class ProcessModelTestRunner:
             return self.instantiate_executer_callback(bpmn_file)
         return self._default_instantiate_executer(bpmn_file)
 
-    def _get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        tasks = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
-        if len(tasks) > 0:
-            tasks = [tasks[0]]
-
-        return tasks
-
     def _default_get_next_task(self, bpmn_process_instance: BpmnWorkflow) -> Optional[SpiffTask]:
-        engine_steps = self._get_ready_engine_steps(bpmn_process_instance)
-        if len(engine_steps) > 0:
-            return engine_steps[0]
+        ready_tasks = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY)])
+        if len(ready_tasks) > 0:
+            return ready_tasks[0]
         return None
 
     def _default_execute_task(self, spiff_task: SpiffTask, test_case_task_properties: Optional[dict]) -> None:
-        if spiff_task.task_spec.manual:
+        if spiff_task.task_spec.manual or spiff_task.task_spec.__class__.__name__ == 'ServiceTask':
             if test_case_task_properties and 'data' in test_case_task_properties:
                 spiff_task.update_data(test_case_task_properties['data'])
             spiff_task.complete()
@@ -274,40 +273,3 @@ class ProcessModelTestRunnerService:
 
     def run(self) -> None:
         self.process_model_test_runner.run()
-
-    def _execute_task_callback(self, spiff_task: SpiffTask, _test_case_json: Optional[dict]) -> None:
-        spiff_task.run()
-
-    def _get_next_task_callback(self, bpmn_process_instance: BpmnWorkflow) -> Optional[SpiffTask]:
-        engine_steps = self._get_ready_engine_steps(bpmn_process_instance)
-        if len(engine_steps) > 0:
-            return engine_steps[0]
-        return None
-
-    def _get_ready_engine_steps(self, bpmn_process_instance: BpmnWorkflow) -> list[SpiffTask]:
-        tasks = list([t for t in bpmn_process_instance.get_tasks(TaskState.READY) if not t.task_spec.manual])
-        if len(tasks) > 0:
-            tasks = [tasks[0]]
-
-        return tasks
-
-    def _instantiate_executer_callback(self, bpmn_file: str) -> BpmnWorkflow:
-        parser = MyCustomParser()
-        data = None
-        with open(bpmn_file, "rb") as f_handle:
-            data = f_handle.read()
-        etree_xml_parser = etree.XMLParser(resolve_entities=False)
-        bpmn = etree.fromstring(data, parser=etree_xml_parser)
-        parser.add_bpmn_xml(bpmn, filename=os.path.basename(bpmn_file))
-        sub_parsers = list(parser.process_parsers.values())
-        executable_process = None
-        for sub_parser in sub_parsers:
-            if sub_parser.process_executable:
-                executable_process = sub_parser.bpmn_id
-        if executable_process is None:
-            raise BpmnFileMissingExecutableProcessError(
-                f"Executable process cannot be found in {bpmn_file}. Test cannot run."
-            )
-        bpmn_process_spec = parser.get_spec(executable_process)
-        bpmn_process_instance = BpmnWorkflow(bpmn_process_spec)
-        return bpmn_process_instance
