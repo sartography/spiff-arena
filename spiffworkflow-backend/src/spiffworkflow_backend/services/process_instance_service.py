@@ -192,8 +192,7 @@ class ProcessInstanceService:
         """
         # navigation = processor.bpmn_process_instance.get_deep_nav_list()
         # ProcessInstanceService.update_navigation(navigation, processor)
-        process_model_service = ProcessModelService()
-        process_model_service.get_process_model(processor.process_model_identifier)
+        ProcessModelService.get_process_model(processor.process_model_identifier)
         process_instance_api = ProcessInstanceApi(
             id=processor.get_process_instance_id(),
             status=processor.get_status(),

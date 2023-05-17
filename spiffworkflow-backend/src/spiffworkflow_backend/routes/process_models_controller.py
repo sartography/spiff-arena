@@ -104,7 +104,7 @@ def process_model_delete(
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     try:
-        ProcessModelService().process_model_delete(process_model_identifier)
+        ProcessModelService.process_model_delete(process_model_identifier)
     except ProcessModelWithInstancesNotDeletableError as exception:
         raise ApiError(
             error_code="existing_instances",
@@ -182,7 +182,7 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
 def process_model_move(modified_process_model_identifier: str, new_location: str) -> flask.wrappers.Response:
     """Process_model_move."""
     original_process_model_id = _un_modify_modified_process_model_id(modified_process_model_identifier)
-    new_process_model = ProcessModelService().process_model_move(original_process_model_id, new_location)
+    new_process_model = ProcessModelService.process_model_move(original_process_model_id, new_location)
     _commit_and_push_to_git(
         f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
     )
@@ -219,7 +219,7 @@ def process_model_list(
         recursive=recursive,
         filter_runnable_by_user=filter_runnable_by_user,
     )
-    process_models_to_return = ProcessModelService().get_batch(process_models, page=page, per_page=per_page)
+    process_models_to_return = ProcessModelService.get_batch(process_models, page=page, per_page=per_page)
 
     if include_parent_groups:
         process_group_cache = IdToProcessGroupMapping({})

@@ -55,9 +55,8 @@ def with_db_and_bpmn_file_cleanup() -> None:
     try:
         yield
     finally:
-        process_model_service = ProcessModelService()
-        if os.path.exists(process_model_service.root_path()):
-            shutil.rmtree(process_model_service.root_path())
+        if os.path.exists(ProcessModelService.root_path()):
+            shutil.rmtree(ProcessModelService.root_path())
 
 
 @pytest.fixture()
