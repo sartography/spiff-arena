@@ -28,17 +28,19 @@ export default function About() {
     versionInfoDict: ObjectWithStringKeysAndValues | null
   ) => {
     if (versionInfoDict !== null && Object.keys(versionInfoDict).length) {
-      const tableRows = Object.keys(versionInfoDict).map((key) => {
-        const value = versionInfoDict[key];
-        return (
-          <tr key={key}>
-            <td className="version-info-column">
-              <strong>{key}</strong>
-            </td>
-            <td className="version-info-column">{value}</td>
-          </tr>
-        );
-      });
+      const tableRows = Object.keys(versionInfoDict)
+        .sort()
+        .map((key) => {
+          const value = versionInfoDict[key];
+          return (
+            <tr key={key}>
+              <td className="version-info-column">
+                <strong>{key}</strong>
+              </td>
+              <td className="version-info-column">{value}</td>
+            </tr>
+          );
+        });
       return (
         <>
           <h2 title="This information is configurable by specifying values in version_info.json in the app at build time">
