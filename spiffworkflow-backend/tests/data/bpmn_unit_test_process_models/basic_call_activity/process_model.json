@@ -1,0 +1,9 @@
+{
+    "description": "",
+    "display_name": "Basic Call Activity",
+    "exception_notification_addresses": [],
+    "fault_or_suspend_on_exception": "fault",
+    "files": [],
+    "primary_file_name": "basic_call_activity.bpmn",
+    "primary_process_id": "BasicCallActivityProcess"
+}
