@@ -94,7 +94,6 @@ class ProcessModelService(FileSystemService):
         page: int = 1,
         per_page: int = 10,
     ) -> list[T]:
-        """Get_batch."""
         start = (page - 1) * per_page
         end = start + per_page
         return items[start:end]
@@ -129,8 +128,8 @@ class ProcessModelService(FileSystemService):
         cls.write_json_file(json_path, json_data)
         process_model.id = process_model_id
 
-    def process_model_delete(self, process_model_id: str) -> None:
-        """Delete Procecss Model."""
+    @classmethod
+    def process_model_delete(cls, process_model_id: str) -> None:
         instances = ProcessInstanceModel.query.filter(
             ProcessInstanceModel.process_model_identifier == process_model_id
         ).all()
@@ -138,19 +137,19 @@ class ProcessModelService(FileSystemService):
             raise ProcessModelWithInstancesNotDeletableError(
                 f"We cannot delete the model `{process_model_id}`, there are existing instances that depend on it."
             )
-        process_model = self.get_process_model(process_model_id)
-        path = self.process_model_full_path(process_model)
+        process_model = cls.get_process_model(process_model_id)
+        path = cls.process_model_full_path(process_model)
         shutil.rmtree(path)
 
-    def process_model_move(self, original_process_model_id: str, new_location: str) -> ProcessModelInfo:
-        """Process_model_move."""
-        process_model = self.get_process_model(original_process_model_id)
-        original_model_path = self.process_model_full_path(process_model)
+    @classmethod
+    def process_model_move(cls, original_process_model_id: str, new_location: str) -> ProcessModelInfo:
+        process_model = cls.get_process_model(original_process_model_id)
+        original_model_path = cls.process_model_full_path(process_model)
         _, model_id = os.path.split(original_model_path)
         new_relative_path = os.path.join(new_location, model_id)
         new_model_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_relative_path))
         shutil.move(original_model_path, new_model_path)
-        new_process_model = self.get_process_model(new_relative_path)
+        new_process_model = cls.get_process_model(new_relative_path)
         return new_process_model
 
     @classmethod
@@ -315,12 +314,10 @@ class ProcessModelService(FileSystemService):
 
     @classmethod
     def add_process_group(cls, process_group: ProcessGroup) -> ProcessGroup:
-        """Add_process_group."""
         return cls.update_process_group(process_group)
 
     @classmethod
     def update_process_group(cls, process_group: ProcessGroup) -> ProcessGroup:
-        """Update_process_group."""
         cat_path = cls.full_path_from_id(process_group.id)
         os.makedirs(cat_path, exist_ok=True)
         json_path = os.path.join(cat_path, cls.PROCESS_GROUP_JSON_FILE)
@@ -331,33 +328,33 @@ class ProcessModelService(FileSystemService):
         cls.write_json_file(json_path, serialized_process_group)
         return process_group
 
-    def process_group_move(self, original_process_group_id: str, new_location: str) -> ProcessGroup:
-        """Process_group_move."""
-        original_group_path = self.full_path_from_id(original_process_group_id)
+    @classmethod
+    def process_group_move(cls, original_process_group_id: str, new_location: str) -> ProcessGroup:
+        original_group_path = cls.full_path_from_id(original_process_group_id)
         _, original_group_id = os.path.split(original_group_path)
         new_root = os.path.join(FileSystemService.root_path(), new_location)
         new_group_path = os.path.abspath(os.path.join(FileSystemService.root_path(), new_root, original_group_id))
         destination = shutil.move(original_group_path, new_group_path)
-        new_process_group = self.get_process_group(destination)
+        new_process_group = cls.get_process_group(destination)
         return new_process_group
 
-    def __get_all_nested_models(self, group_path: str) -> list:
-        """__get_all_nested_models."""
+    @classmethod
+    def __get_all_nested_models(cls, group_path: str) -> list:
         all_nested_models = []
         for _root, dirs, _files in os.walk(group_path):
             for dir in dirs:
                 model_dir = os.path.join(group_path, dir)
                 if ProcessModelService.is_process_model(model_dir):
-                    process_model = self.get_process_model(model_dir)
+                    process_model = cls.get_process_model(model_dir)
                     all_nested_models.append(process_model)
         return all_nested_models
 
-    def process_group_delete(self, process_group_id: str) -> None:
-        """Delete_process_group."""
+    @classmethod
+    def process_group_delete(cls, process_group_id: str) -> None:
         problem_models = []
-        path = self.full_path_from_id(process_group_id)
+        path = cls.full_path_from_id(process_group_id)
         if os.path.exists(path):
-            nested_models = self.__get_all_nested_models(path)
+            nested_models = cls.__get_all_nested_models(path)
             for process_model in nested_models:
                 instances = ProcessInstanceModel.query.filter(
                     ProcessInstanceModel.process_model_identifier == process_model.id
@@ -371,15 +368,15 @@ class ProcessModelService(FileSystemService):
                     f" {problem_models}"
                 )
             shutil.rmtree(path)
-        self.cleanup_process_group_display_order()
+        cls._cleanup_process_group_display_order()
 
-    def cleanup_process_group_display_order(self) -> List[Any]:
-        """Cleanup_process_group_display_order."""
-        process_groups = self.get_process_groups()  # Returns an ordered list
+    @classmethod
+    def _cleanup_process_group_display_order(cls) -> List[Any]:
+        process_groups = cls.get_process_groups()  # Returns an ordered list
         index = 0
         for process_group in process_groups:
             process_group.display_order = index
-            self.update_process_group(process_group)
+            cls.update_process_group(process_group)
             index += 1
         return process_groups
 
