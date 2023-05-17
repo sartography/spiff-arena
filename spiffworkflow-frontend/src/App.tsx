@@ -3,6 +3,7 @@ import { Content } from '@carbon/react';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { defineAbility } from '@casl/ability';
+import React from 'react';
 import NavigationBar from './components/NavigationBar';
 
 import HomePageRoutes from './routes/HomePageRoutes';
@@ -15,8 +16,7 @@ import { AbilityContext } from './contexts/Can';
 import UserService from './services/UserService';
 import ErrorDisplay from './components/ErrorDisplay';
 import APIErrorProvider from './contexts/APIErrorContext';
-import ScrollToTop from "./components/ScrollToTop";
-import React from "react";
+import ScrollToTop from './components/ScrollToTop';
 
 export default function App() {
   if (!UserService.isLoggedIn()) {
