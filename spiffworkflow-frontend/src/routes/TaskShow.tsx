@@ -94,6 +94,9 @@ export default function TaskShow() {
   const params = useParams();
   const navigate = useNavigate();
   const [disabled, setDisabled] = useState(false);
+  const [noValidate, setNoValidate] = useState<boolean>(false);
+
+  const [taskData, setTaskData] = useState<any>(null);
 
   const { addError, removeError } = useAPIError();
 
@@ -108,11 +111,11 @@ export default function TaskShow() {
   useEffect(() => {
     const processResult = (result: Task) => {
       setTask(result);
+      setTaskData(result.data);
       setDisabled(false);
       if (!result.can_complete) {
         navigateToInterstitial(result);
       }
-      window.scrollTo(0, 0); // Scroll back to the top of the page
 
       /*  Disable call to load previous tasks -- do not display menu.
       const url = `/v1.0/process-instances/for-me/${modifyProcessIdentifierForPathParam(
@@ -160,22 +163,30 @@ export default function TaskShow() {
     }
   };
 
-  const handleFormSubmit = (formObject: any, event: any) => {
+  const handleFormSubmit = (formObject: any, _event: any) => {
     if (disabled) {
       return;
     }
+
     const dataToSubmit = formObject?.formData;
     if (!dataToSubmit) {
       navigate(`/tasks`);
       return;
     }
     let queryParams = '';
-    if (event && event.submitter.id === 'close-button') {
+
+    // if validations are turned off then save as draft
+    if (noValidate) {
       queryParams = '?save_as_draft=true';
     }
     setDisabled(true);
     removeError();
     delete dataToSubmit.isManualTask;
+
+    // NOTE: rjsf sets blanks values to undefined and JSON.stringify removes keys with undefined values
+    // so there is no way to clear out a field that previously had a value.
+    // To resolve this, we could potentially go through the object that we are posting (either in here or in
+    // HttpService) and translate all undefined values to null.
     HttpService.makeCallToBackend({
       path: `/tasks/${params.process_instance_id}/${params.task_id}${queryParams}`,
       successCallback: processSubmitResult,
@@ -290,17 +301,27 @@ export default function TaskShow() {
     return errors;
   };
 
+  // This turns off validations and then dispatches the click event after
+  // waiting a second to give the state time to update.
+  // This is to allow saving the form without validations causing issues.
+  const handleSaveAndCloseButton = () => {
+    setNoValidate(true);
+    setTimeout(() => {
+      (document.getElementById('our-very-own-form') as any).dispatchEvent(
+        new Event('submit', { cancelable: true, bubbles: true })
+      );
+    }, 1000);
+  };
+
   const formElement = () => {
     if (!task) {
       return null;
     }
 
     let formUiSchema;
-    let taskData = task.data;
     let jsonSchema = task.form_schema;
     let reactFragmentToHideSubmitButton = null;
     if (task.typename === 'ManualTask') {
-      taskData = {};
       jsonSchema = {
         type: 'object',
         required: [],
@@ -341,7 +362,7 @@ export default function TaskShow() {
         closeButton = (
           <Button
             id="close-button"
-            type="submit"
+            onClick={handleSaveAndCloseButton}
             disabled={disabled}
             kind="secondary"
             title="Save changes without submitting."
@@ -381,14 +402,17 @@ export default function TaskShow() {
       <Grid fullWidth condensed>
         <Column sm={4} md={5} lg={8}>
           <Form
+            id="our-very-own-form"
             disabled={disabled}
             formData={taskData}
+            onChange={(obj: any) => setTaskData(obj.formData)}
             onSubmit={handleFormSubmit}
             schema={jsonSchema}
             uiSchema={formUiSchema}
             widgets={widgets}
             validator={validator}
             customValidate={customValidate}
+            noValidate={noValidate}
             omitExtraData
           >
             {reactFragmentToHideSubmitButton}
