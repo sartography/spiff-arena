@@ -35,5 +35,4 @@ class RefreshPermissions(Script):
         **kwargs: Any,
     ) -> Any:
         group_info = args[0]
-        import pdb; pdb.set_trace()
         AuthorizationService.refresh_permissions(group_info)

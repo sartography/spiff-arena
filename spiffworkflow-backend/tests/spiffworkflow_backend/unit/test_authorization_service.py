@@ -6,8 +6,8 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.user import UserNotFoundError
-from spiffworkflow_backend.services.authorization_service import AuthorizationService, GroupPermissionsDict
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -47,13 +47,13 @@ class TestAuthorizationService(BaseTest):
         assert testuser1_group_identifiers == ["Finance Team", "everybody"]
         assert len(users["testuser2"].groups) == 3
 
-        self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance/model1")
-        self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance/")
+        self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance:model1")
+        self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance")
         self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/", expected_result=False)
-        self.assert_user_has_permission(users["testuser4"], "read", "/v1.0/process-groups/finance/model1")
-        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/finance/model1")
-        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/", expected_result=False)
-        self.assert_user_has_permission(users["testuser2"], "read", "/v1.0/process-groups/")
+        self.assert_user_has_permission(users["testuser4"], "read", "/v1.0/process-groups/finance:model1")
+        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/finance:model1")
+        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups", expected_result=False)
+        self.assert_user_has_permission(users["testuser2"], "read", "/v1.0/process-groups")
 
     def test_user_can_be_added_to_human_task_on_first_login(
         self,
@@ -110,7 +110,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_all_on_process_group."""
         expected_permissions = sorted(
             [
                 ("/event-error-details/some-process-group:some-process-model:*", "read"),

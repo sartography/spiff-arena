@@ -1,4 +1,3 @@
-default_group: everybody
 
 users:
   admin:
@@ -41,52 +40,43 @@ permissions:
   # Admins have access to everything.
   admin:
     groups: [admin]
-    users: []
     allowed_permissions: [create, read, update, delete]
     uri: /*
 
   # Everybody can participate in tasks assigned to them.
   tasks-crud:
     groups: [everybody]
-    users: []
     allowed_permissions: [create, read, update, delete]
     uri: /tasks/*
 
   # Everybody can start all intstances
   create-test-instances:
     groups: [ everybody ]
-    users: [ ]
     allowed_permissions: [ create ]
     uri: /process-instances/*
 
   # Everyone can see everything (all groups, and processes are visible)
   read-all-process-groups:
     groups: [ everybody ]
-    users: [ ]
     allowed_permissions: [ read ]
     uri: /process-groups/*
   read-all-process-models:
     groups: [ everybody ]
-    users: [ ]
     allowed_permissions: [ read ]
     uri: /process-models/*
   read-all-process-instance:
     groups: [ everybody ]
-    users: [ ]
     allowed_permissions: [ read ]
     uri: /process-instances/*
   read-process-instance-reports:
     groups: [ everybody ]
-    users: [ ]
     allowed_permissions: [ read ]
     uri: /process-instances/reports/*
   processes-read:
     groups: [ everybody ]
-    users: [ ]
     allowed_permissions: [ read ]
     uri: /processes
   groups-everybody:
     groups: [everybody]
-    users: []
     allowed_permissions: [create, read]
     uri: /v1.0/user-groups/for-current-user
