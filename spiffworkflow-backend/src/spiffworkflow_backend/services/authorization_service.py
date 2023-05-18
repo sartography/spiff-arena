@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from hashlib import sha256
 from hmac import compare_digest
 from hmac import HMAC
-from typing import Any
 from typing import Optional
 from typing import Set
 from typing import TypedDict
@@ -21,7 +20,6 @@ from sqlalchemy import or_
 from sqlalchemy import text
 
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
-from spiffworkflow_backend.models import permission_assignment
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -30,7 +28,6 @@ from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import MissingPrincipalError
 from spiffworkflow_backend.models.principal import PrincipalModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.models.user_group_assignment import UserGroupAssignmentModel
 from spiffworkflow_backend.routes.openid_blueprint import openid_blueprint
 from spiffworkflow_backend.services.authentication_service import NotAuthorizedError
@@ -617,7 +614,6 @@ class AuthorizationService:
     def add_permission_from_uri_or_macro(
         cls, group_identifier: str, permission: str, target: str
     ) -> list[PermissionAssignmentModel]:
-        """Add_permission_from_uri_or_macro."""
         group = GroupService.find_or_create_group(group_identifier)
         permissions_to_assign = cls.explode_permissions(permission, target)
         permission_assignments = []
@@ -644,35 +640,41 @@ class AuthorizationService:
             permission_configs = yaml.safe_load(file)
 
         group_permissions_by_group: dict[str, GroupPermissionsDict] = {}
-        if current_app.config['SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP']:
-            default_group_identifier = current_app.config['SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP']
-            group_permissions_by_group[default_group_identifier] = {"name": default_group_identifier, "users": [], "permissions": []}
+        if current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]:
+            default_group_identifier = current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
+            group_permissions_by_group[default_group_identifier] = {
+                "name": default_group_identifier,
+                "users": [],
+                "permissions": [],
+            }
 
         if "groups" in permission_configs:
             for group_identifier, group_config in permission_configs["groups"].items():
                 group_info: GroupPermissionsDict = {"name": group_identifier, "users": [], "permissions": []}
                 for username in group_config["users"]:
-                    group_info['users'].append(username)
+                    group_info["users"].append(username)
                 group_permissions_by_group[group_identifier] = group_info
 
         if "permissions" in permission_configs:
             for _permission_identifier, permission_config in permission_configs["permissions"].items():
                 uri = permission_config["uri"]
                 for group_identifier in permission_config["groups"]:
-                    group_permissions_by_group[group_identifier]['permissions'].append(
-                        {'actions': permission_config["allowed_permissions"], "uri": uri}
+                    group_permissions_by_group[group_identifier]["permissions"].append(
+                        {"actions": permission_config["allowed_permissions"], "uri": uri}
                     )
 
         return list(group_permissions_by_group.values())
 
     @classmethod
-    def add_permissions_from_group_permissions(cls, group_permissions: list[GroupPermissionsDict], user_model: Optional[UserModel] = None) -> DesiredPermissionDict:
+    def add_permissions_from_group_permissions(
+        cls, group_permissions: list[GroupPermissionsDict], user_model: Optional[UserModel] = None
+    ) -> DesiredPermissionDict:
         unique_user_group_identifiers: Set[str] = set()
         user_to_group_identifiers: list[UserToGroupDict] = []
         permission_assignments = []
 
         default_group = None
-        default_group_identifier = current_app.config['SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP']
+        default_group_identifier = current_app.config["SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP"]
         if default_group_identifier:
             default_group = GroupService.find_or_create_group(default_group_identifier)
             unique_user_group_identifiers.add(default_group_identifier)

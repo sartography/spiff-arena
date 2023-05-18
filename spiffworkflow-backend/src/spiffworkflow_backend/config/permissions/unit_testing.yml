@@ -36,16 +36,15 @@ permissions:
     allowed_permissions: [create, read, update, delete]
     uri: /tasks/*
 
-  # TODO: all uris should really have the same structure
   finance-admin-group:
     groups: ["Finance Team"]
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-groups/finance/*
+    allowed_permissions: [all]
+    uri: PG:finance
 
-  finance-admin-model:
-    groups: ["Finance Team"]
-    allowed_permissions: [create, read, update, delete]
-    uri: /process-models/finance/*
+  finance-hr-start:
+    groups: ["hr"]
+    allowed_permissions: [start]
+    uri: PG:finance
 
   finance-admin-model-lanes:
     groups: ["Finance Team"]
