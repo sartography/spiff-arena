@@ -7,7 +7,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.models.user import UserNotFoundError
-from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import AuthorizationService, GroupPermissionsDict
 from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -399,7 +399,7 @@ class TestAuthorizationService(BaseTest):
         GroupService.find_or_create_group("group_three")
         assert GroupModel.query.filter_by(identifier="group_three").first() is not None
 
-        group_info = [
+        group_info: list[GroupPermissionsDict] = [
             {
                 "users": ["user_one", "user_two"],
                 "name": "group_one",
