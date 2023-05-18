@@ -1,0 +1,84 @@
+default_group: everybody
+
+groups:
+  admin:
+    users: [admin@spiffworkflow.org]
+
+permissions:
+  admin:
+    groups: [admin]
+    users: []
+    allowed_permissions: [read]
+    uri: /*
+
+  tasks-crud:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create, update, delete]
+    uri: /tasks/*
+
+  process-instances-crud:
+    groups: [ admin ]
+    users: [ ]
+    allowed_permissions: [create, update, delete]
+    uri: /process-instances/*
+
+  suspend:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/process-instance-suspend
+
+  terminate:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/process-instance-terminate
+
+  resume:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/process-instance-resume
+
+  reset:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/process-instance-reset
+
+  users-exist:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/users/exists/by-username
+
+  send-event:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/send-event/*
+
+  task-complete:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/task-complete/*
+
+  messages:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create]
+    uri: /v1.0/messages/*
+
+  secrets:
+    groups: [admin]
+    users: []
+    allowed_permissions: [create, update, delete]
+    uri: /v1.0/secrets/*
+
+  task-data:
+    groups: [admin]
+    users: []
+    allowed_permissions: [update]
+    uri: /v1.0/task-data/*
