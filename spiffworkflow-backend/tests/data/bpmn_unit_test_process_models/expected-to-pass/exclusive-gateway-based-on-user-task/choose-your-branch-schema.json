@@ -1,0 +1,11 @@
+{
+  "title": "Choose Your Branch",
+  "description": "",
+  "properties": {
+    "branch": {
+      "type": "string",
+      "title": "branch"
+    }
+  },
+  "required": []
+}

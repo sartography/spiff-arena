@@ -1,0 +1,11 @@
+{
+  "title": "User Input",
+  "description": "",
+  "properties": {
+    "user_input_variable": {
+      "type": "integer",
+      "title": "user_input_variable"
+    }
+  },
+  "required": []
+}
