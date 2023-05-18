@@ -21,19 +21,10 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 class TestAuthorizationService(BaseTest):
-    """TestAuthorizationService."""
-
-    def test_can_raise_if_missing_user(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_can_raise_if_missing_user."""
-        with pytest.raises(UserNotFoundError):
-            AuthorizationService.import_permissions_from_yaml_file(raise_if_missing_user=True)
-
     def test_does_not_fail_if_user_not_created(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_does_not_fail_if_user_not_created."""
         AuthorizationService.import_permissions_from_yaml_file()
 
     def test_can_import_permissions_from_yaml(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_can_import_permissions_from_yaml."""
         usernames = [
             "testadmin1",
             "testadmin2",
@@ -59,8 +50,6 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance/model1")
         self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance/")
         self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/", expected_result=False)
-        self.assert_user_has_permission(users["testuser4"], "update", "/v1.0/process-groups/finance/model1")
-        # via the user, not the group
         self.assert_user_has_permission(users["testuser4"], "read", "/v1.0/process-groups/finance/model1")
         self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/finance/model1")
         self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/", expected_result=False)
@@ -387,7 +376,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_refresh_permissions."""
         user = self.find_or_create_user(username="user_one")
         user_two = self.find_or_create_user(username="user_two")
         admin_user = self.find_or_create_user(username="testadmin1")
@@ -410,6 +398,11 @@ class TestAuthorizationService(BaseTest):
                 "name": "group_three",
                 "permissions": [{"actions": ["create", "read"], "uri": "PG:hey2"}],
             },
+            {
+                "users": [],
+                "name": "everybody",
+                "permissions": [{"actions": ["read"], "uri": "PG:hey2everybody"}],
+            },
         ]
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_two").first() is None
@@ -418,6 +411,7 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
         self.assert_user_has_permission(user, "create", "/v1.0/process-groups/hey:yo")
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey2everybody:yo")
 
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey:yo")

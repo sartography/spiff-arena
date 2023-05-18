@@ -21,6 +21,7 @@ from sqlalchemy import or_
 from sqlalchemy import text
 
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.models import permission_assignment
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.human_task import HumanTaskModel
@@ -196,88 +197,13 @@ class AuthorizationService:
             db.session.commit()
 
     @classmethod
-    def import_permissions_from_yaml_file(cls, raise_if_missing_user: bool = False) -> DesiredPermissionDict:
-        """Import_permissions_from_yaml_file."""
-        if current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME"] is None:
-            raise (
-                PermissionsFileNotSetError(
-                    "SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_NAME needs to be set in order to import permissions"
-                )
-            )
-
-        permission_configs = None
-        with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:
-            permission_configs = yaml.safe_load(file)
-
-        default_group = None
-        unique_user_group_identifiers: Set[str] = set()
-        user_to_group_identifiers: list[UserToGroupDict] = []
-        if "default_group" in permission_configs:
-            default_group_identifier = permission_configs["default_group"]
-            default_group = GroupService.find_or_create_group(default_group_identifier)
-            unique_user_group_identifiers.add(default_group_identifier)
-
-        if "groups" in permission_configs:
-            for group_identifier, group_config in permission_configs["groups"].items():
-                group = GroupService.find_or_create_group(group_identifier)
-                unique_user_group_identifiers.add(group_identifier)
-                for username in group_config["users"]:
-                    user = UserModel.query.filter_by(username=username).first()
-                    if user is None:
-                        if raise_if_missing_user:
-                            raise (UserNotFoundError(f"Could not find a user with name: {username}"))
-                        continue
-                    user_to_group_dict: UserToGroupDict = {
-                        "username": user.username,
-                        "group_identifier": group_identifier,
-                    }
-                    user_to_group_identifiers.append(user_to_group_dict)
-                    cls.associate_user_with_group(user, group)
-
-        permission_assignments = []
-        if "permissions" in permission_configs:
-            for _permission_identifier, permission_config in permission_configs["permissions"].items():
-                uri = permission_config["uri"]
-                permission_target = cls.find_or_create_permission_target(uri)
-
-                for allowed_permission in permission_config["allowed_permissions"]:
-                    if "groups" in permission_config:
-                        for group_identifier in permission_config["groups"]:
-                            group = GroupService.find_or_create_group(group_identifier)
-                            unique_user_group_identifiers.add(group_identifier)
-                            permission_assignments.append(
-                                cls.create_permission_for_principal(
-                                    group.principal,
-                                    permission_target,
-                                    allowed_permission,
-                                )
-                            )
-                    if "users" in permission_config:
-                        for username in permission_config["users"]:
-                            user = UserModel.query.filter_by(username=username).first()
-                            if user is not None:
-                                principal = (
-                                    PrincipalModel.query.join(UserModel).filter(UserModel.username == username).first()
-                                )
-                                permission_assignments.append(
-                                    cls.create_permission_for_principal(
-                                        principal, permission_target, allowed_permission
-                                    )
-                                )
-
-        if default_group is not None:
-            for user in UserModel.query.all():
-                cls.associate_user_with_group(user, default_group)
-
-        return {
-            "group_identifiers": unique_user_group_identifiers,
-            "permission_assignments": permission_assignments,
-            "user_to_group_identifiers": user_to_group_identifiers,
-        }
+    def import_permissions_from_yaml_file(cls, user_model: Optional[UserModel] = None) -> DesiredPermissionDict:
+        group_permissions = cls.parse_permissions_yaml_into_group_info()
+        result = cls.add_permissions_from_group_permissions(group_permissions, user_model)
+        return result
 
     @classmethod
     def find_or_create_permission_target(cls, uri: str) -> PermissionTargetModel:
-        """Find_or_create_permission_target."""
         uri_with_percent = re.sub(r"\*", "%", uri)
         target_uri_normalized = uri_with_percent.removeprefix(V1_API_PATH_PREFIX)
         permission_target: Optional[PermissionTargetModel] = PermissionTargetModel.query.filter_by(
@@ -296,7 +222,6 @@ class AuthorizationService:
         permission_target: PermissionTargetModel,
         permission: str,
     ) -> PermissionAssignmentModel:
-        """Create_permission_for_principal."""
         permission_assignment: Optional[PermissionAssignmentModel] = PermissionAssignmentModel.query.filter_by(
             principal_id=principal.id,
             permission_target_id=permission_target.id,
@@ -315,7 +240,6 @@ class AuthorizationService:
 
     @classmethod
     def should_disable_auth_for_request(cls) -> bool:
-        """Should_disable_auth_for_request."""
         swagger_functions = ["get_json_spec"]
         authentication_exclusion_list = [
             "status",
@@ -353,7 +277,6 @@ class AuthorizationService:
 
     @classmethod
     def get_permission_from_http_method(cls, http_method: str) -> Optional[str]:
-        """Get_permission_from_request_method."""
         request_method_mapper = {
             "POST": "create",
             "GET": "read",
@@ -515,7 +438,7 @@ class AuthorizationService:
         # we are also a little apprehensive about pre-creating users
         # before the user signs in, because we won't know things like
         # the external service user identifier.
-        cls.import_permissions_from_yaml_file()
+        cls.import_permissions_from_yaml_file(user_model)
 
         if is_new_user:
             UserService.add_user_to_human_tasks_if_appropriate(user_model)
@@ -720,11 +643,9 @@ class AuthorizationService:
         with open(current_app.config["SPIFFWORKFLOW_BACKEND_PERMISSIONS_FILE_ABSOLUTE_PATH"]) as file:
             permission_configs = yaml.safe_load(file)
 
-        group_permissions: list[GroupPermissionsDict] = []
         group_permissions_by_group: dict[str, GroupPermissionsDict] = {}
-        if "default_group" in permission_configs:
-            default_group_identifier = permission_configs["default_group"]
-            # group_permissions.append({"name": default_group_identifier, "users": [], "permissions": []})
+        if current_app.config['SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP']:
+            default_group_identifier = current_app.config['SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP']
             group_permissions_by_group[default_group_identifier] = {"name": default_group_identifier, "users": [], "permissions": []}
 
         if "groups" in permission_configs:
@@ -738,25 +659,25 @@ class AuthorizationService:
             for _permission_identifier, permission_config in permission_configs["permissions"].items():
                 uri = permission_config["uri"]
                 for group_identifier in permission_config["groups"]:
-                    group_permissions_by_group[group_identifier]['permissions'].append({'actions': permission_config["allowed_permissions"], "uri": uri})
+                    group_permissions_by_group[group_identifier]['permissions'].append(
+                        {'actions': permission_config["allowed_permissions"], "uri": uri}
+                    )
 
-        for _group_identifier, group_permission in group_permissions_by_group.items():
-            group_permissions.append(group_permission)
-
-        return group_permissions
+        return list(group_permissions_by_group.values())
 
     @classmethod
-    def refresh_permissions(cls, group_info: list[GroupPermissionsDict]) -> None:
-        """Adds new permission assignments and deletes old ones."""
-        initial_permission_assignments = PermissionAssignmentModel.query.all()
-        initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
-        group_info = group_info + cls.parse_permissions_yaml_into_group_info()
+    def add_permissions_from_group_permissions(cls, group_permissions: list[GroupPermissionsDict], user_model: Optional[UserModel] = None) -> DesiredPermissionDict:
+        unique_user_group_identifiers: Set[str] = set()
+        user_to_group_identifiers: list[UserToGroupDict] = []
+        permission_assignments = []
 
-        desired_group_identifiers: Set[str] = set()
-        desired_permission_assignments: list[PermissionAssignmentModel] = []
-        desired_user_to_group_identifiers: list[UserToGroupDict] = []
+        default_group = None
+        default_group_identifier = current_app.config['SPIFFWORKFLOW_BACKEND_DEFAULT_USER_GROUP']
+        if default_group_identifier:
+            default_group = GroupService.find_or_create_group(default_group_identifier)
+            unique_user_group_identifiers.add(default_group_identifier)
 
-        for group in group_info:
+        for group in group_permissions:
             group_identifier = group["name"]
             GroupService.find_or_create_group(group_identifier)
             for username in group["users"]:
@@ -764,19 +685,44 @@ class AuthorizationService:
                     "username": username,
                     "group_identifier": group_identifier,
                 }
-                desired_user_to_group_identifiers.append(user_to_group_dict)
+                user_to_group_identifiers.append(user_to_group_dict)
                 GroupService.add_user_to_group_or_add_to_waiting(username, group_identifier)
-                desired_group_identifiers.add(group_identifier)
+                unique_user_group_identifiers.add(group_identifier)
             for permission in group["permissions"]:
                 for crud_op in permission["actions"]:
-                    desired_permission_assignments.extend(
+                    permission_assignments.extend(
                         cls.add_permission_from_uri_or_macro(
                             group_identifier=group_identifier,
                             target=permission["uri"],
                             permission=crud_op,
                         )
                     )
-                    desired_group_identifiers.add(group_identifier)
+                    unique_user_group_identifiers.add(group_identifier)
+
+        if default_group is not None:
+            if user_model:
+                cls.associate_user_with_group(user_model, default_group)
+            else:
+                for user in UserModel.query.all():
+                    cls.associate_user_with_group(user, default_group)
+
+        return {
+            "group_identifiers": unique_user_group_identifiers,
+            "permission_assignments": permission_assignments,
+            "user_to_group_identifiers": user_to_group_identifiers,
+        }
+
+    @classmethod
+    def refresh_permissions(cls, group_permissions: list[GroupPermissionsDict]) -> None:
+        """Adds new permission assignments and deletes old ones."""
+        initial_permission_assignments = PermissionAssignmentModel.query.all()
+        initial_user_to_group_assignments = UserGroupAssignmentModel.query.all()
+        group_permissions = group_permissions + cls.parse_permissions_yaml_into_group_info()
+
+        result = cls.add_permissions_from_group_permissions(group_permissions)
+        desired_permission_assignments = result["permission_assignments"]
+        desired_group_identifiers = result["group_identifiers"]
+        desired_user_to_group_identifiers = result["user_to_group_identifiers"]
 
         for ipa in initial_permission_assignments:
             if ipa not in desired_permission_assignments:
@@ -801,10 +747,3 @@ class AuthorizationService:
         for gtd in groups_to_delete:
             db.session.delete(gtd)
         db.session.commit()
-
-
-class KeycloakAuthorization:
-    """Interface with Keycloak server."""
-
-
-# class KeycloakClient:
