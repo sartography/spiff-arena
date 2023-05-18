@@ -13,11 +13,11 @@ SpiffWorkflow is a platform that facilitates the execution of business processes
 
 To access SpiffWorkflow, simply sign in using your Keycloak account. Once you have successfully signed in to the Spiff platform, it is crucial to familiarize yourself with the various sections within the SpiffWorkflow. This will enable you to gain a comprehensive understanding of the interface. 
 
-```{image} quick_start/Untitled.png
+```{image} images/Untitled.png
 :alt: Login Page
 :width: 45%
 ```
-```{image} quick_start/Untitled_1.png
+```{image} images/Untitled_1.png
 :alt: Home Page
 :width: 45%
 ```
@@ -34,7 +34,7 @@ Here, we will provide a generic overview of each section step by step, allowing 
 
 Once you are signed in, you can start exploring the home page. The home page has three tab sections: **In Progress**, **Completed** and **Start New**.  
 
-![Untitled](quick_start/Untitled_2.png)
+![Untitled](images/Untitled_2.png)
 
 - The "In Progress" section provides an overview of all ongoing process instances, including those initiated by you, those awaiting your action, or those awaiting action from a team you are a member of (Optional).
 - The "Completed" section allows you to view all completed process instances, including those initiated by you, those initiated by other SpiffWorkflow users with tasks completed by you and if applicable, those with tasks completed by a group of which you are a member.
@@ -49,7 +49,7 @@ Once you are signed in, you can start exploring the home page. The home page has
 
 If you are a member of a team, you may also have one or more Instances with tasks waiting for [team name] lists as well.
 
-![Untitled](quick_start/Untitled_3.png)
+![Untitled](images/Untitled_3.png)
 
 ### Step 2: Explore the Processes section
 
@@ -61,13 +61,13 @@ The process section provides a comprehensive view of the process ecosystem by sh
 💡 A **process group** is a way of grouping a bunch of **process models.** A **process model** contains all the files necessary to execute a specific process.
 ```
 -- 
-![Untitled](quick_start/Untitled_4.png)
+![Untitled](images/Untitled_4.png)
 
 ### Step 3: Explore the Process Instances section
 
 The Process Instance section provides a detailed view of individual process instances, allowing you to track their progress and manage them effectively. This section includes essential information such as the instance ID, process name, the individual who started the process, the end date, and the current status. 
 
-![Untitled](quick_start/Untitled_5.png)
+![Untitled](images/Untitled_5.png)
 
 ```{admonition} Desktop Notifications
 :class: info
@@ -87,7 +87,7 @@ With SpiffWorkflow, you can easily initiate a new process instance. Here's a ste
 
 The first thing you need to do is sign in to your account on SpiffWorkflow. Once you're signed in, you'll see three tabs in the Home section: In progress, Completed, and Start New. If you want to start a new process, click the "Start New +" button. This will bring up "Processes I can start" section.
 
-![Untitled](quick_start/Untitled_6.png)
+![Untitled](images/Untitled_6.png)
 
 ```{admonition} The Landing Page
 :class: info
@@ -98,7 +98,7 @@ The first thing you need to do is sign in to your account on SpiffWorkflow. Once
 
 Next, you will see a list of available processes that you have permission to start. Choose the process you want to initiate and click “Start”.
 
-![Untitled](quick_start/Untitled_7.png)
+![Untitled](images/Untitled_7.png)
 
 Congratulations! You have successfully started a new process instance in SpiffWorkflow.
 
@@ -118,11 +118,11 @@ There will be three types of instances shown:
 - **Waiting for me:** This section displays a list of process instances with tasks assigned to you and are currently waiting for you to respond to.
 - **Waiting for [team name]:** If you are a member of SpiffWorkflow**,** this section displays a list of process instances with tasks assigned to a group you are a member of and currently waiting for someone in that group to complete them.
 
-![Untitled](quick_start/Untitled_8.png)
+![Untitled](images/Untitled_8.png)
 
 In the case of new users who haven't started or been part of any process or been assigned to any team, you won't be able to see any items on the home page.
 
-![Untitled](quick_start/Untitled_9.png)
+![Untitled](images/Untitled_9.png)
 
 ### Step 2: Respond to the request
 
@@ -130,7 +130,7 @@ Once you have identified the request you need to respond to, simply click on the
 
 Depending on the task requirements, this may involve submitting additional information, reviewing the task or any other action item.
 
-![Untitled](quick_start/Untitled_10.png)
+![Untitled](images/Untitled_10.png)
 
 That's it! With these simple steps, you can efficiently review tasks in SpiffWorkflow.
 
@@ -148,17 +148,17 @@ There are 2 ways of finding your process instances.
 
 Option 1: Once you're signed in, navigate to the home section. Here you will find a list of all the processes instances you've initiated.
 
-![Untitled](quick_start/Untitled_11.png)
+![Untitled](images/Untitled_11.png)
 
 Option 2: You can also view the processes you have initiated in the **"Process Instances"** section.
 
-![Untitled](quick_start/Untitled_12.png)
+![Untitled](images/Untitled_12.png)
 
 ### Step 2: Select the process instance you want to view
 
 Click on the process instance you want to view. This will take you to the process instance information. Navigate to the BPMN diagram section. Here you can see the current task highlighted in **yellow**. The grey represents the path which was taken by the current process steps.
 
-![Untitled](quick_start/Untitled_13.png)
+![Untitled](images/Untitled_13.png)
 
 By following these steps, you can easily view the steps of the process you initiated and keep track of progress.
 
@@ -174,13 +174,13 @@ To check the metadata of a process instance, follow these steps.
 
 Once you're signed in, navigate to the home section. Here you will find a list of all the process instances you've initiated under **“Started by me”**.
 
-![Untitled](quick_start/Untitled_14.png)
+![Untitled](images/Untitled_14.png)
 
 ### Step 2: View metadata for the selected process instance
 
 Click on the process instance you want to view. Upon clicking this, you will be able to view the information about the given instance. You'll find the metadata under the details option in the process instance.
 
-![Untitled](quick_start/Untitled_15.png)
+![Untitled](images/Untitled_15.png)
 
 By following these simple steps, you can easily view the metadata for a process instance in SpiffWorkflow.
 
@@ -194,20 +194,20 @@ The process model files provide great transparency into our internal business ru
 
 Once you have successfully signed in, navigate to the process section. This section allows you to access all the process groups and process models you have access to.
 
-![Untitled](quick_start/Untitled_16.png)
+![Untitled](images/Untitled_16.png)
 
 > **Step 2: Find and click on the process**
 > 
 
 You can either search for a process model using the search bar or navigate through displayed processes to find the process model.
 
-![Untitled](quick_start/Untitled_17.png)
+![Untitled](images/Untitled_17.png)
 
 ### Step 3: Access the process model files
 
 Once you have clicked on the process you want to view, a list of the model files that are associated with the process will appear. 
 
-![Untitled](quick_start/Untitled_18.png)
+![Untitled](images/Untitled_18.png)
 
 By following these simple steps, you can easily view process model files in SpiffWorkflow.
 
@@ -223,49 +223,49 @@ Here are the steps to view and filter process instances in SpiffWorkflow.
 
 Once you are signed in, navigate to the "Process Instances" section. Within the "Process Instances" section, you'll see a list of all the instances for the processes you can access.
 
-![Untitled](quick_start/Untitled_19.png)
+![Untitled](images/Untitled_19.png)
 
 ### Step 2: Click on Filter option
 
 To filter the list, click on the "Filter" option. This will expand the filter section where you will be able to provide details about the process instance. This allows you to enter various details, including the process model, start date, end date, and time. To refine your search, you can enter multiple filter parameters.
 
-![Untitled](quick_start/Untitled_20.png)
+![Untitled](images/Untitled_20.png)
 
 ### Step 3: Apply Filters:
 
 Once you have entered all the relevant filter details, click on the "**Apply**" button to apply the filters. The system will then display all the process instances matching the input details.
 
-![Untitled](quick_start/Untitled_21.png)
+![Untitled](images/Untitled_21.png)
 
 To filter process instances by **process-defined metadata**, follow these steps:
 
 - Search for the specific **process** you want to filter and click on the column option to select metadata options.
 
-![Untitled](quick_start/Untitled_22.png)
+![Untitled](images/Untitled_22.png)
 
 - The metadata fields will be displayed in dropdown. Select the field you want to display and Click on "**Save**" to apply the changes.
 
-![Untitled](quick_start/Untitled_23.png)
+![Untitled](images/Untitled_23.png)
 
 - After saving the details, the newly created column will be displayed. Finally click on “**Apply“** button to reflect the changes.
 
-![Untitled](quick_start/Untitled_24.png)
+![Untitled](images/Untitled_24.png)
 
 ### (Optional) Step 4: Save Perspectives
 
 If you wish to save the perspectives, click on the "**Save**" button. 
 
-![Untitled](quick_start/Untitled_25.png)
+![Untitled](images/Untitled_25.png)
 
 A prompt will appear, allowing you to provide a name for the identifier associated with the saved filter. Enter a descriptive name for the filter identifier and “**Save”** changes. Now you can search for specific processes using Process Instance Perspectives.
 
-![Untitled](quick_start/Untitled_26.png)
+![Untitled](images/Untitled_26.png)
 
-![Untitled](quick_start/Untitled_27.png)
+![Untitled](images/Untitled_27.png)
 
 ### (Optional) Step 5: Filter by ID
 
-![Untitled](quick_start/Untitled_28.png)
+![Untitled](images/Untitled_28.png)
 
 If you want to filter by ID, go to the "Find by Id" section of the page. Enter the ID and click "Submit". The system will show you the process instance with the corresponding ID.
 
@@ -283,17 +283,17 @@ By following these steps, you can submit a request and seek the necessary permis
 
 Once you are signed in, navigate to the "**Process**" section. Use the search bar or browse through the available process models until you find "**Request Access**”. Click on the process model to open it. 
 
-![Untitled](quick_start/Untitled_29.png)
+![Untitled](images/Untitled_29.png)
 
 If you want to access the request access process from **Home** section and click on the "**Start New +**" button. This will open the "Processes I can start" section where you can find the “Request Access” process.
 
-![Untitled](quick_start/Untitled_30.png)
+![Untitled](images/Untitled_30.png)
 
 ### Step 2: Start the Process
 
 Once the "**Process Request**" model is open, initiate the process by clicking on the "Start" button.
 
-![Untitled](quick_start/Untitled_31.png)
+![Untitled](images/Untitled_31.png)
 
 ### Step 3: Provide Request Details & Submit
 
@@ -301,6 +301,6 @@ A task will be presented to capture the necessary information and details for sp
 
 Ensure that all required details have been included such as Process name, Process group name, and type of permissions you need. Click on the "**Submit**" button or similar action to submit your access or special permissions request.
 
-![Untitled](quick_start/Untitled_32.png)
+![Untitled](images/Untitled_32.png)
 
 By following these steps, you can request the special permissions needed to carry out your tasks effectively.
