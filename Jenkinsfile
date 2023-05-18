@@ -63,8 +63,9 @@ pipeline {
     stage('Build') {
       steps { script {
         dir("spiffworkflow-${params.COMPONENT}") {
+          /* Tag and Commit is combined to avoid clashes of parallel builds. */
           image = docker.build(
-            "${params.DOCKER_NAME}:${env.GIT_COMMIT.take(8)}",
+            "${params.DOCKER_NAME}:${params.DOCKER_TAG}-${env.GIT_COMMIT.take(8)}",
             "--label=commit='${env.GIT_COMMIT.take(8)}' ."
           )
         }
