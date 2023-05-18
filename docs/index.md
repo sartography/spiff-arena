@@ -5,6 +5,7 @@ Welcome to SpiffWorkflow's documentation!
 :maxdepth: 2
 :caption: Contents
 quick_start/quick_start.md
+documentation/documentation.md
 ```
 
 This is great!

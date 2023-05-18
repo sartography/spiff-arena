@@ -123,4 +123,4 @@ This project requires a few Python dependencies to work correctly.   We are goin
 1. Open up a markdown file, and make a change. 
 
 ### Step 8:  Commit your changes and push them up for everyone.
-1. 
+1. Press Ctrl + Shift + P (on Windows), or Command + Shift + P (on Mac). 
