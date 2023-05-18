@@ -124,3 +124,7 @@ This project requires a few Python dependencies to work correctly.   We are goin
 
 ### Step 8:  Commit your changes and push them up for everyone.
 1. Select the "git" button on the left hand side of the toolbar (cricles with lines between them) ![Git button](./images/git.png "Git button") 
+
+2. Press the blue "Commit" button.
+
+3. Select "Sync Chagnes."
