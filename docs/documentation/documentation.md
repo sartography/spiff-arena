@@ -1,6 +1,6 @@
 # How to Contribute to the Documentation
 
-This documenation is currently hosted live at [Spiff-Arena's ReadTheDocs](https://spiff-arena.readthedocs.io/en/latest/)
+This documentation is currently hosted live at [Spiff-Arena's ReadTheDocs](https://spiff-arena.readthedocs.io/en/latest/)
 
 
 Please set aside a couple of hours to work through this, as getting this setup correctly once is 10,000 times better than having problems every day for the rest of your life.
@@ -12,7 +12,7 @@ The methodology we are following is knowns as ["Docs as Code"](https://www.write
 This means using the same tools and processes that software developers use for writing code to write the documenation for code.
 In following this methodoloy, you will have to pick up some tools you haven't had to use before (Git, Sphinx).
 Why would a technical writer need to learn these software engineering tools?  
-I'll never make the case for as well as an article by [Tom Johnson](https://idratherbewriting.com/trends/trends-to-follow-or-forget-docs-as-code.html).
+I'll never make the case as well as an article by [Tom Johnson](https://idratherbewriting.com/trends/trends-to-follow-or-forget-docs-as-code.html).
 
 You might notice, when looking at the markdown files, that every sentence starts on a new line.
 Like this one.
@@ -22,7 +22,7 @@ This is called [Ventilated Code](https://vanemden.wordpress.com/2009/01/01/venti
 
 ## Our Tools
 
-[Markdown](https://www.markdownguide.org/getting-started/) is a "markup language that you can use to add formatting elements to plain text documents.  
+[Markdown](https://www.markdownguide.org/getting-started/) is a "markup language that you can use to add formatting elements to plain text documents.
 You won't be writing the documentation in a word processor, but in simple plain text, and using some special syntax that will consistently and professionally format that text.  
 
 
@@ -32,10 +32,10 @@ This will cover a lot of the basics, like bolding text, italics, paragraphs, lis
 ![Markdown screenshot](./images/markdown.png "Markdown example")
 
 ### MyST
-Markdown doesn't support some really useful things.  
-You can't add footnotes, or create an "aside" comment or build a table.  
+Markdown doesn't support some really useful things.
+You can't add footnotes, or create an "aside" comment or build a table.
 Because of this there are many extensions typically referened to as Markdown "Flavors".
-The flavor we are using is MyST. 
+The flavor we are using is MyST.
 There is [excellent documentation on MyST](https://myst-parser.readthedocs.io/en/v0.13.5/using/syntax.html) that you should definitely review, so you know everthing that is available to you.
 
 
