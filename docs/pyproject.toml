@@ -14,6 +14,7 @@ python = "^3.11"
 Sphinx = "^6.2.1"   # myst-parser did not support 7.0 at the time this was written.
 myst-parser = "^1.0.0"
 sphinx-rtd-theme = "^1.2.0"
+sphinx-autoapi = "^2.1.0"
 
 [build-system]
 requires = ["poetry-core"]
