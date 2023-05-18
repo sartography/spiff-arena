@@ -1,0 +1,13 @@
+{
+  "test_case_one": {
+    "tasks": {
+      "user_task_enter_increment": {
+        "data": [
+          { "user_input_variable": 7 },
+          { "user_input_variable": 8 }
+        ]
+      }
+    },
+    "expected_output_json": { "the_var": 15, "counter": 3, "user_input_variable": 8 }
+  }
+}

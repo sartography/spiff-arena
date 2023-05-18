@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
-  <bpmn:process id="BasicServiceTaskProcess" isExecutable="true">
+  <bpmn:process id="ServiceTaskProcess" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1">
       <bpmn:outgoing>Flow_19ephzh</bpmn:outgoing>
     </bpmn:startEvent>
@@ -14,10 +14,10 @@
         <spiffworkflow:serviceTaskOperator id="http/GetRequest" resultVariable="bamboo_get_employee">
           <spiffworkflow:parameters>
             <spiffworkflow:parameter id="basic_auth_password" type="str" value="&#34;x&#34;" />
-            <spiffworkflow:parameter id="basic_auth_username" type="str" value="&#34;secret:BAMBOOHR_API_KEY&#34;" />
+            <spiffworkflow:parameter id="basic_auth_username" type="str" value="&#34;x&#34;" />
             <spiffworkflow:parameter id="headers" type="any" value="{&#34;Accept&#34;: &#34;application/json&#34;}" />
-            <spiffworkflow:parameter id="params" type="any" value="{&#34;fields&#34;: &#34;firstName,lastName&#34;}" />
-            <spiffworkflow:parameter id="url" type="str" value="f&#34;https://api.bamboohr.com/api/gateway.php/statusresearchdemo/v1/employees/113&#34;" />
+            <spiffworkflow:parameter id="params" type="any" value="{}" />
+            <spiffworkflow:parameter id="url" type="str" value="f&#34;https://example.com/api/user&#34;" />
           </spiffworkflow:parameters>
         </spiffworkflow:serviceTaskOperator>
         <spiffworkflow:instructionsForEndUser>This is the Service Task Unit Test Screen.</spiffworkflow:instructionsForEndUser>
@@ -28,7 +28,7 @@
     </bpmn:serviceTask>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="BasicServiceTaskProcess">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ServiceTaskProcess">
       <bpmndi:BPMNEdge id="Flow_19ephzh_di" bpmnElement="Flow_19ephzh">
         <di:waypoint x="215" y="177" />
         <di:waypoint x="270" y="177" />

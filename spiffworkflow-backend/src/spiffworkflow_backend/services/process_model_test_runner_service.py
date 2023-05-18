@@ -39,6 +39,10 @@ class NoTestCasesFoundError(Exception):
     pass
 
 
+class MissingInputTaskData(Exception):
+    pass
+
+
 @dataclass
 class TestCaseResult:
     passed: bool
@@ -115,13 +119,11 @@ class ProcessModelTestRunner:
     def failing_tests_formatted(self) -> str:
         formatted_tests = ["FAILING TESTS:"]
         for failing_test in self.failing_tests():
-            msg = ''
+            msg = ""
             if failing_test.error_messages:
-                msg = '\n\t\t'.join(failing_test.error_messages)
-            formatted_tests.append(
-                f'\t{failing_test.bpmn_file}: {failing_test.test_case_name}: {msg}'
-            )
-        return '\n'.join(formatted_tests)
+                msg = "\n\t\t".join(failing_test.error_messages)
+            formatted_tests.append(f"\t{failing_test.bpmn_file}: {failing_test.test_case_name}: {msg}")
+        return "\n".join(formatted_tests)
 
     def run(self) -> None:
         if len(self.test_mappings.items()) < 1:
@@ -133,10 +135,11 @@ class ProcessModelTestRunner:
                 json_file_contents = json.loads(f.read())
 
             for test_case_name, test_case_contents in json_file_contents.items():
+                self.task_data_index = {}
                 try:
                     self.run_test_case(bpmn_file, test_case_name, test_case_contents)
                 except Exception as ex:
-                    ex_as_array = str(ex).split('\n')
+                    ex_as_array = str(ex).split("\n")
                     self._add_test_result(False, bpmn_file, test_case_name, ex_as_array)
 
     def run_test_case(self, bpmn_file: str, test_case_name: str, test_case_contents: dict) -> None:
@@ -224,7 +227,9 @@ class ProcessModelTestRunner:
             bpmn_process_identifier = bpmn_process_element.attrib["id"]
             self.bpmn_processes_to_file_mappings[bpmn_process_identifier] = file_norm
 
-    def _execute_task(self, spiff_task: SpiffTask, test_case_task_key: str, test_case_task_properties: Optional[dict]) -> None:
+    def _execute_task(
+        self, spiff_task: SpiffTask, test_case_task_key: str, test_case_task_properties: Optional[dict]
+    ) -> None:
         if self.execute_task_callback:
             self.execute_task_callback(spiff_task, test_case_task_key, test_case_task_properties)
         self._default_execute_task(spiff_task, test_case_task_key, test_case_task_properties)
@@ -245,12 +250,21 @@ class ProcessModelTestRunner:
             return ready_tasks[0]
         return None
 
-    def _default_execute_task(self, spiff_task: SpiffTask, test_case_task_key: str, test_case_task_properties: Optional[dict]) -> None:
+    def _default_execute_task(
+        self, spiff_task: SpiffTask, test_case_task_key: str, test_case_task_properties: Optional[dict]
+    ) -> None:
         if spiff_task.task_spec.manual or spiff_task.task_spec.__class__.__name__ == "ServiceTask":
             if test_case_task_properties and "data" in test_case_task_properties:
                 if test_case_task_key not in self.task_data_index:
                     self.task_data_index[test_case_task_key] = 0
-                spiff_task.update_data(test_case_task_properties["data"][self.task_data_index[test_case_task_key]])
+                task_data_length = len(test_case_task_properties["data"])
+                test_case_index = self.task_data_index[test_case_task_key]
+                if task_data_length <= test_case_index:
+                    raise MissingInputTaskData(
+                        f"Missing input task data for task: {test_case_task_key}. "
+                        f"Only {task_data_length} given in the json but task was called {test_case_index + 1} times"
+                    )
+                spiff_task.update_data(test_case_task_properties["data"][test_case_index])
                 self.task_data_index[test_case_task_key] += 1
             spiff_task.complete()
         else:
@@ -297,7 +311,9 @@ class ProcessModelTestRunner:
     def _get_relative_path_of_bpmn_file(self, bpmn_file: str) -> str:
         return os.path.relpath(bpmn_file, start=self.process_model_directory_path)
 
-    def _add_test_result(self, passed: bool, bpmn_file: str, test_case_name: str, error_messages: Optional[list[str]] = None) -> None:
+    def _add_test_result(
+        self, passed: bool, bpmn_file: str, test_case_name: str, error_messages: Optional[list[str]] = None
+    ) -> None:
         bpmn_file_relative = self._get_relative_path_of_bpmn_file(bpmn_file)
         test_result = TestCaseResult(
             passed=passed,
