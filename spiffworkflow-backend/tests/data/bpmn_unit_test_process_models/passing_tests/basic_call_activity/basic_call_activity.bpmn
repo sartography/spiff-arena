@@ -10,7 +10,6 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="Flow_1hzwssi" sourceRef="Activity_0irfg4l" targetRef="Event_0bz40ol" />
     <bpmn:callActivity id="Activity_0irfg4l" name="Call Activity" calledElement="BasicManualTaskProcess">
-    <!-- <bpmn:callActivity id="Activity_0irfg4l" name="Call Activity" calledElement="BasicManualTaskProcess2"> -->
       <bpmn:incoming>Flow_0ext5lt</bpmn:incoming>
       <bpmn:outgoing>Flow_1hzwssi</bpmn:outgoing>
     </bpmn:callActivity>

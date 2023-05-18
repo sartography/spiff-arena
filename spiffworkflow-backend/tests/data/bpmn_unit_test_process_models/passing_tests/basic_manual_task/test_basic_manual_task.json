@@ -2,7 +2,7 @@
   "test_case_one": {
     "tasks": {
       "manual_task_one": {
-        "data": {}
+        "data": [{}]
       }
     },
     "expected_output_json": {}
