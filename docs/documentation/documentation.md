@@ -127,4 +127,5 @@ This project requires a few Python dependencies to work correctly.   We are goin
 
 2. Press the blue "Commit" button.
 
-3. Select "Sync Chagnes."
+3. Any changes you pushed up, should be live on our website within  5 to 10 minutes.
+
