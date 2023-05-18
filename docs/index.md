@@ -7,6 +7,7 @@ Welcome to SpiffWorkflow's documentation!
 quick_start/quick_start.md
 ```
 
+This is great!
 
 Indices and tables
 ==================
