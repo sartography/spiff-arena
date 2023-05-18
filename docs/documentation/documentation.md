@@ -123,4 +123,4 @@ This project requires a few Python dependencies to work correctly.   We are goin
 1. Open up a markdown file, and make a change. 
 
 ### Step 8:  Commit your changes and push them up for everyone.
-1. Press Ctrl + Shift + P (on Windows), or Command + Shift + P (on Mac). 
+1. Select the "git" button on the left hand side of the toolbar (cricles with lines between them) ![Git button](./images/git.png "Git button") 
