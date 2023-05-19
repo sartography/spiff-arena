@@ -41,6 +41,18 @@ def setup_database(session: Session) -> None:
     session.env[flask_env_key] = "e7711a3ba96c46c68e084a86952de16f"
     session.env["FLASK_APP"] = "src/spiffworkflow_backend"
     session.env["SPIFFWORKFLOW_BACKEND_ENV"] = "unit_testing"
+
+    if os.environ.get("SPIFFWORKFLOW_BACKEND_DATABASE_TYPE") == "sqlite":
+        # maybe replace this sqlite-specific block with ./bin/recreate_db clean rmall
+        # (if we can make it work, since it uses poetry),
+        # which would also remove the migrations folder and re-create things as a single migration
+        if os.path.exists("migrations"):
+            import shutil
+
+            shutil.rmtree("migrations")
+        for task in ["init", "migrate"]:
+            session.run("flask", "db", task)
+
     session.run("flask", "db", "upgrade")
 
 

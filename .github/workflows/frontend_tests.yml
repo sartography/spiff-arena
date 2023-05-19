@@ -91,6 +91,11 @@ jobs:
       - name: wait_for_keycloak
         working-directory: ./spiffworkflow-backend
         run: ./keycloak/bin/wait_for_keycloak 5
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:
