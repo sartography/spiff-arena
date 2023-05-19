@@ -1,70 +1,17 @@
-
 groups:
   admin:
     users: [admin@spiffworkflow.org]
 
 permissions:
-  admin:
+  process-groups-ro:
     groups: [admin]
     allowed_permissions: [read]
-    uri: /*
-
-  tasks-crud:
+    uri: PG:ALL
+  basic:
     groups: [admin]
-    allowed_permissions: [create, update, delete]
-    uri: /tasks/*
-
-  process-instances-crud:
-    groups: [ admin ]
-    allowed_permissions: [create, update, delete]
-    uri: /process-instances/*
-
-  suspend:
+    allowed_permissions: [ALL]
+    uri: BASIC
+  elevated-operations:
     groups: [admin]
-    allowed_permissions: [create]
-    uri: /v1.0/process-instance-suspend
-
-  terminate:
-    groups: [admin]
-    allowed_permissions: [create]
-    uri: /v1.0/process-instance-terminate
-
-  resume:
-    groups: [admin]
-    allowed_permissions: [create]
-    uri: /v1.0/process-instance-resume
-
-  reset:
-    groups: [admin]
-    allowed_permissions: [create]
-    uri: /v1.0/process-instance-reset
-
-  users-exist:
-    groups: [admin]
-    allowed_permissions: [create]
-    uri: /v1.0/users/exists/by-username
-
-  send-event:
-    groups: [admin]
-    allowed_permissions: [create]
-    uri: /v1.0/send-event/*
-
-  task-complete:
-    groups: [admin]
-    allowed_permissions: [create]
-    uri: /v1.0/task-complete/*
-
-  messages:
-    groups: [admin]
-    allowed_permissions: [create]
-    uri: /v1.0/messages/*
-
-  secrets:
-    groups: [admin]
-    allowed_permissions: [create, update, delete]
-    uri: /v1.0/secrets/*
-
-  task-data:
-    groups: [admin]
-    allowed_permissions: [update]
-    uri: /v1.0/task-data/*
+    allowed_permissions: [ALL]
+    uri: ELEVATED
