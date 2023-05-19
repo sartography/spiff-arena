@@ -9,11 +9,11 @@ permissions:
     uri: PG:ALL
   basic:
     groups: [admin]
-    allowed_permissions: [ALL]
+    allowed_permissions: [all]
     uri: BASIC
   elevated-operations:
     groups: [admin]
-    allowed_permissions: [ALL]
+    allowed_permissions: [all]
     uri: ELEVATED
   process-model-publish:
     groups: [admin]
