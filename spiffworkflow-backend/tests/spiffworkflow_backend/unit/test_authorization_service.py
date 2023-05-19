@@ -309,6 +309,7 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         expected_permissions = [
+            ("/can-run-privileged-script/*", "create"),
             ("/messages/*", "create"),
             ("/process-instances-reset/*", "create"),
             ("/process-instances-resume/*", "create"),
