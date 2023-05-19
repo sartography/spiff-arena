@@ -34,6 +34,5 @@ class RefreshPermissions(Script):
         *args: Any,
         **kwargs: Any,
     ) -> Any:
-        """Run."""
         group_info = args[0]
         AuthorizationService.refresh_permissions(group_info)
