@@ -523,7 +523,9 @@ class AuthorizationService:
         # can also start through messages as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
 
-        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*"))
+        permissions_to_assign.append(
+            PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*")
+        )
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
