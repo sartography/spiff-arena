@@ -1,4 +1,3 @@
-import { string } from 'prop-types';
 import { modifyProcessIdentifierForPathParam } from '../../src/helpers';
 import { miscDisplayName } from './helpers';
 import 'cypress-file-upload';
@@ -115,7 +114,10 @@ Cypress.Commands.add(
       cy.contains('Task: ', { timeout: 30000 });
     } else {
       cy.url().should('include', `/interstitial`);
-      cy.contains('Status: Completed');
+      // cy.contains('Status: Completed');
+      cy.contains(
+        'There are no additional instructions or information for this task.'
+      );
       if (returnToProcessModelShow) {
         cy.getBySel('process-model-breadcrumb-link').click();
         cy.getBySel('process-model-show-permissions-loaded').should('exist');
