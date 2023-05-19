@@ -104,7 +104,11 @@ jobs:
           # only record on push, not pull_request, since we do not have secrets for PRs,
           # so the required CYPRESS_RECORD_KEY will not be available.
           # we have limited runs in cypress cloud, so only record main builds
-          record: ${{ github.ref_name == 'main' && github.event_name == 'push' }}
+          # the direct check for github.event_name == 'push' is for if we want to go back to triggering this workflow
+          # directly, rather than when Backend Tests complete.
+          # note that github.event.workflow_run is referring to the Backend Tests workflow and another option
+          # for github.event.workflow_run.event is 'pull_request', which we want to ignore.
+          record: ${{ github.ref_name == 'main' && ((github.event_name == 'workflow_run' && github.event.workflow_run.event == 'push') || (github.event_name == 'push')) }}
         env:
           # pass the Dashboard record key as an environment variable
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
