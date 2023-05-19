@@ -1,0 +1,21 @@
+groups:
+  admin:
+    users: [admin@spiffworkflow.org]
+
+permissions:
+  process-groups-ro:
+    groups: [admin]
+    allowed_permissions: [read]
+    uri: PG:ALL
+  basic:
+    groups: [admin]
+    allowed_permissions: [ALL]
+    uri: BASIC
+  elevated-operations:
+    groups: [admin]
+    allowed_permissions: [ALL]
+    uri: ELEVATED
+  process-model-publish:
+    groups: [admin]
+    allowed_permissions: [create]
+    uri: /process-model-publish/*
