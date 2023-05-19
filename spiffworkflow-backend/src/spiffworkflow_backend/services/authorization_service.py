@@ -75,10 +75,11 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
         "path": "/process-instances",
         "relevant_permissions": ["create", "read", "delete"],
     },
-    {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
-    {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
     {"path": "/process-data", "relevant_permissions": ["read"]},
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
+    {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
+    {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
+    {"path": "/process-model-publish", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
 
@@ -524,6 +525,7 @@ class AuthorizationService:
 
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
 
         # read comes from PG and PM permissions
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
