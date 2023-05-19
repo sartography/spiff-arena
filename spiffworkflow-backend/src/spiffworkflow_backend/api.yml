@@ -1122,7 +1122,7 @@ paths:
         - Process Instances
       responses:
         "200":
-          description: Empty ok true response on successful resume.
+          description: Empty ok true response on successful reset.
           content:
             application/json:
               schema:

@@ -438,10 +438,6 @@ class AuthorizationService:
         process_related_path_segment: str,
         target_uris: list[str],
     ) -> list[PermissionToAssign]:
-        permissions = permission_set.split(",")
-        if permission_set == "all":
-            permissions = ["create", "read", "update", "delete"]
-
         permissions_to_assign: list[PermissionToAssign] = []
 
         # we were thinking that if you can start an instance, you ought to be able to:
@@ -472,7 +468,9 @@ class AuthorizationService:
             ]:
                 permissions_to_assign.append(PermissionToAssign(permission="read", target_uri=target_uri))
         else:
+            permissions = permission_set.split(",")
             if permission_set == "all":
+                permissions = ["create", "read", "update", "delete"]
                 for path_segment_dict in PATH_SEGMENTS_FOR_PERMISSION_ALL:
                     target_uri = f"{path_segment_dict['path']}/{process_related_path_segment}"
                     relevant_permissions = path_segment_dict["relevant_permissions"]
@@ -510,6 +508,29 @@ class AuthorizationService:
                 PermissionToAssign(permission=permission, target_uri="/process-instances/reports/*")
             )
             permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/tasks/*"))
+        return permissions_to_assign
+
+    @classmethod
+    def set_elevated_permissions(cls) -> list[PermissionToAssign]:
+        permissions_to_assign: list[PermissionToAssign] = []
+        for process_instance_action in ["resume", "terminate", "suspend", "reset"]:
+            permissions_to_assign.append(
+                PermissionToAssign(permission="create", target_uri=f"/process-instances-{process_instance_action}/*")
+            )
+
+        # FIXME: we need to fix so that user that can start a process-model
+        # can also start through messages as well
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
+
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
+
+        # read comes from PG and PM permissions
+        permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
+
+        for permission in ["create", "read", "update", "delete"]:
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/process-instances/*"))
+            permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/secrets/*"))
         return permissions_to_assign
 
     @classmethod
@@ -557,6 +578,8 @@ class AuthorizationService:
                 * affects given process-model
             BASIC
                 * Basic access to complete tasks and use the site
+            ELEVATED
+                * Operations that require elevated permissions
 
         Permission Macros:
             all
@@ -579,6 +602,8 @@ class AuthorizationService:
 
         elif target.startswith("BASIC"):
             permissions_to_assign += cls.set_basic_permissions()
+        elif target.startswith("ELEVATED"):
+            permissions_to_assign += cls.set_elevated_permissions()
         elif target == "ALL":
             for permission in permissions:
                 permissions_to_assign.append(PermissionToAssign(permission=permission, target_uri="/*"))

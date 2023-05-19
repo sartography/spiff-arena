@@ -301,6 +301,34 @@ class TestAuthorizationService(BaseTest):
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
 
+    def test_explode_permissions_elevated(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        expected_permissions = [
+            ("/messages/*", "create"),
+            ("/process-instances-reset/*", "create"),
+            ("/process-instances-resume/*", "create"),
+            ("/process-instances-suspend/*", "create"),
+            ("/process-instances-terminate/*", "create"),
+            ("/process-instances/*", "create"),
+            ("/process-instances/*", "delete"),
+            ("/process-instances/*", "read"),
+            ("/process-instances/*", "update"),
+            ("/secrets/*", "create"),
+            ("/secrets/*", "delete"),
+            ("/secrets/*", "read"),
+            ("/secrets/*", "update"),
+            ("/send-event/*", "create"),
+            ("/task-complete/*", "create"),
+            ("/task-data/*", "update"),
+        ]
+        permissions_to_assign = AuthorizationService.explode_permissions("all", "ELEVATED")
+        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        assert permissions_to_assign_tuples == expected_permissions
+
     def test_explode_permissions_all(
         self,
         app: Flask,
