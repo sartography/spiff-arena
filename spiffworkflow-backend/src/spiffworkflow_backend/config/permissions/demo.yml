@@ -1,5 +1,3 @@
-default_group: everybody
-
 groups:
   admin:
     users:
@@ -19,6 +17,5 @@ groups:
 permissions:
   admin:
     groups: [admin, tech_writers]
-    users: []
     allowed_permissions: [create, read, update, delete]
     uri: /*
