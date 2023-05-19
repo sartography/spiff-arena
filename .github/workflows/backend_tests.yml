@@ -119,20 +119,23 @@ jobs:
           pipx inject --pip-args=--constraint=.github/workflows/constraints.txt nox nox-poetry
           nox --version
 
-      - name: Checkout Samples
-        if: matrix.database == 'sqlite'
-        uses: actions/checkout@v3
-        with:
-          repository: sartography/sample-process-models
-          path: sample-process-models
-      - name: Poetry Install
-        if: matrix.database == 'sqlite'
-        run: poetry install
-      - name: Setup sqlite
-        if: matrix.database == 'sqlite'
-        env:
-          SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "${GITHUB_WORKSPACE}/sample-process-models"
-        run: ./bin/recreate_db clean rmall
+      # when we get an imcompatible sqlite migration again and need to combine all migrations into one for the benefit of sqlite
+      # see if we can get the sqlite-specific block in the noxfile.py to work instead of this block in the github workflow,
+      # which annoyingly runs python setup outside of the nox environment (which seems to be flakier on poetry install).
+      # - name: Checkout Samples
+      #   if: matrix.database == 'sqlite'
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: sartography/sample-process-models
+      #     path: sample-process-models
+      # - name: Poetry Install
+      #   if: matrix.database == 'sqlite'
+      #   run: poetry install
+      # - name: Setup sqlite
+      #   if: matrix.database == 'sqlite'
+      #   env:
+      #     SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR: "${GITHUB_WORKSPACE}/sample-process-models"
+      #   run: ./bin/recreate_db clean rmall
 
       - name: Setup Mysql
         uses: mirromutth/mysql-action@v1.1
