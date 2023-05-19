@@ -10,7 +10,7 @@ The methodology we are following is known as ["Docs as Code"](https://www.writet
 
 This means using the same tools and processes that software developers use for writing code to write the documentation for code.
 In following this methodology, you will have to pick up some tools you haven't had to use before (Git, Sphinx).
-Why would a technical writer need to learn these software engineering tools?  
+Why would a technical writer need to learn these software engineering tools?
 I'll never make the case as well as an article by [Tom Johnson](https://idratherbewriting.com/trends/trends-to-follow-or-forget-docs-as-code.html).
 
 You might notice, when looking at the markdown files, that every sentence starts on a new line.
@@ -137,3 +137,11 @@ You can do that by following these steps:
 2. Press the blue "Commit" button.
 
 3. Any changes you pushed up should be live on our website within 5 to 10 minutes.
+
+## Linting
+
+Documentation people: please ignore this for now.
+
+We may decide to check the documentation with a "linter" which is designed to keep the documentation consistent and standardized.
+One option is https://github.com/igorshubovych/markdownlint-cli, which uses https://github.com/DavidAnson/markdownlint, which seems to be more popular than https://github.com/markdownlint/markdownlint.
+A `.markdownlint.jsonc` file has been added that configures the same markdownlint program (basically to ignore the rule about long lines, since we are using ventilated prose).
