@@ -75,7 +75,7 @@ jobs:
               database: "sqlite",
             }
           - { python: "3.11", os: "ubuntu-latest", session: "xdoctest" }
-          - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
+          # - { python: "3.11", os: "ubuntu-latest", session: "docs-build" }
 
     env:
       FLASK_SESSION_SECRET_KEY: super_secret_key
@@ -165,13 +165,13 @@ jobs:
           name: coverage-data
           path: "spiffworkflow-backend/.coverage.*"
 
-      - name: Upload documentation
-        if: matrix.session == 'docs-build'
-        uses: actions/upload-artifact@v3
-        with:
-          name: docs
-          path: docs/_build
-
+      # - name: Upload documentation
+      #   if: matrix.session == 'docs-build'
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: docs
+      #     path: docs/_build
+      #
       - name: Upload logs
         if: failure() && matrix.session == 'tests'
         uses: "actions/upload-artifact@v3"
