@@ -141,6 +141,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
+                ("/process-model-publish/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
                 ("/process-models/some-process-group:some-process-model:*", "read"),
@@ -194,7 +195,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_all_on_process_model."""
         expected_permissions = sorted(
             [
                 ("/event-error-details/some-process-group:some-process-model/*", "read"),
@@ -222,6 +222,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
+                ("/process-model-publish/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
                 ("/process-models/some-process-group:some-process-model/*", "read"),
@@ -324,6 +325,7 @@ class TestAuthorizationService(BaseTest):
             ("/send-event/*", "create"),
             ("/task-complete/*", "create"),
             ("/task-data/*", "update"),
+            ("/users/search", "read"),
         ]
         permissions_to_assign = AuthorizationService.explode_permissions("all", "ELEVATED")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
