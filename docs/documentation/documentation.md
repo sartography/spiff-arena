@@ -97,7 +97,7 @@ So let's open just that folder in VSCode.
 * Go to File -> Open Folder 
 * Select the "docs" folder inside of spiff-arena.
 
-Now clikc on the two pieces of paper at the top corner of your screen, and you should see a project that looks like this without all the rest of the code in your way:
+Now click on the two pieces of paper at the top corner of your screen, and you should see a project that looks like this without all the rest of the code in your way:
 
 ![Docs Directory](./images/docs_dir.png "Docs Directory")
 
@@ -106,7 +106,7 @@ Now clikc on the two pieces of paper at the top corner of your screen, and you s
   * Inside VSCode, go to File -> Preferences -> Extensions
   * Search for "myst"
   * click the "install" button.
-  * Repeat, this time doing it for "python extension for VS Code"
+  * Repeat, this time installing the "Python" extension for VS Code (from Microsoft)
 
 ![Myst Extension](./images/myst.png "Search or MyST in extensions")
 
@@ -118,8 +118,8 @@ You can do that by following these steps:
 
 1. Open the Command Palette (Ctrl+Shift+P), start typing the **Python: Create Environment** command to search, and then select the command. 
 1. Select **Venv**
-1. Select Python 3.11 from the list of options if there is nore than one thing to select.
-1. Be sure the the checkbox next to "requirements.txt" is selected. 
+1. Select Python 3.11 from the list of options if there is more than one thing to select.
+1. Be sure the checkbox next to "requirements.txt" is selected.
 1. Click OK.
 
 ### Step 6: Fire up the website
