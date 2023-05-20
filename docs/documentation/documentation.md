@@ -65,14 +65,17 @@ But you will find that most of it just works - and that once you get into a regu
 
 
 ### Step 1:  Pre-Requisites
+
 Assure you have been granted write access to our git repository.
-Make sure you have an account on GitHub and then contact dan@sartography.com and ask him to add you as a contributor.
+Make sure you have an account on GitHub and then contact `dan@sartography.com` and ask him to add you as a contributor.
 
 
 ### Step 2:  Install VSCode
+
 [Download VSCode](https://code.visualstudio.com/) and install it on your computer.
 
 ### Step 3: Install Python 
+
 We need python in order to build the website locally so we can really see what our content is going to look like once we publish.
 It's going to be handy for other reasons as well.
 We'll want python to be properly set up inside of VS Code.
@@ -80,11 +83,12 @@ Follow [these directions and brief tutorial](https://code.visualstudio.com/docs/
 
 
 ### Step 3: Connect VSCode to Git
+
 VSCode comes with Git built in.
 So you can use VSCode to "pull" changes from others down to your local computer and "push" changes back up to share with others (and to cause our docs site to rebuild).
 
 Here are directions for how to [clone Spiff-Arena](https://learn.microsoft.com/en-us/azure/developer/javascript/how-to/with-visual-studio-code/clone-github-repository?tabs=create-repo-command-palette%2Cinitialize-repo-activity-bar%2Ccreate-branch-command-palette%2Ccommit-changes-command-palette%2Cpush-command-palette#clone-repository).
-**IMPORTANT**: Follow those directions, but be sure to checkout https://github.com/sartography/spiff-arena instead of the project they are using!
+**IMPORTANT**: Follow those directions, but be sure to checkout `https://github.com/sartography/spiff-arena` instead of the project they are using!
 
 You can save the project to any directory on your computer.
 We strongly suggest you create a sub-folder called "projects" in your "home" or "Desktop" folder and checkout the code into this directory.  
@@ -103,15 +107,17 @@ Now click on the two pieces of paper at the top corner of your screen, and you s
 
 
 ### Step 4: Add some extensions
-  * Inside VSCode, go to File -> Preferences -> Extensions
-  * Search for "myst"
-  * click the "install" button.
-  * Repeat, this time installing the "Python" extension for VS Code (from Microsoft)
+
+* Inside VSCode, go to File -> Preferences -> Extensions
+* Search for "myst"
+* click the "install" button.
+* Repeat, this time installing the "Python" extension for VS Code (from Microsoft)
 
 ![Myst Extension](./images/myst.png "Search or MyST in extensions")
 
 
 ### Step 5: Install Python Dependencies
+
 This project requires a few Python dependencies to work correctly.
 We are going to set up a Virtual Environment for Python to keep us sane later on.
 You can do that by following these steps:
@@ -123,15 +129,18 @@ You can do that by following these steps:
 1. Click OK.
 
 ### Step 6: Fire up the website
+
 1. Go to Terminal ->  New Terminal
 1. type:  **sphinx-autobuild . _build/html** at the prompt and hit enter.
-1. Open your browser and go to http://127.0.0.1:8000
+1. Open your browser and go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 
 ### Step 7:  Make a change
+
 1. Open up a markdown file, and make a change. 
 
-### Step 8:  Commit your changes and push them up for everyone.
+### Step 8:  Commit your changes and push them up for everyone
+
 1. Select the "git" button on the left hand side of the toolbar (circles with lines between them) ![Git button](./images/git.png "Git button") 
 
 2. Press the blue "Commit" button.
@@ -140,8 +149,12 @@ You can do that by following these steps:
 
 ## Linting
 
+```{admonition} Linting is just an idea
+:class: warning
+
 Documentation people: please ignore this for now.
+```
 
 We may decide to check the documentation with a "linter" which is designed to keep the documentation consistent and standardized.
-One option is https://github.com/igorshubovych/markdownlint-cli, which uses https://github.com/DavidAnson/markdownlint, which seems to be more popular than https://github.com/markdownlint/markdownlint.
+One option is [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli), which uses David Anson's [NodeJS-based markdownlint](https://github.com/DavidAnson/markdownlint), which these days seems to be more popular than the [ruby-based markdownlint](https://github.com/markdownlint/markdownlint).
 A `.markdownlint.jsonc` file has been added that configures the same markdownlint program (basically to ignore the rule about long lines, since we are using ventilated prose).
