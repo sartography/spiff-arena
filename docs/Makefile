@@ -10,7 +10,7 @@ BUILDDIR      = _build
 
 # Put it first so that "make" without argument is like "make help".
 help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) && echo "  \033[0;34mlint\033[0m        runs markdownlint on all markdown files (this was added to the Makefile manually. pardon formatting)"
 
 lint:
 	markdownlint **/*.md
