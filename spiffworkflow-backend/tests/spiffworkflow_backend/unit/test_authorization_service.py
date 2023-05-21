@@ -6,8 +6,8 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.models.user import UserNotFoundError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
 from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.process_instance_processor import (
@@ -21,19 +21,10 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 class TestAuthorizationService(BaseTest):
-    """TestAuthorizationService."""
-
-    def test_can_raise_if_missing_user(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_can_raise_if_missing_user."""
-        with pytest.raises(UserNotFoundError):
-            AuthorizationService.import_permissions_from_yaml_file(raise_if_missing_user=True)
-
     def test_does_not_fail_if_user_not_created(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_does_not_fail_if_user_not_created."""
         AuthorizationService.import_permissions_from_yaml_file()
 
     def test_can_import_permissions_from_yaml(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_can_import_permissions_from_yaml."""
         usernames = [
             "testadmin1",
             "testadmin2",
@@ -56,15 +47,13 @@ class TestAuthorizationService(BaseTest):
         assert testuser1_group_identifiers == ["Finance Team", "everybody"]
         assert len(users["testuser2"].groups) == 3
 
-        self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance/model1")
-        self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance/")
+        self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance:model1")
+        self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/finance")
         self.assert_user_has_permission(users["testuser1"], "update", "/v1.0/process-groups/", expected_result=False)
-        self.assert_user_has_permission(users["testuser4"], "update", "/v1.0/process-groups/finance/model1")
-        # via the user, not the group
-        self.assert_user_has_permission(users["testuser4"], "read", "/v1.0/process-groups/finance/model1")
-        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/finance/model1")
-        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/", expected_result=False)
-        self.assert_user_has_permission(users["testuser2"], "read", "/v1.0/process-groups/")
+        self.assert_user_has_permission(users["testuser4"], "read", "/v1.0/process-groups/finance:model1")
+        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups/finance:model1")
+        self.assert_user_has_permission(users["testuser2"], "update", "/v1.0/process-groups", expected_result=False)
+        self.assert_user_has_permission(users["testuser2"], "read", "/v1.0/process-groups")
 
     def test_user_can_be_added_to_human_task_on_first_login(
         self,
@@ -121,7 +110,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_all_on_process_group."""
         expected_permissions = sorted(
             [
                 ("/event-error-details/some-process-group:some-process-model:*", "read"),
@@ -153,6 +141,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
+                ("/process-model-publish/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
                 ("/process-models/some-process-group:some-process-model:*", "read"),
@@ -206,7 +195,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_explode_permissions_all_on_process_model."""
         expected_permissions = sorted(
             [
                 ("/event-error-details/some-process-group:some-process-model/*", "read"),
@@ -234,6 +222,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
+                ("/process-model-publish/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
                 ("/process-models/some-process-group:some-process-model/*", "read"),
@@ -313,6 +302,36 @@ class TestAuthorizationService(BaseTest):
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
 
+    def test_explode_permissions_elevated(
+        self,
+        app: Flask,
+        client: FlaskClient,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        expected_permissions = [
+            ("/can-run-privileged-script/*", "create"),
+            ("/messages/*", "create"),
+            ("/process-instances-reset/*", "create"),
+            ("/process-instances-resume/*", "create"),
+            ("/process-instances-suspend/*", "create"),
+            ("/process-instances-terminate/*", "create"),
+            ("/process-instances/*", "create"),
+            ("/process-instances/*", "delete"),
+            ("/process-instances/*", "read"),
+            ("/process-instances/*", "update"),
+            ("/secrets/*", "create"),
+            ("/secrets/*", "delete"),
+            ("/secrets/*", "read"),
+            ("/secrets/*", "update"),
+            ("/send-event/*", "create"),
+            ("/task-complete/*", "create"),
+            ("/task-data/*", "update"),
+            ("/users/search", "read"),
+        ]
+        permissions_to_assign = AuthorizationService.explode_permissions("all", "ELEVATED")
+        permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
+        assert permissions_to_assign_tuples == expected_permissions
+
     def test_explode_permissions_all(
         self,
         app: Flask,
@@ -387,7 +406,6 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_can_refresh_permissions."""
         user = self.find_or_create_user(username="user_one")
         user_two = self.find_or_create_user(username="user_two")
         admin_user = self.find_or_create_user(username="testadmin1")
@@ -399,7 +417,7 @@ class TestAuthorizationService(BaseTest):
         GroupService.find_or_create_group("group_three")
         assert GroupModel.query.filter_by(identifier="group_three").first() is not None
 
-        group_info = [
+        group_info: list[GroupPermissionsDict] = [
             {
                 "users": ["user_one", "user_two"],
                 "name": "group_one",
@@ -410,6 +428,11 @@ class TestAuthorizationService(BaseTest):
                 "name": "group_three",
                 "permissions": [{"actions": ["create", "read"], "uri": "PG:hey2"}],
             },
+            {
+                "users": [],
+                "name": "everybody",
+                "permissions": [{"actions": ["read"], "uri": "PG:hey2everybody"}],
+            },
         ]
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_two").first() is None
@@ -418,6 +441,7 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
         self.assert_user_has_permission(user, "create", "/v1.0/process-groups/hey:yo")
+        self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey2everybody:yo")
 
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey:yo")

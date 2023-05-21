@@ -2349,7 +2349,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_correct_user_can_get_and_update_a_task."""
         initiator_user = self.find_or_create_user("testuser4")
         finance_user = self.find_or_create_user("testuser2")
         assert initiator_user.principal is not None
@@ -2372,15 +2371,8 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        # process_model = load_test_spec(
-        #     process_model_id="model_with_lanes",
-        #     bpmn_file_name="lanes.bpmn",
-        #     process_group_id="finance",
-        # )
-
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            # process_model.process_group_id,
             process_model_identifier,
             headers=self.logged_in_headers(initiator_user),
         )
@@ -3041,7 +3033,7 @@ class TestProcessApi(BaseTest):
     #
     #         # modified_process_model_id = process_model_identifier.replace("/", ":")
     #         # response = client.post(
-    #         #     f"/v1.0/process-models/{modified_process_model_id}/publish?branch_to_update=staging",
+    #         #     f"/v1.0/process-model-publish/{modified_process_model_id}?branch_to_update=staging",
     #         #     headers=self.logged_in_headers(with_super_admin_user),
     #         # )
     #
