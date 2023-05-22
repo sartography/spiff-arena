@@ -1,10 +1,9 @@
 """Test_various_bpmn_constructs."""
 from flask.app import Flask
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
 )
@@ -42,7 +41,9 @@ class TestDotNotation(BaseTest):
             "invoice.invoiceAmount": "1000.00",
             "invoice.dueDate": "09/30/2022",
         }
-        ProcessInstanceService.complete_form_task(processor, user_task, form_data, process_instance.process_initiator, human_task)
+        ProcessInstanceService.complete_form_task(
+            processor, user_task, form_data, process_instance.process_initiator, human_task
+        )
 
         expected = {
             "contibutorName": "Elizabeth",

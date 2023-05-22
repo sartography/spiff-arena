@@ -93,7 +93,6 @@ class TestMessageService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_can_send_message_to_multiple_process_models."""
-        process_group_id = "test_group_multi"
         # self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
 
         process_model_sender = load_test_spec(

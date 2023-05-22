@@ -1,15 +1,13 @@
 """Test_message_instance."""
 import pytest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from flask import Flask
 from flask.testing import FlaskClient
-from spiffworkflow_backend.models.process_model import ProcessModelInfo
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 
 class TestMessageInstance(BaseTest):

@@ -25,7 +25,6 @@ from uuid import UUID
 import dateparser
 import pytz
 from flask import current_app
-from flask import g
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore

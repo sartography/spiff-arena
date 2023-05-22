@@ -4,19 +4,11 @@ import shutil
 
 import pytest
 from flask.app import Flask
-from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
-from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_instance_processor import (
-    ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
-)
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -62,5 +54,5 @@ def with_db_and_bpmn_file_cleanup() -> None:
 
 @pytest.fixture()
 def with_super_admin_user() -> UserModel:
-    raise Exception("HEY")
-    # return BaseTest.create_user_with_permission("super_admin")
+    """With_super_admin_user."""
+    return BaseTest.create_user_with_permission("super_admin")
