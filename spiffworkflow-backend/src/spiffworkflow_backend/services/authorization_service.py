@@ -516,7 +516,7 @@ class AuthorizationService:
         permissions_to_assign: list[PermissionToAssign] = []
         for process_instance_action in ["resume", "terminate", "suspend", "reset"]:
             permissions_to_assign.append(
-                PermissionToAssign(permission="create", target_uri=f"/process-instances-{process_instance_action}/*")
+                PermissionToAssign(permission="create", target_uri=f"/process-instance-{process_instance_action}/*")
             )
 
         # FIXME: we need to fix so that user that can start a process-model
