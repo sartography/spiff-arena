@@ -1,10 +1,8 @@
 """Test_get_localtime."""
 from flask.app import Flask
-from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
@@ -18,19 +16,15 @@ class TestGetProcessInitiatorUser(BaseTest):
     def test_get_process_initiator_user(
         self,
         app: Flask,
-        client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         """Test_sets_permission_correctly_on_human_task."""
-        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
 
         process_model = load_test_spec(
             process_model_id="misc/category_number_one/simple_form",
-            # bpmn_file_name="simp.bpmn",
             process_model_source_directory="simple_form",
         )
         process_instance = self.create_process_instance_from_process_model(

@@ -9,13 +9,9 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -27,12 +23,8 @@ class TestErrorHandlingService(BaseTest):
     Like it can fire off BPMN messages in case a BPMN Task is waiting for that message.
     """
 
-    def run_process_model_and_handle_error(
-        self, process_model: ProcessModelInfo, user: UserModel
-    ) -> ProcessInstanceModel:
-        process_instance = ProcessInstanceService.create_process_instance_from_process_model_identifier(
-            process_model.id, user
-        )
+    def run_process_model_and_handle_error(self, process_model: ProcessModelInfo) -> ProcessInstanceModel:
+        process_instance = self.create_process_instance_from_process_model(process_model)
         pip = ProcessInstanceProcessor(process_instance)
         with pytest.raises(WorkflowExecutionServiceError) as e:
             pip.do_engine_steps(save=True)
@@ -44,7 +36,6 @@ class TestErrorHandlingService(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         """Process Model in DB marked as suspended when error occurs."""
         process_model = load_test_spec(
@@ -54,13 +45,13 @@ class TestErrorHandlingService(BaseTest):
         )
 
         # Process instance should be marked as errored by default.
-        process_instance = self.run_process_model_and_handle_error(process_model, with_super_admin_user)
+        process_instance = self.run_process_model_and_handle_error(process_model)
         assert ProcessInstanceStatus.error.value == process_instance.status
 
         # If process model should be suspended on error, then that is what should happen.
         process_model.fault_or_suspend_on_exception = "suspend"
         ProcessModelService.save_process_model(process_model)
-        process_instance = self.run_process_model_and_handle_error(process_model, with_super_admin_user)
+        process_instance = self.run_process_model_and_handle_error(process_model)
         assert ProcessInstanceStatus.suspended.value == process_instance.status
 
     def test_error_sends_bpmn_message(
@@ -68,7 +59,6 @@ class TestErrorHandlingService(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         """Real BPMN Messages should get generated and processes should fire off and complete."""
         process_model = load_test_spec(
@@ -85,7 +75,7 @@ class TestErrorHandlingService(BaseTest):
         process_model.exception_notification_addresses = ["dan@ILoveToReadErrorsInMyEmails.com"]
         ProcessModelService.save_process_model(process_model)
         # kick off the process and assure it got marked as an error.
-        process_instance = self.run_process_model_and_handle_error(process_model, with_super_admin_user)
+        process_instance = self.run_process_model_and_handle_error(process_model)
         assert ProcessInstanceStatus.error.value == process_instance.status
 
         # Both send and receive messages should be generated, matched

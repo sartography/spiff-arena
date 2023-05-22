@@ -25,14 +25,12 @@ class TestLoggingService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
 
         process_model = load_test_spec(
             process_model_id="misc/category_number_one/simple_form",
-            # bpmn_file_name="simp.bpmn",
             process_model_source_directory="simple_form",
         )
         process_instance = self.create_process_instance_from_process_model(
@@ -85,14 +83,12 @@ class TestLoggingService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         initiator_user = self.find_or_create_user("initiator_user")
         assert initiator_user.principal is not None
         AuthorizationService.import_permissions_from_yaml_file()
 
         process_model = load_test_spec(
             process_model_id="misc/category_number_one/simple_form",
-            # bpmn_file_name="simp.bpmn",
             process_model_source_directory="simple_form",
         )
         process_instance = self.create_process_instance_from_process_model(

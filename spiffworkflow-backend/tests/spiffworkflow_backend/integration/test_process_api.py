@@ -182,7 +182,7 @@ class TestProcessApi(BaseTest):
             user=with_super_admin_user,
         )
         response = client.post(
-            f"/v1.0/process-models-natural-language/{process_group_id}",
+            f"/v1.0/process-model-natural-language/{process_group_id}",
             content_type="application/json",
             data=json.dumps(body),
             headers=self.logged_in_headers(with_super_admin_user),
@@ -238,9 +238,6 @@ class TestProcessApi(BaseTest):
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         initial_primary_process_id = "sample"
         terminal_primary_process_id = "new_process_id"
-        self.create_process_group_with_api(
-            client=client, user=with_super_admin_user, process_group_id=process_group_id
-        )
 
         bpmn_file_name = f"{process_model_id}.bpmn"
         bpmn_file_source_directory = process_model_id
@@ -282,14 +279,11 @@ class TestProcessApi(BaseTest):
     ) -> None:
         """Test_process_model_delete."""
         process_group_id = "test_process_group"
-        process_group_description = "Test Process Group"
         process_model_id = "sample"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
-        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_description)
-        self.create_process_model_with_api(
-            client,
+        process_model = load_test_spec(
             process_model_id=process_model_identifier,
-            user=with_super_admin_user,
+            process_model_source_directory=process_model_id,
         )
 
         # assert we have a model
@@ -2349,7 +2343,6 @@ class TestProcessApi(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
         with_super_admin_user: UserModel,
     ) -> None:
-        """Test_correct_user_can_get_and_update_a_task."""
         initiator_user = self.find_or_create_user("testuser4")
         finance_user = self.find_or_create_user("testuser2")
         assert initiator_user.principal is not None
@@ -2372,15 +2365,8 @@ class TestProcessApi(BaseTest):
             bpmn_file_location=bpmn_file_location,
         )
 
-        # process_model = load_test_spec(
-        #     process_model_id="model_with_lanes",
-        #     bpmn_file_name="lanes.bpmn",
-        #     process_group_id="finance",
-        # )
-
         response = self.create_process_instance_from_process_model_id_with_api(
             client,
-            # process_model.process_group_id,
             process_model_identifier,
             headers=self.logged_in_headers(initiator_user),
         )
@@ -3041,7 +3027,7 @@ class TestProcessApi(BaseTest):
     #
     #         # modified_process_model_id = process_model_identifier.replace("/", ":")
     #         # response = client.post(
-    #         #     f"/v1.0/process-models/{modified_process_model_id}/publish?branch_to_update=staging",
+    #         #     f"/v1.0/process-model-publish/{modified_process_model_id}?branch_to_update=staging",
     #         #     headers=self.logged_in_headers(with_super_admin_user),
     #         # )
     #
@@ -3059,6 +3045,17 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )
+        ProcessModelService.update_process_model(
+            process_model,
+            {
+                "metadata_extraction_paths": [
+                    {"key": "key1", "path": "key1"},
+                    {"key": "key2", "path": "key2"},
+                    {"key": "key3", "path": "key3"},
+                ]
+            },
+        )
+
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
         )
@@ -3196,6 +3193,16 @@ class TestProcessApi(BaseTest):
             bpmn_file_name="save_process_instance_metadata.bpmn",
             process_model_source_directory="save_process_instance_metadata",
         )
+        ProcessModelService.update_process_model(
+            process_model,
+            {
+                "metadata_extraction_paths": [
+                    {"key": "key1", "path": "key1"},
+                    {"key": "key2", "path": "key2"},
+                    {"key": "key3", "path": "key3"},
+                ]
+            },
+        )
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=with_super_admin_user
         )
@@ -3270,7 +3277,6 @@ class TestProcessApi(BaseTest):
         with_super_admin_user: UserModel,
     ) -> None:
         """Test_process_instance_list_can_order_by_metadata."""
-        self.create_process_group_with_api(client, with_super_admin_user, "test_group", "test_group")
         process_model = load_test_spec(
             "test_group/hello_world",
             process_model_source_directory="nested-task-data-structure",

@@ -214,7 +214,7 @@ export default function ProcessModelShow() {
     setPublishDisabled(true);
     setProcessModelPublished(null);
     HttpService.makeCallToBackend({
-      path: `/process-models/${modifiedProcessModelId}/publish`,
+      path: targetUris.processModelPublishPath,
       successCallback: postPublish,
       httpMethod: 'POST',
     });
