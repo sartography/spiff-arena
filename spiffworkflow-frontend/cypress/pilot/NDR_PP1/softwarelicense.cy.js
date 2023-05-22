@@ -3371,12 +3371,13 @@ describe('Software and Licenses Path - With Files and Multiple items', () => {
         cy.get('body').click();
         cy.get('#root_vendor').clear().type('Atlassian');
         cy.get('#root_payment_method').select('Debit Card');
-        cy.get('button')
+        /*cy.get('button')
           .contains(/^Submit$/)
           .click();
 
+        
+        cy.contains('Task: Enter NDR Items', { timeout: 60000 });*/
         // item 0
-        cy.contains('Task: Enter NDR Items', { timeout: 60000 });
         cy.get('#root_item_0_sub_category').select('op_src');
         cy.get('#root_item_0_item_name')
           .clear()

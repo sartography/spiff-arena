@@ -9,7 +9,6 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from spiffworkflow_backend.models.process_instance_file_data import (
     ProcessInstanceFileDataModel,
 )
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
@@ -40,7 +39,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         model = ProcessInstanceService.file_data_model_for_value(
             "uploaded_file",
@@ -53,7 +51,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         model = ProcessInstanceService.file_data_model_for_value(
             "not_a_file",
@@ -66,7 +63,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         data = {
             "uploaded_file": self.SAMPLE_FILE_DATA,
@@ -80,7 +76,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         data = {
             "uploaded_files": [self.SAMPLE_FILE_DATA, self.SAMPLE_FILE_DATA],
@@ -95,7 +90,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         data = {
             "not_a_file": "just a value",
@@ -120,7 +114,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         data = {
             "not_a_file": "just a value",
@@ -135,7 +128,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         data = {
             "uploaded_file": self.SAMPLE_FILE_DATA,
@@ -156,7 +148,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         data = {
             "not_a_file": "just a value",
@@ -171,7 +162,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         data = {
             "not_a_file": "just a value",
@@ -198,7 +188,6 @@ class TestProcessInstanceService(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         data = {
             "File": [
