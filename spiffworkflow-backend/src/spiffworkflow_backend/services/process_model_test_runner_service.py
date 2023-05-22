@@ -47,7 +47,7 @@ class MissingInputTaskData(Exception):
 class TestCaseResult:
     passed: bool
     bpmn_file: str
-    test_case_name: str
+    test_case_identifier: str
     error_messages: Optional[list[str]] = None
 
 
@@ -90,6 +90,8 @@ class ProcessModelTestRunner:
         instantiate_executer_callback: Optional[Callable[[str], Any]] = None,
         execute_task_callback: Optional[Callable[[Any, str, Optional[dict]], Any]] = None,
         get_next_task_callback: Optional[Callable[[Any], Any]] = None,
+        test_case_file: Optional[str] = None,
+        test_case_identifier: Optional[str] = None,
     ) -> None:
         self.process_model_directory_path = process_model_directory_path
         self.process_model_directory_for_test_discovery = (
@@ -98,6 +100,8 @@ class ProcessModelTestRunner:
         self.instantiate_executer_callback = instantiate_executer_callback
         self.execute_task_callback = execute_task_callback
         self.get_next_task_callback = get_next_task_callback
+        self.test_case_file = test_case_file
+        self.test_case_identifier = test_case_identifier
 
         # keep track of the current task data index
         self.task_data_index: dict[str, int] = {}
@@ -116,13 +120,16 @@ class ProcessModelTestRunner:
     def failing_tests(self) -> list[TestCaseResult]:
         return [t for t in self.test_case_results if t.passed is False]
 
+    def passing_tests(self) -> list[TestCaseResult]:
+        return [t for t in self.test_case_results if t.passed is True]
+
     def failing_tests_formatted(self) -> str:
         formatted_tests = ["FAILING TESTS:"]
         for failing_test in self.failing_tests():
             msg = ""
             if failing_test.error_messages:
                 msg = "\n\t\t".join(failing_test.error_messages)
-            formatted_tests.append(f"\t{failing_test.bpmn_file}: {failing_test.test_case_name}: {msg}")
+            formatted_tests.append(f"\t{failing_test.bpmn_file}: {failing_test.test_case_identifier}: {msg}")
         return "\n".join(formatted_tests)
 
     def run(self) -> None:
@@ -134,15 +141,16 @@ class ProcessModelTestRunner:
             with open(json_test_case_file) as f:
                 json_file_contents = json.loads(f.read())
 
-            for test_case_name, test_case_contents in json_file_contents.items():
-                self.task_data_index = {}
-                try:
-                    self.run_test_case(bpmn_file, test_case_name, test_case_contents)
-                except Exception as ex:
-                    ex_as_array = str(ex).split("\n")
-                    self._add_test_result(False, bpmn_file, test_case_name, ex_as_array)
+            for test_case_identifier, test_case_contents in json_file_contents.items():
+                if self.test_case_identifier is None or test_case_identifier == self.test_case_identifier:
+                    self.task_data_index = {}
+                    try:
+                        self.run_test_case(bpmn_file, test_case_identifier, test_case_contents)
+                    except Exception as ex:
+                        ex_as_array = str(ex).split("\n")
+                        self._add_test_result(False, bpmn_file, test_case_identifier, ex_as_array)
 
-    def run_test_case(self, bpmn_file: str, test_case_name: str, test_case_contents: dict) -> None:
+    def run_test_case(self, bpmn_file: str, test_case_identifier: str, test_case_contents: dict) -> None:
         bpmn_process_instance = self._instantiate_executer(bpmn_file)
         next_task = self._get_next_task(bpmn_process_instance)
         while next_task is not None:
@@ -158,7 +166,7 @@ class ProcessModelTestRunner:
             task_type = next_task.task_spec.__class__.__name__
             if task_type in ["ServiceTask", "UserTask", "CallActivity"] and test_case_task_properties is None:
                 raise UnrunnableTestCaseError(
-                    f"Cannot run test case '{test_case_name}'. It requires task data for"
+                    f"Cannot run test case '{test_case_identifier}'. It requires task data for"
                     f" {next_task.task_spec.bpmn_id} because it is of type '{task_type}'"
                 )
             self._execute_task(next_task, test_case_task_key, test_case_task_properties)
@@ -183,7 +191,7 @@ class ProcessModelTestRunner:
                 f"expected: {test_case_contents['expected_output_json']}",
                 f"actual: {bpmn_process_instance.data}",
             ]
-        self._add_test_result(error_message is None, bpmn_file, test_case_name, error_message)
+        self._add_test_result(error_message is None, bpmn_file, test_case_identifier, error_message)
 
     def _discover_process_model_test_cases(
         self,
@@ -196,14 +204,15 @@ class ProcessModelTestRunner:
             file_norm = os.path.normpath(file)
             file_dir = os.path.dirname(file_norm)
             json_file_name = os.path.basename(file_norm)
-            bpmn_file_name = re.sub(r"^test_(.*)\.json", r"\1.bpmn", json_file_name)
-            bpmn_file_path = os.path.join(file_dir, bpmn_file_name)
-            if os.path.isfile(bpmn_file_path):
-                test_mappings[file_norm] = bpmn_file_path
-            else:
-                raise MissingBpmnFileForTestCaseError(
-                    f"Cannot find a matching bpmn file for test case json file: '{file_norm}'"
-                )
+            if self.test_case_file is None or json_file_name == self.test_case_file:
+                bpmn_file_name = re.sub(r"^test_(.*)\.json", r"\1.bpmn", json_file_name)
+                bpmn_file_path = os.path.join(file_dir, bpmn_file_name)
+                if os.path.isfile(bpmn_file_path):
+                    test_mappings[file_norm] = bpmn_file_path
+                else:
+                    raise MissingBpmnFileForTestCaseError(
+                        f"Cannot find a matching bpmn file for test case json file: '{file_norm}'"
+                    )
         return test_mappings
 
     def _discover_process_model_processes(
@@ -218,14 +227,23 @@ class ProcessModelTestRunner:
             with open(file_norm, "rb") as f:
                 file_contents = f.read()
             etree_xml_parser = etree.XMLParser(resolve_entities=False)
-            root = etree.fromstring(file_contents, parser=etree_xml_parser)
+
+            # if we cannot load process model then ignore it since it can cause errors unrelated
+            # to the test and if it is related, it will most likely be caught further along the test
+            try:
+                root = etree.fromstring(file_contents, parser=etree_xml_parser)
+            except etree.XMLSyntaxError:
+                continue
+
             call_activities = root.findall(".//bpmn:callActivity", namespaces=DEFAULT_NSMAP)
             for call_activity in call_activities:
-                called_element = call_activity.attrib["calledElement"]
-                self.bpmn_files_to_called_element_mappings[file_norm].append(called_element)
+                if "calledElement" in call_activity.attrib:
+                    called_element = call_activity.attrib["calledElement"]
+                    self.bpmn_files_to_called_element_mappings[file_norm].append(called_element)
             bpmn_process_element = root.find('.//bpmn:process[@isExecutable="true"]', namespaces=DEFAULT_NSMAP)
-            bpmn_process_identifier = bpmn_process_element.attrib["id"]
-            self.bpmn_processes_to_file_mappings[bpmn_process_identifier] = file_norm
+            if bpmn_process_element is not None:
+                bpmn_process_identifier = bpmn_process_element.attrib["id"]
+                self.bpmn_processes_to_file_mappings[bpmn_process_identifier] = file_norm
 
     def _execute_task(
         self, spiff_task: SpiffTask, test_case_task_key: str, test_case_task_properties: Optional[dict]
@@ -312,13 +330,13 @@ class ProcessModelTestRunner:
         return os.path.relpath(bpmn_file, start=self.process_model_directory_path)
 
     def _add_test_result(
-        self, passed: bool, bpmn_file: str, test_case_name: str, error_messages: Optional[list[str]] = None
+        self, passed: bool, bpmn_file: str, test_case_identifier: str, error_messages: Optional[list[str]] = None
     ) -> None:
         bpmn_file_relative = self._get_relative_path_of_bpmn_file(bpmn_file)
         test_result = TestCaseResult(
             passed=passed,
             bpmn_file=bpmn_file_relative,
-            test_case_name=test_case_name,
+            test_case_identifier=test_case_identifier,
             error_messages=error_messages,
         )
         self.test_case_results.append(test_result)
@@ -329,9 +347,16 @@ class BpmnFileMissingExecutableProcessError(Exception):
 
 
 class ProcessModelTestRunnerService:
-    def __init__(self, process_model_directory_path: str) -> None:
+    def __init__(
+        self,
+        process_model_directory_path: str,
+        test_case_file: Optional[str] = None,
+        test_case_identifier: Optional[str] = None,
+    ) -> None:
         self.process_model_test_runner = ProcessModelTestRunner(
             process_model_directory_path,
+            test_case_file=test_case_file,
+            test_case_identifier=test_case_identifier,
             # instantiate_executer_callback=self._instantiate_executer_callback,
             # execute_task_callback=self._execute_task_callback,
             # get_next_task_callback=self._get_next_task_callback,
