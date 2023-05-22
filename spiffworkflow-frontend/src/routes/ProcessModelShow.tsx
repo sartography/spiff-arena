@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   Add,
-  Upload,
   Download,
-  TrashCan,
-  Favorite,
   Edit,
+  Favorite,
+  TrashCan,
+  Upload,
   View,
   // @ts-ignore
 } from '@carbon/icons-react';
@@ -14,18 +14,18 @@ import {
   Accordion,
   AccordionItem,
   Button,
-  Grid,
-  Column,
-  Stack,
   ButtonSet,
-  Modal,
+  Column,
   FileUploader,
+  Grid,
+  Modal,
+  Stack,
   Table,
+  TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
-  TableCell,
-  TableBody,
   // @ts-ignore
 } from '@carbon/react';
 import { Can } from '@casl/react';
@@ -49,6 +49,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 import { useUriListForPermissions } from '../hooks/UriListForPermissions';
 import ProcessInstanceRun from '../components/ProcessInstanceRun';
 import { Notification } from '../components/Notification';
+import ProcessModelTestRun from '../components/ProcessModelTestRun';
 
 export default function ProcessModelShow() {
   const params = useParams();
@@ -68,6 +69,7 @@ export default function ProcessModelShow() {
   const { targetUris } = useUriListForPermissions();
   const permissionRequestData: PermissionsToCheck = {
     [targetUris.processModelShowPath]: ['PUT', 'DELETE'],
+    [targetUris.processModelTestsPath]: ['POST'],
     [targetUris.processModelPublishPath]: ['POST'],
     [targetUris.processInstanceListPath]: ['GET'],
     [targetUris.processInstanceCreatePath]: ['POST'],
@@ -305,6 +307,13 @@ export default function ProcessModelShow() {
             size="lg"
             onClick={() => onSetPrimaryFile(processModelFile.name)}
           />
+        </Can>
+      );
+    }
+    if (processModelFile.name.match(/^test_.*\.json$/)) {
+      elements.push(
+        <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
+          <ProcessModelTestRun processModelFile={processModelFile} />
         </Can>
       );
     }

@@ -53,6 +53,24 @@ class TestProcessModelTestRunner(BaseTest):
         process_model_test_runner = self._run_model_tests(parent_directory="expected-to-fail")
         assert len(process_model_test_runner.test_case_results) == 1
 
+    def test_can_test_process_model_with_multiple_files(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+        with_mocked_root_path: Any,
+    ) -> None:
+        process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="multiple-test-files")
+        assert len(process_model_test_runner.test_case_results) == 3
+
+        process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="multiple-test-files", test_case_file='test_a.json')
+        assert len(process_model_test_runner.test_case_results) == 1
+
+        process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="multiple-test-files", test_case_file='test_b.json')
+        assert len(process_model_test_runner.test_case_results) == 2
+
+        process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="multiple-test-files", test_case_file='test_b.json', test_case_identifier='test_case_2')
+        assert len(process_model_test_runner.test_case_results) == 1
+
     def test_can_test_process_model_call_activity(
         self,
         app: Flask,
@@ -81,7 +99,8 @@ class TestProcessModelTestRunner(BaseTest):
         assert len(process_model_test_runner.test_case_results) == 1
 
     def _run_model_tests(
-        self, bpmn_process_directory_name: Optional[str] = None, parent_directory: str = "expected-to-pass"
+        self, bpmn_process_directory_name: Optional[str] = None, parent_directory: str = "expected-to-pass",
+        test_case_file: Optional[str] = None, test_case_identifier: Optional[str] = None,
     ) -> ProcessModelTestRunner:
         base_process_model_dir_path_segments = [FileSystemService.root_path(), parent_directory]
         path_segments = base_process_model_dir_path_segments
@@ -90,6 +109,8 @@ class TestProcessModelTestRunner(BaseTest):
         process_model_test_runner = ProcessModelTestRunner(
             process_model_directory_path=os.path.join(*base_process_model_dir_path_segments),
             process_model_directory_for_test_discovery=os.path.join(*path_segments),
+            test_case_file=test_case_file,
+            test_case_identifier=test_case_identifier,
         )
         process_model_test_runner.run()
 

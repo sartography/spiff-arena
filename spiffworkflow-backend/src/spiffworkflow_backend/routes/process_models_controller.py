@@ -1,5 +1,7 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
+from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 import os
 import re
 from hashlib import sha256
@@ -312,6 +314,29 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     file.file_contents_hash = file_contents_hash
     file.process_model_id = process_model.id
     return make_response(jsonify(file), 200)
+
+
+def process_model_test_run(
+    modified_process_model_identifier: str,
+    test_case_file: Optional[str] = None,
+    test_case_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    process_model = _get_process_model(process_model_identifier)
+    process_model_test_runner = ProcessModelTestRunner(
+        process_model_directory_path=FileSystemService.root_path(),
+        process_model_directory_for_test_discovery=FileSystemService.full_path_from_id(process_model.id),
+        test_case_file=test_case_file,
+        test_case_identifier=test_case_identifier,
+    )
+    process_model_test_runner.run()
+
+    response_json = {
+        "all_passed": process_model_test_runner.all_test_cases_passed(),
+        "passing": process_model_test_runner.passing_tests(),
+        "failing": process_model_test_runner.failing_tests(),
+    }
+    return make_response(jsonify(response_json), 200)
 
 
 #   {
