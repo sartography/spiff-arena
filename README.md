@@ -15,14 +15,23 @@ If you need to push back from the monorepo to one of the individual repos, here'
 
     git subtree push --prefix=spiffworkflow-frontend git@github.com:sartography/spiffworkflow-frontend.git add_md_file
 
-Setup
------
+## Backend Setup
 
+First install python and poetry, and then:
+
+    cd spiffworkflow-backend
     poetry install
+    ./bin/run_server_locally
 
-Run tests
----------
+## Frontend Setup
 
+First install nodejs, ideally the version in .tool-versions (but likely other versions will work). Then:
+
+    cd spiffworkflow-frontend
+    npm install
+    npm start
+
+## Run tests
     ./bin/run_pyl
 
 Requires at root:
@@ -31,26 +40,19 @@ Requires at root:
 - .pre-commit-config.yaml
 - pyproject.toml
 
-Run cypress automated browser tests
------------------------------------
+## Run cypress automated browser tests
 
-Get the app running so you can access the frontend at http://localhost:7001 in your browser.
+Get the app running so you can access the frontend at http://localhost:7001 in your browser by following the frontend and backend setup steps above, and then:
 
-First install nodejs, ideally the version in .tool-versions (but likely other versions will work).
-
-Then:
-
-    cd spiffworkflow-frontend
-    npm install
     ./bin/run_cypress_tests_locally
 
-License
--------
+## License
+
 SpiffArena's main components are published under the terms of the
 [GNU Lesser General Public License (LGPL) Version 3](https://www.gnu.org/licenses/lgpl-3.0.txt).
 
-Support
--------
+## Support
+
 You can find us on [our Discord Channel](https://discord.gg/BYHcc7PpUC).
 
 Commercial support for SpiffWorkflow is available from [Sartography](https://sartography.com).
