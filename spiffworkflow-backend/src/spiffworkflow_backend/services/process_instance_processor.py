@@ -1109,7 +1109,7 @@ class ProcessInstanceProcessor:
         # TODO: do_engine_steps without a lock
         self.do_engine_steps(save=True)
 
-    def manual_complete_task(self, task_id: str, execute: bool) -> None:
+    def manual_complete_task(self, task_id: str, execute: bool, user: UserModel) -> None:
         """Mark the task complete optionally executing it."""
         spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
@@ -1122,7 +1122,7 @@ class ProcessInstanceProcessor:
                 f" instance {self.process_instance_model.id}"
             )
             human_task = HumanTaskModel.query.filter_by(task_id=task_id).first()
-            self.complete_task(spiff_task, human_task=human_task, user=g.user)
+            self.complete_task(spiff_task, human_task=human_task, user=user)
         elif execute:
             current_app.logger.info(
                 f"Manually executing Task {spiff_task.task_spec.name} of process"
