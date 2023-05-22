@@ -9,14 +9,12 @@ from typing import Optional
 
 from flask import current_app
 from flask.testing import FlaskClient
-from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
-from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from werkzeug.test import TestResponse  # type: ignore
 
-from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.permission_assignment import Permission
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.process_group import ProcessGroup
@@ -29,9 +27,11 @@ from spiffworkflow_backend.models.process_model import ProcessModelInfoSchema
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.file_system_service import FileSystemService
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
 from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceQueueService,
 )
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
 
@@ -319,7 +319,7 @@ class BaseTest:
     ) -> UserModel:
         # user = BaseTest.find_or_create_user(username=username)
         # return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
-        user = BaseTest.find_or_create_user(username='testadmin1')
+        user = BaseTest.find_or_create_user(username="testadmin1")
         AuthorizationService.import_permissions_from_yaml_file(user)
         return user
 
@@ -418,9 +418,7 @@ class BaseTest:
             bpmn_file_name="message_sender.bpmn",  # Slightly misnamed, it sends and receives
         )
 
-        process_instance = self.create_process_instance_from_process_model(
-            process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model)
         processor_send_receive = ProcessInstanceProcessor(process_instance)
         processor_send_receive.do_engine_steps(save=True)
         task = processor_send_receive.get_all_user_tasks()[0]

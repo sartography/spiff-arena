@@ -18,7 +18,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_instance_event import ProcessInstanceEventType
 from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
 from spiffworkflow_backend.models.task_definition import TaskDefinitionModel
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import (
     UserDoesNotHaveAccessToTaskError,
@@ -440,9 +439,7 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_id="test_group/boundary_event_reset",
             process_model_source_directory="boundary_event_reset",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         assert len(process_instance.active_human_tasks) == 1
@@ -467,7 +464,9 @@ class TestProcessInstanceProcessor(BaseTest):
         human_task_one = process_instance.active_human_tasks[0]
         assert human_task_one.task_title == "Manual Task #1"
         processor = ProcessInstanceProcessor(process_instance)
-        processor.manual_complete_task(str(human_task_one.task_id), execute=True, user=process_instance.process_initiator)
+        processor.manual_complete_task(
+            str(human_task_one.task_id), execute=True, user=process_instance.process_initiator
+        )
         processor = ProcessInstanceProcessor(process_instance)
         processor.resume()
         processor.do_engine_steps(save=True)
@@ -490,15 +489,15 @@ class TestProcessInstanceProcessor(BaseTest):
             process_model_id="test_group/step_through_gateway",
             process_model_source_directory="step_through_gateway",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
         processor = ProcessInstanceProcessor(process_instance)
         processor.do_engine_steps(save=True)
         assert len(process_instance.active_human_tasks) == 1
         human_task_one = process_instance.active_human_tasks[0]
         processor.bpmn_process_instance.get_task_from_id(UUID(human_task_one.task_id))
-        processor.manual_complete_task(str(human_task_one.task_id), execute=True, user=process_instance.process_initiator)
+        processor.manual_complete_task(
+            str(human_task_one.task_id), execute=True, user=process_instance.process_initiator
+        )
         processor.save()
         processor = ProcessInstanceProcessor(process_instance)
         step1_task = processor.get_task_by_bpmn_identifier("step_1", processor.bpmn_process_instance)
@@ -866,9 +865,7 @@ class TestProcessInstanceProcessor(BaseTest):
             bpmn_file_name="script_error_with_task_data.bpmn",
             process_model_source_directory="error",
         )
-        process_instance = self.create_process_instance_from_process_model(
-            process_model=process_model
-        )
+        process_instance = self.create_process_instance_from_process_model(process_model=process_model)
 
         processor = ProcessInstanceProcessor(process_instance)
         with pytest.raises(WorkflowExecutionServiceError):

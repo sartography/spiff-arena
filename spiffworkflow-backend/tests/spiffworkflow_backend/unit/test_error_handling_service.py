@@ -9,13 +9,9 @@ from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 from spiffworkflow_backend.models.process_instance import ProcessInstanceStatus
 from spiffworkflow_backend.models.process_model import ProcessModelInfo
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.error_handling_service import ErrorHandlingService
 from spiffworkflow_backend.services.process_instance_processor import (
     ProcessInstanceProcessor,
-)
-from spiffworkflow_backend.services.process_instance_service import (
-    ProcessInstanceService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.workflow_execution_service import WorkflowExecutionServiceError
@@ -27,12 +23,8 @@ class TestErrorHandlingService(BaseTest):
     Like it can fire off BPMN messages in case a BPMN Task is waiting for that message.
     """
 
-    def run_process_model_and_handle_error(
-        self, process_model: ProcessModelInfo
-    ) -> ProcessInstanceModel:
-        process_instance = self.create_process_instance_from_process_model(
-            process_model
-        )
+    def run_process_model_and_handle_error(self, process_model: ProcessModelInfo) -> ProcessInstanceModel:
+        process_instance = self.create_process_instance_from_process_model(process_model)
         pip = ProcessInstanceProcessor(process_instance)
         with pytest.raises(WorkflowExecutionServiceError) as e:
             pip.do_engine_steps(save=True)

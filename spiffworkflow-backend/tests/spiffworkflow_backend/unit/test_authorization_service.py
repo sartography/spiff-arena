@@ -1,12 +1,11 @@
 """Test_message_service."""
 import pytest
-from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.group import GroupModel
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.authorization_service import GroupPermissionsDict
 from spiffworkflow_backend.services.authorization_service import InvalidPermissionError
@@ -17,7 +16,6 @@ from spiffworkflow_backend.services.process_instance_processor import (
 from spiffworkflow_backend.services.process_instance_service import (
     ProcessInstanceService,
 )
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.user_service import UserService
 
 
@@ -137,7 +135,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
-                ('/process-model-natural-language/some-process-group:some-process-model:*', "create"),
+                ("/process-model-natural-language/some-process-group:some-process-model:*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
@@ -160,26 +158,28 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_explode_permissions_start_on_process_group."""
-        expected_permissions = sorted([
-            ("/event-error-details/some-process-group:some-process-model:*", "read"),
-            (
-                "/logs/some-process-group:some-process-model:*",
-                "read",
-            ),
-            (
-                "/logs/typeahead-filter-values/some-process-group:some-process-model:*",
-                "read",
-            ),
-            (
-                "/process-data-file-download/some-process-group:some-process-model:*",
-                "read",
-            ),
-            (
-                "/process-instances/for-me/some-process-group:some-process-model:*",
-                "read",
-            ),
-            ("/process-instances/some-process-group:some-process-model:*", "create"),
-        ])
+        expected_permissions = sorted(
+            [
+                ("/event-error-details/some-process-group:some-process-model:*", "read"),
+                (
+                    "/logs/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                (
+                    "/logs/typeahead-filter-values/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                (
+                    "/process-data-file-download/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                (
+                    "/process-instances/for-me/some-process-group:some-process-model:*",
+                    "read",
+                ),
+                ("/process-instances/some-process-group:some-process-model:*", "create"),
+            ]
+        )
         permissions_to_assign = AuthorizationService.explode_permissions(
             "start", "PG:/some-process-group/some-process-model"
         )
@@ -219,7 +219,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
-                ('/process-model-natural-language/some-process-group:some-process-model/*', "create"),
+                ("/process-model-natural-language/some-process-group:some-process-model/*", "create"),
                 ("/process-model-publish/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
@@ -242,26 +242,28 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_explode_permissions_start_on_process_model."""
-        expected_permissions = sorted([
-            (
-                "/event-error-details/some-process-group:some-process-model/*",
-                "read",
-            ),
-            (
-                "/logs/some-process-group:some-process-model/*",
-                "read",
-            ),
-            ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
-            (
-                "/process-data-file-download/some-process-group:some-process-model/*",
-                "read",
-            ),
-            (
-                "/process-instances/for-me/some-process-group:some-process-model/*",
-                "read",
-            ),
-            ("/process-instances/some-process-group:some-process-model/*", "create"),
-        ])
+        expected_permissions = sorted(
+            [
+                (
+                    "/event-error-details/some-process-group:some-process-model/*",
+                    "read",
+                ),
+                (
+                    "/logs/some-process-group:some-process-model/*",
+                    "read",
+                ),
+                ("/logs/typeahead-filter-values/some-process-group:some-process-model/*", "read"),
+                (
+                    "/process-data-file-download/some-process-group:some-process-model/*",
+                    "read",
+                ),
+                (
+                    "/process-instances/for-me/some-process-group:some-process-model/*",
+                    "read",
+                ),
+                ("/process-instances/some-process-group:some-process-model/*", "create"),
+            ]
+        )
         permissions_to_assign = AuthorizationService.explode_permissions(
             "start", "PM:/some-process-group/some-process-model"
         )
@@ -274,30 +276,32 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        expected_permissions = sorted([
-            ("/active-users/*", "create"),
-            ("/connector-proxy/typeahead/*", "read"),
-            ("/debug/version-info", "read"),
-            ("/process-groups", "read"),
-            ("/process-instances/find-by-id/*", "read"),
-            ("/process-instances/for-me", "create"),
-            ("/process-instances/report-metadata", "read"),
-            ("/process-instances/reports/*", "create"),
-            ("/process-instances/reports/*", "delete"),
-            ("/process-instances/reports/*", "read"),
-            ("/process-instances/reports/*", "update"),
-            ("/process-models", "read"),
-            ("/processes", "read"),
-            ("/processes/callers", "read"),
-            ("/service-tasks", "read"),
-            ("/tasks/*", "create"),
-            ("/tasks/*", "delete"),
-            ("/tasks/*", "read"),
-            ("/tasks/*", "update"),
-            ("/user-groups/for-current-user", "read"),
-            ("/users/exists/by-username", "create"),
-            ("/users/search", "read"),
-        ])
+        expected_permissions = sorted(
+            [
+                ("/active-users/*", "create"),
+                ("/connector-proxy/typeahead/*", "read"),
+                ("/debug/version-info", "read"),
+                ("/process-groups", "read"),
+                ("/process-instances/find-by-id/*", "read"),
+                ("/process-instances/for-me", "create"),
+                ("/process-instances/report-metadata", "read"),
+                ("/process-instances/reports/*", "create"),
+                ("/process-instances/reports/*", "delete"),
+                ("/process-instances/reports/*", "read"),
+                ("/process-instances/reports/*", "update"),
+                ("/process-models", "read"),
+                ("/processes", "read"),
+                ("/processes/callers", "read"),
+                ("/service-tasks", "read"),
+                ("/tasks/*", "create"),
+                ("/tasks/*", "delete"),
+                ("/tasks/*", "read"),
+                ("/tasks/*", "update"),
+                ("/user-groups/for-current-user", "read"),
+                ("/users/exists/by-username", "create"),
+                ("/users/search", "read"),
+            ]
+        )
         permissions_to_assign = AuthorizationService.explode_permissions("all", "BASIC")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
@@ -308,28 +312,30 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        expected_permissions = sorted([
-            ("/authentications", "read"),
-            ("/can-run-privileged-script/*", "create"),
-            ("/debug/*", "create"),
-            ("/messages", "read"),
-            ("/messages/*", "create"),
-            ("/process-instance-reset/*", "create"),
-            ("/process-instance-resume/*", "create"),
-            ("/process-instance-suspend/*", "create"),
-            ("/process-instance-terminate/*", "create"),
-            ("/process-instances/*", "create"),
-            ("/process-instances/*", "delete"),
-            ("/process-instances/*", "read"),
-            ("/process-instances/*", "update"),
-            ("/secrets/*", "create"),
-            ("/secrets/*", "delete"),
-            ("/secrets/*", "read"),
-            ("/secrets/*", "update"),
-            ("/send-event/*", "create"),
-            ("/task-complete/*", "create"),
-            ("/task-data/*", "update"),
-        ])
+        expected_permissions = sorted(
+            [
+                ("/authentications", "read"),
+                ("/can-run-privileged-script/*", "create"),
+                ("/debug/*", "create"),
+                ("/messages", "read"),
+                ("/messages/*", "create"),
+                ("/process-instance-reset/*", "create"),
+                ("/process-instance-resume/*", "create"),
+                ("/process-instance-suspend/*", "create"),
+                ("/process-instance-terminate/*", "create"),
+                ("/process-instances/*", "create"),
+                ("/process-instances/*", "delete"),
+                ("/process-instances/*", "read"),
+                ("/process-instances/*", "update"),
+                ("/secrets/*", "create"),
+                ("/secrets/*", "delete"),
+                ("/secrets/*", "read"),
+                ("/secrets/*", "update"),
+                ("/send-event/*", "create"),
+                ("/task-complete/*", "create"),
+                ("/task-data/*", "update"),
+            ]
+        )
         permissions_to_assign = AuthorizationService.explode_permissions("all", "ELEVATED")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions

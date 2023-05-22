@@ -11,7 +11,6 @@ from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.spec_reference import SpecReferenceCache
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 from spiffworkflow_backend.services.spec_file_service import (
     ProcessModelFileInvalidError,
@@ -39,7 +38,7 @@ class TestSpecFileService(BaseTest):
         load_test_spec(
             process_model_id=self.process_model_id,
             bpmn_file_name=self.bpmn_file_name,
-            process_model_source_directory='call_activity_nested',
+            process_model_source_directory="call_activity_nested",
         )
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
         assert len(bpmn_process_id_lookups) == 1
@@ -57,7 +56,7 @@ class TestSpecFileService(BaseTest):
         load_test_spec(
             process_model_id=self.process_model_id,
             bpmn_file_name=self.bpmn_file_name,
-            process_model_source_directory='call_activity_nested',
+            process_model_source_directory="call_activity_nested",
         )
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
         assert len(bpmn_process_id_lookups) == 1
@@ -94,7 +93,7 @@ class TestSpecFileService(BaseTest):
         load_test_spec(
             process_model_id=self.process_model_id,
             bpmn_file_name=self.bpmn_file_name,
-            process_model_source_directory='call_activity_nested',
+            process_model_source_directory="call_activity_nested",
         )
 
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
@@ -144,7 +143,7 @@ class TestSpecFileService(BaseTest):
         load_test_spec(
             process_model_id=self.process_model_id,
             bpmn_file_name=self.bpmn_file_name,
-            process_model_source_directory='call_activity_nested',
+            process_model_source_directory="call_activity_nested",
         )
 
         bpmn_process_id_lookups = SpecReferenceCache.query.all()
@@ -173,7 +172,7 @@ class TestSpecFileService(BaseTest):
         process_model_id = "test_group/call_activity_nested"
         process_model = load_test_spec(
             process_model_id=process_model_id,
-            process_model_source_directory='call_activity_nested',
+            process_model_source_directory="call_activity_nested",
         )
         files = SpecFileService.get_files(process_model)
 

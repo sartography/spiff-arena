@@ -8,7 +8,6 @@ from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.permission_assignment import PermissionAssignmentModel
 from spiffworkflow_backend.models.permission_target import PermissionTargetModel
 from spiffworkflow_backend.models.principal import PrincipalModel
-from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.user_service import UserService
 
 
