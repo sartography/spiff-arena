@@ -59,7 +59,6 @@ class BaseTest:
 
     @staticmethod
     def logged_in_headers(user: UserModel, _redirect_url: str = "http://some/frontend/url") -> Dict[str, str]:
-        """Logged_in_headers."""
         return dict(Authorization="Bearer " + user.encode_auth_token())
 
     def create_group_and_model_with_bpmn(
@@ -317,11 +316,8 @@ class BaseTest:
         target_uri: str = PermissionTargetModel.URI_ALL,
         permission_names: Optional[list[str]] = None,
     ) -> UserModel:
-        # user = BaseTest.find_or_create_user(username=username)
-        # return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
-        user = BaseTest.find_or_create_user(username="testadmin1")
-        AuthorizationService.import_permissions_from_yaml_file(user)
-        return user
+        user = BaseTest.find_or_create_user(username=username)
+        return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
 
     @classmethod
     def add_permissions_to_user(

@@ -9,6 +9,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from spiffworkflow_backend.models.bpmn_process import BpmnProcessModel
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.user import UserModel
+from spiffworkflow_backend.services.authorization_service import AuthorizationService
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
 
 
@@ -55,4 +56,6 @@ def with_db_and_bpmn_file_cleanup() -> None:
 @pytest.fixture()
 def with_super_admin_user() -> UserModel:
     """With_super_admin_user."""
-    return BaseTest.create_user_with_permission("super_admin")
+    user = BaseTest.find_or_create_user(username="testadmin1")
+    AuthorizationService.import_permissions_from_yaml_file(user)
+    return user
