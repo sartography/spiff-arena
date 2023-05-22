@@ -1,7 +1,6 @@
 """Test_get_localtime."""
 import pytest
 from flask.app import Flask
-from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -15,7 +14,6 @@ class TestRefreshPermissions(BaseTest):
     def test_refresh_permissions_requires_elevated_permission(
         self,
         app: Flask,
-        client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         basic_user = self.find_or_create_user("basic_user")
