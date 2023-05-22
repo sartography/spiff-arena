@@ -135,10 +135,12 @@ class ProcessInstanceService:
         return False
 
     @classmethod
-    def do_waiting(cls, status_value) -> None:
+    def do_waiting(cls, status_value: str) -> None:
         """Do_waiting."""
         run_at_in_seconds_threshold = round(time.time())
-        process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(status_value, run_at_in_seconds_threshold)
+        process_instance_ids_to_check = ProcessInstanceQueueService.peek_many(
+            status_value, run_at_in_seconds_threshold
+        )
         if len(process_instance_ids_to_check) == 0:
             return
 
