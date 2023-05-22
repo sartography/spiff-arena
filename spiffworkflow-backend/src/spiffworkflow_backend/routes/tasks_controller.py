@@ -257,7 +257,7 @@ def manual_complete_task(
     process_instance = ProcessInstanceModel.query.filter(ProcessInstanceModel.id == int(process_instance_id)).first()
     if process_instance:
         processor = ProcessInstanceProcessor(process_instance)
-        processor.manual_complete_task(task_guid, execute)
+        processor.manual_complete_task(task_guid, execute, g.user)
     else:
         raise ApiError(
             error_code="complete_task",

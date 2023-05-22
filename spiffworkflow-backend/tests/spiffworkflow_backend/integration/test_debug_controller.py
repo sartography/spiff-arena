@@ -10,7 +10,7 @@ class TestDebugController(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        response = client.get(
+        response = client.post(
             "/v1.0/debug/test-raise-error",
         )
         assert response.status_code == 500

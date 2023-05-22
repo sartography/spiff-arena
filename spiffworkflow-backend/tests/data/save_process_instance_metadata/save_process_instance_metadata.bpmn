@@ -11,13 +11,13 @@
     <bpmn:scriptTask id="save_key1">
       <bpmn:incoming>Flow_1j4jzft</bpmn:incoming>
       <bpmn:outgoing>Flow_10xyk22</bpmn:outgoing>
-      <bpmn:script>save_process_instance_metadata({"key1": "value1"})</bpmn:script>
+      <bpmn:script>key1 = "value1"</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:sequenceFlow id="Flow_10xyk22" sourceRef="save_key1" targetRef="save_key2" />
     <bpmn:scriptTask id="save_key2">
       <bpmn:incoming>Flow_10xyk22</bpmn:incoming>
       <bpmn:outgoing>Flow_01xr2ac</bpmn:outgoing>
-      <bpmn:script>save_process_instance_metadata({"key2": "value2", "key3": "value3"})</bpmn:script>
+      <bpmn:script>key2 = "value2"; key3 = "value3"</bpmn:script>
     </bpmn:scriptTask>
     <bpmn:sequenceFlow id="Flow_01xr2ac" sourceRef="save_key2" targetRef="Event_1s123jg" />
   </bpmn:process>

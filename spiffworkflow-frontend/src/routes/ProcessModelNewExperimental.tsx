@@ -27,7 +27,7 @@ export default function ProcessModelNewExperimental() {
   const handleFormSubmission = (event: any) => {
     event.preventDefault();
     HttpService.makeCallToBackend({
-      path: `/process-models-natural-language/${params.process_group_id}`,
+      path: `/process-model-natural-language/${params.process_group_id}`,
       successCallback: navigateToProcessModel,
       httpMethod: 'POST',
       postBody: { natural_language_text: processModelDescriptiveText },

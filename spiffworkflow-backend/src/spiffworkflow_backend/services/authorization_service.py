@@ -79,6 +79,7 @@ PATH_SEGMENTS_FOR_PERMISSION_ALL = [
     {"path": "/process-data-file-download", "relevant_permissions": ["read"]},
     {"path": "/process-instance-suspend", "relevant_permissions": ["create"]},
     {"path": "/process-instance-terminate", "relevant_permissions": ["create"]},
+    {"path": "/process-model-natural-language", "relevant_permissions": ["create"]},
     {"path": "/process-model-publish", "relevant_permissions": ["create"]},
     {"path": "/task-data", "relevant_permissions": ["read", "update"]},
 ]
@@ -487,11 +488,10 @@ class AuthorizationService:
     @classmethod
     def set_basic_permissions(cls) -> list[PermissionToAssign]:
         permissions_to_assign: list[PermissionToAssign] = []
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/active-users/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/process-instances/for-me"))
-        permissions_to_assign.append(
-            PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata")
-        )
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/active-users/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/users/exists/by-username"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/connector-proxy/typeahead/*"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/debug/version-info"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-groups"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/process-models"))
@@ -499,7 +499,11 @@ class AuthorizationService:
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/processes/callers"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/service-tasks"))
         permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/user-groups/for-current-user"))
-        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/users/exists/by-username"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
+
+        permissions_to_assign.append(
+            PermissionToAssign(permission="read", target_uri="/process-instances/report-metadata")
+        )
         permissions_to_assign.append(
             PermissionToAssign(permission="read", target_uri="/process-instances/find-by-id/*")
         )
@@ -522,13 +526,15 @@ class AuthorizationService:
         # FIXME: we need to fix so that user that can start a process-model
         # can also start through messages as well
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/messages/*"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/messages"))
+        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/authentications"))
 
         permissions_to_assign.append(
             PermissionToAssign(permission="create", target_uri="/can-run-privileged-script/*")
         )
+        permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/debug/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/send-event/*"))
         permissions_to_assign.append(PermissionToAssign(permission="create", target_uri="/task-complete/*"))
-        permissions_to_assign.append(PermissionToAssign(permission="read", target_uri="/users/search"))
 
         # read comes from PG and PM permissions
         permissions_to_assign.append(PermissionToAssign(permission="update", target_uri="/task-data/*"))
@@ -697,6 +703,8 @@ class AuthorizationService:
             group_identifier = group["name"]
             GroupService.find_or_create_group(group_identifier)
             for username in group["users"]:
+                if user_model and username != user_model.username:
+                    continue
                 user_to_group_dict: UserToGroupDict = {
                     "username": username,
                     "group_identifier": group_identifier,
@@ -704,6 +712,10 @@ class AuthorizationService:
                 user_to_group_identifiers.append(user_to_group_dict)
                 GroupService.add_user_to_group_or_add_to_waiting(username, group_identifier)
                 unique_user_group_identifiers.add(group_identifier)
+        for group in group_permissions:
+            group_identifier = group["name"]
+            if user_model and group_identifier not in unique_user_group_identifiers:
+                continue
             for permission in group["permissions"]:
                 for crud_op in permission["actions"]:
                     permission_assignments.extend(
