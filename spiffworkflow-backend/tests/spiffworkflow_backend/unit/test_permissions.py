@@ -1,4 +1,3 @@
-"""Test Permissions."""
 from flask.app import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -22,18 +21,13 @@ from spiffworkflow_backend.services.user_service import UserService
 #  * super-admins users maybe conventionally get the user role as well
 # finance-admin role allows create, update, and delete of all models under the finance group
 class TestPermissions(BaseTest):
-    """TestPermissions."""
-
     def test_user_can_be_given_permission_to_administer_process_group(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_user_can_be_given_permission_to_administer_process_group."""
         process_group_id = "group-a"
-        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
         load_test_spec(
             "group-a/timers_intermediate_catch_event",
             bpmn_file_name="timers_intermediate_catch_event.bpmn",
@@ -58,7 +52,6 @@ class TestPermissions(BaseTest):
     def test_group_a_admin_needs_to_stay_away_from_group_b(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        """Test_group_a_admin_needs_to_stay_away_from_group_b."""
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
         process_group_b_id = process_group_ids[1]
@@ -87,7 +80,6 @@ class TestPermissions(BaseTest):
         self.assert_user_has_permission(group_a_admin, "update", f"/{process_group_b_id}", expected_result=False)
 
     def test_user_can_be_granted_access_through_a_group(self, app: Flask, with_db_and_bpmn_file_cleanup: None) -> None:
-        """Test_user_can_be_granted_access_through_a_group."""
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
         for process_group_id in process_group_ids:
@@ -125,7 +117,6 @@ class TestPermissions(BaseTest):
     def test_user_can_be_read_models_with_global_permission(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        """Test_user_can_be_read_models_with_global_permission."""
         process_group_ids = ["group-a", "group-b"]
         process_group_a_id = process_group_ids[0]
         process_group_b_id = process_group_ids[1]
@@ -156,7 +147,6 @@ class TestPermissions(BaseTest):
     def test_user_can_access_base_path_when_given_wildcard_permission(
         self, app: Flask, with_db_and_bpmn_file_cleanup: None
     ) -> None:
-        """Test_user_can_access_base_path_when_given_wildcard_permission."""
         group_a_admin = self.find_or_create_user()
 
         permission_target = PermissionTargetModel(uri="/process-models/%")

@@ -1,5 +1,6 @@
 """Test_message_service."""
 import pytest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -60,7 +61,6 @@ class TestAuthorizationService(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
         """Test_user_can_be_added_to_human_task_on_first_login."""
         initiator_user = self.find_or_create_user("initiator_user")
@@ -69,16 +69,12 @@ class TestAuthorizationService(BaseTest):
         self.find_or_create_user("testuser1")
         AuthorizationService.import_permissions_from_yaml_file()
 
-        process_model_identifier = self.create_group_and_model_with_bpmn(
-            client=client,
-            user=with_super_admin_user,
-            process_group_id="test_group",
-            process_model_id="model_with_lanes",
+        process_model = load_test_spec(
+            process_model_id="test_group/model_with_lanes",
             bpmn_file_name="lanes.bpmn",
-            bpmn_file_location="model_with_lanes",
+            process_model_source_directory="model_with_lanes",
         )
 
-        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
         process_instance = self.create_process_instance_from_process_model(
             process_model=process_model, user=initiator_user
         )
@@ -141,6 +137,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instances/some-process-group:some-process-model:*", "read"),
+                ('/process-model-natural-language/some-process-group:some-process-model:*', "create"),
                 ("/process-model-publish/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "create"),
                 ("/process-models/some-process-group:some-process-model:*", "delete"),
@@ -163,7 +160,7 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_explode_permissions_start_on_process_group."""
-        expected_permissions = [
+        expected_permissions = sorted([
             ("/event-error-details/some-process-group:some-process-model:*", "read"),
             (
                 "/logs/some-process-group:some-process-model:*",
@@ -182,7 +179,7 @@ class TestAuthorizationService(BaseTest):
                 "read",
             ),
             ("/process-instances/some-process-group:some-process-model:*", "create"),
-        ]
+        ])
         permissions_to_assign = AuthorizationService.explode_permissions(
             "start", "PG:/some-process-group/some-process-model"
         )
@@ -222,6 +219,7 @@ class TestAuthorizationService(BaseTest):
                     "delete",
                 ),
                 ("/process-instances/some-process-group:some-process-model/*", "read"),
+                ('/process-model-natural-language/some-process-group:some-process-model/*', "create"),
                 ("/process-model-publish/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "create"),
                 ("/process-models/some-process-group:some-process-model/*", "delete"),
@@ -244,7 +242,7 @@ class TestAuthorizationService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         """Test_explode_permissions_start_on_process_model."""
-        expected_permissions = [
+        expected_permissions = sorted([
             (
                 "/event-error-details/some-process-group:some-process-model/*",
                 "read",
@@ -263,7 +261,7 @@ class TestAuthorizationService(BaseTest):
                 "read",
             ),
             ("/process-instances/some-process-group:some-process-model/*", "create"),
-        ]
+        ])
         permissions_to_assign = AuthorizationService.explode_permissions(
             "start", "PM:/some-process-group/some-process-model"
         )
@@ -276,8 +274,9 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        expected_permissions = [
-            ("/active-users/*", "read"),
+        expected_permissions = sorted([
+            ("/active-users/*", "create"),
+            ("/connector-proxy/typeahead/*", "read"),
             ("/debug/version-info", "read"),
             ("/process-groups", "read"),
             ("/process-instances/find-by-id/*", "read"),
@@ -297,7 +296,8 @@ class TestAuthorizationService(BaseTest):
             ("/tasks/*", "update"),
             ("/user-groups/for-current-user", "read"),
             ("/users/exists/by-username", "create"),
-        ]
+            ("/users/search", "read"),
+        ])
         permissions_to_assign = AuthorizationService.explode_permissions("all", "BASIC")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
@@ -308,8 +308,11 @@ class TestAuthorizationService(BaseTest):
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        expected_permissions = [
+        expected_permissions = sorted([
+            ("/authentications", "read"),
             ("/can-run-privileged-script/*", "create"),
+            ("/debug/*", "create"),
+            ("/messages", "read"),
             ("/messages/*", "create"),
             ("/process-instance-reset/*", "create"),
             ("/process-instance-resume/*", "create"),
@@ -326,8 +329,7 @@ class TestAuthorizationService(BaseTest):
             ("/send-event/*", "create"),
             ("/task-complete/*", "create"),
             ("/task-data/*", "update"),
-            ("/users/search", "read"),
-        ]
+        ])
         permissions_to_assign = AuthorizationService.explode_permissions("all", "ELEVATED")
         permissions_to_assign_tuples = sorted([(p.target_uri, p.permission) for p in permissions_to_assign])
         assert permissions_to_assign_tuples == expected_permissions
@@ -437,7 +439,7 @@ class TestAuthorizationService(BaseTest):
         AuthorizationService.refresh_permissions(group_info)
         assert GroupModel.query.filter_by(identifier="group_two").first() is None
         assert GroupModel.query.filter_by(identifier="group_one").first() is not None
-        self.assert_user_has_permission(admin_user, "create", "/anything-they-want")
+        self.assert_user_has_permission(admin_user, "create", "/v1.0/process-groups/whatever")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
         self.assert_user_has_permission(user, "create", "/v1.0/process-groups/hey:yo")
@@ -469,7 +471,7 @@ class TestAuthorizationService(BaseTest):
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey")
         self.assert_user_has_permission(user, "read", "/v1.0/process-groups/hey:yo")
         self.assert_user_has_permission(user, "create", "/v1.0/process-groups/hey:yo", expected_result=False)
-        self.assert_user_has_permission(admin_user, "create", "/anything-they-want")
+        self.assert_user_has_permission(admin_user, "create", "/v1.0/process-groups/whatever")
 
         self.assert_user_has_permission(user_two, "read", "/v1.0/process-groups/hey", expected_result=False)
         assert GroupModel.query.filter_by(identifier="group_three").first() is not None

@@ -9,9 +9,12 @@ from typing import Optional
 
 from flask import current_app
 from flask.testing import FlaskClient
+from spiffworkflow_backend.services.process_instance_processor import ProcessInstanceProcessor
+from spiffworkflow_backend.services.process_instance_service import ProcessInstanceService
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 from werkzeug.test import TestResponse  # type: ignore
 
+from spiffworkflow_backend.models.message_instance import MessageInstanceModel
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.permission_assignment import Permission
@@ -314,9 +317,11 @@ class BaseTest:
         target_uri: str = PermissionTargetModel.URI_ALL,
         permission_names: Optional[list[str]] = None,
     ) -> UserModel:
-        """Create_user_with_permission."""
-        user = BaseTest.find_or_create_user(username=username)
-        return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
+        # user = BaseTest.find_or_create_user(username=username)
+        # return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
+        user = BaseTest.find_or_create_user(username='testadmin1')
+        AuthorizationService.import_permissions_from_yaml_file(user)
+        return user
 
     @classmethod
     def add_permissions_to_user(
@@ -325,7 +330,6 @@ class BaseTest:
         target_uri: str = PermissionTargetModel.URI_ALL,
         permission_names: Optional[list[str]] = None,
     ) -> UserModel:
-        """Add_permissions_to_user."""
         permission_target = AuthorizationService.find_or_create_permission_target(target_uri)
 
         if permission_names is None:
@@ -401,3 +405,67 @@ class BaseTest:
 
     def empty_report_metadata_body(self) -> ReportMetadata:
         return {"filter_by": [], "columns": [], "order_by": []}
+
+    def start_sender_process(
+        self,
+        client: FlaskClient,
+        payload: dict,
+        group_name: str = "test_group",
+    ) -> ProcessInstanceModel:
+        process_model = load_test_spec(
+            "test_group/message",
+            process_model_source_directory="message_send_one_conversation",
+            bpmn_file_name="message_sender.bpmn",  # Slightly misnamed, it sends and receives
+        )
+
+        process_instance = self.create_process_instance_from_process_model(
+            process_model
+        )
+        processor_send_receive = ProcessInstanceProcessor(process_instance)
+        processor_send_receive.do_engine_steps(save=True)
+        task = processor_send_receive.get_all_user_tasks()[0]
+        human_task = process_instance.active_human_tasks[0]
+
+        ProcessInstanceService.complete_form_task(
+            processor_send_receive,
+            task,
+            payload,
+            process_instance.process_initiator,
+            human_task,
+        )
+        processor_send_receive.save()
+        return process_instance
+
+    def assure_a_message_was_sent(self, process_instance: ProcessInstanceModel, payload: dict) -> None:
+        # There should be one new send message for the given process instance.
+        send_messages = (
+            MessageInstanceModel.query.filter_by(message_type="send")
+            .filter_by(process_instance_id=process_instance.id)
+            .order_by(MessageInstanceModel.id)
+            .all()
+        )
+        assert len(send_messages) == 1
+        send_message = send_messages[0]
+        assert send_message.payload == payload, "The send message should match up with the payload"
+        assert send_message.name == "Request Approval"
+        assert send_message.status == "ready"
+
+    def assure_there_is_a_process_waiting_on_a_message(self, process_instance: ProcessInstanceModel) -> None:
+        # There should be one new send message for the given process instance.
+        waiting_messages = (
+            MessageInstanceModel.query.filter_by(message_type="receive")
+            .filter_by(status="ready")
+            .filter_by(process_instance_id=process_instance.id)
+            .order_by(MessageInstanceModel.id)
+            .all()
+        )
+        assert len(waiting_messages) == 1
+        waiting_message = waiting_messages[0]
+        self.assure_correlation_properties_are_right(waiting_message)
+
+    def assure_correlation_properties_are_right(self, message: MessageInstanceModel) -> None:
+        # Correlation Properties should match up
+        po_curr = next(c for c in message.correlation_rules if c.name == "po_number")
+        customer_curr = next(c for c in message.correlation_rules if c.name == "customer_id")
+        assert po_curr is not None
+        assert customer_curr is not None

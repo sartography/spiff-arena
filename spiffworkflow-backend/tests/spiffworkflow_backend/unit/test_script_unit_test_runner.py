@@ -1,4 +1,3 @@
-"""Test Permissions."""
 from flask.app import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
@@ -13,20 +12,15 @@ from spiffworkflow_backend.services.script_unit_test_runner import ScriptUnitTes
 
 
 class TestScriptUnitTestRunner(BaseTest):
-    """TestScriptUnitTestRunner."""
-
     def test_takes_data_and_returns_expected_result(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_takes_data_and_returns_expected_result."""
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
-        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
         process_model_id = "simple_script"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         load_test_spec(
@@ -56,14 +50,10 @@ class TestScriptUnitTestRunner(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_fails_when_expected_output_does_not_match_actual_output."""
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "test_logging_spiff_logger"
-        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
-
         process_model_id = "simple_script"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         load_test_spec(
@@ -93,14 +83,10 @@ class TestScriptUnitTestRunner(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_script_with_unit_tests_when_hey_is_passed_in."""
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
-        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
-
         process_model_id = "script_with_unit_tests"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
         load_test_spec(
@@ -126,14 +112,10 @@ class TestScriptUnitTestRunner(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_script_with_unit_tests_when_hey_is_not_passed_in."""
         app.config["THREAD_LOCAL_DATA"].process_instance_id = None
 
         process_group_id = "script_with_unit_tests"
-        self.create_process_group_with_api(client, with_super_admin_user, process_group_id, process_group_id)
-
         process_model_id = "script_with_unit_tests"
         process_model_identifier = f"{process_group_id}/{process_model_id}"
 

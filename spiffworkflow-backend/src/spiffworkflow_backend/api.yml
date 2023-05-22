@@ -149,7 +149,7 @@ paths:
                 $ref: "#/components/schemas/OkTrue"
 
   /debug/test-raise-error:
-    get:
+    post:
       operationId: spiffworkflow_backend.routes.debug_controller.test_raise_error
       summary: Returns an unhandled exception that should notify sentry, if sentry is configured
       tags:
@@ -184,7 +184,7 @@ paths:
         description: The identifier for the last visited page for the user.
         schema:
           type: string
-    get:
+    post:
       tags:
         - Active User
       operationId: spiffworkflow_backend.routes.active_users_controller.active_user_updates
@@ -207,7 +207,7 @@ paths:
         description: The identifier for the last visited page for the user.
         schema:
           type: string
-    get:
+    post:
       tags:
         - Active User
       operationId: spiffworkflow_backend.routes.active_users_controller.active_user_unregister

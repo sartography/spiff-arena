@@ -16,10 +16,18 @@ groups:
     users: [testuser2, testuser3, testuser4]
 
 permissions:
-  admin:
+  process-groups-all:
     groups: [admin]
-    allowed_permissions: [create, read, update, delete]
-    uri: /*
+    allowed_permissions: [all]
+    uri: PG:ALL
+  basic:
+    groups: [admin]
+    allowed_permissions: [all]
+    uri: BASIC
+  elevated-operations:
+    groups: [admin]
+    allowed_permissions: [all]
+    uri: ELEVATED
 
   read-all:
     groups: ["Finance Team", hr, admin]
