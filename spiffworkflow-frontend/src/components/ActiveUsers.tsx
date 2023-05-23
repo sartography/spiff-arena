@@ -18,6 +18,7 @@ export default function ActiveUsers() {
       HttpService.makeCallToBackend({
         path: `/active-users/updates/${lastVisitedIdentifier}`,
         successCallback: setActiveUsers,
+        httpMethod: 'POST',
       });
     };
 
@@ -25,6 +26,7 @@ export default function ActiveUsers() {
       HttpService.makeCallToBackend({
         path: `/active-users/unregister/${lastVisitedIdentifier}`,
         successCallback: setActiveUsers,
+        httpMethod: 'POST',
       });
     };
     updateActiveUsers();

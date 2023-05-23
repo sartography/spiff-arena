@@ -1,9 +1,7 @@
-"""Test_get_localtime."""
 import datetime
 
 import pytz
 from flask.app import Flask
-from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
@@ -20,10 +18,7 @@ from spiffworkflow_backend.services.process_instance_service import (
 
 
 class TestGetLocaltime(BaseTest):
-    """TestProcessAPi."""
-
     def test_get_localtime_script_directly(self) -> None:
-        """Test_get_localtime_script_directly."""
         current_time = datetime.datetime.now()
         timezone = "US/Pacific"
         process_model_identifier = "test_process_model"
@@ -44,17 +39,14 @@ class TestGetLocaltime(BaseTest):
     def test_get_localtime_script_through_bpmn(
         self,
         app: Flask,
-        client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
-        """Test_process_instance_run."""
         initiator_user = self.find_or_create_user("initiator_user")
         self.add_permissions_to_user(
             initiator_user,
             target_uri="/v1.0/process-groups",
             permission_names=["read", "create"],
         )
-        self.create_process_group_with_api(client=client, user=initiator_user, process_group_id="test_group")
         process_model = load_test_spec(
             process_model_id="test_group/get_localtime",
             bpmn_file_name="get_localtime.bpmn",
