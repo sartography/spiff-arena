@@ -2,12 +2,14 @@ import glob
 import json
 import os
 import re
+import traceback
 from dataclasses import dataclass
 from typing import Any
 from typing import Callable
 from typing import Optional
 
 from lxml import etree  # type: ignore
+from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
 from SpiffWorkflow.task import TaskState
@@ -44,11 +46,22 @@ class MissingInputTaskData(Exception):
 
 
 @dataclass
+class TestCaseErrorDetails:
+    error_messages: list[str]
+    task_error_line: Optional[str] = None
+    task_trace: Optional[list[str]] = None
+    task_bpmn_identifier: Optional[str] = None
+    task_bpmn_name: Optional[str] = None
+    task_line_number: Optional[int] = None
+    stacktrace: Optional[list[str]] = None
+
+
+@dataclass
 class TestCaseResult:
     passed: bool
     bpmn_file: str
     test_case_identifier: str
-    error_messages: Optional[list[str]] = None
+    test_case_error_details: Optional[TestCaseErrorDetails] = None
 
 
 DEFAULT_NSMAP = {
@@ -127,8 +140,8 @@ class ProcessModelTestRunner:
         formatted_tests = ["FAILING TESTS:"]
         for failing_test in self.failing_tests():
             msg = ""
-            if failing_test.error_messages:
-                msg = "\n\t\t".join(failing_test.error_messages)
+            if failing_test.test_case_error_details is not None:
+                msg = "\n\t\t".join(failing_test.test_case_error_details.error_messages)
             formatted_tests.append(f"\t{failing_test.bpmn_file}: {failing_test.test_case_identifier}: {msg}")
         return "\n".join(formatted_tests)
 
@@ -147,8 +160,7 @@ class ProcessModelTestRunner:
                     try:
                         self.run_test_case(bpmn_file, test_case_identifier, test_case_contents)
                     except Exception as ex:
-                        ex_as_array = str(ex).split("\n")
-                        self._add_test_result(False, bpmn_file, test_case_identifier, ex_as_array)
+                        self._add_test_result(False, bpmn_file, test_case_identifier, exception=ex)
 
     def run_test_case(self, bpmn_file: str, test_case_identifier: str, test_case_contents: dict) -> None:
         bpmn_process_instance = self._instantiate_executer(bpmn_file)
@@ -329,15 +341,40 @@ class ProcessModelTestRunner:
     def _get_relative_path_of_bpmn_file(self, bpmn_file: str) -> str:
         return os.path.relpath(bpmn_file, start=self.process_model_directory_path)
 
+    def _exception_to_test_case_error_details(self, exception: Exception) -> TestCaseErrorDetails:
+        error_messages = str(exception).split("\n")
+        test_case_error_details = TestCaseErrorDetails(error_messages=error_messages)
+        if isinstance(exception, WorkflowTaskException):
+            test_case_error_details.task_error_line = exception.error_line
+            test_case_error_details.task_trace = exception.task_trace
+            test_case_error_details.task_line_number = exception.line_number
+            test_case_error_details.task_bpmn_identifier = exception.task_spec.bpmn_id
+            test_case_error_details.task_bpmn_name = exception.task_spec.bpmn_name
+        else:
+            test_case_error_details.stacktrace = traceback.format_exc().split("\n")
+
+        return test_case_error_details
+
     def _add_test_result(
-        self, passed: bool, bpmn_file: str, test_case_identifier: str, error_messages: Optional[list[str]] = None
+        self,
+        passed: bool,
+        bpmn_file: str,
+        test_case_identifier: str,
+        error_messages: Optional[list[str]] = None,
+        exception: Optional[Exception] = None,
     ) -> None:
+        test_case_error_details = None
+        if exception is not None:
+            test_case_error_details = self._exception_to_test_case_error_details(exception)
+        elif error_messages:
+            test_case_error_details = TestCaseErrorDetails(error_messages=error_messages)
+
         bpmn_file_relative = self._get_relative_path_of_bpmn_file(bpmn_file)
         test_result = TestCaseResult(
             passed=passed,
             bpmn_file=bpmn_file_relative,
             test_case_identifier=test_case_identifier,
-            error_messages=error_messages,
+            test_case_error_details=test_case_error_details,
         )
         self.test_case_results.append(test_result)
 
