@@ -1,0 +1,10 @@
+{
+  "test_case_1": {
+    "tasks": {
+      "ServiceTaskProcess:service_task_one": {
+        "data": [{ "the_result": "result_from_service" }]
+      }
+    },
+    "expected_output_json": { "the_result": "result_from_service" }
+  }
+}
