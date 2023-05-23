@@ -291,6 +291,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "datetime": datetime,
             "decimal": decimal,
             "enumerate": enumerate,
+            "filter": filter,
             "format": format,
             "list": list,
             "dict": dict,
