@@ -112,6 +112,8 @@ export interface ProcessReference {
   is_primary: boolean;
 }
 
+export type ObjectWithStringKeysAndValues = { [key: string]: string };
+
 export interface ProcessFile {
   content_type: string;
   last_modified: string;
