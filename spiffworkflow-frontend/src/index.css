@@ -418,6 +418,12 @@ td.actions-cell {
   padding-bottom: 10px;
 }
 
+.cds--btn--ghost:not([disabled]).red-icon svg {
+  fill: red;
+}
+.cds--btn--ghost:not([disabled]).green-icon svg {
+  fill: #198038;
+}
 .cds--btn--ghost:not([disabled]) svg.red-icon {
   fill: red;
 }

@@ -420,7 +420,6 @@ class ProcessInstanceProcessor:
         )
 
         self.process_instance_model = process_instance_model
-        self.process_model_service = ProcessModelService()
         bpmn_process_spec = None
         self.full_bpmn_process_dict: dict = {}
 
@@ -1018,7 +1017,7 @@ class ProcessInstanceProcessor:
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
 
         process_model_display_name = ""
-        process_model_info = self.process_model_service.get_process_model(
+        process_model_info = ProcessModelService.get_process_model(
             self.process_instance_model.process_model_identifier
         )
         if process_model_info is not None:

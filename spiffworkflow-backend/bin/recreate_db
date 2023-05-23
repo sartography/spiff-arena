@@ -23,6 +23,11 @@ if [[ -z "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR:-}" ]]; then
   export SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR
 fi
 
+database_host="localhost"
+if [[ -n "${SPIFFWORKFLOW_BACKEND_DATABASE_URI:-}" ]]; then
+  database_host=$(grep -oP "^[^:]+://.*@\K(.+?)[:/]" <<<"$SPIFFWORKFLOW_BACKEND_DATABASE_URI" | sed -E 's/[:\/]$//')
+fi
+
 tasks=""
 if [[ "${1:-}" == "clean" ]]; then
   subcommand="${2:-}"
@@ -37,8 +42,8 @@ if [[ "${1:-}" == "clean" ]]; then
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" != "mysql" ]]; then
     rm -f ./src/instance/*.sqlite3
   else
-    mysql -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"
-    mysql -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_unit_testing"
+    mysql -h "$database_host" -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_local_development"
+    mysql -h "$database_host" -uroot -e "DROP DATABASE IF EXISTS spiffworkflow_backend_unit_testing"
   fi
 
   # TODO: check to see if the db already exists and we can connect to it. also actually clean it up.
@@ -74,8 +79,8 @@ else
 fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
-  mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development"
-  mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_unit_testing"
+  mysql -h "$database_host" -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_local_development"
+  mysql -h "$database_host" -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_unit_testing"
 fi
 
 for task in $tasks; do
@@ -85,7 +90,7 @@ done
 SPIFFWORKFLOW_BACKEND_ENV=unit_testing FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
 if [[ -n "${SPIFFWORKFLOW_BACKEND_ENV:-}" ]] && ! grep -Eq '^(local_development|unit_testing)$' <<< "$SPIFFWORKFLOW_BACKEND_ENV"; then
   if [[ "${SPIFFWORKFLOW_BACKEND_DATABASE_TYPE:-mysql}" == "mysql" ]]; then
-    mysql -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_$SPIFFWORKFLOW_BACKEND_ENV"
+    mysql -h "$database_host" -uroot -e "CREATE DATABASE IF NOT EXISTS spiffworkflow_backend_$SPIFFWORKFLOW_BACKEND_ENV"
   fi
   FLASK_APP=src/spiffworkflow_backend poetry run flask db upgrade
 fi
