@@ -468,8 +468,12 @@ def get_ready_engine_step_count(bpmn_process_instance: BpmnWorkflow) -> int:
 def _dequeued_interstitial_stream(process_instance_id: int) -> Generator[Optional[str], Optional[str], None]:
     process_instance = _find_process_instance_by_id_or_raise(process_instance_id)
 
-    with ProcessInstanceQueueService.dequeued(process_instance):
-        yield from _interstitial_stream(process_instance)
+    # TODO: currently this just redirects back to home if the process has not been started
+    # need something better to show?
+
+    if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+        with ProcessInstanceQueueService.dequeued(process_instance):
+            yield from _interstitial_stream(process_instance)
 
 
 def interstitial(process_instance_id: int) -> Response:
