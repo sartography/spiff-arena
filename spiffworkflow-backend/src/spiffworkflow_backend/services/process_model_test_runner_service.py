@@ -1,5 +1,6 @@
 import glob
 import json
+from typing import Union
 import os
 import re
 import traceback
@@ -89,6 +90,8 @@ JSON file format:
     }
 }
 """
+
+
 class ProcessModelTestRunner:
     """Generic test runner code. May move into own library at some point.
 
@@ -257,7 +260,7 @@ class ProcessModelTestRunner:
                 self.bpmn_processes_to_file_mappings[bpmn_process_identifier] = file_norm
 
     def _execute_task(
-        self, spiff_task: SpiffTask, test_case_task_key: str, test_case_task_properties: Optional[dict]
+        self, spiff_task: SpiffTask, test_case_task_key: Optional[str], test_case_task_properties: Optional[dict]
     ) -> None:
         if self.execute_task_callback:
             self.execute_task_callback(spiff_task, test_case_task_key, test_case_task_properties)
@@ -280,10 +283,10 @@ class ProcessModelTestRunner:
         return None
 
     def _default_execute_task(
-        self, spiff_task: SpiffTask, test_case_task_key: str, test_case_task_properties: Optional[dict]
+        self, spiff_task: SpiffTask, test_case_task_key: Optional[str], test_case_task_properties: Optional[dict]
     ) -> None:
         if spiff_task.task_spec.manual or spiff_task.task_spec.__class__.__name__ == "ServiceTask":
-            if test_case_task_properties and "data" in test_case_task_properties:
+            if test_case_task_key and test_case_task_properties and "data" in test_case_task_properties:
                 if test_case_task_key not in self.task_data_index:
                     self.task_data_index[test_case_task_key] = 0
                 task_data_length = len(test_case_task_properties["data"])
@@ -309,7 +312,7 @@ class ProcessModelTestRunner:
                     related_bpmn_files.extend(self._find_related_bpmn_files(new_file))
         return related_bpmn_files
 
-    def _get_etree_from_bpmn_file(self, bpmn_file: str) -> etree.Element:
+    def _get_etree_from_bpmn_file(self, bpmn_file: str) -> etree._Element:
         data = None
         with open(bpmn_file, "rb") as f_handle:
             data = f_handle.read()
@@ -340,7 +343,7 @@ class ProcessModelTestRunner:
     def _get_relative_path_of_bpmn_file(self, bpmn_file: str) -> str:
         return os.path.relpath(bpmn_file, start=self.process_model_directory_path)
 
-    def _exception_to_test_case_error_details(self, exception: Exception) -> TestCaseErrorDetails:
+    def _exception_to_test_case_error_details(self, exception: Union[Exception, WorkflowTaskException]) -> TestCaseErrorDetails:
         error_messages = str(exception).split("\n")
         test_case_error_details = TestCaseErrorDetails(error_messages=error_messages)
         if isinstance(exception, WorkflowTaskException):
