@@ -18,11 +18,17 @@ class BackgroundProcessingService:
         """__init__."""
         self.app = app
 
+    def process_not_started_process_instances(self) -> None:
+        """Since this runs in a scheduler, we need to specify the app context as well."""
+        with self.app.app_context():
+            ProcessInstanceLockService.set_thread_local_locking_context("bg:notstarted")
+            ProcessInstanceService.do_waiting(ProcessInstanceStatus.not_started.value)
+
     def process_waiting_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""
         with self.app.app_context():
             ProcessInstanceLockService.set_thread_local_locking_context("bg:waiting")
-            ProcessInstanceService.do_waiting()
+            ProcessInstanceService.do_waiting(ProcessInstanceStatus.waiting.value)
 
     def process_user_input_required_process_instances(self) -> None:
         """Since this runs in a scheduler, we need to specify the app context as well."""

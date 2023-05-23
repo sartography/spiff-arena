@@ -305,7 +305,8 @@ class BaseTest:
         db.session.add(process_instance)
         db.session.commit()
 
-        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance)
+        run_at_in_seconds = round(time.time())
+        ProcessInstanceQueueService.enqueue_new_process_instance(process_instance, run_at_in_seconds)
 
         return process_instance
 

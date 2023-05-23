@@ -70,8 +70,11 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
     """Start_scheduler."""
     scheduler = scheduler_class()
 
-    # TODO: polling intervals for different jobs
+    # TODO: polling intervals for messages job
     polling_interval_in_seconds = app.config["SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_POLLING_INTERVAL_IN_SECONDS"]
+    not_started_polling_interval_in_seconds = app.config[
+        "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_NOT_STARTED_POLLING_INTERVAL_IN_SECONDS"
+    ]
     user_input_required_polling_interval_in_seconds = app.config[
         "SPIFFWORKFLOW_BACKEND_BACKGROUND_SCHEDULER_USER_INPUT_REQUIRED_POLLING_INTERVAL_IN_SECONDS"
     ]
@@ -83,6 +86,11 @@ def start_scheduler(app: flask.app.Flask, scheduler_class: BaseScheduler = Backg
         BackgroundProcessingService(app).process_message_instances_with_app_context,
         "interval",
         seconds=10,
+    )
+    scheduler.add_job(
+        BackgroundProcessingService(app).process_not_started_process_instances,
+        "interval",
+        seconds=not_started_polling_interval_in_seconds,
     )
     scheduler.add_job(
         BackgroundProcessingService(app).process_waiting_process_instances,
