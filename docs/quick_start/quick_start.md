@@ -306,5 +306,3 @@ Ensure that all required details have been included such as Process name, Proces
 ![Untitled](images/Untitled_32.png)
 
 By following these steps, you can request the special permissions needed to carry out your tasks effectively.
-
-New changes added by Usama
