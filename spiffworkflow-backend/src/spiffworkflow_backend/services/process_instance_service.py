@@ -46,6 +46,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceQueueService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.workflow_service import WorkflowService
 
 
 class ProcessInstanceService:
@@ -77,7 +78,11 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
-        run_at_in_seconds = round(time.time())
+        processor = ProcessInstanceProcessor(process_instance_model)
+        delay_in_seconds = WorkflowService.calculate_run_at_delay_in_seconds(
+            processor.bpmn_process_instance, datetime.now(timezone.utc)
+        )
+        run_at_in_seconds = round(time.time()) + delay_in_seconds
         ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
         return process_instance_model
 
