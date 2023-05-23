@@ -1,6 +1,5 @@
 import glob
 import json
-from typing import Union
 import os
 import re
 import traceback
@@ -8,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 from typing import Callable
 from typing import Optional
+from typing import Union
 
 from lxml import etree  # type: ignore
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -103,7 +103,7 @@ class ProcessModelTestRunner:
         process_model_directory_path: str,
         process_model_directory_for_test_discovery: Optional[str] = None,
         instantiate_executer_callback: Optional[Callable[[str], Any]] = None,
-        execute_task_callback: Optional[Callable[[Any, str, Optional[dict]], Any]] = None,
+        execute_task_callback: Optional[Callable[[Any, Optional[str], Optional[dict]], Any]] = None,
         get_next_task_callback: Optional[Callable[[Any], Any]] = None,
         test_case_file: Optional[str] = None,
         test_case_identifier: Optional[str] = None,
@@ -343,7 +343,9 @@ class ProcessModelTestRunner:
     def _get_relative_path_of_bpmn_file(self, bpmn_file: str) -> str:
         return os.path.relpath(bpmn_file, start=self.process_model_directory_path)
 
-    def _exception_to_test_case_error_details(self, exception: Union[Exception, WorkflowTaskException]) -> TestCaseErrorDetails:
+    def _exception_to_test_case_error_details(
+        self, exception: Union[Exception, WorkflowTaskException]
+    ) -> TestCaseErrorDetails:
         error_messages = str(exception).split("\n")
         test_case_error_details = TestCaseErrorDetails(error_messages=error_messages)
         if isinstance(exception, WorkflowTaskException):

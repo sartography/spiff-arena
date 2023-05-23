@@ -1,5 +1,4 @@
 import os
-# from typing import Any
 from typing import Optional
 
 import pytest
