@@ -1,15 +1,12 @@
 import os
-from typing import Any
+# from typing import Any
 from typing import Optional
 
 import pytest
 from flask import current_app
 from flask import Flask
-from pytest_mock import MockerFixture
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
-from spiffworkflow_backend.models.task import TaskModel  # noqa: F401
-from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.process_model_test_runner_service import NoTestCasesFoundError
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 
@@ -19,7 +16,6 @@ class TestProcessModelTestRunner(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_mocked_root_path: Any,
     ) -> None:
         process_model_test_runner = self._run_model_tests("script-task")
         assert len(process_model_test_runner.test_case_results) == 1
@@ -28,9 +24,8 @@ class TestProcessModelTestRunner(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_mocked_root_path: Any,
     ) -> None:
-        process_model_test_runner = ProcessModelTestRunner(os.path.join(FileSystemService.root_path(), "DNE"))
+        process_model_test_runner = ProcessModelTestRunner(os.path.join(self.root_path(), "DNE"))
         with pytest.raises(NoTestCasesFoundError):
             process_model_test_runner.run()
         assert process_model_test_runner.all_test_cases_passed(), process_model_test_runner.test_case_results
@@ -39,7 +34,6 @@ class TestProcessModelTestRunner(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_mocked_root_path: Any,
     ) -> None:
         process_model_test_runner = self._run_model_tests()
         assert len(process_model_test_runner.test_case_results) > 1
@@ -48,7 +42,6 @@ class TestProcessModelTestRunner(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_mocked_root_path: Any,
     ) -> None:
         process_model_test_runner = self._run_model_tests(parent_directory="expected-to-fail")
         assert len(process_model_test_runner.test_case_results) == 1
@@ -57,7 +50,6 @@ class TestProcessModelTestRunner(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_mocked_root_path: Any,
     ) -> None:
         process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="multiple-test-files")
         assert len(process_model_test_runner.test_case_results) == 3
@@ -83,7 +75,6 @@ class TestProcessModelTestRunner(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_mocked_root_path: Any,
     ) -> None:
         process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="call-activity")
         assert len(process_model_test_runner.test_case_results) == 1
@@ -92,7 +83,6 @@ class TestProcessModelTestRunner(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_mocked_root_path: Any,
     ) -> None:
         process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="service-task")
         assert len(process_model_test_runner.test_case_results) == 1
@@ -101,7 +91,6 @@ class TestProcessModelTestRunner(BaseTest):
         self,
         app: Flask,
         with_db_and_bpmn_file_cleanup: None,
-        with_mocked_root_path: Any,
     ) -> None:
         process_model_test_runner = self._run_model_tests(bpmn_process_directory_name="loopback-to-user-task")
         assert len(process_model_test_runner.test_case_results) == 1
@@ -113,7 +102,7 @@ class TestProcessModelTestRunner(BaseTest):
         test_case_file: Optional[str] = None,
         test_case_identifier: Optional[str] = None,
     ) -> ProcessModelTestRunner:
-        base_process_model_dir_path_segments = [FileSystemService.root_path(), parent_directory]
+        base_process_model_dir_path_segments = [self.root_path(), parent_directory]
         path_segments = base_process_model_dir_path_segments
         if bpmn_process_directory_name:
             path_segments = path_segments + [bpmn_process_directory_name]
@@ -131,9 +120,8 @@ class TestProcessModelTestRunner(BaseTest):
         ), process_model_test_runner.failing_tests_formatted()
         return process_model_test_runner
 
-    @pytest.fixture()
-    def with_mocked_root_path(self, mocker: MockerFixture) -> None:
-        path = os.path.join(
+    def root_path(self) -> str:
+        return os.path.join(
             current_app.instance_path,
             "..",
             "..",
@@ -141,4 +129,3 @@ class TestProcessModelTestRunner(BaseTest):
             "data",
             "bpmn_unit_test_process_models",
         )
-        mocker.patch.object(FileSystemService, attribute="root_path", return_value=path)
