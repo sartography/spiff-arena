@@ -83,6 +83,18 @@ export default function ProcessModelShow() {
     `${params.process_model_id}`
   );
 
+  let hasTestCaseFiles: boolean = false;
+
+  const isTestCaseFile = (processModelFile: ProcessFile) => {
+    return processModelFile.name.match(/^test_.*\.json$/);
+  };
+
+  if (processModel) {
+    hasTestCaseFiles = !!processModel.files.find(
+      (processModelFile: ProcessFile) => isTestCaseFile(processModelFile)
+    );
+  }
+
   useEffect(() => {
     const processResult = (result: ProcessModel) => {
       setProcessModel(result);
@@ -310,7 +322,7 @@ export default function ProcessModelShow() {
         </Can>
       );
     }
-    if (processModelFile.name.match(/^test_.*\.json$/)) {
+    if (isTestCaseFile(processModelFile)) {
       elements.push(
         <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
           <ProcessModelTestRun processModelFile={processModelFile} />
@@ -655,6 +667,11 @@ export default function ProcessModelShow() {
             <Button disabled={publishDisabled} onClick={publishProcessModel}>
               Publish Changes
             </Button>
+          </Can>
+          <Can I="POST" a={targetUris.processModelTestsPath} ability={ability}>
+            {hasTestCaseFiles ? (
+              <ProcessModelTestRun buttonType="text" />
+            ) : null}
           </Can>
         </Stack>
         {processModelFilesSection()}

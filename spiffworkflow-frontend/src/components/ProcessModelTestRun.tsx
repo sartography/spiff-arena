@@ -10,10 +10,14 @@ import {
 } from './ErrorDisplay';
 
 type OwnProps = {
-  processModelFile: ProcessFile;
+  processModelFile?: ProcessFile;
+  buttonType?: string;
 };
 
-export default function ProcessModelTestRun({ processModelFile }: OwnProps) {
+export default function ProcessModelTestRun({
+  processModelFile,
+  buttonType = 'icon',
+}: OwnProps) {
   const [testCaseResults, setTestCaseResults] =
     useState<TestCaseResults | null>(null);
   const [showTestCaseResultsModal, setShowTestCaseResultsModal] =
@@ -32,7 +36,7 @@ export default function ProcessModelTestRun({ processModelFile }: OwnProps) {
             kind="ghost"
             className="green-icon"
             renderIcon={Checkmark}
-            iconDescription="PASS"
+            iconDescription="All BPMN unit tests passed"
             hasIconOnly
             size="lg"
             onClick={() => setShowTestCaseResultsModal(true)}
@@ -44,7 +48,7 @@ export default function ProcessModelTestRun({ processModelFile }: OwnProps) {
           kind="ghost"
           className="red-icon"
           renderIcon={Close}
-          iconDescription="FAILS"
+          iconDescription="BPMN unit tests failed"
           hasIconOnly
           size="lg"
           onClick={() => setShowTestCaseResultsModal(true)}
@@ -54,12 +58,17 @@ export default function ProcessModelTestRun({ processModelFile }: OwnProps) {
     return null;
   };
 
-  const onProcessModelTestRun = (fileName: string) => {
+  const onProcessModelTestRun = () => {
     const httpMethod = 'POST';
     setTestCaseResults(null);
 
+    let queryParams = '';
+    if (processModelFile) {
+      queryParams = `?test_case_file=${processModelFile.name}`;
+    }
+
     HttpService.makeCallToBackend({
-      path: `${targetUris.processModelTestsPath}?test_case_file=${fileName}`,
+      path: `${targetUris.processModelTestsPath}${queryParams}`,
       successCallback: onProcessModelTestRunSuccess,
       httpMethod,
     });
@@ -143,17 +152,36 @@ export default function ProcessModelTestRun({ processModelFile }: OwnProps) {
     );
   };
 
+  const buttonElement = () => {
+    if (buttonType === 'icon') {
+      return (
+        <Button
+          kind="ghost"
+          renderIcon={PlayOutline}
+          iconDescription="Run BPMN unit tests defined in this file"
+          hasIconOnly
+          size="lg"
+          onClick={() => onProcessModelTestRun()}
+        />
+      );
+    }
+    if (buttonType === 'text') {
+      return (
+        <Button
+          onClick={() => onProcessModelTestRun()}
+          title="Run all BPMN unit tests for this process model"
+        >
+          Run Unit Tests
+        </Button>
+      );
+    }
+    return null;
+  };
+
   return (
     <>
       {testCaseResultsModal()}
-      <Button
-        kind="ghost"
-        renderIcon={PlayOutline}
-        iconDescription="Run Test"
-        hasIconOnly
-        size="lg"
-        onClick={() => onProcessModelTestRun(processModelFile.name)}
-      />
+      {buttonElement()}
       {processModelTestRunResultTag()}
     </>
   );
