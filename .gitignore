@@ -3,6 +3,6 @@ pyrightconfig.json
 t
 *~
 .dccache
-*~
 version_info.json
 .coverage*
+UNKNOWN.egg-info/
