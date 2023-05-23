@@ -76,23 +76,40 @@ const submitWithUser = (
     .contains(/^Submit$/)
     .click();
 
-  if (expectAdditionalApprovalInfoPage) {
-    cy.contains(expectAdditionalApprovalInfoPage, { timeout: 60000 });
+  // if (expectAdditionalApprovalInfoPage) {
+  //   cy.contains(expectAdditionalApprovalInfoPage, { timeout: 60000 });
 
-    cy.get('button')
-      .contains(/^Continue$/)
-      .click();
-  }
+  //   cy.get('button')
+  //     .contains(/^Continue$/)
+  //     .click();
+  // }
 
-  cy.visit('/');
-
-  cy.location({ timeout: 60000 }).should((loc) => {
-    expect(loc.pathname).to.eq('/');
-  });
-  cy.wait(2000);
+  cy.get('button').contains('Return to Home', { timeout: 60000 });
   cy.logout();
-  cy.wait(2000);
 };
+
+  //Check if the process instance is completed successfully
+  const checkProcessInstanceCompleted = (
+    username,
+    password,
+    processInstanceId
+) => {
+      cy.wait(2000);
+      cy.log('========Login with : ', username);
+      cy.log('========processInstanceId: ', processInstanceId);
+      cy.login(username, password);
+
+      cy.wait(1000);
+      cy.visit('/admin/process-instances/find-by-id');
+      cy.get('#process-instance-id-input').type(processInstanceId);
+
+      cy.get('button')
+          .contains(/^Submit$/)
+          .click();
+
+      cy.wait(2000);
+      cy.get('#tag-1 > span').contains('complete');
+}
 
 // Consulting Fees Path - Without Files
 describe.only('Consulting Fees Path - Without Files', () => {
@@ -237,6 +254,8 @@ describe.only('Consulting Fees Path - Without Files', () => {
           'Task: Reminder: Check Existing Budget',
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -378,6 +397,8 @@ describe.only('Consulting Fees Path - Without Files', () => {
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -539,6 +560,8 @@ describe.only('Consulting Fees Path - Without Files', () => {
           'Task: Reminder: Check Existing Budget',
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
   });
@@ -734,6 +757,8 @@ describe('Consulting Fees Path - With Files', () => {
           'Task: Reminder: Check Existing Budget',
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -925,6 +950,8 @@ describe('Consulting Fees Path - With Files', () => {
           null,
           'reject'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
 
@@ -1131,6 +1158,8 @@ describe('Consulting Fees Path - With Files', () => {
           'Task: Reminder: Check Existing Budget',
           'approve'
         );
+
+        checkProcessInstanceCompleted(username, password, processInstanceId);
       });
     });
   });

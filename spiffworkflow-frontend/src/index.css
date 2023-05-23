@@ -478,22 +478,28 @@ svg.notification-icon {
 
 .user_instructions_0 {
   filter: opacity(1);
+  font-size: 1.2em;
+  margin-bottom: 30px;
 }
 
 .user_instructions_1 {
   filter: opacity(60%);
+  font-size: 1.1em;
 }
 
 .user_instructions_2 {
   filter: opacity(40%);
+  font-size: 1em;
 }
 
 .user_instructions_3 {
   filter: opacity(20%);
+  font-size: 9em;
 }
 
 .user_instructions_4 {
   filter: opacity(10%);
+  font-size: 8em;
 }
 
 .float-right {
@@ -561,4 +567,8 @@ svg.notification-icon {
 /* Default to first color if more than 10 users */
 .user-circle:nth-child(n+11) {
   background-color: #8e8e8e;
+}
+
+.version-info-column {
+  width: 50%;
 }

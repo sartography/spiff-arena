@@ -49,20 +49,23 @@ pipeline {
   stages {
     stage('Prep') {
       steps { script {
-        def jobMetaJson = new JsonBuilder([
-          git_commit: env.GIT_COMMIT.take(7),
-          git_branch: env.GIT_BRANCH,
-          build_id:   env.BUILD_ID,
-        ]).toPrettyString()
-        sh "echo '${jobMetaJson}' > version_info.json"
+        dir("spiffworkflow-${params.COMPONENT}") {
+          def jobMetaJson = new JsonBuilder([
+            git_commit: env.GIT_COMMIT.take(7),
+            git_branch: env.GIT_BRANCH,
+            build_id:   env.BUILD_ID,
+          ]).toPrettyString()
+          sh "echo '${jobMetaJson}' > version_info.json"
+        }
       } }
     }
 
     stage('Build') {
       steps { script {
         dir("spiffworkflow-${params.COMPONENT}") {
+          /* Tag and Commit is combined to avoid clashes of parallel builds. */
           image = docker.build(
-            "${params.DOCKER_NAME}:${env.GIT_COMMIT.take(8)}",
+            "${params.DOCKER_NAME}:${params.DOCKER_TAG}-${env.GIT_COMMIT.take(8)}",
             "--label=commit='${env.GIT_COMMIT.take(8)}' ."
           )
         }

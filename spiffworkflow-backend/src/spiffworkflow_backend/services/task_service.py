@@ -432,7 +432,8 @@ class TaskService:
         for task_id, task_properties in tasks.items():
             # The Root task is added to the spec by Spiff when the bpmn process is instantiated
             # within Spiff. We do not actually need it and it's missing from our initial
-            # bpmn process defintion so let's avoid using it.
+            # bpmn process defintion so let's avoid using it. This causes issues with the hashing
+            # since it is not there when we initially take the hash and save the definition.
             if task_properties["task_spec"] == "Root":
                 continue
 

@@ -40,15 +40,16 @@ fi
 
 additional_args=""
 
-if [[ "${SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT:-}" != "/" ]]; then
-  additional_args="${additional_args} -e SCRIPT_NAME=${SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT}"
+app_root="${SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT:-}"
+if [[ -n "$app_root" ]] && [[ "${app_root}" != "/" ]]; then
+  additional_args="${additional_args} -e SCRIPT_NAME=${app_root}"
 fi
 
 # HACK: if loading fixtures for acceptance tests when we do not need multiple workers
 # it causes issues with attempting to add duplicate data to the db
-workers=3
+worker_count=4
 if [[ "${SPIFFWORKFLOW_BACKEND_LOAD_FIXTURE_DATA:-}" == "true" ]]; then
-  workers=1
+  worker_count=1
 fi
 
 if [[ "${SPIFFWORKFLOW_BACKEND_RUN_DATA_SETUP:-}" != "false" ]]; then
@@ -67,11 +68,35 @@ fi
 git init "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 git config --global --add safe.directory "${SPIFFWORKFLOW_BACKEND_BPMN_SPEC_ABSOLUTE_DIR}"
 
+if [[ -z "${SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER:-}" ]]; then
+  # default to 3 * 2 = 6 threads per worker
+  # you may want to configure threads_to_use_per_core based on whether your workload is more cpu intensive or more I/O intensive:
+  #   cpu heavy, make it smaller
+  #   I/O heavy, make it larger
+  threads_to_use_per_core=3
+
+  # https://stackoverflow.com/a/55423170/6090676
+  # if we had access to python (i'm not sure i want to run another python script here),
+  # we could do something like this (on linux) to get the number of cores available to this process and a better estimate of a
+  # reasonable num_cores_multiple_for_threads
+  # if hasattr(os, 'sched_getaffinity')
+  #   number_of_available_cores = os.sched_getaffinity(0)
+  # BUT the python solution isn't even as portable as this one, which is mostly posix compliant and works on linux/mac/freebsd.
+  num_cores_multiple_for_threads=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN 2>/dev/null || echo 1)
+
+  SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER=$((threads_to_use_per_core * num_cores_multiple_for_threads))
+  export SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER
+fi
+
+# --worker-class is not strictly necessary, since setting threads will automatically set the worker class to gthread, but meh
 export IS_GUNICORN="true"
 # THIS MUST BE THE LAST COMMAND!
 exec poetry run gunicorn ${additional_args}  \
   --bind "0.0.0.0:$port"  \
-  --workers="$workers"  \
+  --preload \
+  --worker-class "gthread" \
+  --workers="$worker_count"  \
+  --threads "$SPIFFWORKFLOW_BACKEND_THREADS_PER_WORKER" \
   --limit-request-line 8192  \
   --timeout "$GUNICORN_TIMEOUT_SECONDS"  \
   --capture-output  \

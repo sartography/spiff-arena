@@ -162,6 +162,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/OkTrue"
 
+  /debug/version-info:
+    get:
+      operationId: spiffworkflow_backend.routes.debug_controller.version_info
+      summary: Returns information about the version of the application
+      tags:
+        - Status
+      responses:
+        "200":
+          description: Returns version info if it exists.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OkTrue"
 
   /active-users/updates/{last_visited_identifier}:
     parameters:

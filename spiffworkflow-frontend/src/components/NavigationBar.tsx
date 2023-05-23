@@ -30,6 +30,7 @@ import { PermissionsToCheck } from '../interfaces';
 import { usePermissionFetcher } from '../hooks/PermissionService';
 import { UnauthenticatedError } from '../services/HttpService';
 import { SPIFF_ENVIRONMENT } from '../config';
+import appVersionInfo from '../helpers/appVersionInfo';
 
 // for ref: https://react-bootstrap.github.io/components/navbar/
 export default function NavigationBar() {
@@ -57,6 +58,15 @@ export default function NavigationBar() {
   };
   const { ability } = usePermissionFetcher(permissionRequestData);
 
+  // default to readthedocs and let someone specify an environment variable to override:
+  //
+  let documentationUrl = 'https://spiffworkflow.readthedocs.io';
+  if ('DOCUMENTATION_URL' in window.spiffworkflowFrontendJsenv) {
+    documentationUrl = window.spiffworkflowFrontendJsenv.DOCUMENTATION_URL;
+  }
+
+  const versionInfo = appVersionInfo();
+
   useEffect(() => {
     let newActiveKey = '/admin/process-groups';
     if (location.pathname.match(/^\/admin\/messages\b/)) {
@@ -81,6 +91,15 @@ export default function NavigationBar() {
     return activeKey === menuItemPath;
   };
 
+  let aboutLinkElement = null;
+
+  if (Object.keys(versionInfo).length) {
+    aboutLinkElement = <a href="/about">About</a>;
+  }
+
+  const userEmail = UserService.getUserEmail();
+  const username = UserService.getPreferredUsername();
+
   const profileToggletip = (
     <div style={{ display: 'flex' }} id="user-profile-toggletip">
       <Toggletip isTabTip align="bottom-right">
@@ -89,15 +108,18 @@ export default function NavigationBar() {
           className="user-profile-toggletip-button"
           type="button"
         >
-          <div className="user-circle">
-            {UserService.getPreferredUsername()[0].toUpperCase()}
-          </div>
+          <div className="user-circle">{username[0].toUpperCase()}</div>
         </ToggletipButton>
         <ToggletipContent className="user-profile-toggletip-content">
           <p>
-            <strong>{UserService.getPreferredUsername()}</strong>
+            <strong>{username}</strong>
           </p>
-          <p>{UserService.getUserEmail()}</p>
+          {username !== userEmail && <p>{userEmail}</p>}
+          <hr />
+          {aboutLinkElement}
+          <a target="_blank" href={documentationUrl} rel="noreferrer">
+            Documentation
+          </a>
           <hr />
           <Button
             data-qa="logout-button"

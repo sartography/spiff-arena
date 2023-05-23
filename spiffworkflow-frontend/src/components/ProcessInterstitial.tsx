@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
-import { Loading, Grid, Column, Button } from '@carbon/react';
+import { Loading, Button } from '@carbon/react';
 import { BACKEND_BASE_URL } from '../config';
 import { getBasicHeaders } from '../services/HttpService';
 
@@ -95,26 +95,17 @@ export default function ProcessInterstitial({
     return state;
   };
 
-  const getStatusImage = () => {
-    switch (getStatus()) {
-      case 'RUNNING':
-        return (
-          <Loading description="Active loading indicator" withOverlay={false} />
-        );
-      case 'LOCKED':
-        return <img src="/interstitial/locked.png" alt="Locked" />;
-      case 'READY':
-      case 'REDIRECTING':
-        return <img src="/interstitial/redirect.png" alt="Redirecting ...." />;
-      case 'WAITING':
-        return <img src="/interstitial/waiting.png" alt="Waiting ...." />;
-      case 'COMPLETED':
-        return <img src="/interstitial/completed.png" alt="Completed" />;
-      case 'ERROR':
-        return <img src="/interstitial/errored.png" alt="Errored" />;
-      default:
-        return getStatus();
+  const getLoadingIcon = () => {
+    if (getStatus() === 'RUNNING') {
+      return (
+        <Loading
+          description="Active loading indicator"
+          withOverlay={false}
+          style={{ margin: 'auto' }}
+        />
+      );
     }
+    return null;
   };
 
   const getReturnHomeButton = (index: number) => {
@@ -129,6 +120,7 @@ export default function ProcessInterstitial({
             kind="secondary"
             data-qa="return-to-home-button"
             onClick={() => navigate(`/tasks`)}
+            style={{ marginBottom: 30 }}
           >
             Return to Home
           </Button>
@@ -138,35 +130,14 @@ export default function ProcessInterstitial({
     return '';
   };
 
-  const getHr = (index: number) => {
-    if (index === 0) {
-      return (
-        <div style={{ padding: '10px 0 50px 0' }}>
-          <hr />
-        </div>
-      );
-    }
-    return '';
-  };
-
-  function capitalize(str: string): string {
-    if (str && str.length > 0) {
-      return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-    }
-    return '';
-  }
-
   const userMessage = (myTask: ProcessInstanceTask) => {
     if (!processInstance || processInstance.status === 'completed') {
       if (!myTask.can_complete && userTasks.includes(myTask.type)) {
         return (
-          <>
-            <h4 className="heading-compact-01">Waiting on Someone Else</h4>
-            <p>
-              This next task is assigned to a different person or team. There is
-              no action for you to take at this time.
-            </p>
-          </>
+          <p>
+            This next task is assigned to a different person or team. There is
+            no action for you to take at this time.
+          </p>
         );
       }
       if (shouldRedirect(myTask)) {
@@ -198,6 +169,7 @@ export default function ProcessInterstitial({
   if (state === 'CLOSED' && lastTask === null) {
     navigate(`/tasks`);
   }
+
   if (lastTask) {
     return (
       <>
@@ -215,21 +187,10 @@ export default function ProcessInterstitial({
             ],
           ]}
         />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {getStatusImage()}
-          <div>
-            <h1 style={{ marginBottom: '0em' }}>
-              {lastTask.process_model_display_name}:{' '}
-              {lastTask.process_instance_id}
-            </h1>
-            <div>Status: {capitalize(getStatus())}</div>
-          </div>
-        </div>
-        <br />
-        <br />
-        {data.map((d, index) => (
-          <Grid fullWidth style={{ marginBottom: '1em' }}>
-            <Column md={6} lg={8} sm={4}>
+        {getLoadingIcon()}
+        <div style={{ maxWidth: 800, margin: 'auto', padding: 50 }}>
+          {data.map((d, index) => (
+            <>
               <div
                 className={
                   index < 4
@@ -240,10 +201,9 @@ export default function ProcessInterstitial({
                 {userMessage(d)}
               </div>
               {getReturnHomeButton(index)}
-              {getHr(index)}
-            </Column>
-          </Grid>
-        ))}
+            </>
+          ))}
+        </div>
       </>
     );
   }

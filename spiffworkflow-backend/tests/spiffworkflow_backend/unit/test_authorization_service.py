@@ -289,6 +289,7 @@ class TestAuthorizationService(BaseTest):
     ) -> None:
         expected_permissions = [
             ("/active-users/*", "read"),
+            ("/debug/version-info", "read"),
             ("/process-groups", "read"),
             ("/process-instances/find-by-id/*", "read"),
             ("/process-instances/for-me", "create"),
