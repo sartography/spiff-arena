@@ -77,6 +77,7 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
+        processor = ProcessInstanceProcessor(process_instance_model)
         run_at_in_seconds = round(time.time())
         ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
         return process_instance_model
