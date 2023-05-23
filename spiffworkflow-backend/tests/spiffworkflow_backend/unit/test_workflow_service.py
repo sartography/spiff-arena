@@ -13,6 +13,7 @@ from spiffworkflow_backend.services.workflow_service import (
     WorkflowService,
 )
 
+from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from spiffworkflow_backend.specs.start_event import StartEvent
 
 BPMN_WRAPPER = """
@@ -51,6 +52,8 @@ def example_start_datetime_minus_5_mins_in_utc(
 class CustomBpmnDmnParser(BpmnDmnParser):
     OVERRIDE_PARSER_CLASSES = {}
     OVERRIDE_PARSER_CLASSES.update(BpmnDmnParser.OVERRIDE_PARSER_CLASSES)
+    OVERRIDE_PARSER_CLASSES.update(SpiffBpmnParser.OVERRIDE_PARSER_CLASSES)
+
     StartEvent.register_parser_class(OVERRIDE_PARSER_CLASSES)
 
 def workflow_from_str(bpmn_str: str, process_id: str) -> BpmnWorkflow:
