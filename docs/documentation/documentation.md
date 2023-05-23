@@ -135,7 +135,7 @@ You can do that by following these steps:
 1. Open your browser and go to [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 
-### Step 7:  Make a change
+### Step 7:  Make a change 
 
 1. Open up a markdown file, and make a change. 
 
