@@ -17,18 +17,6 @@ from SpiffWorkflow.task import TaskState
 from spiffworkflow_backend.services.custom_parser import MyCustomParser
 
 
-# workflow json for test case
-# 1. default action is load xml from disk and use spiff like normal and get back workflow json
-# 2. do stuff from disk cache
-
-# find all process models
-# find all json test cases for each
-# for each test case, fire up something like spiff
-# for each task, if there is something special in the test case definition,
-#   do it (provide data for user task, mock service task, etc)
-# when the thing is complete, check workflow data against expected data
-
-
 class UnrunnableTestCaseError(Exception):
     pass
 
@@ -71,25 +59,36 @@ DEFAULT_NSMAP = {
 }
 
 
-# input:
-#   BPMN_TASK_IDENTIIFER:
-#       can be either task bpmn identifier or in format:
-#       [BPMN_PROCESS_ID]:[TASK_BPMN_IDENTIFIER]
-#       example: 'BasicServiceTaskProcess:service_task_one'
-#       this allows for tasks to share bpmn identifiers across models
-#       which is useful for call activities
-#
-#   json_file:
-# {
-#     [TEST_CASE_NAME]: {
-#         "tasks": {
-#             [BPMN_TASK_IDENTIIFER]: {
-#               "data": [DATA]
-#             }
-#         },
-#         "expected_output_json": [DATA]
-#     }
-# }
+"""
+JSON file name:
+    The name should be in format "test_BPMN_FILE_NAME_IT_TESTS.json".
+
+BPMN_TASK_IDENTIIFER:
+    can be either task bpmn identifier or in format:
+    [BPMN_PROCESS_ID]:[TASK_BPMN_IDENTIFIER]
+    example: 'BasicServiceTaskProcess:service_task_one'
+    this allows for tasks to share bpmn identifiers across models
+    which is useful for call activities
+
+DATA for tasks:
+    This is an array of task data. This allows for the task to
+    be called multiple times and given different data each time.
+    This is useful for testing loops where each iteration needs
+    different input. The test will fail if the task is called
+    multiple times without task data input for each call.
+
+JSON file format:
+{
+    TEST_CASE_NAME: {
+        "tasks": {
+            BPMN_TASK_IDENTIIFER: {
+            "data": [DATA]
+            }
+        },
+        "expected_output_json": DATA
+    }
+}
+"""
 class ProcessModelTestRunner:
     """Generic test runner code. May move into own library at some point.
 
