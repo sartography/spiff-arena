@@ -22,7 +22,7 @@ import Configuration from './Configuration';
 import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
-import ProcessInterstitialPage from "./ProcessInterstitialPage";
+import ProcessInterstitialPage from './ProcessInterstitialPage';
 
 export default function AdminRoutes() {
   const location = useLocation();
