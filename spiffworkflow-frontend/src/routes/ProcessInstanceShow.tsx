@@ -53,6 +53,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
+import ProcessInterstitial from '../components/ProcessInterstitial';
 
 type OwnProps = {
   variant: string;
@@ -1109,6 +1110,11 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
           </h1>
           {buttonIcons()}
         </Stack>
+        <ProcessInterstitial
+          processInstanceId={processInstance.id}
+          processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
+          allowRedirect={false}
+        />
         <br />
         <br />
         <Grid condensed fullWidth>
