@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="ServiceTaskProcess" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_19ephzh</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_19ephzh" sourceRef="StartEvent_1" targetRef="service_task_one" />
+    <bpmn:endEvent id="Event_132m0z7">
+      <bpmn:incoming>Flow_1dsxn78</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1dsxn78" sourceRef="service_task_one" targetRef="Event_132m0z7" />
+    <bpmn:serviceTask id="service_task_one" name="Task 2">
+      <bpmn:extensionElements>
+        <spiffworkflow:serviceTaskOperator id="http/GetRequest" resultVariable="bamboo_get_employee">
+          <spiffworkflow:parameters>
+            <spiffworkflow:parameter id="basic_auth_password" type="str" value="&#34;x&#34;" />
+            <spiffworkflow:parameter id="basic_auth_username" type="str" value="&#34;x&#34;" />
+            <spiffworkflow:parameter id="headers" type="any" value="{&#34;Accept&#34;: &#34;application/json&#34;}" />
+            <spiffworkflow:parameter id="params" type="any" value="{}" />
+            <spiffworkflow:parameter id="url" type="str" value="f&#34;https://example.com/api/user&#34;" />
+          </spiffworkflow:parameters>
+        </spiffworkflow:serviceTaskOperator>
+        <spiffworkflow:instructionsForEndUser>This is the Service Task Unit Test Screen.</spiffworkflow:instructionsForEndUser>
+        <spiffworkflow:postScript />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0xx2kop</bpmn:incoming>
+      <bpmn:outgoing>Flow_1dsxn78</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ServiceTaskProcess">
+      <bpmndi:BPMNEdge id="Flow_19ephzh_di" bpmnElement="Flow_19ephzh">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xx2kop_di" bpmnElement="Flow_0xx2kop">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="430" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1dsxn78_di" bpmnElement="Flow_1dsxn78">
+        <di:waypoint x="530" y="177" />
+        <di:waypoint x="592" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_132m0z7_di" bpmnElement="Event_132m0z7">
+        <dc:Bounds x="592" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1nlg9cc_di" bpmnElement="service_task_one">
+        <dc:Bounds x="430" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
