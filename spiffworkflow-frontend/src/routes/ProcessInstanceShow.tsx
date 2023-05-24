@@ -53,7 +53,7 @@ import { usePermissionFetcher } from '../hooks/PermissionService';
 import ProcessInstanceClass from '../classes/ProcessInstanceClass';
 import TaskListTable from '../components/TaskListTable';
 import useAPIError from '../hooks/UseApiError';
-import ProcessInterstitial from "../components/ProcessInterstitial";
+import ProcessInterstitial from '../components/ProcessInterstitial';
 
 type OwnProps = {
   variant: string;
@@ -1093,9 +1093,28 @@ export default function ProcessInstanceShow({ variant }: OwnProps) {
 
     return (
       <>
-        <ProcessInterstitial processInstanceId={processInstance.id} modifiedProcessModelIdentifier={String(modifiedProcessModelId)} allowRedirect={false}/>
-        {buttonIcons()}
-        <br />
+        <ProcessBreadcrumb
+          hotCrumbs={[
+            ['Process Groups', '/admin'],
+            {
+              entityToExplode: processModelId,
+              entityType: 'process-model-id',
+              linkLastItem: true,
+            },
+            [`Process Instance Id: ${processInstance.id}`],
+          ]}
+        />
+        <Stack orientation="horizontal" gap={1}>
+          <h1 className="with-icons">
+            Process Instance Id: {processInstance.id}
+          </h1>
+          {buttonIcons()}
+        </Stack>
+        <ProcessInterstitial
+          processInstanceId={processInstance.id}
+          processInstanceShowPageUrl={processInstanceShowPageBaseUrl}
+          allowRedirect={false}
+        />
         <br />
         <br />
         <Grid condensed fullWidth>

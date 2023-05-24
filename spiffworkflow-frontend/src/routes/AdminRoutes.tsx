@@ -22,6 +22,7 @@ import Configuration from './Configuration';
 import JsonSchemaFormBuilder from './JsonSchemaFormBuilder';
 import ProcessModelNewExperimental from './ProcessModelNewExperimental';
 import ProcessInstanceFindById from './ProcessInstanceFindById';
+import ProcessInterstitialPage from "./ProcessInterstitialPage";
 
 export default function AdminRoutes() {
   const location = useLocation();
@@ -74,6 +75,14 @@ export default function AdminRoutes() {
         <Route
           path="process-instances/for-me/:process_model_id/:process_instance_id/:to_task_guid"
           element={<ProcessInstanceShow variant="for-me" />}
+        />
+        <Route
+          path="process-instances/for-me/:process_model_id/:process_instance_id/interstitial"
+          element={<ProcessInterstitialPage variant="for-me" />}
+        />
+        <Route
+          path="process-instances/:process_model_id/:process_instance_id/interstitial"
+          element={<ProcessInterstitialPage variant="all" />}
         />
         <Route
           path="process-instances/:process_model_id/:process_instance_id"

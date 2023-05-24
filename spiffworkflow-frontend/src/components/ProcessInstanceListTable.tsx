@@ -1590,9 +1590,7 @@ export default function ProcessInstanceListTable({
       });
       if (showActionsColumn) {
         let buttonElement = null;
-        const interstitialUrl = `/process/${modifyProcessIdentifierForPathParam(
-          processInstance.process_model_identifier
-        )}/${processInstance.id}/interstitial`;
+        const taskShowUrl = `/tasks/${processInstance.id}/${processInstance.task_id}`;
         const regex = new RegExp(`\\b(${preferredUsername}|${userEmail})\\b`);
         let hasAccessToCompleteTask = false;
         if (
@@ -1601,20 +1599,18 @@ export default function ProcessInstanceListTable({
         ) {
           hasAccessToCompleteTask = true;
         }
-        let buttonText = 'View';
+        buttonElement = null;
         if (hasAccessToCompleteTask && processInstance.task_id) {
-          buttonText = 'Go';
+          buttonElement = (
+            <Button
+              kind="secondary"
+              href={taskShowUrl}
+              style={{ width: '60px' }}
+            >
+              Go
+            </Button>
+          );
         }
-
-        buttonElement = (
-          <Button
-            kind="secondary"
-            href={interstitialUrl}
-            style={{ width: '60px' }}
-          >
-            {buttonText}
-          </Button>
-        );
 
         if (
           processInstance.status === 'not_started' ||

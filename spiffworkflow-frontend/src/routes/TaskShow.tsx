@@ -102,7 +102,7 @@ export default function TaskShow() {
 
   const navigateToInterstitial = (myTask: Task) => {
     navigate(
-      `/process/${modifyProcessIdentifierForPathParam(
+      `/admin/process-instances/${modifyProcessIdentifierForPathParam(
         myTask.process_model_identifier
       )}/${myTask.process_instance_id}/interstitial`
     );
