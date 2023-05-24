@@ -10,7 +10,7 @@ from spiffworkflow_backend.services.logging_service import setup_logger
 
 
 class ConfigurationError(Exception):
-    """ConfigurationError."""
+    pass
 
 
 def setup_database_configs(app: Flask) -> None:

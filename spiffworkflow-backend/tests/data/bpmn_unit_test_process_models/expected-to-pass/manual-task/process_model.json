@@ -1,0 +1,9 @@
+{
+    "description": "Manual Task",
+    "display_name": "Manual Task",
+    "exception_notification_addresses": [],
+    "fault_or_suspend_on_exception": "fault",
+    "files": [],
+    "primary_file_name": "manual_task.bpmn",
+    "primary_process_id": "ManualTaskProcess"
+}
