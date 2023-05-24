@@ -38,7 +38,7 @@ def now_in_utc() -> Generator[datetime, None, None]:
 
 @pytest.fixture()
 def example_start_datetime_in_utc_str() -> Generator[str, None, None]:
-    yield "2019-10-01T12:00:00Z"
+    yield "2019-10-01T12:00:00+00:00"
 
 
 @pytest.fixture()
@@ -69,7 +69,7 @@ def workflow_from_fragment(bpmn_fragment: str, process_id: str) -> BpmnWorkflow:
     return workflow_from_str(BPMN_WRAPPER.format(bpmn_fragment), process_id)
 
 
-class TestWorkfloweService(BaseTest):
+class TestWorkflowService(BaseTest):
     """TestWorkflowService."""
 
     def test_run_at_delay_is_0_for_regular_start_events(self, now_in_utc: datetime) -> None:
