@@ -59,6 +59,7 @@ class ProcessInstanceService:
         cls,
         process_model: ProcessModelInfo,
         user: UserModel,
+            run_at_in_seconds: Optional[int] = None,
     ) -> ProcessInstanceModel:
         """Get_process_instance_from_spec."""
         db.session.commit()
@@ -77,8 +78,11 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
-        processor = ProcessInstanceProcessor(process_instance_model)
-        run_at_in_seconds = round(time.time())
+
+        if run_at_in_seconds is None:
+            processor = ProcessInstanceProcessor(process_instance_model)
+            run_at_in_seconds = round(time.time())
+        
         ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
         return process_instance_model
 
@@ -87,10 +91,11 @@ class ProcessInstanceService:
         cls,
         process_model_identifier: str,
         user: UserModel,
+            run_at_in_seconds: Optional[int] = None,
     ) -> ProcessInstanceModel:
         """Create_process_instance_from_process_model_identifier."""
         process_model = ProcessModelService.get_process_model(process_model_identifier)
-        return cls.create_process_instance(process_model, user)
+        return cls.create_process_instance(process_model, user, run_at_in_seconds)
 
     @classmethod
     def waiting_event_can_be_skipped(cls, waiting_event: Dict[str, Any], now_in_utc: datetime) -> bool:
