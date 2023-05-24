@@ -3,44 +3,33 @@ import pytest
 from flask import Flask
 from flask.testing import FlaskClient
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
+from tests.spiffworkflow_backend.helpers.test_data import load_test_spec
 
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.message_instance import MessageInstanceModel
-from spiffworkflow_backend.models.user import UserModel
-from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.models.process_model import ProcessModelInfo
 
 
 class TestMessageInstance(BaseTest):
-    """TestMessageInstance."""
-
-    def setup_message_tests(self, client: FlaskClient, user: UserModel) -> str:
-        """Setup_message_tests."""
-        process_group_id = "test_group"
-        process_model_id = "hello_world"
+    def setup_message_tests(self, client: FlaskClient) -> ProcessModelInfo:
+        process_model_id = "testk_group/hello_world"
         bpmn_file_name = "hello_world.bpmn"
         bpmn_file_location = "hello_world"
-        process_model_identifier = self.create_group_and_model_with_bpmn(
-            client,
-            user,
-            process_group_id=process_group_id,
+        process_model = load_test_spec(
             process_model_id=process_model_id,
             bpmn_file_name=bpmn_file_name,
-            bpmn_file_location=bpmn_file_location,
+            process_model_source_directory=bpmn_file_location,
         )
-        return process_model_identifier
+        return process_model
 
     def test_can_create_message_instance(
         self,
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_can_create_message_instance."""
         message_name = "Message Model One"
-        process_model_identifier = self.setup_message_tests(client, with_super_admin_user)
-
-        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
+        process_model = self.setup_message_tests(client)
         process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         queued_message = MessageInstanceModel(
@@ -64,12 +53,9 @@ class TestMessageInstance(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_cannot_set_invalid_status."""
         message_name = "message_model_one"
-        process_model_identifier = self.setup_message_tests(client, with_super_admin_user)
-        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
+        process_model = self.setup_message_tests(client)
         process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         with pytest.raises(ValueError) as exception:
@@ -100,13 +86,9 @@ class TestMessageInstance(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_cannot_set_invalid_message_type."""
         message_name = "message_model_one"
-        process_model_identifier = self.setup_message_tests(client, with_super_admin_user)
-
-        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
+        process_model = self.setup_message_tests(client)
         process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         with pytest.raises(ValueError) as exception:
@@ -136,13 +118,9 @@ class TestMessageInstance(BaseTest):
         app: Flask,
         client: FlaskClient,
         with_db_and_bpmn_file_cleanup: None,
-        with_super_admin_user: UserModel,
     ) -> None:
-        """Test_force_failure_cause_if_status_is_failure."""
         message_name = "message_model_one"
-        process_model_identifier = self.setup_message_tests(client, with_super_admin_user)
-
-        process_model = ProcessModelService.get_process_model(process_model_id=process_model_identifier)
+        process_model = self.setup_message_tests(client)
         process_instance = self.create_process_instance_from_process_model(process_model, "waiting")
 
         queued_message = MessageInstanceModel(

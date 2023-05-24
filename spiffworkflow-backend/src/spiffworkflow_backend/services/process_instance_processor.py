@@ -25,7 +25,6 @@ from uuid import UUID
 import dateparser
 import pytz
 from flask import current_app
-from flask import g
 from lxml import etree  # type: ignore
 from lxml.etree import XMLSyntaxError  # type: ignore
 from RestrictedPython import safe_globals  # type: ignore
@@ -292,6 +291,7 @@ class CustomBpmnScriptEngine(PythonScriptEngine):  # type: ignore
             "datetime": datetime,
             "decimal": decimal,
             "enumerate": enumerate,
+            "filter": filter,
             "format": format,
             "list": list,
             "dict": dict,
@@ -420,7 +420,6 @@ class ProcessInstanceProcessor:
         )
 
         self.process_instance_model = process_instance_model
-        self.process_model_service = ProcessModelService()
         bpmn_process_spec = None
         self.full_bpmn_process_dict: dict = {}
 
@@ -1018,7 +1017,7 @@ class ProcessInstanceProcessor:
         ready_or_waiting_tasks = self.get_all_ready_or_waiting_tasks()
 
         process_model_display_name = ""
-        process_model_info = self.process_model_service.get_process_model(
+        process_model_info = ProcessModelService.get_process_model(
             self.process_instance_model.process_model_identifier
         )
         if process_model_info is not None:
@@ -1109,7 +1108,7 @@ class ProcessInstanceProcessor:
         # TODO: do_engine_steps without a lock
         self.do_engine_steps(save=True)
 
-    def manual_complete_task(self, task_id: str, execute: bool) -> None:
+    def manual_complete_task(self, task_id: str, execute: bool, user: UserModel) -> None:
         """Mark the task complete optionally executing it."""
         spiff_task = self.bpmn_process_instance.get_task_from_id(UUID(task_id))
         event_type = ProcessInstanceEventType.task_skipped.value
@@ -1122,7 +1121,7 @@ class ProcessInstanceProcessor:
                 f" instance {self.process_instance_model.id}"
             )
             human_task = HumanTaskModel.query.filter_by(task_id=task_id).first()
-            self.complete_task(spiff_task, human_task=human_task, user=g.user)
+            self.complete_task(spiff_task, human_task=human_task, user=user)
         elif execute:
             current_app.logger.info(
                 f"Manually executing Task {spiff_task.task_spec.name} of process"

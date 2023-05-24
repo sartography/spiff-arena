@@ -30,6 +30,7 @@ from spiffworkflow_backend.routes.process_api_blueprint import _get_process_mode
 from spiffworkflow_backend.routes.process_api_blueprint import (
     _un_modify_modified_process_model_id,
 )
+from spiffworkflow_backend.services.file_system_service import FileSystemService
 from spiffworkflow_backend.services.git_service import GitCommandError
 from spiffworkflow_backend.services.git_service import GitService
 from spiffworkflow_backend.services.git_service import MissingGitConfigsError
@@ -43,6 +44,7 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 from spiffworkflow_backend.services.process_model_service import (
     ProcessModelWithInstancesNotDeletableError,
 )
+from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
 from spiffworkflow_backend.services.spec_file_service import (
     ProcessModelFileInvalidError,
 )
@@ -104,7 +106,7 @@ def process_model_delete(
     """Process_model_delete."""
     process_model_identifier = modified_process_model_identifier.replace(":", "/")
     try:
-        ProcessModelService().process_model_delete(process_model_identifier)
+        ProcessModelService.process_model_delete(process_model_identifier)
     except ProcessModelWithInstancesNotDeletableError as exception:
         raise ApiError(
             error_code="existing_instances",
@@ -182,7 +184,7 @@ def process_model_show(modified_process_model_identifier: str, include_file_refe
 def process_model_move(modified_process_model_identifier: str, new_location: str) -> flask.wrappers.Response:
     """Process_model_move."""
     original_process_model_id = _un_modify_modified_process_model_id(modified_process_model_identifier)
-    new_process_model = ProcessModelService().process_model_move(original_process_model_id, new_location)
+    new_process_model = ProcessModelService.process_model_move(original_process_model_id, new_location)
     _commit_and_push_to_git(
         f"User: {g.user.username} moved process model {original_process_model_id} to {new_process_model.id}"
     )
@@ -219,7 +221,7 @@ def process_model_list(
         recursive=recursive,
         filter_runnable_by_user=filter_runnable_by_user,
     )
-    process_models_to_return = ProcessModelService().get_batch(process_models, page=page, per_page=per_page)
+    process_models_to_return = ProcessModelService.get_batch(process_models, page=page, per_page=per_page)
 
     if include_parent_groups:
         process_group_cache = IdToProcessGroupMapping({})
@@ -312,6 +314,29 @@ def process_model_file_show(modified_process_model_identifier: str, file_name: s
     file.file_contents_hash = file_contents_hash
     file.process_model_id = process_model.id
     return make_response(jsonify(file), 200)
+
+
+def process_model_test_run(
+    modified_process_model_identifier: str,
+    test_case_file: Optional[str] = None,
+    test_case_identifier: Optional[str] = None,
+) -> flask.wrappers.Response:
+    process_model_identifier = modified_process_model_identifier.replace(":", "/")
+    process_model = _get_process_model(process_model_identifier)
+    process_model_test_runner = ProcessModelTestRunner(
+        process_model_directory_path=FileSystemService.root_path(),
+        process_model_directory_for_test_discovery=FileSystemService.full_path_from_id(process_model.id),
+        test_case_file=test_case_file,
+        test_case_identifier=test_case_identifier,
+    )
+    process_model_test_runner.run()
+
+    response_json = {
+        "all_passed": process_model_test_runner.all_test_cases_passed(),
+        "passing": process_model_test_runner.passing_tests(),
+        "failing": process_model_test_runner.failing_tests(),
+    }
+    return make_response(jsonify(response_json), 200)
 
 
 #   {

@@ -1,0 +1,22 @@
+{
+  "test_case_one": {
+    "tasks": {
+      "user_task_choose_branch": {
+        "data": [
+          { "branch": "a" }
+        ]
+      }
+    },
+    "expected_output_json": { "branch": "a", "chosen_branch": "A"}
+  },
+  "test_case_two": {
+    "tasks": {
+      "user_task_choose_branch": {
+        "data": [
+          { "branch": "b" }
+        ]
+      }
+    },
+    "expected_output_json": { "branch": "b", "chosen_branch": "B"}
+  }
+}

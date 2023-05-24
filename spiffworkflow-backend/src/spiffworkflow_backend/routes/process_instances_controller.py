@@ -124,7 +124,8 @@ def process_instance_run(
 
     processor = None
     try:
-        processor = ProcessInstanceService.run_process_instance_with_processor(process_instance)
+        if not ProcessInstanceQueueService.is_enqueued_to_run_in_the_future(process_instance):
+            processor = ProcessInstanceService.run_process_instance_with_processor(process_instance)
     except (
         ApiError,
         ProcessInstanceIsNotEnqueuedError,

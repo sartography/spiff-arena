@@ -31,7 +31,7 @@ SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "ma
 # SpiffWorkflow = {git = "https://github.com/sartography/SpiffWorkflow", rev = "6cad2981712bb61eca23af1adfafce02d3277cb9"}
 # SpiffWorkflow = {develop = true, path = "../../spiffworkflow/" }
 sentry-sdk = "^1.10"
-sphinx-autoapi = "^2.0"
+# sphinx-autoapi = "^2.0"
 mysql-connector-python = "*"
 pytest-flask = "^1.2.0"
 pytest-flask-sqlalchemy = "^1.1.0"
@@ -93,8 +93,8 @@ safety = "^2.3.1"
 mypy = ">=0.961"
 typeguard = "^3"
 xdoctest = {extras = ["colors"], version = "^1.0.1"}
-sphinx = "^5.0.2"
-sphinx-autobuild = ">=2021.3.14"
+# sphinx = "^5.0.2"
+# sphinx-autobuild = ">=2021.3.14"
 pre-commit = "^2.20.0"
 flake8 = "^4.0.1"
 black = ">=21.10b0"
@@ -111,10 +111,10 @@ pep8-naming = "^0.13.2"
 darglint = "^1.8.1"
 reorder-python-imports = "^3.9.0"
 pre-commit-hooks = "^4.0.1"
-sphinx-click = "^4.3.0"
+# sphinx-click = "^4.3.0"
 Pygments = "^2.10.0"
 pyupgrade = "^3.1.0"
-furo = ">=2021.11.12"
+# furo = ">=2021.11.12"
 
 [tool.poetry.scripts]
 spiffworkflow-backend = "spiffworkflow_backend.__main__:main"

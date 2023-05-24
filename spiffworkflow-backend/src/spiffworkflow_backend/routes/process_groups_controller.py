@@ -53,7 +53,7 @@ def process_group_delete(modified_process_group_id: str) -> flask.wrappers.Respo
     process_group_id = _un_modify_modified_process_model_id(modified_process_group_id)
 
     try:
-        ProcessModelService().process_group_delete(process_group_id)
+        ProcessModelService.process_group_delete(process_group_id)
     except ProcessModelWithInstancesNotDeletableError as exception:
         raise ApiError(
             error_code="existing_instances",
@@ -88,7 +88,7 @@ def process_group_list(
     process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     process_groups = ProcessModelService.get_process_groups_for_api(process_group_identifier)
-    batch = ProcessModelService().get_batch(items=process_groups, page=page, per_page=per_page)
+    batch = ProcessModelService.get_batch(items=process_groups, page=page, per_page=per_page)
     pages = len(process_groups) // per_page
     remainder = len(process_groups) % per_page
     if remainder > 0:
@@ -128,7 +128,7 @@ def process_group_show(
 def process_group_move(modified_process_group_identifier: str, new_location: str) -> flask.wrappers.Response:
     """Process_group_move."""
     original_process_group_id = _un_modify_modified_process_model_id(modified_process_group_identifier)
-    new_process_group = ProcessModelService().process_group_move(original_process_group_id, new_location)
+    new_process_group = ProcessModelService.process_group_move(original_process_group_id, new_location)
     _commit_and_push_to_git(
         f"User: {g.user.username} moved process group {original_process_group_id} to {new_process_group.id}"
     )

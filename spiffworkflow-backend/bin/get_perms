@@ -7,5 +7,20 @@ function error_handler() {
 trap 'error_handler ${LINENO} $?' ERR
 set -o errtrace -o errexit -o nounset -o pipefail
 
-set -x
-mysql -uroot spiffworkflow_backend_development -e 'select pa.id, g.identifier group_identifier, pt.uri, permission from permission_assignment pa join principal p on p.id = pa.principal_id join `group` g on g.id = p.group_id join permission_target pt on pt.id = pa.permission_target_id;'
+database=spiffworkflow_backend_local_development
+if [[ "${1:-}" == "test" ]]; then
+  database=spiffworkflow_backend_unit_testing
+fi
+
+# shellcheck disable=2016
+mysql -uroot "$database" -e '
+  select u.username user, g.identifier group
+    FROM `user` u
+    JOIN `user_group_assignment` uga on uga.user_id = u.id
+    JOIN `group` g on g.id = uga.group_id;
+
+  select pa.id, g.identifier group_identifier, pt.uri, permission from permission_assignment pa
+  join principal p on p.id = pa.principal_id
+  join `group` g on g.id = p.group_id
+  join permission_target pt on pt.id = pa.permission_target_id;
+'
