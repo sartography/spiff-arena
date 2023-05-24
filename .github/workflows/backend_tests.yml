@@ -84,6 +84,7 @@ jobs:
       PRE_COMMIT_COLOR: "always"
       SPIFFWORKFLOW_BACKEND_DATABASE_PASSWORD: password
       SPIFFWORKFLOW_BACKEND_DATABASE_TYPE: ${{ matrix.database }}
+      SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI: 'true'
 
     steps:
       - name: Check out the repository
