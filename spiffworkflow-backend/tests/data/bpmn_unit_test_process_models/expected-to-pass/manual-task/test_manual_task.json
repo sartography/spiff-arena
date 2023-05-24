@@ -1,0 +1,10 @@
+{
+  "test_case_1": {
+    "tasks": {
+      "manual_task_one": {
+        "data": [{}]
+      }
+    },
+    "expected_output_json": {}
+  }
+}

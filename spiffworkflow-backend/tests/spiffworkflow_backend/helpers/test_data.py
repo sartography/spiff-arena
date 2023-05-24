@@ -12,12 +12,10 @@ from spiffworkflow_backend.services.process_model_service import ProcessModelSer
 
 
 def assure_process_group_exists(process_group_id: Optional[str] = None) -> ProcessGroup:
-    """Assure_process_group_exists."""
     process_group = None
-    process_model_service = ProcessModelService()
     if process_group_id is not None:
         try:
-            process_group = process_model_service.get_process_group(process_group_id)
+            process_group = ProcessModelService.get_process_group(process_group_id)
         except ProcessEntityNotFoundError:
             process_group = None
 
@@ -31,7 +29,7 @@ def assure_process_group_exists(process_group_id: Optional[str] = None) -> Proce
             admin=False,
             display_order=0,
         )
-        process_model_service.add_process_group(process_group)
+        ProcessModelService.add_process_group(process_group)
     return process_group
 
 

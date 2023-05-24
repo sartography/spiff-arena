@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="loopback_process" name="Loopback Process" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_12xxe7w</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_12xxe7w" sourceRef="StartEvent_1" targetRef="set_variable" />
+    <bpmn:exclusiveGateway id="Gateway_1gap20a" default="Flow_1sg0c65">
+      <bpmn:incoming>Flow_0wnc5ju</bpmn:incoming>
+      <bpmn:outgoing>Flow_0utss6p</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1sg0c65</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_08tc3r7" sourceRef="set_variable" targetRef="increment_variable" />
+    <bpmn:endEvent id="Event_1il3y5o">
+      <bpmn:incoming>Flow_0utss6p</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_0utss6p" sourceRef="Gateway_1gap20a" targetRef="Event_1il3y5o">
+      <bpmn:conditionExpression>a == 3</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:scriptTask id="set_variable" name="Set Variable">
+      <bpmn:incoming>Flow_12xxe7w</bpmn:incoming>
+      <bpmn:outgoing>Flow_08tc3r7</bpmn:outgoing>
+      <bpmn:script>a = 1</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_0wnc5ju" sourceRef="increment_variable" targetRef="Gateway_1gap20a" />
+    <bpmn:scriptTask id="increment_variable" name="Increment Variable">
+      <bpmn:extensionElements>
+        <spiffworkflow:instructionsForEndUser />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_08tc3r7</bpmn:incoming>
+      <bpmn:incoming>Flow_1sg0c65</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wnc5ju</bpmn:outgoing>
+      <bpmn:script>a += 1</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="Flow_1sg0c65" sourceRef="Gateway_1gap20a" targetRef="increment_variable" />
+    <bpmn:textAnnotation id="TextAnnotation_09y70ug">
+      <bpmn:text>loop back if a &lt; 3</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0470wt9" sourceRef="Flow_1sg0c65" targetRef="TextAnnotation_09y70ug" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="loopback_process">
+      <bpmndi:BPMNShape id="TextAnnotation_09y70ug_di" bpmnElement="TextAnnotation_09y70ug">
+        <dc:Bounds x="610" y="55" width="130" height="30" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1gap20a_di" bpmnElement="Gateway_1gap20a" isMarkerVisible="true">
+        <dc:Bounds x="535" y="152" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1il3y5o_di" bpmnElement="Event_1il3y5o">
+        <dc:Bounds x="632" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0hrsdn8_di" bpmnElement="set_variable">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1g5b8wo_di" bpmnElement="increment_variable">
+        <dc:Bounds x="400" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0470wt9_di" bpmnElement="Association_0470wt9">
+        <di:waypoint x="567.1081954098089" y="89.9595613114437" />
+        <di:waypoint x="610" y="81" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12xxe7w_di" bpmnElement="Flow_12xxe7w">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_08tc3r7_di" bpmnElement="Flow_08tc3r7">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="400" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0utss6p_di" bpmnElement="Flow_0utss6p">
+        <di:waypoint x="585" y="177" />
+        <di:waypoint x="632" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wnc5ju_di" bpmnElement="Flow_0wnc5ju">
+        <di:waypoint x="500" y="177" />
+        <di:waypoint x="535" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1sg0c65_di" bpmnElement="Flow_1sg0c65">
+        <di:waypoint x="560" y="150" />
+        <di:waypoint x="610" y="140" />
+        <di:waypoint x="550" y="70" />
+        <di:waypoint x="489" y="137" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

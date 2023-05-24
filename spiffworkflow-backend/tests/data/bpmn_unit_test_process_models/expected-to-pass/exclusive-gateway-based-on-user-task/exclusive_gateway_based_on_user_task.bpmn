@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:spiffworkflow="http://spiffworkflow.org/bpmn/schema/1.0/core" id="Definitions_96f6665" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.0-dev">
+  <bpmn:process id="exclusive_gateway_based_on_user_task_process" name="ExclusiveGatewayBasedOnUserTaskProcess" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_19j3jcx</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_19j3jcx" sourceRef="StartEvent_1" targetRef="user_task_choose_branch" />
+    <bpmn:exclusiveGateway id="Gateway_0xwvfep" default="Flow_10m4g0q">
+      <bpmn:incoming>Flow_0qa66xz</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ww41l3</bpmn:outgoing>
+      <bpmn:outgoing>Flow_10m4g0q</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_0qa66xz" sourceRef="user_task_choose_branch" targetRef="Gateway_0xwvfep" />
+    <bpmn:sequenceFlow id="Flow_1ww41l3" sourceRef="Gateway_0xwvfep" targetRef="script_task_branch_a">
+      <bpmn:conditionExpression>branch == 'a'</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_10m4g0q" sourceRef="Gateway_0xwvfep" targetRef="script_task_branch_b" />
+    <bpmn:endEvent id="Event_05ovp79">
+      <bpmn:incoming>Flow_1oxbb75</bpmn:incoming>
+      <bpmn:incoming>Flow_1ck9lfk</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1oxbb75" sourceRef="script_task_branch_b" targetRef="Event_05ovp79" />
+    <bpmn:sequenceFlow id="Flow_1ck9lfk" sourceRef="script_task_branch_a" targetRef="Event_05ovp79" />
+    <bpmn:userTask id="user_task_choose_branch" name="User Task Choose Branch">
+      <bpmn:extensionElements>
+        <spiffworkflow:properties>
+          <spiffworkflow:property name="formJsonSchemaFilename" value="choose-your-branch-schema.json" />
+          <spiffworkflow:property name="formUiSchemaFilename" value="choose-your-branch-uischema.json" />
+        </spiffworkflow:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_19j3jcx</bpmn:incoming>
+      <bpmn:outgoing>Flow_0qa66xz</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:scriptTask id="script_task_branch_a" name="Script Task Branch A">
+      <bpmn:incoming>Flow_1ww41l3</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ck9lfk</bpmn:outgoing>
+      <bpmn:script>chosen_branch = 'A'</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:scriptTask id="script_task_branch_b" name="Script Task Branch B">
+      <bpmn:incoming>Flow_10m4g0q</bpmn:incoming>
+      <bpmn:outgoing>Flow_1oxbb75</bpmn:outgoing>
+      <bpmn:script>chosen_branch = 'B'</bpmn:script>
+    </bpmn:scriptTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="exclusive_gateway_based_on_user_task_process">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0xwvfep_di" bpmnElement="Gateway_0xwvfep" isMarkerVisible="true">
+        <dc:Bounds x="425" y="152" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_05ovp79_di" bpmnElement="Event_05ovp79">
+        <dc:Bounds x="562" y="159" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_15rk06j_di" bpmnElement="user_task_choose_branch">
+        <dc:Bounds x="270" y="137" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0oy60uv_di" bpmnElement="script_task_branch_a">
+        <dc:Bounds x="500" y="20" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_02hkehe_di" bpmnElement="script_task_branch_b">
+        <dc:Bounds x="500" y="260" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_19j3jcx_di" bpmnElement="Flow_19j3jcx">
+        <di:waypoint x="215" y="177" />
+        <di:waypoint x="270" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qa66xz_di" bpmnElement="Flow_0qa66xz">
+        <di:waypoint x="370" y="177" />
+        <di:waypoint x="425" y="177" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ww41l3_di" bpmnElement="Flow_1ww41l3">
+        <di:waypoint x="450" y="152" />
+        <di:waypoint x="450" y="60" />
+        <di:waypoint x="500" y="60" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10m4g0q_di" bpmnElement="Flow_10m4g0q">
+        <di:waypoint x="450" y="202" />
+        <di:waypoint x="450" y="300" />
+        <di:waypoint x="500" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1oxbb75_di" bpmnElement="Flow_1oxbb75">
+        <di:waypoint x="550" y="260" />
+        <di:waypoint x="550" y="233" />
+        <di:waypoint x="580" y="233" />
+        <di:waypoint x="580" y="195" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ck9lfk_di" bpmnElement="Flow_1ck9lfk">
+        <di:waypoint x="550" y="100" />
+        <di:waypoint x="550" y="130" />
+        <di:waypoint x="580" y="130" />
+        <di:waypoint x="580" y="159" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
