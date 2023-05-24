@@ -101,7 +101,6 @@ from spiffworkflow_backend.services.workflow_execution_service import (
 from spiffworkflow_backend.services.workflow_execution_service import (
     WorkflowExecutionService,
 )
-
 from spiffworkflow_backend.specs.start_event import (
     StartEvent,
 )

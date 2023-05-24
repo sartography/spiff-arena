@@ -5,15 +5,14 @@ from datetime import timezone
 from typing import Generator
 
 import pytest
-from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore
+from SpiffWorkflow.dmn.parser.BpmnDmnParser import BpmnDmnParser  # type: ignore
+from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.services.workflow_service import (
     WorkflowService,
 )
-
-from SpiffWorkflow.spiff.parser.process import SpiffBpmnParser  # type: ignore
 from spiffworkflow_backend.specs.start_event import StartEvent
 
 BPMN_WRAPPER = """
@@ -49,12 +48,14 @@ def example_start_datetime_minus_5_mins_in_utc(
     example_datetime = datetime.fromisoformat(example_start_datetime_in_utc_str)
     yield example_datetime - timedelta(minutes=5)
 
-class CustomBpmnDmnParser(BpmnDmnParser):
+
+class CustomBpmnDmnParser(BpmnDmnParser):  # type: ignore
     OVERRIDE_PARSER_CLASSES = {}
     OVERRIDE_PARSER_CLASSES.update(BpmnDmnParser.OVERRIDE_PARSER_CLASSES)
     OVERRIDE_PARSER_CLASSES.update(SpiffBpmnParser.OVERRIDE_PARSER_CLASSES)
 
     StartEvent.register_parser_class(OVERRIDE_PARSER_CLASSES)
+
 
 def workflow_from_str(bpmn_str: str, process_id: str) -> BpmnWorkflow:
     parser = CustomBpmnDmnParser()
