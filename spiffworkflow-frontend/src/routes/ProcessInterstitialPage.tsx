@@ -15,8 +15,6 @@ export default function ProcessInterstitialPage({ variant }: OwnProps) {
     processInstanceShowPageUrl = `/admin/process-instances/${params.process_model_id}/${params.process_instance_id}`;
   }
 
-  // @ts-ignore
-  console.log('params', params, processInstanceShowPageUrl);
   return (
     <>
       <ProcessBreadcrumb
