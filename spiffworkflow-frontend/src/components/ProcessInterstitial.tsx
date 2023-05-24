@@ -2,33 +2,32 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchEventSource } from '@microsoft/fetch-event-source';
 // @ts-ignore
-import { Loading, Button } from '@carbon/react';
+import { Loading } from '@carbon/react';
 import { BACKEND_BASE_URL } from '../config';
 import { getBasicHeaders } from '../services/HttpService';
 
 // @ts-ignore
 import InstructionsForEndUser from './InstructionsForEndUser';
-import ProcessBreadcrumb from './ProcessBreadcrumb';
 import { ProcessInstance, ProcessInstanceTask } from '../interfaces';
 import useAPIError from '../hooks/UseApiError';
 
 type OwnProps = {
   processInstanceId: number;
-  modifiedProcessModelIdentifier: string;
+  processInstanceShowPageUrl: string;
   allowRedirect: boolean;
 };
 
 export default function ProcessInterstitial({
   processInstanceId,
-  modifiedProcessModelIdentifier,
   allowRedirect,
+  processInstanceShowPageUrl,
 }: OwnProps) {
   const [data, setData] = useState<any[]>([]);
   const [lastTask, setLastTask] = useState<any>(null);
   const [state, setState] = useState<string>('RUNNING');
   const [processInstance, setProcessInstance] =
     useState<ProcessInstance | null>(null);
-  const processInstanceShowPageBaseUrl = `/admin/process-instances/for-me/${modifiedProcessModelIdentifier}`;
+
   const navigate = useNavigate();
   const userTasks = useMemo(() => {
     return ['User Task', 'Manual Task'];
@@ -50,13 +49,14 @@ export default function ProcessInterstitial({
         }
       },
       onclose() {
+        console.log('The state is closed.');
         setState('CLOSED');
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // it is critical to only run this once.
 
-  const shouldRedirect = useCallback(
+  const shouldRedirectToTask = useCallback(
     (myTask: ProcessInstanceTask): boolean => {
       return (
         allowRedirect &&
@@ -66,21 +66,38 @@ export default function ProcessInterstitial({
         userTasks.includes(myTask.type)
       );
     },
-    [userTasks, processInstance]
+    [allowRedirect, processInstance, userTasks]
   );
+
+  const shouldRedirectToProcessInstance = useCallback((): boolean => {
+    return allowRedirect && state === 'CLOSED';
+  }, [allowRedirect, state]);
 
   useEffect(() => {
     // Added this seperate use effect so that the timer interval will be cleared if
     // we end up redirecting back to the TaskShow page.
-    if (shouldRedirect(lastTask)) {
+    if (shouldRedirectToTask(lastTask)) {
       lastTask.properties.instructionsForEndUser = '';
       const timerId = setInterval(() => {
         navigate(`/tasks/${lastTask.process_instance_id}/${lastTask.id}`);
       }, 2000);
       return () => clearInterval(timerId);
     }
+    if (shouldRedirectToProcessInstance()) {
+      // Navigate without pause as we will be showing the same information.
+      navigate(processInstanceShowPageUrl);
+    }
     return undefined;
-  }, [lastTask, navigate, userTasks, shouldRedirect]);
+  }, [
+    lastTask,
+    navigate,
+    userTasks,
+    shouldRedirectToTask,
+    processInstanceId,
+    processInstanceShowPageUrl,
+    state,
+    shouldRedirectToProcessInstance,
+  ]);
 
   const getStatus = (): string => {
     if (processInstance) {
@@ -101,33 +118,11 @@ export default function ProcessInterstitial({
         <Loading
           description="Active loading indicator"
           withOverlay={false}
-          style={{ margin: 'auto' }}
+          style={{ margin: '50px 0 50px 50px' }}
         />
       );
     }
     return null;
-  };
-
-  const getReturnHomeButton = (index: number) => {
-    if (
-      index === 0 &&
-      !shouldRedirect(lastTask) &&
-      ['WAITING', 'ERROR', 'LOCKED', 'COMPLETED', 'READY'].includes(getStatus())
-    ) {
-      return (
-        <div style={{ padding: '10px 0 0 0' }}>
-          <Button
-            kind="secondary"
-            data-qa="return-to-home-button"
-            onClick={() => navigate(`/tasks`)}
-            style={{ marginBottom: 30 }}
-          >
-            Return to Home
-          </Button>
-        </div>
-      );
-    }
-    return '';
   };
 
   const userMessage = (myTask: ProcessInstanceTask) => {
@@ -140,7 +135,7 @@ export default function ProcessInterstitial({
           </p>
         );
       }
-      if (shouldRedirect(myTask)) {
+      if (shouldRedirectToTask(myTask)) {
         return <div>Redirecting you to the next task now ...</div>;
       }
       if (myTask && myTask.can_complete && userTasks.includes(myTask.type)) {
@@ -170,40 +165,24 @@ export default function ProcessInterstitial({
     navigate(`/tasks`);
   }
 
+  let displayableData = data;
+  if (state === 'CLOSED') {
+    displayableData = [data[0]];
+  }
+
   if (lastTask) {
     return (
       <>
-        <ProcessBreadcrumb
-          hotCrumbs={[
-            ['Process Groups', '/admin'],
-            {
-              entityToExplode: lastTask.process_model_identifier,
-              entityType: 'process-model-id',
-              linkLastItem: true,
-            },
-            [
-              `Process Instance: ${processInstanceId}`,
-              `${processInstanceShowPageBaseUrl}/${processInstanceId}`,
-            ],
-          ]}
-        />
         {getLoadingIcon()}
-        <div style={{ maxWidth: 800, margin: 'auto', padding: 50 }}>
-          {data.map((d, index) => (
-            <>
-              <div
-                className={
-                  index < 4
-                    ? `user_instructions_${index}`
-                    : `user_instructions_4`
-                }
-              >
-                {userMessage(d)}
-              </div>
-              {getReturnHomeButton(index)}
-            </>
-          ))}
-        </div>
+        {displayableData.map((d, index) => (
+          <div
+            className={
+              index < 4 ? `user_instructions_${index}` : `user_instructions_4`
+            }
+          >
+            {userMessage(d)}
+          </div>
+        ))}
       </>
     );
   }
