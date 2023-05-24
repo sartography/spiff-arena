@@ -167,7 +167,6 @@ export default function TaskShow() {
     if (disabled) {
       return;
     }
-    return;
 
     const dataToSubmit = formObject?.formData;
     if (!dataToSubmit) {
@@ -266,10 +265,77 @@ export default function TaskShow() {
     return null;
   };
 
+  const formatDateString = (dateString?: string) => {
+    let dateObject = new Date();
+    if (dateString) {
+      dateObject = new Date(dateString);
+    }
+    return dateObject.toISOString().split('T')[0];
+  };
+
+  const checkFieldComparisons = (
+    formData: any,
+    propertyKey: string,
+    propertyMetadata: any,
+    formattedDateString: string,
+    errors: any
+  ) => {
+    const fieldIdentifierToCompareWith = propertyMetadata.minimumDate.replace(
+      /^field:/,
+      ''
+    );
+    if (fieldIdentifierToCompareWith in formData) {
+      const dateToCompareWith = formData[fieldIdentifierToCompareWith];
+      if (dateToCompareWith) {
+        const dateStringToCompareWith = formatDateString(dateToCompareWith);
+        if (dateStringToCompareWith > formattedDateString) {
+          errors[propertyKey].addError(
+            `must be equal to or greater than '${fieldIdentifierToCompareWith}'`
+          );
+        }
+      } else {
+        errors[propertyKey].addError(
+          `was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
+        );
+      }
+    } else {
+      errors[propertyKey].addError(
+        `was supposed to be compared against '${fieldIdentifierToCompareWith}' but it either doesn't have a value or does not exist`
+      );
+    }
+  };
+
+  const checkMinimumDate = (
+    formData: any,
+    propertyKey: string,
+    propertyMetadata: any,
+    errors: any
+  ) => {
+    const dateString = formData[propertyKey];
+    if (dateString) {
+      const formattedDateString = formatDateString(dateString);
+      if (propertyMetadata.minimumDate === 'today') {
+        const dateTodayString = formatDateString();
+        if (dateTodayString > formattedDateString) {
+          errors[propertyKey].addError('must be today or after');
+        }
+      } else if (propertyMetadata.minimumDate.startsWith('field:')) {
+        checkFieldComparisons(
+          formData,
+          propertyKey,
+          propertyMetadata,
+          formattedDateString,
+          errors
+        );
+      }
+    }
+  };
+
   const getFieldsWithDateValidations = (
     jsonSchema: any,
     formData: any,
     errors: any
+    // eslint-disable-next-line sonarjs/cognitive-complexity
   ) => {
     // if the jsonSchema has an items attribute then assume the element itself
     // doesn't have a custom validation but it's children could so use that
@@ -279,50 +345,8 @@ export default function TaskShow() {
     if ('properties' in jsonSchemaToUse) {
       Object.keys(jsonSchemaToUse.properties).forEach((propertyKey: string) => {
         const propertyMetadata = jsonSchemaToUse.properties[propertyKey];
-        if (
-          typeof propertyMetadata === 'object' &&
-          'minimumDate' in propertyMetadata
-        ) {
-          const dateValue = formData[propertyKey];
-          if (dateValue) {
-            const dateValueObject = new Date(dateValue);
-            const dateValueString = dateValueObject.toISOString().split('T')[0];
-            if (propertyMetadata.minimumDate === 'today') {
-              const dateToday = new Date();
-              const dateTodayString = dateToday.toISOString().split('T')[0];
-              if (dateTodayString > dateValueString) {
-                errors[propertyKey].addError('must be today or after');
-              }
-            } else if (propertyMetadata.minimumDate.startsWith('field:')) {
-              const fieldIdentifierToCompareWith = propertyMetadata.minimumDate
-                .split(':')
-                .slice(1)
-                .join(':');
-              if (fieldIdentifierToCompareWith in formData) {
-                const dateToCompareWith =
-                  formData[fieldIdentifierToCompareWith];
-                const dateObjectToCompareWith = new Date(dateToCompareWith);
-                const dateStringToCompareWith = dateObjectToCompareWith
-                  .toISOString()
-                  .split('T')[0];
-                if (dateToCompareWith) {
-                  if (dateStringToCompareWith > dateValueString) {
-                    errors[propertyKey].addError(
-                      `this field must be equal to greater than '${fieldIdentifierToCompareWith}'`
-                    );
-                  }
-                } else {
-                  errors[propertyKey].addError(
-                    `this field was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field did not have a value`
-                  );
-                }
-              } else {
-                errors[propertyKey].addError(
-                  `this field was supposed to be compared against '${fieldIdentifierToCompareWith}' but that field cannot be found`
-                );
-              }
-            }
-          }
+        if ('minimumDate' in propertyMetadata) {
+          checkMinimumDate(formData, propertyKey, propertyMetadata, errors);
         }
 
         // recurse through all nested properties as well
