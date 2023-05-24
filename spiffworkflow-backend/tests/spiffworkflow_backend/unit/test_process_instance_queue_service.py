@@ -1,4 +1,5 @@
 """Test_process_instance_queue_service."""
+import time
 from contextlib import suppress
 
 from flask.app import Flask
@@ -36,7 +37,7 @@ class TestProcessInstanceQueueService(BaseTest):
     ) -> None:
         process_instance = self._create_process_instance()
         assert not ProcessInstanceLockService.has_lock(process_instance.id)
-        queue_entries = ProcessInstanceQueueService.entries_with_status("not_started", None)
+        queue_entries = ProcessInstanceQueueService.entries_with_status("not_started", None, round(time.time()))
         check_passed = False
         for entry in queue_entries:
             if entry.process_instance_id == process_instance.id:
@@ -51,7 +52,7 @@ class TestProcessInstanceQueueService(BaseTest):
         with_db_and_bpmn_file_cleanup: None,
     ) -> None:
         process_instance = self._create_process_instance()
-        queue_entry_ids = ProcessInstanceQueueService.peek_many("not_started")
+        queue_entry_ids = ProcessInstanceQueueService.peek_many("not_started", round(time.time()))
         assert process_instance.id in queue_entry_ids
 
     def test_can_run_some_code_with_a_dequeued_process_instance(

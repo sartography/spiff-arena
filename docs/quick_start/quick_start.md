@@ -17,6 +17,7 @@ To access SpiffWorkflow, simply sign in using your Keycloak account. Once you ha
 :alt: Login Page
 :width: 45%
 ```
+
 ```{image} images/Untitled_1.png
 :alt: Home Page
 :width: 45%
@@ -60,6 +61,7 @@ The process section provides a comprehensive view of the process ecosystem by sh
 :class: info
 💡 A **process group** is a way of grouping a bunch of **process models.** A **process model** contains all the files necessary to execute a specific process.
 ```
+
 -- 
 ![Untitled](images/Untitled_4.png)
 
@@ -142,7 +144,7 @@ After starting a process, it's important to stay informed about its progress. Ev
 
 Here's how you can view the steps of the process you just started.
 
-### Step 1: Navigate to the “Home” or “Process Instance” section.
+### Step 1: Navigate to the “Home” or “Process Instance” section
 
 There are 2 ways of finding your process instances.
 
@@ -170,7 +172,7 @@ The Process-defined **metadata can provide valuable insights into its history, c
 
 To check the metadata of a process instance, follow these steps.
 
-### Step 1: Navigate to the “Home” or “Process Instance” section.
+### Step 1: Navigate to the “Home” or “Process Instance” section as before
 
 Once you're signed in, navigate to the home section. Here you will find a list of all the process instances you've initiated under **“Started by me”**.
 
@@ -231,7 +233,7 @@ To filter the list, click on the "Filter" option. This will expand the filter se
 
 ![Untitled](images/Untitled_20.png)
 
-### Step 3: Apply Filters:
+### Step 3: Apply Filters
 
 Once you have entered all the relevant filter details, click on the "**Apply**" button to apply the filters. The system will then display all the process instances matching the input details.
 
