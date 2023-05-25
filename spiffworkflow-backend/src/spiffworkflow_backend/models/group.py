@@ -15,13 +15,14 @@ if TYPE_CHECKING:
     from spiffworkflow_backend.models.user import UserModel  # noqa: F401
 
 
+SPIFF_NO_AUTH_ANONYMOUS_GROUP = "spiff_anonymous_group"
+
+
 class GroupNotFoundError(Exception):
-    """GroupNotFoundError."""
+    pass
 
 
 class GroupModel(SpiffworkflowBaseDBModel):
-    """GroupModel."""
-
     __tablename__ = "group"
     __table_args__ = {"extend_existing": True}
 

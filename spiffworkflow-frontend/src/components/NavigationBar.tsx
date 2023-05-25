@@ -120,15 +120,19 @@ export default function NavigationBar() {
           <a target="_blank" href={documentationUrl} rel="noreferrer">
             Documentation
           </a>
-          <hr />
-          <Button
-            data-qa="logout-button"
-            className="button-link"
-            onClick={handleLogout}
-          >
-            <Logout />
-            &nbsp;&nbsp;Sign out
-          </Button>
+          {!UserService.authenticationDisabled() ? (
+            <>
+              <hr />
+              <Button
+                data-qa="logout-button"
+                className="button-link"
+                onClick={handleLogout}
+              >
+                <Logout />
+                &nbsp;&nbsp;Sign out
+              </Button>
+            </>
+          ) : null}
         </ToggletipContent>
       </Toggletip>
     </div>

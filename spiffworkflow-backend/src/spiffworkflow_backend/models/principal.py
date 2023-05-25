@@ -32,3 +32,5 @@ class PrincipalModel(SpiffworkflowBaseDBModel):
 
     user = relationship("UserModel", viewonly=True)
     group = relationship("GroupModel", viewonly=True)
+
+    permission_assignments = relationship("PermissionAssignmentModel", cascade="delete")  # type: ignore

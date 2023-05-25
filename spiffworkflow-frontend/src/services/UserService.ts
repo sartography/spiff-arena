@@ -62,6 +62,15 @@ const getUserEmail = () => {
   return null;
 };
 
+const authenticationDisabled = () => {
+  const idToken = getIdToken();
+  if (idToken) {
+    const idObject = jwt(idToken);
+    return (idObject as any).authentication_disabled;
+  }
+  return false;
+};
+
 const getPreferredUsername = () => {
   const idToken = getIdToken();
   if (idToken) {
@@ -82,14 +91,15 @@ const hasRole = (_roles: string[]): boolean => {
 };
 
 const UserService = {
+  authenticationDisabled,
   doLogin,
   doLogout,
-  isLoggedIn,
   getAccessToken,
-  loginIfNeeded,
   getPreferredUsername,
   getUserEmail,
   hasRole,
+  isLoggedIn,
+  loginIfNeeded,
 };
 
 export default UserService;
