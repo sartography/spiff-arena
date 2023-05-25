@@ -1,7 +1,7 @@
 services:
   spiffworkflow-frontend:
     container_name: spiffworkflow-frontend
-    image: ghcr.io/sartography/spiffworkflow-frontend:latest
+    image: ghcr.io/sartography/spiffworkflow-frontend:main-latest
     depends_on:
       spiffworkflow-backend:
         condition: service_healthy
@@ -13,7 +13,7 @@ services:
 
   spiffworkflow-backend:
     container_name: spiffworkflow-backend
-    image: ghcr.io/sartography/spiffworkflow-backend:latest
+    image: ghcr.io/sartography/spiffworkflow-backend:main-latest
     environment:
       SPIFFWORKFLOW_BACKEND_APPLICATION_ROOT: "/"
       SPIFFWORKFLOW_BACKEND_ENV: "local_development"
