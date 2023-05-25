@@ -46,6 +46,7 @@ from spiffworkflow_backend.services.process_instance_queue_service import (
     ProcessInstanceQueueService,
 )
 from spiffworkflow_backend.services.process_model_service import ProcessModelService
+from spiffworkflow_backend.services.workflow_service import WorkflowService
 
 
 class ProcessInstanceService:
@@ -53,6 +54,17 @@ class ProcessInstanceService:
 
     FILE_DATA_DIGEST_PREFIX = "spifffiledatadigest+"
     TASK_STATE_LOCKED = "locked"
+
+    @staticmethod
+    def calculate_start_delay_in_seconds(process_instance_model: ProcessInstanceModel) -> int:
+        try:
+            processor = ProcessInstanceProcessor(process_instance_model)
+            delay_in_seconds = WorkflowService.calculate_run_at_delay_in_seconds(
+                processor.bpmn_process_instance, datetime.now(timezone.utc)
+            )
+        except Exception:
+            delay_in_seconds = 0
+        return delay_in_seconds
 
     @classmethod
     def create_process_instance(
@@ -77,7 +89,8 @@ class ProcessInstanceService:
         )
         db.session.add(process_instance_model)
         db.session.commit()
-        run_at_in_seconds = round(time.time())
+        delay_in_seconds = cls.calculate_start_delay_in_seconds(process_instance_model)
+        run_at_in_seconds = round(time.time()) + delay_in_seconds
         ProcessInstanceQueueService.enqueue_new_process_instance(process_instance_model, run_at_in_seconds)
         return process_instance_model
 
