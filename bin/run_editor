@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+SPIFF_EDITOR_BPMN_SPEC_DIR=$1 \
 docker compose -f editor.docker-compose.yml up -d
 
 echo ""
