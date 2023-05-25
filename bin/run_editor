@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND="${SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND:-http://localhost:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}}"
-
 docker compose -f editor.docker-compose.yml up -d
 
 echo ""
 echo "Spiff Editor is ready."
 echo ""
-echo "Please open ${SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND}"
+echo "Please open ${SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND:-http://localhost:${SPIFFWORKFLOW_FRONTEND_PORT:-8001}}"

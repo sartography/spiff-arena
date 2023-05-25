@@ -37,7 +37,7 @@ services:
     ports:
       - "${SPIFF_BACKEND_PORT:-8000}:${SPIFF_BACKEND_PORT:-8000}/tcp"
     volumes:
-      - ./process_models:/app/process_models
+      - "${SPIFF_EDITOR_BPMN_SPEC_DIR:-./process_models}:/app/process_models"
       - ./log:/app/log
     healthcheck:
       test: "curl localhost:${SPIFF_BACKEND_PORT:-8000}/v1.0/status --fail"
