@@ -29,16 +29,16 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_SERVER_URL = environ.get(
 )
 
 SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND = environ.get(
-    'SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND',
-    default=f"https://{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
+    "SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND",
+    default=f"https://{environment_identifier_for_this_config_file_only}.spiffworkflow.org",
 )
 SPIFFWORKFLOW_BACKEND_URL = environ.get(
-    'SPIFFWORKFLOW_BACKEND_URL',
-    default=f"https://api.{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
+    "SPIFFWORKFLOW_BACKEND_URL",
+    default=f"https://api.{environment_identifier_for_this_config_file_only}.spiffworkflow.org",
 )
 SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL = environ.get(
-    'SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL',
-    default=f"https://connector-proxy.{environment_identifier_for_this_config_file_only}.spiffworkflow.org"
+    "SPIFFWORKFLOW_BACKEND_CONNECTOR_PROXY_URL",
+    default=f"https://connector-proxy.{environment_identifier_for_this_config_file_only}.spiffworkflow.org",
 )
 SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL = environ.get(
     "SPIFFWORKFLOW_BACKEND_GIT_PUBLISH_CLONE_URL",

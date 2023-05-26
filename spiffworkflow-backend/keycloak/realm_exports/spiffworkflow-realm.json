@@ -3250,7 +3250,7 @@
     "alwaysDisplayInConsole" : false,
     "clientAuthenticatorType" : "client-secret",
     "secret" : "JXeQExm0JhQPLumgHtIIqf52bDalHz0q",
-    "redirectUris" : [ "http://localhost:7000/*", "https://api.unused-for-local-dev.spiffworkflow.org/*", "https://api.replace-me-with-spiff-domain/*", "http://67.205.133.116:7000/*", "http://167.172.242.138:7000/*" ],
+    "redirectUris" : [ "http://localhost:7000/*", "https://replace-me-with-spiff-domain-and-api-path-prefix/*", "http://67.205.133.116:7000/*", "http://167.172.242.138:7000/*" ],
     "webOrigins" : [ ],
     "notBefore" : 0,
     "bearerOnly" : false,

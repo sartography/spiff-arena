@@ -484,11 +484,11 @@ class WorkflowExecutionService:
             )
             for correlation_property in event["value"]:
                 message_correlation = MessageInstanceCorrelationRuleModel(
-                    message_instance_id=message_instance.id,
+                    message_instance=message_instance,
                     name=correlation_property.name,
                     retrieval_expression=correlation_property.retrieval_expression,
                 )
-                message_instance.correlation_rules.append(message_correlation)
+                db.session.add(message_correlation)
             db.session.add(message_instance)
 
             bpmn_process = self.process_instance_model.bpmn_process

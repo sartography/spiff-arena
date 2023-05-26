@@ -1,4 +1,4 @@
-"""Conftest."""
+# noqa
 import os
 import shutil
 
@@ -25,8 +25,7 @@ from spiffworkflow_backend import create_app  # noqa: E402
 
 
 @pytest.fixture(scope="session")
-def app() -> Flask:
-    """App."""
+def app() -> Flask:  # noqa
     os.environ["SPIFFWORKFLOW_BACKEND_ENV"] = "unit_testing"
     os.environ["FLASK_SESSION_SECRET_KEY"] = "e7711a3ba96c46c68e084a86952de16f"
     app = create_app()
@@ -53,8 +52,12 @@ def with_db_and_bpmn_file_cleanup() -> None:
 
 
 @pytest.fixture()
-def with_super_admin_user() -> UserModel:
-    """With_super_admin_user."""
-    user = BaseTest.find_or_create_user(username="testadmin1")
-    AuthorizationService.import_permissions_from_yaml_file(user)
+def with_super_admin_user() -> UserModel:  # noqa
+    # this loads all permissions from yaml everytime this function is called which is slow
+    # so default to just setting a simple super admin and only run with the "real" permissions in ci
+    if os.environ.get("SPIFFWORKFLOW_BACKEND_RUNNING_IN_CI") == "true":
+        user = BaseTest.find_or_create_user(username="testadmin1")
+        AuthorizationService.import_permissions_from_yaml_file(user)
+    else:
+        user = BaseTest.create_user_with_permission("super_admin")
     return user
