@@ -33,7 +33,6 @@ class UserService:
         tenant_specific_field_2: Optional[str] = None,
         tenant_specific_field_3: Optional[str] = None,
     ) -> UserModel:
-        """Create_user."""
         user_model: Optional[UserModel] = (
             UserModel.query.filter(UserModel.service == service).filter(UserModel.service_id == service_id).first()
         )
