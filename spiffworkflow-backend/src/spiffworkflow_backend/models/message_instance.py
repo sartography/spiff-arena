@@ -63,7 +63,9 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
     failure_cause: str = db.Column(db.Text())
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)
-    correlation_rules = relationship("MessageInstanceCorrelationRuleModel", back_populates="message_instance")
+    correlation_rules = relationship(
+        "MessageInstanceCorrelationRuleModel", back_populates="message_instance", cascade="delete"
+    )
 
     @validates("message_type")
     def validate_message_type(self, key: str, value: Any) -> Any:

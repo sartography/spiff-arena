@@ -1,4 +1,3 @@
-"""Authentication_service."""
 import base64
 import enum
 import json
@@ -16,7 +15,7 @@ from spiffworkflow_backend.models.refresh_token import RefreshTokenModel
 
 
 class MissingAccessTokenError(Exception):
-    """MissingAccessTokenError."""
+    pass
 
 
 class NotAuthorizedError(Exception):
@@ -35,20 +34,22 @@ class UserNotLoggedInError(Exception):
 
 
 class TokenExpiredError(Exception):
-    """TokenExpiredError."""
+    pass
 
 
 class TokenInvalidError(Exception):
-    """TokenInvalidError."""
+    pass
 
 
 class TokenNotProvidedError(Exception):
     pass
 
 
-class AuthenticationProviderTypes(enum.Enum):
-    """AuthenticationServiceProviders."""
+class OpenIdConnectionError(Exception):
+    pass
 
+
+class AuthenticationProviderTypes(enum.Enum):
     open_id = "open_id"
     internal = "internal"
 
@@ -78,8 +79,11 @@ class AuthenticationService:
         """All openid systems provide a mapping of static names to the full path of that endpoint."""
         openid_config_url = f"{cls.server_url()}/.well-known/openid-configuration"
         if name not in AuthenticationService.ENDPOINT_CACHE:
-            response = requests.get(openid_config_url)
-            AuthenticationService.ENDPOINT_CACHE = response.json()
+            try:
+                response = requests.get(openid_config_url)
+                AuthenticationService.ENDPOINT_CACHE = response.json()
+            except requests.exceptions.ConnectionError as ce:
+                raise OpenIdConnectionError(f"Cannot connect to given open id url: {openid_config_url}") from ce
         if name not in AuthenticationService.ENDPOINT_CACHE:
             raise Exception(f"Unknown OpenID Endpoint: {name}. Tried to get from {openid_config_url}")
         return AuthenticationService.ENDPOINT_CACHE.get(name, "")
