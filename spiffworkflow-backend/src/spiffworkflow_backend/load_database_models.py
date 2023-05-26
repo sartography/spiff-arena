@@ -7,6 +7,8 @@ some models need to be loaded before others for relationships and to
 avoid circular imports
 """
 
+# unused imports are needed for SQLAlchemy to load the models
+# ruff: noqa: F401
 
 from spiffworkflow_backend.models.db import add_listeners
 
