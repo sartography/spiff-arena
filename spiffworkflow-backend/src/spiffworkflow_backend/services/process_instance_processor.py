@@ -101,7 +101,11 @@ from spiffworkflow_backend.services.workflow_execution_service import (
 from spiffworkflow_backend.services.workflow_execution_service import (
     WorkflowExecutionService,
 )
+from spiffworkflow_backend.specs.start_event import (
+    StartEvent,
+)
 
+StartEvent.register_converter(SPIFF_SPEC_CONFIG)
 
 # Sorry about all this crap.  I wanted to move this thing to another file, but
 # importing a bunch of types causes circular imports.
