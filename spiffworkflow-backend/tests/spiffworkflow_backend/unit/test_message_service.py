@@ -94,8 +94,8 @@ class TestMessageService(BaseTest):
             "amount": "100.00",
         }
 
-        # Load up the definition for the receiving process (it has a message start event that should cause it to
-        # fire when a unique message comes through.
+        # Load up the definition for the receiving process
+        # It has a message start event that should cause it to fire when a unique message comes through
         # Fire up the first process
         load_test_spec(
             "test_group/message_receive",
