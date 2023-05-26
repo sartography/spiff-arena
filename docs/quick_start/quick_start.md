@@ -54,8 +54,7 @@ The process section provides a comprehensive view of the process ecosystem by sh
 ```{admonition} Process Groups
 A **process group** is a way of grouping a bunch of **process models** and a **process model** contains all the files necessary to execute a specific process.
 ```
-
--- 
+ 
 ![Untitled](images/Untitled_4.png)
 
 ### Step 3: Explore the Process Instances section
