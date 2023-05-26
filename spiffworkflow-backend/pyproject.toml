@@ -170,6 +170,12 @@ implicit_reexport = true
 namespace_packages = true
 explicit_package_bases = false
 
+[tool.ruff]
+line-length = 130
+
+[tool.ruff.per-file-ignores]
+"migrations/versions/*.py" = ["E501"]
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"

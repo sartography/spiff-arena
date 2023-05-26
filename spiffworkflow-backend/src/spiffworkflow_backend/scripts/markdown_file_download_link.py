@@ -30,7 +30,7 @@ class GetMarkdownFileDownloadLink(Script):
     ) -> Any:
         """Run."""
         # example input:
-        #  "data:some/mimetype;name=testing.txt;base64,spifffiledatadigest+7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"
+        #  "data:some/mimetype;name=testing.txt;base64,spifffiledatadigest+7a2051ffefd1eaf475dbef9fda019cb3d4a10eb8aea4c2c2a84a50a797a541bf"  # noqa: B950,E501
         digest_reference = args[0]
         parts = digest_reference.split(";")
         digest = parts[2].split(",")[1][-64:]
