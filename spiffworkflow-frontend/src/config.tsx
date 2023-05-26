@@ -13,6 +13,7 @@ declare global {
 let spiffEnvironment = '';
 let appRoutingStrategy = 'subdomain_based';
 let backendBaseUrl = null;
+let documentationUrl = null;
 if ('spiffworkflowFrontendJsenv' in window) {
   if ('APP_ROUTING_STRATEGY' in window.spiffworkflowFrontendJsenv) {
     appRoutingStrategy = window.spiffworkflowFrontendJsenv.APP_ROUTING_STRATEGY;
@@ -22,6 +23,9 @@ if ('spiffworkflowFrontendJsenv' in window) {
   }
   if ('BACKEND_BASE_URL' in window.spiffworkflowFrontendJsenv) {
     backendBaseUrl = window.spiffworkflowFrontendJsenv.BACKEND_BASE_URL;
+  }
+  if ('DOCUMENTATION_URL' in window.spiffworkflowFrontendJsenv) {
+    documentationUrl = window.spiffworkflowFrontendJsenv.DOCUMENTATION_URL;
   }
 }
 
@@ -66,6 +70,7 @@ if (!backendBaseUrl.endsWith('/v1.0')) {
 }
 
 export const BACKEND_BASE_URL = backendBaseUrl;
+export const DOCUMENTATION_URL = documentationUrl;
 
 export const PROCESS_STATUSES = [
   'not_started',
