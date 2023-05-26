@@ -134,7 +134,6 @@ class MessageService:
     def get_process_instance_for_message_instance(
         message_instance_receive: MessageInstanceModel,
     ) -> ProcessInstanceModel:
-        """Process_message_receive."""
         process_instance_receive: ProcessInstanceModel = ProcessInstanceModel.query.filter_by(
             id=message_instance_receive.process_instance_id
         ).first()
@@ -157,7 +156,6 @@ class MessageService:
         message_model_name: str,
         message_payload: dict,
     ) -> None:
-        """process_message_receive."""
         processor_receive = ProcessInstanceProcessor(process_instance_receive)
         processor_receive.bpmn_process_instance.catch_bpmn_message(message_model_name, message_payload)
         processor_receive.do_engine_steps(save=True)

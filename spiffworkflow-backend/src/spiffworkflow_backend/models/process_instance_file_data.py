@@ -12,8 +12,6 @@ from spiffworkflow_backend.models.process_instance import ProcessInstanceModel
 
 @dataclass
 class ProcessInstanceFileDataModel(SpiffworkflowBaseDBModel):
-    """ProcessInstanceFileDataModel."""
-
     __tablename__ = "process_instance_file_data"
 
     id: int = db.Column(db.Integer, primary_key=True)
