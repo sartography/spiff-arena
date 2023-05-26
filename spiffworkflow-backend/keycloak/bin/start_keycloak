@@ -52,8 +52,8 @@ docker run \
 
 script_dir="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 cp "${script_dir}/../realm_exports/${realm_name}-realm.json" /tmp/${realm_name}-realm.json
-spiff_subdomain="unused-for-local-dev"
-perl -pi -e "s/{{SPIFF_SUBDOMAIN}}/${spiff_subdomain}/g" /tmp/${realm_name}-realm.json
+spiff_subdomain="for-local-dev.spiffworkflow.org"
+perl -pi -e "s/replace-me-with-spiff-domain-and-api-path-prefix/${spiff_subdomain}/g" /tmp/${realm_name}-realm.json
 docker cp /tmp/${realm_name}-realm.json keycloak:/tmp
 
 sleep 20

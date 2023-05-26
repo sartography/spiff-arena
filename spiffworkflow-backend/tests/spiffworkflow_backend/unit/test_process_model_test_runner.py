@@ -8,6 +8,7 @@ from tests.spiffworkflow_backend.helpers.base_test import BaseTest
 
 from spiffworkflow_backend.services.process_model_test_runner_service import NoTestCasesFoundError
 from spiffworkflow_backend.services.process_model_test_runner_service import ProcessModelTestRunner
+from spiffworkflow_backend.services.process_model_test_runner_service import UnsupporterRunnerDelegateGiven
 
 
 class TestProcessModelTestRunner(BaseTest):
@@ -28,6 +29,16 @@ class TestProcessModelTestRunner(BaseTest):
         with pytest.raises(NoTestCasesFoundError):
             process_model_test_runner.run()
         assert process_model_test_runner.all_test_cases_passed(), process_model_test_runner.test_case_results
+
+    def test_will_raise_if_bad_delegate_is_given(
+        self,
+        app: Flask,
+        with_db_and_bpmn_file_cleanup: None,
+    ) -> None:
+        with pytest.raises(UnsupporterRunnerDelegateGiven):
+            ProcessModelTestRunner(
+                os.path.join(self.root_path(), "DNE"), process_model_test_runner_delegate_class=NoTestCasesFoundError
+            )
 
     def test_can_test_multiple_process_models_with_all_passing_tests(
         self,

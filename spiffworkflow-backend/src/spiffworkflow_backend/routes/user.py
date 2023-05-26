@@ -6,7 +6,6 @@ import re
 from typing import Any
 from typing import Dict
 from typing import Optional
-from typing import Union
 
 import flask
 import jwt
@@ -20,6 +19,10 @@ from werkzeug.wrappers import Response
 
 from spiffworkflow_backend.exceptions.api_error import ApiError
 from spiffworkflow_backend.helpers.api_version import V1_API_PATH_PREFIX
+from spiffworkflow_backend.models.db import db
+from spiffworkflow_backend.models.group import GroupModel
+from spiffworkflow_backend.models.group import SPIFF_NO_AUTH_ANONYMOUS_GROUP
+from spiffworkflow_backend.models.user import SPIFF_NO_AUTH_ANONYMOUS_USER
 from spiffworkflow_backend.models.user import UserModel
 from spiffworkflow_backend.services.authentication_service import AuthenticationService
 from spiffworkflow_backend.services.authentication_service import (
@@ -27,6 +30,7 @@ from spiffworkflow_backend.services.authentication_service import (
 )
 from spiffworkflow_backend.services.authentication_service import TokenExpiredError
 from spiffworkflow_backend.services.authorization_service import AuthorizationService
+from spiffworkflow_backend.services.group_service import GroupService
 from spiffworkflow_backend.services.user_service import UserService
 
 """
@@ -36,9 +40,7 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 # authorization_exclusion_list = ['status']
-def verify_token(
-    token: Optional[str] = None, force_run: Optional[bool] = False
-) -> Optional[Dict[str, Optional[Union[str, int]]]]:
+def verify_token(token: Optional[str] = None, force_run: Optional[bool] = False) -> None:
     """Verify the token for the user (if provided).
 
     If in production environment and token is not provided, gets user from the SSO headers and returns their token.
@@ -82,6 +84,22 @@ def verify_token(
                         current_app.logger.error(
                             f"Exception in verify_token getting user from decoded internal token. {e}"
                         )
+
+                # if the user is the anonymous user and we have auth enabled then make sure we clean up the anonymouse user
+                if (
+                    user_model
+                    and not current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED")
+                    and user_model.username == SPIFF_NO_AUTH_ANONYMOUS_USER
+                    and user_model.service_id == "spiff_anonymous_service_id"
+                ):
+                    group_model = GroupModel.query.filter_by(identifier=SPIFF_NO_AUTH_ANONYMOUS_GROUP).first()
+                    db.session.delete(group_model)
+                    db.session.delete(user_model)
+                    db.session.commit()
+                    tld = current_app.config["THREAD_LOCAL_DATA"]
+                    tld.user_has_logged_out = True
+                    return None
+
             elif "iss" in decoded_token.keys():
                 user_info = None
                 try:
@@ -196,29 +214,22 @@ def set_new_access_token_in_cookie(
     return response
 
 
-def encode_auth_token(sub: str, token_type: Optional[str] = None) -> str:
-    """Generates the Auth Token.
-
-    :return: string
-    """
-    payload = {"sub": sub}
-    if token_type is None:
-        token_type = "internal"  # noqa: S105
-    payload["token_type"] = token_type
-    if "SECRET_KEY" in current_app.config:
-        secret_key = current_app.config.get("SECRET_KEY")
-    else:
-        current_app.logger.error("Missing SECRET_KEY in encode_auth_token")
-        raise ApiError(error_code="encode_error", message="Missing SECRET_KEY in encode_auth_token")
-    return jwt.encode(
-        payload,
-        str(secret_key),
-        algorithm="HS256",
-    )
-
-
 def login(redirect_url: str = "/") -> Response:
-    """Login."""
+    if current_app.config.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED"):
+        user = UserModel.query.filter_by(username=SPIFF_NO_AUTH_ANONYMOUS_USER).first()
+        if user is None:
+            user = UserService.create_user(
+                SPIFF_NO_AUTH_ANONYMOUS_USER, "spiff_anonymous_service", "spiff_anonymous_service_id"
+            )
+        GroupService.add_user_to_group_or_add_to_waiting(user.username, SPIFF_NO_AUTH_ANONYMOUS_GROUP)
+        AuthorizationService.add_permission_from_uri_or_macro(SPIFF_NO_AUTH_ANONYMOUS_GROUP, "all", "/*")
+        g.user = user
+        g.token = user.encode_auth_token({"authentication_disabled": True})
+        tld = current_app.config["THREAD_LOCAL_DATA"]
+        tld.new_access_token = g.token
+        tld.new_id_token = g.token
+        return redirect(redirect_url)
+
     state = AuthenticationService.generate_state(redirect_url)
     login_redirect_url = AuthenticationService().get_login_redirect_url(state.decode("UTF-8"))
     return redirect(login_redirect_url)

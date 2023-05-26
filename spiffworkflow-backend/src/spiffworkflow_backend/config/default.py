@@ -79,6 +79,10 @@ SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS = environ.get(
     "SPIFFWORKFLOW_BACKEND_OPEN_ID_TENANT_SPECIFIC_FIELDS"
 )
 
+SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED = (
+    environ.get("SPIFFWORKFLOW_BACKEND_AUTHENTICATION_DISABLED", default="false") == "true"
+)
+
 # loggers to use is a comma separated list of logger prefixes that we will be converted to list of strings
 SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE = environ.get("SPIFFWORKFLOW_BACKEND_LOGGERS_TO_USE")
 
