@@ -1,10 +1,8 @@
 """Process_instance_report_service."""
 import copy
 import re
+from collections.abc import Generator
 from typing import Any
-from typing import Generator
-from typing import Optional
-from typing import Type
 
 import sqlalchemy
 from flask import current_app
@@ -42,7 +40,7 @@ class ProcessInstanceReportService:
     """ProcessInstanceReportService."""
 
     @classmethod
-    def system_metadata_map(cls, metadata_key: str) -> Optional[ReportMetadata]:
+    def system_metadata_map(cls, metadata_key: str) -> ReportMetadata | None:
         # TODO replace with system reports that are loaded on launch (or similar)
         terminal_status_values = ",".join(ProcessInstanceModel.terminal_statuses())
         non_terminal_status_values = ",".join(ProcessInstanceModel.non_terminal_statuses())
@@ -194,8 +192,8 @@ class ProcessInstanceReportService:
     def report_with_identifier(
         cls,
         user: UserModel,
-        report_id: Optional[int] = None,
-        report_identifier: Optional[str] = None,
+        report_id: int | None = None,
+        report_identifier: str | None = None,
     ) -> ProcessInstanceReportModel:
         if report_id is not None:
             process_instance_report = ProcessInstanceReportModel.query.filter_by(
@@ -303,7 +301,7 @@ class ProcessInstanceReportService:
         return potential_owner_usernames_from_group_concat_or_similar
 
     @classmethod
-    def get_column_names_for_model(cls, model: Type[SpiffworkflowBaseDBModel]) -> list[str]:
+    def get_column_names_for_model(cls, model: type[SpiffworkflowBaseDBModel]) -> list[str]:
         """Get_column_names_for_model."""
         return [i.name for i in model.__table__.columns]
 

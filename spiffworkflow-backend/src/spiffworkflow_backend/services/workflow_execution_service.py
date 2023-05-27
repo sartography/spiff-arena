@@ -3,10 +3,8 @@ from __future__ import annotations
 import copy
 import time
 from abc import abstractmethod
+from collections.abc import Callable
 from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Optional
 from uuid import UUID
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
@@ -72,7 +70,7 @@ class EngineStepDelegate:
         pass
 
 
-SubprocessSpecLoader = Callable[[], Optional[Dict[str, Any]]]
+SubprocessSpecLoader = Callable[[], dict[str, Any] | None]
 
 
 class ExecutionStrategy:

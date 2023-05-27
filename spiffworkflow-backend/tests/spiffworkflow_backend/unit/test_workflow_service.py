@@ -1,8 +1,8 @@
 """Test_workflow_service."""
+from collections.abc import Generator
 from datetime import datetime
 from datetime import timedelta
 from datetime import timezone
-from typing import Generator
 
 import pytest
 from SpiffWorkflow.bpmn.workflow import BpmnWorkflow  # type: ignore

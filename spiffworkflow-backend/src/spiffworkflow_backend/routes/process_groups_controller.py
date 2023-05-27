@@ -1,7 +1,6 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
 from typing import Any
-from typing import Optional
 
 import flask.wrappers
 from flask import g
@@ -79,7 +78,7 @@ def process_group_update(modified_process_group_id: str, body: dict) -> flask.wr
 
 
 def process_group_list(
-    process_group_identifier: Optional[str] = None, page: int = 1, per_page: int = 100
+    process_group_identifier: str | None = None, page: int = 1, per_page: int = 100
 ) -> flask.wrappers.Response:
     process_groups = ProcessModelService.get_process_groups_for_api(process_group_identifier)
     batch = ProcessModelService.get_batch(items=process_groups, page=page, per_page=per_page)

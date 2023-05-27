@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 from flask.app import Flask

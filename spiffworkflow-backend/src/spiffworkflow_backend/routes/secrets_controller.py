@@ -1,6 +1,5 @@
 """APIs for dealing with process groups, process models, and process instances."""
 import json
-from typing import Dict
 
 from flask import g
 from flask import jsonify
@@ -44,7 +43,7 @@ def secret_list(
     return make_response(jsonify(response_json), 200)
 
 
-def secret_create(body: Dict) -> Response:
+def secret_create(body: dict) -> Response:
     """Add secret."""
     secret_model = SecretService().add_secret(body["key"], body["value"], g.user.id)
     return Response(

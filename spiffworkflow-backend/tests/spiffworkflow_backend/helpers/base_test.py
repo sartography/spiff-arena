@@ -4,8 +4,6 @@ import json
 import os
 import time
 from typing import Any
-from typing import Dict
-from typing import Optional
 
 from flask import current_app
 from flask.testing import FlaskClient
@@ -56,17 +54,17 @@ class BaseTest:
         )
 
     @staticmethod
-    def logged_in_headers(user: UserModel, _redirect_url: str = "http://some/frontend/url") -> Dict[str, str]:
+    def logged_in_headers(user: UserModel, _redirect_url: str = "http://some/frontend/url") -> dict[str, str]:
         return dict(Authorization="Bearer " + user.encode_auth_token())
 
     def create_group_and_model_with_bpmn(
         self,
         client: FlaskClient,
         user: UserModel,
-        process_group_id: Optional[str] = "test_group",
-        process_model_id: Optional[str] = "random_fact",
-        bpmn_file_name: Optional[str] = None,
-        bpmn_file_location: Optional[str] = None,
+        process_group_id: str | None = "test_group",
+        process_model_id: str | None = "random_fact",
+        bpmn_file_name: str | None = None,
+        bpmn_file_location: str | None = None,
     ) -> str:
         """Creates a process group.
 
@@ -128,14 +126,14 @@ class BaseTest:
     def create_process_model_with_api(
         self,
         client: FlaskClient,
-        process_model_id: Optional[str] = None,
+        process_model_id: str | None = None,
         process_model_display_name: str = "Cooooookies",
         process_model_description: str = "Om nom nom delicious cookies",
         fault_or_suspend_on_exception: str = NotificationType.suspend.value,
-        exception_notification_addresses: Optional[list] = None,
-        primary_process_id: Optional[str] = None,
-        primary_file_name: Optional[str] = None,
-        user: Optional[UserModel] = None,
+        exception_notification_addresses: list | None = None,
+        primary_process_id: str | None = None,
+        primary_file_name: str | None = None,
+        user: UserModel | None = None,
     ) -> TestResponse:
         if process_model_id is not None:
             # make sure we have a group
@@ -195,11 +193,11 @@ class BaseTest:
         self,
         client: FlaskClient,
         process_model_id: str,
-        process_model_location: Optional[str] = None,
-        process_model: Optional[ProcessModelInfo] = None,
+        process_model_location: str | None = None,
+        process_model: ProcessModelInfo | None = None,
         file_name: str = "random_fact.svg",
         file_data: bytes = b"abcdef",
-        user: Optional[UserModel] = None,
+        user: UserModel | None = None,
     ) -> Any:
         """Test_create_spec_file.
 
@@ -247,7 +245,7 @@ class BaseTest:
     def create_process_instance_from_process_model_id_with_api(
         client: FlaskClient,
         test_process_model_id: str,
-        headers: Dict[str, str],
+        headers: dict[str, str],
     ) -> TestResponse:
         """Create_process_instance.
 
@@ -283,8 +281,8 @@ class BaseTest:
     def create_process_instance_from_process_model(
         self,
         process_model: ProcessModelInfo,
-        status: Optional[str] = "not_started",
-        user: Optional[UserModel] = None,
+        status: str | None = "not_started",
+        user: UserModel | None = None,
     ) -> ProcessInstanceModel:
         """Create_process_instance_from_process_model."""
         if user is None:
@@ -313,7 +311,7 @@ class BaseTest:
         cls,
         username: str,
         target_uri: str = PermissionTargetModel.URI_ALL,
-        permission_names: Optional[list[str]] = None,
+        permission_names: list[str] | None = None,
     ) -> UserModel:
         user = BaseTest.find_or_create_user(username=username)
         return cls.add_permissions_to_user(user, target_uri=target_uri, permission_names=permission_names)
@@ -323,7 +321,7 @@ class BaseTest:
         cls,
         user: UserModel,
         target_uri: str = PermissionTargetModel.URI_ALL,
-        permission_names: Optional[list[str]] = None,
+        permission_names: list[str] | None = None,
     ) -> UserModel:
         permission_target = AuthorizationService.find_or_create_permission_target(target_uri)
 
@@ -382,8 +380,8 @@ class BaseTest:
         self,
         client: FlaskClient,
         user: UserModel,
-        report_metadata: Optional[ReportMetadata] = None,
-        param_string: Optional[str] = "",
+        report_metadata: ReportMetadata | None = None,
+        param_string: str | None = "",
     ) -> TestResponse:
         report_metadata_to_use = report_metadata
         if report_metadata_to_use is None:

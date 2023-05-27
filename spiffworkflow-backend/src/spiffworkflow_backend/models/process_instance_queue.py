@@ -1,6 +1,5 @@
 """Process_instance_queue."""
 from dataclasses import dataclass
-from typing import Union
 
 from sqlalchemy import ForeignKey
 
@@ -21,8 +20,8 @@ class ProcessInstanceQueueModel(SpiffworkflowBaseDBModel):
     )
     run_at_in_seconds: int = db.Column(db.Integer)
     priority: int = db.Column(db.Integer)
-    locked_by: Union[str, None] = db.Column(db.String(80), index=True, nullable=True)
-    locked_at_in_seconds: Union[int, None] = db.Column(db.Integer, index=True, nullable=True)
+    locked_by: str | None = db.Column(db.String(80), index=True, nullable=True)
+    locked_at_in_seconds: int | None = db.Column(db.Integer, index=True, nullable=True)
     status: str = db.Column(db.String(50), index=True)
     updated_at_in_seconds: int = db.Column(db.Integer)
     created_at_in_seconds: int = db.Column(db.Integer)

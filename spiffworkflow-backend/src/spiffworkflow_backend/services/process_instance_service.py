@@ -2,14 +2,10 @@
 import base64
 import hashlib
 import time
+from collections.abc import Generator
 from datetime import datetime
 from datetime import timezone
 from typing import Any
-from typing import Dict
-from typing import Generator
-from typing import List
-from typing import Optional
-from typing import Tuple
 from urllib.parse import unquote
 
 import sentry_sdk
@@ -96,7 +92,7 @@ class ProcessInstanceService:
         return cls.create_process_instance(process_model, user)
 
     @classmethod
-    def waiting_event_can_be_skipped(cls, waiting_event: Dict[str, Any], now_in_utc: datetime) -> bool:
+    def waiting_event_can_be_skipped(cls, waiting_event: dict[str, Any], now_in_utc: datetime) -> bool:
         #
         # over time this function can gain more knowledge of different event types,
         # for now we are just handling Duration Timer events.
@@ -112,7 +108,7 @@ class ProcessInstanceService:
         return False
 
     @classmethod
-    def all_waiting_events_can_be_skipped(cls, waiting_events: List[Dict[str, Any]]) -> bool:
+    def all_waiting_events_can_be_skipped(cls, waiting_events: list[dict[str, Any]]) -> bool:
         for waiting_event in waiting_events:
             if not cls.waiting_event_can_be_skipped(waiting_event, datetime.now(timezone.utc)):
                 return False
@@ -174,9 +170,9 @@ class ProcessInstanceService:
     def run_process_instance_with_processor(
         cls,
         process_instance: ProcessInstanceModel,
-        status_value: Optional[str] = None,
-        execution_strategy_name: Optional[str] = None,
-    ) -> Optional[ProcessInstanceProcessor]:
+        status_value: str | None = None,
+        execution_strategy_name: str | None = None,
+    ) -> ProcessInstanceProcessor | None:
         processor = None
         with ProcessInstanceQueueService.dequeued(process_instance):
             processor = ProcessInstanceProcessor(process_instance)
@@ -228,7 +224,7 @@ class ProcessInstanceService:
         return result
 
     @staticmethod
-    def get_users_assigned_to_task(processor: ProcessInstanceProcessor, spiff_task: SpiffTask) -> List[int]:
+    def get_users_assigned_to_task(processor: ProcessInstanceProcessor, spiff_task: SpiffTask) -> list[int]:
         """Get_users_assigned_to_task."""
         if processor.process_instance_model.process_initiator_id is None:
             raise ApiError.from_task(
@@ -280,7 +276,7 @@ class ProcessInstanceService:
         identifier: str,
         value: str,
         process_instance_id: int,
-    ) -> Optional[ProcessInstanceFileDataModel]:
+    ) -> ProcessInstanceFileDataModel | None:
         if value.startswith("data:"):
             try:
                 parts = value.split(";")
@@ -311,7 +307,7 @@ class ProcessInstanceService:
     def possible_file_data_values(
         cls,
         data: dict[str, Any],
-    ) -> Generator[Tuple[str, str, Optional[int]], None, None]:
+    ) -> Generator[tuple[str, str, int | None], None, None]:
         for identifier, value in data.items():
             if isinstance(value, str):
                 yield (identifier, value, None)
@@ -329,7 +325,7 @@ class ProcessInstanceService:
         cls,
         data: dict[str, Any],
         process_instance_id: int,
-    ) -> List[ProcessInstanceFileDataModel]:
+    ) -> list[ProcessInstanceFileDataModel]:
         models = []
 
         for identifier, value, list_index in cls.possible_file_data_values(data):
@@ -344,7 +340,7 @@ class ProcessInstanceService:
     def replace_file_data_with_digest_references(
         cls,
         data: dict[str, Any],
-        models: List[ProcessInstanceFileDataModel],
+        models: list[ProcessInstanceFileDataModel],
     ) -> None:
         for model in models:
             digest_reference = (
@@ -460,7 +456,7 @@ class ProcessInstanceService:
         processor: ProcessInstanceProcessor,
         spiff_task: SpiffTask,
         add_docs_and_forms: bool = False,
-        calling_subprocess_task_id: Optional[str] = None,
+        calling_subprocess_task_id: str | None = None,
     ) -> Task:
         """Spiff_task_to_api_task."""
         task_type = spiff_task.task_spec.description

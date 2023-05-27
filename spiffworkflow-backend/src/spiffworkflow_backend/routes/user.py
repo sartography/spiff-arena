@@ -4,8 +4,6 @@ import base64
 import json
 import re
 from typing import Any
-from typing import Dict
-from typing import Optional
 
 import flask
 import jwt
@@ -38,7 +36,7 @@ from spiffworkflow_backend.services.user_service import UserService
 
 
 # authorization_exclusion_list = ['status']
-def verify_token(token: Optional[str] = None, force_run: Optional[bool] = False) -> None:
+def verify_token(token: str | None = None, force_run: bool | None = False) -> None:
     """Verify the token for the user (if provided).
 
     If in production environment and token is not provided, gets user from the SSO headers and returns their token.
@@ -187,7 +185,7 @@ def set_new_access_token_in_cookie(
     It will also delete the cookies if the user has logged out.
     """
     tld = current_app.config["THREAD_LOCAL_DATA"]
-    domain_for_frontend_cookie: Optional[str] = re.sub(
+    domain_for_frontend_cookie: str | None = re.sub(
         r"^https?:\/\/",
         "",
         current_app.config["SPIFFWORKFLOW_BACKEND_URL_FOR_FRONTEND"],
@@ -245,7 +243,7 @@ def parse_id_token(token: str) -> Any:
     return json.loads(decoded)
 
 
-def login_return(code: str, state: str, session_state: str = "") -> Optional[Response]:
+def login_return(code: str, state: str, session_state: str = "") -> Response | None:
     state_dict = ast.literal_eval(base64.b64decode(state).decode("utf-8"))
     state_redirect_url = state_dict["redirect_url"]
     auth_token_object = AuthenticationService().get_auth_token_object(code)
@@ -318,7 +316,7 @@ def login_api_return(code: str, state: str, session_state: str) -> str:
     return access_token
 
 
-def logout(id_token: str, redirect_url: Optional[str]) -> Response:
+def logout(id_token: str, redirect_url: str | None) -> Response:
     """Logout."""
     if redirect_url is None:
         redirect_url = ""
@@ -333,7 +331,7 @@ def logout_return() -> Response:
     return redirect(f"{frontend_url}/")
 
 
-def get_decoded_token(token: str) -> Optional[Dict]:
+def get_decoded_token(token: str) -> dict | None:
     """Get_token_type."""
     try:
         decoded_token = jwt.decode(token, options={"verify_signature": False})
@@ -359,7 +357,7 @@ def get_scope(token: str) -> str:
     return scope
 
 
-def get_user_from_decoded_internal_token(decoded_token: dict) -> Optional[UserModel]:
+def get_user_from_decoded_internal_token(decoded_token: dict) -> UserModel | None:
     """Get_user_from_decoded_internal_token."""
     sub = decoded_token["sub"]
     parts = sub.split("::")

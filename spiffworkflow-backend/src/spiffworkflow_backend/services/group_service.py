@@ -1,5 +1,3 @@
-from typing import Optional
-
 from spiffworkflow_backend.models.db import db
 from spiffworkflow_backend.models.group import GroupModel
 from spiffworkflow_backend.models.user import UserModel
@@ -9,7 +7,7 @@ from spiffworkflow_backend.services.user_service import UserService
 class GroupService:
     @classmethod
     def find_or_create_group(cls, group_identifier: str) -> GroupModel:
-        group: Optional[GroupModel] = GroupModel.query.filter_by(identifier=group_identifier).first()
+        group: GroupModel | None = GroupModel.query.filter_by(identifier=group_identifier).first()
         if group is None:
             group = GroupModel(identifier=group_identifier)
             db.session.add(group)

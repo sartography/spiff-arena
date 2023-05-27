@@ -4,7 +4,6 @@ import sys
 import traceback
 from dataclasses import dataclass
 from typing import Any
-from typing import Optional
 
 from SpiffWorkflow.bpmn.exceptions import WorkflowTaskException  # type: ignore
 from SpiffWorkflow.task import Task as SpiffTask  # type: ignore
@@ -18,10 +17,10 @@ class ScriptUnitTestResult:
     """ScriptUnitTestResult."""
 
     result: bool
-    context: Optional[PythonScriptContext] = None
-    error: Optional[str] = None
-    line_number: Optional[int] = None
-    offset: Optional[int] = None
+    context: PythonScriptContext | None = None
+    error: str | None = None
+    line_number: int | None = None
+    offset: int | None = None
 
 
 class ScriptUnitTestRunner:

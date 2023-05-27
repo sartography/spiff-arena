@@ -125,7 +125,7 @@ class ProcessInstanceReportModel(SpiffworkflowBaseDBModel):
                 f"Process instance report with identifier already exists: {identifier}"
             )
 
-        report_metadata_dict = typing.cast(typing.Dict[str, Any], report_metadata)
+        report_metadata_dict = typing.cast(dict[str, Any], report_metadata)
         json_data_hash = JsonDataModel.create_and_insert_json_data_from_dict(report_metadata_dict)
 
         process_instance_report = cls(

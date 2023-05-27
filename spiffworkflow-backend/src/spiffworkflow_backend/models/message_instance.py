@@ -3,7 +3,6 @@ import enum
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 from typing import Any
-from typing import Optional
 
 from flask import current_app
 from SpiffWorkflow.bpmn.PythonScriptEngine import PythonScriptEngine  # type: ignore
@@ -151,7 +150,7 @@ class MessageInstanceModel(SpiffworkflowBaseDBModel):
 
 @listens_for(Session, "before_flush")  # type: ignore
 def ensure_failure_cause_is_set_if_message_instance_failed(
-    session: Any, _flush_context: Optional[Any], _instances: Optional[Any]
+    session: Any, _flush_context: Any | None, _instances: Any | None
 ) -> None:
     """Ensure_failure_cause_is_set_if_message_instance_failed."""
     for instance in session.new:
