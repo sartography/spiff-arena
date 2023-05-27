@@ -160,6 +160,7 @@ explicit_package_bases = false
 select = [
   "B",   # flake8-bugbear
   "E",   # pycodestyle error
+  # "ERA",  # eradicate
   "F",   # pyflakes
   # "N",   # pep8-naming
   # "PL",  # pylint
